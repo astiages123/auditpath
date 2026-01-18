@@ -1,0 +1,47 @@
+src/components/achievements/AchievementsRoom.tsx(20,8): error TS2307: Cannot find module '@/lib/client-db' or its corresponding type declarations.
+src/components/achievements/AchievementsRoom.tsx(28,8): error TS2307: Cannot find module '@/lib/achievements' or its corresponding type declarations.
+src/components/achievements/AchievementsRoom.tsx(29,29): error TS2307: Cannot find module '@/hooks/useProgress' or its corresponding type declarations.
+src/components/achievements/AchievementsRoom.tsx(30,26): error TS6142: Module './SealCard' was resolved to '/Users/vedatdiyar/Desktop/AuditPath/src/components/achievements/SealCard.tsx', but '--jsx' is not set.
+src/components/achievements/AchievementsRoom.tsx(31,33): error TS6142: Module './SealDetailModal' was resolved to '/Users/vedatdiyar/Desktop/AuditPath/src/components/achievements/SealDetailModal.tsx', but '--jsx' is not set.
+src/components/achievements/AchievementsRoom.tsx(32,25): error TS2307: Cannot find module '@/hooks/useAuth' or its corresponding type declarations.
+src/components/achievements/AchievementsRoom.tsx(45,10): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(46,12): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(47,20): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(48,18): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(49,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(50,12): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(158,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(160,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(161,9): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(162,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(163,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(164,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(165,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(167,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(168,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(171,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(177,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(178,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(179,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(182,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(183,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(189,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(190,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(191,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(192,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(194,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(198,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(209,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(217,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(219,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(220,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(228,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(229,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(231,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(238,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(247,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(254,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(262,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/components/achievements/AchievementsRoom.tsx(275,7): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/lib/supabase.ts(3,33): error TS2339: Property 'env' does not exist on type 'ImportMeta'.
+src/lib/supabase.ts(4,37): error TS2339: Property 'env' does not exist on type 'ImportMeta'.

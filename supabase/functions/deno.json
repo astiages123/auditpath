@@ -1,0 +1,11 @@
+{
+  "imports": {
+    "supabase": "jsr:@supabase/supabase-js@2",
+    "resend": "npm:resend@3",
+    "openai": "npm:openai@4"
+  },
+  "compilerOptions": {
+    "allowJs": true,
+    "lib": ["deno.window", "esnext"]
+  }
+}

@@ -1,0 +1,368 @@
+# Kullanıcı Akışı Raporu: Not Yükleme'den Konu Tamamlama'ya (GÜNCEL)
+
+**Hazırlayan:** Ürün Yöneticisi Perspektifi  
+**Tarih:** 18 Ocak 2026  
+**Kapsam:** AuditPath Uygulaması – Öğrenme Süreci Analizi
+
+---
+
+## Özet
+
+Bu rapor, bir kullanıcının AuditPath platformunda notlarını sisteme yüklemesinden başlayarak bir konuyu başarıyla tamamlamasına kadar geçen tüm süreci kronolojik sırayla açıklamaktadır. Her adım, kullanıcı deneyimi perspektifinden ve "neden" yapıldığı bağlamında ele alınmıştır.
+
+---
+
+## Faz 1: Notların Sisteme Yüklenmesi
+
+### Adım 1.1 – Kullanıcı Bir Dersi Seçer
+- **Ne olur:** Kullanıcı ana sayfadan bir ders (örn. "Anayasa Hukuku") seçer ve ilgili not sayfasına yönlendirilir.
+- **Neden:** Platform, kullanıcının çalışmak istediği konuyu belirlemesini sağlar. Bu seçim, tüm sonraki işlemlerin hangi içerik üzerinde yapılacağını belirler.
+
+### Adım 1.2 – Ders Notları Yüklenir
+- **Ne olur:** Sistem, seçilen derse ait tüm not parçalarını (chunk) sıralı şekilde getirir. Her not parçası, bir h3 başlığı altında gruplanmış içerik bloğudur.
+- **Neden:** Notlar küçük, yönetilebilir parçalara bölünmüştür çünkü:
+  - Kullanıcı tek seferde tüm içeriği okumak zorunda kalmaz
+  - Her parça için ayrı ayrı soru üretilebilir
+  - İlerleme daha hassas takip edilebilir
+
+### Adım 1.3 – İçerik İşlenmeye Hazır Hale Gelir
+- **Ne olur:** Her not parçasının yanında bir "Soru Üret" butonu belirir. Bu buton, ilgili parçanın benzersiz kimliğini (chunkId) taşır.
+- **Neden:** Kullanıcıya kontrol verilir – hangi konu üzerinde çalışmak istediğine kendisi karar verir.
+
+```mermaid
+flowchart TD
+    A[Kullanıcı Dersi Seçer] --> B[Not Sayfası Açılır]
+    B --> C[Not Parçaları Yüklenir]
+    C --> D[Her Parçada 'Soru Üret' Butonu Görünür]
+    D --> E{Kullanıcı Butona Tıklar mı?}
+    E -->|Evet| F[Faz 2'ye Geçiş]
+    E -->|Hayır| G[Kullanıcı Notları Okumaya Devam Eder]
+```
+
+---
+
+## Faz 2: İçerik İşleme ve Kavram Haritası Oluşturma
+
+### Adım 2.1 – Soru Üretme İsteği Tetiklenir
+- **Ne olur:** Kullanıcı "Soru Üret" butonuna tıkladığında, sistem ilgili not parçasının içeriğini okumaya başlar.
+- **Neden:** Rastgele değil, belirli bir konuya odaklı soru üretmek için önce o konunun içeriği anlaşılmalıdır.
+
+### Adım 2.2 – İçerik Bağlamı Oluşturulur
+- **Ne olur:** Sistem şu bilgileri toplar:
+  - Dersin adı (örn. "Anayasa Hukuku")
+  - Konu grubu (h1/h2 başlıkları)
+  - Alt konu başlığı (h3)
+  - İçeriğin kendisi
+  - Kelime sayısı
+- **Neden:** Bu hiyerarşik bilgi, sorunun doğru bağlamda ve KPSS standartlarına uygun şekilde üretilmesini sağlar.
+
+### Adım 2.3 – Kavram Haritası (Concept Map) Üretilir
+- **Ne olur:** Sistem, içeriği analiz ederek temel kavramları çıkarır. Her kavram için:
+  - Başlık (örn. "Temel Haklar")
+  - Odak noktası (örn. "Sınırlandırma koşulları")
+  - Zorluk seviyesi (Bilgi / Uygulama / Analiz)
+  - Varsa ilişkili görsel
+- **Neden:** Bu harita, soruların:
+  - İçeriğin farklı bölümlerinden dengeli çıkmasını
+  - Farklı zorluk seviyelerinde olmasını
+  - Tekrara düşmemesini sağlar
+
+### Adım 2.4 – Soru Kotası Hesaplanır
+- **Ne olur:** Kelime sayısı ve **Kavram Yoğunluğu (Concept Density)** oranına göre kota belirlenir.
+- **Formül:** $CD = KavramSayısı / KelimeSayısı$
+  - Temel kota kelime sayısına göre belirlenir (4, 8, 12, 20).
+  - Eğer CD > %5 ise (çok yoğun içerik), temel kota 1.3 ile çarpılarak artırılır.
+  - Eğer CD < %2 ise (seyrek içerik), kota 0.8 ile çarpılarak azaltılır.
+- **Neden:** Sadece uzunluk değil, bilgi yoğunluğu da önemlidir. Yoğun metinler daha fazla soru gerektirir.
+
+```mermaid
+flowchart TD
+    A[Soru Üret Butonuna Tıklanır] --> B[Not Parçası İçeriği Okunur]
+    B --> C[Bağlam Bilgisi Oluşturulur]
+    C --> D{Kavram Haritası Var mı?}
+    D -->|Evet| E[Mevcut Harita Kullanılır]
+    D -->|Hayır| F[Yapay Zeka Kavram Haritası Üretir]
+    F --> G[Harita Sisteme Kaydedilir]
+    E --> H[Soru Kotası Hesaplanır]
+    G --> H
+    H --> I[Faz 3'e Geçiş]
+```
+
+---
+
+## Faz 3: Soru Oluşturma
+
+### Adım 3.1 – Pedagojik Strateji Belirlenir
+- **Ne olur:** İçerik uzunluğuna ve ilerlemeye göre strateji çizilir:
+  - **Küçük Parça Stratejisi (≤150 kelime):** Sadece "Tanım" ve "İlişki" soruları sorulur. Karmaşık analiz soruları üretilmez.
+  - **Normal Strateji (>150 kelime):**
+    - **%0-40 ilerleme:** "Tanım" soruları (Bilgi düzeyi)
+    - **%40-80 ilerleme:** "İlişki" soruları (Uygulama/Analiz düzeyi)
+    - **%80-100 ilerleme:** "Sonuç/Etki" soruları (Analiz düzeyi)
+- **Neden:** Kısa metinlerde derin analiz yapmak yapay olabilir. Uzun metinlerde ise öğrenme basitten karmaşığa doğru ilerlemelidir.
+
+### Adım 3.2 – Konu Seçilir
+- **Ne olur:** Kavram haritasından sırayla (Round-robin) bir konu seçilir.
+- **Neden:** Tüm kavramlardan dengeli soru çıkması sağlanır. Tek bir konuya yığılma önlenir.
+
+### Adım 3.3 – Ders Özel Talimatları Eklenir
+- **Ne olur:** Eğer seçilen ders için özel kurallar varsa (örn. "Anayasa Hukuku'nda madde numarası sor"), bunlar sorgu oluşturucuya eklenir.
+- **Neden:** Her ders farklıdır. Muhasebe için hesaplama sorusu, Anayasa için madde numarası sorusu gerekebilir.
+
+### Adım 3.4 – Yapay Zeka Soruyu Üretir
+- **Ne olur:** Tüm bağlam bilgisi, talimatlar ve örnek format yapay zekaya gönderilir. Yapay zeka, KPSS standardında 5 şıklı bir soru üretir.
+- **Neden:** İnsan eliyle binlerce soru hazırlamak pratik değildir. Yapay zeka, içeriğe uygun, tutarlı ve eğitimsel açıdan doğru sorular üretebilir.
+
+### Adım 3.5 – Soru Doğrulanır ve Kaydedilir
+- **Ne olur:** Üretilen soru kontrol edilir:
+  - 5 şık var mı?
+  - Doğru cevap işaretli mi?
+  - Açıklama var mı?
+  Geçerliyse sisteme kaydedilir ve kullanıcıya gösterilir.
+- **Neden:** Hatalı veya eksik sorular kullanıcı deneyimini bozar. Doğrulama bu riski azaltır.
+
+```mermaid
+flowchart TD
+    A[Soru Kotası Hesaplandı] --> B[İlerleme Durumu Kontrol Edilir]
+    B --> C[Pedagojik Strateji Belirlenir]
+    C --> D[Kavram Haritasından Konu Seçilir]
+    D --> E[Ders Özel Talimatları Eklenir]
+    E --> F[Yapay Zeka Soruyu Üretir]
+    F --> G{Soru Geçerli mi?}
+    G -->|Evet| H[Soru Kaydedilir]
+    G -->|Hayır| I[Tekrar Denenir]
+    I --> F
+    H --> J[Kullanıcıya Gösterilir]
+```
+
+---
+
+## Faz 4: Kullanıcının Testi Çözmesi
+
+### Adım 4.1 – Oturum Başlatılır
+- **Ne olur:** Quiz ekranı açıldığında, kullanıcı için o derse özel bir "oturum" başlatılır. Sistem:
+  - Bugün kaçıncı oturum olduğunu kontrol eder
+  - Bekleyen tekrar sorularını listeler
+  - Yeni ve tekrar soru oranını belirler
+- **Neden:** Her gün aynı dersten çalışmak farklı bir oturumdur. Bu, ilerlemenin takibini mümkün kılar.
+
+### Adım 4.2 – Sorular Sırayla Gösterilir
+- **Ne olur:** Kullanıcıya 5 soru art arda gösterilir. Her soruda:
+  - Soru metni ve 5 şık
+  - Geçen süre gösteren zamanlayıcı
+  - "Bilmiyorum (Boş Geç)" seçeneği
+- **Neden:** Tek seferde çok soru görmek bunaltıcı olabilir. Tek tek gösterim, odaklanmayı artırır.
+
+### Adım 4.3 – Kullanıcı Cevap Verir
+- **Ne olur:** Kullanıcı bir şıkkı seçtiğinde:
+  - Seçilen şık vurgulanır
+  - Doğru/yanlış durumu gösterilir
+  - Açıklama butonu açılır
+- **Neden:** Anında geri bildirim, öğrenmeyi pekiştirir. Kullanıcı neden doğru/yanlış olduğunu hemen görür.
+
+### Adım 4.4 – Boş Geçme Seçeneği
+- **Ne olur:** Kullanıcı "Boş Geç" butonuna tıklarsa, cevap verilmeden bir sonraki soruya geçilir. Soru "aktif" durumda kalır.
+- **Neden:** Gerçek sınavlarda da boş geçme stratejisi vardır. Kullanıcıya baskı yapılmaz.
+
+```mermaid
+flowchart TD
+    A[Quiz Ekranı Açılır] --> B[Oturum Bilgisi Yüklenir]
+    B --> C[İlk Soru Gösterilir]
+    C --> D{Kullanıcı Ne Yapar?}
+    D -->|Şık Seçer| E[Cevap Değerlendirilir]
+    D -->|Boş Geç| F[Soru Aktif Kalır]
+    E --> G[Doğru/Yanlış Gösterilir]
+    G --> H[Açıklama Görüntülenebilir]
+    F --> I[Sonraki Soruya Geç]
+    H --> I
+    I --> J{Daha Soru Var mı?}
+    J -->|Evet| C
+    J -->|Hayır| K[Faz 5'e Geçiş]
+```
+
+---
+
+## Faz 5: Geri Bildirim ve Puanlama (Raf Sistemi)
+
+### Adım 5.1 – Cevap Kaydedilir
+- **Ne olur:** Her cevap anında sisteme kaydedilir:
+  - Kullanıcı kimliği
+  - Soru kimliği
+  - Cevap türü (doğru/yanlış/boş)
+  - Seçilen şık
+  - Harcanan süre
+  - Oturum numarası
+- **Neden:** Bu veriler, kullanıcının güçlü ve zayıf yönlerini analiz etmek, raf sistemini çalıştırmak ve istatistik üretmek için gereklidir.
+
+### Adım 5.2 – Raf Durumu Güncellenir (Shelf System)
+- **Ne olur:** Her sorunun bir "raf durumu" vardır. Cevaba ve **Dinamik Zaman Barajına ($T_{max}$)** göre güncellenir.
+- **$T_{max}$ Formülü:** $((KelimeSayisi / 180) \times 60) + (15 \times ZorlukCarpanı)$
+
+| Cevap Türü | Süre Durumu | Yeni Raf Durumu | Ne Anlama Gelir? |
+|------------|-------------|-----------------|------------------|
+| **Doğru** | Süre < $T_{max}$ | Arşivlendi | Hızlı ve doğru biliyor |
+| **Doğru** | Süre > $T_{max}$ | Takip Bekliyor | Doğru ama yavaş (düşünme süresi uzun) |
+| **Yanlış** | - | Takip Bekliyor | Eksik bilgi |
+| **Boş** | - | Aktif | Cevaplanmadı |
+
+- **Neden:** Sabit 60 saniye kuralı adil değildir. Uzun ve karmaşık sorular daha fazla süre gerektirir. Sistem buna adapte olur.
+
+### Adım 5.3 – Yanlış Cevap İçin Takip Sorusu Hazırlanır
+- **Ne olur:** Kullanıcı yanlış cevap verdiğinde, sistem arka planda:
+  - Orijinal soruyu ve kullanıcının yanlış cevabını analiz eder
+  - Aynı konudan ama farklı açıdan yeni bir soru üretir
+  - Bu soruyu "takip sorusu" olarak kaydeder
+- **Neden:** Aynı soruyu tekrar sormak ezberi teşvik eder. Farklı açıdan soru, gerçek öğrenmeyi ölçer.
+
+### Adım 5.4 – Ustalık Puanı Güncellenir
+- **Ne olur:** Puanlama, kullanıcının "durum geçmişine" (state tracking) göre yapılır:
+  - **Doğru Cevap:** +10 Puan
+  - **İlk Hata:** -5 Puan 
+  - **İlk Boş:** -2 Puan (Soru aktif kalır, puan az düşer)
+  - **Tekrarlı Hata/Boş:** -10 Puan (Daha önce görülen soruda hata yapmak büyük kayıptır)
+- **Neden:** İlk defa hata yapmak öğrenmenin parçasıdır (küçük ceza). Ancak aynı hatayı tekrarlamak öğrenilmediğini gösterir (büyük ceza).
+
+### Adım 5.5 – İlk Oturum Kuralı (Kaldırıldı)
+- **Not:** Eski sistemdeki "ilk oturumda puanı 70'te sabitleme" kuralı kaldırılmıştır. Kullanıcı hak ediyorsa ilk oturumda da ilerleyebilir.
+
+```mermaid
+flowchart TD
+    A[Kullanıcı Cevap Verir] --> B[Cevap Sisteme Kaydedilir]
+    B --> C{Cevap Türü?}
+    C -->|Doğru & Hızlı| D[Soru Arşivlenir]
+    C -->|Doğru & Yavaş| E[Takip Bekliyor]
+    C -->|Yanlış| F[Takip Bekliyor]
+    C -->|Boş| G[Aktif Kalır]
+    F --> H[AI Takip Sorusu Üretir]
+    D --> I[Ustalık Puanı Artar (+10)]
+    E --> I
+    F --> J{İlk Hata mı?}
+    J -->|Evet| K[Puan Azalır (-5)]
+    J -->|Hayır| L[Puan Çok Azalır (-10)]
+    G --> M[Puan Biraz Azalır (-2)]
+```
+
+---
+
+## Faz 6: Test Sonucu ve Konu Tamamlama
+
+### Adım 6.1 – Test Özet Ekranı Gösterilir
+- **Ne olur:** Tüm sorular cevaplandığında, kullanıcıya bir özet ekranı gösterilir:
+  - **Başarı Yüzdesi:** Doğru / Toplam
+  - **Ustalık Puanı:** Bu oturumdaki performansa göre hesaplanan puan
+  - **Tekrar Listesi:** Yanlış ve boş soruların sayısı
+  - **Toplam Süre:** SS:DD:ss formatında
+- **Neden:** Kullanıcı, performansını bir bakışta görür. Motivasyon ve öz değerlendirme sağlanır.
+
+### Adım 6.2 – Geri Bildirim Mesajı Gösterilir
+- **Ne olur:** 
+  - Tekrar listesi boşsa: "Mükemmel! Hiçbir soru tekrar listesine düşmedi."
+  - Tekrar varsa: "X soru tekrar listesine eklendi. AI asistanın takip soruları hazırlıyor..."
+- **Neden:** Kullanıcı, sistemin ne yapacağını anlar. Şeffaflık güven oluşturur.
+
+### Adım 6.3 – Oturum Tamamlanır ve Kaydedilir
+- **Ne olur:** Sistem:
+  - Oturum sayacını günceller
+  - Tüm istatistikleri kaydeder
+  - Arka planda takip sorularını üretmeye başlar
+- **Neden:** Veri kaybı önlenir. Kullanıcı bir sonraki girişinde kaldığı yerden devam edebilir.
+
+### Adım 6.4 – Kullanıcı Ana Menüye Döner
+- **Ne olur:** Kullanıcıya **"Ana Menüye Dön"** butonu sunulur ve tıklandığında ders listesine yönlendirilir.
+- **Neden:** Oturum tamamlandıktan sonra kullanıcı farklı bir konuya geçebilir veya çalışmasını sonlandırabilir.
+
+```mermaid
+flowchart TD
+    A[Tüm Sorular Tamamlandı] --> B[Test Sonucu Hesaplanır]
+    B --> C[Özet Ekranı Gösterilir]
+    C --> D[Başarı Yüzdesi Animasyonla Gösterilir]
+    D --> E[Ustalık ve Tekrar Bilgisi Gösterilir]
+    E --> F[Geri Bildirim Mesajı Gösterilir]
+    F --> G[Oturum Sisteme Kaydedilir]
+    G --> H{Kullanıcı Ne Yapar?}
+    H --> I[Ders Listesine Dön]
+```
+
+---
+
+## Konu Tamamlama Kriterleri
+
+Bir konunun "tamamlanmış" sayılması için:
+
+| Kriter | Açıklama |
+|--------|----------|
+| **Soru Kotası Doldu** | O not parçası için üretilebilecek tüm sorular üretildi |
+| **Tüm Sorular Çözüldü** | Kullanıcı, o parçadaki tüm soruları en az bir kez cevapladı |
+| **Ustalık Puanı = 100** | Kullanıcının o parçadaki ustalık puanı %100 olmalı |
+| **Arşivlenen Sorular** | Çoğu soru "arşivlenmiş" durumda (yani ustaca biliniyorlar) |
+
+> [!NOTE]
+> Konu tamamlama için "Mastery Score" mutlaka 100 olmalıdır. İlk oturum kısıtlaması kaldırıldığı için, kullanıcı eğer yeterince soru çözer ve başarılı olursa tek oturumda da tamamlayabilir (ancak genelde soru sayısı gereği birden fazla oturum sürer).
+
+---
+
+## Tekrar Sistemi (Review Queue)
+
+Bir sonraki oturumda, sistem şu öncelik sırasına göre soru getirir:
+
+| Öncelik | Durum | Açıklama |
+|---------|-------|----------|
+| 1 | **Aktif (Boş)** | Kullanıcının boş geçtiği sorular |
+| 2 | **Takip Bekliyor** | Yanlış veya yavaş doğru cevaplanan sorular |
+| 3 | **Arşiv (Zayıf Parça)** | Ustalık puanı düşük parçalardan arşivlenmiş sorular |
+
+- **Neden:** Bu sistem, unutma eğrisine karşı çalışır. Kullanıcı, bilmediği konuları daha sık görür.
+
+---
+
+## Görsel Akış Özeti
+
+```mermaid
+flowchart TB
+    subgraph Faz1[1. Not Yükleme]
+        A1[Ders Seçilir] --> A2[Notlar Yüklenir] --> A3[Soru Üret Butonu Görünür]
+    end
+    
+    subgraph Faz2[2. İçerik İşleme]
+        B1[İçerik Analiz Edilir] --> B2[Kavram Haritası Oluşturulur] --> B3[Kota Hesaplanır]
+    end
+    
+    subgraph Faz3[3. Soru Üretimi]
+        C1[Strateji Belirlenir] --> C2[Konu Seçilir] --> C3[AI Soru Üretir]
+    end
+    
+    subgraph Faz4[4. Test Çözme]
+        D1[Oturum Başlar] --> D2[Sorular Gösterilir] --> D3[Cevaplar Alınır]
+    end
+    
+    subgraph Faz5[5. Puanlama]
+        E1[Cevap Kaydedilir] --> E2[Raf Durumu Güncellenir] --> E3[Ustalık Hesaplanır]
+    end
+    
+    subgraph Faz6[6. Tamamlama]
+        F1[Sonuç Gösterilir] --> F2[Oturum Kaydedilir] --> F3[Kullanıcı Seçim Yapar]
+    end
+    
+    Faz1 --> Faz2 --> Faz3 --> Faz4 --> Faz5 --> Faz6
+    F3 -->|Yeni Konu| Faz1
+```
+
+---
+
+## Sonuç ve Uyum Değerlendirmesi
+
+Bu rapor, codebase'deki gerçek implementasyona dayanmaktadır. Önemli bulgular:
+
+1. **Kademeli Öğrenme:** Sistem, Bloom taksonomisine uygun olarak basit "tanım" sorularından karmaşık "analiz" sorularına ilerler.
+
+2. **Adaptif Tekrar:** Yanlış cevaplar için özel takip soruları üretilir, bu da ezberi değil gerçek öğrenmeyi hedefler.
+
+3. **Şeffaf Puanlama:** Kullanıcı, her adımda nerede olduğunu ve ne yapması gerektiğini bilir. Puanlama tekrarlı hataları cezalandırarak dikkatli olmayı teşvik eder.
+
+4. **Dinamik Zamanlama:** $T_{max}$ ile her sorunun zorluğuna ve uzunluğuna göre adil bir süre değerlendirmesi yapılır.
+
+5. **Esneklik:** "Tekrar Çöz" zorlaması kaldırıldı, kullanıcı testi bitirince serbestçe hareket edebilir.
+
+---
+
+*Bu rapor, Ürün Yöneticisi perspektifinden hazırlanmış olup, teknik terminoloji yerine kullanıcı deneyimi odaklı ifadeler kullanılmıştır.*

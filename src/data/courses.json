@@ -1,0 +1,6361 @@
+[
+  {
+    "category": "1. EKONOMİ (Toplam: 144 Saat)",
+    "courses": [
+      {
+        "id": "mikro-iktisat",
+        "name": "Mikro İktisat - Bilge Beyaz",
+        "lessonType": "Mikro İktisat",
+        "totalVideos": 111,
+        "totalHours": 60.67,
+        "playlistUrl": "https://www.youtube.com/playlist?list=PLPhEmM6X--Wefl2MTmJ67Uv851yYQTfB4",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Ders Tanıtımı",
+            "duration": "07:29",
+            "durationMinutes": 7.48
+          },
+          {
+            "id": 2,
+            "title": "Matematiksel Temeller 1",
+            "duration": "39:23",
+            "durationMinutes": 39.38
+          },
+          {
+            "id": 3,
+            "title": "Matematiksel Temeller 2",
+            "duration": "39:51",
+            "durationMinutes": 39.85
+          },
+          {
+            "id": 4,
+            "title": "Matematiksel Temeller 3",
+            "duration": "37:37",
+            "durationMinutes": 37.62
+          },
+          {
+            "id": 5,
+            "title": "Toplam, Marjinal, Ortalama İlişkisi 1",
+            "duration": "33:13",
+            "durationMinutes": 33.22
+          },
+          {
+            "id": 6,
+            "title": "Toplam, Marjinal, Ortalama İlişkisi 2",
+            "duration": "32:38",
+            "durationMinutes": 32.63
+          },
+          {
+            "id": 7,
+            "title": "Toplam, Marjinal, Ortalama İlişkisi 3",
+            "duration": "34:54",
+            "durationMinutes": 34.9
+          },
+          {
+            "id": 8,
+            "title": "Tüketim Kuramı: Temel Kavramlar",
+            "duration": "37:39",
+            "durationMinutes": 37.65
+          },
+          {
+            "id": 9,
+            "title": "Kardinalist Tüketim Kuramı 1",
+            "duration": "39:36",
+            "durationMinutes": 39.6
+          },
+          {
+            "id": 10,
+            "title": "Kardinalist Tüketim Kuramı 2",
+            "duration": "38:23",
+            "durationMinutes": 38.38
+          },
+          {
+            "id": 11,
+            "title": "Kardinalist Tüketim Kuramı 3",
+            "duration": "34:11",
+            "durationMinutes": 34.18
+          },
+          {
+            "id": 12,
+            "title": "Kardinalist Tüketim Kuramı 4",
+            "duration": "38:18",
+            "durationMinutes": 38.3
+          },
+          {
+            "id": 13,
+            "title": "Ordinalist Kuram: Farksızlık Eğrileri",
+            "duration": "38:58",
+            "durationMinutes": 38.97
+          },
+          {
+            "id": 14,
+            "title": "Marjinal İkame Oranı (MRS) 1",
+            "duration": "42:26",
+            "durationMinutes": 42.43
+          },
+          {
+            "id": 15,
+            "title": "Marjinal İkame Oranı (MRS) 2",
+            "duration": "38:53",
+            "durationMinutes": 38.88
+          },
+          {
+            "id": 16,
+            "title": "Atipik Farksızlık Eğrileri 1",
+            "duration": "44:53",
+            "durationMinutes": 44.88
+          },
+          {
+            "id": 17,
+            "title": "Atipik Farksızlık Eğrileri 2",
+            "duration": "37:20",
+            "durationMinutes": 37.33
+          },
+          {
+            "id": 18,
+            "title": "Bütçe Doğrusu ve Kısıtı 1",
+            "duration": "36:24",
+            "durationMinutes": 36.4
+          },
+          {
+            "id": 19,
+            "title": "Bütçe Doğrusu ve Kısıtı 2",
+            "duration": "43:41",
+            "durationMinutes": 43.68
+          },
+          {
+            "id": 20,
+            "title": "Tüketici Dengesi 1",
+            "duration": "36:07",
+            "durationMinutes": 36.12
+          },
+          {
+            "id": 21,
+            "title": "Tüketici Dengesi 2",
+            "duration": "44:51",
+            "durationMinutes": 44.85
+          },
+          {
+            "id": 22,
+            "title": "Tüketici Dengesi 3",
+            "duration": "34:02",
+            "durationMinutes": 34.03
+          },
+          {
+            "id": 23,
+            "title": "Tüketici Dengesi Değişimleri 1",
+            "duration": "31:11",
+            "durationMinutes": 31.18
+          },
+          {
+            "id": 24,
+            "title": "Tüketici Dengesi Değişimleri 2",
+            "duration": "37:45",
+            "durationMinutes": 37.75
+          },
+          {
+            "id": 25,
+            "title": "Tüketici Dengesi Değişimleri 3",
+            "duration": "29:28",
+            "durationMinutes": 29.47
+          },
+          {
+            "id": 26,
+            "title": "Fiyat Değişiminin Etkileri 1",
+            "duration": "38:01",
+            "durationMinutes": 38.02
+          },
+          {
+            "id": 27,
+            "title": "Fiyat Değişiminin Etkileri 2",
+            "duration": "32:58",
+            "durationMinutes": 32.97
+          },
+          {
+            "id": 28,
+            "title": "Fiyat Değişiminin Etkileri 3",
+            "duration": "43:51",
+            "durationMinutes": 43.85
+          },
+          {
+            "id": 29,
+            "title": "Talep ve Arz Fonksiyonları 1",
+            "duration": "37:53",
+            "durationMinutes": 37.88
+          },
+          {
+            "id": 30,
+            "title": "Talep ve Arz Fonksiyonları 2",
+            "duration": "33:20",
+            "durationMinutes": 33.33
+          },
+          {
+            "id": 31,
+            "title": "Talep ve Arz Fonksiyonları 3",
+            "duration": "32:20",
+            "durationMinutes": 32.33
+          },
+          {
+            "id": 32,
+            "title": "Genel Esneklik Kavramı",
+            "duration": "22:24",
+            "durationMinutes": 22.4
+          },
+          {
+            "id": 33,
+            "title": "Talebin Fiyat Esnekliği 1",
+            "duration": "39:05",
+            "durationMinutes": 39.08
+          },
+          {
+            "id": 34,
+            "title": "Talebin Fiyat Esnekliği 2",
+            "duration": "30:40",
+            "durationMinutes": 30.67
+          },
+          {
+            "id": 35,
+            "title": "Talebin Fiyat Esnekliği 3",
+            "duration": "25:50",
+            "durationMinutes": 25.83
+          },
+          {
+            "id": 36,
+            "title": "Talebin Fiyat Esnekliği 4",
+            "duration": "35:13",
+            "durationMinutes": 35.22
+          },
+          {
+            "id": 37,
+            "title": "Talebin Fiyat Esnekliği 5",
+            "duration": "38:45",
+            "durationMinutes": 38.75
+          },
+          {
+            "id": 38,
+            "title": "Talebin Gelir Esnekliği 1",
+            "duration": "28:28",
+            "durationMinutes": 28.47
+          },
+          {
+            "id": 39,
+            "title": "Talebin Gelir Esnekliği 2",
+            "duration": "36:40",
+            "durationMinutes": 36.67
+          },
+          {
+            "id": 40,
+            "title": "Çapraz Talep Esnekliği",
+            "duration": "27:43",
+            "durationMinutes": 27.72
+          },
+          {
+            "id": 41,
+            "title": "Arz Esnekliği",
+            "duration": "43:22",
+            "durationMinutes": 43.37
+          },
+          {
+            "id": 42,
+            "title": "Piyasa Dengesi",
+            "duration": "25:51",
+            "durationMinutes": 25.85
+          },
+          {
+            "id": 43,
+            "title": "Dengeye Yöneliş Yaklaşımları",
+            "duration": "39:21",
+            "durationMinutes": 39.35
+          },
+          {
+            "id": 44,
+            "title": "Piyasa Dengesi Değişimleri 1",
+            "duration": "35:58",
+            "durationMinutes": 35.97
+          },
+          {
+            "id": 45,
+            "title": "Piyasa Dengesi Değişimleri 2",
+            "duration": "09:39",
+            "durationMinutes": 9.65
+          },
+          {
+            "id": 46,
+            "title": "Örümcek Ağı (Cobweb) Teoremi",
+            "duration": "36:10",
+            "durationMinutes": 36.17
+          },
+          {
+            "id": 47,
+            "title": "Tüketici ve Üretici Rantı 1",
+            "duration": "32:21",
+            "durationMinutes": 32.35
+          },
+          {
+            "id": 48,
+            "title": "Tüketici ve Üretici Rantı 2",
+            "duration": "38:13",
+            "durationMinutes": 38.22
+          },
+          {
+            "id": 49,
+            "title": "Taban Fiyat Uygulaması",
+            "duration": "37:44",
+            "durationMinutes": 37.73
+          },
+          {
+            "id": 50,
+            "title": "Taban Fiyat ve Dara Kaybı",
+            "duration": "35:42",
+            "durationMinutes": 35.7
+          },
+          {
+            "id": 51,
+            "title": "Tavan Fiyat Uygulaması",
+            "duration": "39:15",
+            "durationMinutes": 39.25
+          },
+          {
+            "id": 52,
+            "title": "Tavan Fiyat ve Dara Kaybı",
+            "duration": "29:46",
+            "durationMinutes": 29.77
+          },
+          {
+            "id": 53,
+            "title": "Vergi Uygulamaları 1",
+            "duration": "31:03",
+            "durationMinutes": 31.05
+          },
+          {
+            "id": 54,
+            "title": "Vergi Uygulamaları 2",
+            "duration": "40:14",
+            "durationMinutes": 40.23
+          },
+          {
+            "id": 55,
+            "title": "Vergi Uygulamaları 3",
+            "duration": "20:51",
+            "durationMinutes": 20.85
+          },
+          {
+            "id": 56,
+            "title": "Kota Uygulaması",
+            "duration": "30:55",
+            "durationMinutes": 30.92
+          },
+          {
+            "id": 57,
+            "title": "Kısa Dönemde Üretim 1",
+            "duration": "33:16",
+            "durationMinutes": 33.27
+          },
+          {
+            "id": 58,
+            "title": "Kısa Dönemde Üretim 2",
+            "duration": "33:54",
+            "durationMinutes": 33.9
+          },
+          {
+            "id": 59,
+            "title": "Kısa Dönemde Üretim 3",
+            "duration": "35:16",
+            "durationMinutes": 35.27
+          },
+          {
+            "id": 60,
+            "title": "Kısa Dönemde Üretim 4",
+            "duration": "14:03",
+            "durationMinutes": 14.05
+          },
+          {
+            "id": 61,
+            "title": "Uzun Dönemde Üretim 1",
+            "duration": "31:06",
+            "durationMinutes": 31.1
+          },
+          {
+            "id": 62,
+            "title": "Uzun Dönem: Eş Ürün Eğrileri",
+            "duration": "36:55",
+            "durationMinutes": 36.92
+          },
+          {
+            "id": 63,
+            "title": "Marjinal Teknik İkame Oranı (MRTS)",
+            "duration": "34:23",
+            "durationMinutes": 34.38
+          },
+          {
+            "id": 64,
+            "title": "İkame Esnekliği",
+            "duration": "09:02",
+            "durationMinutes": 9.03
+          },
+          {
+            "id": 65,
+            "title": "Üretim Fonksiyonları 1",
+            "duration": "27:25",
+            "durationMinutes": 27.42
+          },
+          {
+            "id": 66,
+            "title": "Üretim Fonksiyonları 2",
+            "duration": "34:35",
+            "durationMinutes": 34.58
+          },
+          {
+            "id": 67,
+            "title": "Eşmaliyet Kısıtı",
+            "duration": "38:07",
+            "durationMinutes": 38.12
+          },
+          {
+            "id": 68,
+            "title": "Üretici Dengesi 1",
+            "duration": "38:01",
+            "durationMinutes": 38.02
+          },
+          {
+            "id": 69,
+            "title": "Üretici Dengesi 2",
+            "duration": "24:59",
+            "durationMinutes": 24.98
+          },
+          {
+            "id": 70,
+            "title": "Üretici Dengesi 3",
+            "duration": "30:10",
+            "durationMinutes": 30.17
+          },
+          {
+            "id": 71,
+            "title": "Üretici Dengesi Değişimleri 1",
+            "duration": "37:32",
+            "durationMinutes": 37.53
+          },
+          {
+            "id": 72,
+            "title": "Üretici Dengesi Değişimleri 2",
+            "duration": "28:21",
+            "durationMinutes": 28.35
+          },
+          {
+            "id": 73,
+            "title": "Kısa Dönem Maliyetleri 1",
+            "duration": "36:17",
+            "durationMinutes": 36.28
+          },
+          {
+            "id": 74,
+            "title": "Kısa Dönem Maliyetleri 2",
+            "duration": "32:43",
+            "durationMinutes": 32.72
+          },
+          {
+            "id": 75,
+            "title": "Kısa Dönem Maliyetleri 3",
+            "duration": "37:32",
+            "durationMinutes": 37.53
+          },
+          {
+            "id": 76,
+            "title": "Kısa Dönem Maliyetleri 4",
+            "duration": "27:28",
+            "durationMinutes": 27.47
+          },
+          {
+            "id": 77,
+            "title": "Kısa Dönem Maliyetleri: Soru Çözümü",
+            "duration": "30:02",
+            "durationMinutes": 30.03
+          },
+          {
+            "id": 78,
+            "title": "Uzun Dönem Maliyetleri 1",
+            "duration": "41:19",
+            "durationMinutes": 41.32
+          },
+          {
+            "id": 79,
+            "title": "Uzun Dönem Maliyetleri 2",
+            "duration": "28:48",
+            "durationMinutes": 28.8
+          },
+          {
+            "id": 80,
+            "title": "Maliyetler: Özet",
+            "duration": "28:08",
+            "durationMinutes": 28.13
+          },
+          {
+            "id": 81,
+            "title": "Piyasa Türlerine Giriş",
+            "duration": "24:37",
+            "durationMinutes": 24.62
+          },
+          {
+            "id": 82,
+            "title": "Tam Rekabet: Firma Analizi",
+            "duration": "32:28",
+            "durationMinutes": 32.47
+          },
+          {
+            "id": 83,
+            "title": "Tam Rekabet: Firma Karları",
+            "duration": "37:05",
+            "durationMinutes": 37.08
+          },
+          {
+            "id": 84,
+            "title": "Kısa Dönem Denge Analizi 1",
+            "duration": "39:09",
+            "durationMinutes": 39.15
+          },
+          {
+            "id": 85,
+            "title": "Kısa Dönem Denge Analizi 2",
+            "duration": "35:30",
+            "durationMinutes": 35.5
+          },
+          {
+            "id": 86,
+            "title": "Üretim Yapma Koşulu",
+            "duration": "30:57",
+            "durationMinutes": 30.95
+          },
+          {
+            "id": 87,
+            "title": "Kısa Dönem Arz Eğrisi",
+            "duration": "33:09",
+            "durationMinutes": 33.15
+          },
+          {
+            "id": 88,
+            "title": "Kısa Dönem Üretici Rantı",
+            "duration": "14:07",
+            "durationMinutes": 14.12
+          },
+          {
+            "id": 89,
+            "title": "Vergi Müdahalesi",
+            "duration": "19:21",
+            "durationMinutes": 19.35
+          },
+          {
+            "id": 90,
+            "title": "Uzun Dönem Dengesi",
+            "duration": "29:22",
+            "durationMinutes": 29.37
+          },
+          {
+            "id": 91,
+            "title": "Uzun Dönem Endüstriler",
+            "duration": "24:17",
+            "durationMinutes": 24.28
+          },
+          {
+            "id": 92,
+            "title": "Monopol (Tekel) Piyasası",
+            "duration": "42:29",
+            "durationMinutes": 42.48
+          },
+          {
+            "id": 93,
+            "title": "Monopolcü Firma Analizi 1",
+            "duration": "28:55",
+            "durationMinutes": 28.92
+          },
+          {
+            "id": 94,
+            "title": "Monopolcü Firma Analizi 2",
+            "duration": "32:32",
+            "durationMinutes": 32.53
+          },
+          {
+            "id": 95,
+            "title": "Monopolün Yol Açtığı Refah Kaybı",
+            "duration": "40:35",
+            "durationMinutes": 40.58
+          },
+          {
+            "id": 96,
+            "title": "Tekelci Güç Analizi 1",
+            "duration": "22:58",
+            "durationMinutes": 22.97
+          },
+          {
+            "id": 97,
+            "title": "Tekelci Güç Analizi 2",
+            "duration": "38:16",
+            "durationMinutes": 38.27
+          },
+          {
+            "id": 98,
+            "title": "Tekelci Firma: Soru Çözümü",
+            "duration": "14:37",
+            "durationMinutes": 14.62
+          },
+          {
+            "id": 99,
+            "title": "Tekelci Rekabet Piyasası",
+            "duration": "40:44",
+            "durationMinutes": 40.73
+          },
+          {
+            "id": 100,
+            "title": "Oligopol Piyasası 1",
+            "duration": "35:04",
+            "durationMinutes": 35.07
+          },
+          {
+            "id": 101,
+            "title": "Oligopol Piyasası 2",
+            "duration": "31:38",
+            "durationMinutes": 31.63
+          },
+          {
+            "id": 102,
+            "title": "Oligopol Piyasası 3",
+            "duration": "32:05",
+            "durationMinutes": 32.08
+          },
+          {
+            "id": 103,
+            "title": "Oligopol Piyasası 4",
+            "duration": "24:37",
+            "durationMinutes": 24.62
+          },
+          {
+            "id": 104,
+            "title": "Faktör Piyasaları 1",
+            "duration": "37:11",
+            "durationMinutes": 37.18
+          },
+          {
+            "id": 105,
+            "title": "Faktör Piyasaları 2",
+            "duration": "40:16",
+            "durationMinutes": 40.27
+          },
+          {
+            "id": 106,
+            "title": "Faktör Piyasaları 3",
+            "duration": "35:17",
+            "durationMinutes": 35.28
+          },
+          {
+            "id": 107,
+            "title": "Faktör Piyasaları 4",
+            "duration": "20:11",
+            "durationMinutes": 20.18
+          },
+          {
+            "id": 108,
+            "title": "Faktör Piyasaları 5",
+            "duration": "30:35",
+            "durationMinutes": 30.58
+          },
+          {
+            "id": 109,
+            "title": "Genel Denge Analizi 1",
+            "duration": "34:17",
+            "durationMinutes": 34.28
+          },
+          {
+            "id": 110,
+            "title": "Genel Denge Analizi 2",
+            "duration": "36:01",
+            "durationMinutes": 36.02
+          },
+          {
+            "id": 111,
+            "title": "Mikro İktisat Final Soru Çözümü",
+            "duration": "13:27",
+            "durationMinutes": 13.45
+          }
+        ]
+      },
+      {
+        "id": "makro-iktisat",
+        "name": "Makro İktisat - Mesut Güzelli",
+        "lessonType": "Makro İktisat",
+        "totalVideos": 91,
+        "totalHours": 46.48,
+        "playlistUrl": "https://www.youtube.com/playlist?list=PLPhEmM6X--WfdZ2ntwO2Kmw6J285ajpTG",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Makro İktisada Giriş",
+            "duration": "12:36",
+            "durationMinutes": 12.6
+          },
+          {
+            "id": 2,
+            "title": "Milli Gelir Muhasebesi 1",
+            "duration": "27:03",
+            "durationMinutes": 27.05
+          },
+          {
+            "id": 3,
+            "title": "Milli Gelir Muhasebesi 2",
+            "duration": "37:06",
+            "durationMinutes": 37.1
+          },
+          {
+            "id": 4,
+            "title": "Milli Gelir Muhasebesi 3",
+            "duration": "39:32",
+            "durationMinutes": 39.53
+          },
+          {
+            "id": 5,
+            "title": "Milli Gelir Muhasebesi 4",
+            "duration": "26:40",
+            "durationMinutes": 26.67
+          },
+          {
+            "id": 6,
+            "title": "Milli Gelir Muhasebesi 5",
+            "duration": "30:43",
+            "durationMinutes": 30.72
+          },
+          {
+            "id": 7,
+            "title": "Milli Gelir Muhasebesi 6",
+            "duration": "26:59",
+            "durationMinutes": 26.98
+          },
+          {
+            "id": 8,
+            "title": "İktisadi Temel Kavramlar 1",
+            "duration": "37:38",
+            "durationMinutes": 37.63
+          },
+          {
+            "id": 9,
+            "title": "İktisadi Temel Kavramlar 2",
+            "duration": "31:54",
+            "durationMinutes": 31.9
+          },
+          {
+            "id": 10,
+            "title": "İktisadi Temel Kavramlar 3",
+            "duration": "32:11",
+            "durationMinutes": 32.18
+          },
+          {
+            "id": 11,
+            "title": "Keynesyen Model Varsayımları",
+            "duration": "29:14",
+            "durationMinutes": 29.23
+          },
+          {
+            "id": 12,
+            "title": "Tüketim ve Tasarruf 1",
+            "duration": "39:20",
+            "durationMinutes": 39.33
+          },
+          {
+            "id": 13,
+            "title": "Tüketim ve Tasarruf 2",
+            "duration": "25:44",
+            "durationMinutes": 25.73
+          },
+          {
+            "id": 14,
+            "title": "Tüketim ve Tasarruf 3",
+            "duration": "33:15",
+            "durationMinutes": 33.25
+          },
+          {
+            "id": 15,
+            "title": "Tüketim ve Tasarruf 4",
+            "duration": "30:40",
+            "durationMinutes": 30.67
+          },
+          {
+            "id": 16,
+            "title": "Tüketim ve Tasarruf 5",
+            "duration": "37:37",
+            "durationMinutes": 37.62
+          },
+          {
+            "id": 17,
+            "title": "Yatırım Harcamaları 1",
+            "duration": "30:04",
+            "durationMinutes": 30.07
+          },
+          {
+            "id": 18,
+            "title": "Yatırım Harcamaları 2",
+            "duration": "31:33",
+            "durationMinutes": 31.55
+          },
+          {
+            "id": 19,
+            "title": "Yatırım Harcamaları 3",
+            "duration": "34:16",
+            "durationMinutes": 34.27
+          },
+          {
+            "id": 20,
+            "title": "Yatırım Harcamaları 4",
+            "duration": "31:05",
+            "durationMinutes": 31.08
+          },
+          {
+            "id": 21,
+            "title": "Yatırım Harcamaları 5",
+            "duration": "17:30",
+            "durationMinutes": 17.5
+          },
+          {
+            "id": 22,
+            "title": "Kamu Harcamaları ve Vergiler",
+            "duration": "36:05",
+            "durationMinutes": 36.08
+          },
+          {
+            "id": 23,
+            "title": "Net İhracat (Dış Ticaret)",
+            "duration": "53:24",
+            "durationMinutes": 53.4
+          },
+          {
+            "id": 24,
+            "title": "Toplam Harcama Fonksiyonu 1",
+            "duration": "36:23",
+            "durationMinutes": 36.38
+          },
+          {
+            "id": 25,
+            "title": "Toplam Harcama Fonksiyonu 2",
+            "duration": "31:09",
+            "durationMinutes": 31.15
+          },
+          {
+            "id": 26,
+            "title": "Makro Ekonomik Denge",
+            "duration": "32:17",
+            "durationMinutes": 32.28
+          },
+          {
+            "id": 27,
+            "title": "Denge Analizi: Soru Çözümü",
+            "duration": "30:48",
+            "durationMinutes": 30.8
+          },
+          {
+            "id": 28,
+            "title": "Denge Analizi: Sonuçlar",
+            "duration": "29:55",
+            "durationMinutes": 29.92
+          },
+          {
+            "id": 29,
+            "title": "Denge Sonuçları: Soru Çözümü",
+            "duration": "19:25",
+            "durationMinutes": 19.42
+          },
+          {
+            "id": 30,
+            "title": "Çarpan Mekanizması 1",
+            "duration": "37:00",
+            "durationMinutes": 37
+          },
+          {
+            "id": 31,
+            "title": "Çarpan Mekanizması 2",
+            "duration": "32:40",
+            "durationMinutes": 32.67
+          },
+          {
+            "id": 32,
+            "title": "Çarpan Mekanizması 3",
+            "duration": "29:45",
+            "durationMinutes": 29.75
+          },
+          {
+            "id": 33,
+            "title": "Çarpan Mekanizması 4",
+            "duration": "25:26",
+            "durationMinutes": 25.43
+          },
+          {
+            "id": 34,
+            "title": "Çarpan Mekanizması 5",
+            "duration": "35:51",
+            "durationMinutes": 35.85
+          },
+          {
+            "id": 35,
+            "title": "Çarpan Mekanizması 6",
+            "duration": "47:07",
+            "durationMinutes": 47.12
+          },
+          {
+            "id": 36,
+            "title": "İşsizlik Türleri ve Ölçümü 1",
+            "duration": "31:50",
+            "durationMinutes": 31.83
+          },
+          {
+            "id": 37,
+            "title": "İşsizlik Türleri ve Ölçümü 2",
+            "duration": "27:35",
+            "durationMinutes": 27.58
+          },
+          {
+            "id": 38,
+            "title": "İşsizlik Türleri ve Ölçümü 3",
+            "duration": "28:12",
+            "durationMinutes": 28.2
+          },
+          {
+            "id": 39,
+            "title": "İşsizlik Türleri ve Ölçümü 4",
+            "duration": "34:27",
+            "durationMinutes": 34.45
+          },
+          {
+            "id": 40,
+            "title": "Enflasyon: Tanım ve Ölçüm 1",
+            "duration": "30:23",
+            "durationMinutes": 30.38
+          },
+          {
+            "id": 41,
+            "title": "Enflasyon: Tanım ve Ölçüm 2",
+            "duration": "37:49",
+            "durationMinutes": 37.82
+          },
+          {
+            "id": 42,
+            "title": "Enflasyonist ve Deflasyonist Açık",
+            "duration": "29:28",
+            "durationMinutes": 29.47
+          },
+          {
+            "id": 43,
+            "title": "IS-LM Modeli: Giriş",
+            "duration": "20:39",
+            "durationMinutes": 20.65
+          },
+          {
+            "id": 44,
+            "title": "IS Doğrusu: Mal Piyasası 1",
+            "duration": "35:05",
+            "durationMinutes": 35.08
+          },
+          {
+            "id": 45,
+            "title": "IS Doğrusu: Mal Piyasası 2",
+            "duration": "26:03",
+            "durationMinutes": 26.05
+          },
+          {
+            "id": 46,
+            "title": "IS Doğrusu: Mal Piyasası 3",
+            "duration": "32:58",
+            "durationMinutes": 32.97
+          },
+          {
+            "id": 47,
+            "title": "Para Piyasası 1",
+            "duration": "42:42",
+            "durationMinutes": 42.7
+          },
+          {
+            "id": 48,
+            "title": "Para Piyasası 2",
+            "duration": "29:12",
+            "durationMinutes": 29.2
+          },
+          {
+            "id": 49,
+            "title": "Para Piyasası 3",
+            "duration": "20:03",
+            "durationMinutes": 20.05
+          },
+          {
+            "id": 50,
+            "title": "Para Talebi Teorileri 1",
+            "duration": "27:52",
+            "durationMinutes": 27.87
+          },
+          {
+            "id": 51,
+            "title": "Para Talebi Teorileri 2",
+            "duration": "28:44",
+            "durationMinutes": 28.73
+          },
+          {
+            "id": 52,
+            "title": "Para Talebi Teorileri 3",
+            "duration": "15:21",
+            "durationMinutes": 15.35
+          },
+          {
+            "id": 53,
+            "title": "Para Talebi Teorileri 4",
+            "duration": "31:45",
+            "durationMinutes": 31.75
+          },
+          {
+            "id": 54,
+            "title": "Para Talebi Teorileri 5",
+            "duration": "39:07",
+            "durationMinutes": 39.12
+          },
+          {
+            "id": 55,
+            "title": "Para Talebi Teorileri 6",
+            "duration": "39:36",
+            "durationMinutes": 39.6
+          },
+          {
+            "id": 56,
+            "title": "LM Doğrusu: Para Piyasası 1",
+            "duration": "30:42",
+            "durationMinutes": 30.7
+          },
+          {
+            "id": 57,
+            "title": "LM Doğrusu: Para Piyasası 2",
+            "duration": "38:06",
+            "durationMinutes": 38.1
+          },
+          {
+            "id": 58,
+            "title": "IS-LM Dengesi 1",
+            "duration": "27:04",
+            "durationMinutes": 27.07
+          },
+          {
+            "id": 59,
+            "title": "IS-LM Dengesi 2",
+            "duration": "29:05",
+            "durationMinutes": 29.08
+          },
+          {
+            "id": 60,
+            "title": "Politika Analizi 1",
+            "duration": "31:06",
+            "durationMinutes": 31.1
+          },
+          {
+            "id": 61,
+            "title": "Politika Analizi 2",
+            "duration": "35:25",
+            "durationMinutes": 35.42
+          },
+          {
+            "id": 62,
+            "title": "Politika Analizi 3",
+            "duration": "27:37",
+            "durationMinutes": 27.62
+          },
+          {
+            "id": 63,
+            "title": "Politika Analizi 4",
+            "duration": "35:29",
+            "durationMinutes": 35.48
+          },
+          {
+            "id": 64,
+            "title": "Politikaların Etkinliği 1",
+            "duration": "21:25",
+            "durationMinutes": 21.42
+          },
+          {
+            "id": 65,
+            "title": "Politikaların Etkinliği 2",
+            "duration": "22:09",
+            "durationMinutes": 22.15
+          },
+          {
+            "id": 66,
+            "title": "Döviz Piyasası 1",
+            "duration": "34:28",
+            "durationMinutes": 34.47
+          },
+          {
+            "id": 67,
+            "title": "Döviz Piyasası 2",
+            "duration": "34:42",
+            "durationMinutes": 34.7
+          },
+          {
+            "id": 68,
+            "title": "Ödemeler Bilançosu 1",
+            "duration": "35:54",
+            "durationMinutes": 35.9
+          },
+          {
+            "id": 69,
+            "title": "Ödemeler Bilançosu 2",
+            "duration": "26:06",
+            "durationMinutes": 26.1
+          },
+          {
+            "id": 70,
+            "title": "Açık Ekonomi IS-LM Dengesi",
+            "duration": "27:11",
+            "durationMinutes": 27.18
+          },
+          {
+            "id": 71,
+            "title": "Açık Ekonomi: Maliye Politikası 1",
+            "duration": "29:02",
+            "durationMinutes": 29.03
+          },
+          {
+            "id": 72,
+            "title": "Açık Ekonomi: Maliye Politikası 2",
+            "duration": "30:15",
+            "durationMinutes": 30.25
+          },
+          {
+            "id": 73,
+            "title": "Açık Ekonomi: Maliye Politikası 3",
+            "duration": "24:25",
+            "durationMinutes": 24.42
+          },
+          {
+            "id": 74,
+            "title": "Açık Ekonomi: Para Politikası 1",
+            "duration": "25:54",
+            "durationMinutes": 25.9
+          },
+          {
+            "id": 75,
+            "title": "Açık Ekonomi: Para Politikası 2",
+            "duration": "31:59",
+            "durationMinutes": 31.98
+          },
+          {
+            "id": 76,
+            "title": "Üçlü Açmaz ve Sermaye Hareketliliği",
+            "duration": "36:34",
+            "durationMinutes": 36.57
+          },
+          {
+            "id": 77,
+            "title": "AD-AS Modeline Giriş",
+            "duration": "12:45",
+            "durationMinutes": 12.75
+          },
+          {
+            "id": 78,
+            "title": "Toplam Talep (AD) 1",
+            "duration": "35:10",
+            "durationMinutes": 35.17
+          },
+          {
+            "id": 79,
+            "title": "Toplam Talep (AD) 2",
+            "duration": "27:59",
+            "durationMinutes": 27.98
+          },
+          {
+            "id": 80,
+            "title": "Toplam Talep (AD) 3",
+            "duration": "24:05",
+            "durationMinutes": 24.08
+          },
+          {
+            "id": 81,
+            "title": "Toplam Arz (AS)",
+            "duration": "42:04",
+            "durationMinutes": 42.07
+          },
+          {
+            "id": 82,
+            "title": "Toplam Arz Yaklaşımları 1",
+            "duration": "33:08",
+            "durationMinutes": 33.13
+          },
+          {
+            "id": 83,
+            "title": "Toplam Arz Yaklaşımları 2",
+            "duration": "30:46",
+            "durationMinutes": 30.77
+          },
+          {
+            "id": 84,
+            "title": "Toplam Arz Yaklaşımları 3",
+            "duration": "23:55",
+            "durationMinutes": 23.92
+          },
+          {
+            "id": 85,
+            "title": "Toplam Arz Yaklaşımları 4",
+            "duration": "24:46",
+            "durationMinutes": 24.77
+          },
+          {
+            "id": 86,
+            "title": "Toplam Arz Yaklaşımları 5",
+            "duration": "27:52",
+            "durationMinutes": 27.87
+          },
+          {
+            "id": 87,
+            "title": "Toplam Arz Yaklaşımları 6",
+            "duration": "16:48",
+            "durationMinutes": 16.8
+          },
+          {
+            "id": 88,
+            "title": "Toplam Arz Yaklaşımları 7",
+            "duration": "32:58",
+            "durationMinutes": 32.97
+          },
+          {
+            "id": 89,
+            "title": "AD-AS: Para ve Maliye Politikaları",
+            "duration": "34:40",
+            "durationMinutes": 34.67
+          },
+          {
+            "id": 90,
+            "title": "Tüketim Teorileri 1",
+            "duration": "29:22",
+            "durationMinutes": 29.37
+          },
+          {
+            "id": 91,
+            "title": "Tüketim Teorileri 2",
+            "duration": "29:19",
+            "durationMinutes": 29.32
+          }
+        ]
+      },
+      {
+        "id": "para-banka-ve-kredi",
+        "name": "Para, Banka ve Kredi - Emel Aksaç",
+        "lessonType": "Para, Banka ve Kredi",
+        "totalVideos": 31,
+        "totalHours": 11.9,
+        "playlistUrl": "https://www.youtube.com/playlist?list=PLPhEmM6X--WfGpm2Hn2g0YnRuHmp3UwL6",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Ders Tanıtımı",
+            "duration": "02:53",
+            "durationMinutes": 2.88
+          },
+          {
+            "id": 2,
+            "title": "Para: Kavram ve Tarihçe",
+            "duration": "29:44",
+            "durationMinutes": 29.73
+          },
+          {
+            "id": 3,
+            "title": "Senyoraj, Enflasyon Vergisi, Para İkamesi, Para Aldanması",
+            "duration": "25:34",
+            "durationMinutes": 25.57
+          },
+          {
+            "id": 4,
+            "title": "Para Arzı",
+            "duration": "13:55",
+            "durationMinutes": 13.92
+          },
+          {
+            "id": 5,
+            "title": "Kaydi Para Yaratım Süreci",
+            "duration": "27:31",
+            "durationMinutes": 27.52
+          },
+          {
+            "id": 6,
+            "title": "Kaydi Para Çarpanı",
+            "duration": "16:15",
+            "durationMinutes": 16.25
+          },
+          {
+            "id": 7,
+            "title": "MB Para Tabanı ve Artış Mekanizması",
+            "duration": "18:04",
+            "durationMinutes": 18.07
+          },
+          {
+            "id": 8,
+            "title": "Klasik Miktar Teorisi",
+            "duration": "20:20",
+            "durationMinutes": 20.33
+          },
+          {
+            "id": 9,
+            "title": "Keynes: Likidite Tercihi Teorisi",
+            "duration": "47:39",
+            "durationMinutes": 47.65
+          },
+          {
+            "id": 10,
+            "title": "Baumol-Tobin Para Talebi",
+            "duration": "23:18",
+            "durationMinutes": 23.3
+          },
+          {
+            "id": 11,
+            "title": "Friedman: Modern Miktar Teorisi",
+            "duration": "28:24",
+            "durationMinutes": 28.4
+          },
+          {
+            "id": 12,
+            "title": "IS Eğrisi ve Mal Piyasası",
+            "duration": "23:33",
+            "durationMinutes": 23.55
+          },
+          {
+            "id": 13,
+            "title": "LM Eğrisi ve Para Piyasası",
+            "duration": "25:06",
+            "durationMinutes": 25.1
+          },
+          {
+            "id": 14,
+            "title": "Para Politikasının Likidite ve Hasıla Etkisi",
+            "duration": "10:54",
+            "durationMinutes": 10.9
+          },
+          {
+            "id": 15,
+            "title": "Para Politikası Araçları",
+            "duration": "19:56",
+            "durationMinutes": 19.93
+          },
+          {
+            "id": 16,
+            "title": "Para Politikası Çarpanı - I",
+            "duration": "19:10",
+            "durationMinutes": 19.17
+          },
+          {
+            "id": 17,
+            "title": "Para Politikası Çarpanı - II",
+            "duration": "10:04",
+            "durationMinutes": 10.07
+          },
+          {
+            "id": 18,
+            "title": "Ara Hedef Seçimi",
+            "duration": "21:05",
+            "durationMinutes": 21.08
+          },
+          {
+            "id": 19,
+            "title": "Likidite Tuzağı",
+            "duration": "24:02",
+            "durationMinutes": 24.03
+          },
+          {
+            "id": 20,
+            "title": "2008 Finansal Krizi",
+            "duration": "21:14",
+            "durationMinutes": 21.23
+          },
+          {
+            "id": 21,
+            "title": "Kriz Analizi (IS-LM Modeli)",
+            "duration": "12:57",
+            "durationMinutes": 12.95
+          },
+          {
+            "id": 22,
+            "title": "Toplam Talep (AD) Eğrisi",
+            "duration": "19:39",
+            "durationMinutes": 19.65
+          },
+          {
+            "id": 23,
+            "title": "TCMB Politikaları (1930 - 2000)",
+            "duration": "24:51",
+            "durationMinutes": 24.85
+          },
+          {
+            "id": 24,
+            "title": "TCMB Politikaları (2000 - 2025)",
+            "duration": "41:07",
+            "durationMinutes": 41.12
+          },
+          {
+            "id": 25,
+            "title": "TCMB Analitik Bilançosu",
+            "duration": "24:50",
+            "durationMinutes": 24.83
+          },
+          {
+            "id": 26,
+            "title": "Bilanço Kayıt Örnekleri",
+            "duration": "26:52",
+            "durationMinutes": 26.87
+          },
+          {
+            "id": 27,
+            "title": "Para Politikası Rejimleri",
+            "duration": "32:28",
+            "durationMinutes": 32.47
+          },
+          {
+            "id": 28,
+            "title": "Parasal Aktarım Mekanizmaları",
+            "duration": "15:27",
+            "durationMinutes": 15.45
+          },
+          {
+            "id": 29,
+            "title": "Aktarım Mekanizması Yaklaşımları",
+            "duration": "33:19",
+            "durationMinutes": 33.32
+          },
+          {
+            "id": 30,
+            "title": "Faiz Oranları",
+            "duration": "30:38",
+            "durationMinutes": 30.63
+          },
+          {
+            "id": 31,
+            "title": "Genel Soru Çözümü",
+            "duration": "23:11",
+            "durationMinutes": 23.18
+          }
+        ]
+      },
+      {
+        "id": "uluslararasi-ticaret",
+        "name": "Uluslararası Ticaret - Emel Aksaç",
+        "lessonType": "Uluslararası Ticaret",
+        "totalVideos": 33,
+        "totalHours": 12.64,
+        "playlistUrl": "https://youtube.com/playlist?list=PLPhEmM6X--WencoL45la-rJqdjP6MQ6ce&si=QRfrSYIzub-VrZkp",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Ders Tanıtımı",
+            "duration": "01:58",
+            "durationMinutes": 1.97
+          },
+          {
+            "id": 2,
+            "title": "Uluslararası İktisada Giriş",
+            "duration": "07:57",
+            "durationMinutes": 7.95
+          },
+          {
+            "id": 3,
+            "title": "Merkantilizm Öncesi Dönem",
+            "duration": "35:15",
+            "durationMinutes": 35.25
+          },
+          {
+            "id": 4,
+            "title": "Merkantilizm",
+            "duration": "25:54",
+            "durationMinutes": 25.9
+          },
+          {
+            "id": 5,
+            "title": "Klasik Dış Ticaret Teorileri",
+            "duration": "27:26",
+            "durationMinutes": 27.43
+          },
+          {
+            "id": 6,
+            "title": "Smith: Mutlak Üstünlükler Teorisi",
+            "duration": "30:26",
+            "durationMinutes": 30.43
+          },
+          {
+            "id": 7,
+            "title": "Ricardo: Karşılaştırmalı Üstünlükler",
+            "duration": "24:25",
+            "durationMinutes": 24.42
+          },
+          {
+            "id": 8,
+            "title": "Dış Ticaret Üçgeni ve Denge",
+            "duration": "29:05",
+            "durationMinutes": 29.08
+          },
+          {
+            "id": 9,
+            "title": "Mill: Karşılıklı Talep Teorisi",
+            "duration": "21:32",
+            "durationMinutes": 21.53
+          },
+          {
+            "id": 10,
+            "title": "Teklif Eğrileri ve Kaymalar",
+            "duration": "17:01",
+            "durationMinutes": 17.02
+          },
+          {
+            "id": 11,
+            "title": "Singer-Prebisch Tezi",
+            "duration": "23:02",
+            "durationMinutes": 23.03
+          },
+          {
+            "id": 12,
+            "title": "Heckscher-Ohlin Teorisi",
+            "duration": "20:33",
+            "durationMinutes": 20.55
+          },
+          {
+            "id": 13,
+            "title": "Faktör Fiyatları Eşitliği",
+            "duration": "15:32",
+            "durationMinutes": 15.53
+          },
+          {
+            "id": 14,
+            "title": "Stolper-Samuelson: Gelir Dağılımı",
+            "duration": "13:36",
+            "durationMinutes": 13.6
+          },
+          {
+            "id": 15,
+            "title": "Leontief Paradoksu",
+            "duration": "18:58",
+            "durationMinutes": 18.97
+          },
+          {
+            "id": 16,
+            "title": "Yeni Dış Ticaret Teorileri",
+            "duration": "18:33",
+            "durationMinutes": 18.55
+          },
+          {
+            "id": 17,
+            "title": "Dış Ticaret Politikası Araçları",
+            "duration": "30:58",
+            "durationMinutes": 30.97
+          },
+          {
+            "id": 18,
+            "title": "Gümrük Tarifelerinin Etkileri",
+            "duration": "18:49",
+            "durationMinutes": 18.82
+          },
+          {
+            "id": 19,
+            "title": "İthalat Kotalarının Etkileri",
+            "duration": "15:43",
+            "durationMinutes": 15.72
+          },
+          {
+            "id": 20,
+            "title": "Tarife ve Kota Karşılaştırması",
+            "duration": "11:51",
+            "durationMinutes": 11.85
+          },
+          {
+            "id": 21,
+            "title": "Soru Çözümü: Tarife ve Kota",
+            "duration": "27:54",
+            "durationMinutes": 27.9
+          },
+          {
+            "id": 22,
+            "title": "Küreselleşme ve GATT",
+            "duration": "19:44",
+            "durationMinutes": 19.73
+          },
+          {
+            "id": 23,
+            "title": "Ekonomik Entegrasyon Türleri",
+            "duration": "22:38",
+            "durationMinutes": 22.63
+          },
+          {
+            "id": 24,
+            "title": "Viner: Gümrük Birliği Etkileri",
+            "duration": "13:06",
+            "durationMinutes": 13.1
+          },
+          {
+            "id": 25,
+            "title": "Küresel Ekonomik Gruplaşmalar",
+            "duration": "12:27",
+            "durationMinutes": 12.45
+          },
+          {
+            "id": 26,
+            "title": "Ödemeler Bilançosu (BOP) Yapısı",
+            "duration": "34:10",
+            "durationMinutes": 34.17
+          },
+          {
+            "id": 27,
+            "title": "Ödemeler Bilançosu Denkleşmesi",
+            "duration": "37:51",
+            "durationMinutes": 37.85
+          },
+          {
+            "id": 28,
+            "title": "Döviz Piyasası ve Kur Sistemleri",
+            "duration": "40:48",
+            "durationMinutes": 40.8
+          },
+          {
+            "id": 29,
+            "title": "Arbitraj, Spekülasyon ve Swap",
+            "duration": "36:00",
+            "durationMinutes": 36
+          },
+          {
+            "id": 30,
+            "title": "Avrupa Birliği (AB) Yapısı",
+            "duration": "24:08",
+            "durationMinutes": 24.13
+          },
+          {
+            "id": 31,
+            "title": "Türkiye - AB İlişkileri",
+            "duration": "27:40",
+            "durationMinutes": 27.67
+          },
+          {
+            "id": 32,
+            "title": "IMF: Kuruluşu ve İşleyişi",
+            "duration": "39:19",
+            "durationMinutes": 39.32
+          },
+          {
+            "id": 33,
+            "title": "Türkiye - IMF İlişkileri",
+            "duration": "14:16",
+            "durationMinutes": 14.27
+          }
+        ]
+      },
+      {
+        "id": "turkiye-ekonomisi",
+        "name": "Türkiye Ekonomisi - Emel Aksaç",
+        "lessonType": "Türkiye Ekonomisi",
+        "totalVideos": 31,
+        "totalHours": 11.85,
+        "playlistUrl": "https://www.youtube.com/playlist?list=PLPhEmM6X--Wf28W5rVGC5mp8BE4eNNODX",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Ders Tanıtımıı",
+            "duration": "01:58",
+            "durationMinutes": 1.97
+          },
+          {
+            "id": 2,
+            "title": "Osmanlı Mirası ve 1920 Öncesi - I",
+            "duration": "19:51",
+            "durationMinutes": 19.85
+          },
+          {
+            "id": 3,
+            "title": "Osmanlı Mirası ve 1920 Öncesi - II",
+            "duration": "14:34",
+            "durationMinutes": 14.57
+          },
+          {
+            "id": 4,
+            "title": "Osmanlı Mirası ve 1920 Öncesi - III",
+            "duration": "18:22",
+            "durationMinutes": 18.37
+          },
+          {
+            "id": 5,
+            "title": "İttihat Terakki ve İlk Sanayi Sayımı",
+            "duration": "22:40",
+            "durationMinutes": 22.67
+          },
+          {
+            "id": 6,
+            "title": "1920'li Yıllar Ekonomi Politikaları",
+            "duration": "11:46",
+            "durationMinutes": 11.77
+          },
+          {
+            "id": 7,
+            "title": "İzmir İktisat Kongresi",
+            "duration": "20:30",
+            "durationMinutes": 20.5
+          },
+          {
+            "id": 8,
+            "title": "Kongre Sonrası Gelişmeler",
+            "duration": "29:04",
+            "durationMinutes": 29.07
+          },
+          {
+            "id": 9,
+            "title": "1927 Sayım Sonuçları",
+            "duration": "26:31",
+            "durationMinutes": 26.52
+          },
+          {
+            "id": 10,
+            "title": "1930'lu Yıllar Gelişmeleri",
+            "duration": "22:07",
+            "durationMinutes": 22.12
+          },
+          {
+            "id": 11,
+            "title": "I. Beş Yıllık Sanayi Planı (1934-38)",
+            "duration": "20:47",
+            "durationMinutes": 20.78
+          },
+          {
+            "id": 12,
+            "title": "II. Dünya Savaşı Dönemi Ekonomisi",
+            "duration": "21:32",
+            "durationMinutes": 21.53
+          },
+          {
+            "id": 13,
+            "title": "Marshall Planı ve 1940'lar",
+            "duration": "27:24",
+            "durationMinutes": 27.4
+          },
+          {
+            "id": 14,
+            "title": "1950'li Yıllar Gelişmeleri",
+            "duration": "30:14",
+            "durationMinutes": 30.23
+          },
+          {
+            "id": 15,
+            "title": "4 Ağustos 1958 İstikrar Kararları",
+            "duration": "17:45",
+            "durationMinutes": 17.75
+          },
+          {
+            "id": 16,
+            "title": "Planlı Kalkınma Dönemi - I",
+            "duration": "21:47",
+            "durationMinutes": 21.78
+          },
+          {
+            "id": 17,
+            "title": "Planlı Kalkınma Dönemi - II",
+            "duration": "20:15",
+            "durationMinutes": 20.25
+          },
+          {
+            "id": 18,
+            "title": "Türkiye - AET (AB) İlişkileri",
+            "duration": "25:48",
+            "durationMinutes": 25.8
+          },
+          {
+            "id": 19,
+            "title": "24 Ocak Kararları (1980)",
+            "duration": "27:44",
+            "durationMinutes": 27.73
+          },
+          {
+            "id": 20,
+            "title": "5 Nisan İstikrar Paketi (1994)",
+            "duration": "26:06",
+            "durationMinutes": 26.1
+          },
+          {
+            "id": 21,
+            "title": "2000 Enflasyonla Mücadele Programı",
+            "duration": "23:05",
+            "durationMinutes": 23.08
+          },
+          {
+            "id": 22,
+            "title": "2000-2001 Kriz Nedenleri - I",
+            "duration": "28:28",
+            "durationMinutes": 28.47
+          },
+          {
+            "id": 23,
+            "title": "2000-2001 Kriz Nedenleri - II",
+            "duration": "15:14",
+            "durationMinutes": 15.23
+          },
+          {
+            "id": 24,
+            "title": "2000-2001 Kriz Nedenleri - III",
+            "duration": "24:02",
+            "durationMinutes": 24.03
+          },
+          {
+            "id": 25,
+            "title": "Güçlü Ekonomiye Geçiş Programı (2001)",
+            "duration": "29:50",
+            "durationMinutes": 29.83
+          },
+          {
+            "id": 26,
+            "title": "2001 TCMB Kanunu Değişiklikleri",
+            "duration": "20:51",
+            "durationMinutes": 20.85
+          },
+          {
+            "id": 27,
+            "title": "TCMB Para Politikası Araçları",
+            "duration": "28:49",
+            "durationMinutes": 28.82
+          },
+          {
+            "id": 28,
+            "title": "2008 Sonrası Yeni Politika Araçları",
+            "duration": "25:05",
+            "durationMinutes": 25.08
+          },
+          {
+            "id": 29,
+            "title": "2008 Sonrası Büyüme ve Enflasyon",
+            "duration": "26:22",
+            "durationMinutes": 26.37
+          },
+          {
+            "id": 30,
+            "title": "Gelir Dağılımı (Gini) ve İşsizlik",
+            "duration": "31:56",
+            "durationMinutes": 31.93
+          },
+          {
+            "id": 31,
+            "title": "Cari İşlemler Dengesi ve Faiz Politikası",
+            "duration": "30:19",
+            "durationMinutes": 30.32
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "category": "2. HUKUK (Toplam: 161 Saat)",
+    "courses": [
+      {
+        "id": "medeni-hukuk",
+        "name": "Medeni Hukuk - Eyüp İpek",
+        "lessonType": "Medeni Hukuk",
+        "totalVideos": 61,
+        "totalHours": 41.25,
+        "playlistUrl": "https://youtube.com/playlist?list=PLPhEmM6X--WcZPK4H0J9OLNwvxLh_pU_5&si=KNpiTQYkvc6SX4U5",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Ders Tanıtımı",
+            "duration": "03:28",
+            "durationMinutes": 3.47
+          },
+          {
+            "id": 2,
+            "title": "Materyal Tanıtımı",
+            "duration": "02:55",
+            "durationMinutes": 2.92
+          },
+          {
+            "id": 3,
+            "title": "Hukukun Kaynakları",
+            "duration": "49:23",
+            "durationMinutes": 49.38
+          },
+          {
+            "id": 4,
+            "title": "Zaman Bakımından Uygulama ve Yorum",
+            "duration": "40:35",
+            "durationMinutes": 40.58
+          },
+          {
+            "id": 5,
+            "title": "Hukukta Boşluk ve Doldurulması",
+            "duration": "46:46",
+            "durationMinutes": 46.77
+          },
+          {
+            "id": 6,
+            "title": "Dürüstlük Kuralı (Objektif İyiniyet)",
+            "duration": "40:18",
+            "durationMinutes": 40.3
+          },
+          {
+            "id": 7,
+            "title": "İyiniyet (Subjektif İyiniyet)",
+            "duration": "42:08",
+            "durationMinutes": 42.13
+          },
+          {
+            "id": 8,
+            "title": "İspat Yükü ve Özel Hukuk Hakları",
+            "duration": "56:24",
+            "durationMinutes": 56.4
+          },
+          {
+            "id": 9,
+            "title": "Gerçek Kişiliğin Başlangıcı ve Sonu",
+            "duration": "43:54",
+            "durationMinutes": 43.9
+          },
+          {
+            "id": 10,
+            "title": "Hak ve Fiil Ehliyeti",
+            "duration": "37:09",
+            "durationMinutes": 37.15
+          },
+          {
+            "id": 11,
+            "title": "Tam ve Sınırlı Ehliyetliler",
+            "duration": "31:00",
+            "durationMinutes": 31
+          },
+          {
+            "id": 12,
+            "title": "Tam ve Sınırlı Ehliyetsizler",
+            "duration": "37:33",
+            "durationMinutes": 37.55
+          },
+          {
+            "id": 13,
+            "title": "Kişilik Hakları ve Korunması",
+            "duration": "41:14",
+            "durationMinutes": 41.23
+          },
+          {
+            "id": 14,
+            "title": "Kişisel Durum Sicilleri",
+            "duration": "48:04",
+            "durationMinutes": 48.07
+          },
+          {
+            "id": 15,
+            "title": "Yerleşim Yeri ve Hısımlık",
+            "duration": "38:00",
+            "durationMinutes": 38
+          },
+          {
+            "id": 16,
+            "title": "Tüzel Kişiler: Genel Hükümler",
+            "duration": "51:10",
+            "durationMinutes": 51.17
+          },
+          {
+            "id": 17,
+            "title": "Dernekler",
+            "duration": "43:19",
+            "durationMinutes": 43.32
+          },
+          {
+            "id": 18,
+            "title": "Vakıflar",
+            "duration": "28:30",
+            "durationMinutes": 28.5
+          },
+          {
+            "id": 19,
+            "title": "Nişanlanma",
+            "duration": "48:36",
+            "durationMinutes": 48.6
+          },
+          {
+            "id": 20,
+            "title": "Evliliğin Şartları",
+            "duration": "41:47",
+            "durationMinutes": 41.78
+          },
+          {
+            "id": 21,
+            "title": "Evliliğin Genel Hükümleri",
+            "duration": "41:33",
+            "durationMinutes": 41.55
+          },
+          {
+            "id": 22,
+            "title": "Mal Rejimleri Genel",
+            "duration": "31:35",
+            "durationMinutes": 31.58
+          },
+          {
+            "id": 23,
+            "title": "Edinilmiş Mallara Katılma Rejimi",
+            "duration": "47:29",
+            "durationMinutes": 47.48
+          },
+          {
+            "id": 24,
+            "title": "Evliliğin Yokluğu ve Butlanı",
+            "duration": "42:22",
+            "durationMinutes": 42.37
+          },
+          {
+            "id": 25,
+            "title": "Boşanma Sebepleri",
+            "duration": "40:35",
+            "durationMinutes": 40.58
+          },
+          {
+            "id": 26,
+            "title": "Boşanmanın Sonuçları",
+            "duration": "27:10",
+            "durationMinutes": 27.17
+          },
+          {
+            "id": 27,
+            "title": "Soybağının Kurulması",
+            "duration": "45:01",
+            "durationMinutes": 45.02
+          },
+          {
+            "id": 28,
+            "title": "Tanıma ve Babalık Kararı",
+            "duration": "29:44",
+            "durationMinutes": 29.73
+          },
+          {
+            "id": 29,
+            "title": "Evlat Edinme",
+            "duration": "43:26",
+            "durationMinutes": 43.43
+          },
+          {
+            "id": 30,
+            "title": "Velayet, Nafaka ve Vesayet",
+            "duration": "40:05",
+            "durationMinutes": 40.08
+          },
+          {
+            "id": 31,
+            "title": "Vesayet Organları ve Kayyımlık",
+            "duration": "48:00",
+            "durationMinutes": 48
+          },
+          {
+            "id": 32,
+            "title": "Yasal Mirasçılar",
+            "duration": "46:41",
+            "durationMinutes": 46.68
+          },
+          {
+            "id": 33,
+            "title": "Vasiyetname",
+            "duration": "44:21",
+            "durationMinutes": 44.35
+          },
+          {
+            "id": 34,
+            "title": "Miras Sözleşmesi",
+            "duration": "46:48",
+            "durationMinutes": 46.8
+          },
+          {
+            "id": 35,
+            "title": "Art Mirasçı Atama",
+            "duration": "34:46",
+            "durationMinutes": 34.77
+          },
+          {
+            "id": 36,
+            "title": "ÖBT İptali ve Saklı Paylı Mirasçılar",
+            "duration": "41:41",
+            "durationMinutes": 41.68
+          },
+          {
+            "id": 37,
+            "title": "Tenkis ve Denkleştirme",
+            "duration": "53:37",
+            "durationMinutes": 53.62
+          },
+          {
+            "id": 38,
+            "title": "Mirastan Yoksunluk ve Çıkarma",
+            "duration": "31:30",
+            "durationMinutes": 31.5
+          },
+          {
+            "id": 39,
+            "title": "Terekenin Korunması Önlemleri",
+            "duration": "33:15",
+            "durationMinutes": 33.25
+          },
+          {
+            "id": 40,
+            "title": "Mirasın Reddi ve Resmi Tasfiye",
+            "duration": "42:51",
+            "durationMinutes": 42.85
+          },
+          {
+            "id": 41,
+            "title": "Miras İstihkak ve Paylaşım",
+            "duration": "51:09",
+            "durationMinutes": 51.15
+          },
+          {
+            "id": 42,
+            "title": "Ayni Haklara Hakim İlkeler",
+            "duration": "51:07",
+            "durationMinutes": 51.12
+          },
+          {
+            "id": 43,
+            "title": "Zilyetlik Türleri",
+            "duration": "50:49",
+            "durationMinutes": 50.82
+          },
+          {
+            "id": 44,
+            "title": "Zilyetliğin Kazanılması",
+            "duration": "39:31",
+            "durationMinutes": 39.52
+          },
+          {
+            "id": 45,
+            "title": "Zilyetliğin Korunması ve Karineler",
+            "duration": "57:13",
+            "durationMinutes": 57.22
+          },
+          {
+            "id": 46,
+            "title": "Zilyetlik ve İstihkak Davaları",
+            "duration": "50:44",
+            "durationMinutes": 50.73
+          },
+          {
+            "id": 47,
+            "title": "Tapu Sicili Teşkilatı",
+            "duration": "51:08",
+            "durationMinutes": 51.13
+          },
+          {
+            "id": 48,
+            "title": "Tapu Siciline Güven İlkesi",
+            "duration": "33:56",
+            "durationMinutes": 33.93
+          },
+          {
+            "id": 49,
+            "title": "Tapu İşlemleri ve Şerhler",
+            "duration": "49:24",
+            "durationMinutes": 49.4
+          },
+          {
+            "id": 50,
+            "title": "Mülkiyet, Bütünleyici Parça ve Eklenti",
+            "duration": "46:58",
+            "durationMinutes": 46.97
+          },
+          {
+            "id": 51,
+            "title": "Paylı ve Elbirliği Mülkiyeti",
+            "duration": "42:29",
+            "durationMinutes": 42.48
+          },
+          {
+            "id": 52,
+            "title": "Taşınmaz Mülkiyeti ve Zamanaşımı",
+            "duration": "46:17",
+            "durationMinutes": 46.28
+          },
+          {
+            "id": 53,
+            "title": "Taşkın ve Haksız Yapı",
+            "duration": "34:41",
+            "durationMinutes": 34.68
+          },
+          {
+            "id": 54,
+            "title": "Mülkiyetin Kısıtlamaları (Komşuluk)",
+            "duration": "38:14",
+            "durationMinutes": 38.23
+          },
+          {
+            "id": 55,
+            "title": "Taşınır Mülkiyeti",
+            "duration": "28:11",
+            "durationMinutes": 28.18
+          },
+          {
+            "id": 56,
+            "title": "İrtifak, İntifa ve Sükna Hakları",
+            "duration": "46:27",
+            "durationMinutes": 46.45
+          },
+          {
+            "id": 57,
+            "title": "Üst ve Kaynak Hakkı",
+            "duration": "31:41",
+            "durationMinutes": 31.68
+          },
+          {
+            "id": 58,
+            "title": "Rehin, İpotek ve Rehinli Senetler",
+            "duration": "31:36",
+            "durationMinutes": 31.6
+          },
+          {
+            "id": 59,
+            "title": "Rehinde Sabit Dereceler İlkesi",
+            "duration": "42:19",
+            "durationMinutes": 42.32
+          },
+          {
+            "id": 60,
+            "title": "Rehnin Kapsamı ve Kanuni İpotek",
+            "duration": "38:29",
+            "durationMinutes": 38.48
+          },
+          {
+            "id": 61,
+            "title": "Taşınır Rehni ve Hapis Hakkı",
+            "duration": "27:40",
+            "durationMinutes": 27.67
+          }
+        ]
+      },
+      {
+        "id": "borclar-hukuku",
+        "name": "Borçlar Hukuku - Eyüp İpek",
+        "lessonType": "Borçlar Hukuku",
+        "totalVideos": 49,
+        "totalHours": 31.31,
+        "playlistUrl": "https://www.youtube.com/playlist?list=PLPhEmM6X--WdUk5T5GDpER6-00xTX--2s",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Ders Tanıtımı",
+            "duration": "03:01",
+            "durationMinutes": 3.02
+          },
+          {
+            "id": 2,
+            "title": "Materyal Tanıtımı",
+            "duration": "02:41",
+            "durationMinutes": 2.68
+          },
+          {
+            "id": 3,
+            "title": "Hakim Olan İlkeler - I",
+            "duration": "47:17",
+            "durationMinutes": 47.28
+          },
+          {
+            "id": 4,
+            "title": "Hakim Olan İlkeler - II",
+            "duration": "32:45",
+            "durationMinutes": 32.75
+          },
+          {
+            "id": 5,
+            "title": "Borç İlişkisi ve Kavramı",
+            "duration": "40:46",
+            "durationMinutes": 40.77
+          },
+          {
+            "id": 6,
+            "title": "Edim Türleri",
+            "duration": "50:24",
+            "durationMinutes": 50.4
+          },
+          {
+            "id": 7,
+            "title": "Seçimlik Borç ve Hak Türleri",
+            "duration": "51:11",
+            "durationMinutes": 51.18
+          },
+          {
+            "id": 8,
+            "title": "Defiler ve Yükümler",
+            "duration": "41:03",
+            "durationMinutes": 41.05
+          },
+          {
+            "id": 9,
+            "title": "Borç Kaynakları ve Hukuki İşlem",
+            "duration": "44:42",
+            "durationMinutes": 44.7
+          },
+          {
+            "id": 10,
+            "title": "Hukuki İşlem Türleri",
+            "duration": "33:41",
+            "durationMinutes": 33.68
+          },
+          {
+            "id": 11,
+            "title": "Borçlandırıcı ve Tasarruf İşlemleri",
+            "duration": "31:02",
+            "durationMinutes": 31.03
+          },
+          {
+            "id": 12,
+            "title": "Sebebe Bağlı (İllî) ve Soyut İşlemler",
+            "duration": "25:34",
+            "durationMinutes": 25.57
+          },
+          {
+            "id": 13,
+            "title": "Sözleşmenin Kurulması (Öneri-Kabul)",
+            "duration": "55:02",
+            "durationMinutes": 55.03
+          },
+          {
+            "id": 14,
+            "title": "İlan Yoluyla Ödül Sözü Verme",
+            "duration": "31:26",
+            "durationMinutes": 31.43
+          },
+          {
+            "id": 15,
+            "title": "Ön Sözleşme ve Şekil Şartı",
+            "duration": "48:06",
+            "durationMinutes": 48.1
+          },
+          {
+            "id": 16,
+            "title": "Tahvil ve Genel İşlem Koşulları (GİK)",
+            "duration": "33:03",
+            "durationMinutes": 33.05
+          },
+          {
+            "id": 17,
+            "title": "Geçersizlik (Hükümsüzlük) Halleri",
+            "duration": "37:55",
+            "durationMinutes": 37.92
+          },
+          {
+            "id": 18,
+            "title": "İrade Bozuklukları (Yanılma-Aldatma)",
+            "duration": "46:47",
+            "durationMinutes": 46.78
+          },
+          {
+            "id": 19,
+            "title": "Korkutma, Gabin ve Zihni Kayıt",
+            "duration": "34:06",
+            "durationMinutes": 34.1
+          },
+          {
+            "id": 20,
+            "title": "Muvazaa ve İnançlı İşlemler",
+            "duration": "41:25",
+            "durationMinutes": 41.42
+          },
+          {
+            "id": 21,
+            "title": "Temsil Türleri (Doğrudan-Dolaylı)",
+            "duration": "36:13",
+            "durationMinutes": 36.22
+          },
+          {
+            "id": 22,
+            "title": "Yetkisiz Temsil ve İyiniyet",
+            "duration": "25:01",
+            "durationMinutes": 25.02
+          },
+          {
+            "id": 23,
+            "title": "Haksız Fiil ve Hukuka Uygunluk",
+            "duration": "42:58",
+            "durationMinutes": 42.97
+          },
+          {
+            "id": 24,
+            "title": "Haksız Fiilin Unsurları",
+            "duration": "53:34",
+            "durationMinutes": 53.57
+          },
+          {
+            "id": 25,
+            "title": "Kusursuz Sorumluluk (Adam Çalıştıran)",
+            "duration": "36:46",
+            "durationMinutes": 36.77
+          },
+          {
+            "id": 26,
+            "title": "İfa Yardımcısının Sorumluluğu",
+            "duration": "34:32",
+            "durationMinutes": 34.53
+          },
+          {
+            "id": 27,
+            "title": "Bina, Hayvan ve Ev Başkanı Sorumluluğu",
+            "duration": "33:27",
+            "durationMinutes": 33.45
+          },
+          {
+            "id": 28,
+            "title": "Tehlike ve Araç İşleten Sorumluluğu",
+            "duration": "30:27",
+            "durationMinutes": 30.45
+          },
+          {
+            "id": 29,
+            "title": "Maddi ve Destekten Yoksun Kalma Tazminatı",
+            "duration": "43:32",
+            "durationMinutes": 43.53
+          },
+          {
+            "id": 30,
+            "title": "Manevi Tazminat ve Zamanaşımı",
+            "duration": "48:17",
+            "durationMinutes": 48.28
+          },
+          {
+            "id": 31,
+            "title": "Sebepsiz Zenginleşme Temelleri",
+            "duration": "44:25",
+            "durationMinutes": 44.42
+          },
+          {
+            "id": 32,
+            "title": "Zenginleşmenin İadesi ve İfanın Tarafları",
+            "duration": "46:58",
+            "durationMinutes": 46.97
+          },
+          {
+            "id": 33,
+            "title": "İfa Biçimleri (Aliud, Kısmi İfa)",
+            "duration": "45:19",
+            "durationMinutes": 45.32
+          },
+          {
+            "id": 34,
+            "title": "Para Borçları, Döviz ve Faiz",
+            "duration": "59:32",
+            "durationMinutes": 59.53
+          },
+          {
+            "id": 35,
+            "title": "İfa Yeri, Zamanı ve Muacceliyet",
+            "duration": "35:29",
+            "durationMinutes": 35.48
+          },
+          {
+            "id": 36,
+            "title": "Erken İfa ve Ödemezlik Def'i",
+            "duration": "32:37",
+            "durationMinutes": 32.62
+          },
+          {
+            "id": 37,
+            "title": "Borca Aykırılık Halleri",
+            "duration": "49:38",
+            "durationMinutes": 49.63
+          },
+          {
+            "id": 38,
+            "title": "İmkansızlık",
+            "duration": "25:15",
+            "durationMinutes": 25.25
+          },
+          {
+            "id": 39,
+            "title": "Borçlu Temerrüdü",
+            "duration": "49:47",
+            "durationMinutes": 49.78
+          },
+          {
+            "id": 40,
+            "title": "Alacaklı Temerrüdü ve Sona Erme",
+            "duration": "34:07",
+            "durationMinutes": 34.12
+          },
+          {
+            "id": 41,
+            "title": "Sona Erme Halleri (İbra, Yenileme, Birleşme)",
+            "duration": "40:03",
+            "durationMinutes": 40.05
+          },
+          {
+            "id": 42,
+            "title": "Takas",
+            "duration": "28:35",
+            "durationMinutes": 28.58
+          },
+          {
+            "id": 43,
+            "title": "Zamanaşımı",
+            "duration": "57:15",
+            "durationMinutes": 57.25
+          },
+          {
+            "id": 44,
+            "title": "Müteselsil Borçluluk ve Alacaklılık",
+            "duration": "53:40",
+            "durationMinutes": 53.67
+          },
+          {
+            "id": 45,
+            "title": "Pey Akçesi, Cayma Parası ve Koşullar",
+            "duration": "42:43",
+            "durationMinutes": 42.72
+          },
+          {
+            "id": 46,
+            "title": "Ceza Koşulu (Cezai Şart)",
+            "duration": "35:11",
+            "durationMinutes": 35.18
+          },
+          {
+            "id": 47,
+            "title": "Üçüncü Kişi Yararına Sözleşmeler",
+            "duration": "19:03",
+            "durationMinutes": 19.05
+          },
+          {
+            "id": 48,
+            "title": "Alacağın Devri",
+            "duration": "29:56",
+            "durationMinutes": 29.93
+          },
+          {
+            "id": 49,
+            "title": "Borcun Nakli ve Sözleşmenin Devri",
+            "duration": "32:33",
+            "durationMinutes": 32.55
+          }
+        ]
+      },
+      {
+        "id": "ticaret-hukuku",
+        "name": "Ticaret Hukuku - Elif Kendüzler",
+        "lessonType": "Ticaret Hukuku",
+        "totalVideos": 68,
+        "totalHours": 29.33,
+        "playlistUrl": "https://youtube.com/playlist?list=PLPhEmM6X--WccJilJRVA_BMRqKV_zsx9H&si=qbFKaDTQ-Ov2ddmL",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Seri Tanıtımı",
+            "duration": "08:26",
+            "durationMinutes": 8.43
+          },
+          {
+            "id": 2,
+            "title": "Ticaret Hukuku Sistemleri",
+            "duration": "28:40",
+            "durationMinutes": 28.67
+          },
+          {
+            "id": 3,
+            "title": "Ticaret Hukukunun Kaynakları",
+            "duration": "20:36",
+            "durationMinutes": 20.6
+          },
+          {
+            "id": 4,
+            "title": "Ticari İşletme Tanımı ve Unsurları",
+            "duration": "36:46",
+            "durationMinutes": 36.77
+          },
+          {
+            "id": 5,
+            "title": "Merkez ve Şube Ayrımı",
+            "duration": "46:17",
+            "durationMinutes": 46.28
+          },
+          {
+            "id": 6,
+            "title": "Ticari İşletmenin Devri",
+            "duration": "35:12",
+            "durationMinutes": 35.2
+          },
+          {
+            "id": 7,
+            "title": "Ticari İşletme Rehni",
+            "duration": "36:05",
+            "durationMinutes": 36.08
+          },
+          {
+            "id": 8,
+            "title": "Tacir Sıfatının Kazanılması",
+            "duration": "38:04",
+            "durationMinutes": 38.07
+          },
+          {
+            "id": 9,
+            "title": "Tüzel Kişilerlerde Tacirlik",
+            "duration": "22:49",
+            "durationMinutes": 22.82
+          },
+          {
+            "id": 10,
+            "title": "Tacirliğin Sona Ermesi",
+            "duration": "21:59",
+            "durationMinutes": 21.98
+          },
+          {
+            "id": 11,
+            "title": "Tacir Olmanın Hukuki Sonuçları",
+            "duration": "28:42",
+            "durationMinutes": 28.7
+          },
+          {
+            "id": 12,
+            "title": "Ticari İş Karinesi",
+            "duration": "29:03",
+            "durationMinutes": 29.05
+          },
+          {
+            "id": 13,
+            "title": "Ticari Hükümlerin Uygulanma Sırası",
+            "duration": "18:21",
+            "durationMinutes": 18.35
+          },
+          {
+            "id": 14,
+            "title": "Ticari Örf ve Adet Hukuku",
+            "duration": "24:30",
+            "durationMinutes": 24.5
+          },
+          {
+            "id": 15,
+            "title": "Ticari Yargı ve Mahkemeler",
+            "duration": "30:09",
+            "durationMinutes": 30.15
+          },
+          {
+            "id": 16,
+            "title": "Mutlak ve Nispi Ticari Davalar",
+            "duration": "26:02",
+            "durationMinutes": 26.03
+          },
+          {
+            "id": 17,
+            "title": "Ticari İşlerde Faiz ve Zamanaşımı",
+            "duration": "24:46",
+            "durationMinutes": 24.77
+          },
+          {
+            "id": 18,
+            "title": "Ticaret Sicili ve İşleyişi",
+            "duration": "31:13",
+            "durationMinutes": 31.22
+          },
+          {
+            "id": 19,
+            "title": "Tescilin Olumlu ve Olumsuz Etkisi",
+            "duration": "32:33",
+            "durationMinutes": 32.55
+          },
+          {
+            "id": 20,
+            "title": "Ticaret Unvanı: Seçme ve Koruma",
+            "duration": "20:57",
+            "durationMinutes": 20.95
+          },
+          {
+            "id": 21,
+            "title": "İşletme Adı ve Marka Ayrımı",
+            "duration": "30:35",
+            "durationMinutes": 30.58
+          },
+          {
+            "id": 22,
+            "title": "Marka Hukuku ve Tescil",
+            "duration": "27:28",
+            "durationMinutes": 27.47
+          },
+          {
+            "id": 23,
+            "title": "Haksız Rekabet: Tanım ve Şartlar",
+            "duration": "32:24",
+            "durationMinutes": 32.4
+          },
+          {
+            "id": 24,
+            "title": "Haksız Rekabet Halleri ve Davalar",
+            "duration": "27:08",
+            "durationMinutes": 27.13
+          },
+          {
+            "id": 25,
+            "title": "Ticari Defter Tutma Zorunluluğu",
+            "duration": "22:17",
+            "durationMinutes": 22.28
+          },
+          {
+            "id": 26,
+            "title": "Defterlerin İspat ve Delil Gücü",
+            "duration": "17:45",
+            "durationMinutes": 17.75
+          },
+          {
+            "id": 27,
+            "title": "Tacir Yardımcıları: Ticari Temsilci",
+            "duration": "22:24",
+            "durationMinutes": 22.4
+          },
+          {
+            "id": 28,
+            "title": "Ticari Vekil, Pazarlamacı ve Acente",
+            "duration": "21:36",
+            "durationMinutes": 21.6
+          },
+          {
+            "id": 29,
+            "title": "Cari Hesap: İşleyiş ve Sona Erme",
+            "duration": "30:01",
+            "durationMinutes": 30.02
+          },
+          {
+            "id": 30,
+            "title": "Şirketler Hukuku Genel İlkeleri",
+            "duration": "21:03",
+            "durationMinutes": 21.05
+          },
+          {
+            "id": 31,
+            "title": "Sermaye ve Ortaklık Kavramı",
+            "duration": "21:33",
+            "durationMinutes": 21.55
+          },
+          {
+            "id": 32,
+            "title": "Adi Şirket: Kuruluş ve Yönetim",
+            "duration": "34:41",
+            "durationMinutes": 34.68
+          },
+          {
+            "id": 33,
+            "title": "Adi Şirket: Temsil ve Sorumluluk",
+            "duration": "25:30",
+            "durationMinutes": 25.5
+          },
+          {
+            "id": 34,
+            "title": "Kolektif Şirket Esasları",
+            "duration": "27:06",
+            "durationMinutes": 27.1
+          },
+          {
+            "id": 35,
+            "title": "Komandit Şirket Esasları",
+            "duration": "27:35",
+            "durationMinutes": 27.58
+          },
+          {
+            "id": 36,
+            "title": "Sermaye Şirketlerine Giriş",
+            "duration": "24:54",
+            "durationMinutes": 24.9
+          },
+          {
+            "id": 37,
+            "title": "A.Ş. Tanımı ve Kuruluşu",
+            "duration": "24:27",
+            "durationMinutes": 24.45
+          },
+          {
+            "id": 38,
+            "title": "A.Ş. Sermaye ve Pay Sistemi",
+            "duration": "20:28",
+            "durationMinutes": 20.47
+          },
+          {
+            "id": 39,
+            "title": "A.Ş. Yönetim Kurulu Yapısı",
+            "duration": "15:54",
+            "durationMinutes": 15.9
+          },
+          {
+            "id": 40,
+            "title": "Yönetim Kurulu: Görev ve Yetki",
+            "duration": "35:29",
+            "durationMinutes": 35.48
+          },
+          {
+            "id": 41,
+            "title": "A.Ş. Genel Kurul Esasları",
+            "duration": "18:27",
+            "durationMinutes": 18.45
+          },
+          {
+            "id": 42,
+            "title": "Kararların İptali ve Butlanı",
+            "duration": "20:07",
+            "durationMinutes": 20.12
+          },
+          {
+            "id": 43,
+            "title": "Pay Sahipliği: Mali ve Kişisel Haklar",
+            "duration": "19:01",
+            "durationMinutes": 19.02
+          },
+          {
+            "id": 44,
+            "title": "A.Ş. Denetim ve Tasfiye",
+            "duration": "17:44",
+            "durationMinutes": 17.73
+          },
+          {
+            "id": 45,
+            "title": "Ltd. Şti. Kuruluş ve Ortaklık",
+            "duration": "36:22",
+            "durationMinutes": 36.37
+          },
+          {
+            "id": 46,
+            "title": "Ltd. Şti. Yönetimi ve Müdürler",
+            "duration": "20:03",
+            "durationMinutes": 20.05
+          },
+          {
+            "id": 47,
+            "title": "Ortaklıktan Çıkma ve Çıkarılma",
+            "duration": "19:44",
+            "durationMinutes": 19.73
+          },
+          {
+            "id": 48,
+            "title": "Kıymetli Evrak: Temel İlkeler",
+            "duration": "33:32",
+            "durationMinutes": 33.53
+          },
+          {
+            "id": 49,
+            "title": "Kıymetli Evrakın Devir Şekilleri",
+            "duration": "23:50",
+            "durationMinutes": 23.83
+          },
+          {
+            "id": 50,
+            "title": "Def'iler ve Sınıflandırılması",
+            "duration": "27:38",
+            "durationMinutes": 27.63
+          },
+          {
+            "id": 51,
+            "title": "Zayi ve İptal Davaları",
+            "duration": "23:28",
+            "durationMinutes": 23.47
+          },
+          {
+            "id": 52,
+            "title": "Poliçe: Tanım ve Genel Yapı",
+            "duration": "22:53",
+            "durationMinutes": 22.88
+          },
+          {
+            "id": 53,
+            "title": "Poliçede Kabul ve Ciro",
+            "duration": "17:20",
+            "durationMinutes": 17.33
+          },
+          {
+            "id": 54,
+            "title": "Poliçede Ödeme ve Başvuru Hakları",
+            "duration": "26:02",
+            "durationMinutes": 26.03
+          },
+          {
+            "id": 55,
+            "title": "Bono: Tanım ve Unsurlar",
+            "duration": "21:41",
+            "durationMinutes": 21.68
+          },
+          {
+            "id": 56,
+            "title": "Bono: Ödeme, Protesto ve Zamanaşımı",
+            "duration": "34:28",
+            "durationMinutes": 34.47
+          },
+          {
+            "id": 57,
+            "title": "Çek: Tanım ve Zorunlu Unsurlar",
+            "duration": "23:19",
+            "durationMinutes": 23.32
+          },
+          {
+            "id": 58,
+            "title": "Çek: İbraz Süreleri ve Ödeme",
+            "duration": "24:37",
+            "durationMinutes": 24.62
+          },
+          {
+            "id": 59,
+            "title": "Çek: Ciro ve Teminat Yasağı",
+            "duration": "23:15",
+            "durationMinutes": 23.25
+          },
+          {
+            "id": 60,
+            "title": "Karşılıksız Çek ve Sorumluluklar",
+            "duration": "25:15",
+            "durationMinutes": 25.25
+          },
+          {
+            "id": 61,
+            "title": "Özel Çek Türleri (Bloke, Teyitli vb.)",
+            "duration": "24:39",
+            "durationMinutes": 24.65
+          },
+          {
+            "id": 62,
+            "title": "İmzaların Bağımsızlığı İlkesi",
+            "duration": "26:38",
+            "durationMinutes": 26.63
+          },
+          {
+            "id": 63,
+            "title": "Aval: Kambiyo Teminatı",
+            "duration": "21:11",
+            "durationMinutes": 21.18
+          },
+          {
+            "id": 64,
+            "title": "Kambiyo Senetlerinde Zamanaşımı",
+            "duration": "28:17",
+            "durationMinutes": 28.28
+          },
+          {
+            "id": 65,
+            "title": "Reeskont ve Kıymetli Evrak İlişkisi",
+            "duration": "26:28",
+            "durationMinutes": 26.47
+          },
+          {
+            "id": 66,
+            "title": "Temsilci ve Vekilin Yetki Sınırları",
+            "duration": "27:36",
+            "durationMinutes": 27.6
+          },
+          {
+            "id": 67,
+            "title": "Haksız Rekabet Davalarında Zamanaşımı",
+            "duration": "17:34",
+            "durationMinutes": 17.57
+          },
+          {
+            "id": 68,
+            "title": "Genel Özet ve Sınav İpuçları",
+            "duration": "37:29",
+            "durationMinutes": 37.48
+          }
+        ]
+      },
+      {
+        "id": "bankacilik-hukuku",
+        "name": "Bankacılık Hukuku - Davut Gürses",
+        "lessonType": "Bankacılık Hukuku",
+        "totalVideos": 7,
+        "totalHours": 3.93,
+        "playlistUrl": "https://youtube.com/playlist?list=PLc6OXSkSGbhf4kW77b8v0iB0cIR2_LNpr&si=oxug-AFNHy3m4OgP",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Bankacılık Hukukuna Giriş",
+            "duration": "38:07",
+            "durationMinutes": 38.12
+          },
+          {
+            "id": 2,
+            "title": "Kuruluş ve Faaliyet Esasları",
+            "duration": "38:28",
+            "durationMinutes": 38.47
+          },
+          {
+            "id": 3,
+            "title": "İç Kontrol, Risk Yönetimi ve Denetim",
+            "duration": "37:48",
+            "durationMinutes": 37.8
+          },
+          {
+            "id": 4,
+            "title": "Kredi Limitleri, Risk Grubu ve Karşılıklar",
+            "duration": "36:34",
+            "durationMinutes": 36.57
+          },
+          {
+            "id": 5,
+            "title": "Faaliyet Sınırlamaları ve Taşınmaz Edinimi",
+            "duration": "34:01",
+            "durationMinutes": 34.02
+          },
+          {
+            "id": 6,
+            "title": "Bankacılık Sırrı ve İtibarın Korunması",
+            "duration": "34:00",
+            "durationMinutes": 34
+          },
+          {
+            "id": 7,
+            "title": "Cezai Müeyyideler ve Bankacılık Suçları",
+            "duration": "16:45",
+            "durationMinutes": 16.75
+          }
+        ]
+      },
+      {
+        "id": "icra-ve-iflas-hukuku",
+        "name": "İcra ve İflas - Muhammet Özekes",
+        "lessonType": "İcra ve İflas Hukuku",
+        "totalVideos": 24,
+        "totalHours": 18.68,
+        "playlistUrl": "https://youtube.com/playlist?list=PLc6OXSkSGbheXlJKwuHzl4hce6LwvxDrk&si=0PiAN2Y-2S9bMACf",
+        "videos": [
+          {
+            "id": 1,
+            "title": "İcra Hukukuna Giriş ve Teşkilat",
+            "duration": "1:03:20",
+            "durationMinutes": 63.33
+          },
+          {
+            "id": 2,
+            "title": "İcra Organları ve İşlemleri",
+            "duration": "41:51",
+            "durationMinutes": 41.85
+          },
+          {
+            "id": 3,
+            "title": "Takip Safhaları ve Şikayet",
+            "duration": "39:22",
+            "durationMinutes": 39.37
+          },
+          {
+            "id": 4,
+            "title": "Genel Haciz Yoluyla Takip",
+            "duration": "34:05",
+            "durationMinutes": 34.08
+          },
+          {
+            "id": 5,
+            "title": "Ödeme Emri ve Kesinleşme",
+            "duration": "40:10",
+            "durationMinutes": 40.17
+          },
+          {
+            "id": 6,
+            "title": "İtirazın İptali Davası - I",
+            "duration": "43:42",
+            "durationMinutes": 43.7
+          },
+          {
+            "id": 7,
+            "title": "İtirazın İptali Davası (Tekrar)",
+            "duration": "43:42",
+            "durationMinutes": 43.7
+          },
+          {
+            "id": 8,
+            "title": "Menfi Tespit ve İstirdat Davaları",
+            "duration": "24:16",
+            "durationMinutes": 24.27
+          },
+          {
+            "id": 9,
+            "title": "Haciz Aşaması ve Uygulanması",
+            "duration": "55:33",
+            "durationMinutes": 55.55
+          },
+          {
+            "id": 10,
+            "title": "Haczedilemeyen Mal ve Haklar",
+            "duration": "50:25",
+            "durationMinutes": 50.42
+          },
+          {
+            "id": 11,
+            "title": "Hacze İştirak ve Haczin Etkisi",
+            "duration": "1:03:03",
+            "durationMinutes": 63.05
+          },
+          {
+            "id": 12,
+            "title": "Paraya Çevirme (Satış)",
+            "duration": "40:10",
+            "durationMinutes": 40.17
+          },
+          {
+            "id": 13,
+            "title": "Satış Türleri ve İhale",
+            "duration": "38:01",
+            "durationMinutes": 38.02
+          },
+          {
+            "id": 14,
+            "title": "Paraların Paylaştırılması",
+            "duration": "41:55",
+            "durationMinutes": 41.92
+          },
+          {
+            "id": 15,
+            "title": "Abonelik Sözleşmeleri Takibi",
+            "duration": "39:04",
+            "durationMinutes": 39.07
+          },
+          {
+            "id": 16,
+            "title": "Kambiyo Senetlerine Özgü Takip",
+            "duration": "44:54",
+            "durationMinutes": 44.9
+          },
+          {
+            "id": 17,
+            "title": "Taşınmaz Tahliyesi Takibi",
+            "duration": "34:41",
+            "durationMinutes": 34.68
+          },
+          {
+            "id": 18,
+            "title": "İlamlı İcra Takibi",
+            "duration": "57:15",
+            "durationMinutes": 57.25
+          },
+          {
+            "id": 19,
+            "title": "Rehnin Paraya Çevrilmesi",
+            "duration": "55:06",
+            "durationMinutes": 55.1
+          },
+          {
+            "id": 20,
+            "title": "İhtiyati Haciz",
+            "duration": "45:42",
+            "durationMinutes": 45.7
+          },
+          {
+            "id": 21,
+            "title": "İflas Hukuku Genel Esaslar",
+            "duration": "1:27:22",
+            "durationMinutes": 87.37
+          },
+          {
+            "id": 22,
+            "title": "Konkordato ve Yeniden Yapılandırma",
+            "duration": "42:13",
+            "durationMinutes": 42.22
+          },
+          {
+            "id": 23,
+            "title": "Tasarrufun İptali Davası",
+            "duration": "30:02",
+            "durationMinutes": 30.03
+          },
+          {
+            "id": 24,
+            "title": "Paraya Çevirme (Tekrar)",
+            "duration": "1:04:41",
+            "durationMinutes": 64.68
+          }
+        ]
+      },
+      {
+        "id": "ceza-hukuku",
+        "name": "Türk Ceza Kanunu - Hukuk Öğretir",
+        "lessonType": "Ceza Hukuku",
+        "totalVideos": 36,
+        "totalHours": 13.86,
+        "playlistUrl": "https://youtube.com/playlist?list=PLQQ4ignJI779FA95yMNPjp6uhLEUC4A3E&si=escVX-_q6O9IjIDS",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Ceza Hukukuna Giriş",
+            "duration": "26:55",
+            "durationMinutes": 26.92
+          },
+          {
+            "id": 2,
+            "title": "Anayasal Esaslar",
+            "duration": "13:17",
+            "durationMinutes": 13.28
+          },
+          {
+            "id": 3,
+            "title": "TCK Temel İlkeler",
+            "duration": "19:54",
+            "durationMinutes": 19.9
+          },
+          {
+            "id": 4,
+            "title": "Zaman Bakımından Uygulama",
+            "duration": "25:25",
+            "durationMinutes": 25.42
+          },
+          {
+            "id": 5,
+            "title": "Yer Bakımından Uygulama",
+            "duration": "26:47",
+            "durationMinutes": 26.78
+          },
+          {
+            "id": 6,
+            "title": "Şahsilik İlkesi",
+            "duration": "20:39",
+            "durationMinutes": 20.65
+          },
+          {
+            "id": 7,
+            "title": "Suçluların İadesi (Geri Verme)",
+            "duration": "35:45",
+            "durationMinutes": 35.75
+          },
+          {
+            "id": 8,
+            "title": "Suçun Özneleri: Fail ve Mağdur",
+            "duration": "12:58",
+            "durationMinutes": 12.97
+          },
+          {
+            "id": 9,
+            "title": "Maddi Unsur: Hareket",
+            "duration": "25:18",
+            "durationMinutes": 25.3
+          },
+          {
+            "id": 10,
+            "title": "Maddi Unsur: Netice",
+            "duration": "17:57",
+            "durationMinutes": 17.95
+          },
+          {
+            "id": 11,
+            "title": "Maddi Unsur: Nedensellik Bağı",
+            "duration": "12:50",
+            "durationMinutes": 12.83
+          },
+          {
+            "id": 12,
+            "title": "Manevi Unsur: Kast",
+            "duration": "22:58",
+            "durationMinutes": 22.97
+          },
+          {
+            "id": 13,
+            "title": "Manevi Unsur: Olası Kast",
+            "duration": "21:55",
+            "durationMinutes": 21.92
+          },
+          {
+            "id": 14,
+            "title": "Manevi Unsur: Taksir",
+            "duration": "26:51",
+            "durationMinutes": 26.85
+          },
+          {
+            "id": 15,
+            "title": "Neticesi Sebebiyle Ağırlaşmış Suç",
+            "duration": "21:47",
+            "durationMinutes": 21.78
+          },
+          {
+            "id": 16,
+            "title": "Hukuka Aykırılık ve Kusur Yeteneği",
+            "duration": "20:51",
+            "durationMinutes": 20.85
+          },
+          {
+            "id": 17,
+            "title": "Tehdit ve Haksız Tahrik",
+            "duration": "34:13",
+            "durationMinutes": 34.22
+          },
+          {
+            "id": 18,
+            "title": "Hata Halleri ve Sapma",
+            "duration": "24:41",
+            "durationMinutes": 24.68
+          },
+          {
+            "id": 19,
+            "title": "Kanun Hükmü ve Kanunsuz Emir",
+            "duration": "16:45",
+            "durationMinutes": 16.75
+          },
+          {
+            "id": 20,
+            "title": "Meşru Savunma",
+            "duration": "29:06",
+            "durationMinutes": 29.1
+          },
+          {
+            "id": 21,
+            "title": "Zorunluluk, Rıza ve Hak Kullanımı",
+            "duration": "33:36",
+            "durationMinutes": 33.6
+          },
+          {
+            "id": 22,
+            "title": "Suça Teşebbüs",
+            "duration": "19:23",
+            "durationMinutes": 19.38
+          },
+          {
+            "id": 23,
+            "title": "Vazgeçme, Etkin Pişmanlık ve İşlenemez Suç",
+            "duration": "26:37",
+            "durationMinutes": 26.62
+          },
+          {
+            "id": 24,
+            "title": "Suç Ortaklığı (İştirak)",
+            "duration": "23:13",
+            "durationMinutes": 23.22
+          },
+          {
+            "id": 25,
+            "title": "Müşterek ve Dolaylı Faillik",
+            "duration": "21:45",
+            "durationMinutes": 21.75
+          },
+          {
+            "id": 26,
+            "title": "Azmettirme, Yardım Etme ve Özgü Suçlar",
+            "duration": "15:16",
+            "durationMinutes": 15.27
+          },
+          {
+            "id": 27,
+            "title": "Suçların İçtimai: Bileşik Suç",
+            "duration": "19:30",
+            "durationMinutes": 19.5
+          },
+          {
+            "id": 28,
+            "title": "Zincirleme Suç ve Fikri İçtima",
+            "duration": "28:59",
+            "durationMinutes": 28.98
+          },
+          {
+            "id": 29,
+            "title": "Ceza Türleri ve Seçenek Yaptırımlar",
+            "duration": "19:40",
+            "durationMinutes": 19.67
+          },
+          {
+            "id": 30,
+            "title": "Erteleme ve Adli Para Cezası",
+            "duration": "25:15",
+            "durationMinutes": 25.25
+          },
+          {
+            "id": 31,
+            "title": "Güvenlik Tedbirleri ve Müsadere",
+            "duration": "23:47",
+            "durationMinutes": 23.78
+          },
+          {
+            "id": 32,
+            "title": "Suçta Tekerrür ve Koşullu Salıverilme",
+            "duration": "24:42",
+            "durationMinutes": 24.7
+          },
+          {
+            "id": 33,
+            "title": "Cezanın Belirlenmesi ve İndirim",
+            "duration": "28:27",
+            "durationMinutes": 28.45
+          },
+          {
+            "id": 34,
+            "title": "Ölüm, Genel Af ve Özel Af",
+            "duration": "16:30",
+            "durationMinutes": 16.5
+          },
+          {
+            "id": 35,
+            "title": "Dava ve Ceza Zamanaşımı",
+            "duration": "21:16",
+            "durationMinutes": 21.27
+          },
+          {
+            "id": 36,
+            "title": "Şikayet ve Ön Ödeme",
+            "duration": "26:31",
+            "durationMinutes": 26.52
+          }
+        ]
+      },
+      {
+        "id": "is-hukuku",
+        "name": "İş Hukuku - Mehmet Bağcı",
+        "lessonType": "İş Hukuku",
+        "totalVideos": 9,
+        "totalHours": 5.94,
+        "playlistUrl": "https://www.youtube.com/playlist?list=PLQQ4ignJI778D3I0O-f_7KkQ6QByayR0l",
+        "videos": [
+          {
+            "id": 1,
+            "title": "İş Hukuku: Temel Kavramlar ve Giriş",
+            "duration": "59:08",
+            "durationMinutes": 59.13
+          },
+          {
+            "id": 2,
+            "title": "İş Sözleşmesi Türleri - I",
+            "duration": "28:31",
+            "durationMinutes": 28.52
+          },
+          {
+            "id": 3,
+            "title": "İş Sözleşmesi Türleri - II ve Ehliyet",
+            "duration": "39:21",
+            "durationMinutes": 39.35
+          },
+          {
+            "id": 4,
+            "title": "Tarafların Borçları: Ücret ve Hizmet",
+            "duration": "48:15",
+            "durationMinutes": 48.25
+          },
+          {
+            "id": 5,
+            "title": "İşverenin Koruma ve Eşitlik Borcu",
+            "duration": "39:34",
+            "durationMinutes": 39.57
+          },
+          {
+            "id": 6,
+            "title": "Çalışma ve Dinlenme Süreleri",
+            "duration": "30:18",
+            "durationMinutes": 30.3
+          },
+          {
+            "id": 7,
+            "title": "İş Sözleşmesinin Feshi ve Sona Ermesi",
+            "duration": "44:26",
+            "durationMinutes": 44.43
+          },
+          {
+            "id": 8,
+            "title": "İş Güvencesi ve İşe İade Sistemi",
+            "duration": "38:05",
+            "durationMinutes": 38.08
+          },
+          {
+            "id": 9,
+            "title": "Sona Ermenin Sonuçları ve Tazminatlar",
+            "duration": "28:32",
+            "durationMinutes": 28.53
+          }
+        ]
+      },
+      {
+        "id": "medeni-usul-hukuku",
+        "name": "Medeni Usul Hukuku - Kamusal Alan Hukuk Akademi",
+        "lessonType": "Medeni Usul Hukuku",
+        "totalVideos": 51,
+        "totalHours": 16.256944444444443,
+        "notePath": null,
+        "playlistUrl": "https://www.youtube.com/playlist?list=PLhZMVVb8_mrLtTOvTaBCod2qXp92-S4vg",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Usul Hukukunun Anlamı, Görev Kuralları",
+            "duration": "26:44",
+            "durationMinutes": 26.733333333333334
+          },
+          {
+            "id": 2,
+            "title": "Yetki Kuralları, Genel, Kesin ve Özel Yetki",
+            "duration": "22:52",
+            "durationMinutes": 22.866666666666667
+          },
+          {
+            "id": 3,
+            "title": "Yetki Sözleşmesi, Yetki İtirazı",
+            "duration": "27:55",
+            "durationMinutes": 27.916666666666668
+          },
+          {
+            "id": 4,
+            "title": "Yargı Yerinin Belirlenmesi: Merci Tayini",
+            "duration": "07:49",
+            "durationMinutes": 7.816666666666666
+          },
+          {
+            "id": 5,
+            "title": "Medeni Usul Hukuku İlkeleri",
+            "duration": "19:32",
+            "durationMinutes": 19.533333333333335
+          },
+          {
+            "id": 6,
+            "title": "Yargıcın Yasaklılığı ve Reddi - 1",
+            "duration": "24:33",
+            "durationMinutes": 24.55
+          },
+          {
+            "id": 7,
+            "title": "Yargıcın Yasaklılığı ve Reddi - 2",
+            "duration": "27:56",
+            "durationMinutes": 27.933333333333334
+          },
+          {
+            "id": 8,
+            "title": "Taraflar: Taraf Ehliyeti, Tarafın Temsili",
+            "duration": "19:07",
+            "durationMinutes": 19.116666666666667
+          },
+          {
+            "id": 9,
+            "title": "İhtiyari ve Mecburi Dava Arkadaşlığı",
+            "duration": "11:58",
+            "durationMinutes": 11.966666666666667
+          },
+          {
+            "id": 10,
+            "title": "Davanın İhbarı, Davaya Katılma",
+            "duration": "23:46",
+            "durationMinutes": 23.766666666666666
+          },
+          {
+            "id": 11,
+            "title": "Davaya Vekalet - 1",
+            "duration": "15:17",
+            "durationMinutes": 15.283333333333333
+          },
+          {
+            "id": 12,
+            "title": "Vekilin İstifası, Azli ve Teminat",
+            "duration": "24:03",
+            "durationMinutes": 24.05
+          },
+          {
+            "id": 13,
+            "title": "HMK'da Süreler",
+            "duration": "16:41",
+            "durationMinutes": 16.683333333333334
+          },
+          {
+            "id": 14,
+            "title": "Eski Hale Getirme ve Adli Tatil",
+            "duration": "24:13",
+            "durationMinutes": 24.216666666666665
+          },
+          {
+            "id": 15,
+            "title": "Dava Türleri",
+            "duration": "29:25",
+            "durationMinutes": 29.416666666666668
+          },
+          {
+            "id": 16,
+            "title": "Dava Şartları ve İlk İtirazlar",
+            "duration": "14:32",
+            "durationMinutes": 14.533333333333333
+          },
+          {
+            "id": 17,
+            "title": "Davanın Açılması",
+            "duration": "21:33",
+            "durationMinutes": 21.55
+          },
+          {
+            "id": 18,
+            "title": "Cevap Dilekçesi",
+            "duration": "21:57",
+            "durationMinutes": 21.95
+          },
+          {
+            "id": 19,
+            "title": "Ön İnceleme Aşaması",
+            "duration": "13:40",
+            "durationMinutes": 13.666666666666666
+          },
+          {
+            "id": 20,
+            "title": "Tahkikat Aşaması",
+            "duration": "08:00",
+            "durationMinutes": 8
+          },
+          {
+            "id": 21,
+            "title": "Duruşma ve Duruşma Düzeni",
+            "duration": "20:00",
+            "durationMinutes": 20
+          },
+          {
+            "id": 22,
+            "title": "Soru Yöneltme ve Tutanak",
+            "duration": "14:32",
+            "durationMinutes": 14.533333333333333
+          },
+          {
+            "id": 23,
+            "title": "Ön Sorun ve Bekletici Sorun",
+            "duration": "11:39",
+            "durationMinutes": 11.65
+          },
+          {
+            "id": 24,
+            "title": "Davaların Birleştirilmesi",
+            "duration": "10:57",
+            "durationMinutes": 10.95
+          },
+          {
+            "id": 25,
+            "title": "İsticvap",
+            "duration": "10:55",
+            "durationMinutes": 10.916666666666666
+          },
+          {
+            "id": 26,
+            "title": "Islah",
+            "duration": "16:50",
+            "durationMinutes": 16.833333333333332
+          },
+          {
+            "id": 27,
+            "title": "Tahkikatın Sona Ermesi",
+            "duration": "09:15",
+            "durationMinutes": 9.25
+          },
+          {
+            "id": 28,
+            "title": "İspat Hukuku: İkrar, Karine, Varsayım",
+            "duration": "18:42",
+            "durationMinutes": 18.7
+          },
+          {
+            "id": 29,
+            "title": "İspat Hukuku: Belge ve Senet",
+            "duration": "15:06",
+            "durationMinutes": 15.1
+          },
+          {
+            "id": 30,
+            "title": "Delil Sözleşmesi, Delillerin İncelenmesi",
+            "duration": "09:55",
+            "durationMinutes": 9.916666666666666
+          },
+          {
+            "id": 31,
+            "title": "Adi Senet, Yazı/İmza İnkarı, Sahtelik",
+            "duration": "20:37",
+            "durationMinutes": 20.616666666666667
+          },
+          {
+            "id": 32,
+            "title": "Haksız Sahtelik İddiası, Belge İbrazı",
+            "duration": "27:32",
+            "durationMinutes": 27.533333333333335
+          },
+          {
+            "id": 33,
+            "title": "Yemin",
+            "duration": "17:04",
+            "durationMinutes": 17.066666666666666
+          },
+          {
+            "id": 34,
+            "title": "Tanıklık",
+            "duration": "14:04",
+            "durationMinutes": 14.066666666666666
+          },
+          {
+            "id": 35,
+            "title": "Tanıklıktan Çekinme",
+            "duration": "18:43",
+            "durationMinutes": 18.716666666666665
+          },
+          {
+            "id": 36,
+            "title": "Bilirkişi",
+            "duration": "29:12",
+            "durationMinutes": 29.2
+          },
+          {
+            "id": 37,
+            "title": "Keşif",
+            "duration": "12:16",
+            "durationMinutes": 12.266666666666667
+          },
+          {
+            "id": 38,
+            "title": "Hüküm: Temel Kavramlar",
+            "duration": "11:53",
+            "durationMinutes": 11.883333333333333
+          },
+          {
+            "id": 39,
+            "title": "Hükmün Verilmesi",
+            "duration": "16:16",
+            "durationMinutes": 16.266666666666666
+          },
+          {
+            "id": 40,
+            "title": "Kesin Hüküm",
+            "duration": "15:21",
+            "durationMinutes": 15.35
+          },
+          {
+            "id": 41,
+            "title": "Tashih, Tavzih, Tamamlama",
+            "duration": "12:13",
+            "durationMinutes": 12.216666666666667
+          },
+          {
+            "id": 42,
+            "title": "Sulh, Kabul, Feragat",
+            "duration": "17:15",
+            "durationMinutes": 17.25
+          },
+          {
+            "id": 43,
+            "title": "Basit Yargılama Usulü",
+            "duration": "12:44",
+            "durationMinutes": 12.733333333333333
+          },
+          {
+            "id": 44,
+            "title": "Yargılama Giderleri",
+            "duration": "28:56",
+            "durationMinutes": 28.933333333333334
+          },
+          {
+            "id": 45,
+            "title": "İstinaf",
+            "duration": "33:00",
+            "durationMinutes": 33
+          },
+          {
+            "id": 46,
+            "title": "Temyiz",
+            "duration": "18:54",
+            "durationMinutes": 18.9
+          },
+          {
+            "id": 47,
+            "title": "Yargılamanın Yenilenmesi",
+            "duration": "19:56",
+            "durationMinutes": 19.933333333333334
+          },
+          {
+            "id": 48,
+            "title": "Çekişmesiz Yargı",
+            "duration": "25:26",
+            "durationMinutes": 25.433333333333334
+          },
+          {
+            "id": 49,
+            "title": "Geçici Hukuki Koruma",
+            "duration": "26:52",
+            "durationMinutes": 26.866666666666667
+          },
+          {
+            "id": 50,
+            "title": "Tahkim - 1. Bölüm",
+            "duration": "28:51",
+            "durationMinutes": 28.85
+          },
+          {
+            "id": 51,
+            "title": "Tahkim - 2. Bölüm",
+            "duration": "28:56",
+            "durationMinutes": 28.933333333333334
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "category": "3. MUHASEBE VE MALİYE (Toplam: 79 Saat)",
+    "courses": [
+      {
+        "id": "muhasebe",
+        "name": "Genel Muhasebe - Sinan Öztürk",
+        "lessonType": "Muhasebe",
+        "totalVideos": 124,
+        "totalHours": 42.61,
+        "playlistUrl": "https://youtube.com/playlist?list=PLPhEmM6X--WfpyELg1RTSCI6zqpe8lTCV&si=YUeLZcBv-GH2wmHG",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Ders Tanıtımı",
+            "duration": "10:54",
+            "durationMinutes": 10.9
+          },
+          {
+            "id": 2,
+            "title": "Muhasebenin İşlevleri ve Giriş",
+            "duration": "15:37",
+            "durationMinutes": 15.62
+          },
+          {
+            "id": 3,
+            "title": "Mali Tablolar ve Temel Eşitlik",
+            "duration": "22:20",
+            "durationMinutes": 22.33
+          },
+          {
+            "id": 4,
+            "title": "Bilanço Hazırlama Uygulaması",
+            "duration": "18:45",
+            "durationMinutes": 18.75
+          },
+          {
+            "id": 5,
+            "title": "Gelir ve Nakit Akım Tabloları",
+            "duration": "15:15",
+            "durationMinutes": 15.25
+          },
+          {
+            "id": 6,
+            "title": "Hesap Kavramı ve İşleyiş Kuralları",
+            "duration": "21:06",
+            "durationMinutes": 21.1
+          },
+          {
+            "id": 7,
+            "title": "Temel Aktif Hesaplar",
+            "duration": "15:59",
+            "durationMinutes": 15.98
+          },
+          {
+            "id": 8,
+            "title": "Temel Pasif Hesaplar",
+            "duration": "08:51",
+            "durationMinutes": 8.85
+          },
+          {
+            "id": 9,
+            "title": "Gelir Tablosu Hesapları",
+            "duration": "14:05",
+            "durationMinutes": 14.08
+          },
+          {
+            "id": 10,
+            "title": "Çift Taraflı Kayıt Tekniği",
+            "duration": "22:37",
+            "durationMinutes": 22.62
+          },
+          {
+            "id": 11,
+            "title": "Muhasebe Belgeleri",
+            "duration": "24:52",
+            "durationMinutes": 24.87
+          },
+          {
+            "id": 12,
+            "title": "Kayıt Süreci ve Ticari Mal Satışı",
+            "duration": "34:40",
+            "durationMinutes": 34.67
+          },
+          {
+            "id": 13,
+            "title": "Muhasebe Süreci ve Açılış Kaydı",
+            "duration": "20:10",
+            "durationMinutes": 20.17
+          },
+          {
+            "id": 14,
+            "title": "Hesapların Kapatılması",
+            "duration": "36:30",
+            "durationMinutes": 36.5
+          },
+          {
+            "id": 15,
+            "title": "Muhasebe Süreci: Genel Uygulama",
+            "duration": "18:25",
+            "durationMinutes": 18.42
+          },
+          {
+            "id": 16,
+            "title": "Muhasebenin Temel Kavramları",
+            "duration": "18:44",
+            "durationMinutes": 18.73
+          },
+          {
+            "id": 17,
+            "title": "Genel Muhasebe İlkeleri 1",
+            "duration": "15:02",
+            "durationMinutes": 15.03
+          },
+          {
+            "id": 18,
+            "title": "Genel Muhasebe İlkeleri 2",
+            "duration": "11:54",
+            "durationMinutes": 11.9
+          },
+          {
+            "id": 19,
+            "title": "Genel Muhasebe İlkeleri 3",
+            "duration": "09:50",
+            "durationMinutes": 9.83
+          },
+          {
+            "id": 20,
+            "title": "KDV Hesapları: Temel Kurallar",
+            "duration": "20:48",
+            "durationMinutes": 20.8
+          },
+          {
+            "id": 21,
+            "title": "KDV Kayıt Örnekleri",
+            "duration": "19:25",
+            "durationMinutes": 19.42
+          },
+          {
+            "id": 22,
+            "title": "Ay Sonu KDV İşlemleri",
+            "duration": "12:45",
+            "durationMinutes": 12.75
+          },
+          {
+            "id": 23,
+            "title": "KDV Mahsup İşlemleri",
+            "duration": "14:55",
+            "durationMinutes": 14.92
+          },
+          {
+            "id": 24,
+            "title": "Üç Hesaplı KDV Uygulaması",
+            "duration": "25:11",
+            "durationMinutes": 25.18
+          },
+          {
+            "id": 25,
+            "title": "Hazır Değerlere Giriş",
+            "duration": "21:30",
+            "durationMinutes": 21.5
+          },
+          {
+            "id": 26,
+            "title": "Kasa Hesabı: Yabancı Para İşlemleri",
+            "duration": "26:23",
+            "durationMinutes": 26.38
+          },
+          {
+            "id": 27,
+            "title": "Alınan Çekler ve Uygulamalar",
+            "duration": "17:21",
+            "durationMinutes": 17.35
+          },
+          {
+            "id": 28,
+            "title": "Bankalar Hesabı ve Uygulamalar",
+            "duration": "16:14",
+            "durationMinutes": 16.23
+          },
+          {
+            "id": 29,
+            "title": "Verilen Çekler, Hatır ve Vadeli Çekler",
+            "duration": "26:51",
+            "durationMinutes": 26.85
+          },
+          {
+            "id": 30,
+            "title": "Diğer Hazır Değerler",
+            "duration": "34:33",
+            "durationMinutes": 34.55
+          },
+          {
+            "id": 31,
+            "title": "Menkul Kıymetler: Temel Kavramlar",
+            "duration": "17:40",
+            "durationMinutes": 17.67
+          },
+          {
+            "id": 32,
+            "title": "Hisse Senedi İşlemleri: Geçici Yatırım",
+            "duration": "24:26",
+            "durationMinutes": 24.43
+          },
+          {
+            "id": 33,
+            "title": "Hisse Senedi İşlemleri: Yatırım Amaçlı",
+            "duration": "31:21",
+            "durationMinutes": 31.35
+          },
+          {
+            "id": 34,
+            "title": "Hisse Senedi Getiri Kayıtları",
+            "duration": "21:45",
+            "durationMinutes": 21.75
+          },
+          {
+            "id": 35,
+            "title": "Tahvil, Bono ve Senet Alışı",
+            "duration": "28:10",
+            "durationMinutes": 28.17
+          },
+          {
+            "id": 36,
+            "title": "Hazine Bonusu ve Tahvil Getirileri",
+            "duration": "26:49",
+            "durationMinutes": 26.82
+          },
+          {
+            "id": 37,
+            "title": "Tahvil, Bono ve Senet Satışı",
+            "duration": "16:26",
+            "durationMinutes": 16.43
+          },
+          {
+            "id": 38,
+            "title": "Ticari Alacaklar ve Alıcılar Hesabı",
+            "duration": "21:44",
+            "durationMinutes": 21.73
+          },
+          {
+            "id": 39,
+            "title": "Alıcılar Hesabı Örnekleri",
+            "duration": "33:17",
+            "durationMinutes": 33.28
+          },
+          {
+            "id": 40,
+            "title": "Alacak Senetleri ve Yardımcı Hesaplar",
+            "duration": "36:35",
+            "durationMinutes": 36.58
+          },
+          {
+            "id": 41,
+            "title": "Senet İskontosu ve Peşin Değer Hesabı",
+            "duration": "23:30",
+            "durationMinutes": 23.5
+          },
+          {
+            "id": 42,
+            "title": "Senet Yenileme ve Ciro İşlemleri",
+            "duration": "17:17",
+            "durationMinutes": 17.28
+          },
+          {
+            "id": 43,
+            "title": "Poliçe ve Hatır Senedi Uygulama",
+            "duration": "25:13",
+            "durationMinutes": 25.22
+          },
+          {
+            "id": 44,
+            "title": "Stok Değerleme Yöntemleri",
+            "duration": "16:42",
+            "durationMinutes": 16.7
+          },
+          {
+            "id": 45,
+            "title": "FIFO (İlk Giren İlk Çıkar)",
+            "duration": "16:25",
+            "durationMinutes": 16.42
+          },
+          {
+            "id": 46,
+            "title": "LIFO (Son Giren İlk Çıkar)",
+            "duration": "16:12",
+            "durationMinutes": 16.2
+          },
+          {
+            "id": 47,
+            "title": "Stok Yöntemi Seçim Kriterleri",
+            "duration": "20:58",
+            "durationMinutes": 20.97
+          },
+          {
+            "id": 48,
+            "title": "Aralıklı Envanter: Giriş",
+            "duration": "11:23",
+            "durationMinutes": 11.38
+          },
+          {
+            "id": 49,
+            "title": "Aralıklı Envanter: Temel Kurallar",
+            "duration": "10:17",
+            "durationMinutes": 10.28
+          },
+          {
+            "id": 50,
+            "title": "Aralıklı Envanter: Alış/Satış Giderleri",
+            "duration": "10:41",
+            "durationMinutes": 10.68
+          },
+          {
+            "id": 51,
+            "title": "Aralıklı Envanter: İade İşlemleri",
+            "duration": "10:06",
+            "durationMinutes": 10.1
+          },
+          {
+            "id": 52,
+            "title": "Aralıklı Envanter: İskontolar",
+            "duration": "18:05",
+            "durationMinutes": 18.08
+          },
+          {
+            "id": 53,
+            "title": "Aralıklı Envanter: Temel Kayıtlar",
+            "duration": "32:45",
+            "durationMinutes": 32.75
+          },
+          {
+            "id": 54,
+            "title": "Aralıklı Envanter: STMM ve Brüt Kar/Zarar",
+            "duration": "38:52",
+            "durationMinutes": 38.87
+          },
+          {
+            "id": 55,
+            "title": "Sürekli Envanter: Temel Kurallar",
+            "duration": "23:14",
+            "durationMinutes": 23.23
+          },
+          {
+            "id": 56,
+            "title": "Sürekli Envanter: Mal Alışı ve Giderler",
+            "duration": "12:48",
+            "durationMinutes": 12.8
+          },
+          {
+            "id": 57,
+            "title": "Sürekli Envanter: İade ve İskontolar",
+            "duration": "08:31",
+            "durationMinutes": 8.52
+          },
+          {
+            "id": 58,
+            "title": "Sürekli Envanter: Temel Soru Türleri",
+            "duration": "26:26",
+            "durationMinutes": 26.43
+          },
+          {
+            "id": 59,
+            "title": "Sürekli Envanter: Büyük Defter Kayıtları",
+            "duration": "16:48",
+            "durationMinutes": 16.8
+          },
+          {
+            "id": 60,
+            "title": "Avans Hesapları 1",
+            "duration": "26:32",
+            "durationMinutes": 26.53
+          },
+          {
+            "id": 61,
+            "title": "Avans Hesapları 2",
+            "duration": "18:27",
+            "durationMinutes": 18.45
+          },
+          {
+            "id": 62,
+            "title": "Avans Hesapları Uygulamaları",
+            "duration": "26:35",
+            "durationMinutes": 26.58
+          },
+          {
+            "id": 63,
+            "title": "Dönem Sonu Envanter ve Değerleme",
+            "duration": "24:32",
+            "durationMinutes": 24.53
+          },
+          {
+            "id": 64,
+            "title": "TTK'ya Göre Değerleme Standartları",
+            "duration": "13:41",
+            "durationMinutes": 13.68
+          },
+          {
+            "id": 65,
+            "title": "TMS Değerleme Ölçüleri",
+            "duration": "10:02",
+            "durationMinutes": 10.03
+          },
+          {
+            "id": 66,
+            "title": "Kasa Eksik ve Fazlası: Kurallar",
+            "duration": "19:27",
+            "durationMinutes": 19.45
+          },
+          {
+            "id": 67,
+            "title": "Kasa Eksik ve Fazlası: Örnekler",
+            "duration": "20:33",
+            "durationMinutes": 20.55
+          },
+          {
+            "id": 68,
+            "title": "Yabancı Para Dönem Sonu İşlemleri",
+            "duration": "20:02",
+            "durationMinutes": 20.03
+          },
+          {
+            "id": 69,
+            "title": "Kasa Farkı İçin Karşılık Ayrılması",
+            "duration": "08:56",
+            "durationMinutes": 8.93
+          },
+          {
+            "id": 70,
+            "title": "Bankalar Hesabı: Envanter and Düzeltme",
+            "duration": "26:03",
+            "durationMinutes": 26.05
+          },
+          {
+            "id": 71,
+            "title": "Banka Faiz Kayıtları",
+            "duration": "31:39",
+            "durationMinutes": 31.65
+          },
+          {
+            "id": 72,
+            "title": "Yabancı Para Faiz Kayıtları",
+            "duration": "24:14",
+            "durationMinutes": 24.23
+          },
+          {
+            "id": 73,
+            "title": "Menkul Kıymetler: Envanter İşlemleri",
+            "duration": "12:10",
+            "durationMinutes": 12.17
+          },
+          {
+            "id": 74,
+            "title": "Menkul Kıymetler: Uygulamalar",
+            "duration": "23:06",
+            "durationMinutes": 23.1
+          },
+          {
+            "id": 75,
+            "title": "Ticari Alacaklar'da Reeskont",
+            "duration": "19:13",
+            "durationMinutes": 19.22
+          },
+          {
+            "id": 76,
+            "title": "Şüpheli Ticari Alacaklar",
+            "duration": "16:04",
+            "durationMinutes": 16.07
+          },
+          {
+            "id": 77,
+            "title": "Şüpheli Alacaklar Uygulaması",
+            "duration": "18:06",
+            "durationMinutes": 18.1
+          },
+          {
+            "id": 78,
+            "title": "Değersiz Alacak Kayıtları",
+            "duration": "09:42",
+            "durationMinutes": 9.7
+          },
+          {
+            "id": 79,
+            "title": "Değeri Düşen Ticari Mallar",
+            "duration": "24:34",
+            "durationMinutes": 24.57
+          },
+          {
+            "id": 80,
+            "title": "MDV: Maliyet Bedeli Esasları",
+            "duration": "34:58",
+            "durationMinutes": 34.97
+          },
+          {
+            "id": 81,
+            "title": "MDV Maliyet Bedeli Örnekleri",
+            "duration": "22:18",
+            "durationMinutes": 22.3
+          },
+          {
+            "id": 82,
+            "title": "Amortisman Yöntemleri 1",
+            "duration": "17:27",
+            "durationMinutes": 17.45
+          },
+          {
+            "id": 83,
+            "title": "Amortisman Yöntemleri 2",
+            "duration": "19:54",
+            "durationMinutes": 19.9
+          },
+          {
+            "id": 84,
+            "title": "Amortisman Yöntemleri 3",
+            "duration": "17:15",
+            "durationMinutes": 17.25
+          },
+          {
+            "id": 85,
+            "title": "Kıst Amortisman ve Yöntem Değişimi",
+            "duration": "19:10",
+            "durationMinutes": 19.17
+          },
+          {
+            "id": 86,
+            "title": "Endirekt Amortisman Kayıtları",
+            "duration": "17:32",
+            "durationMinutes": 17.53
+          },
+          {
+            "id": 87,
+            "title": "Direkt Amortisman Kayıtları",
+            "duration": "07:36",
+            "durationMinutes": 7.6
+          },
+          {
+            "id": 88,
+            "title": "Maddi Duran Varlık (MDV) Satışı",
+            "duration": "10:11",
+            "durationMinutes": 10.18
+          },
+          {
+            "id": 89,
+            "title": "MDV Satışı Uygulama Örnekleri",
+            "duration": "19:38",
+            "durationMinutes": 19.63
+          },
+          {
+            "id": 90,
+            "title": "MDV Özel Fon Uygulaması",
+            "duration": "16:05",
+            "durationMinutes": 16.08
+          },
+          {
+            "id": 91,
+            "title": "MODV: Temel Kavramlar",
+            "duration": "20:02",
+            "durationMinutes": 20.03
+          },
+          {
+            "id": 92,
+            "title": "MODV: Uygulama Örnekleri",
+            "duration": "26:58",
+            "durationMinutes": 26.97
+          },
+          {
+            "id": 93,
+            "title": "Banka Kredileri (KVYK - UVYK)",
+            "duration": "22:06",
+            "durationMinutes": 22.1
+          },
+          {
+            "id": 94,
+            "title": "Maddi Teminatlı Krediler",
+            "duration": "17:23",
+            "durationMinutes": 17.38
+          },
+          {
+            "id": 95,
+            "title": "Uzun Vadeli Banka Kredileri",
+            "duration": "20:49",
+            "durationMinutes": 20.82
+          },
+          {
+            "id": 96,
+            "title": "Bono ve Senet İhracı 1",
+            "duration": "14:59",
+            "durationMinutes": 14.98
+          },
+          {
+            "id": 97,
+            "title": "Bono ve Senet İhracı 2",
+            "duration": "21:48",
+            "durationMinutes": 21.8
+          },
+          {
+            "id": 98,
+            "title": "Tahvil İhracı İşlemleri",
+            "duration": "23:20",
+            "durationMinutes": 23.33
+          },
+          {
+            "id": 99,
+            "title": "Ticari Borçlar Kayıtları",
+            "duration": "19:56",
+            "durationMinutes": 19.93
+          },
+          {
+            "id": 100,
+            "title": "Borç ve Gider Karşılıkları",
+            "duration": "31:49",
+            "durationMinutes": 31.82
+          },
+          {
+            "id": 101,
+            "title": "Özkaynaklar ve Şirket Kuruluşu",
+            "duration": "22:54",
+            "durationMinutes": 22.9
+          },
+          {
+            "id": 102,
+            "title": "Sermaye Artırımı ve Azaltımı",
+            "duration": "09:41",
+            "durationMinutes": 9.68
+          },
+          {
+            "id": 103,
+            "title": "Özkaynaklar: Yedekler",
+            "duration": "25:29",
+            "durationMinutes": 25.48
+          },
+          {
+            "id": 104,
+            "title": "Özkaynaklar: Kar Dağıtımı",
+            "duration": "32:13",
+            "durationMinutes": 32.22
+          },
+          {
+            "id": 105,
+            "title": "Dönem Ayarlayıcı Kayıtlar 1",
+            "duration": "27:57",
+            "durationMinutes": 27.95
+          },
+          {
+            "id": 106,
+            "title": "Dönem Ayarlayıcı Kayıtlar 2",
+            "duration": "16:07",
+            "durationMinutes": 16.12
+          },
+          {
+            "id": 107,
+            "title": "Ücret Tahakkuk Kaydı (Personel)",
+            "duration": "21:50",
+            "durationMinutes": 21.83
+          },
+          {
+            "id": 108,
+            "title": "Gelir Tablosu Hesapları 1",
+            "duration": "14:22",
+            "durationMinutes": 14.37
+          },
+          {
+            "id": 109,
+            "title": "Gelir Tablosu Hesapları 2",
+            "duration": "10:53",
+            "durationMinutes": 10.88
+          },
+          {
+            "id": 110,
+            "title": "Finansman Giderleri Grubu",
+            "duration": "12:49",
+            "durationMinutes": 12.82
+          },
+          {
+            "id": 111,
+            "title": "Maliyet Hesapları: 7A Uygulaması",
+            "duration": "16:11",
+            "durationMinutes": 16.18
+          },
+          {
+            "id": 112,
+            "title": "7A Grubu: 710 Hesap",
+            "duration": "19:06",
+            "durationMinutes": 19.1
+          },
+          {
+            "id": 113,
+            "title": "7A Grubu: 720, 730, 740 Hesaplar",
+            "duration": "26:33",
+            "durationMinutes": 26.55
+          },
+          {
+            "id": 114,
+            "title": "7A Grubu: 750, 760, 770 Hesaplar",
+            "duration": "19:50",
+            "durationMinutes": 19.83
+          },
+          {
+            "id": 115,
+            "title": "Maliyet Hesapları: 7B Uygulaması",
+            "duration": "35:23",
+            "durationMinutes": 35.38
+          },
+          {
+            "id": 116,
+            "title": "Mali Analiz: Bilanço Yorumlama",
+            "duration": "28:05",
+            "durationMinutes": 28.08
+          },
+          {
+            "id": 117,
+            "title": "Oran Analizi: Likidite Oranları",
+            "duration": "26:26",
+            "durationMinutes": 26.43
+          },
+          {
+            "id": 118,
+            "title": "Likidite Oranları: Soru Çözümü",
+            "duration": "20:20",
+            "durationMinutes": 20.33
+          },
+          {
+            "id": 119,
+            "title": "Finansal Oranlar: Soru Çözümü",
+            "duration": "24:49",
+            "durationMinutes": 24.82
+          },
+          {
+            "id": 120,
+            "title": "Faaliyet ve Karlılık Oranları",
+            "duration": "29:52",
+            "durationMinutes": 29.87
+          },
+          {
+            "id": 121,
+            "title": "Dikey, Yatay ve Trend Analizi",
+            "duration": "33:12",
+            "durationMinutes": 33.2
+          },
+          {
+            "id": 122,
+            "title": "Başabaş Analizi",
+            "duration": "17:46",
+            "durationMinutes": 17.77
+          },
+          {
+            "id": 123,
+            "title": "Maliyet Muhasebesi: Temel Kayıtlar",
+            "duration": "20:03",
+            "durationMinutes": 20.05
+          },
+          {
+            "id": 124,
+            "title": "Satılan Mamullerin Maliyeti Tablosu",
+            "duration": "23:58",
+            "durationMinutes": 23.97
+          }
+        ]
+      },
+      {
+        "id": "maliye",
+        "name": "Maliye Teorisi - Murat Güzelli",
+        "lessonType": "Maliye",
+        "totalVideos": 72,
+        "totalHours": 34.58,
+        "playlistUrl": "https://www.youtube.com/playlist?list=PLPhEmM6X--WfxX96Dz0lfKLeRKWS8YTOd",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Ders Tanıtımı",
+            "duration": "12:48",
+            "durationMinutes": 12.8
+          },
+          {
+            "id": 2,
+            "title": "Maliye Bilimine Giriş",
+            "duration": "27:25",
+            "durationMinutes": 27.42
+          },
+          {
+            "id": 3,
+            "title": "Kamu Maliyesine İlişkin Yaklaşımlar",
+            "duration": "32:31",
+            "durationMinutes": 32.52
+          },
+          {
+            "id": 4,
+            "title": "Ekonomik Sistemler ve Maliye",
+            "duration": "25:00",
+            "durationMinutes": 25
+          },
+          {
+            "id": 5,
+            "title": "Kamu Maliyesinin Tarihsel Gelişimi",
+            "duration": "41:24",
+            "durationMinutes": 41.4
+          },
+          {
+            "id": 6,
+            "title": "Devlet Faaliyetlerine İlişkin Görüşler",
+            "duration": "32:40",
+            "durationMinutes": 32.67
+          },
+          {
+            "id": 7,
+            "title": "Ekonomik Kesimler (Kamu ve Özel)",
+            "duration": "17:20",
+            "durationMinutes": 17.33
+          },
+          {
+            "id": 8,
+            "title": "Kamu Maliyesinin Temel Amaçları",
+            "duration": "45:46",
+            "durationMinutes": 45.77
+          },
+          {
+            "id": 9,
+            "title": "Piyasa Başarısızlıkları ve Nedenleri",
+            "duration": "56:08",
+            "durationMinutes": 56.13
+          },
+          {
+            "id": 10,
+            "title": "Dışsallıklar ve Mali Etkileri",
+            "duration": "34:04",
+            "durationMinutes": 34.07
+          },
+          {
+            "id": 11,
+            "title": "Dışsallıkların Çözümü ve Asimetrik Bilgi",
+            "duration": "33:56",
+            "durationMinutes": 33.93
+          },
+          {
+            "id": 12,
+            "title": "Kamu Hizmetleri ve Üretim Modelleri",
+            "duration": "14:14",
+            "durationMinutes": 14.23
+          },
+          {
+            "id": 13,
+            "title": "İktisadi Refah Görüşleri",
+            "duration": "20:55",
+            "durationMinutes": 20.92
+          },
+          {
+            "id": 14,
+            "title": "Kamu Tercihi ve Oylama Modelleri 1",
+            "duration": "34:10",
+            "durationMinutes": 34.17
+          },
+          {
+            "id": 15,
+            "title": "Kamu Tercihi ve Oylama Modelleri 2",
+            "duration": "15:46",
+            "durationMinutes": 15.77
+          },
+          {
+            "id": 16,
+            "title": "Kamu Harcamaları: Tanım ve Kapsam",
+            "duration": "38:18",
+            "durationMinutes": 38.3
+          },
+          {
+            "id": 17,
+            "title": "Kamu Harcamalarının Artış Nedenleri",
+            "duration": "38:47",
+            "durationMinutes": 38.78
+          },
+          {
+            "id": 18,
+            "title": "Kamu Harcamalarının Sınıflandırılması 1",
+            "duration": "27:51",
+            "durationMinutes": 27.85
+          },
+          {
+            "id": 19,
+            "title": "Kamu Harcamalarının Sınıflandırılması 2",
+            "duration": "28:50",
+            "durationMinutes": 28.83
+          },
+          {
+            "id": 20,
+            "title": "Kamu Harcaması Artış Teorileri 1",
+            "duration": "35:51",
+            "durationMinutes": 35.85
+          },
+          {
+            "id": 21,
+            "title": "Kamu Harcaması Artış Teorileri 2",
+            "duration": "21:16",
+            "durationMinutes": 21.27
+          },
+          {
+            "id": 22,
+            "title": "Kamu Gelirleri ve Finansman Kaynakları",
+            "duration": "36:41",
+            "durationMinutes": 36.68
+          },
+          {
+            "id": 23,
+            "title": "Vergi Sistemi ve Temel İlkeler",
+            "duration": "38:48",
+            "durationMinutes": 38.8
+          },
+          {
+            "id": 24,
+            "title": "Temel Vergi Kavramları",
+            "duration": "32:24",
+            "durationMinutes": 32.4
+          },
+          {
+            "id": 25,
+            "title": "Vergi Teorileri ve Ödeme Gücü 1",
+            "duration": "35:09",
+            "durationMinutes": 35.15
+          },
+          {
+            "id": 26,
+            "title": "Vergi Teorileri ve Ödeme Gücü 2",
+            "duration": "26:55",
+            "durationMinutes": 26.92
+          },
+          {
+            "id": 27,
+            "title": "Vergilendirme Süreci (Teknik Boyut)",
+            "duration": "17:29",
+            "durationMinutes": 17.48
+          },
+          {
+            "id": 28,
+            "title": "Diğer Vergi Kavramları 1",
+            "duration": "40:00",
+            "durationMinutes": 40
+          },
+          {
+            "id": 29,
+            "title": "Diğer Vergi Kavramları 2",
+            "duration": "19:51",
+            "durationMinutes": 19.85
+          },
+          {
+            "id": 30,
+            "title": "Diğer Vergi Kavramları 3",
+            "duration": "15:58",
+            "durationMinutes": 15.97
+          },
+          {
+            "id": 31,
+            "title": "Vergiye Tepkiler ve Vergi Yansıması",
+            "duration": "38:23",
+            "durationMinutes": 38.38
+          },
+          {
+            "id": 32,
+            "title": "Vergilerin Tasnifi (Sınıflandırma)",
+            "duration": "43:50",
+            "durationMinutes": 43.83
+          },
+          {
+            "id": 33,
+            "title": "Borçlanmaya İlişkin İktisadi Görüşler",
+            "duration": "26:41",
+            "durationMinutes": 26.68
+          },
+          {
+            "id": 34,
+            "title": "Devlet Borçlanmasının Avantajları",
+            "duration": "31:46",
+            "durationMinutes": 31.77
+          },
+          {
+            "id": 35,
+            "title": "Devlet Borçlarının Sınıflandırılması 1",
+            "duration": "24:05",
+            "durationMinutes": 24.08
+          },
+          {
+            "id": 36,
+            "title": "Devlet Borçlarının Sınıflandırılması 2",
+            "duration": "34:59",
+            "durationMinutes": 34.98
+          },
+          {
+            "id": 37,
+            "title": "Borç Yönetimi ve Teknikleri",
+            "duration": "32:18",
+            "durationMinutes": 32.3
+          },
+          {
+            "id": 38,
+            "title": "Devlet Borçlarının Sürdürülebilirliği",
+            "duration": "22:49",
+            "durationMinutes": 22.82
+          },
+          {
+            "id": 39,
+            "title": "Bütçe Hakkı ve Fonksiyonları",
+            "duration": "25:38",
+            "durationMinutes": 25.63
+          },
+          {
+            "id": 40,
+            "title": "Bütçe İlkeleri ve Teorileri",
+            "duration": "32:57",
+            "durationMinutes": 32.95
+          },
+          {
+            "id": 41,
+            "title": "Bütçe Sistemleri (Geleneksel ve Modern)",
+            "duration": "36:56",
+            "durationMinutes": 36.93
+          },
+          {
+            "id": 42,
+            "title": "Türkiye'de Bütçe Sistemi ve Süreci",
+            "duration": "16:23",
+            "durationMinutes": 16.38
+          },
+          {
+            "id": 43,
+            "title": "Merkezi Yönetim Bütçesi: Hazırlık",
+            "duration": "17:46",
+            "durationMinutes": 17.77
+          },
+          {
+            "id": 44,
+            "title": "Merkezi Yönetim Bütçesi: Onay",
+            "duration": "10:30",
+            "durationMinutes": 10.5
+          },
+          {
+            "id": 45,
+            "title": "Merkezi Yönetim Bütçesi: Uygulama",
+            "duration": "33:19",
+            "durationMinutes": 33.32
+          },
+          {
+            "id": 46,
+            "title": "Bütçenin Denetimi (İdari ve Yargısal)",
+            "duration": "18:52",
+            "durationMinutes": 18.87
+          },
+          {
+            "id": 47,
+            "title": "Gelir Vergisi: Mükellefiyet Türleri",
+            "duration": "35:25",
+            "durationMinutes": 35.42
+          },
+          {
+            "id": 48,
+            "title": "Ticari Kazanç ve Tespit Usulleri",
+            "duration": "41:02",
+            "durationMinutes": 41.03
+          },
+          {
+            "id": 49,
+            "title": "Ticari Kazançlarda İndirilecek Giderler",
+            "duration": "50:34",
+            "durationMinutes": 50.57
+          },
+          {
+            "id": 50,
+            "title": "Zirai Kazançlar",
+            "duration": "24:40",
+            "durationMinutes": 24.67
+          },
+          {
+            "id": 51,
+            "title": "Ücret Gelirleri",
+            "duration": "21:58",
+            "durationMinutes": 21.97
+          },
+          {
+            "id": 52,
+            "title": "Serbest Meslek Kazançları",
+            "duration": "22:15",
+            "durationMinutes": 22.25
+          },
+          {
+            "id": 53,
+            "title": "Gayrimenkul Sermaye İradı (GMSİ)",
+            "duration": "41:01",
+            "durationMinutes": 41.02
+          },
+          {
+            "id": 54,
+            "title": "Menkul Sermaye İradı (MSİ)",
+            "duration": "17:26",
+            "durationMinutes": 17.43
+          },
+          {
+            "id": 55,
+            "title": "Diğer Kazanç ve İratlar",
+            "duration": "15:29",
+            "durationMinutes": 15.48
+          },
+          {
+            "id": 56,
+            "title": "Vergi Beyan Esası",
+            "duration": "45:52",
+            "durationMinutes": 45.87
+          },
+          {
+            "id": 57,
+            "title": "Kurumlar Vergisi",
+            "duration": "42:43",
+            "durationMinutes": 42.72
+          },
+          {
+            "id": 58,
+            "title": "Motorlu Taşıtlar Vergisi (MTV)",
+            "duration": "23:09",
+            "durationMinutes": 23.15
+          },
+          {
+            "id": 59,
+            "title": "Emlak Vergisi",
+            "duration": "20:43",
+            "durationMinutes": 20.72
+          },
+          {
+            "id": 60,
+            "title": "Değerli Konut Vergisi",
+            "duration": "10:10",
+            "durationMinutes": 10.17
+          },
+          {
+            "id": 61,
+            "title": "Veraset ve İntikal Vergisi",
+            "duration": "30:48",
+            "durationMinutes": 30.8
+          },
+          {
+            "id": 62,
+            "title": "Katma Değer Vergisi (KDV)",
+            "duration": "23:37",
+            "durationMinutes": 23.62
+          },
+          {
+            "id": 63,
+            "title": "Özel Tüketim Vergisi (ÖTV)",
+            "duration": "06:32",
+            "durationMinutes": 6.53
+          },
+          {
+            "id": 64,
+            "title": "Banka ve Sigorta Muameleleri Vergisi (BSMV)",
+            "duration": "13:08",
+            "durationMinutes": 13.13
+          },
+          {
+            "id": 65,
+            "title": "Vergi Usul Hukuku 1",
+            "duration": "34:53",
+            "durationMinutes": 34.88
+          },
+          {
+            "id": 66,
+            "title": "Vergi Usul Hukuku 2",
+            "duration": "33:44",
+            "durationMinutes": 33.73
+          },
+          {
+            "id": 67,
+            "title": "Vergi Usul Hukuku 3",
+            "duration": "21:04",
+            "durationMinutes": 21.07
+          },
+          {
+            "id": 68,
+            "title": "Verginin Tarafları (İdare and Mükellef)",
+            "duration": "33:54",
+            "durationMinutes": 33.9
+          },
+          {
+            "id": 69,
+            "title": "Vergilendirme Süreci (Hukuki Boyut)",
+            "duration": "43:01",
+            "durationMinutes": 43.02
+          },
+          {
+            "id": 70,
+            "title": "GUY Sınavı ve Kariyer Bilgilendirme",
+            "duration": "19:23",
+            "durationMinutes": 19.38
+          },
+          {
+            "id": 71,
+            "title": "Vergi Alacağını Sona Erdiren Haller",
+            "duration": "41:07",
+            "durationMinutes": 41.12
+          },
+          {
+            "id": 72,
+            "title": "Vergi Denetim Yolları",
+            "duration": "15:49",
+            "durationMinutes": 15.82
+          }
+        ]
+      },
+      {
+        "id": "banka-muhasebesi",
+        "name": "Banka Muhasebesi - Cemal Hoca",
+        "lessonType": "Banka Muhasebesi",
+        "totalVideos": 5,
+        "totalHours": 1.89,
+        "playlistUrl": "https://youtube.com/playlist?list=PLYBtq65-tdImjW164SnSprjf0OMVITkE_&si=9W2QlBM8uStvblgg",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Bankaların Sınıflandırılması",
+            "duration": "12:33",
+            "durationMinutes": 12.55
+          },
+          {
+            "id": 2,
+            "title": "Tekdüzen Hesap Planı ve İşleyiş",
+            "duration": "26:26",
+            "durationMinutes": 26.43
+          },
+          {
+            "id": 3,
+            "title": "Mevduat ve Kaynak İşlemleri",
+            "duration": "31:32",
+            "durationMinutes": 31.53
+          },
+          {
+            "id": 4,
+            "title": "Şube Muhasebesi ve Cari Hesaplar",
+            "duration": "21:53",
+            "durationMinutes": 21.88
+          },
+          {
+            "id": 5,
+            "title": "Döviz Tevdiat ve Şubeler Cari Hesabı",
+            "duration": "20:55",
+            "durationMinutes": 20.92
+          }
+        ]
+      },
+      {
+        "id": "isletme-yonetimi",
+        "name": "İşletme Yönetimi (AÖF)",
+        "lessonType": "İşletme Yönetimi",
+        "totalVideos": 8,
+        "totalHours": 1.39,
+        "playlistUrl": "https://www.youtube.com/playlist?list=PLfFz63YLe29oga382t4p0ACkU9PTErzIR",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Yönetim ve Yönetici",
+            "duration": "09:19",
+            "durationMinutes": 9.32
+          },
+          {
+            "id": 2,
+            "title": "Klasik Yönetim Kuramları",
+            "duration": "10:10",
+            "durationMinutes": 10.17
+          },
+          {
+            "id": 3,
+            "title": "Modern Yönetim Kuramları",
+            "duration": "10:15",
+            "durationMinutes": 10.25
+          },
+          {
+            "id": 4,
+            "title": "Planlama",
+            "duration": "09:58",
+            "durationMinutes": 9.97
+          },
+          {
+            "id": 5,
+            "title": "Örgütleme",
+            "duration": "10:08",
+            "durationMinutes": 10.13
+          },
+          {
+            "id": 6,
+            "title": "Yöneltme",
+            "duration": "11:20",
+            "durationMinutes": 11.33
+          },
+          {
+            "id": 7,
+            "title": "Koordinasyon ve Kontrol",
+            "duration": "11:18",
+            "durationMinutes": 11.3
+          },
+          {
+            "id": 8,
+            "title": "Çağdaş Yönetim Konuları",
+            "duration": "11:05",
+            "durationMinutes": 11.08
+          }
+        ]
+      },
+      {
+        "id": "pazarlama-yonetimi",
+        "name": "Pazarlama Yönetimi (AÖF)",
+        "lessonType": "Pazarlama Yönetimi",
+        "totalVideos": 8,
+        "totalHours": 1.41,
+        "playlistUrl": "https://www.youtube.com/playlist?list=PLfFz63YLe29qFsfcr0xu43U0_EycrMYEP",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Değer Yaratım Süreci Olarak Pazarlama",
+            "duration": "10:21",
+            "durationMinutes": 10.35
+          },
+          {
+            "id": 2,
+            "title": "Pazarlama Yönetim Süreci",
+            "duration": "09:50",
+            "durationMinutes": 9.83
+          },
+          {
+            "id": 3,
+            "title": "Pazarlama Stratejileri ve Rekabet",
+            "duration": "13:36",
+            "durationMinutes": 13.6
+          },
+          {
+            "id": 4,
+            "title": "Ürün Yönetimi",
+            "duration": "09:28",
+            "durationMinutes": 9.47
+          },
+          {
+            "id": 5,
+            "title": "Fiyat Yönetimi",
+            "duration": "10:53",
+            "durationMinutes": 10.88
+          },
+          {
+            "id": 6,
+            "title": "Dağıtım Yönetimi",
+            "duration": "10:26",
+            "durationMinutes": 10.43
+          },
+          {
+            "id": 7,
+            "title": "Pazarlama İletişimi Yönetimi",
+            "duration": "12:06",
+            "durationMinutes": 12.1
+          },
+          {
+            "id": 8,
+            "title": "Pazarlama Performansının Değerlendirilmesi",
+            "duration": "07:49",
+            "durationMinutes": 7.82
+          }
+        ]
+      },
+      {
+        "id": "finansal-yonetim",
+        "name": "Finansal Yönetim (AÖF)",
+        "lessonType": "Finansal Yönetim",
+        "totalVideos": 8,
+        "totalHours": 1.57,
+        "playlistUrl": "https://youtube.com/playlist?list=PLfFz63YLe29pGOq7BTtyqrVpx8E1l9aXA&si=HxiyG8eKl5pYmx-E",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Finansal Yönetime Giriş",
+            "duration": "10:41",
+            "durationMinutes": 10.68
+          },
+          {
+            "id": 2,
+            "title": "Paranın Zaman Değeri",
+            "duration": "10:55",
+            "durationMinutes": 10.92
+          },
+          {
+            "id": 3,
+            "title": "Finansal Analiz",
+            "duration": "13:12",
+            "durationMinutes": 13.2
+          },
+          {
+            "id": 4,
+            "title": "Finansal Planlama ve Denetim",
+            "duration": "11:17",
+            "durationMinutes": 11.28
+          },
+          {
+            "id": 5,
+            "title": "Finansman Kaynakları",
+            "duration": "12:30",
+            "durationMinutes": 12.5
+          },
+          {
+            "id": 6,
+            "title": "Sermaye Maliyeti",
+            "duration": "10:49",
+            "durationMinutes": 10.82
+          },
+          {
+            "id": 7,
+            "title": "Çalışma Sermayesi Yönetimi",
+            "duration": "11:50",
+            "durationMinutes": 11.83
+          },
+          {
+            "id": 8,
+            "title": "Yatırım Kararları",
+            "duration": "12:40",
+            "durationMinutes": 12.67
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "category": "4. GENEL YETENEK VE İNGİLİZCE (Toplam: 80 Saat)",
+    "courses": [
+      {
+        "id": "finans-matematigi",
+        "name": "Finans Matematiği - BUders",
+        "lessonType": "Finans Matematiği",
+        "totalVideos": 32,
+        "totalHours": 4.61,
+        "playlistUrl": "https://youtube.com/playlist?list=PLcNWqzWzYG2sHIneJFRvfHCtFifbtQU3A&si=zFjseeSlFtpVPzTp",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Finans Matematiğine Giriş",
+            "duration": "07:10",
+            "durationMinutes": 7.17
+          },
+          {
+            "id": 2,
+            "title": "Basit Faiz",
+            "duration": "21:29",
+            "durationMinutes": 21.48
+          },
+          {
+            "id": 3,
+            "title": "Basit Faiz: Soru 1",
+            "duration": "06:55",
+            "durationMinutes": 6.92
+          },
+          {
+            "id": 4,
+            "title": "Basit Faiz: Soru 2",
+            "duration": "06:08",
+            "durationMinutes": 6.13
+          },
+          {
+            "id": 5,
+            "title": "Basit Faiz: Soru 3",
+            "duration": "05:32",
+            "durationMinutes": 5.53
+          },
+          {
+            "id": 6,
+            "title": "Basit Faiz: Soru 4",
+            "duration": "05:11",
+            "durationMinutes": 5.18
+          },
+          {
+            "id": 7,
+            "title": "Basit Faiz: Soru 5",
+            "duration": "05:59",
+            "durationMinutes": 5.98
+          },
+          {
+            "id": 8,
+            "title": "Bileşik Faiz",
+            "duration": "20:12",
+            "durationMinutes": 20.2
+          },
+          {
+            "id": 9,
+            "title": "Sürekli Bileşik Faiz",
+            "duration": "09:20",
+            "durationMinutes": 9.33
+          },
+          {
+            "id": 10,
+            "title": "Efektif Faiz Oranı",
+            "duration": "15:01",
+            "durationMinutes": 15.02
+          },
+          {
+            "id": 11,
+            "title": "Bileşik Faiz: Soru 1",
+            "duration": "06:06",
+            "durationMinutes": 6.1
+          },
+          {
+            "id": 12,
+            "title": "Bileşik Faiz: Soru 2",
+            "duration": "04:10",
+            "durationMinutes": 4.17
+          },
+          {
+            "id": 13,
+            "title": "Bileşik Faiz: Soru 3",
+            "duration": "07:07",
+            "durationMinutes": 7.12
+          },
+          {
+            "id": 14,
+            "title": "Bileşik Faiz: Soru 4",
+            "duration": "08:12",
+            "durationMinutes": 8.2
+          },
+          {
+            "id": 15,
+            "title": "Bileşik Faiz: Soru 5",
+            "duration": "07:04",
+            "durationMinutes": 7.07
+          },
+          {
+            "id": 16,
+            "title": "Bileşik Faiz: Soru 6",
+            "duration": "06:51",
+            "durationMinutes": 6.85
+          },
+          {
+            "id": 17,
+            "title": "Bileşik Faiz: Soru 7",
+            "duration": "04:59",
+            "durationMinutes": 4.98
+          },
+          {
+            "id": 18,
+            "title": "Bileşik Faiz: Soru 8",
+            "duration": "07:36",
+            "durationMinutes": 7.6
+          },
+          {
+            "id": 19,
+            "title": "Anüite: Gelecek Değer",
+            "duration": "20:15",
+            "durationMinutes": 20.25
+          },
+          {
+            "id": 20,
+            "title": "Anüite Gelecek Değer: Soru 1",
+            "duration": "08:33",
+            "durationMinutes": 8.55
+          },
+          {
+            "id": 21,
+            "title": "Anüite Gelecek Değer: Soru 2",
+            "duration": "05:07",
+            "durationMinutes": 5.12
+          },
+          {
+            "id": 22,
+            "title": "Anüite Gelecek Değer: Soru 3",
+            "duration": "05:08",
+            "durationMinutes": 5.13
+          },
+          {
+            "id": 23,
+            "title": "Anüite Gelecek Değer: Soru 4",
+            "duration": "08:01",
+            "durationMinutes": 8.02
+          },
+          {
+            "id": 24,
+            "title": "Anüite Gelecek Değer: Soru 5",
+            "duration": "12:01",
+            "durationMinutes": 12.02
+          },
+          {
+            "id": 25,
+            "title": "Anüite: Bugünkü Değer",
+            "duration": "14:42",
+            "durationMinutes": 14.7
+          },
+          {
+            "id": 26,
+            "title": "Anüite Bugünkü Değer: Soru 1",
+            "duration": "05:13",
+            "durationMinutes": 5.22
+          },
+          {
+            "id": 27,
+            "title": "Anüite Bugünkü Değer: Soru 2",
+            "duration": "05:55",
+            "durationMinutes": 5.92
+          },
+          {
+            "id": 28,
+            "title": "Anüite Bugünkü Değer: Soru 3",
+            "duration": "04:28",
+            "durationMinutes": 4.47
+          },
+          {
+            "id": 29,
+            "title": "Anüite Bugünkü Değer: Soru 4",
+            "duration": "07:06",
+            "durationMinutes": 7.1
+          },
+          {
+            "id": 30,
+            "title": "Anüite Bugünkü Değer: Soru 5",
+            "duration": "04:53",
+            "durationMinutes": 4.88
+          },
+          {
+            "id": 31,
+            "title": "Genel Soru Çözümü 1",
+            "duration": "05:57",
+            "durationMinutes": 5.95
+          },
+          {
+            "id": 32,
+            "title": "Genel Soru Çözümü 2",
+            "duration": "14:10",
+            "durationMinutes": 14.17
+          }
+        ]
+      },
+      {
+        "id": "matematik-sayisal-mantik",
+        "name": "Matematik & Sayısal Mantık - İlyas Güneş",
+        "lessonType": "Matematik & Sayısal Mantık",
+        "totalVideos": 79,
+        "totalHours": 59.41,
+        "playlistUrl": "https://youtube.com/playlist?list=PLPlLdubQ1fMsIk3Kujy9yqJOyFLHsfQlp&si=xEU2K9BmKlCcxtOX",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Ders Tanıtımı",
+            "duration": "17:28",
+            "durationMinutes": 17.47
+          },
+          {
+            "id": 2,
+            "title": "Temel İşlemler 1",
+            "duration": "49:04",
+            "durationMinutes": 49.07
+          },
+          {
+            "id": 3,
+            "title": "Temel İşlemler 2",
+            "duration": "34:34",
+            "durationMinutes": 34.57
+          },
+          {
+            "id": 4,
+            "title": "Temel Kavramlar 1",
+            "duration": "45:25",
+            "durationMinutes": 45.42
+          },
+          {
+            "id": 5,
+            "title": "Temel Kavramlar 2",
+            "duration": "36:07",
+            "durationMinutes": 36.12
+          },
+          {
+            "id": 6,
+            "title": "Tek ve Çift Sayılar",
+            "duration": "57:42",
+            "durationMinutes": 57.7
+          },
+          {
+            "id": 7,
+            "title": "Asal Sayılar",
+            "duration": "42:15",
+            "durationMinutes": 42.25
+          },
+          {
+            "id": 8,
+            "title": "Ardışık Sayılar 1",
+            "duration": "41:57",
+            "durationMinutes": 41.95
+          },
+          {
+            "id": 9,
+            "title": "Ardışık Sayılar 2",
+            "duration": "41:16",
+            "durationMinutes": 41.27
+          },
+          {
+            "id": 10,
+            "title": "Faktöriyel 1",
+            "duration": "31:51",
+            "durationMinutes": 31.85
+          },
+          {
+            "id": 11,
+            "title": "Faktöriyel 2",
+            "duration": "36:13",
+            "durationMinutes": 36.22
+          },
+          {
+            "id": 12,
+            "title": "Sayı Basamakları 1",
+            "duration": "44:38",
+            "durationMinutes": 44.63
+          },
+          {
+            "id": 13,
+            "title": "Sayı Basamakları 2",
+            "duration": "42:17",
+            "durationMinutes": 42.28
+          },
+          {
+            "id": 14,
+            "title": "Taban Aritmetiği",
+            "duration": "21:27",
+            "durationMinutes": 21.45
+          },
+          {
+            "id": 15,
+            "title": "Bölme",
+            "duration": "35:47",
+            "durationMinutes": 35.78
+          },
+          {
+            "id": 16,
+            "title": "Bölünebilme 1",
+            "duration": "30:34",
+            "durationMinutes": 30.57
+          },
+          {
+            "id": 17,
+            "title": "Bölünebilme 2",
+            "duration": "37:09",
+            "durationMinutes": 37.15
+          },
+          {
+            "id": 18,
+            "title": "Asal Çarpanlar",
+            "duration": "39:54",
+            "durationMinutes": 39.9
+          },
+          {
+            "id": 19,
+            "title": "EBOB - EKOK 1",
+            "duration": "42:18",
+            "durationMinutes": 42.3
+          },
+          {
+            "id": 20,
+            "title": "EBOB - EKOK 2",
+            "duration": "43:17",
+            "durationMinutes": 43.28
+          },
+          {
+            "id": 21,
+            "title": "Genel Tekrar 1",
+            "duration": "58:21",
+            "durationMinutes": 58.35
+          },
+          {
+            "id": 22,
+            "title": "Rasyonel Sayılar 1",
+            "duration": "39:43",
+            "durationMinutes": 39.72
+          },
+          {
+            "id": 23,
+            "title": "Rasyonel Sayılar 2",
+            "duration": "31:09",
+            "durationMinutes": 31.15
+          },
+          {
+            "id": 24,
+            "title": "Ondalık Sayılar",
+            "duration": "41:23",
+            "durationMinutes": 41.38
+          },
+          {
+            "id": 25,
+            "title": "Basit Eşitsizlikler 1",
+            "duration": "39:06",
+            "durationMinutes": 39.1
+          },
+          {
+            "id": 26,
+            "title": "Basit Eşitsizlikler 2",
+            "duration": "46:29",
+            "durationMinutes": 46.48
+          },
+          {
+            "id": 27,
+            "title": "Mutlak Değer 1",
+            "duration": "40:29",
+            "durationMinutes": 40.48
+          },
+          {
+            "id": 28,
+            "title": "Mutlak Değer 2",
+            "duration": "45:11",
+            "durationMinutes": 45.18
+          },
+          {
+            "id": 29,
+            "title": "Mutlak Değer 3",
+            "duration": "43:10",
+            "durationMinutes": 43.17
+          },
+          {
+            "id": 30,
+            "title": "Genel Tekrar 2",
+            "duration": "48:02",
+            "durationMinutes": 48.03
+          },
+          {
+            "id": 31,
+            "title": "Üslü Sayılar 1",
+            "duration": "35:48",
+            "durationMinutes": 35.8
+          },
+          {
+            "id": 32,
+            "title": "Üslü Sayılar 2",
+            "duration": "54:14",
+            "durationMinutes": 54.23
+          },
+          {
+            "id": 33,
+            "title": "Köklü Sayılar 1",
+            "duration": "35:04",
+            "durationMinutes": 35.07
+          },
+          {
+            "id": 34,
+            "title": "Köklü Sayılar 2",
+            "duration": "38:11",
+            "durationMinutes": 38.18
+          },
+          {
+            "id": 35,
+            "title": "Köklü Sayılar 3",
+            "duration": "44:22",
+            "durationMinutes": 44.37
+          },
+          {
+            "id": 36,
+            "title": "Genel Tekrar 3",
+            "duration": "59:00",
+            "durationMinutes": 59
+          },
+          {
+            "id": 37,
+            "title": "Çarpanlara Ayırma 1",
+            "duration": "46:08",
+            "durationMinutes": 46.13
+          },
+          {
+            "id": 38,
+            "title": "Çarpanlara Ayırma 2",
+            "duration": "37:31",
+            "durationMinutes": 37.52
+          },
+          {
+            "id": 39,
+            "title": "Çarpanlara Ayırma 3",
+            "duration": "39:30",
+            "durationMinutes": 39.5
+          },
+          {
+            "id": 40,
+            "title": "1. Dereceden Denklemler",
+            "duration": "51:39",
+            "durationMinutes": 51.65
+          },
+          {
+            "id": 41,
+            "title": "Oran - Orantı 1",
+            "duration": "34:35",
+            "durationMinutes": 34.58
+          },
+          {
+            "id": 42,
+            "title": "Oran - Orantı 2",
+            "duration": "53:02",
+            "durationMinutes": 53.03
+          },
+          {
+            "id": 43,
+            "title": "Oran - Orantı 3",
+            "duration": "1:01:29",
+            "durationMinutes": 61.48
+          },
+          {
+            "id": 44,
+            "title": "Genel Tekrar 4",
+            "duration": "1:23:41",
+            "durationMinutes": 83.68
+          },
+          {
+            "id": 45,
+            "title": "Sayı - Kesir Problemleri 1",
+            "duration": "44:06",
+            "durationMinutes": 44.1
+          },
+          {
+            "id": 46,
+            "title": "Sayı - Kesir Problemleri 2",
+            "duration": "47:08",
+            "durationMinutes": 47.13
+          },
+          {
+            "id": 47,
+            "title": "Sayı - Kesir Problemleri 3",
+            "duration": "38:26",
+            "durationMinutes": 38.43
+          },
+          {
+            "id": 48,
+            "title": "Sayı - Kesir Problemleri 4",
+            "duration": "33:01",
+            "durationMinutes": 33.02
+          },
+          {
+            "id": 49,
+            "title": "Sayı - Kesir Problemleri 5",
+            "duration": "48:06",
+            "durationMinutes": 48.1
+          },
+          {
+            "id": 50,
+            "title": "Yaş Problemleri 1",
+            "duration": "30:33",
+            "durationMinutes": 30.55
+          },
+          {
+            "id": 51,
+            "title": "Yaş Problemleri 2",
+            "duration": "46:07",
+            "durationMinutes": 46.12
+          },
+          {
+            "id": 52,
+            "title": "Karışım Problemleri",
+            "duration": "49:50",
+            "durationMinutes": 49.83
+          },
+          {
+            "id": 53,
+            "title": "İşçi - Havuz Problemleri",
+            "duration": "40:11",
+            "durationMinutes": 40.18
+          },
+          {
+            "id": 54,
+            "title": "Genel Tekrar 5",
+            "duration": "2:04:31",
+            "durationMinutes": 124.52
+          },
+          {
+            "id": 55,
+            "title": "Yüzde - Kâr - Zarar 1",
+            "duration": "37:52",
+            "durationMinutes": 37.87
+          },
+          {
+            "id": 56,
+            "title": "Yüzde - Kâr - Zarar 2",
+            "duration": "50:33",
+            "durationMinutes": 50.55
+          },
+          {
+            "id": 57,
+            "title": "Yüzde - Kâr - Zarar 3",
+            "duration": "43:10",
+            "durationMinutes": 43.17
+          },
+          {
+            "id": 58,
+            "title": "Hız Problemleri 1",
+            "duration": "45:54",
+            "durationMinutes": 45.9
+          },
+          {
+            "id": 59,
+            "title": "Hız Problemleri 2",
+            "duration": "1:05:30",
+            "durationMinutes": 65.5
+          },
+          {
+            "id": 60,
+            "title": "Grafik Problemleri 1",
+            "duration": "51:09",
+            "durationMinutes": 51.15
+          },
+          {
+            "id": 61,
+            "title": "Grafik Problemleri 2",
+            "duration": "45:34",
+            "durationMinutes": 45.57
+          },
+          {
+            "id": 62,
+            "title": "Kümeler 1",
+            "duration": "34:45",
+            "durationMinutes": 34.75
+          },
+          {
+            "id": 63,
+            "title": "Kümeler 2",
+            "duration": "46:11",
+            "durationMinutes": 46.18
+          },
+          {
+            "id": 64,
+            "title": "Kümeler 3",
+            "duration": "45:32",
+            "durationMinutes": 45.53
+          },
+          {
+            "id": 65,
+            "title": "İşlem",
+            "duration": "43:08",
+            "durationMinutes": 43.13
+          },
+          {
+            "id": 66,
+            "title": "Modüler Aritmetik",
+            "duration": "47:33",
+            "durationMinutes": 47.55
+          },
+          {
+            "id": 67,
+            "title": "Permütasyon",
+            "duration": "50:31",
+            "durationMinutes": 50.52
+          },
+          {
+            "id": 68,
+            "title": "Kombinasyon",
+            "duration": "43:59",
+            "durationMinutes": 43.98
+          },
+          {
+            "id": 69,
+            "title": "Olasılık 1",
+            "duration": "42:20",
+            "durationMinutes": 42.33
+          },
+          {
+            "id": 70,
+            "title": "Olasılık 2",
+            "duration": "38:13",
+            "durationMinutes": 38.22
+          },
+          {
+            "id": 71,
+            "title": "Fonksiyonlar 1",
+            "duration": "47:00",
+            "durationMinutes": 47
+          },
+          {
+            "id": 72,
+            "title": "Fonksiyonlar 2",
+            "duration": "40:35",
+            "durationMinutes": 40.58
+          },
+          {
+            "id": 73,
+            "title": "Sayısal Mantık",
+            "duration": "1:03:43",
+            "durationMinutes": 63.72
+          },
+          {
+            "id": 74,
+            "title": "Doğruda Açılar",
+            "duration": "29:36",
+            "durationMinutes": 29.6
+          },
+          {
+            "id": 75,
+            "title": "Üçgenlerde Açılar",
+            "duration": "55:44",
+            "durationMinutes": 55.73
+          },
+          {
+            "id": 76,
+            "title": "Özel Üçgenler ve Elemanlar",
+            "duration": "1:15:02",
+            "durationMinutes": 75.03
+          },
+          {
+            "id": 77,
+            "title": "Üçgende Alan ve Benzerlik I",
+            "duration": "40:26",
+            "durationMinutes": 40.43
+          },
+          {
+            "id": 78,
+            "title": "Üçgende Alan ve Benzerlik II",
+            "duration": "48:44",
+            "durationMinutes": 48.73
+          },
+          {
+            "id": 79,
+            "title": "Çokgenler ve Dörtgenler",
+            "duration": "51:31",
+            "durationMinutes": 51.52
+          }
+        ]
+      },
+      {
+        "id": "istatistik",
+        "name": "İstatistik - XDERS",
+        "lessonType": "İstatistik",
+        "totalVideos": 15,
+        "totalHours": 6.52,
+        "playlistUrl": "https://www.youtube.com/playlist?list=PL4G1-wcRc1jG1tCySPIJTT_gdQ0I8fwGP",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Temel Kavramlar ve Ölçekler",
+            "duration": "26:46",
+            "durationMinutes": 26.77
+          },
+          {
+            "id": 2,
+            "title": "İstatistiksel Seriler",
+            "duration": "19:49",
+            "durationMinutes": 19.82
+          },
+          {
+            "id": 3,
+            "title": "Grafik Türleri",
+            "duration": "22:32",
+            "durationMinutes": 22.53
+          },
+          {
+            "id": 4,
+            "title": "Aritmetik ve Ağırlıklı Ortalama",
+            "duration": "30:45",
+            "durationMinutes": 30.75
+          },
+          {
+            "id": 5,
+            "title": "Kareli, Geometrik ve Harmonik Ortalama",
+            "duration": "27:19",
+            "durationMinutes": 27.32
+          },
+          {
+            "id": 6,
+            "title": "Mod, Medyan ve Kartiller",
+            "duration": "35:09",
+            "durationMinutes": 35.15
+          },
+          {
+            "id": 7,
+            "title": "Değişkenlik Ölçüleri 1 (Sapma ve Aralık)",
+            "duration": "21:57",
+            "durationMinutes": 21.95
+          },
+          {
+            "id": 8,
+            "title": "Değişkenlik Ölçüleri 2 (Varyans ve Sapma)",
+            "duration": "24:28",
+            "durationMinutes": 24.47
+          },
+          {
+            "id": 9,
+            "title": "Korelasyon ve Kovaryans",
+            "duration": "26:25",
+            "durationMinutes": 26.42
+          },
+          {
+            "id": 10,
+            "title": "Sıralama Korelasyonu",
+            "duration": "19:19",
+            "durationMinutes": 19.32
+          },
+          {
+            "id": 11,
+            "title": "Regresyon Analizi",
+            "duration": "31:30",
+            "durationMinutes": 31.5
+          },
+          {
+            "id": 12,
+            "title": "Basit İndeksler",
+            "duration": "30:48",
+            "durationMinutes": 30.8
+          },
+          {
+            "id": 13,
+            "title": "Bileşik İndeksler",
+            "duration": "20:25",
+            "durationMinutes": 20.42
+          },
+          {
+            "id": 14,
+            "title": "Karar Teorisi",
+            "duration": "34:06",
+            "durationMinutes": 34.1
+          },
+          {
+            "id": 15,
+            "title": "Karar Teorisi: Soru Çözümü",
+            "duration": "19:46",
+            "durationMinutes": 19.77
+          }
+        ]
+      },
+      {
+        "id": "sozel-mantik",
+        "name": "Sözel Mantık - Aker Kartal",
+        "lessonType": "Sözel Mantık",
+        "totalVideos": 18,
+        "totalHours": 5.39,
+        "notePath": null,
+        "playlistUrl": "https://www.youtube.com/watch?v=TSJQXXNOZIU&list=PL5w_hbb3voMnDXx1DQVmiFZZBGdAuZdhb",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Sözel Mantık - 1",
+            "duration": "22:38",
+            "durationMinutes": 22.633333333333333
+          },
+          {
+            "id": 2,
+            "title": "Sözel Mantık - 2",
+            "duration": "15:54",
+            "durationMinutes": 15.9
+          },
+          {
+            "id": 3,
+            "title": "Sözel Mantık - 3",
+            "duration": "10:43",
+            "durationMinutes": 10.716666666666667
+          },
+          {
+            "id": 4,
+            "title": "Sözel Mantık - 4",
+            "duration": "13:35",
+            "durationMinutes": 13.583333333333334
+          },
+          {
+            "id": 5,
+            "title": "Sözel Mantık - 5",
+            "duration": "18:16",
+            "durationMinutes": 18.266666666666666
+          },
+          {
+            "id": 6,
+            "title": "Sözel Mantık - 6",
+            "duration": "19:58",
+            "durationMinutes": 19.966666666666665
+          },
+          {
+            "id": 7,
+            "title": "Sözel Mantık - 7",
+            "duration": "21:19",
+            "durationMinutes": 21.316666666666666
+          },
+          {
+            "id": 8,
+            "title": "Sözel Mantık - 8",
+            "duration": "14:42",
+            "durationMinutes": 14.7
+          },
+          {
+            "id": 9,
+            "title": "Sözel Mantık - 9",
+            "duration": "21:10",
+            "durationMinutes": 21.166666666666668
+          },
+          {
+            "id": 10,
+            "title": "Sözel Mantık - 10",
+            "duration": "16:08",
+            "durationMinutes": 16.133333333333333
+          },
+          {
+            "id": 11,
+            "title": "Sözel Mantık - 11",
+            "duration": "09:48",
+            "durationMinutes": 9.8
+          },
+          {
+            "id": 12,
+            "title": "Sözel Mantık - 12",
+            "duration": "16:44",
+            "durationMinutes": 16.733333333333334
+          },
+          {
+            "id": 13,
+            "title": "Sözel Mantık - 13",
+            "duration": "10:14",
+            "durationMinutes": 10.233333333333333
+          },
+          {
+            "id": 14,
+            "title": "Karma Soru Çözümü - 1",
+            "duration": "29:17",
+            "durationMinutes": 29.283333333333335
+          },
+          {
+            "id": 15,
+            "title": "Karma Soru Çözümü - 2",
+            "duration": "27:00",
+            "durationMinutes": 27
+          },
+          {
+            "id": 16,
+            "title": "ÖSYM Soruları Çözümü - 1",
+            "duration": "16:06",
+            "durationMinutes": 16.1
+          },
+          {
+            "id": 17,
+            "title": "ÖSYM Soruları Çözümü - 2",
+            "duration": "23:03",
+            "durationMinutes": 23.05
+          },
+          {
+            "id": 18,
+            "title": "ÖSYM Soruları Çözümü - 3",
+            "duration": "16:49",
+            "durationMinutes": 16.816666666666666
+          }
+        ]
+      },
+      {
+        "id": "ingilizce",
+        "name": "İngilizce - Fatih Çömez",
+        "lessonType": "İngilizce",
+        "totalVideos": 45,
+        "totalHours": 14.916666666666666,
+        "notePath": null,
+        "playlistUrl": "https://www.youtube.com/playlist?list=PL8xiaE-wCWlZRj6dhWBQ0XHeoandgYHCN",
+        "videos": [
+          {
+            "id": 1,
+            "title": "Ön Hazırlık Konuları",
+            "duration": "14:12",
+            "durationMinutes": 14.2
+          },
+          {
+            "id": 2,
+            "title": "Present Simple & Present Continuous",
+            "duration": "16:42",
+            "durationMinutes": 16.7
+          },
+          {
+            "id": 3,
+            "title": "Present Perfect Tense",
+            "duration": "14:32",
+            "durationMinutes": 14.533333333333333
+          },
+          {
+            "id": 4,
+            "title": "Simple Past Tense",
+            "duration": "11:56",
+            "durationMinutes": 11.933333333333334
+          },
+          {
+            "id": 5,
+            "title": "Diğer Past Tense'ler",
+            "duration": "11:44",
+            "durationMinutes": 11.733333333333333
+          },
+          {
+            "id": 6,
+            "title": "Future Tense",
+            "duration": "14:14",
+            "durationMinutes": 14.233333333333333
+          },
+          {
+            "id": 7,
+            "title": "Zaman Uyumu Kuralları",
+            "duration": "07:05",
+            "durationMinutes": 7.083333333333333
+          },
+          {
+            "id": 8,
+            "title": "Present Modals",
+            "duration": "12:52",
+            "durationMinutes": 12.866666666666667
+          },
+          {
+            "id": 9,
+            "title": "Past - Future Modals",
+            "duration": "13:33",
+            "durationMinutes": 13.55
+          },
+          {
+            "id": 10,
+            "title": "Passive Voice (Edilgen Yapı)",
+            "duration": "12:35",
+            "durationMinutes": 12.583333333333334
+          },
+          {
+            "id": 11,
+            "title": "Passive Voice Soru Çözümü",
+            "duration": "36:00",
+            "durationMinutes": 36
+          },
+          {
+            "id": 12,
+            "title": "Prepositions (Edatlar)",
+            "duration": "12:25",
+            "durationMinutes": 12.416666666666666
+          },
+          {
+            "id": 13,
+            "title": "Determiners - Quantifiers",
+            "duration": "10:49",
+            "durationMinutes": 10.816666666666666
+          },
+          {
+            "id": 14,
+            "title": "Determiners - Quantifiers Soru Çözümü",
+            "duration": "44:57",
+            "durationMinutes": 44.95
+          },
+          {
+            "id": 15,
+            "title": "Conditionals (Type 1 - 2 - 3)",
+            "duration": "09:22",
+            "durationMinutes": 9.366666666666667
+          },
+          {
+            "id": 16,
+            "title": "Conditionals (Type 4 - 5)",
+            "duration": "10:53",
+            "durationMinutes": 10.883333333333333
+          },
+          {
+            "id": 17,
+            "title": "Conditionals Soru Çözümü",
+            "duration": "40:17",
+            "durationMinutes": 40.28333333333333
+          },
+          {
+            "id": 18,
+            "title": "Gerund - Infinitive",
+            "duration": "17:16",
+            "durationMinutes": 17.266666666666666
+          },
+          {
+            "id": 19,
+            "title": "Kısaltma Çözüm Teknikleri",
+            "duration": "10:00",
+            "durationMinutes": 10
+          },
+          {
+            "id": 20,
+            "title": "Relative Clause - 1",
+            "duration": "14:20",
+            "durationMinutes": 14.333333333333334
+          },
+          {
+            "id": 21,
+            "title": "Relative Clause - 2",
+            "duration": "12:07",
+            "durationMinutes": 12.116666666666667
+          },
+          {
+            "id": 22,
+            "title": "Relative Clause - 3",
+            "duration": "08:19",
+            "durationMinutes": 8.316666666666666
+          },
+          {
+            "id": 23,
+            "title": "Relative Clause Soru Çözümü",
+            "duration": "28:13",
+            "durationMinutes": 28.216666666666665
+          },
+          {
+            "id": 24,
+            "title": "Noun Clause",
+            "duration": "16:02",
+            "durationMinutes": 16.033333333333335
+          },
+          {
+            "id": 25,
+            "title": "Noun Clause Soru Çözümü",
+            "duration": "41:59",
+            "durationMinutes": 41.983333333333334
+          },
+          {
+            "id": 26,
+            "title": "Adjective - Adverb - 1",
+            "duration": "17:35",
+            "durationMinutes": 17.583333333333332
+          },
+          {
+            "id": 27,
+            "title": "Adjective - Adverb - 2",
+            "duration": "14:43",
+            "durationMinutes": 14.716666666666667
+          },
+          {
+            "id": 28,
+            "title": "Adjective - Adverb Soru Çözümü",
+            "duration": "33:56",
+            "durationMinutes": 33.93333333333333
+          },
+          {
+            "id": 29,
+            "title": "Conjunctions (Bağlaçlar) - 1",
+            "duration": "09:01",
+            "durationMinutes": 9.016666666666667
+          },
+          {
+            "id": 30,
+            "title": "Conjunctions (Bağlaçlar) - 2",
+            "duration": "10:46",
+            "durationMinutes": 10.766666666666667
+          },
+          {
+            "id": 31,
+            "title": "Conjunctions (Bağlaçlar) - 3",
+            "duration": "19:05",
+            "durationMinutes": 19.083333333333332
+          },
+          {
+            "id": 32,
+            "title": "Conjunctions Soru Çözümü",
+            "duration": "44:16",
+            "durationMinutes": 44.266666666666666
+          },
+          {
+            "id": 33,
+            "title": "Reading Comprehension - 1",
+            "duration": "13:36",
+            "durationMinutes": 13.6
+          },
+          {
+            "id": 34,
+            "title": "Reading Comprehension - 2",
+            "duration": "12:49",
+            "durationMinutes": 12.816666666666666
+          },
+          {
+            "id": 35,
+            "title": "Reading Comprehension - 3",
+            "duration": "07:55",
+            "durationMinutes": 7.916666666666667
+          },
+          {
+            "id": 36,
+            "title": "Reading Comprehension - 4",
+            "duration": "08:39",
+            "durationMinutes": 8.65
+          },
+          {
+            "id": 37,
+            "title": "Reading Comprehension - 5",
+            "duration": "11:21",
+            "durationMinutes": 11.35
+          },
+          {
+            "id": 38,
+            "title": "Reading Comprehension - 6",
+            "duration": "09:27",
+            "durationMinutes": 9.45
+          },
+          {
+            "id": 39,
+            "title": "Reading Comprehension - 7",
+            "duration": "08:41",
+            "durationMinutes": 8.683333333333334
+          },
+          {
+            "id": 40,
+            "title": "Reading Comprehension - 8",
+            "duration": "21:09",
+            "durationMinutes": 21.15
+          },
+          {
+            "id": 41,
+            "title": "Gerund - Infinitive Soru Çözümü",
+            "duration": "26:48",
+            "durationMinutes": 26.8
+          },
+          {
+            "id": 42,
+            "title": "Modals Soru Çözümü",
+            "duration": "43:58",
+            "durationMinutes": 43.96666666666667
+          },
+          {
+            "id": 43,
+            "title": "Prepositions Soru Çözümü",
+            "duration": "34:14",
+            "durationMinutes": 34.233333333333334
+          },
+          {
+            "id": 44,
+            "title": "Tenses Soru Çözümü",
+            "duration": "39:40",
+            "durationMinutes": 39.666666666666664
+          },
+          {
+            "id": 45,
+            "title": "GENEL GRAMER SORULARI",
+            "duration": "01:04:57",
+            "durationMinutes": 64.95
+          }
+        ]
+      }
+    ]
+  }
+]
