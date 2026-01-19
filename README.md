@@ -1,66 +1,74 @@
-# AuditPath
+# AuditPath 🚀
 
-AuditPath, kullanıcıların öğrenme süreçlerini takip etmelerini, çalışma alışkanlıklarını oyunlaştırma öğeleriyle geliştirmelerini ve verimli bir çalışma disiplini kazanmalarını sağlayan modern bir web uygulamasıdır. Kullanıcılar ders ilerlemelerini izleyebilir, Pomodoro tekniği ile çalışabilir ve detaylı istatistiklerle performanslarını analiz edebilir.
+**AuditPath**, hukuk öğrencileri ve profesyoneller için geliştirilmiş, **AI destekli** yeni nesil bir öğrenme ve sınav hazırlık asistanıdır. Kullanıcıların ders notlarını yükleyerek kişiselleştirilmiş quizler oluşturmasını, aralıklı tekrar sistemi (SRS) ile bilgileri kalıcı hale getirmesini ve detaylı analizlerle gelişimlerini takip etmesini sağlar.
 
-## Özellikler
+## 🌟 Temel Özellikler
 
-### 🟢 Aktif Özellikler
-*   **Ders ve Video Takibi:** Kurs müfredatını görüntüleme, tamamlanan videoları işaretleme ve ilerleme yüzdesini anlık görme.
-*   **Markdown Not Sistemi:** Derslerle senkronize çalışan, Markdown formatında not görüntüleme altyapısı.
-*   **Pomodoro Zamanlayıcı:** Çalışma, mola ve duraklatma sürelerini kaydeden entegre zamanlayıcı.
-*   **Oyunlaştırma (Gamification):**
-    *   **Rütbe Sistemi:** İlerlemeye bağlı olarak değişen kullanıcı rütbeleri.
-    *   **Seri (Streak) Takibi:** Günlük giriş ve çalışma serileri.
-    *   **Başarımlar:** Belirli hedeflere ulaşıldığında kazanılan rozetler ve ödüller.
-*   **Detaylı İstatistikler:**
-    *   Günlük/Haftalık çalışma süreleri.
-    *   Verimlilik grafikleri (Video izleme vs Pomodoro süresi).
-    *   Kategori bazlı dağılım.
-*   **Kullanıcı Yönetimi:** Supabase tabanlı güvenli kimlik doğrulama (Auth) ve profil yönetimi.
+### 🧠 Akıllı Not İşleme
+*   Ders notlarınızı (Markdown formatında) sisteme yükleyin.
+*   Sistem, içeriği analiz eder ve öğrenmeye uygun küçük parçalara (chunks) ayırır.
+*   Her parça için içerik yoğunluğu ve zorluk derecesi otomatik hesaplanır.
 
-### 🟡 Planlanan Özellikler (Roadmap)
-*   **Quiz Sistemi (Yapay Zeka Destekli):** Groq, OpenAI veya Gemini altyapısı kullanılarak, kullanıcının notlarından ve ders içeriklerinden otomatik test soruları üreten bir modül geliştirilmesi planlanmaktadır. İlgili SDK bağımlılıkları projeye eklenmiş ancak henüz entegrasyon yapılmamıştır.
+### 🤖 AI Soru Üretimi (Bloom Taxonomy)
+*   **Google GenAI (Gemini) / OpenAI** entegrasyonu.
+*   Ezberden uzak, pedagojik standartlara uygun sorular:
+    *   **Bilgi (Knowledge):** Temel tanım ve kavram soruları.
+    *   **Uygulama (Application):** Örnek olay ve ilişkilendirme soruları.
+    *   **Analiz (Analysis):** Neden-sonuç ve çıkarım soruları.
 
-## Teknik Mimari
+### 📊 Sınav Simülatörü & Raf Sistemi (Shelf System)
+*   Gerçek sınav deneyimini simüle eden zaman ayarlı testler.
+*   **Dinamik Raf Sistemi:** Sorular, verdiğiniz cevabın doğruluğuna ve hızına göre "Aktif", "Takip Bekliyor" veya "Arşiv" raflarına ayrılır.
+*   Yanlış cevaplanan sorular için **AI destekli takip soruları** üretilir.
 
-Proje, modern frontend standartlarına uygun olarak **React 19** ve **TypeScript** ile geliştirilmiştir. Performans ve kullanıcı deneyimi ön planda tutulmuştur.
+### 🍅 Pomodoro & Odaklanma
+*   Ders çalışma sürelerinizi entegre Pomodoro sayacı ile yönetin.
+*   Mola ve çalışma süreleri otomatik olarak kaydedilir ve raporlanır.
 
-### Teknoloji Yığını
-*   **Core:** React 19, TypeScript, Vite
-*   **Styling:** Tailwind CSS 4.0, Radix UI (Primitives), Lucide React (Icons)
-*   **State Management:** Zustand, TanStack Query (React Query)
-*   **Database & Auth:** Supabase
-*   **Animations:** Framer Motion, customized confetti effects
-*   **AI Integration (Hazırlık):** Groq SDK, OpenAI SDK, Google GenAI SDK
+### 📈 İlerleme Takibi (Analytics)
+*   Ders bazında ilerleme grafikleri.
+*   "Ustalık Puanı" (Mastery Score) ile yetkinlik seviyenizi görün.
+*   Haftalık çalışma hedefleri ve başarımlar.
 
-### Dizin Yapısı
-```
-src/
-├── api/            # API servisleri (Şu an boş, AI entegrasyonu için ayrıldı)
-├── components/     # UI bileşenleri
-│   ├── ui/         # Radix tabanlı atomik bileşenler
-│   ├── layout/     # Ana yerleşim düzenleri
-│   ├── features/   # Özellik bazlı bileşenler (pomodoro, notes, stats vb.)
-├── hooks/          # Özel React hook'ları
-├── lib/            # Yardımcı fonksiyonlar ve Supabase istemcisi
-├── pages/          # Sayfa görünümleri (Route hedefleri)
-├── store/          # Zustand global state yönetim modülleri
-├── schemas/        # Zod doğrulama şemaları
-scripts/            # Node.js tabanlı yardımcı araçlar (örn: not senkronizasyonu)
-public/notes/       # Markdown formatındaki ders notları
-```
+## 🛠️ Teknoloji Yığını
 
-## Kurulum
+### Frontend
+*   **React 19**
+*   **Vite** (Hızlı geliştirme ve build)
+*   **TypeScript** (Tip güvenliği)
+*   **Tailwind CSS v4** (Modern stil yönetimi)
+*   **Radix UI** (Erişilebilir UI bileşenleri)
+*   **Framer Motion** (Animasyonlar)
+*   **Zustand** (Client-side state yönetimi)
+*   **TanStack Query** (Server-side state & caching)
 
-Projeyi yerel ortamınızda çalıştırmak için aşağıdaki adımları izleyin.
+### Backend & Veritabanı
+*   **Supabase** (BaaS)
+    *   **PostgreSQL:** İlişkisel veri tabanı.
+    *   **Auth:** Kullanıcı kimlik doğrulama.
+    *   **Realtime:** Canlı veri akışı.
 
-### Gereksinimler
-*   Node.js (v18+)
-*   npm veya yarn
+### AI & Servisler
+*   **Google GenAI SDK**
+*   **OpenAI SDK**
+*   **Groq SDK**
 
-### Adımlar
+## 🗄️ Veritabanı Yapısı (Özet)
 
-1.  **Repo'yu klonlayın:**
+Temel tablolar ve işlevleri:
+
+*   `courses`: Dersler ve meta verileri.
+*   `note_chunks`: İşlenmiş ders notu parçaları.
+*   `questions`: AI tarafından üretilen sorular ve detayları.
+*   `user_quiz_progress`: Kullanıcıların soru bazlı cevap ve süre kayıtları.
+*   `chunk_mastery`: Her not parçası için kullanıcının ustalık puanı.
+*   `pomodoro_sessions`: Çalışma oturumu kayıtları.
+
+## 🚀 Kurulum
+
+Projeyi yerel ortamınızda çalıştırmak için:
+
+1.  **Depoyu klonlayın:**
     ```bash
     git clone https://github.com/username/auditpath.git
     cd auditpath
@@ -72,33 +80,31 @@ Projeyi yerel ortamınızda çalıştırmak için aşağıdaki adımları izleyi
     ```
 
 3.  **Çevresel Değişkenleri Ayarlayın:**
-    Kök dizinde `.env` dosyası oluşturun ve aşağıdaki değerleri tanımlayın:
+    `.env.example` dosyasını `.env` olarak kopyalayın ve gerekli API anahtarlarını girin:
     ```env
     VITE_SUPABASE_URL=your_supabase_url
     VITE_SUPABASE_ANON_KEY=your_supabase_key
-    DATABASE_URL=your_postgres_connection_string # Not senkronizasyonu için gerekli
+    VITE_GOOGLE_API_KEY=your_gemini_api_key
+    # ... diğer anahtarlar
     ```
 
-4.  **Uygulamayı Başlatın:**
+4.  **Uygulamayı başlatın:**
     ```bash
     npm run dev
     ```
 
-## Çalıştırma Komutları
+## 📝 Kullanım Akışı
 
-*   `npm run dev`: Geliştirme sunucusunu başlatır.
-*   `npm run build`: Production için derleme alır.
-*   `npm run preview`: Derlenen projeyi önizler.
-*   `npm run lint`: Kod standartlarını kontrol eder.
-*   `npm run sync-notes`: `public/notes` klasöründeki Markdown dosyalarını veritabanı ile senkronize eder.
+1.  **Ders Seçimi:** Ana sayfadan çalışmak istediğiniz dersi seçin.
+2.  **Soru Üretimi:** İlgili konunun yanındaki "Soru Üret" butonuna basın. AI, içeriği analiz edip soruları hazırlar.
+3.  **Test Çöz:** Hazırlanan sorularla testi başlatın. Süreyi ve şıkları dikkatli kullanın.
+4.  **Analiz:** Test bitiminde sonuç ekranını inceleyin. Hatalı sorular tekrar havuzuna düşecektir.
+5.  **Tekrar:** Belirli aralıklarla sisteme girerek "Takip Bekleyen" soruları eritin.
 
-## Temizlik & Bakım Notları
+## 🤝 Katkıda Bulunma
 
-*   **AI Bağımlılıkları:** `package.json` dosyasında bulunan `@google/genai`, `groq-sdk`, `openai` paketleri şu an aktif olarak kullanılmamaktadır. **Quiz Sistemi** geliştirilene kadar "dead dependency" durumundadırlar, ancak gelecek planları için tutulmaktadır.
-*   **TypeScript:** `tsconfig.json` ayarları React 19 ve Vite standartlarına göre optimize edilmiştir.
-*   **Eslint:** ESLint 9 yapılandırması mevcuttur.
-
-## Geliştirme Notları
-
-*   **Not Senkronizasyonu:** Ders içerikleri veritabanında değil, dosya sisteminde (`public/notes`) tutulur ve `npm run sync-notes` komutu ile parçalanarak (chunking) veritabanına aktarılır. Bu script `scripts/sync-notes.js` dosyasında bulunur.
-*   **Veritabanı İstemcisi:** `src/lib/client-db.ts` dosyası, uygulama genelindeki veritabanı işlemlerini (Progress, Stats, Auth vb.) yöneten ana katmandır. SQL sorguları yerine bu fonksiyonların kullanılması önerilir.
+1.  Forklayın.
+2.  Yeni bir branch oluşturun (`git checkout -b feature/yeniozellik`).
+3.  Değişikliklerinizi commit yapın (`git commit -m 'feat: Yeni özellik eklendi'`).
+4.  Branch'inizi pushlayın (`git push origin feature/yeniozellik`).
+5.  Pull Request açın.

@@ -83,7 +83,7 @@ export function AuthForms({ onSuccess, view, onToggleView }: AuthFormProps) {
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
-              placeholder="isim@ornek.com"
+              placeholder="E-Mail Adresiniz"
               type="email"
               autoCapitalize="none"
               autoComplete="email"
