@@ -301,8 +301,11 @@ export function PomodoroModal() {
                       {category.courses.map((course) => (
                         <CommandItem
                           key={course.id}
+                          value={course.id}
+                          keywords={[course.name]}
                           onSelect={() => handleCourseSelect(course.id)}
-                          className="group flex items-center justify-between py-4 px-4 my-1 cursor-pointer rounded-xl transition-all hover:bg-primary/5 aria-selected:bg-primary/10"
+                          disabled={false}
+                          className="group flex items-center justify-between py-4 px-4 my-1 cursor-pointer rounded-xl transition-all hover:bg-primary/5 aria-selected:bg-primary/10 pointer-events-auto! opacity-100!"
                         >
                           <div className="flex flex-col gap-0.5">
                             <span className="font-semibold text-[15px]">
