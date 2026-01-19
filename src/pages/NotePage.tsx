@@ -43,7 +43,7 @@ export default function NotePage() {
                 // Markdown: ### Title \n :::question-generator ... ::: \n Content
                 
                 const joined = chunks.map(c => {
-                    return `### ${c.section_title}\n\n:::question-generator{chunkId="${c.id}"}:::\n\n${c.content}`;
+                    return `## ${c.section_title}\n\n:::question-generator{chunkId="${c.id}"}:::\n\n${c.content}`;
                 }).join('\n\n---\n\n');
                 
                 setChunksContent(joined);

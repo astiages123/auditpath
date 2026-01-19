@@ -206,7 +206,6 @@ export type Database = {
           id: string
           metadata: Json | null
           parent_h1_id: string | null
-          parent_h2_id: string | null
           section_title: string
           word_count: number | null
         }
@@ -221,7 +220,6 @@ export type Database = {
           id?: string
           metadata?: Json | null
           parent_h1_id?: string | null
-          parent_h2_id?: string | null
           section_title: string
           word_count?: number | null
         }
@@ -236,7 +234,6 @@ export type Database = {
           id?: string
           metadata?: Json | null
           parent_h1_id?: string | null
-          parent_h2_id?: string | null
           section_title?: string
           word_count?: number | null
         }

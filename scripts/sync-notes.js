@@ -182,8 +182,8 @@ async function processFile(filePath, pool) {
             // UPSERT Mekanizması: Çakışma (Conflict) durumunda checksum farklıysa GÜNCELLE
             await client.query(
                 `INSERT INTO note_chunks 
-                (course_id, course_name, section_title, content, chunk_order, char_count, word_count, checksum, parent_h1_id, parent_h2_id) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                (course_id, course_name, section_title, content, chunk_order, char_count, word_count, checksum, parent_h1_id) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 ON CONFLICT (course_id, section_title) 
                 DO UPDATE SET 
                     content = EXCLUDED.content,
@@ -191,10 +191,9 @@ async function processFile(filePath, pool) {
                     char_count = EXCLUDED.char_count,
                     word_count = EXCLUDED.word_count,
                     checksum = EXCLUDED.checksum,
-                    parent_h1_id = EXCLUDED.parent_h1_id,
-                    parent_h2_id = EXCLUDED.parent_h2_id
+                    parent_h1_id = EXCLUDED.parent_h1_id
                 WHERE note_chunks.checksum IS DISTINCT FROM EXCLUDED.checksum`, 
-                [course.id, course.name, chunk.title, chunk.content, i, charCount, wordCount, chunkChecksum, chunk.h1, chunk.h2]
+                [course.id, course.name, chunk.title, chunk.content, i, charCount, wordCount, chunkChecksum, chunk.h1]
             );
         }
 
@@ -220,12 +219,11 @@ function parseMarkdownChunks(content, courseName) {
     const lines = content.split('\n');
     const chunks = [];
     let currentH1 = courseName; // Default H1 ders adıdır
-    let currentH2 = "";
-    let currentH3Title = "Giriş";
+    let currentH2Title = "Giriş";
     let currentBuffer = [];
 
-    const addChunk = (title, buffer, h1, h2) => {
-        const chunk = createChunkObj(title, buffer, h1, h2);
+    const addChunk = (title, buffer, h1) => {
+        const chunk = createChunkObj(title, buffer, h1, null);
         if (chunk.content.length > 0) {
             chunks.push(chunk);
         }
@@ -237,19 +235,17 @@ function parseMarkdownChunks(content, courseName) {
         if (trimmed.startsWith('# ')) {
             currentH1 = trimmed.replace('# ', '').trim();
         } else if (trimmed.startsWith('## ')) {
-            currentH2 = trimmed.replace('## ', '').trim();
-        } else if (trimmed.startsWith('### ')) {
-            // Yeni H3 geldiğinde eldeki buffer'ı kaydet
-            addChunk(currentH3Title, currentBuffer, currentH1, currentH2);
+            // Yeni H2 geldiğinde eldeki buffer'ı kaydet
+            addChunk(currentH2Title, currentBuffer, currentH1);
             
-            currentH3Title = trimmed.replace('### ', '').trim();
+            currentH2Title = trimmed.replace('## ', '').trim();
             currentBuffer = [line]; // Başlığı içeriğe dahil et
         } else {
             currentBuffer.push(line);
         }
     }
     // Son kalan chunk
-    addChunk(currentH3Title, currentBuffer, currentH1, currentH2);
+    addChunk(currentH2Title, currentBuffer, currentH1);
     return chunks;
 }
 

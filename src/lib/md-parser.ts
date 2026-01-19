@@ -11,7 +11,7 @@ export interface MarkdownChunk {
 
 export class MarkdownParser {
   /**
-   * Reads a markdown file and splits it into chunks based on H3 headers (###).
+   * Reads a markdown file and splits it into chunks based on H2 headers (##).
    * @param filePath Absolute path to the markdown file
    */
   static parseFile(filePath: string): MarkdownChunk[] {
@@ -20,8 +20,7 @@ export class MarkdownParser {
       const lines = fileContent.split("\n");
       const chunks: MarkdownChunk[] = [];
       let currentH1 = "";
-      let currentH2 = "";
-      let currentHeader = "Introduction";
+      let currentHeader = "Giriş";
       let currentContent: string[] = [];
 
       lines.forEach((line) => {
@@ -29,13 +28,10 @@ export class MarkdownParser {
         if (trimmedLine.startsWith("# ")) {
           currentH1 = trimmedLine.replace("# ", "").trim();
         } else if (trimmedLine.startsWith("## ")) {
-          currentH2 = trimmedLine.replace("## ", "").trim();
-        } else if (trimmedLine.startsWith("### ")) {
           // Verify if we have content for the previous header
           if (currentContent.length > 0) {
             const metadata: string[] = [];
             if (currentH1) metadata.push(`Kategori: ${currentH1}`);
-            if (currentH2) metadata.push(`Alt-Kategori: ${currentH2}`);
             
             const metaText = metadata.length > 0 ? `> **Kılavuz:** ${metadata.join(" | ")}\n\n` : "";
 
@@ -44,10 +40,9 @@ export class MarkdownParser {
               content: metaText + currentContent.join("\n").trim(),
               sourceFile: path.basename(filePath),
               h1: currentH1 || undefined,
-              h2: currentH2 || undefined,
             });
           }
-          currentHeader = trimmedLine.replace("### ", "").trim();
+          currentHeader = trimmedLine.replace("## ", "").trim();
           currentContent = [];
         } else {
           currentContent.push(line);
@@ -58,16 +53,14 @@ export class MarkdownParser {
       if (currentContent.length > 0) {
         const metadata: string[] = [];
         if (currentH1) metadata.push(`Kategori: ${currentH1}`);
-        if (currentH2) metadata.push(`Alt-Kategori: ${currentH2}`);
         
-            const metaText = metadata.length > 0 ? `> **Kılavuz:** ${metadata.join(" | ")}\n\n` : "";
+        const metaText = metadata.length > 0 ? `> **Kılavuz:** ${metadata.join(" | ")}\n\n` : "";
 
         chunks.push({
           header: currentHeader,
           content: metaText + currentContent.join("\n").trim(),
           sourceFile: path.basename(filePath),
           h1: currentH1 || undefined,
-          h2: currentH2 || undefined,
         });
       }
 

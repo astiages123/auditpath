@@ -249,7 +249,7 @@ export async function generateFollowUpQuestion(
   }
 
   // 6. Save to database
-  const savedId = await saveFollowUpQuestion(question, context, noteContext.h3Title);
+  const savedId = await saveFollowUpQuestion(question, context, noteContext.h2Title);
   if (savedId) {
     question.id = savedId;
   }

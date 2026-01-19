@@ -44,9 +44,8 @@ export interface NoteContext {
   courseId?: string;
   courseSlug?: string;
   courseName: string;
-  h1Title: string | null;
-  h2Title: string | null;
-  h3Title: string;
+  h1Title: string | null; // Ders/Kategori
+  h2Title: string;        // Konu (Chunk Başlığı)
 
   content: string;
   wordCount: number;
@@ -210,7 +209,7 @@ export async function getSubjectGuidelines(
 export async function getNoteContext(chunkId: string): Promise<NoteContext | null> {
   const { data, error } = await supabase
     .from('note_chunks')
-    .select('course_id, course_name, section_title, content, metadata, parent_h1_id, parent_h2_id, word_count')
+    .select('course_id, course_name, section_title, content, metadata, parent_h1_id, word_count')
     .eq('id', chunkId)
     .single();
 
@@ -229,7 +228,7 @@ export async function getNoteContext(chunkId: string): Promise<NoteContext | nul
   // Extract hierarchy from metadata if available
   const metadata = (data.metadata || {}) as Record<string, unknown>;
   const h1Title = (metadata.h1_title as string) || data.parent_h1_id || null;
-  const h2Title = (metadata.h2_title as string) || data.parent_h2_id || null;
+  const h2Title = data.section_title; // H2 artık section_title'dır
 
   return {
     courseId: data.course_id,
@@ -237,7 +236,6 @@ export async function getNoteContext(chunkId: string): Promise<NoteContext | nul
     courseName: data.course_name,
     h1Title,
     h2Title,
-    h3Title: data.section_title,
     content: data.content,
     wordCount: data.word_count || 0,
     metadata,
@@ -415,7 +413,7 @@ async function saveQuestionToDatabase(
     const { data, error } = await supabase.from('questions').insert({
       course_id: noteContext.courseId,
       chunk_id: chunkId,
-      section_title: noteContext.h3Title,
+      section_title: noteContext.h2Title,
       question_data: question as unknown as import('../types/supabase').Json,
       usage_type: metadata.usageType,
       sequence_index: metadata.sequenceIndex,
@@ -464,8 +462,7 @@ function buildPrompt(
   // Add note content with hierarchy
   const hierarchyStr = [
     noteContext.h1Title ? `Ders: ${noteContext.h1Title}` : null,
-    noteContext.h2Title ? `Konu Grubu: ${noteContext.h2Title}` : null,
-    `Konu: ${noteContext.h3Title}`,
+    `Konu: ${noteContext.h2Title}`,
   ]
     .filter(Boolean)
     .join(' > ');
@@ -948,8 +945,7 @@ export async function generateQuizQuestionFromContent(
     courseName,
     courseSlug: courseData?.course_slug,
     h1Title: null,
-    h2Title: null,
-    h3Title: sectionTitle,
+    h2Title: sectionTitle,
     content,
     wordCount: content.trim().split(/\s+/).length,
   };
