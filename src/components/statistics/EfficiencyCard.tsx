@@ -2,14 +2,19 @@
 
 import { useState } from "react";
 import { AlertTriangle, TrendingUp } from "lucide-react";
-import type { EfficiencyData } from "@/lib/client-db";
+import type { EfficiencyData, CumulativeStats } from "@/lib/client-db";
 import { StatDetailModal } from "./StatDetailModal";
+import { HistoryView } from "./HistoryView";
+import { GeneralProgress } from "./GeneralProgress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface EfficiencyCardProps {
     data: EfficiencyData;
+    cumulativeData: CumulativeStats | null;
+    userId: string;
 }
 
-export function EfficiencyCard({ data }: EfficiencyCardProps) {
+export function EfficiencyCard({ data, cumulativeData, userId }: EfficiencyCardProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const maxValue = Math.max(data.videoMinutes, data.pomodoroMinutes, 1);
@@ -88,50 +93,100 @@ export function EfficiencyCard({ data }: EfficiencyCardProps) {
                 title="Verimlilik Detayları"
             >
                 <div className="space-y-4">
-                    <div className="bg-muted/30 rounded-xl p-4">
-                        <p className="text-sm text-muted-foreground">Net Video Süresi</p>
-                        <p className="text-2xl font-bold">{data.videoMinutes} dakika</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Bugün tamamlanan videoların toplam süresi
-                        </p>
-                    </div>
+                    <Tabs defaultValue="details" className="w-full">
+                        <TabsList className="grid w-full grid-cols-3">
+                            <TabsTrigger value="details">Detaylar</TabsTrigger>
+                            <TabsTrigger value="history">Geçmiş</TabsTrigger>
+                            <TabsTrigger value="cumulative">Genel</TabsTrigger>
+                        </TabsList>
 
-                    <div className="bg-muted/30 rounded-xl p-4">
-                        <p className="text-sm text-muted-foreground">Pomodoro Çalışma Süresi</p>
-                        <p className="text-2xl font-bold">{data.pomodoroMinutes} dakika</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Bugün çalışarak geçirilen toplam süre
-                        </p>
-                    </div>
+                        <TabsContent value="details" className="space-y-4 mt-4">
+                            <div className="bg-muted/30 rounded-xl p-4">
+                                <p className="text-sm text-muted-foreground">Net Video Süresi</p>
+                                <p className="text-2xl font-bold">{data.videoMinutes} dakika</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Bugün tamamlanan videoların toplam süresi
+                                </p>
+                            </div>
 
-                    <div className={`rounded-xl p-4 ${data.isAlarm ? "bg-destructive/20" : "bg-primary/20"}`}>
-                        <p className="text-sm text-muted-foreground">Öğrenme Katsayısı</p>
-                        <p className={`text-3xl font-bold ${data.isAlarm ? "text-destructive" : "text-primary"}`}>
-                            {data.ratio > 0 ? `${data.ratio}x` : "-"}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            {data.isAlarm
-                                ? "⚠️ Katsayı 3.0x üzerinde"
-                                : data.ratio > 0
-                                    ? "✓ Verimli çalışma"
-                                    : "Henüz veri yok"
-                            }
-                        </p>
-                    </div>
+                            <div className="bg-muted/30 rounded-xl p-4">
+                                <p className="text-sm text-muted-foreground">Pomodoro Çalışma Süresi</p>
+                                <p className="text-2xl font-bold">{data.pomodoroMinutes} dakika</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Bugün çalışarak geçirilen toplam süre
+                                </p>
+                            </div>
 
-                    <div className="bg-muted/20 rounded-xl p-4 text-sm text-muted-foreground">
-                        <p className="font-medium mb-2 flex items-center gap-2">
-                            <TrendingUp className="h-4 w-4" />
-                            Nasıl Hesaplanır?
-                        </p>
-                        <p>
-                            Öğrenme Katsayısı = Pomodoro Süresi ÷ Video Süresi
-                        </p>
-                        <p className="mt-2">
-                            İdeal oran 1.5x - 2.5x arasındadır. 3.0x üzeri değerler
-                            aşırı mola veya odaklanma sorunu işaret edebilir.
-                        </p>
-                    </div>
+                            <div className={`rounded-xl p-4 ${
+                                data.ratio < 1.0 || data.ratio > 2.2 ? "bg-red-500/10" : 
+                                data.ratio >= 1.2 && data.ratio <= 1.7 ? "bg-green-500/10" :
+                                data.ratio >= 1.8 && data.ratio <= 2.2 ? "bg-yellow-500/10" :
+                                "bg-primary/10"
+                            }`}>
+                                <p className="text-sm text-muted-foreground">Öğrenme Katsayısı</p>
+                                <div className="flex items-center gap-2 group">
+                                    <p className={`text-3xl font-bold ${
+                                        data.ratio < 1.0 || data.ratio > 2.2 ? 'text-red-500' : 
+                                        data.ratio >= 1.2 && data.ratio <= 1.7 ? 'text-green-500' :
+                                        data.ratio >= 1.8 && data.ratio <= 2.2 ? 'text-yellow-500' :
+                                        'text-primary'
+                                    }`}>
+                                        {data.ratio > 0 ? `${data.ratio}x` : "-"}
+                                    </p>
+                                </div>
+                                <p className="text-xs font-medium mt-1">
+                                    {data.ratio > 0 ? (
+                                        data.ratio < 1.0 ? (
+                                            <span className="text-red-500">Yüzeysel: Videoyu 1.5x hızda bitirip notlara neredeyse hiç bakmamışsın. Öğrenme kalıcılığı riskte.</span>
+                                        ) : data.ratio <= 1.7 ? (
+                                            <span className="text-green-500">Altın Oran: Teknolojiyi en verimli kullandığın aralık. Hızlı izleme + AI notlarını akıllıca sentezleme.</span>
+                                        ) : data.ratio <= 2.2 ? (
+                                            <span className="text-yellow-500">Yoğun Mesai: Konu ya çok zor ya da notları düzenlerken detaylarda boğulmaya başlıyorsun.</span>
+                                        ) : (
+                                            <span className="text-red-500">Verim Kaybı: AI desteğine rağmen bu süredeysen, öğrenmekten ziyade "not süsleme" veya "odak dağılması" yaşıyorsun.</span>
+                                        )
+                                    ) : "Henüz veri yok"}
+                                </p>
+                            </div>
+
+                            <div className="bg-muted/20 rounded-xl p-4 text-sm text-muted-foreground">
+                                <p className="font-medium mb-3 flex items-center gap-2">
+                                    <TrendingUp className="h-4 w-4" />
+                                    Verimlilik Skalası
+                                </p>
+                                <div className="space-y-3 text-[11px] leading-snug">
+                                    <div className="flex gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1 shrink-0" />
+                                        <p><span className="text-red-500 font-bold">&lt; 1.0x (Düşük):</span> Yüzeysel çalışma, düşük kalıcılık.</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1 shrink-0" />
+                                        <p><span className="text-green-500 font-bold">1.2x - 1.7x (İdeal):</span> Altın Oran. En verimli sentez.</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-1 shrink-0" />
+                                        <p><span className="text-yellow-500 font-bold">1.8x - 2.2x (Limit):</span> Detaylarda boğulma riski.</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1 shrink-0" />
+                                        <p><span className="text-red-500 font-bold">&gt; 2.2x (Aşırı):</span> Odak dağılması veya not süsleme.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="history" className="mt-4">
+                             <HistoryView userId={userId} />
+                        </TabsContent>
+
+                        <TabsContent value="cumulative" className="mt-4">
+                            {cumulativeData ? (
+                                <GeneralProgress data={cumulativeData} />
+                            ) : (
+                                <div className="text-center py-8 text-muted-foreground">Yükleniyor...</div>
+                            )}
+                        </TabsContent>
+                    </Tabs>
                 </div>
             </StatDetailModal>
         </>

@@ -19,12 +19,13 @@ export function TableOfContents({ content, activeId, onItemClick }: TableOfConte
     const [currentActiveId, setCurrentActiveId] = useState<string>("");
     const observerRef = useRef<IntersectionObserver | null>(null);
 
-    // Extract h2, h3, and h4 headings from markdown content
-    const headings = useMemo(() => {
-        // Regex to capture ##, ###, and ####
+    // Extract h2, h3 and h4 headings from markdown content
+    const { items: headings, highestLevel } = useMemo(() => {
+        // Regex to capture ##, ### and ####
         const headingRegex = /^(#{2,4})\s+(.+)$/gm;
         const items: HeadingItem[] = [];
         let match;
+        let minLevel: number = 4;
 
         // Counters for numbering
         let h2Count = 0;
@@ -38,6 +39,8 @@ export function TableOfContents({ content, activeId, onItemClick }: TableOfConte
                 .toLowerCase()
                 .replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF\s-]/g, '')
                 .replace(/\s+/g, '-');
+
+            if (level < minLevel) minLevel = level;
 
             let prefix = "";
             if (level === 2) {
@@ -54,10 +57,10 @@ export function TableOfContents({ content, activeId, onItemClick }: TableOfConte
                 prefix = `${String.fromCharCode(96 + h4Count)}.`; // a., b., c...
             }
 
-            items.push({ id, text, level, prefix });
+            items.push({ id, text, level: level as 2 | 3 | 4, prefix });
         }
 
-        return items;
+        return { items, highestLevel: minLevel };
     }, [content]);
 
     // Set up intersection observer for active section tracking
@@ -112,45 +115,41 @@ export function TableOfContents({ content, activeId, onItemClick }: TableOfConte
                 İçindekiler
             </h2>
             <ul className="space-y-1">
-                {headings.map((heading, index) => (
-                    <li key={`${heading.id}-${index}`}>
-                        <button
-                            onClick={() => handleClick(heading.id)}
-                            style={{
-                                paddingLeft: heading.level === 2 ? '0.75rem' : heading.level === 3 ? '2.5rem' : '4.5rem'
-                            }}
-                            className="w-full text-left group transition-all duration-200 border-none bg-transparent block"
-                        >
-                            <div className={`
-                                flex items-start px-3 py-1.5 rounded-lg transition-all duration-200
-                                ${effectiveActiveId === heading.id
-                                    ? 'bg-accent text-foreground shadow-lg'
-                                    : 'group-hover:bg-accent group-hover:text-foreground text-zinc-300'
-                                }
-                            `}>
-                                <span className={`
-                                    mr-2 font-sans shrink-0 transition-colors duration-200 mt-0.5
-                                    ${heading.level === 4 ? 'text-sm' : 'text-base'}
-                                    ${effectiveActiveId === heading.id ? 'font-bold' : ''}
-                                `}>
-                                    {heading.prefix}
-                                </span>
-                                <span className={`
-                                    line-clamp-2 transition-colors duration-200
+                {headings.map((heading, index) => {
+                    // Indentation level relative to the highest level present in the note
+                    const indent = heading.level - highestLevel;
+                    
+                    return (
+                        <li key={`${heading.id}-${index}`}>
+                            <button
+                                onClick={() => handleClick(heading.id)}
+                                style={{
+                                    paddingLeft: `${0.75 + indent * 1.5}rem`
+                                }}
+                                className="w-full text-left group border-none bg-transparent block"
+                            >
+                                <div className={`
+                                    flex items-start px-3 py-1.5 rounded-lg
                                     ${effectiveActiveId === heading.id
-                                        ? `font-bold ${heading.level === 4 ? 'text-sm' : 'text-base'}`
-                                        : heading.level === 2
-                                            ? 'font-semibold text-lg'
-                                            : heading.level === 3
-                                                ? 'text-base'
-                                                : 'text-sm'}
+                                        ? 'bg-accent text-foreground shadow-lg'
+                                        : 'group-hover:bg-accent group-hover:text-foreground text-zinc-300'
+                                    }
                                 `}>
-                                    {heading.text}
-                                </span>
-                            </div>
-                        </button>
-                    </li>
-                ))}
+                                    <span className="mr-2 font-sans shrink-0 mt-0.5 text-sm">
+                                        {heading.prefix}
+                                    </span>
+                                    <span className={`
+                                        ${indent === 0 
+                                            ? 'font-semibold' 
+                                            : 'text-sm'}
+                                    `}>
+                                        {heading.text}
+                                    </span>
+                                </div>
+                            </button>
+                        </li>
+                    );
+                })}
             </ul>
         </nav >
     );

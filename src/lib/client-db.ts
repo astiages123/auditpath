@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { Database, Json } from './types/supabase';
+import type { Database, Json } from './types/supabase';
 import { calculateSessionTotals } from './pomodoro-utils';
 
 
@@ -132,7 +132,7 @@ export async function getUserStats(userId: string) {
     // Helper to normalize date string to YYYY-MM-DD (local time usually fine for simple streak)
     const toDateString = (dateStr: string) => {
         const d = new Date(dateStr);
-        return d.toISOString().split('T')[0];
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     };
 
     if (progress) {
@@ -214,7 +214,7 @@ export async function getUserStats(userId: string) {
     let streak = 0;
     const today = new Date();
     // Check if we have activity today
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     
     if (activeDays.has(todayStr)) {
         streak = 1;
@@ -234,7 +234,7 @@ export async function getUserStats(userId: string) {
     // Let's implement standard streak logic:
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
 
     let currentCheckDate = new Date(today);
     
@@ -259,7 +259,7 @@ export async function getUserStats(userId: string) {
 
     if (activeDays.has(todayStr) || activeDays.has(yesterdayStr)) {
         while (true) {
-            const checkStr = currentCheckDate.toISOString().split('T')[0];
+            const checkStr = `${currentCheckDate.getFullYear()}-${String(currentCheckDate.getMonth() + 1).padStart(2, '0')}-${String(currentCheckDate.getDate()).padStart(2, '0')}`;
             if (activeDays.has(checkStr)) {
                 tempStreak++;
                 currentCheckDate.setDate(currentCheckDate.getDate() - 1);
@@ -338,19 +338,43 @@ export async function upsertPomodoroSession(
 ) {
   const { totalWork, totalBreak, totalPause } = calculateSessionTotals(session.timeline);
 
+  // Validate if courseId is a UUID
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  let finalCourseId: string | null = session.courseId;
+  let finalCourseName = session.courseName;
+
+  if (!uuidRegex.test(session.courseId)) {
+    // If not a UUID, it's likely a slug. Try to resolve it.
+    const { data: course } = await supabase
+      .from("courses")
+      .select("id, name")
+      .eq("course_slug", session.courseId)
+      .maybeSingle();
+
+    if (course) {
+      finalCourseId = course.id;
+      if (!finalCourseName) finalCourseName = course.name;
+    } else {
+      // If we can't find it, set to null to avoid Postgres 400 error
+      finalCourseId = null;
+    }
+  }
+
   const { data, error } = await supabase
     .from("pomodoro_sessions")
     .upsert({
       id: session.id,
       user_id: userId,
-      course_id: session.courseId,
-      course_name: session.courseName,
+      course_id: finalCourseId,
+      course_name: finalCourseName,
       timeline: session.timeline,
       started_at: new Date(session.startedAt).toISOString(),
       ended_at: new Date().toISOString(),
       total_work_time: totalWork,
       total_break_time: totalBreak,
       total_pause_time: totalPause,
+      // @ts-ignore - Bu alan yeni eklendi, tipler güncellenince hata gidecektir
+      is_completed: session.isCompleted || false,
     })
     .select()
     .single();
@@ -408,7 +432,10 @@ export async function getTotalActiveDays(userId: string) {
 
   if (error || !data) return 0;
 
-  const days = new Set(data.map(d => d.started_at.split('T')[0]));
+  const days = new Set(data.map(d => {
+    const date = new Date(d.started_at);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }));
   return days.size;
 }
 
@@ -432,6 +459,8 @@ export async function getLatestActiveSession(userId: string) {
     .select('*, course:courses(*, category:categories(*))')
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
+    // @ts-ignore - is_completed kolonu migration sonrasında aktif olacaktır
+    .neq('is_completed', true)
     .limit(1)
     .maybeSingle();
 
@@ -535,6 +564,17 @@ export async function toggleVideoProgress(
 
   if (error) {
     console.error('Error toggling video progress:', error);
+  } else if (completed) {
+      // Log to video_logs for stats
+      const { error: logError } = await supabase
+        .from('video_logs')
+        .insert({
+            user_id: userId,
+            video_id: video.id,
+            course_id: courseId
+        });
+        
+      if (logError) console.error('Error logging video completion:', logError);
   }
 }
 
@@ -577,28 +617,101 @@ export async function toggleVideoProgressBatch(
 
   if (error) {
     console.error('Error batch toggling video progress:', error);
+  } else if (completed) {
+    // Batch log
+    const logData = videos.map(v => ({
+        user_id: userId,
+        video_id: v.id,
+        course_id: courseId
+    }));
+    
+    const { error: logError } = await supabase
+        .from('video_logs')
+        .insert(logData);
+
+    if (logError) console.error('Error logging batch video completion:', logError);
+  }
+
+  if (error) {
+    console.error('Error batch toggling video progress:', error);
   }
 }
 
 export async function getDailyStats(userId: string): Promise<DailyStats> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const today = new Date(now);
+  
+  // Virtual Day Logic: Day starts at 04:00 AM
+  // If we are between 00:00 - 04:00, we belong to the previous day
+  if (now.getHours() < 4) {
+      today.setDate(today.getDate() - 1);
+  }
+  today.setHours(4, 0, 0, 0);
 
-  const { data, error } = await supabase
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  // 1. Fetch Today's Pomodoro Stats
+  const { data: todaySessions, error: todayError } = await supabase
     .from("pomodoro_sessions")
-    .select("total_work_time, total_break_time")
+    .select("total_work_time, total_break_time, total_pause_time")
     .eq("user_id", userId)
-    .gte("started_at", today.toISOString());
+    .gte("started_at", today.toISOString())
+    .lt("started_at", tomorrow.toISOString());
 
-  if (error) {
-    console.error("Error fetching daily stats:", error);
+  if (todayError) {
+    console.error("Error fetching daily stats:", todayError);
   }
 
+  // 2. Fetch Yesterday's Pomodoro Stats (for Trend)
+  const { data: yesterdaySessions, error: yesterdayError } = await supabase
+    .from("pomodoro_sessions")
+    .select("total_work_time")
+    .eq("user_id", userId)
+    .gte("started_at", yesterday.toISOString())
+    .lt("started_at", today.toISOString());
+
+  // 3. Fetch Today's Video Stats using video_logs (NEW LOGIC)
+  const { data: todayVideoLogs, error: videoError } = await supabase
+    .from("video_logs")
+    .select("video:videos(duration_minutes)")
+    .eq("user_id", userId)
+    .gte("created_at", today.toISOString())
+    .lt("created_at", tomorrow.toISOString());
+
   const totalWorkMinutes =
-    data?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
+    todaySessions?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
   const totalBreakMinutes =
-    data?.reduce((acc, s) => acc + (s.total_break_time || 0), 0) || 0;
-  const sessionCount = data?.length || 0;
+    todaySessions?.reduce((acc, s) => acc + (s.total_break_time || 0), 0) || 0;
+  const totalPauseMinutes = 
+    todaySessions?.reduce((acc, s) => acc + (s.total_pause_time || 0), 0) || 0;
+  const sessionCount = todaySessions?.length || 0;
+
+  const yesterdayWorkMinutes = 
+    yesterdaySessions?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
+
+  // Calculate Trend
+  let trendPercentage = 0;
+  if (yesterdayWorkMinutes === 0) {
+    trendPercentage = totalWorkMinutes > 0 ? 100 : 0;
+  } else {
+    trendPercentage = Math.round(((totalWorkMinutes - yesterdayWorkMinutes) / yesterdayWorkMinutes) * 100);
+  }
+
+  // Calculate Video Stats from Logs
+  let totalVideoMinutes = 0;
+  const completedVideosCount = todayVideoLogs?.length || 0;
+
+  if (todayVideoLogs) {
+    totalVideoMinutes = todayVideoLogs.reduce((acc, log) => {
+      // @ts-ignore
+      const duration = log.video?.duration_minutes || 0;
+      return acc + duration;
+    }, 0);
+  }
 
   // Default goal 4 hours (240 mins)
   const goalMinutes = 240;
@@ -611,11 +724,11 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     goalMinutes,
     progress,
     goalPercentage: progress,
-    trendPercentage: 0,
+    trendPercentage,
     dailyGoal: goalMinutes,
-    totalPauseMinutes: 0,
-    totalVideoMinutes: 0,
-    completedVideos: 0,
+    totalPauseMinutes,
+    totalVideoMinutes: Math.round(totalVideoMinutes),
+    completedVideos: completedVideosCount,
   };
 }
 
@@ -637,22 +750,26 @@ export async function getLast30DaysActivity(userId: string): Promise<DayActivity
 
   const dailyCounts: Record<string, number> = {};
   data?.forEach((s) => {
-    const dateStr = s.started_at.split("T")[0];
+    const d = new Date(s.started_at);
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     dailyCounts[dateStr] = (dailyCounts[dateStr] || 0) + 1;
   });
 
   const heatmap: DayActivity[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   for (let i = 0; i <= 30; i++) {
-    const d = new Date(thirtyDaysAgo);
-    d.setDate(d.getDate() + i);
-    const dateStr = d.toISOString().split("T")[0];
+    const d = new Date(today);
+    d.setDate(d.getDate() - (30 - i));
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const count = dailyCounts[dateStr] || 0;
     
     let level: 0 | 1 | 2 | 3 | 4 = 0;
-    if (count > 8) level = 4;
-    else if (count > 5) level = 3;
-    else if (count > 2) level = 2;
-    else if (count > 0) level = 1;
+    if (count >= 5) level = 4;
+    else if (count >= 3) level = 3;
+    else if (count >= 2) level = 2;
+    else if (count >= 1) level = 1;
 
     heatmap.push({ 
       date: dateStr, 
@@ -667,32 +784,192 @@ export async function getLast30DaysActivity(userId: string): Promise<DayActivity
 }
 
 export async function getEfficiencyRatio(userId: string): Promise<EfficiencyData> {
-  const { data, error } = await supabase
+  const now = new Date();
+  const today = new Date(now);
+  if (now.getHours() < 4) {
+      today.setDate(today.getDate() - 1);
+  }
+  today.setHours(4, 0, 0, 0);
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  // 1. Fetch Today's Pomodoro Stats
+  const { data: todaySessions, error: sessionError } = await supabase
     .from("pomodoro_sessions")
     .select("total_work_time, total_break_time")
     .eq("user_id", userId)
-    .order("started_at", { ascending: false })
-    .limit(20);
+    .gte("started_at", today.toISOString())
+    .lt("started_at", tomorrow.toISOString());
 
-  if (error || !data || data.length === 0) {
-    return { ratio: 100, trend: "stable", isAlarm: false, videoMinutes: 0, pomodoroMinutes: 0 };
+  // 2. Fetch Today's Video Stats using video_logs (NEW LOGIC)
+  const { data: todayVideoLogs, error: videoError } = await supabase
+    .from("video_logs")
+    .select("video:videos(duration_minutes)")
+    .eq("user_id", userId)
+    .gte("created_at", today.toISOString())
+    .lt("created_at", tomorrow.toISOString());
+
+  if (sessionError || videoError) {
+    console.error("Error fetching efficiency metrics:", sessionError || videoError);
   }
 
-  const totalWork = data.reduce((acc, s) => acc + (s.total_work_time || 0), 0);
-  const totalBreak = data.reduce((acc, s) => acc + (s.total_break_time || 0), 0);
+  const totalWork = todaySessions?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
+  
+  let totalVideoMinutes = 0;
+  if (todayVideoLogs) {
+    totalVideoMinutes = todayVideoLogs.reduce((acc, log) => {
+      // @ts-ignore
+      const duration = (log.video as any)?.duration_minutes || 0;
+      return acc + duration;
+    }, 0);
+  }
 
-  // Ideal ratio is work/(work+break) approx 80-90%
-  const ratio = totalWork + totalBreak > 0 
-    ? Math.round((totalWork / (totalWork + totalBreak)) * 100) 
-    : 100;
+  // Calculate Learning Quotient: Pomodoro Minutes / Video Minutes
+  // If Video duration is 0, we avoid division by zero
+  const ratio = totalVideoMinutes > 0 
+    ? Math.round((totalWork / totalVideoMinutes) * 10) / 10 
+    : 0.0;
 
   return {
     ratio,
-    trend: "stable", // Would need more sophisticated analysis for trend
-    isAlarm: ratio > 300, // Alarm if efficiency exceeds 3.0x (300%)
-    videoMinutes: 0, // Placeholder, should be calculated from video_progress
-    pomodoroMinutes: totalWork,
+    trend: "stable",
+    isAlarm: false, // You can implement a check here: e.g. ratio > 3.0
+    videoMinutes: Math.round(totalVideoMinutes),
+    pomodoroMinutes: totalWork
   };
+}
+
+export interface CumulativeStats {
+    totalWorkMinutes: number;
+    totalVideoMinutes: number;
+    ratio: number;
+}
+
+export async function getCumulativeStats(userId: string): Promise<CumulativeStats> {
+   // 1. Total Pomodoro
+   const { data: allSessions, error: sessionError } = await supabase
+    .from("pomodoro_sessions")
+    .select("total_work_time")
+    .eq("user_id", userId);
+
+   // 2. Total Video (Using video_progress for historically accurate total count, 
+   // or video_logs if we trust backfill. Let's use video_logs for consistency with learning quotient logic)
+   // Actually for "Cumulative Learning Coefficient", we should probably use ALL logs.
+   const { data: allLogs, error: logError } = await supabase
+    .from("video_logs")
+    .select("video:videos(duration_minutes)")
+    .eq("user_id", userId);
+
+    if (sessionError || logError) {
+        console.error("Error fetching cumulative stats:", sessionError || logError);
+    } else {
+        // Debug Log
+        console.log("Cumulative Logs Found:", allLogs?.length, "Samples:", allLogs?.slice(0, 3));
+    }
+
+    const totalWorkMinutes = allSessions?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
+    
+    let totalVideoMinutes = 0;
+    if (allLogs) {
+        totalVideoMinutes = allLogs.reduce((acc, log) => {
+            // @ts-ignore
+            const duration = (log.video as any)?.duration_minutes || 0;
+            return acc + duration;
+        }, 0);
+    }
+
+    const ratio = totalVideoMinutes > 0 
+        ? Math.round((totalWorkMinutes / totalVideoMinutes) * 10) / 10 
+        : 0;
+
+    return {
+        totalWorkMinutes,
+        totalVideoMinutes: Math.round(totalVideoMinutes),
+        ratio
+    };
+}
+
+
+
+export interface HistoryStats {
+    date: string;
+    pomodoro: number;
+    video: number;
+}
+
+export async function getHistoryStats(userId: string, days: number = 7): Promise<HistoryStats[]> {
+    const now = new Date();
+    const today = new Date(now);
+    if (now.getHours() < 4) {
+        today.setDate(today.getDate() - 1);
+    }
+    today.setHours(4, 0, 0, 0);
+
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - (days - 1)); // Include today
+    startDate.setHours(4, 0, 0, 0);
+
+    // 1. Fetch Pomodoro Sessions
+    const { data: sessions, error: sessionError } = await supabase
+        .from("pomodoro_sessions")
+        .select("started_at, total_work_time")
+        .eq("user_id", userId)
+        .gte("started_at", startDate.toISOString());
+
+    // 2. Fetch Video Logs
+    const { data: logs, error: logError } = await supabase
+        .from("video_logs")
+        .select("created_at, video:videos(duration_minutes)")
+        .eq("user_id", userId)
+        .gte("created_at", startDate.toISOString());
+
+    if (sessionError || logError) {
+        console.error("Error fetching history stats:", sessionError || logError);
+        return [];
+    }
+
+    // Group by Date
+    const statsMap: Record<string, { pomodoro: number; video: number }> = {};
+
+    // Initialize with 0s for all days
+    for (let i = 0; i < days; i++) {
+        const d = new Date(startDate);
+        d.setDate(d.getDate() + i);
+        const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        statsMap[dateKey] = { pomodoro: 0, video: 0 };
+    }
+
+    sessions?.forEach(s => {
+        const d = new Date(s.started_at);
+        // Virtual Day Shift for Mapping
+        if (d.getHours() < 4) d.setDate(d.getDate() - 1);
+        
+        const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        if (statsMap[dateKey]) {
+            statsMap[dateKey].pomodoro += (s.total_work_time || 0);
+        }
+    });
+
+    logs?.forEach(l => {
+        const d = new Date(l.created_at);
+        // Virtual Day Shift for Mapping
+        if (d.getHours() < 4) d.setDate(d.getDate() - 1);
+
+        const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        if (statsMap[dateKey]) {
+            // @ts-ignore
+            statsMap[dateKey].video += (l.video?.duration_minutes || 0);
+        }
+    });
+
+    // Convert to array and sort
+    return Object.entries(statsMap)
+        .map(([date, values]) => ({
+            date, // Keeps YYYY-MM-DD for sorting
+            ...values
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 export async function getRecentSessions(userId: string, limit: number = 20): Promise<TimelineBlock[]> {
@@ -708,17 +985,29 @@ export async function getRecentSessions(userId: string, limit: number = 20): Pro
     return [];
   }
 
-  return data.map((s) => ({
-    id: s.id,
-    courseName: s.course_name || "Bilinmeyen Ders",
-    startTime: s.started_at,
-    endTime: s.ended_at,
-    duration: s.total_work_time || 0,
-    durationMinutes: s.total_work_time || 0,
-    pauseMinutes: s.total_pause_time || 0,
-    type: "work", // Simplification: treatment of the whole session as work for now
-    timeline: Array.isArray(s.timeline) ? (s.timeline as Json[]) : [],
-  }));
+  return data.map((s) => {
+    // Calculate totals directly from timeline for 100% accuracy
+    const timeline = Array.isArray(s.timeline) ? (s.timeline as any[]) : [];
+    const { totalWork, totalBreak, totalPause } = calculateSessionTotals(timeline, new Date(s.ended_at).getTime());
+    
+    // Fallback to DB columns if timeline is empty/invalid but columns exist
+    const workTime = totalWork > 0 ? totalWork : (s.total_work_time || 0);
+    const breakTime = totalBreak > 0 ? totalBreak : s.total_break_time || 0; // Keep 0 if computed is 0
+    const pauseTime = totalPause > 0 ? totalPause : s.total_pause_time || 0;
+
+    return {
+      id: s.id,
+      courseName: s.course_name || "Bilinmeyen Ders",
+      startTime: s.started_at,
+      endTime: s.ended_at,
+      duration: workTime,
+      durationMinutes: workTime + breakTime, // Total session span
+      pauseMinutes: pauseTime,
+      breakMinutes: breakTime,
+      type: (breakTime > workTime) ? "break" : "work",
+      timeline: timeline,
+    };
+  });
 }
 
 export async function getNoteChunkById(chunkId: string) {
@@ -807,53 +1096,140 @@ export async function getTopicQuestionCount(courseId: string, topic: string) {
   return count || 0;
 }
 
-export async function getTopicCompletionStatus(userId: string, courseId: string, topic: string) {
-  // 1. Get total "antrenman" questions for this topic
-  const { count: totalCount, error: countError } = await supabase
-    .from('questions')
-    .select('*', { count: 'exact', head: true })
+export interface TopicCompletionStats {
+  completed: boolean;
+  antrenman: { solved: number; total: number };
+  deneme: { solved: number; total: number };
+  arsiv: { solved: number; total: number };
+  mistakes: { solved: number; total: number };
+}
+
+import { calculateQuota } from './ai/quiz-api';
+
+export async function getTopicCompletionStatus(userId: string, courseId: string, topic: string): Promise<TopicCompletionStats> {
+  // 1. Get Chunk Info for Quota Calculation
+  const { data: chunk } = await supabase
+    .from('note_chunks')
+    .select('id, word_count, metadata')
     .eq('course_id', courseId)
     .eq('section_title', topic)
-    .eq('usage_type', 'antrenman');
+    .limit(1)
+    .maybeSingle();
 
-  if (countError) {
-    console.error('Error fetching total question count:', countError);
-    return { completed: false, total: 0, solved: 0 };
+  let quota = { total: 0, antrenmanCount: 0, arsivCount: 0, denemeCount: 0 };
+
+  if (chunk) {
+      const wordCount = chunk.word_count || 0;
+      const metadata = chunk.metadata as Record<string, unknown> || {};
+      const conceptMap = (metadata.concept_map as unknown[]) || [];
+      const conceptCount = conceptMap.length;
+      quota = calculateQuota(wordCount, conceptCount);
   }
 
-  // 2. Get questions solved by user for this topic/course
-  // We need to join user_quiz_progress with questions to filter by usage_type 'antrenman'
-  // But user_quiz_progress already links to specific question_ids.
-  // A simpler approximate is to check how many DISTINCT question_ids the user has solved
-  // that belong to this topic and are 'antrenman'.
+  // 2. Get all questions for this topic
+  const { data: questions, error: questionsError } = await supabase
+    .from('questions')
+    .select('id, usage_type, parent_question_id')
+    .eq('course_id', courseId)
+    .eq('section_title', topic);
+
+  if (questionsError || !questions) {
+    console.error('Error fetching questions for status:', questionsError);
+    return {
+        completed: false,
+        antrenman: { solved: 0, total: quota.antrenmanCount },
+        deneme: { solved: 0, total: quota.denemeCount },
+        arsiv: { solved: 0, total: quota.arsivCount },
+        mistakes: { solved: 0, total: 0 }
+    };
+  }
+
+  // 3. Calculate Totals (Existing in DB vs Theoretical Quota)
+  const existingCounts = {
+      antrenman: 0,
+      deneme: 0,
+      arsiv: 0,
+      mistakes: 0
+  };
   
+  const questionIds = new Set<string>();
+  const idToTypeMap = new Map<string, 'antrenman' | 'deneme' | 'arsiv' | 'mistakes'>();
+
+  questions.forEach(q => {
+      questionIds.add(q.id);
+      let type: 'antrenman' | 'deneme' | 'arsiv' | 'mistakes' = 'antrenman'; // default
+
+      if (q.parent_question_id) {
+          type = 'mistakes';
+      } else {
+          // Explicit types
+          if (q.usage_type === 'deneme') type = 'deneme';
+          else if (q.usage_type === 'arsiv') type = 'arsiv';
+          else type = 'antrenman';
+      }
+      
+      idToTypeMap.set(q.id, type);
+      existingCounts[type]++;
+  });
+
+  // 4. Get User Progress
   const { data: solvedData, error: solvedError } = await supabase
     .from('user_quiz_progress')
-    .select('question_id, questions!inner(usage_type, section_title)')
+    .select('question_id')
     .eq('user_id', userId)
     .eq('course_id', courseId)
-    .eq('questions.section_title', topic)
-    .eq('questions.usage_type', 'antrenman');
-    
+    .in('question_id', Array.from(questionIds));
+
   if (solvedError) {
-    console.error('Error fetching solved count:', solvedError);
-     return { completed: false, total: totalCount || 0, solved: 0 };
+      console.error('Error fetching solved stats:', solvedError);
+       return {
+        completed: false,
+        antrenman: { solved: 0, total: quota.antrenmanCount },
+        deneme: { solved: 0, total: quota.denemeCount },
+        arsiv: { solved: 0, total: quota.arsivCount },
+        mistakes: { solved: 0, total: 0 }
+    };
   }
 
-  // Filter distinct question IDs just in case (though progress is usually 1 per attempt, but we want unique questions solved)
-  const uniqueSolved = new Set(solvedData.map(d => d.question_id));
-  const solvedCount = uniqueSolved.size;
-  const total = totalCount || 0;
+  const solvedCounts = {
+      antrenman: 0,
+      deneme: 0,
+      arsiv: 0,
+      mistakes: 0
+  };
+  
+  const uniqueSolved = new Set<string>();
+  solvedData?.forEach(d => {
+      if (!uniqueSolved.has(d.question_id)) {
+          uniqueSolved.add(d.question_id);
+          const type = idToTypeMap.get(d.question_id);
+          if (type) {
+              solvedCounts[type]++;
+          }
+      }
+  });
 
-  // Completed if solvedCount is close to total (e.g. >= total). 
-  // Allow a small margin? No, strict is fine for "completion".
-  const completed = total > 0 && solvedCount >= total;
+  // Final Totals - taking the max of Quota vs Existing to ensure we don't show "10/5"
+  const antrenmanTotal = Math.max(quota.antrenmanCount, existingCounts.antrenman);
+  const denemeTotal = Math.max(quota.denemeCount, existingCounts.deneme);
+  const arsivTotal = Math.max(quota.arsivCount, existingCounts.arsiv);
+  const mistakesTotal = existingCounts.mistakes;
 
-  return { completed, total, solved: solvedCount };
-}
+  // Completed logic: Consistent with the UI display
+  const isCompleted = antrenmanTotal > 0 && solvedCounts.antrenman >= antrenmanTotal;
+
+  return {
+      completed: isCompleted,
+      antrenman: { solved: solvedCounts.antrenman, total: antrenmanTotal },
+      deneme: { solved: solvedCounts.deneme, total: denemeTotal },
+      arsiv: { solved: solvedCounts.arsiv, total: arsivTotal },
+      mistakes: { solved: solvedCounts.mistakes, total: mistakesTotal }
+  };
+};
 
 export interface TopicWithCounts {
     name: string;
+    isCompleted: boolean; // Computed on client side or simplified fetch?
     counts: {
         antrenman: number;
         arsiv: number;
@@ -863,6 +1239,9 @@ export interface TopicWithCounts {
 }
 
 export async function getCourseTopicsWithCounts(courseId: string): Promise<TopicWithCounts[]> {
+    const { data: user } = await supabase.auth.getUser();
+    const userId = user.user?.id;
+
     // 1. Get topics from note_chunks sorted by chunk_order
     const { data: chunks, error: chunksError } = await supabase
         .from('note_chunks')
@@ -890,41 +1269,91 @@ export async function getCourseTopicsWithCounts(courseId: string): Promise<Topic
     // 2. Fetch all questions for this course to aggregate counts
     const { data: questions, error: questionsError } = await supabase
         .from('questions')
-        .select('section_title, usage_type')
+        .select('id, section_title, usage_type, parent_question_id')
         .eq('course_id', courseId);
 
     if (questionsError) {
         console.error('Error fetching questions for counts:', questionsError);
-        // Fallback: return topics with 0 counts
-        return orderedTopics.map(t => ({
+         return orderedTopics.map(t => ({
             name: t,
+            isCompleted: false,
             counts: { antrenman: 0, arsiv: 0, deneme: 0, total: 0 }
         }));
     }
 
-    // 3. Aggregate counts
-    const countsMap: Record<string, { antrenman: number; arsiv: number; deneme: number; total: number }> = {};
+    // 2.1 Fetch Solved Questions to determine isCompleted
+    let solvedIds = new Set<string>();
+    if (userId) {
+        const { data: solved } = await supabase
+            .from('user_quiz_progress')
+            .select('question_id')
+            .eq('user_id', userId)
+            .eq('course_id', courseId);
+        
+        solved?.forEach(s => solvedIds.add(s.question_id));
+    }
+
+    // 3. Aggregate counts & completion
+    // Map: Topic -> { antrenmanTotal: 0, antrenmanSolved: 0, ...others }
+    const topicStats: Record<string, { 
+        antrenman: number; 
+        arsiv: number; 
+        deneme: number; 
+        total: number;
+        antrenmanSolved: number; // To check completion
+    }> = {};
     
-    // Initialize map
+    // Initialize
     orderedTopics.forEach(t => {
-        countsMap[t] = { antrenman: 0, arsiv: 0, deneme: 0, total: 0 };
+        topicStats[t] = { antrenman: 0, arsiv: 0, deneme: 0, total: 0, antrenmanSolved: 0 };
     });
 
     questions?.forEach(q => {
         const t = q.section_title;
-        if (countsMap[t]) {
-            countsMap[t].total += 1;
-            const type = q.usage_type as string; // 'antrenman' | 'arsiv' | 'deneme'
-            if (type === 'antrenman') countsMap[t].antrenman += 1;
-            else if (type === 'arsiv') countsMap[t].arsiv += 1;
-            else if (type === 'deneme') countsMap[t].deneme += 1;
+        if (topicStats[t]) {
+            topicStats[t].total += 1;
+            const type = q.usage_type as string; 
+            
+            // Note: UI Badges requested to be removed, but we still return counts if needed.
+            // Requirement said "Remove badge from UI", not remove from data.
+            // But completion logic mainly cares about "Antrenman" (non-mistake) questions.
+            
+            if (q.parent_question_id) {
+                // Mistake question - doesn't count towards 'Antrenman' total for badge usually, 
+                // but let's keep simple counts as per existing logic or update?
+                // Existing logic counted them based on usage_type 'antrenman' if they had it.
+                // Assuming generated follow-ups have usage_type 'antrenman'. 
+                // BUT User wants "Hata Telafisi" category separate in stats. 
+                // For this list "isCompleted", we focus on MAIN questions.
+                // So if parent_question_id is present, we ignore for "Antrenman Completion".
+            } else {
+                 if (type === 'antrenman') {
+                     topicStats[t].antrenman += 1;
+                     if (solvedIds.has(q.id)) {
+                         topicStats[t].antrenmanSolved += 1;
+                     }
+                 }
+                 else if (type === 'arsiv') topicStats[t].arsiv += 1;
+                 else if (type === 'deneme') topicStats[t].deneme += 1;
+            }
         }
     });
 
-    return orderedTopics.map(topic => ({
-        name: topic,
-        counts: countsMap[topic]
-    }));
+    return orderedTopics.map(topic => {
+        const s = topicStats[topic];
+        const isCompleted = s.antrenman > 0 && s.antrenmanSolved >= s.antrenman;
+        
+        return {
+            name: topic,
+            isCompleted, 
+            counts: {
+                antrenman: s.antrenman,
+                arsiv: s.arsiv,
+                deneme: s.deneme,
+                total: s.total
+            }
+        };
+    });
 }
 
 export async function getTopicQuestions(courseId: string, topic: string) {
@@ -1173,7 +1602,7 @@ export async function finishQuizSession(stats: SessionResultStats) {
   // 1. Increment Course Session Counter (Manual Logic since RPC is missing)
   const { data: existing, error: fetchError } = await supabase
     .from('course_session_counters')
-    .select('current_session')
+    .select('id, current_session')
     .eq('course_id', stats.courseId)
     .eq('user_id', stats.userId)
     .maybeSingle();
@@ -1188,10 +1617,13 @@ export async function finishQuizSession(stats: SessionResultStats) {
   const { error: upsertError } = await supabase
     .from('course_session_counters')
     .upsert({
+        id: existing?.id, // Includes ID if it exists to perform UPDATE instead of INSERT
         course_id: stats.courseId,
         user_id: stats.userId,
         current_session: nextSession,
         last_session_date: new Date().toISOString()
+    }, {
+        onConflict: 'user_id,course_id' // Explicitly handle conflict
     });
   
   if (upsertError) {

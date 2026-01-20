@@ -11,6 +11,7 @@ import {
   QuizGenerationResult,
   generateQuizQuestion,
   generateQuizQuestionFromContent,
+  fetchQuestionsForSession,
 } from '@/lib/ai/quiz-api';
 
 export interface QuizState {
@@ -24,6 +25,7 @@ export interface QuizState {
   isAnswered: boolean;
   showExplanation: boolean;
   isCorrect: boolean | null;
+  hasStarted: boolean; // New state to track if user clicked start
 }
 
 export interface UseQuizReturn {
@@ -44,6 +46,7 @@ export interface UseQuizReturn {
   retry: () => Promise<void>;
   /** Mark current question as blank (skipped without answering) */
   markAsBlank: () => void;
+  startQuiz: () => void; // method to start quiz
 }
 
 const initialState: QuizState = {
@@ -57,6 +60,7 @@ const initialState: QuizState = {
   isAnswered: false,
   showExplanation: false,
   isCorrect: null,
+  hasStarted: false,
 };
 
 export function useQuiz(): UseQuizReturn {
@@ -76,7 +80,8 @@ export function useQuiz(): UseQuizReturn {
         
         // Show loading only if we have less than 1 questions ready
         // This allows user to start answering while others generate in background
-        const shouldShowLoading = newGeneratedCount < Math.min(1, targetCount);
+        // Show loading until ALL questions are generated
+        const shouldShowLoading = newGeneratedCount < targetCount;
 
         return {
           ...prev,
@@ -105,7 +110,7 @@ export function useQuiz(): UseQuizReturn {
       }));
       setLastGenerationParams({ type: 'chunk', chunkId });
 
-      console.log('Generating single question from chunk:', chunkId);
+      // console.log('Generating single question from chunk:', chunkId);
       const result = await generateQuizQuestion(chunkId);
       handleGenerationResult(result, 1);
     },
@@ -121,7 +126,7 @@ export function useQuiz(): UseQuizReturn {
       }));
       setLastGenerationParams({ type: 'content', courseName, sectionTitle, content, courseId });
 
-      console.log('Generating single question from content');
+      // console.log('Generating single question from content');
       const result = await generateQuizQuestionFromContent(courseName, sectionTitle, content, courseId);
       handleGenerationResult(result, 1);
     },
@@ -130,69 +135,170 @@ export function useQuiz(): UseQuizReturn {
 
   const generateBatch = useCallback(
     async (count: number, params: { type: 'chunk'; chunkId: string; userId?: string } | { type: 'content'; courseName: string; sectionTitle: string; content: string; courseId?: string }) => {
-      setState(() => ({
-        ...initialState,
+      // 0. GET QUOTA logic
+      let antrenmanCount = count;
+      let arsivCount = 0;
+      let denemeCount = 0;
+
+      if (params.type === 'chunk') {
+          try {
+             const { getQuizQuotaAction } = await import('@/lib/ai/quiz-api');
+             const quotaResult = await getQuizQuotaAction(params.chunkId);
+             if (quotaResult.success && quotaResult.quota) {
+                 antrenmanCount = quotaResult.quota.antrenmanCount;
+                 arsivCount = quotaResult.quota.arsivCount;
+                 denemeCount = quotaResult.quota.denemeCount;
+                 console.log(`[QuizGen/TR] 📊 Kota Planı: ${antrenmanCount} Antrenman, ${arsivCount} Arşiv, ${denemeCount} Deneme.`);
+             }
+          } catch (e) {
+              console.error('[QuizGen] Failed to fetch quota:', e);
+          }
+      }
+
+      setState((prev) => ({
+        ...prev,
         isLoading: true,
-        totalToGenerate: count,
+        error: null,
         generatedCount: 0,
+        totalToGenerate: antrenmanCount, // Only show Antrenman count to user
+        queue: [], // Reset queue on new batch
+        currentQuestion: null,
+        hasStarted: false
       }));
       setLastGenerationParams(params);
 
-      console.log(`Starting batch generation of ${count} questions...`);
+      // Track failed requests for retry (Antrenman only)
+      const failedIndices: number[] = [];
 
-      // We generate sequentially to ensure order but update state incrementally
-      // The state.isLoading will automatically flip to false after first few questions (handled in handleGenerationResult)
-      for (let i = 0; i < count; i++) {
-        // If we want to stop generation if user navigates away, we'd need an abort controller/ref check here.
-        // For now, simpler is fine.
-        console.log(`Batch generation ${i + 1}/${count} starting...`);
-        
-        let result: QuizGenerationResult;
-        
-        if (params.type === 'chunk') {
-          result = await generateQuizQuestion(params.chunkId, { userId: params.userId });
-        } else {
-          result = await generateQuizQuestionFromContent(
-            params.courseName,
-            params.sectionTitle,
-            params.content,
-            params.courseId
-          );
-        }
+      // 1. PRE-CHECK: Fetch existing questions from DB
+      let questionsToGenerate = antrenmanCount;
+      const fetchedQuestions: QuizQuestion[] = [];
+      
+      if (params.type === 'chunk' && params.userId) {
+          try {
+              const existing = await fetchQuestionsForSession(params.chunkId, antrenmanCount, params.userId, 'antrenman');
+              if (existing.length > 0) {
+                  console.log(`[QuizGen] Found ${existing.length} existing questions.`);
+                  fetchedQuestions.push(...existing);
+                  questionsToGenerate -= existing.length;
 
-        console.log(`Batch generation ${i + 1}/${count} completed. Success: ${result.success}`);
-        
-        // Handle result logic inline here to ensure we have access to 'count' loop variable easily
-        if (result.success && result.question) {
-           setState((prev) => {
-            const isFirst = prev.currentQuestion === null;
-            const newGeneratedCount = prev.generatedCount + 1;
-            
-            // Critical change: Stop loading UI as soon as we have enough questions (e.g. 1)
-            // But continue generating the rest in background loop.
-            const shouldShowLoading = newGeneratedCount < Math.min(1, count);
+                  // Update State with fetched questions immediately
+                  setState((prev) => {
+                      const isFirst = prev.currentQuestion === null;
+                      return {
+                          ...prev,
+                          currentQuestion: isFirst ? existing[0] : prev.currentQuestion,
+                          queue: isFirst ? [...prev.queue, ...existing.slice(1)] : [...prev.queue, ...existing],
+                          generatedCount: prev.generatedCount + existing.length,
+                          isLoading: questionsToGenerate > 0, // Continue loading if we need more
+                      };
+                  });
+              }
+          } catch (e) {
+              console.error('[QuizGen] Error fetching existing questions:', e);
+          }
+      }
 
-            return {
-              ...prev,
-              currentQuestion: isFirst ? result.question! : prev.currentQuestion,
-              queue: isFirst ? prev.queue : [...prev.queue, result.question!],
-              generatedCount: newGeneratedCount,
-              isLoading: shouldShowLoading,
-              error: null,
-            };
-          });
-        } else {
-           // On error, we might want to stop the batch or just show error.
-           setState((prev) => ({
-            ...prev,
-            isLoading: false,
-            error: result.error || `Soru ${i+1}/${count} oluşturulurken hata oluştu.`,
-           }));
-           break; // Stop batch on error
+      // 2. GENERATE ANTRENMAN (Visible to User) - Only if needed
+      for (let i = 0; i < questionsToGenerate; i++) {
+        try {
+          let result: QuizGenerationResult;
+          
+          if (params.type === 'chunk') {
+            result = await generateQuizQuestion(params.chunkId, { userId: params.userId, usageType: 'antrenman' });
+          } else {
+            result = await generateQuizQuestionFromContent(
+              params.courseName,
+              params.sectionTitle,
+              params.content,
+              params.courseId
+            ); // Content-based doesn't support usageType yet fully, defaults to antrenman
+          }
+
+          if (result.success && result.question) {
+             setState((prev) => {
+              const isFirst = prev.currentQuestion === null;
+              const newGeneratedCount = prev.generatedCount + 1;
+              return {
+                ...prev,
+                currentQuestion: isFirst ? result.question! : prev.currentQuestion,
+                queue: isFirst ? prev.queue : [...prev.queue, result.question!],
+                generatedCount: newGeneratedCount,
+                error: null,
+              };
+            });
+          } else {
+             console.warn(`[QuizGen/TR] ⚠️ Antrenman Soru ${i+1} üretilemedi.`);
+             failedIndices.push(i);
+          }
+
+          // Rate limit protection
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        } catch (err) {
+           console.error(`[QuizGen/TR] ❌ Hata (Antrenman ${i+1}):`, err);
+           failedIndices.push(i);
         }
       }
+
+      // RETRY LOGIC for Antrenman
+      if (failedIndices.length > 0) {
+          console.log(`[QuizGen/TR] 🔄 Başarısız olan ${failedIndices.length} antrenman sorusu için tekrar deneniyor...`);
+          for (const index of failedIndices) {
+             try {
+                let result: QuizGenerationResult;
+                if (params.type === 'chunk') {
+                    result = await generateQuizQuestion(params.chunkId, { userId: params.userId, usageType: 'antrenman' });
+                } else {
+                    result = await generateQuizQuestionFromContent(params.courseName, params.sectionTitle, params.content, params.courseId);
+                }
+
+                if (result.success && result.question) {
+                     setState((prev) => {
+                        const isFirst = prev.currentQuestion === null;
+                        const newGeneratedCount = prev.generatedCount + 1;
+                        return {
+                            ...prev,
+                            currentQuestion: isFirst ? result.question! : prev.currentQuestion,
+                            queue: isFirst ? prev.queue : [...prev.queue, result.question!],
+                            generatedCount: newGeneratedCount,
+                            error: null,
+                        };
+                     });
+                     console.log(`[QuizGen/TR] ✅ Antrenman Soru ${index+1} kurtarıldı.`);
+                }
+             } catch (retryErr) { console.error('Retry failed', retryErr); }
+          }
+      }
+
+      // Final State Check (Stop Loading UI)
+      setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: prev.generatedCount === 0 ? "Soru üretimi başarısız oldu." : null
+      }));
+
+      // 2. BACKGROUND GENERATION (Arsiv & Deneme)
+      // Fire and forget - do not await or block UI
+      if (params.type === 'chunk' && (arsivCount > 0 || denemeCount > 0)) {
+          (async () => {
+              console.log(`[QuizGen/TR] 🕵️‍♂️ Arka plan üretimi başlıyor (Arşiv: ${arsivCount}, Deneme: ${denemeCount})...`);
+              
+              // Generate ARSIV
+              for (let i = 0; i < arsivCount; i++) {
+                  await generateQuizQuestion(params.chunkId, { userId: params.userId, usageType: 'arsiv' });
+              }
+              console.log(`[QuizGen/TR] ✅ Arşiv üretimi tamamlandı.`);
+
+              // Generate DENEME
+              for (let i = 0; i < denemeCount; i++) {
+                  await generateQuizQuestion(params.chunkId, { userId: params.userId, usageType: 'deneme' });
+              }
+              console.log(`[QuizGen/TR] ✅ Deneme üretimi tamamlandı.`);
+          })();
+      }
+
       
-      console.log('Batch generation finished.');
+      // console.log('Batch generation finished.');
     },
     []
   );
@@ -283,6 +389,10 @@ export function useQuiz(): UseQuizReturn {
     });
   }, []);
 
+  const startQuiz = useCallback(() => {
+    setState((prev) => ({ ...prev, hasStarted: true }));
+  }, []);
+
   const reset = useCallback(() => {
     setState(initialState);
     setLastGenerationParams(null);
@@ -328,5 +438,6 @@ export function useQuiz(): UseQuizReturn {
     reset,
     retry,
     markAsBlank,
+    startQuiz,
   };
 }

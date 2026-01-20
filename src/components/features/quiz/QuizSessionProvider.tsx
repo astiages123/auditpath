@@ -102,7 +102,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
               reviewQueue = savedSession.reviewQueue || [];
               currentReviewIndex = savedSession.currentReviewIndex || 0;
               restoredQueue = true;
-              console.log('[QuizSession] Restored session from storage');
+              // console.log('[QuizSession] Restored session from storage');
             } else {
                localStorage.removeItem(storageKey);
             }
@@ -142,11 +142,13 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
           courseStats,
         });
 
+        /*
         console.log(
           `[QuizSession] Initialized: Session #${sessionInfo.currentSession}, ` +
             `${quotaInfo.pendingReviewCount} pending reviews, ` +
             `Mode: ${quotaInfo.isMaintenanceMode ? 'Maintenance (70/30)' : 'Normal (80/20)'}`
         );
+        */
       } catch (err) {
         console.error('[QuizSession] Initialization error:', err);
         setState((prev) => ({

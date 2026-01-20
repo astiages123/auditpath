@@ -102,7 +102,7 @@ export async function getSessionInfo(
         .select('*')
         .eq('user_id', userId)
         .eq('course_id', courseId)
-        .single();
+        .maybeSingle();
 
     if (existing) {
         if (existing.last_session_date !== today) {
@@ -332,7 +332,7 @@ export async function recordQuizResponse(
 
   // 3. Update Mastery Score
   if (chunkId) {
-    await incrementQuestionsSeen(userId, chunkId);
+    await incrementQuestionsSeen(userId, chunkId, courseId);
     
     // Fetch current score
     const { data: existingMastery } = await supabase
@@ -340,7 +340,7 @@ export async function recordQuizResponse(
             .select('mastery_score')
             .eq('user_id', userId)
             .eq('chunk_id', chunkId)
-            .single();
+            .maybeSingle();
 
     const currentScore = existingMastery?.mastery_score ?? 0;
     // const totalQuestions = await getChunkQuestionCount(chunkId); // Unused
@@ -385,7 +385,8 @@ export async function updateChunkMastery(
  */
 export async function incrementQuestionsSeen(
   userId: string,
-  chunkId: string
+  chunkId: string,
+  courseId: string
 ): Promise<void> {
   const { data: existing } = await supabase
     .from('chunk_mastery')
@@ -403,6 +404,16 @@ export async function incrementQuestionsSeen(
       })
       .eq('user_id', userId)
       .eq('chunk_id', chunkId);
+  } else {
+    // Create new record if it doesn't exist
+    await supabase.from('chunk_mastery').insert({
+      user_id: userId,
+      chunk_id: chunkId,
+      course_id: courseId,
+      total_questions_seen: 1,
+      mastery_score: 0,
+      updated_at: new Date().toISOString(),
+    });
   }
 }
 

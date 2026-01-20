@@ -68,16 +68,29 @@ export async function startFollowupGeneration(incorrectQuestionIds: string[], co
         if (result.success && result.question?.id) {
              // Immediately update status to 'pending_followup' 
              // and maybe set `parent_question_id` to q.id to track relationship
+             // Immediately update parent_question_id
              const { error: updateError } = await supabase
                 .from('questions')
                 .update({ 
-                    status: 'pending_followup',
                     parent_question_id: q.id 
                 })
                 .eq('id', result.question?.id);
 
              if (updateError) {
-                 console.error('[FollowupGen] Error updating status:', updateError);
+                 console.error('[FollowupGen] Error linking parent question:', updateError);
+             }
+
+             // Upsert status in user_question_status
+             const { error: statusError } = await supabase
+                .from('user_question_status')
+                .upsert({
+                    user_id: userId,
+                    question_id: result.question.id!,
+                    status: 'pending_followup'
+                }, { onConflict: 'user_id,question_id' });
+
+             if (statusError) {
+                 console.error('[FollowupGen] Error updating status:', statusError);
              } else {
 
              }

@@ -47,16 +47,30 @@ serve(async (req: Request) => {
       body: JSON.stringify(body),
     })
 
-    const data = await response.json()
+    const responseText = await response.text();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (e) {
+      throw new Error(`AI Provider response was not valid JSON: ${responseText.substring(0, 200)}`);
+    }
+
+    if (!response.ok) {
+      const errorMsg = data.error?.message || data.error || responseText || 'Unknown AI Provider error';
+      return new Response(JSON.stringify({ error: errorMsg, status: response.status }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: response.status,
+      })
+    }
+
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
 
-
-
   } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : String(error);
+    console.error('AI Proxy Error:', msg);
     return new Response(JSON.stringify({ error: msg }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,

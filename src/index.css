@@ -346,3 +346,15 @@
 .efficiency-alarm {
   animation: alarm-pulse 2s ease-in-out infinite;
 }
+
+/* KaTeX Formula Scaling */
+.katex .mfrac {
+  font-size: 1.4em;
+}
+
+/* Ensure inline math doesn't break line height too much */
+.katex-display {
+  margin: 1em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}

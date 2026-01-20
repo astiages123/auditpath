@@ -7,6 +7,8 @@ interface TimerState {
     isBreak: boolean;
     duration: number;
     startTime: number | null;
+    originalStartTime: number | null;
+    endTime: number | null;
     totalPaused: number;
     sessionCount: number;
     selectedCourse: { id: string, name: string, category: string } | null;
@@ -25,6 +27,8 @@ interface TimerState {
     incrementSession: () => void;
     setSessionId: (id: string | null) => void;
     setSessionCount: (count: number) => void;
+    hasRestored: boolean;
+    setHasRestored: (val: boolean) => void;
 }
 
 export const useTimerStore = create<TimerState>()(
@@ -35,12 +39,15 @@ export const useTimerStore = create<TimerState>()(
             isBreak: false,
             duration: 50 * 60,
             startTime: null,
+            originalStartTime: null,
+            endTime: null,
             totalPaused: 0,
             sessionCount: 1,
             selectedCourse: null,
             isWidgetOpen: false,
             sessionId: null,
             timeline: [],
+            hasRestored: false,
 
             startTimer: () => set((state) => {
                 const now = Date.now();
@@ -63,9 +70,15 @@ export const useTimerStore = create<TimerState>()(
                     start: now
                 });
 
+                // Calculate endTime based on current timeLeft or start fresh
+                const endTime = now + (state.timeLeft * 1000);
+
                 return {
                     isActive: true,
                     startTime: now,
+                    // Only set originalStartTime if it's not already set (i.e., first start)
+                    originalStartTime: state.originalStartTime || now,
+                    endTime,
                     timeline: newTimeline
                 };
             }),
@@ -83,8 +96,16 @@ export const useTimerStore = create<TimerState>()(
                     start: now
                 });
 
+                // Recalculate timeLeft one last time to be precise before pausing
+                let newTimeLeft = state.timeLeft;
+                if (state.isActive && state.endTime) {
+                    newTimeLeft = Math.ceil((state.endTime - now) / 1000);
+                }
+
                 return {
                     isActive: false,
+                    endTime: null,
+                    timeLeft: newTimeLeft,
                     timeline: newTimeline
                 };
             }),
@@ -93,14 +114,18 @@ export const useTimerStore = create<TimerState>()(
                 isActive: false,
                 timeLeft: initialTime !== undefined ? initialTime : state.duration,
                 startTime: null,
+                originalStartTime: null,
+                endTime: null,
                 totalPaused: 0,
                 sessionId: null,
                 timeline: []
             })),
 
             tick: () => set((state) => {
-                if (!state.isActive) return state;
-                return { timeLeft: state.timeLeft - 1 };
+                if (!state.isActive || !state.endTime) return state;
+                const now = Date.now();
+                const newTimeLeft = Math.ceil((state.endTime - now) / 1000);
+                return { timeLeft: newTimeLeft };
             }),
 
             setMode: (mode) => {
@@ -111,6 +136,8 @@ export const useTimerStore = create<TimerState>()(
                     timeLeft: newDuration,
                     isActive: false,
                     startTime: null,
+                    originalStartTime: null,
+                    endTime: null,
                     totalPaused: 0,
                     sessionId: null,
                     timeline: []
@@ -121,10 +148,15 @@ export const useTimerStore = create<TimerState>()(
             setWidgetOpen: (open) => set({ isWidgetOpen: open }),
             incrementSession: () => set((state) => ({ sessionCount: state.sessionCount + 1 })),
             setSessionId: (id: string | null) => set({ sessionId: id }),
-            setSessionCount: (count) => set({ sessionCount: count }),
+            setSessionCount: (count: number) => set({ sessionCount: count }),
+            setHasRestored: (val: boolean) => set({ hasRestored: val }),
         }),
         {
             name: 'pomodoro-storage',
+            partialize: (state) => {
+                const { hasRestored, ...rest } = state;
+                return rest;
+            },
         }
     )
 );

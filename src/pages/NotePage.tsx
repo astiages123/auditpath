@@ -14,45 +14,6 @@ export default function NotePage() {
     const location = useLocation();
     // Using TanStack Query hook
     const { data: note, isLoading: loading } = useNotes(slug || '');
-    
-    // Fetch chunks state
-    const [chunksContent, setChunksContent] = React.useState<string | null>(null);
-
-    React.useEffect(() => {
-        async function fetchChunks() {
-            if (!slug) return;
-            
-            // 1. Find course UUID from slug
-            const { supabase } = await import('@/lib/supabase');
-            const { data: course } = await supabase
-                .from('courses')
-                .select('id')
-                .eq('course_slug', slug)
-                .maybeSingle();
-                
-            if (!course) return;
-
-            // 2. Fetch chunks
-            const { getCourseTopics } = await import('@/lib/client-db');
-            const chunks = await getCourseTopics('anon', course.id); // 'anon' or user ID if needed, but for public notes 'anon' is fine or we rely on RLS
-
-            if (chunks && chunks.length > 0) {
-                // 3. Construct markdown
-                // Inject the button BEFORE the h3 header or AFTER?
-                // Visual design: Header -> Button -> Content.
-                // Markdown: ### Title \n :::question-generator ... ::: \n Content
-                
-                const joined = chunks.map(c => {
-                    return `## ${c.section_title}\n\n:::question-generator{chunkId="${c.id}"}:::\n\n${c.content}`;
-                }).join('\n\n---\n\n');
-                
-                setChunksContent(joined);
-            }
-        }
-        
-        // Fetch chunks if connected
-        fetchChunks();
-    }, [slug]);
 
     // Side effect for title can be kept or moved to a separate useEffect or inside the component render
     useEffect(() => {
@@ -80,6 +41,11 @@ export default function NotePage() {
         }
     }, [loading, note, location.hash]);
 
+    const processedContent = React.useMemo(() => {
+        if (!note?.content) return "";
+        return note.content.replace(/\\"/g, '"');
+    }, [note?.content]);
+
     if (loading) {
         return (
             <div className="flex h-screen items-center justify-center">
@@ -103,14 +69,14 @@ export default function NotePage() {
         <div className="fixed inset-0 z-50 bg-background text-foreground overflow-hidden">
             <div className="note-layout-container h-full flex">
                 {/* Sidebar - Table of Contents */}
-                <aside className="note-sidebar hidden lg:block w-72 h-full overflow-y-auto border-r border-border bg-card p-4">
+                <aside className="note-sidebar hidden lg:block w-80 h-full overflow-y-auto border-r border-border bg-card p-4">
                     <div className="mb-4">
                         <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="w-full justify-start pl-0">
                             <ArrowLeft className="mr-2 h-4 w-4" />
                             Ana Sayfa
                         </Button>
                     </div>
-                    <TableOfContents content={note.content} />
+                    <TableOfContents content={processedContent} />
                 </aside>
 
                 {/* Main Content Area */}
@@ -121,8 +87,8 @@ export default function NotePage() {
                             Geri
                         </Button>
                     </div>
-                    <article className="note-content-limit max-w-4xl mx-auto">
-                        <NoteViewer content={chunksContent || note.content} lessonType={note.lessonType} />
+                    <article className="note-content-limit w-full max-w-none mx-auto">
+                        <NoteViewer content={processedContent} lessonType={note.lessonType} />
                     </article>
                 </main>
             </div>

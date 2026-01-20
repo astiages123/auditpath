@@ -194,6 +194,53 @@ export type Database = {
           },
         ]
       }
+      generation_jobs: {
+        Row: {
+          attempts: number
+          chunk_id: string
+          created_at: string
+          error_message: string | null
+          id: string
+          job_type: string
+          priority: number
+          status: string
+          target_count: number
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          chunk_id: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type: string
+          priority?: number
+          status?: string
+          target_count?: number
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          chunk_id?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_type?: string
+          priority?: number
+          status?: string
+          target_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "generation_jobs_chunk_id_fkey"
+            columns: ["chunk_id"]
+            isOneToOne: false
+            referencedRelation: "note_chunks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       note_chunks: {
         Row: {
           char_count: number | null
@@ -206,6 +253,7 @@ export type Database = {
           id: string
           metadata: Json | null
           parent_h1_id: string | null
+          parent_h2: string | null
           section_title: string
           word_count: number | null
         }
@@ -220,6 +268,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           parent_h1_id?: string | null
+          parent_h2?: string | null
           section_title: string
           word_count?: number | null
         }
@@ -234,6 +283,7 @@ export type Database = {
           id?: string
           metadata?: Json | null
           parent_h1_id?: string | null
+          parent_h2?: string | null
           section_title?: string
           word_count?: number | null
         }
@@ -254,6 +304,7 @@ export type Database = {
           created_at: string | null
           ended_at: string
           id: string
+          is_completed: boolean | null
           started_at: string
           timeline: Json | null
           total_break_time: number | null
@@ -267,6 +318,7 @@ export type Database = {
           created_at?: string | null
           ended_at: string
           id?: string
+          is_completed?: boolean | null
           started_at: string
           timeline?: Json | null
           total_break_time?: number | null
@@ -280,6 +332,7 @@ export type Database = {
           created_at?: string | null
           ended_at?: string
           id?: string
+          is_completed?: boolean | null
           started_at?: string
           timeline?: Json | null
           total_break_time?: number | null
@@ -568,6 +621,45 @@ export type Database = {
           xp?: number | null
         }
         Relationships: []
+      }
+      video_logs: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          id: string
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_logs_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_logs_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       video_progress: {
         Row: {

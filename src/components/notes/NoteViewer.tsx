@@ -1,7 +1,5 @@
 "use client";
 
-import "./notes.css";
-
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
@@ -14,7 +12,7 @@ import remarkDirective from "remark-directive";
 import { visit } from "unist-util-visit";
 import { Plugin } from "unified";
 import { Node, Parent, Literal } from "unist";
-import { GenerateQuestionButton } from '../features/quiz/GenerateQuestionButton';
+import { Heading } from "mdast";
 
 interface NoteViewerProps {
   content: string;
@@ -22,139 +20,167 @@ interface NoteViewerProps {
   className?: string;
 }
 
-// Custom plugin to handle directives like :::Örnek ... :::
+// Helper to convert number to letter (0 -> A, 1 -> B, etc.)
+const toUpperLetter = (num: number) => String.fromCharCode(65 + num);
+const toLowerLetter = (num: number) => String.fromCharCode(97 + num);
+
+// Helper to extract text from heading nodes
+const getHeadingText = (node: any): string => {
+  if (node.type === "text" || node.type === "inlineCode") return node.value || "";
+  if (node.children) return node.children.map(getHeadingText).join("");
+  return "";
+};
+
+// Helper to slugify text to match TOC logic
+const slugify = (text: string) => {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF\s-]/g, "")
+    .replace(/\s+/g, "-");
+};
+
+/**
+ * Custom plugin to handle auto-numbering of headings based on hierarchy:
+ * H2 -> A. Title
+ * H3 -> 1. Title
+ * H4 -> a. Title
+ */
+const remarkHeadingNumbering: Plugin = () => {
+  return (tree: Node) => {
+    const counters = { h2: 0, h3: 0, h4: 0 };
+
+    visit(tree, "heading", (node: Heading) => {
+      // 1. Generate ID for scrolling (must match TOC logic)
+      const textContent = getHeadingText(node);
+      const id = slugify(textContent);
+      
+      const data = (node as any).data || ((node as any).data = {});
+      const props = data.hProperties || (data.hProperties = {});
+      props.id = id;
+
+      // 2. Add Prefixes
+      if (node.depth === 1) {
+        // Reset all on new H1 (though usually only 1 per doc)
+        counters.h2 = 0;
+        counters.h3 = 0;
+        counters.h4 = 0;
+      } else if (node.depth === 2) {
+        counters.h2++;
+        counters.h3 = 0;
+        counters.h4 = 0;
+        insertPrefix(node, `${toUpperLetter(counters.h2 - 1)}. `);
+      } else if (node.depth === 3) {
+        counters.h3++;
+        counters.h4 = 0;
+        insertPrefix(node, `${counters.h3}. `);
+      } else if (node.depth === 4) {
+        counters.h4++;
+        insertPrefix(node, `${toLowerLetter(counters.h4 - 1)}. `);
+      }
+    });
+  };
+
+  function insertPrefix(node: Heading, prefix: string) {
+    if (node.children && node.children.length > 0) {
+      const firstChild = node.children[0];
+      if (firstChild.type === "text") {
+        (firstChild as Literal).value = `${prefix}${(firstChild as Literal).value}`;
+      } else {
+        node.children.unshift({ type: "text", value: prefix } as unknown as Node as any);
+      }
+    }
+  }
+};
+
 const remarkCustomDirectives: Plugin = () => {
   return (tree: Node) => {
-    visit(tree, (node: Node) => {
+    visit(tree, (node: Node, index, parent) => {
+      // CLEANUP: Remove technical artifacts like :::question-generator
+      if (node.type === "containerDirective" || node.type === "leafDirective" || node.type === "textDirective") {
+         const d = node as any;
+         if (d.name === 'question-generator') {
+            // Remove the node from the tree
+            if (parent && typeof index === 'number') {
+               (parent as any).children.splice(index, 1);
+               return index; // Return same index to visit next node correctly
+            }
+         }
+      }
+
       if (
         node.type === "containerDirective" ||
         node.type === "leafDirective" ||
         node.type === "textDirective"
       ) {
-        const d = node as Node & {
-          name: string;
-          children: Node[];
-          data: { hName?: string; hProperties?: Record<string, unknown> };
-        };
+        const d = node as any;
         const data = d.data || (d.data = {});
-        const tagName = node.type === "textDirective" ? "span" : "div";
 
-        // Handle "Örnek" directive
-        if (d.name === "Örnek" || d.name === "Ornek") {
-          data.hName = tagName;
-          data.hProperties = {
-            className: ["directive-box", "directive-example"],
-          };
-
-          // Find the first paragraph to inject the badge into
-          const firstParagraph = d.children.find(
-            (child: Node) => child.type === "paragraph"
-          ) as Parent | undefined;
-          let badgeLabel = "Örnek";
-
-          if (
-            firstParagraph &&
-            firstParagraph.children &&
-            firstParagraph.children.length > 0
-          ) {
-            const firstChild = firstParagraph.children[0] as Literal;
-            if (firstChild.type === "text") {
-              // Match pattern like "1: " or "1. " or "1:" at start of text
-              let textValue = firstChild.value as string;
-              const match = textValue.match(/^(\s*\d+[:.])\s*([\s\S]*)/);
-              if (match) {
-                badgeLabel = `Örnek ${match[1].trim()}`;
-                textValue = match[2];
-              }
-
-              // Handle forced break after title
-              const newlineIndex = textValue.indexOf("\n");
-              if (newlineIndex !== -1) {
-                const beforeText = textValue.slice(0, newlineIndex).trim();
-                const afterText = textValue.slice(newlineIndex + 1);
-                firstChild.value = beforeText;
-
-                const newChildren = [
-                  firstChild,
-                  {
-                    type: "textDirective",
-                    name: "br",
-                    data: { hName: "br" },
-                    children: [],
-                  },
-                  { type: "text", value: afterText },
-                  ...firstParagraph.children.slice(1),
-                ] as Node[];
-                firstParagraph.children = newChildren;
-              } else if (firstParagraph.children.length > 1) {
-                // If more siblings follow the title on the same paragraph
-                textValue = textValue.trim();
-                firstChild.value = textValue;
-                const newChildren = [
-                  firstChild,
-                  {
-                    type: "textDirective",
-                    name: "br",
-                    data: { hName: "br" },
-                    children: [],
-                  },
-                  ...firstParagraph.children.slice(1),
-                ] as Node[];
-                firstParagraph.children = newChildren;
-              } else {
-                firstChild.value = textValue.trim();
-              }
-            }
-          }
-
-          const badgeNode = {
-            type: "textDirective",
-            name: "span",
-            data: {
-              hName: "span",
-              hProperties: { className: ["directive-badge", "badge-example"] },
-            },
-            children: [{ type: "text", value: badgeLabel }],
-          };
-
-          if (firstParagraph) {
-            // Inject into the first paragraph's children
-            (firstParagraph.children as unknown[]).unshift(
-              badgeNode,
-              { type: "text", value: " " } // Add a space
-            );
-          } else {
-            // Fallback if no paragraph found
-            const fallbackNode = {
-              type: "paragraph",
-              children: [badgeNode],
-            };
-            d.children.unshift(fallbackNode as Node);
-          }
+        // 3. Example Cards (Generic ":::" blocks or named directive blocks)
+        if (node.type === "containerDirective") {
+             const isExample = d.name === 'example' || d.name === 'Örnek' || d.name === 'ornek';
+             data.hName = "div";
+             data.hProperties = {
+                className: [
+                  "my-8",
+                  "p-6",
+                  isExample ? "bg-emerald-500/5" : "bg-muted/30",
+                  "border",
+                  isExample ? "border-emerald-500/20" : "border-border",
+                  "rounded-xl",
+                  "shadow-sm",
+                  "relative",
+                  "overflow-hidden",
+                  "border-l-4",
+                  isExample ? "border-l-emerald-500" : "border-l-primary"
+                ]
+             };
         }
 
-        // Handle "Cevap" or "Çözüm" directives (inline or block)
-        if (["Cevap", "Çözüm", "Cozum"].includes(d.name)) {
-          data.hName = "span";
-          data.hProperties = {
-            className: ["directive-badge", "badge-answer"],
-          };
-          // For these, we might just want to wrap the content or just be a badge
-          // If it's a block, we make it a badge?
-          // Request says: "Cevap Çözüm gibi kelimeleri farklı renkte bir badge rengine al"
-          // This implies they might be just words in text or small blocks.
-          // If textDirective (:Cevap), it wraps the text.
-        // Handle "question-generator"
-        if (d.name === 'question-generator') {
-             const attributes = (d as unknown as { attributes: Record<string, string> }).attributes || {};
-             const chunkId = attributes.chunkId;
-             if (chunkId) {
-                 data.hName = 'question-generator';
-                 data.hProperties = { chunkId };
+        // 4. Badge Styling
+        // "Cevap", "Çözüm", "Not", "İpucu"
+        const badgeKeywords = ["Cevap", "Çözüm", "Cozum", "Not", "İpucu", "Ipucu"];
+        if (badgeKeywords.includes(d.name)) {
+             data.hName = "span";
+             
+             // Default (Notes) -> Primary Color
+             let colorClass = "bg-primary/10 text-primary border-primary/20"; 
+             
+             if (d.name === "Cevap" || d.name === "Çözüm" || d.name === "Cozum") {
+                 // Answer -> Emerald implies success, but let's stick to theme if desired.
+                 // User asked to align with project colors. 
+                 // If project has 'success' var we use it, otherwise use hardcoded colors that match dark theme well.
+                 colorClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+             } else if (d.name === "İpucu" || d.name === "Ipucu") {
+                 // Hint -> Amber
+                 colorClass = "bg-amber-500/10 text-amber-400 border-amber-500/20";
              }
-        }
+
+             data.hProperties = {
+                className: [
+                  "inline-flex",
+                  "items-center",
+                  "px-2.5",
+                  "py-0.5",
+                  "rounded-md",
+                  "text-sm",
+                  "font-medium",
+                  "mr-2",
+                  "border",
+                  ...colorClass.split(" ")
+                ]
+             };
         }
       }
+    });
+
+    // Clean up <p ... node="[object Object]"> artifacts
+    visit(tree, "raw", (node: any, index, parent) => {
+        if (node.value && node.value.includes('[object Object]')) {
+             if (parent && typeof index === 'number') {
+                 (parent as any).children.splice(index, 1);
+                 return index;
+             }
+        }
     });
   };
 };
@@ -164,289 +190,155 @@ export function NoteViewer({
   lessonType,
   className = "",
 }: NoteViewerProps) {
-  // Pre-process content to convert ::Name ... :: to :::Name ... :::
-  // The user requested `::Örnek ... ::` syntax.
-  // We need to support nested content until the next `::`.
-  // However, `remark-directive` expects `:::Name` for containers.
-  // Let's do a simple replacement for now, or use a more robust regex.
-  // User said: "Eğer bir kısım ::Örnek ile başlıyorsa onu özel bir örnek tablosuna al. tekrar :: gelene kadar her şey o örnek kutusunun içindedir."
-  // This sounds like `::Örnek` starts the block, and the next `::` (or end of file?) ends it?
-  // OR "tekrar :: gelene kadar" means `::` acts as a delimiter/terminator or start of new block?
-  // Let's assume standard markdown directive syntax is acceptable IF we map `::` to `:::`.
-  // But strict "until the next ::" suggests a custom parser logic.
-  // Let's try to normalize `::Örnek` to `:::Örnek` and append `:::` at the end of the block.
-
-  // Simplest approach: Replace `::Örnek` with `:::Örnek` and ensure it ends with `:::`.
-  // But finding the END is tricky if it's "until the next ::".
-
-  // Let's try this regex replacement logic:
-  // Replace `::Örnek` with `:::Örnek`.
-  // Replace `::` (standing alone or followed by another keyword) with `:::` ???
-  // User said: "tekrar :: gelene kadar her şey o örnek kutusunun içindedir."
-  // This implies `::` is a separator.
-
-  // NOTE: Implementing a robust parser in regex is hard.
-  // Strategy:
-  // 1. Replace `^::Örnek` with `\n:::Örnek\n`.
-  // 2. Identify where it ends. If it ends at the next `::` keyword or `::` delimiter.
-  // If the user uses `::` as a generic closing tag, replace `\n::\n` with `\n:::\n`.
-
+  
   const processedContent = React.useMemo(() => {
     let newContent = content;
 
-    // Un-bold wrapped directives: `**:::Örnek ...**` or `__:::Örnek ...__`
+    // 1. Ensure Lesson Name is H1 at the top
+    if (lessonType) {
+        if (!/^#\s/.test(newContent)) {
+             newContent = `# ${lessonType}\n\n${newContent}`;
+        }
+    }
+
+    // Cleanup
+    newContent = newContent.replace(/:::question-generator[\s\S]*?:::/g, "");
+
+    // 3. Image Path Correction & Format Cleanup
+    // Handles ![]() and also []() that point to images, including nested brackets [[alt]]
     newContent = newContent.replace(
-      /^([\s>]*)(?:\*\*|__)\s*(:{2,3}(?:Örnek|Ornek).*?)\s*(?:\*\*|__)\s*$/gm,
-      "$1$2"
-    );
-
-    // Replace start of block `::Örnek` or `:::Örnek` -> `:::Ornek`
-    newContent = newContent.replace(
-      /^([\s>]*):{2,3}(?:Örnek|Ornek)/gm,
-      "$1\n:::Ornek\n"
-    );
-
-    // If there is a closing `::` explicitly used by the user:
-    newContent = newContent.replace(/\n::\s*$/gm, "\n:::\n");
-
-    // Also handle "Cevap", "Çözüm" if they are used as badges like `::Cevap`.
-    newContent = newContent.replace(/::(Cevap|Çözüm|Cozum)/g, ":$1"); // Inline directive? :Cevap
-
-    // Preserve :::question-generator as is. It is already correct syntax.
-
-
-    // Fix Turkish characters in KaTeX
-    newContent = newContent.replace(
-      /(\$\$?)([\s\S]*?)\1/g,
-      (match, border, mathContent) => {
-        if (/[çşğüöıİĞÜŞÖÇ]/.test(mathContent)) {
-          const fixedMath = mathContent.replace(
-            /([a-zA-ZçşğüöıİĞÜŞÖÇ]+)/g,
-            (word: string) => {
-              if (/[çşğüöıİĞÜŞÖÇ]/.test(word)) {
-                return `\\textit{${word}}`;
-              }
-              return word;
-            }
-          );
-          return `${border}${fixedMath}${border}`;
+      /(!?\[(?:\[[^\]]*\]|[^\]])*\])\(([^)]+)\)(?:\{[^}]*\})?/g,
+      (match, label, imagePath) => {
+        const isImage = label.startsWith("!") || 
+                        /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(imagePath.split('?')[0]) ||
+                        imagePath.includes("/media/");
+        
+        if (isImage) {
+          const mediaMatch = imagePath.match(/media\/[^/\s]+$/);
+          if (mediaMatch) {
+            return `![](./media/${mediaMatch[0].replace("media/", "")})`;
+          }
+          const cleanPath = imagePath.replace(/^\.?\//, "");
+          return `![](${cleanPath})`;
         }
         return match;
       }
     );
 
-    // Transform Pandoc-style images to clean markdown images
-    // Pattern: ![alt text](absolute/path/to/media/filename.ext){width="..." height="..."}
-    // Result: ![](./media/filename.ext)
+    // 4. Custom Example Blocks (:::Örnek ... :::)
+    // Converts ::: content ::: (even with bold markers like **::: or :::**) to a styled markdown directive
     newContent = newContent.replace(
-      /!\[[^\]]*\]\(([^)]+)\)(?:\{[^}]*\})?/g,
-      (match, imagePath) => {
-        // Extract just the media/filename part from any path
-        const mediaMatch = imagePath.match(/media\/[^/\s]+$/);
-        if (mediaMatch) {
-          return `![](./media/${mediaMatch[0].replace("media/", "")})`;
-        }
-        // If already a relative path, just clean up the dimensions
-        const cleanPath = imagePath.replace(/^\.?\//, "");
-        return `![](${cleanPath})`;
+      /(?:\*\*|__)?:::\s*([\s\S]*?)\s*:::(?:\*\*|__)?/g,
+      (match, content) => {
+        return `\n\n:::example\n${content.trim()}\n:::\n\n`;
       }
     );
 
+    // 5. Cleanup Escaped Quotes
+    // Removes artifacts like \" from automated exports
+    newContent = newContent.replace(/\\"/g, '"');
+
+    // 6. Fix Turkish characters in Math formulas
+    // KaTeX struggles with Turkish chars inside math mode unless wrapped in \text{}
+    newContent = newContent.replace(/(\$\$?)([\s\S]+?)\1/g, (match, sign, math) => {
+      // Replace Turkish characters with \text{char}
+      const fixedMath = math.replace(/[çğıöşüÇĞİÖŞÜ]/g, (char: string) => `\\text{${char}}`);
+      return `${sign}${fixedMath}${sign}`;
+    });
+
     return newContent;
-  }, [content]);
+  }, [content, lessonType]);
 
-  // Custom components for rendering
   const components: Components = {
-    // ... (existing IDs)
-    // Add IDs to headings for table of contents navigation
-    h1: ({ children, ...props }) => {
-      const id = String(children)
-        .toLowerCase()
-        .replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF\s-]/g, "")
-        .replace(/\s+/g, "-");
-      return (
-        <h1 id={id} className="scroll-mt-20" {...props}>
-          {children}
-        </h1>
-      );
-    },
-    h2: ({ children, ...props }) => {
-      const id = String(children)
-        .toLowerCase()
-        .replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF\s-]/g, "")
-        .replace(/\s+/g, "-");
-      return (
-        <h2 id={id} className="scroll-mt-20" {...props}>
-          {children}
-        </h2>
-      );
-    },
-    h3: ({ children, ...props }) => {
-      const id = String(children)
-        .toLowerCase()
-        .replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF\s-]/g, "")
-        .replace(/\s+/g, "-");
-      return (
-        <h3 id={id} className="scroll-mt-20" {...props}>
-          {children}
-        </h3>
-      );
-    },
-    h4: ({ children, ...props }) => {
-      const id = String(children)
-        .toLowerCase()
-        .replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF\s-]/g, "")
-        .replace(/\s+/g, "-");
-      return (
-        <h4 id={id} className="scroll-mt-20" {...props}>
-          {children}
-        </h4>
-      );
-    },
-    h5: ({ children, ...props }) => {
-      const id = String(children)
-        .toLowerCase()
-        .replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF\s-]/g, "")
-        .replace(/\s+/g, "-");
-      return (
-        <h5 id={id} className="scroll-mt-20" {...props}>
-          {children}
-        </h5>
-      );
-    },
-    h6: ({ children, ...props }) => {
-      const id = String(children)
-        .toLowerCase()
-        .replace(/[^a-z0-9\u00C0-\u024F\u1E00-\u1EFF\s-]/g, "")
-        .replace(/\s+/g, "-");
-      return (
-        <h6 id={id} className="scroll-mt-20" {...props}>
-          {children}
-        </h6>
-      );
-    },
-    // Style tables from Pandoc HTML output
-    table: ({ children, ...props }) => (
-      <div className="overflow-x-auto my-6">
-        <table className="min-w-full border-collapse" {...props}>
-          {children}
-        </table>
-      </div>
-    ),
-    th: ({ children, ...props }) => (
-      <th
-        className="border border-zinc-700 px-4 py-2 text-left font-semibold"
-        {...props}
-      >
+    // 2. Heading Typography Rules
+    h1: ({ children, node, ...props }) => (
+      <h1 className="text-3xl font-bold tracking-tight text-primary text-center mb-10 pb-4 border-b border-border scroll-mt-20" {...props}>
         {children}
-      </th>
+      </h1>
     ),
-    td: ({ children, ...props }) => (
-      <td className="border border-zinc-700 px-4 py-2" {...props}>
+    h2: ({ children, node, ...props }) => (
+      <h2 className="text-2xl font-bold text-violet-400 text-center mt-12 mb-6 scroll-mt-20" {...props}>
         {children}
-      </td>
+      </h2>
     ),
-    // Style images - convert various path formats to API endpoint
-    img: ({ src, ..._props }) => {
+    h3: ({ children, node, ...props }) => (
+      <h3 className="text-xl font-semibold text-indigo-400 text-center mt-10 mb-4 scroll-mt-20" {...props}>
+        {children}
+      </h3>
+    ),
+    h4: ({ children, node, ...props }) => (
+      <h4 className="text-lg font-medium text-amber-500 mt-8 mb-3 scroll-mt-20" {...props}>
+        {children}
+      </h4>
+    ),
+    h5: ({ children, node, ...props }) => (
+        <h5 className="text-base font-medium text-emerald-500 mt-6 mb-2" {...props}>{children}</h5>
+    ),
+    h6: ({ children, node, ...props }) => (
+        <h6 className="text-sm font-medium text-muted-foreground mt-4 mb-2" {...props}>{children}</h6>
+    ),
+    
+    // Images
+    img: ({ src, node, ..._props }) => {
       let imageSrc = src;
-
       if (
         lessonType &&
         typeof src === "string" &&
         !src.startsWith("http") &&
         !src.startsWith("/api/")
       ) {
-        // Rewrite path to point to /notes/[Folder]/...
-        // e.g. src="media/image.png" -> /notes/[lessonType]/media/image.png
-
         let cleanPath = src;
-
-        // If it's something like `media/image1.webp` or `./media/image1.webp`
         const mediaMatch = src.match(/media\/[^/]+$/);
         if (mediaMatch) {
-          cleanPath = mediaMatch[0]; // media/image1.webp
+          cleanPath = mediaMatch[0];
         } else {
           cleanPath = src.replace(/^\.?\//, "");
         }
-
-        // If lessonType is the *real folder name*, we can plain use it.
         imageSrc = `/notes/${encodeURIComponent(lessonType)}/${cleanPath}`;
       }
-
       return (
         <img
           src={imageSrc as string}
           alt=""
-          title=""
-          className="max-w-full h-auto rounded-lg border border-zinc-700 mx-auto block my-6"
+          className="max-w-full h-auto rounded-lg border border-border mx-auto block my-6 shadow-sm bg-muted/50"
           loading="lazy"
           {..._props}
         />
       );
     },
-    // Style code blocks
-    code: ({ className, children, ...props }) => {
-      const match = /language-(\w+)/.exec(className || "");
-      const isInline = !match;
-
-      if (isInline) {
-        return (
-          <code
-            className="bg-zinc-800 px-1.5 py-0.5 rounded text-sm font-mono"
-            {...props}
-          >
-            {children}
-          </code>
-        );
-      }
-
-      return (
-        <code
-          className={`block bg-zinc-900 p-4 rounded-lg overflow-x-auto font-mono text-sm ${className}`}
-          {...props}
-        >
+    // Tables
+    table: ({ children, node, ...props }) => (
+      <div className="overflow-x-auto my-6 rounded-lg border border-border bg-card">
+        <table className="min-w-full divide-y divide-border" {...props}>
           {children}
-        </code>
-      );
-    },
-    pre: ({ children, ...props }) => (
-      <pre className="my-4 overflow-x-auto" {...props}>
-        {children}
-      </pre>
+        </table>
+      </div>
     ),
-    // Style blockquotes
-    blockquote: ({ children, ...props }) => (
-      <blockquote
-        className="border-l-4 border-accent pl-4 italic text-foreground"
-        {...props}
-      >
+    colgroup: ({ children, node, ...props }) => {
+      const cleanChildren = React.Children.toArray(children).filter(
+        child => typeof child !== 'string' || child.trim() !== ''
+      );
+      return <colgroup {...props}>{cleanChildren}</colgroup>;
+    },
+    th: ({ children, node, ...props }) => (
+      <th className="bg-muted px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider" {...props}>
+        {children}
+      </th>
+    ),
+    td: ({ children, node, ...props }) => (
+      <td className="px-4 py-3 text-sm text-foreground border-t border-border whitespace-pre-wrap" {...props}>
+        {children}
+      </td>
+    ),
+    blockquote: ({ children, node, ...props }) => (
+      <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground my-4 bg-muted/20 py-1 pr-2 rounded-r" {...props}>
         {children}
       </blockquote>
     ),
-    // Style lists
-    ul: ({ children, ...props }) => (
-      <ul className="list-disc ml-6 my-4 space-y-2 text-foreground" {...props}>
-        {children}
-      </ul>
-    ),
-    ol: ({ children, ...props }) => (
-      <ol
-        className="list-decimal ml-6 my-4 space-y-2 text-foreground"
-        {...props}
-      >
-        {children}
-      </ol>
-    ),
-    li: ({ children, ...props }) => (
-      <li className="pl-1" {...props}>
-        {children}
-      </li>
-    ),
-    // Style links
-    a: ({ children, href, ...props }) => (
+    a: ({ children, href, node, ...props }) => (
       <a
         href={href}
-        className="text-blue-400 hover:text-blue-300 underline underline-offset-2"
+        className="text-primary hover:text-primary/80 underline decoration-primary/30 underline-offset-2 transition-colors"
         target={href?.startsWith("http") ? "_blank" : undefined}
         rel={href?.startsWith("http") ? "noopener noreferrer" : undefined}
         {...props}
@@ -454,52 +346,50 @@ export function NoteViewer({
         {children}
       </a>
     ),
-    // Style paragraphs
-    p: ({ children, ...props }) => (
-      <p
-        className="my-4 leading-relaxed last:mb-0 font-normal text-foreground"
-        {...props}
-      >
-        {children}
-      </p>
-    ),
-    // Fix colgroup whitespace issue
-    colgroup: ({ children, ...props }) => {
-      // Filter out text nodes (whitespace) to prevent hydration errors
-      const filteredChildren = React.Children.toArray(children).filter(
-        (child) =>
-          typeof child !== "string" ||
-          (typeof child === "string" && child.trim() !== "")
-      );
-      return <colgroup {...props}>{filteredChildren}</colgroup>;
-    },
-    // Horizontal rule
-    hr: () => <hr className="my-8 border-zinc-700" />,
-    // Custom directive component
-    "question-generator": ({ chunkId }: { chunkId?: string }) => {
-        if (!chunkId) return null;
+    ul: ({ children, node, ...props }) => <ul className="list-disc ml-6 my-4 space-y-1 text-foreground marker:text-primary" {...props}>{children}</ul>,
+    ol: ({ children, node, ...props }) => <ol className="list-decimal ml-6 my-4 space-y-1 text-foreground marker:text-primary" {...props}>{children}</ol>,
+    li: ({ children, node, ...props }) => <li className="pl-1" {...props}>{children}</li>,
+    p: ({ children, node, ...props }) => <p className="my-3 leading-7 text-foreground/90" {...props}>{children}</p>,
+    hr: ({ node, ...props }: any) => <hr className="my-8 border-border" {...props} />,
+    
+    // Code blocks
+    code: ({ className, children, node, ...props }) => {
+      const match = /language-(\w+)/.exec(className || "");
+      const isInline = !match;
+
+      if (isInline) {
         return (
-            <div className="my-4 not-prose">
-                <GenerateQuestionButton chunkId={chunkId} />
-            </div>
+          <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono text-primary" {...props}>
+            {children}
+          </code>
         );
-    }
-  } as Components;
+      }
+      return (
+        <code className={`block bg-muted/50 p-4 rounded-lg overflow-x-auto font-mono text-sm border border-border ${className}`} {...props}>
+          {children}
+        </code>
+      );
+    },
+    pre: ({ children, node, ...props }) => (
+      <pre className="my-4 overflow-x-auto" {...props}>
+        {children}
+      </pre>
+    ),
+  };
 
   return (
-    <div
-      className={`note-viewer prose prose-invert prose-zinc max-w-none ${className}`}
-    >
+    <div className={`note-viewer max-w-none bg-card p-8 md:p-12 shadow-sm rounded-xl border border-border prose prose-invert prose-zinc prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 ${className}`}>
       <ReactMarkdown
         remarkPlugins={[
           remarkGfm,
           remarkMath,
           remarkDirective,
+          remarkHeadingNumbering,
           remarkCustomDirectives,
         ]}
         rehypePlugins={[
           rehypeRaw,
-          [rehypeKatex, { strict: false }], // Allow Turkish characters in math mode
+          [rehypeKatex, { strict: false }],
         ]}
         components={components}
       >

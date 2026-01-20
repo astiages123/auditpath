@@ -63,6 +63,7 @@ export function QuizEngine({
     toggleExplanation,
     // reset,
     retry,
+    startQuiz,
   } = useQuiz();
 
   const { user } = useAuth();
@@ -278,6 +279,13 @@ export function QuizEngine({
     }
   }, [state, courseId, chunkId, recordResponse, nextQuestion, user]);
 
+  // Handle start logic
+  const handleStart = useCallback(() => {
+    startQuiz(); // Hook state update
+    // Timer will reset reliably via existing useEffect on currentQuestion dependency
+    console.log('Quiz Started Manually');
+  }, [startQuiz]);
+
 
 
   // If no question is loaded yet and we have params, show start button
@@ -318,18 +326,38 @@ export function QuizEngine({
              <h3 className="text-lg font-medium text-white">
                {state.isLoading ? 'Sorular Hazırlanıyor...' : 'Oturum Hazırlanıyor...'}
              </h3>
-             {state.isLoading && state.totalToGenerate > 1 && (
+             {state.isLoading && state.totalToGenerate > 0 && (
                <p className="text-muted-foreground">
-                 {state.generatedCount + 1} / {state.totalToGenerate} tamamlanıyor
-               </p>
-             )}
-             {!state.isLoading && !sessionState.isInitialized && (
-               <p className="text-muted-foreground">
-                 Öğrenme seansı başlatılıyor...
+                 {state.generatedCount} / {state.totalToGenerate} tamamlanıyor
                </p>
              )}
            </div>
         </div>
+      )}
+
+      {/* Ready to Start State */}
+      {!state.isLoading && !state.hasStarted && sessionState.isInitialized && !sessionState.error && state.queue.length > 0 && ( // Also check if we have questions
+         <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-12 space-y-6"
+         >
+            <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto ring-1 ring-primary/50">
+               <ArrowRight className="w-8 h-8 text-primary" />
+            </div>
+            <div className="space-y-2">
+                <h3 className="text-2xl font-bold text-white">Hazır mısın?</h3>
+                <p className="text-muted-foreground max-w-sm mx-auto">
+                    {state.generatedCount} adet antrenman sorusu hazırlandı. Başlamaya hazır olduğunda butona bas.
+                </p>
+            </div>
+            <button
+                onClick={handleStart}
+                className="px-8 py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-all shadow-lg hover:shadow-primary/25"
+            >
+                Antrenmanı Başlat
+            </button>
+         </motion.div>
       )}
 
       {/* Session Error */}
@@ -353,8 +381,8 @@ export function QuizEngine({
         </div>
       )}
 
-      {/* Quiz Card */}
-      {!state.isLoading && sessionState.isInitialized && !sessionState.error && (
+      {/* Quiz Card - SHOW ONLY IF STARTED */}
+      {!state.isLoading && sessionState.isInitialized && !sessionState.error && state.hasStarted && (
         <div className="space-y-6">
            {/* Stats Header */}
            {sessionState.courseStats && (

@@ -12,9 +12,9 @@ export class DebugLogger {
    * Start a new log group
    */
   static group(name: string, data?: Record<string, unknown>) {
-    console.group(`%c ⬛ [${name}]`, DebugLogger.STYLES.header);
+    // console.group(`%c ⬛ [${name}]`, DebugLogger.STYLES.header);
     if (data) {
-      console.log('Context:', data);
+      // console.log('Context:', data);
     }
   }
 
@@ -22,52 +22,54 @@ export class DebugLogger {
    * End the current log group
    */
   static groupEnd() {
-    console.groupEnd();
+    // console.groupEnd();
   }
 
   /**
    * Log an input step (Arguments, Initial State)
    */
   static input(message: string, data: unknown) {
-    console.log(`%c 📥 [INPUT] ${message}`, DebugLogger.STYLES.input, data);
+    // console.log(`%c 📥 [INPUT] ${message}`, DebugLogger.STYLES.input, data);
   }
 
   /**
    * Log a processing step (Calculations, Logic)
    */
   static process(message: string, data?: unknown) {
-    console.log(`%c ⚙️ [PROCESS] ${message}`, DebugLogger.STYLES.process, data || '');
+    // console.log(`%c ⚙️ [PROCESS] ${message}`, DebugLogger.STYLES.process, data || '');
   }
 
   /**
    * Log an output step (Return values, Final State)
    */
   static output(message: string, data: unknown) {
-    console.log(`%c 📤 [OUTPUT] ${message}`, DebugLogger.STYLES.output, data);
+    // console.log(`%c 📤 [OUTPUT] ${message}`, DebugLogger.STYLES.output, data);
   }
 
   /**
    * Log a database operation request
    */
   static db(operation: string, table: string, data: unknown) {
+    /*
     console.log(
       `%c 💾 [DB: ${operation.toUpperCase()} -> ${table}]`,
       DebugLogger.STYLES.db,
       data
     );
+    */
   }
 
   /**
    * Log an error
    */
   static error(message: string, error: unknown) {
-    console.log(`%c ❌ [ERROR] ${message}`, DebugLogger.STYLES.error, error);
+    // console.log(`%c ❌ [ERROR] ${message}`, DebugLogger.STYLES.error, error);
   }
 
   /**
    * Quick table view
    */
   static table(data: unknown) {
-    console.table(data);
+    // console.table(data);
   }
 }

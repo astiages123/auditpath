@@ -75,14 +75,14 @@ KARAR MEKANİZMASI:
 /**
  * Call AI Proxy Edge Function for validation
  */
-async function callValidatorAPI(prompt: string): Promise<string | null> {
+async function callValidatorAPI(prompt: string, model: string = VALIDATOR_MODEL): Promise<string | null> {
   try {
     const { data, error } = await supabase.functions.invoke('ai-proxy', {
       body: {
         provider: 'openrouter',
         prompt,
         systemPrompt: VALIDATOR_SYSTEM_PROMPT,
-        model: VALIDATOR_MODEL,
+        model,
         temperature: 0.3  // Low temperature for consistent grading
       }
     });
@@ -198,13 +198,13 @@ Yukarıdaki soruyu kaynak metne göre değerlendir ve JSON formatında puanla.`;
 export async function validateQuestion(
   question: QuestionToValidate,
   sourceContent: string,
-  options: { isFailSafe?: boolean } = {}
+  options: { isFailSafe?: boolean, threshold?: number, model?: string } = {}
 ): Promise<ValidationResult> {
-  const { isFailSafe = false } = options;
+  const { isFailSafe = false, threshold, model } = options;
 
 
   const prompt = buildValidationPrompt(question, sourceContent, isFailSafe);
-  const responseText = await callValidatorAPI(prompt);
+  const responseText = await callValidatorAPI(prompt, model);
 
   if (!responseText) {
     console.warn('[Validator] API response empty, defaulting to APPROVED');
@@ -253,8 +253,8 @@ export async function validateQuestion(
 /**
  * Check if validation passed threshold
  */
-export function isValidationPassed(result: ValidationResult): boolean {
-  return result.decision === 'APPROVED' && result.total_score >= VALIDATION_THRESHOLD;
+export function isValidationPassed(result: ValidationResult, threshold: number = VALIDATION_THRESHOLD): boolean {
+  return result.decision === 'APPROVED' && result.total_score >= threshold;
 }
 
 /**

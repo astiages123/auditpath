@@ -1,33 +1,21 @@
 "use client";
 
-import { usePomodoro } from "@/hooks/usePomodoro";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import {
-  Play,
-  Pause,
-  Coffee,
-  Briefcase,
-  Flag,
-  ChevronRight,
-  Search,
-  X,
-  BookOpen,
+import { useState, useMemo, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Play, Pause, X, Coffee, Briefcase, CheckCircle2, 
+  Target, Search, ChevronUp, Maximize2, Minimize2 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { Button } from "@/components/ui/button";
+import { usePomodoro } from "@/hooks/usePomodoro";
+import { useAuth } from "@/hooks/useAuth";
+import { upsertPomodoroSession } from "@/lib/client-db";
+import coursesData from "@/data/courses.json";
+import { Json } from "@/lib/types/supabase";
+
+// Dialog/Alert Components
 import {
   AlertDialog,
   AlertDialogAction,
@@ -38,15 +26,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import coursesData from "@/data/courses.json";
-import { useState, useMemo, useEffect } from "react";
-import { upsertPomodoroSession } from "@/lib/client-db";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
-import { createPortal } from "react-dom";
-
-const WORK_LIMIT = 50 * 60 * 1000;
-const BREAK_LIMIT = 10 * 60 * 1000;
 
 export function PomodoroModal() {
   const {
@@ -54,127 +33,110 @@ export function PomodoroModal() {
     status,
     minutes,
     seconds,
-    isOvertime,
     start,
     pause,
     switchMode,
     finishDay,
     selectedCourse,
     setCourse,
-    activeDuration,
     startTime,
     timeline,
     isOpen,
     setOpen,
-    sessionCount,
     resetAndClose,
     sessionId,
+    duration,
+    sessionCount,
+    timeLeft,
   } = usePomodoro();
 
-  const [showCloseAlert, setShowCloseAlert] = useState(false);
-  const [showFinishAlert, setShowFinishAlert] = useState(false);
-  // showSelectionCloseAlert unused state removed
   const { user } = useAuth();
   const userId = user?.id;
 
-  // Request notification permission on mount
+  const [mounted, setMounted] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showCloseAlert, setShowCloseAlert] = useState(false);
+  const [showFinishAlert, setShowFinishAlert] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  
+  // Expanded state for the timer widget
+  const [isExpanded, setIsExpanded] = useState(false);
+
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      Notification.permission === "default"
-    ) {
-      Notification.requestPermission();
-    }
+    setMounted(true);
   }, []);
 
-  // Progress calculation
-  const progress = useMemo(() => {
-    if (isOvertime) return 100;
-    const limit = mode === "work" ? WORK_LIMIT : BREAK_LIMIT;
-    return Math.min(100, (activeDuration / limit) * 100);
-  }, [activeDuration, mode, isOvertime]);
-
-  const courseOptions = useMemo(() => {
-    const options: { id: string; name: string; category: string }[] = [];
-    coursesData.forEach((category) => {
-      category.courses.forEach((course) => {
-        options.push({
-          id: course.id,
-          name: course.name,
-          category: category.category,
-        });
-      });
-    });
-    return options;
-  }, []);
+  // Handle ESC key to close modal or selection view
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (!selectedCourse && isOpen) {
+          setOpen(false);
+        } else if (isExpanded) {
+          setIsExpanded(false);
+        }
+      }
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, [isOpen, selectedCourse, isExpanded, setOpen]);
 
   const isWorking = mode === "work";
+  const isRunning = status === "running";
 
-  // Dynamic styles based on mode
-  const colors = {
-    primary: isOvertime
-      ? "text-red-500"
-      : isWorking
-      ? "text-blue-400"
-      : "text-emerald-400",
-    bg: isOvertime
-      ? "bg-red-500/10"
-      : isWorking
-      ? "bg-blue-500/10"
-      : "bg-emerald-500/10",
-    border: isOvertime
-      ? "border-red-500/20"
-      : isWorking
-      ? "border-blue-500/20"
-      : "border-emerald-500/20",
-    glow: isOvertime
-      ? "shadow-[0_0_40px_-5px_rgba(239,68,68,0.3)]"
-      : isWorking
-      ? "shadow-[0_0_40px_-5px_rgba(59,130,246,0.2)]"
-      : "shadow-[0_0_40px_-5px_rgba(16,185,129,0.2)]",
-    ring: isOvertime ? "#ef4444" : isWorking ? "#3b82f6" : "#10b981",
-  };
+  // Data Logic
+  const courseOptions = useMemo(() => {
+    return coursesData.flatMap(category => 
+      category.courses.map(course => ({
+        id: course.id,
+        name: course.name,
+        category: category.category
+      }))
+    );
+  }, []);
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
-      setOpen(false);
-    } else {
-      setOpen(true);
-    }
+  const filteredCategories = useMemo(() => {
+    if (!searchQuery) return coursesData;
+    const query = searchQuery.toLowerCase();
+    
+    return coursesData.map(cat => ({
+      ...cat,
+      courses: cat.courses.filter(c => c.name.toLowerCase().includes(query))
+    })).filter(cat => cat.courses.length > 0);
+  }, [searchQuery]);
+
+  // Action Handlers
+  const handleCourseSelect = (courseId: string) => {
+    const course = courseOptions.find((c) => c.id === courseId);
+    if (course) setCourse(course);
   };
 
   const performSave = async () => {
     if (!selectedCourse || !startTime) return;
-
-    const closedTimeline = timeline.map(
-      (e: { start: number; end?: number; type: string }) => ({
-        ...e,
-        end: e.end || Date.now(),
-      })
-    );
+    const closedTimeline = timeline.map((e: any) => ({
+      ...e,
+      end: e.end || Date.now(),
+    }));
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result: any = await upsertPomodoroSession(
+      await upsertPomodoroSession(
         {
           id: sessionId || crypto.randomUUID(),
           courseId: selectedCourse.id,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          timeline: closedTimeline as any,
+          courseName: selectedCourse.name,
+          timeline: closedTimeline as unknown as Json[],
           startedAt: startTime,
         },
         userId || ""
       );
-
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      toast.success("Oturum başarıyla kaydedildi.");
     } catch (error) {
-      toast.error("Oturum kaydedilirken bir sorun oluştu.");
       console.error(error);
     }
+  };
+
+  const handleSwitchMode = async () => {
+    await performSave();
+    switchMode();
   };
 
   const confirmClose = async () => {
@@ -184,316 +146,348 @@ export function PomodoroModal() {
 
   const confirmFinish = async () => {
     await performSave();
+    await finishDay();
     setShowFinishAlert(false);
-    finishDay();
     setOpen(false);
   };
 
-  const handleSwitchMode = async () => {
-    await performSave();
-    switchMode();
-  };
+  const progress = useMemo(() => {
+     if (timeLeft <= 0) return 100;
+     if (duration <= 0) return 0;
+     return Math.min(100, ((duration - timeLeft) / duration) * 100);
+   }, [timeLeft, duration]);
 
-  const handleCourseSelect = (value: string) => {
-    const course = courseOptions.find((c) => c.id === value);
-    if (course) {
-      setCourse(course);
-    }
-  };
+   // Handle backdrop click
+   const handleBackdropClick = (e: React.MouseEvent) => {
+      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
+          if (!selectedCourse) {
+            setOpen(false);
+          }
+      }
+   };
 
-  // --- Components ---
+  if (!mounted || !isOpen) return null;
 
-  const ProgressRing = ({ size = 220 }: { size?: number }) => {
-    const radius = size / 2 - 12;
-    const circumference = 2 * Math.PI * radius;
-    const offset = circumference - (progress / 100) * circumference;
-
-    return (
-      <div
-        className="relative flex items-center justify-center"
-        style={{ width: size, height: size }}
-      >
-        <svg width={size} height={size} className="transform -rotate-90">
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="transparent"
-            stroke="currentColor"
-            strokeWidth="10"
-            className="text-muted/5"
-          />
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            fill="transparent"
-            stroke={colors.ring}
-            strokeWidth="10"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            className="transition-all duration-1000 ease-out"
-            style={{
-              filter: `drop-shadow(0 0 12px ${colors.ring}40)`,
-            }}
-          />
-        </svg>
-
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span
-            className={cn(
-              "text-3xl font-bold font-mono tracking-tighter leading-none",
-              isOvertime ? "text-red-500 animate-pulse" : "text-foreground"
-            )}
+  return createPortal(
+    <div 
+      className={cn(
+        "fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 transition-all",
+        !selectedCourse ? "bg-black/40 backdrop-blur-sm items-center" : "items-end justify-start pointer-events-none"
+      )}
+      onClick={handleBackdropClick}
+    >
+      <AnimatePresence mode="wait">
+        {!selectedCourse ? (
+          // SELECTION VIEW (GOAL MODAL)
+          <motion.div
+             key="selection"
+             ref={modalRef}
+             initial={{ opacity: 0, scale: 0.95, y: 10 }}
+             animate={{ opacity: 1, scale: 1, y: 0 }}
+             exit={{ opacity: 0, scale: 0.95, y: 10 }}
+             className="w-full max-w-lg bg-card border border-border rounded-3xl shadow-2xl overflow-hidden pointer-events-auto"
           >
-            {minutes}:{seconds}
-          </span>
-          <span className="text-[11px] font-black text-muted-foreground mt-1.5 tracking-widest uppercase">
-            Oturum #{sessionCount}
-          </span>
-        </div>
-      </div>
-    );
-  };
-
-  // Selection View
-  if (!selectedCourse) {
-    return (
-      <>
-        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-          <DialogContent className="sm:max-w-[500px] border-border/40 p-0 overflow-hidden bg-background/95 backdrop-blur-xl shadow-2xl rounded-3xl">
-            <div className="p-8 pb-4 relative">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Search className="w-5 h-5 text-primary" />
+            {/* Header */}
+            <div className="p-5 border-b border-border bg-muted/20 relative">
+               <button 
+                  onClick={() => setOpen(false)}
+                  className="absolute right-4 top-4 p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+               >
+                  <X size={20} />
+               </button>
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                  <Target size={24} />
                 </div>
                 <div>
-                  <DialogTitle className="text-2xl font-bold">
-                    Ders Seçimi
-                  </DialogTitle>
-                  <DialogDescription className="text-base text-muted-foreground">
-                    Odaklanmak istediğin dersi seçerek oturumu başlat.
-                  </DialogDescription>
+                   <h2 className="text-xl font-heading font-bold text-foreground">Hedef Belirle</h2>
+                   <p className="text-sm text-muted-foreground">Bugünkü odağın ne olacak?</p>
                 </div>
               </div>
             </div>
 
-            <div className="px-6 pb-8 h-[450px]">
-              <Command className="rounded-2xl border bg-transparent overflow-hidden">
-                <CommandInput
-                  placeholder="Derslerde ara..."
-                  className="h-14 text-base border-none ring-0 focus:ring-0"
-                />
-                <CommandList className="max-h-full py-2">
-                  <CommandEmpty className="py-12 text-center text-muted-foreground">
-                    Aradığınız ders bulunamadı.
-                  </CommandEmpty>
-                  {coursesData.map((category) => (
-                    <CommandGroup
-                      key={category.category}
-                      heading={category.category.replace(
-                        /\s*\(Toplam:.*?\)/,
-                        ""
-                      )}
-                      className="px-3"
-                    >
-                      {category.courses.map((course) => (
-                        <CommandItem
-                          key={course.id}
-                          value={course.id}
-                          keywords={[course.name]}
-                          onSelect={() => handleCourseSelect(course.id)}
-                          disabled={false}
-                          className="group flex items-center justify-between py-4 px-4 my-1 cursor-pointer rounded-xl transition-all hover:bg-primary/5 aria-selected:bg-primary/10 pointer-events-auto! opacity-100!"
-                        >
-                          <div className="flex flex-col gap-0.5">
-                            <span className="font-semibold text-[15px]">
+            {/* Search */}
+            <div className="p-3 bg-card">
+               <div className="relative group">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors" size={18} />
+                  <input 
+                    className="w-full bg-secondary/50 border border-transparent focus:border-primary/20 rounded-xl py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
+                    placeholder="Ders veya konu ara..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    autoFocus
+                  />
+               </div>
+            </div>
+
+            {/* List */}
+            <div className="max-h-[320px] overflow-y-auto px-4 pb-4 custom-scrollbar space-y-4 bg-card">
+              {filteredCategories.length > 0 ? (
+                filteredCategories.map((cat, idx) => (
+                   <div key={idx}>
+                     <h3 className="text-xs font-bold text-primary/80 uppercase tracking-wider mb-2 px-2">
+                       {cat.category.replace(/\(.*\)/, '')}
+                     </h3>
+                     <div className="space-y-1">
+                       {cat.courses.map(course => (
+                         <button
+                           key={course.id}
+                           onClick={() => handleCourseSelect(course.id)}
+                           className="w-full text-left px-4 py-3 rounded-xl hover:bg-secondary/80 active:bg-secondary transition-colors flex items-center justify-between group"
+                         >
+                            <span className="text-foreground/80 group-hover:text-foreground font-medium transition-colors">
                               {course.name}
                             </span>
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary transition-colors" />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  ))}
-                </CommandList>
-              </Command>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </>
-    );
-  }
-
-  // Timer View - Fixed Widget
-  if (!isOpen) return null;
-
-  return createPortal(
-    <>
-      <div className="fixed bottom-8 left-8 z-50 pointer-events-none">
-        <div
-          className={cn(
-            "pointer-events-auto bg-background  border border-white/10 rounded-[2.5rem]  p-7 flex flex-col items-center transition-all duration-700 w-[280px] relative",
-            colors.glow
-          )}
-        >
-          {/* Widget Close Button */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="absolute right-4 top-4 rounded-full w-7 h-7 text-muted-foreground hover:bg-white/10 transition-colors"
-            onClick={() => setShowCloseAlert(true)}
-          >
-            <X className="w-3.5 h-3.5" />
-          </Button>
-
-          {/* Header */}
-          <div className="flex flex-col items-center gap-0.5 mb-4 text-center">
-            <h2
-              className={cn(
-                "text-lg font-black uppercase tracking-wider",
-                colors.primary
-              )}
-            >
-              {isOvertime ? "EK SÜRE" : isWorking ? "ÇALIŞMA" : "MOLA"}
-            </h2>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/5 border border-white/5">
-              <BookOpen className="w-3 h-3 text-white" />
-              <span className="text-[10px] font-bold text-white uppercase tracking-wide truncate">
-                {selectedCourse.name}
-              </span>
-            </div>
-          </div>
-
-          {/* Ring Container */}
-          <div className="relative mb-5 group">
-            <div
-              className={cn(
-                "absolute inset-0 rounded-full blur-2xl opacity-10  ",
-                isOvertime
-                  ? "bg-red-500"
-                  : isWorking
-                  ? "bg-blue-500"
-                  : "bg-emerald-500"
-              )}
-            />
-            <ProgressRing size={170} />
-          </div>
-
-          {/* Controls Stack */}
-          <div className="w-full flex flex-col gap-3">
-            <Button
-              onClick={status === "running" ? pause : start}
-              className={cn(
-                "w-full h-12 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95 shadow-lg shadow-black/10",
-                status === "running"
-                  ? "bg-white/5 hover:bg-white/10 text-foreground border border-white/10"
-                  : cn(
-                      "text-white border-none",
-                      isWorking
-                        ? "bg-blue-600 hover:bg-blue-500"
-                        : "bg-emerald-600 hover:bg-emerald-500"
-                    )
-              )}
-            >
-              {status === "running" ? (
-                <>
-                  <Pause className="w-5 h-5 fill-current" />
-                  <span className="text-base font-bold">Duraklat</span>
-                </>
+                            <Play size={16} className="text-primary opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
+                         </button>
+                       ))}
+                     </div>
+                   </div>
+                ))
               ) : (
-                <>
-                  <Play className="w-5 h-5 fill-current ml-0.5" />
-                  <span className="text-base font-bold">Devam Et</span>
-                </>
+                <div className="py-10 text-center text-muted-foreground">
+                  Sonuç bulunamadı.
+                </div>
               )}
-            </Button>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              <Button
-                variant="outline"
-                onClick={handleSwitchMode}
-                className="h-11 rounded-xl border-white/5 bg-white/5 hover:bg-white/10 flex items-center justify-center gap-2 p-0 transition-all hover:-translate-y-0.5"
-                title={isWorking ? "Mola Ver" : "Çalışmaya Başla"}
-              >
-                {isWorking ? (
-                  <Coffee className="w-4 h-4 text-white" />
-                ) : (
-                  <Briefcase className="w-4 h-4 text-white" />
-                )}
-                <span className="text-[10px] font-bold uppercase tracking-tight text-white">
-                  {isWorking ? "MOLA" : "ÇALIŞ"}
-                </span>
-              </Button>
-
-              <Button
-                variant="outline"
-                onClick={() => setShowFinishAlert(true)}
-                className="h-11 rounded-xl border-red-500/10 bg-red-500/20 hover:bg-red-500/30  hover:text-red-500/10 flex items-center justify-center gap-2 p-0 transition-all hover:-translate-y-0.5"
-                title="Günü Bitir"
-              >
-                <Flag className="w-4 h-4 text-white" />
-                <span className="text-[10px] font-bold uppercase tracking-tight text-white">
-                  BİTİR
-                </span>
-              </Button>
             </div>
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        ) : (
+          // UNIFIED TIMER WIDGET VIEW
+          <motion.div
+            key="timer"
+            layout
+            transition={{ 
+              layout: { type: "spring", stiffness: 350, damping: 30 },
+              opacity: { duration: 0.2 }
+            }}
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            className={cn(
+              "pointer-events-auto relative overflow-hidden backdrop-blur-3xl border shadow-2xl transition-colors duration-500",
+              isExpanded ? "rounded-[40px] w-[340px]" : "rounded-[28px] w-[220px]",
+              isWorking 
+                ? "bg-card/90 border-primary/20 shadow-primary/5" 
+                : "bg-card/90 border-emerald-500/20 shadow-emerald-500/5"
+            )}
+          >
+            {/* Dynamic Background Mesh */}
+            <div className={cn(
+              "absolute inset-0 opacity-10 pointer-events-none",
+              isWorking 
+                ? "bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-primary via-transparent to-transparent" 
+                : "bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-emerald-500 via-transparent to-transparent"
+            )} />
 
-      {/* Confirmation Dialogs */}
+            <div className="relative z-10 flex flex-col items-center w-full">
+              
+              {/* Header Info */}
+              <div className="w-full flex items-center justify-between px-5 pt-4 mb-2">
+                 <motion.div layout className="flex items-center gap-2">
+                    <div className={cn(
+                      "w-1.5 h-1.5 rounded-full animate-pulse",
+                      isWorking ? "bg-primary" : "bg-emerald-500"
+                    )} />
+                    <span className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase truncate max-w-[80px]">
+                      {selectedCourse.name}
+                    </span>
+                 </motion.div>
+                 
+                 <motion.div layout className="flex gap-1">
+                   <button 
+                     onClick={() => setIsExpanded(!isExpanded)}
+                     className="p-1.5 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                   >
+                     {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                   </button>
+                   <button 
+                     onClick={() => setShowCloseAlert(true)}
+                     className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                   >
+                     <X size={14} />
+                   </button>
+                 </motion.div>
+              </div>
+
+              {/* Central Timer Ring Area */}
+              <motion.div 
+                layout
+                className={cn(
+                  "relative flex items-center justify-center transition-all duration-500",
+                  isExpanded ? "w-64 h-64" : "w-40 h-40"
+                )}
+              >
+                <svg 
+                  className="w-full h-full transform -rotate-90 absolute"
+                  viewBox="0 0 224 224"
+                >
+                  <circle
+                    cx="112"
+                    cy="112"
+                    r="100"
+                    stroke="currentColor"
+                    strokeWidth={isExpanded ? "6" : "8"}
+                    fill="transparent"
+                    className="text-secondary/50"
+                  />
+                  <motion.circle
+                    cx="112"
+                    cy="112"
+                    r="100"
+                    stroke={isWorking ? "var(--color-primary)" : "#10b981"}
+                    strokeWidth={isExpanded ? "6" : "8"}
+                    strokeDasharray={2 * Math.PI * 100}
+                    initial={{ strokeDashoffset: 2 * Math.PI * 100 }}
+                    animate={{ strokeDashoffset: (2 * Math.PI * 100) * (1 - progress / 100) }}
+                    transition={{ duration: 1, ease: "linear" }}
+                    strokeLinecap="round"
+                    fill="transparent"
+                    className="drop-shadow-lg"
+                  />
+                </svg>
+
+                {/* Inner Text Container */}
+                <div className="relative flex flex-col items-center justify-center pointer-events-none select-none">
+                  <motion.span 
+                    layout
+                    className={cn(
+                      "font-heading font-medium tracking-tight text-foreground tabular-nums leading-none",
+                      isExpanded ? "text-6xl" : "text-4xl"
+                    )}
+                  >
+                    {minutes}:{seconds}
+                  </motion.span>
+                  <AnimatePresence>
+                    {isExpanded && (
+                      <motion.span 
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        className={cn(
+                          "mt-4 text-[13px] font-bold tracking-[0.2em] uppercase transition-colors duration-500 opacity-60",
+                          isWorking ? "text-primary" : "text-emerald-400"
+                        )}
+                      >
+                        {isWorking ? "ÇALIŞMA" : "MOLA"}
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.div>
+
+              {/* Unified Controls Area */}
+              <div className={cn(
+                "w-full flex flex-col gap-3 px-6 pb-6 pt-2",
+                !isExpanded && "px-4 pb-4 pt-1"
+              )}>
+                 <motion.div layout className="flex flex-col gap-3 w-full">
+                    {/* Primary Action: Start/Pause */}
+                    <button
+                        onClick={isRunning ? pause : start}
+                        className={cn(
+                          "transition-all active:scale-95 flex items-center justify-center rounded-2xl shadow-lg group w-full",
+                          isExpanded ? "h-14" : "h-11",
+                          isRunning 
+                            ? "bg-secondary text-foreground hover:bg-secondary/80" 
+                            : (isWorking ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-emerald-500 text-white hover:bg-emerald-600")
+                        )}
+                    >
+                        {isRunning ? (
+                          <Pause size={isExpanded ? 20 : 16} fill="currentColor" className="mr-2" />
+                        ) : (
+                          <Play size={isExpanded ? 20 : 16} fill="currentColor" className="mr-2" />
+                        )}
+                        <motion.span layout className={cn("font-bold tracking-tight", isExpanded ? "text-base" : "text-xs")}>
+                          {isRunning ? "DURAKLAT" : "BAŞLAT"}
+                        </motion.span>
+                    </button>
+                    
+                    {/* Secondary Actions Row */}
+                    <AnimatePresence mode="popLayout">
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="flex gap-2 w-full"
+                        >
+                          <Button
+                            variant="ghost"
+                            onClick={handleSwitchMode}
+                            className={cn(
+                              "h-12 flex-1 rounded-xl gap-2 text-sm font-bold transition-all",
+                              isWorking 
+                                ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20" 
+                                : "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20"
+                            )}
+                          >
+                             {isWorking ? <Coffee size={18} /> : <Briefcase size={18} />}
+                             <span>{isWorking ? "Mola" : "Çalış"}</span>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            onClick={() => setShowFinishAlert(true)}
+                            className="h-12 flex-1 rounded-xl gap-2 text-sm font-bold bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+                          >
+                             <CheckCircle2 size={18} />
+                             <span>Günü Bitir</span>
+                          </Button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                 </motion.div>
+              </div>
+
+              {/* Stats Bar */}
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.5 }}
+                    exit={{ opacity: 0 }}
+                    className="w-full px-5 pb-4 flex items-center justify-center text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] border-t border-border/20 pt-3"
+                  >
+                      <span>OTURUM {sessionCount}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Close Alert */}
       <AlertDialog open={showCloseAlert} onOpenChange={setShowCloseAlert}>
-        <AlertDialogContent className="rounded-[2.5rem] border-border/40 bg-background/95 backdrop-blur-xl">
+        <AlertDialogContent className="bg-card border-border text-foreground rounded-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-bold">
-              Oturumu Kapat?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-base text-muted-foreground">
-              Aktif oturum sonlandırılacak ve ilerlemeniz silinecektir. Yeniden
-              başlamak istediğinizden emin misiniz?
+            <AlertDialogTitle>Oturumu Kapat</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Mevcut oturumun kaydedilmeyecek. Emin misin?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-3 mt-6">
-            <AlertDialogCancel className="rounded-2xl h-10 font-medium">
-              Vazgeç
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmClose}
-              className="bg-red-500/50 hover:bg-red-500/60 text-white rounded-2xl h-10 px-8 font-medium"
-            >
-              Evet, Sıfırla ve Kapat
-            </AlertDialogAction>
+          <AlertDialogFooter>
+             <AlertDialogCancel className="rounded-xl border-border bg-secondary hover:bg-secondary/80 text-foreground">İptal</AlertDialogCancel>
+             <AlertDialogAction onClick={confirmClose} className="rounded-xl bg-destructive hover:bg-destructive/90 text-destructive-foreground">Kapat</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={showFinishAlert} onOpenChange={setShowFinishAlert}>
-        <AlertDialogContent className="rounded-[2.5rem] border-border/40 bg-background/95 backdrop-blur-xl">
+       {/* Finish Alert */}
+       <AlertDialog open={showFinishAlert} onOpenChange={setShowFinishAlert}>
+        <AlertDialogContent className="bg-card border-border text-foreground rounded-3xl">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-2xl font-bold">
-              Günü Bitir?
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-base text-muted-foreground">
-              Mevcut çalışma verileriniz kaydedilecek ve tüm sayaçlar
-              sıfırlanacaktır. Devam etmek istiyor musunuz?
+            <AlertDialogTitle>Günü Tamamla</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Tüm çalışmaların kaydedilecek. Günü bitirmek istiyor musun?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-3 mt-6">
-            <AlertDialogCancel className="rounded-2xl h-12 font-medium">
-              Vazgeç
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmFinish}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl h-12 px-8 font-bold"
-            >
-              Günü Bitir
-            </AlertDialogAction>
+          <AlertDialogFooter>
+             <AlertDialogCancel className="rounded-xl border-border bg-secondary hover:bg-secondary/80 text-foreground">Devam Et</AlertDialogCancel>
+             <AlertDialogAction onClick={confirmFinish} className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white">Bitir ve Kaydet</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>,
+    </div>,
     document.body
   );
 }

@@ -13,7 +13,7 @@ export function FocusTrend({ data }: FocusTrendProps) {
          return (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4 text-center">
                 <Zap className="w-8 h-8 mb-2 opacity-50" />
-                <p>Trend analizi için daha fazla veriye ihtiyaç var (Min 2 gün)</p>
+                <p>Trend analizi için daha fazla veriye ihtiyaç var (En az 2 gün)</p>
             </div>
         );
     }

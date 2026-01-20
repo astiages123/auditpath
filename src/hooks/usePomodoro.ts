@@ -21,21 +21,29 @@ const playNotificationSound = () => {
     if (!AudioContextClass) return;
 
     const ctx = new AudioContextClass();
-    const oscillator = ctx.createOscillator();
-    const gainNode = ctx.createGain();
+    
+    const playNote = (freq: number, startTime: number, duration: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, startTime);
+      
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.1, startTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
 
-    oscillator.connect(gainNode);
-    gainNode.connect(ctx.destination);
-
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(880, ctx.currentTime); // A5
-    oscillator.frequency.setValueAtTime(587, ctx.currentTime + 0.1); // D5
-
-    gainNode.gain.setValueAtTime(0.1, ctx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.5);
-
-    oscillator.start();
-    oscillator.stop(ctx.currentTime + 0.5);
+    const now = ctx.currentTime;
+    // Yumuşak bir "Ding" akoru (A Major)
+    playNote(880, now, 1.0); // A5
+    playNote(1108.73, now + 0.05, 1.0); // C#6
+    playNote(1318.51, now + 0.1, 1.0); // E6
   } catch (e) {
     console.error("Audio play failed", e);
   }
@@ -47,6 +55,7 @@ export function usePomodoro() {
     isActive,
     isBreak,
     startTime,
+    originalStartTime,
     totalPaused,
     selectedCourse,
     startTimer,
@@ -63,6 +72,8 @@ export function usePomodoro() {
     setSessionId,
     timeline,
     setSessionCount,
+    hasRestored,
+    setHasRestored,
   } = useTimerStore();
 
   const { user } = useAuth();
@@ -70,54 +81,59 @@ export function usePomodoro() {
   const [streak, setStreak] = useState(0);
 
   // Restore active session or sync daily count
-  const restoredRef = useRef(false);
+
 
   useEffect(() => {
     if (!userId) return;
 
-    // 1. Always update daily count on mount
-    getDailySessionCount(userId).then((count) => {
+    // 1. Sync daily session count from DB
+    // We only do this if there's no active session to avoid jumping numbers during a session
+    const syncSessionCount = async () => {
+      const count = await getDailySessionCount(userId);
       if (sessionId) {
-        setSessionCount(count);
+        // If we have an active session, ensure its count is at least the current one
+        // and that it matches DB if it was already saved today.
+        // For now, we trust the restored sessionCount but count can be used for verification.
+        // setSessionCount(count); // Not safe if count includes current session or not
       } else {
         setSessionCount(count + 1);
       }
-    });
+    };
+
+    syncSessionCount();
 
     // 2. Update Streak
     getStreak(userId).then((s) => setStreak(s));
 
     // 3. Restore active session if idle
-    if (
-      !sessionId &&
-      !isActive &&
-      startTime === null &&
-      userId &&
-      !restoredRef.current
-    ) {
-      getLatestActiveSession(userId).then((session) => {
-        if (session) {
-          const sessionAge = Date.now() - new Date(session.started_at).getTime();
-          const isRecent = sessionAge < 12 * 60 * 60 * 1000; // 12 hours
+    if (userId && !hasRestored) {
+      if (sessionId || isActive || startTime !== null) {
+        // If we already have a session state, don't try to restore
+        setHasRestored(true);
+      } else {
+        // Mark as attempt made immediately to avoid double-triggers
+        setHasRestored(true);
+        getLatestActiveSession(userId).then((session) => {
+          if (session) {
+            const sessionAge = Date.now() - new Date(session.started_at).getTime();
+            const isRecent = sessionAge < 12 * 60 * 60 * 1000; // 12 hours
 
-          if (isRecent) {
-            setSessionId(session.id);
-            if (session.course_id && session.course_name && !selectedCourse) {
-              setCourse({
-                id: session.course_id,
-                name: session.course_name,
-                category: session.course?.category?.name || "General",
-              });
-            }
+            if (isRecent) {
+              setSessionId(session.id);
+              if (session.course_id && session.course_name && !selectedCourse) {
+                setCourse({
+                  id: session.course_id,
+                  name: session.course_name,
+                  category: session.course?.category?.name || "General",
+                });
+              }
 
-            // Prevent duplicate toasts
-            if (!restoredRef.current) {
+              // Prevent duplicate toasts
               toast.info("Önceki oturumunuzdan devam ediliyor.");
-              restoredRef.current = true;
             }
           }
-        }
-      });
+        });
+      }
     }
   }, [
     userId,
@@ -128,6 +144,8 @@ export function usePomodoro() {
     setCourse,
     selectedCourse,
     setSessionCount,
+    hasRestored,
+    setHasRestored,
   ]);
 
   // Sync State to DB
@@ -147,7 +165,7 @@ export function usePomodoro() {
           courseId: selectedCourse.id,
           courseName: selectedCourse.name,
           timeline,
-          startedAt: startTime || Date.now(),
+          startedAt: originalStartTime || startTime || Date.now(),
         },
         userId
       );
@@ -166,6 +184,7 @@ export function usePomodoro() {
     timeline,
     selectedCourse,
     startTime,
+    originalStartTime,
   ]);
 
   // Start/Resume Wrapper
@@ -175,6 +194,10 @@ export function usePomodoro() {
     // If no session ID, generate it but don't save yet.
     // Auto-save effect will handle the first save once progress starts.
     if (!sessionId) {
+      if (userId) {
+        const count = await getDailySessionCount(userId);
+        setSessionCount(count + 1);
+      }
       const newId = crypto.randomUUID();
       setSessionId(newId);
     }
@@ -187,9 +210,9 @@ export function usePomodoro() {
       if (Notification.permission === "granted") {
         new Notification("Süre Doldu!", {
           body: !isBreak
-            ? "Çalışma süresi bitti. Mola verme zamanı!"
-            : "Mola bitti. Çalışmaya dön!",
-          icon: "/logo.svg",
+            ? "Harika iş çıkardın! Şimdi kısa bir mola zamanı. ☕"
+            : "Mola bitti, tekrar odaklanmaya hazır mısın? 💪",
+          icon: "/favicon.svg",
         });
       }
       playNotificationSound();
@@ -202,7 +225,7 @@ export function usePomodoro() {
             courseId: selectedCourse.id,
             courseName: selectedCourse.name,
             timeline,
-            startedAt: startTime || Date.now(),
+            startedAt: originalStartTime || startTime || Date.now(),
             isCompleted: true,
           },
           userId
@@ -227,6 +250,7 @@ export function usePomodoro() {
     selectedCourse,
     timeline,
     startTime,
+    originalStartTime,
     incrementSession,
     setSessionId,
   ]);
@@ -260,7 +284,7 @@ export function usePomodoro() {
     resetTimer();
     setCourse(null);
     setSessionId(null);
-    restoredRef.current = true; // Prevent restoration for this mount
+    setHasRestored(true); // Prevent re-restoring after explicit close
     setWidgetOpen(false);
   };
 
@@ -300,7 +324,7 @@ export function usePomodoro() {
               id: sessionId,
               courseId: selectedCourse.id,
               timeline,
-              startedAt: startTime || Date.now(),
+              startedAt: originalStartTime || startTime || Date.now(),
             },
             userId
           );
@@ -315,6 +339,8 @@ export function usePomodoro() {
       resetTimer();
       setMode("work");
     },
+    duration,
+    timeLeft,
     isOpen: isWidgetOpen,
     setOpen: setWidgetOpen,
     streak,

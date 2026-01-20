@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react'
 const Achievements = lazy(() => import('@/pages/Achievements'))
 const NotePage = lazy(() => import('@/pages/NotePage'))
 const Statistics = lazy(() => import('@/pages/Statistics'))
+const Settings = lazy(() => import('@/pages/Settings'))
 
 // Loading fallback component
 function PageLoader() {
@@ -28,6 +29,7 @@ function App() {
                     <Route path="/achievements" element={<AuthGuard><Achievements /></AuthGuard>} />
                     <Route path="/notes/:slug" element={<AuthGuard><NotePage /></AuthGuard>} />
                     <Route path="/statistics" element={<AuthGuard><Statistics /></AuthGuard>} />
+                    <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
                 </Routes>
             </Suspense>
         </RootLayout>

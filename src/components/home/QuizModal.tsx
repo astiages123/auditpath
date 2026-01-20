@@ -24,13 +24,17 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
   const [loading, setLoading] = useState(true);
   
   // Status State
-  // const [questionCount, setQuestionCount] = useState<number | null>(null); 
-  // const [_questionCount, setQuestionCount] = useState<number | null>(null);
-  const [completionStatus, setCompletionStatus] = useState<{ completed: boolean; total: number; solved: number } | null>(null);
+  const [completionStatus, setCompletionStatus] = useState<{
+        completed: boolean;
+        antrenman: { solved: number; total: number };
+        deneme: { solved: number; total: number };
+        arsiv: { solved: number; total: number };
+        mistakes: { solved: number; total: number };
+  } | null>(null);
+
   const [loadingCount, setLoadingCount] = useState(false);
   
   const [existingQuestions, setExistingQuestions] = useState<QuizQuestion[]>([]);
-  // const [_loadingExisting, setLoadingExisting] = useState(false);
   
   // Quiz Engine State
   const [isQuizActive, setIsQuizActive] = useState(false);
@@ -59,12 +63,20 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
             getFirstChunkIdForTopic(courseId, selectedTopic.name),
             getTopicCompletionStatus(user.id, courseId, selectedTopic.name)
         ]);
-        // setQuestionCount(count);
+        
         setTargetChunkId(chunkId);
         setCompletionStatus(status);
         setLoadingCount(false);
+
+        // Auto-Refill Trigger: Check and fill quota for this topic in background
+        if (chunkId) {
+             console.log(`[QuizModal] Triggering background check for chunk: ${chunkId}`);
+             import('@/lib/ai/background-generator').then(({ checkAndTriggerBackgroundGeneration }) => {
+                 checkAndTriggerBackgroundGeneration(chunkId, [], courseId, user.id);
+             });
+        }
+
       } else {
-        // setQuestionCount(null);
         setTargetChunkId(null);
         setCompletionStatus(null);
       }
@@ -73,20 +85,12 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
   }, [selectedTopic, courseId, user]);
 
   const handleStartQuiz = () => {
-    if (completionStatus?.completed) return; // Guard clause
+    // If completed is true, maybe block? But user might want to re-solve? 
+    // Requirement: "Tebrikler" shows instead of Button. So user cannot start logic from here if completed.
+    if (completionStatus?.completed) return; 
     setExistingQuestions([]);
     setIsQuizActive(true);
   };
-
-  // const handleSolveExisting = async () => {
-  //   if (!selectedTopic || !courseId) return;
-    
-  //   setLoadingExisting(true);
-  //   const questions = await getTopicQuestions(courseId, selectedTopic.name);
-  //   setExistingQuestions(questions);
-  //   setLoadingExisting(false);
-  //   setIsQuizActive(true);
-  // };
 
   const handleBackToTopics = () => {
       setSelectedTopic(null);
@@ -178,17 +182,15 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
                                                 {topic.name}
                                             </span>
                                         </div>
-                                        {/* Question Counts */}
+                                        {/* Status Icon */}
                                         <div className="flex items-center gap-2 shrink-0">
-                                             {topic.counts.total > 0 && (
-                                                <div className="flex gap-1 text-[10px] items-center text-muted-foreground bg-muted px-2 py-0.5 rounded-full font-mono">
-                                                    {topic.counts.antrenman > 0 && <span title="Antrenman">A:{topic.counts.antrenman}</span>}
-                                                    {topic.counts.arsiv > 0 && <span title="Arşiv">Ar:{topic.counts.arsiv}</span>}
-                                                    {topic.counts.deneme > 0 && <span title="Deneme">D:{topic.counts.deneme}</span>}
-                                                    <span className="font-bold border-l border-border pl-1 ml-1" title="Toplam">{topic.counts.total}</span>
+                                            {topic.isCompleted && (
+                                                <div className="flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                                                    <CheckCircle className="w-3 h-3" />
+                                                    <span>Tamamlandı</span>
                                                 </div>
-                                             )}
-                                             {selectedTopic?.name === topic.name && <ChevronRight className="w-4 h-4 text-primary shrink-0" />}
+                                            )}
+                                            {selectedTopic?.name === topic.name && <ChevronRight className="w-4 h-4 text-primary shrink-0" />}
                                         </div>
                                     </div>
                                 </button>
@@ -197,13 +199,13 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
                     </div>
 
                     {/* Right: Detail Panel */}
-                    <div className="bg-muted/5 p-8 flex flex-col items-center justify-center text-center">
+                    <div className="bg-muted/5 p-6 flex flex-col items-center justify-center h-full text-center">
                         {selectedTopic ? (
-                            <div className="max-w-md w-full space-y-8 animate-in fade-in zoom-in-95 duration-200">
+                            <div className="max-w-md w-full space-y-5 animate-in fade-in zoom-in-95 duration-200">
                                 <div className="space-y-2">
-                                    <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary">
+                                    <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary">
                                         {completionStatus?.completed ? (
-                                            <CheckCircle className="w-8 h-8 text-emerald-500" />
+                                            <CheckCircle className="w-6 h-6 text-emerald-500" />
                                         ) : (
                                             <FileText className="w-8 h-8" />
                                         )}
@@ -211,51 +213,64 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
                                     <h3 className="text-2xl font-bold">{selectedTopic.name}</h3>
                                     
                                     {completionStatus?.completed ? (
-                                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-600">
-                                            <p className="font-medium">Bu konudaki tüm antrenman sorularını tamamladınız.</p>
-                                            <p className="text-sm opacity-80 mt-1">Soru havuzu sıfırlandı, artık tekrar için aralıklı tekrar modunu kullanabilirsiniz.</p>
+                                        <div className="space-y-3">
+                                            <h2 className="text-xl font-bold text-emerald-500">Tebrikler, konuyu tamamladınız!</h2>
+                                            <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-600">
+                                                <p className="font-medium">Bu konudaki tüm antrenman sorularını bitirdiniz.</p>
+                                                <p className="text-sm opacity-80 mt-1">Tekrar yapmak için arşiv modunu veya aralıklı tekrarı kullanabilirsiniz.</p>
+                                            </div>
                                         </div>
                                     ) : (
                                         <p className="text-muted-foreground">
-                                            Bu konuyla ilgili soru üretmek için hazırsınız.
+                                            Bu konuyla ilgili hedefiniz antrenman sorularını tamamlamak.
                                         </p>
                                     )}
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="bg-background p-4 rounded-xl border border-border/50 shadow-sm">
-                                        <div className="text-sm text-muted-foreground mb-1">Çözülen / Toplam</div>
-                                        <div className="text-2xl font-bold">
-                                            {loadingCount ? (
-                                                <Loader2 className="w-5 h-5 animate-spin inline-block" />
-                                            ) : (
-                                                <>
-                                                 <span className={completionStatus?.completed ? "text-emerald-500" : ""}>{completionStatus?.solved || 0}</span>
-                                                 <span className="text-muted-foreground text-lg ml-1">/ {completionStatus?.total || 0}</span>
-                                                </>
-                                            )}
-                                        </div>
+                                {/* Stats Grid - Updated */}
+                                <div className="grid grid-cols-2 gap-3 w-full">
+                                    {/* 1. Antrenman */}
+                                    <div className="bg-background p-3 rounded-xl border border-border/50 shadow-sm flex flex-col items-center justify-center">
+                                         <div className="text-xs text-muted-foreground mb-1 font-medium">Antrenman</div>
+                                         <div className="text-lg font-bold flex items-baseline gap-1">
+                                             <span className={completionStatus?.completed ? "text-emerald-500" : "text-primary"}>{completionStatus?.antrenman.solved || 0}</span>
+                                             <span className="text-muted-foreground text-sm font-normal">/ {completionStatus?.antrenman.total || 0}</span>
+                                         </div>
                                     </div>
-                                    <div className="bg-background p-4 rounded-xl border border-border/50 shadow-sm">
-                                        <div className="text-sm text-muted-foreground mb-1">Ders Notu</div>
-                                        <div className="text-2xl font-bold text-green-500">Aktif</div>
+
+                                    <div className="bg-background p-3 rounded-xl border border-border/50 shadow-sm flex flex-col items-center justify-center">
+                                         <div className="text-xs font-medium text-red-500/80 mb-1">Hata Telafisi</div>
+                                         <div className="text-lg font-bold flex items-baseline gap-1">
+                                             <span className="text-red-500">{completionStatus?.mistakes.solved || 0}</span>
+                                             <span className="text-muted-foreground text-sm font-normal">/ {completionStatus?.mistakes.total || 0}</span>
+                                         </div>
+                                    </div>
+                                    
+                                    {/* 3. Deneme */}
+                                    <div className="bg-background p-3 rounded-xl border border-border/50 shadow-sm flex flex-col items-center justify-center opacity-80">
+                                         <div className="text-xs text-muted-foreground mb-1 font-medium">Deneme</div>
+                                         <div className="text-lg font-bold flex items-baseline gap-1">
+                                             <span>{completionStatus?.deneme.solved || 0}</span>
+                                             <span className="text-muted-foreground text-sm font-normal">/ {completionStatus?.deneme.total || 0}</span>
+                                         </div>
+                                    </div>
+
+                                     {/* 4. Arşiv */}
+                                     <div className="bg-background p-3 rounded-xl border border-border/50 shadow-sm flex flex-col items-center justify-center opacity-80">
+                                         <div className="text-xs text-muted-foreground mb-1 font-medium">Arşiv</div>
+                                         <div className="text-lg font-bold flex items-baseline gap-1">
+                                             <span>{completionStatus?.arsiv.solved || 0}</span>
+                                             <span className="text-muted-foreground text-sm font-normal">/ {completionStatus?.arsiv.total || 0}</span>
+                                         </div>
                                     </div>
                                 </div>
 
-                             <div className="flex flex-col gap-3 w-full">
-                                    {/* Existing questions button removed as logic is now purely generation vs completion */}
-                                    {/* However, if there are questions but not complete, we might want to continue? 
-                                        Actually, "Yeni Soru Üret" continues generating until completion. 
-                                        So we just need the Generate button.
-                                        But if user wants to review old questions? Maybe accessing Archive? 
-                                        For now, keeping it simple as per request: Training first.
-                                    */}
-
+                                <div className="flex flex-col gap-3 w-full">
                                     {!completionStatus?.completed && (
                                         <button
                                             onClick={handleStartQuiz}
                                             disabled={loadingCount}
-                                            className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="w-full py-4 bg-primary/70 text-primary-foreground rounded-xl font-bold text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             {loadingCount ? (
                                                 <>
@@ -274,7 +289,7 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
                                     {completionStatus?.completed && (
                                          <button
                                             disabled
-                                            className="w-full py-4 bg-muted text-muted-foreground rounded-xl font-bold text-lg flex items-center justify-center gap-2 cursor-not-allowed"
+                                            className="w-full py-4 bg-muted text-muted-foreground rounded-xl font-bold text-lg flex items-center justify-center gap-2 cursor-not-allowed border border-border"
                                         >
                                             <CheckCircle className="w-5 h-5" />
                                             Konu Tamamlandı

@@ -19,9 +19,14 @@ import {
     type SubjectCompetency,
     type BloomStats,
     type SRSStats,
-    type FocusTrend
+    type FocusTrend,
+    getCumulativeStats,
+    type CumulativeStats
 } from "@/lib/client-db";
 import { BentoGrid, BentoCard } from "@/components/statistics/BentoGrid";
+import { GeneralProgress } from "@/components/statistics/GeneralProgress";
+import { HistoryView } from "@/components/statistics/HistoryView";
+// Tabs removed from page level
 import { DailyGoalCard } from "@/components/statistics/DailyGoalCard";
 import { ConsistencyHeatmap } from "@/components/statistics/ConsistencyHeatmap";
 import { EfficiencyCard } from "@/components/statistics/EfficiencyCard";
@@ -45,6 +50,7 @@ export default function StatisticsPage() {
     const [heatmapData, setHeatmapData] = useState<DayActivity[]>([]);
     const [efficiencyData, setEfficiencyData] = useState<EfficiencyData | null>(null);
     const [timelineData, setTimelineData] = useState<TimelineBlock[]>([]);
+    const [cumulativeStats, setCumulativeStats] = useState<CumulativeStats | null>(null);
     
     // New Stats
     const [quizStats, setQuizStats] = useState<QuizStats | null>(null);
@@ -77,7 +83,8 @@ export default function StatisticsPage() {
                     subjects,
                     bloom,
                     srs,
-                    trend
+                    trend,
+                    cumulativeData
                 ] = await Promise.all([
                     getDailyStats(userId!),
                     getLast30DaysActivity(userId!),
@@ -88,6 +95,7 @@ export default function StatisticsPage() {
                     getBloomStats(userId!),
                     getSRSStats(userId!),
                     getFocusTrend(userId!),
+                    getCumulativeStats(userId!),
                 ]);
 
                 setDailyStats(stats);
@@ -99,6 +107,7 @@ export default function StatisticsPage() {
                 setBloomStats(bloom);
                 setSrsStats(srs);
                 setFocusTrend(trend);
+                setCumulativeStats(cumulativeData);
             } catch (error) {
                 console.error("Failed to fetch statistics:", error);
             } finally {
@@ -168,6 +177,9 @@ export default function StatisticsPage() {
                 </motion.div>
             </div>
 
+
+
+            {/* Main Stats Grid */}
             {!hasData && !loading ? (
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
@@ -193,12 +205,18 @@ export default function StatisticsPage() {
                     </BentoCard>
 
                     <BentoCard isAlarm={efficiencyData?.isAlarm} className="bg-linear-to-br from-accent/5 to-transparent">
-                        {efficiencyData ? <EfficiencyCard data={efficiencyData} /> : "Veri yok"}
+                        {efficiencyData ? (
+                            <EfficiencyCard 
+                                data={efficiencyData} 
+                                cumulativeData={cumulativeStats}
+                                userId={userId}
+                            />
+                        ) : "Veri yok"}
                     </BentoCard>
 
                     {/* Row 2: Radar, Focus Trend */}
                     <BentoCard className="">
-                         <SubjectRadar data={subjectStats} />
+                            <SubjectRadar data={subjectStats} />
                     </BentoCard>
 
                     <BentoCard colSpan={2} className="bg-linear-to-r from-blue-500/5 to-purple-500/5">
@@ -226,6 +244,7 @@ export default function StatisticsPage() {
                     </BentoCard>
                 </BentoGrid>
             )}
+
         </div>
     );
 }

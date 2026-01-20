@@ -22,7 +22,7 @@ export function ConsistencyHeatmap({ data }: ConsistencyHeatmapProps) {
                 <div
                   className={cn(
                     "w-3 h-3 rounded-[2px] transition-colors",
-                    day.count === 0 && "bg-muted/20",
+                    day.count === 0 && "bg-foreground/10",
                     day.level === 1 && "bg-primary/30",
                     day.level === 2 && "bg-primary/50",
                     day.level === 3 && "bg-primary/70",

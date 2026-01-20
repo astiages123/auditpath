@@ -15,6 +15,7 @@ import {
   LogOut,
   User as UserIcon,
   Sparkles,
+  Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +32,7 @@ import { ProgramModal } from "../program/ProgramModal";
 import { JourneyModal } from "../home/JourneyModal";
 import { AuthModal } from "../auth/AuthModal";
 import { cn } from "@/lib/utils";
+import { usePomodoro } from "@/hooks/usePomodoro";
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -42,6 +44,9 @@ export function Header() {
   const [mounted] = useState(true); // Assuming SPA, no hydration mismatch
   const location = useLocation();
   const pathname = location.pathname;
+
+  // Use the global Pomodoro hook to control the modal
+  const { setOpen: setPomodoroOpen } = usePomodoro();
 
   // useEffect(() => {
   //   setMounted(true);
@@ -56,6 +61,7 @@ export function Header() {
     { label: "İstatistikler", href: "/statistics", icon: ChartScatter, color: "text-blue-500", auth: true },
     { label: "Yolculuk", action: () => setJourneyOpen(true), icon: LineSquiggle, color: "text-emerald-500", auth: true },
     { label: "Başarımlar", href: "/achievements", icon: Trophy, color: "text-yellow-500", auth: true },
+    { label: "Kronometre", action: () => setPomodoroOpen(true), icon: Timer, color: "text-rose-500" },
     { label: "Program", action: () => setProgramOpen(true), icon: CalendarDays, color: "text-purple-500", auth: true },
   ];
 
@@ -189,10 +195,12 @@ export function Header() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator className="my-1 opacity-50" />
-                    <DropdownMenuItem className="rounded-xl px-3 py-2.5 gap-3 cursor-pointer">
-                      <UserIcon className="h-4 w-4 text-primary" />
-                      <span className="font-medium">Profil Ayarları</span>
-                    </DropdownMenuItem>
+                    <Link to="/settings">
+                      <DropdownMenuItem className="rounded-xl px-3 py-2.5 gap-3 cursor-pointer">
+                        <UserIcon className="h-4 w-4 text-primary" />
+                        <span className="font-medium">Ayarlar</span>
+                      </DropdownMenuItem>
+                    </Link>
                     <DropdownMenuItem onClick={() => signOut()} className="rounded-xl px-3 py-2.5 gap-3 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
                       <LogOut className="h-4 w-4" />
                       <span className="font-medium">Güvenli Çıkış</span>

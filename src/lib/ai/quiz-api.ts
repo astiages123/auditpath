@@ -11,6 +11,7 @@ import { validateQuestion, isValidationPassed } from './QuestionValidatorService
 // --- Configuration ---
 // const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'; // Unused
 const MODEL_MIMO = 'xiaomi/mimo-v2-flash:free';
+const MODEL_VALIDATOR = 'openai/gpt-oss-120b'; // For fallback role swap
 const MODEL_MAPPER = 'xiaomi/mimo-v2-flash:free';
 const MAX_RETRIES = 2;
 
@@ -57,6 +58,9 @@ export type BloomLevel = 'knowledge' | 'application' | 'analysis';
 
 interface QuotaDefinition {
   total: number;
+  antrenmanCount: number;
+  arsivCount: number;
+  denemeCount: number;
 }
 
 export interface QuizGenerationResult {
@@ -108,7 +112,12 @@ const SYSTEM_PROMPT = `Sen, Türkiye'deki KPSS (Kamu Personeli Seçme Sınavı) 
 8. **BAĞLAMSAL BÜTÜNLÜK**:
    - Soru kökünde bir öncüle, veriye veya sıralamaya atıf yapılıyorsa (Örn: "Verilen bilgilere göre...", "Yukarıdaki tabloya göre...", "I, II ve III numaralı ifadelerden..."), bu bilgiler soru metni içerisinde mutlaka yer almalıdır.
    - Bağımsız sorularda gereksiz atıf cümleleri kullanılmamalıdır.
-   - Eğer soru "Aşağıdakilerden hangileri doğrudur?" formatındaysa, "Aşağıdakiler" listesini soru metninde açıkça belirt.`;
+   - Eğer soru "Aşağıdakilerden hangileri doğrudur?" formatındaysa, "Aşağıdakiler" listesini soru metninde açıkça belirt.
+
+9. **KAYNAK METNE SADAKAT (GROUNDEDNESS)**:
+    - Soru ve tüm seçenekler YALNIZCA sana verilen ders notundaki bilgilere dayanmalıdır.
+    - Metinde geçmeyen teknik terimler, formüller, kısaltmalar (örn: STC, MC vb. eğer metinde yoksa) veya dışarıdan genel kültür/akademik bilgi EKLEME. 
+    - Eğer metin bir bilginin detayını vermiyorsa, o detay üzerinden soru kurgulama.`;
 
 const MAPPER_SYSTEM_PROMPT = `Sen bir Eğitim İçerik Analistisin. Metni analiz ederek soru üretilecek [TARGET_COUNT] adet ana durak belirle. 
 Metnin baş, orta ve son kısımlarından dengeli bir dağılım yap. 
@@ -192,7 +201,7 @@ export async function getSubjectGuidelines(
   }
 
   if (error || !data) {
-    console.warn(`No guidelines found for subject: ${courseName}`);
+    // console.warn(`No guidelines found for subject: ${courseName}`);
     return null;
   }
 
@@ -214,7 +223,7 @@ export async function getNoteContext(chunkId: string): Promise<NoteContext | nul
     .single();
 
   if (error || !data) {
-    console.error('Error fetching note chunk:', error);
+    // console.error('Error fetching note chunk:', error);
     return null;
   }
 
@@ -258,12 +267,12 @@ async function saveConceptMapToChunk(chunkId: string, map: ConceptMap, currentMe
       .eq('id', chunkId);
 
     if (error) {
-      console.error('[QuizGen] Error saving concept map to chunk:', error);
+      // console.error('[QuizGen] Error saving concept map to chunk:', error);
     } else {
 
     }
   } catch (err) {
-    console.error('[QuizGen] Exception saving concept map:', err);
+    // console.error('[QuizGen] Exception saving concept map:', err);
   }
 }
 
@@ -285,18 +294,18 @@ async function saveConceptMapToChunk(chunkId: string, map: ConceptMap, currentMe
  * CD > 5%: 1.3x
  * FinalQuota = BaseQuota(WordCount) * Multiplier
  */
-function calculateQuota(wordCount: number, conceptCount: number): QuotaDefinition {
-  // 1. Base Quota
-  let baseCount = 4;
-  if (wordCount <= 150) {
-    baseCount = 4;
-  } else if (wordCount <= 500) {
-    baseCount = 8;
-  } else if (wordCount <= 1200) {
-    baseCount = 12;
-  } else {
-    baseCount = 20;
-  }
+export function calculateQuota(wordCount: number, conceptCount: number): QuotaDefinition {
+  // Constants
+  const MIN_BASE_QUOTA = 8;
+  const MAX_BASE_QUOTA = 30;
+  const GROWTH_RATE_PER_100_WORDS = 1.1;
+  const ARCHIVE_RATIO = 0.25;
+
+  // 1. Base Quota Calculation (Linear Scaling)
+  // Formula: min(30, 8 + ((wordCount / 100) * 1.1))
+  const linearGrowth = (Math.max(0, wordCount) / 100) * GROWTH_RATE_PER_100_WORDS;
+  const rawBase = MIN_BASE_QUOTA + linearGrowth;
+  const baseCount = Math.min(MAX_BASE_QUOTA, rawBase);
 
   // 2. Concept Density (CD) logic
   // Avoid division by zero
@@ -305,22 +314,27 @@ function calculateQuota(wordCount: number, conceptCount: number): QuotaDefinitio
   
   let multiplier = 1.0;
   if (cd < 0.02) {
-      multiplier = 0.8;
+      multiplier = 0.8; // Sparse
   } else if (cd <= 0.05) {
-      multiplier = 1.0;
+      multiplier = 1.0; // Normal
   } else {
-      multiplier = 1.3;
+      multiplier = 1.3; // Dense
   }
 
-  const finalTotal = Math.round(baseCount * multiplier);
+  // Final Calculation
+  // Ceiling to ensure we don't round down on fractions
+  const antrenmanCount = Math.ceil(baseCount * multiplier);
 
-  // Ensure minimum 1 if concepts exist, else 0? 
-  // If conceptCount is 0, cd is 0 -> multiplier 0.8 -> total = base * 0.8.
-  // But if conceptCount is actually 0, we can't generate questions properly (no topics).
-  // Check caller logic: if conceptCount == 0 returns error. So here we just calculate quota.
+  // Secondary Quotas
+  const arsivCount = Math.ceil(antrenmanCount * ARCHIVE_RATIO);
+  const denemeCount = Math.ceil(antrenmanCount * ARCHIVE_RATIO);
+  const total = antrenmanCount + arsivCount + denemeCount;
 
   return { 
-    total: Math.max(1, finalTotal)
+    total,
+    antrenmanCount,
+    arsivCount,
+    denemeCount
   };
 }
 
@@ -333,8 +347,34 @@ function calculateQuota(wordCount: number, conceptCount: number): QuotaDefinitio
 function determineNodeStrategy(
   currentCount: number,
   totalQuota: number,
-  wordCount: number
+  wordCount: number,
+  topicLevel?: ConceptMapItem['seviye'] // Optional level from Concept Map
 ): { bloomLevel: BloomLevel; instruction: string; nodeType: 'Definition' | 'Relationship' | 'Result' } {
+  // 1. STRICT MAPPING ADHERENCE
+  // If topic has a specific level from the map, USE IT regardless of progress.
+  if (topicLevel) {
+      if (topicLevel === 'Analiz') {
+          return {
+              bloomLevel: 'analysis',
+              nodeType: 'Result', // or Relationship
+              instruction: "Şu an 'Analiz' aşamasındasın. Seçilen kavramın neden-sonuç ilişkilerini, grafiksel yorumlarını veya diğer değişkenlerle etkileşimini derinlemesine sorgulayan zor bir soru üret."
+          };
+      } else if (topicLevel === 'Uygulama') {
+          return {
+              bloomLevel: 'application',
+              nodeType: 'Relationship',
+              instruction: "Şu an 'Uygulama' aşamasındasın. Seçilen kavramın formüllerini, hesaplama yöntemlerini veya pratik örneklerini içeren işlemli veya senaryolu bir soru üret."
+          };
+      } else if (topicLevel === 'Bilgi') {
+          return {
+              bloomLevel: 'knowledge',
+              nodeType: 'Definition',
+              instruction: "Şu an 'Bilgi' aşamasındasın. Seçilen kavramın temel tanımını, ne olduğunu ve temel özelliklerini sorgulayan net bir soru üret."
+          };
+      }
+  }
+
+  // 2. Default Strategies (Fallback if no map level)
   if (totalQuota === 0) return { bloomLevel: 'knowledge', instruction: '', nodeType: 'Definition' };
 
   // Small Chunk Strategy (<= 150 words)
@@ -405,7 +445,7 @@ async function saveQuestionToDatabase(
   }
 ): Promise<string | null> {
   if (!noteContext.courseId) {
-    console.error('Cannot save question: courseId is missing');
+    // console.error('Cannot save question: courseId is missing');
     return null;
   }
 
@@ -426,14 +466,14 @@ async function saveQuestionToDatabase(
     }).select('id').single();
 
     if (error) {
-      console.error('Error saving question to database:', error);
+      // console.error('Error saving question to database:', error);
       return null;
     } else {
 
       return data.id;
     }
   } catch (err) {
-    console.error('Exception saving question to database:', err);
+    // console.error('Exception saving question to database:', err);
     return null;
   }
 }
@@ -538,7 +578,7 @@ function parseQuizResponse(responseText: string): QuizQuestion | null {
       parsed.a > 4 ||
       typeof parsed.exp !== 'string'
     ) {
-      console.error('Invalid quiz question structure:', parsed);
+      console.error('[QuizGen/TR] ❌ JSON yapısı geçersiz:', parsed);
       return null;
     }
 
@@ -547,10 +587,10 @@ function parseQuizResponse(responseText: string): QuizQuestion | null {
       o: parsed.o.map((opt: unknown) => String(opt)),
       a: parsed.a,
       exp: parsed.exp,
-      img: parsed.img || null, // Capture image if returned by MiMo
+      img: parsed.img || null,
     };
   } catch (e) {
-    console.error('Failed to parse quiz response:', e);
+    console.error('[QuizGen/TR] ❌ JSON ayrıştırma hatası. Ham yanıt:', responseText);
     return null;
   }
 }
@@ -577,13 +617,13 @@ async function callOpenRouterAPI(prompt: string, model: string, systemPrompt: st
     });
 
     if (error) {
-      console.error(`Edge Function error (${model}):`, error);
-      return null;
+       console.error(`[QuizGen/TR] ❌ API Hatası (${model}):`, error);
+       return null;
     }
 
     return data.choices?.[0]?.message?.content || null;
   } catch (error) {
-    console.error(`Edge Function call failed (${model}):`, error);
+    console.error(`[QuizGen/TR] ❌ API Çağrısı Başarısız:`, error);
     return null;
   }
 }
@@ -608,7 +648,7 @@ async function generateConceptMap(content: string, wordCount: number): Promise<C
   const responseText = await callOpenRouterAPI(userPrompt, MODEL_MAPPER, currentSystemPrompt, 0.5);
 
   if (!responseText) {
-    console.warn('[Mapper] API response empty.');
+    // console.warn('[Mapper] API response empty.');
     return null;
   }
 
@@ -629,11 +669,11 @@ async function generateConceptMap(content: string, wordCount: number): Promise<C
       return parsed as ConceptMap;
     }
     
-    console.warn('[Mapper] Invalid JSON structure.', parsed);
+    // console.warn('[Mapper] Invalid JSON structure.', parsed);
     return null;
 
   } catch (e) {
-    console.warn('[Mapper] Failed to parse JSON:', e);
+    // console.warn('[Mapper] Failed to parse JSON:', e);
     return null;
   }
 
@@ -670,7 +710,7 @@ async function fetchPendingFollowUpQuestion(
       .eq('chunk_id', chunkId);
 
     if (progressError) {
-      console.warn('[QuizGen] Error checking progress:', progressError);
+      // console.warn('[QuizGen] Error checking progress:', progressError);
       return null;
     }
 
@@ -702,7 +742,7 @@ async function fetchPendingFollowUpQuestion(
 
     return null;
   } catch (e) {
-    console.error('[QuizGen] Error fetching pending follow-ups:', e);
+    // console.error('[QuizGen] Error fetching pending follow-ups:', e);
     return null;
   }
 }
@@ -713,9 +753,14 @@ async function fetchPendingFollowUpQuestion(
  */
 export async function generateQuizQuestion(
   chunkId: string,
-  options: { userId?: string; isGlobal?: boolean; createdBy?: string } = {}
+  options: { 
+    userId?: string; 
+    isGlobal?: boolean; 
+    createdBy?: string;
+    usageType?: QuestionUsageType;
+  } = {}
 ): Promise<QuizGenerationResult> {
-  const { userId, isGlobal, createdBy } = options;
+  const { userId, isGlobal, createdBy, usageType = 'antrenman' } = options;
 
 
   // 0. Check for pending follow-up questions first (if userId provided)
@@ -747,9 +792,15 @@ export async function generateQuizQuestion(
   // 1. Get note context
   const noteContext = await getNoteContext(chunkId);
   if (!noteContext) {
-    console.error('[QuizGen] Note context not found');
+    // console.error('[QuizGen] Note context not found');
     return { success: false, error: 'Not içeriği bulunamadı.' };
   }
+
+  console.log(`[QuizGen/TR] 🚀 Soru üretimi başladı. Chunk ID: ${chunkId}`);
+  
+  console.log(`[QuizGen/TR] 📚 Ders: ${noteContext.courseName} > ${noteContext.h2Title}`);
+
+
 
 
   // 2. Load or Generate Concept Map
@@ -788,11 +839,15 @@ export async function generateQuizQuestion(
   // 3. Calculate Quota and Check Status
   const quota = calculateQuota(noteContext.wordCount, conceptCount);
   
-  // Count existing questions for this chunk
+  console.log(`[QuizGen/TR] 📊 İstatistikler: ${noteContext.wordCount} kelime analiz edildi. ${conceptCount} adet konsept bulundu.`);
+  console.log(`[QuizGen/TR] 🎯 Hedef: Bu içerikten toplam ${quota.total} soru üretilecek (${quota.antrenmanCount} Antrenman, ${quota.arsivCount} Arşiv, ${quota.denemeCount} Deneme).`);
+  
+  // Count existing questions for this chunk AND usageType
   const { count: currentCount, error: countError } = await supabase
     .from('questions')
     .select('*', { count: 'exact', head: true })
-    .eq('chunk_id', chunkId);
+    .eq('chunk_id', chunkId)
+    .eq('usage_type', usageType); // Filter by type
 
   if (countError) {
       console.error('[QuizGen] Error counting questions:', countError);
@@ -800,126 +855,151 @@ export async function generateQuizQuestion(
   }
 
   const totalGenerated = currentCount || 0;
+  
+  // Determine limit based on type
+  let limit = quota.total;
+  if (usageType === 'antrenman') limit = quota.antrenmanCount;
+  else if (usageType === 'arsiv') limit = quota.arsivCount;
+  else if (usageType === 'deneme') limit = quota.denemeCount;
 
-  if (totalGenerated >= quota.total) {
-      return { success: false, error: 'Bu bölüm için belirlenen soru kotası dolmuştur.' };
+  console.log(`[QuizGen/TR] ℹ️ Mevcut Durum (${usageType}): Şimdiye kadar ${totalGenerated}/${limit} soru üretilmiş.`);
+
+  if (totalGenerated >= limit) {
+      return { success: false, error: `Bu içerik için '${usageType}' kotası (${limit}) dolmuştur.` };
   }
 
-  // 4. Determine Node Strategy based on Progress
-  const strategy = determineNodeStrategy(totalGenerated, quota.total, noteContext.wordCount);
+  const mapIndex = totalGenerated % conceptCount;
+  const selectedTopic = conceptMap![mapIndex];
+
+  // 4. Determine Node Strategy based on Progress OR Mapping Level
+  const strategy = determineNodeStrategy(totalGenerated, quota.total, noteContext.wordCount, selectedTopic?.seviye);
+  
+  console.log(`[QuizGen/TR] 🧠 Strateji: '${strategy.bloomLevel}' seviyesinde '${strategy.nodeType}' sorusu üretilecek.`);
 
 
   // 5. Select Topic (Round-robin)
   // Use current count as index
-  const mapIndex = totalGenerated % conceptCount;
-  const selectedTopic = conceptMap![mapIndex];
 
 
   // 6. Build Prompt
   const guidelines = await getSubjectGuidelines(noteContext.courseName);
   const prompt = buildPrompt(noteContext, guidelines, strategy.instruction, selectedTopic);
 
+  console.log(`[QuizGen/TR] ⏳ AI Modelinden yanıt bekleniyor...`);
 
-  // 7. Call API with validation loop
-  const MAX_VALIDATION_ATTEMPTS = 3;
-  let improvementHint: string | null = null;
 
-  for (let validationAttempt = 0; validationAttempt < MAX_VALIDATION_ATTEMPTS; validationAttempt++) {
-    const isFailSafe = validationAttempt === MAX_VALIDATION_ATTEMPTS - 1;
+  // 7. Call API with Hybrid Decision Loop
+  const MAX_ATTEMPTS = 3;
+  let currentPrompt = prompt;
+  let attemptMode: 'initial' | 'refine' | 'regenerate' = 'initial';
+  let bestQuestion: QuizQuestion | null = null;
+  let bestScore = 0;
 
-    
-    // Build prompt (with improvement hint if this is a retry)
-    let currentPrompt = prompt;
-    if (improvementHint) {
-      currentPrompt += `\n\n## İYİLEŞTİRME TALİMATI (ÖNCEKİ DENEMEDE BAŞARISIZ):\n${improvementHint}`;
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+     const isLastAttempt = attempt === MAX_ATTEMPTS - 1;
+     
+     // Dynamic Temperature
+     let temperature = 0.7;
+     if (attemptMode === 'refine') temperature = 0.4;
+     else if (attemptMode === 'regenerate') temperature = 0.8;
 
-    }
-
-    // Try to generate with retries
-    let question: QuizQuestion | null = null;
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-
-      const responseText = await callOpenRouterAPI(currentPrompt, MODEL_MIMO, SYSTEM_PROMPT);
-
-      if (!responseText) {
-        if (attempt === MAX_RETRIES) {
-          console.error('[QuizGen] API failed after retries');
-          return { success: false, error: 'API bağlantısı başarısız oldu. Lütfen tekrar deneyin.' };
+     // Generate Question
+     let question: QuizQuestion | null = null;
+     // Retry loop for API errors specifically
+     for (let apiRetry = 0; apiRetry <= MAX_RETRIES; apiRetry++) {
+        const responseText = await callOpenRouterAPI(currentPrompt, MODEL_MIMO, SYSTEM_PROMPT, temperature);
+        if (responseText) {
+           question = parseQuizResponse(responseText);
+           if (question) break;
+           console.warn(`[QuizGen/TR] ⚠️ Yanıt okunamadı, yeniden deneniyor (Deneme ${apiRetry + 1})...`);
+        } else {
+           console.warn(`[QuizGen/TR] ⚠️ API yanıt vermedi, yeniden deneniyor (Deneme ${apiRetry + 1})...`);
         }
+        // Extra delay on retry
+        await new Promise(resolve => setTimeout(resolve, 2000));
+     }
 
+     if (!question) {
+        console.error('[QuizGen/TR] ❌ API Hatası veya Parse Edilemeyen Yanıt.');
+        if (isLastAttempt) break;
         continue;
-      }
+     }
 
-      question = parseQuizResponse(responseText);
-      if (question) break;
+     console.log(`[QuizGen/TR] ✅ Ham soru üretildi (Mod: ${attemptMode}). Denetleme başlıyor...`);
 
-      if (attempt === MAX_RETRIES) {
-        console.error('[QuizGen] Failed to parse response after retries');
-        return { success: false, error: 'Geçersiz yanıt formatı. Lütfen tekrar deneyin.' };
-      }
-    }
+     // Validate
+     const validationResult = await validateQuestion(question, noteContext.content);
+     const score = validationResult.total_score;
+     
+     // Keep track of best question just in case
+     if (score > bestScore) {
+        bestScore = score;
+        bestQuestion = question;
+     }
 
-    if (!question) {
-      return { success: false, error: 'Soru üretilemedi.' };
-    }
+     // --- HYBRID DECISION LOGIC ---
 
-
-
-    // 8. VALIDATE THE QUESTION
-
-    const validationResult = await validateQuestion(question, noteContext.content, { isFailSafe });
-
-    if (isValidationPassed(validationResult)) {
-
-      
-      // Save to database with validation metadata
-      const savedId = await saveQuestionToDatabase(question, noteContext, chunkId, {
-        usageType: 'antrenman',
-        sequenceIndex: totalGenerated + 1,
-        bloomLevel: strategy.bloomLevel,
-        isGlobal: isGlobal ?? true,
-        createdBy: createdBy,
-        qualityScore: validationResult.total_score,
-        validatorFeedback: JSON.stringify(validationResult),
-        validationStatus: 'APPROVED'
-      });
-
-      if (savedId) {
-        question.id = savedId;
-      }
-
-      // Inject explicit image from Topic if needed
-      if (selectedTopic?.gorsel && !question.img) {
-        question.img = selectedTopic.gorsel;
-      }
-
-      // Add dynamic imgPath
-      if (question.img && noteContext.courseSlug) {
-        question.imgPath = `/notes/${noteContext.courseSlug}/media/`;
-      }
-      
-      return { success: true, question };
-    } else {
-      // Validation failed
-
-
-      
-      if (validationAttempt < MAX_VALIDATION_ATTEMPTS - 1) {
-        // Prepare for retry with improvement hint
-        improvementHint = validationResult.improvement_suggestion || 
-          `Önceki soru ${validationResult.total_score} puan aldı. Şu hataları düzelt: ${validationResult.critical_faults.join(', ')}`;
-
-      } else {
-        // Max attempts reached, log failure
-        console.error(`[QuizGen] ⚠️ Max validation attempts reached. Final score: ${validationResult.total_score}/100`);
-        console.error('[QuizGen] This chunk could not produce a quality question.');
+     // 1. Direct Approve (Soft Threshold)
+     if (score >= 82) {
+        console.log(`[QuizGen/TR] ⚡ Yumuşak Eşik Onayı (Skor: ${score}). Kabul edildi.`);
         
-        return { 
-          success: false, 
-          error: `Şu an uygun kalitede soru üretilemiyor. Son skor: ${validationResult.total_score}/100. Lütfen daha sonra tekrar deneyin.`
-        };
-      }
-    }
+        const savedId = await saveQuestionToDatabase(question, noteContext, chunkId, {
+            usageType: usageType,
+            sequenceIndex: totalGenerated + 1,
+            bloomLevel: strategy.bloomLevel,
+            isGlobal: isGlobal ?? true,
+            createdBy: createdBy,
+            qualityScore: score,
+            validatorFeedback: JSON.stringify(validationResult),
+            validationStatus: 'APPROVED'
+        });
+        if (savedId) question.id = savedId;
+        // Inject image logic...
+        if (selectedTopic?.gorsel && !question.img) question.img = selectedTopic.gorsel;
+        if (question.img && noteContext.courseSlug) question.imgPath = `/notes/${noteContext.courseSlug}/media/`;
+        
+        return { success: true, question };
+     }
+
+     // 2. Check if this is the last attempt and we haven't succeeded with >= 82 yet
+     if (isLastAttempt) {
+         if (bestQuestion && bestScore >= 75) {
+              console.log(`[QuizGen/TR] ⚠️ Son deneme tamamlandı (82 puan barajı aşılamadı).`);
+              console.log(`[QuizGen/TR] 💾 Tüm denemeler arasındaki en iyi soru (Skor: ${bestScore}) seçiliyor...`);
+
+              const savedId = await saveQuestionToDatabase(bestQuestion, noteContext, chunkId, {
+                  usageType: usageType,
+                  sequenceIndex: totalGenerated + 1,
+                  bloomLevel: strategy.bloomLevel,
+                  isGlobal: isGlobal ?? true,
+                  createdBy: createdBy,
+                  qualityScore: bestScore,
+                  validatorFeedback: "Selected via Best-of-N Strategy",
+                  validationStatus: 'APPROVED'
+              });
+              if (savedId) bestQuestion.id = savedId;
+              if (selectedTopic?.gorsel && !bestQuestion.img) bestQuestion.img = selectedTopic.gorsel;
+              if (bestQuestion.img && noteContext.courseSlug) bestQuestion.imgPath = `/notes/${noteContext.courseSlug}/media/`;
+            
+              return { success: true, question: bestQuestion };
+         } else {
+              console.warn(`[QuizGen/TR] ❌ Tüm denemeler başarısız. En iyi skor (${bestScore}) 75 barajının altında kaldı.`);
+              return { success: false, error: 'Kaliteli soru üretilemedi.' };
+         }
+     }
+
+     // 3. Intermediate Steps: Refine or Regenerate
+     if (score >= 70) {
+        console.log(`[QuizGen/TR] 🛠️ İyileştirme (Refine) Modu Aktif (Skor: ${score}).`);
+        attemptMode = 'refine';
+        const hint = validationResult.improvement_suggestion || validationResult.critical_faults.join(', ');
+        currentPrompt = prompt + `\n\n## MEVCUT SORU TASLAĞI:\n\`\`\`json\n${JSON.stringify(question)}\n\`\`\`\n\n## DÜZELTME TALİMATI:\nBu soruyu şu eleştirilere göre düzeltip JSON olarak tekrar ver: ${hint}\n\n⚠️ ÖNEMLİ: Sadece orijinal metindeki terimleri kullan (Groundedness). Dışarıdan terim (STC vb.) ekleme.`;
+     } else {
+        console.log(`[QuizGen/TR] 🔄 Düşük Skor (${score}). Strateji değiştirilerek yeniden üretiliyor...`);
+        attemptMode = 'regenerate';
+        currentPrompt = prompt + `\n\n(Not: Önceki deneme çok düşük puan aldı. Lütfen konuya farklı bir açıdan yaklaş.)`;
+     }
+     continue;
   }
 
   return { success: false, error: 'Beklenmeyen hata oluştu.' };
@@ -1036,4 +1116,83 @@ export async function getChunkQuotaStatus(chunkId: string): Promise<QuotaStatus 
     used,
     isFull
   };
+}
+
+/**
+ * Public action to get quota for a chunk
+ */
+export async function getQuizQuotaAction(chunkId: string): Promise<{ success: boolean; quota?: QuotaDefinition; error?: string }> {
+  try {
+    const noteContext = await getNoteContext(chunkId);
+    if (!noteContext) return { success: false, error: 'Not bulunamadı.' };
+
+    // Generate or get map for concept count
+    let conceptCount = 0;
+    const existingMap = (noteContext.metadata?.concept_map as ConceptMap) || null;
+    
+    if (existingMap) {
+        conceptCount = existingMap.length;
+    } else {
+         const map = await generateConceptMap(noteContext.content, noteContext.wordCount);
+         if (map) {
+             await saveConceptMapToChunk(chunkId, map, noteContext.metadata);
+             conceptCount = map.length;
+         }
+    }
+
+    const quota = calculateQuota(noteContext.wordCount, conceptCount);
+    return { success: true, quota };
+  } catch (err) {
+      console.error('[QuizGen] Error getting quota:', err);
+      return { success: false, error: 'Kota hesaplanamadı.' };
+  }
+}
+
+/**
+ * Fetch questions for a session (Prioritizing pre-generated ones)
+ */
+export async function fetchQuestionsForSession(
+  chunkId: string,
+  count: number,
+  userId: string,
+  usageType: QuestionUsageType = 'antrenman'
+): Promise<QuizQuestion[]> {
+  try {
+     const { data: solved, error: solvedError } = await supabase
+        .from('user_quiz_progress')
+        .select('question_id')
+        .eq('user_id', userId)
+        .eq('chunk_id', chunkId);
+        
+     const solvedIds = new Set(solved?.map(s => s.question_id) || []);
+     
+     let query = supabase
+        .from('questions')
+        .select('id, question_data')
+        .eq('chunk_id', chunkId)
+        .eq('usage_type', usageType)
+        .limit(count + solvedIds.size);
+
+     if (solvedIds.size > 0 && solvedIds.size < 100) {
+         query = query.not('id', 'in', `(${Array.from(solvedIds).join(',')})`);
+     }
+
+     const { data: questions, error } = await query;
+     
+     if (error || !questions) return [];
+
+     const available = questions
+        .filter(q => !solvedIds.has(q.id))
+        .slice(0, count)
+        .map(q => {
+             const question = q.question_data as unknown as QuizQuestion;
+             question.id = q.id;
+             return question;
+        });
+        
+     return available;
+  } catch (e) {
+      console.error('[QuizApi] Error fetching questions:', e);
+      return [];
+  }
 }
