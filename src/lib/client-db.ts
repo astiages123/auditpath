@@ -44,9 +44,10 @@ export interface TimelineBlock {
   courseName: string;
   startTime: string;
   endTime: string;
-  duration: number;
-  durationMinutes: number;
-  pauseMinutes: number;
+  durationSeconds: number;
+  totalDurationSeconds: number;
+  pauseSeconds: number;
+  breakSeconds?: number;
   type: "work" | "break" | "WORK" | "BREAK";
   timeline?: Json[];
 }
@@ -139,11 +140,23 @@ export async function getUserStats(userId: string) {
       for (const p of progress) {
           const dateStr = p.completed_at || p.updated_at; // Fallback to updated_at
           if (dateStr) {
-              activeDays.add(toDateString(dateStr));
-              
               const d = new Date(dateStr);
-              if (!firstActivityDate || d < firstActivityDate) {
-                  firstActivityDate = d;
+              // Virtual Day Adjustment for Activity Check
+              if (d.getHours() < 4) {
+                  d.setDate(d.getDate() - 1);
+              }
+              // Manual formatting to ensure consistency with toDateString isn't needed if we stick to this block
+              // But let's replicate the string generation exactly:
+              const formattedDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+              
+              activeDays.add(formattedDate);
+              
+              // For firstActivityDate, we use the raw date (approx is fine) or the adjusted one?
+              // Let's use raw for absolute timeline start, or adjusted?
+              // Raw is safer for "when did I start".
+              const rawDate = new Date(dateStr);
+              if (!firstActivityDate || rawDate < firstActivityDate) {
+                  firstActivityDate = rawDate;
               }
           }
         
@@ -210,65 +223,82 @@ export async function getUserStats(userId: string) {
     }
 
     // 2. Calculate Streak
-    // Count consecutive days going backwards from today
+    // Count consecutive days ending TODAY or YESTERDAY.
+    // Logic:
+    // - Calculate streak strictly ending YESTERDAY.
+    // - If activity today, streak = yesterdayStreak + 1.
+    // - If no activity today, streak = yesterdayStreak (but only if yesterday was active, else 0).
+    // Actually, simpler:
+    // Iterate backwards from TODAY.
+    // If today has activity -> streak starts at 1, go to yesterday.
+    // If today has NO activity -> check yesterday. If yesterday active -> streak starts at 1 (representing yesterday), continue backwards.
+    // If neither -> streak 0.
+
     let streak = 0;
-    const today = new Date();
-    // Check if we have activity today
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    
-    if (activeDays.has(todayStr)) {
-        streak = 1;
+    const nowLocal = new Date();
+    // Virtual day adjustment (04:00 AM)
+    if (nowLocal.getHours() < 4) {
+        nowLocal.setDate(nowLocal.getDate() - 1);
     }
     
-    // Check previous days
-    // If we have activity today, we check yesterday.
-    // If we DON'T have activity today, we check if we had activity yesterday (streak saved).
-    // The requirement says: "Video complete... streak +1". "Video uncomplete... streak back".
-    // This implies a strict consecutive count including today if done, or up to yesterday if not done today?
-    // Usually "current streak" is:
-    // - If active today: count(today + backwards continuous)
-    // - If not active today: 
-    //    - If active yesterday: count(yesterday + backwards continuous)
-    //    - Else: 0
+    // Check consecutive days
+    const checkDate = new Date(nowLocal);
+    let consecutiveDays = 0;
     
-    // Let's implement standard streak logic:
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-
-    let currentCheckDate = new Date(today);
-    
-    // If not active today, but active yesterday, start check from yesterday
-    if (!activeDays.has(todayStr) && activeDays.has(yesterdayStr)) {
-         currentCheckDate = yesterday;
-    } else if (!activeDays.has(todayStr) && !activeDays.has(yesterdayStr)) {
-         // Streak broken or 0
-         currentCheckDate = new Date(0); // force loop fail
-    }
-    
-    // Re-loop to count
-    let tempStreak = 0;
-    // resetting date for loop
-    if (activeDays.has(todayStr)) {
-        currentCheckDate = new Date(today);
-    } else if (activeDays.has(yesterdayStr)) {
-        currentCheckDate = new Date(yesterday);
-    } else {
-        // 0 streak
-    }
-
-    if (activeDays.has(todayStr) || activeDays.has(yesterdayStr)) {
-        while (true) {
-            const checkStr = `${currentCheckDate.getFullYear()}-${String(currentCheckDate.getMonth() + 1).padStart(2, '0')}-${String(currentCheckDate.getDate()).padStart(2, '0')}`;
-            if (activeDays.has(checkStr)) {
-                tempStreak++;
-                currentCheckDate.setDate(currentCheckDate.getDate() - 1);
+    // We check explicitly day-by-day backwards
+    while (true) {
+        const checkYear = checkDate.getFullYear();
+        const checkMonth = String(checkDate.getMonth() + 1).padStart(2, '0');
+        const checkDay = String(checkDate.getDate()).padStart(2, '0');
+        const dateStr = `${checkYear}-${checkMonth}-${checkDay}`;
+        
+        if (activeDays.has(dateStr)) {
+            consecutiveDays++;
+            checkDate.setDate(checkDate.getDate() - 1);
+        } else {
+            // Gap found.
+            // Exception: If the gap is TODAY (and we haven't done anything today yet),
+            // we shouldn't break the streak immediately; it just means it hasn't incremented yet.
+            // But we already checked today in the loop (start of loop).
+            // So if the FIRST check (Today) fails, we check Yesterday.
+            
+            if (consecutiveDays === 0) {
+                 // Today has no activity. Check if yesterday had activity.
+                 // This effectively means "Current Streak" is maintained from yesterday.
+                 checkDate.setDate(checkDate.getDate() - 1);
+                 
+                 const yesterdayYear = checkDate.getFullYear();
+                 const yesterdayMonth = String(checkDate.getMonth() + 1).padStart(2, '0');
+                 const yesterdayDay = String(checkDate.getDate()).padStart(2, '0');
+                 const yesterdayStr = `${yesterdayYear}-${yesterdayMonth}-${yesterdayDay}`;
+                 
+                 if (activeDays.has(yesterdayStr)) {
+                     // Yesterday was active! Continue loop from yesterday.
+                     // Don't increment consecutiveDays here yet, let the loop handle it
+                     // Reset checkDate to yesterday to restart loop logic correctly?
+                     // No, `checkDate` is already decremented to Yesterday.
+                     // Just continue to next iteration, it will check `activeDays.has(yesterday)` again?
+                     // Wait, `checkDate` was decremented above. So on next `while` loop, it checks yesterday.
+                     // But we need to ensure we don't double decrement or break.
+                     
+                     // Let's restart loop structure for clarity:
+                     // We handled "Today" implicitly. 
+                     // If `consecutiveDays === 0` here, it means `activeDays.has(today)` was false.
+                     // `checkDate` is now Yesterday.
+                     // We continue the loop, effectively checking Yesterday next.
+                     continue;
+                 } else {
+                     // Neither today nor yesterday active -> Streak 0.
+                     break;
+                 }
             } else {
+                // We had some consecutive days (e.g. Today, Yesterday...), and now found a gap.
+                // Streak ends.
                 break;
             }
         }
     }
-    streak = tempStreak;
+    streak = consecutiveDays;
 
     // 3. Estimate Days Remaining
     // Formula: (Total Remaining Hours) / (Daily Average Hours)
@@ -314,6 +344,32 @@ export async function getUserStats(userId: string) {
       rankProgress,
       progressPercentage,
       estimatedDays,
+      todayVideoCount: (() => {
+          // Use the EXACT same logic as activeDays to ensure consistency
+          // Re-calculate todayStr using the same toDateString logic with Virtual Day
+          const now = new Date();
+          if (now.getHours() < 4) {
+              now.setDate(now.getDate() - 1);
+          }
+          const checkTodayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+          
+          if (!progress) return 0;
+          
+          // Count videos that fall into "Today" bucket
+          return progress.filter(p => {
+              const dateStr = p.completed_at || p.updated_at;
+              if (!dateStr) return false;
+              
+              const d = new Date(dateStr);
+              // Apply Same Virtual Day Logic to the record's date
+              if (d.getHours() < 4) {
+                  d.setDate(d.getDate() - 1);
+              }
+              const pStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+              
+              return pStr === checkTodayStr;
+          }).length;
+      })(),
     };
   } catch (error: unknown) {
     const e = error as { name?: string; message?: string };
@@ -325,6 +381,7 @@ export async function getUserStats(userId: string) {
   }
 }
 
+// ... (upsertPomodoroSession implementation)
 export async function upsertPomodoroSession(
   session: {
     id: string;
@@ -370,10 +427,9 @@ export async function upsertPomodoroSession(
       timeline: session.timeline,
       started_at: new Date(session.startedAt).toISOString(),
       ended_at: new Date().toISOString(),
-      total_work_time: totalWork,
-      total_break_time: totalBreak,
-      total_pause_time: totalPause,
-      // @ts-ignore - Bu alan yeni eklendi, tipler güncellenince hata gidecektir
+      total_work_time: totalWork, // Now in seconds (INTEGER)
+      total_break_time: totalBreak, // Now in seconds
+      total_pause_time: totalPause, // Now in seconds
       is_completed: session.isCompleted || false,
     })
     .select()
@@ -420,8 +476,6 @@ export async function unlockAchievement(userId: string, achievementId: string) {
   if (error) console.error('Error unlocking achievement:', error);
 }
 
-
-
 export async function getTotalActiveDays(userId: string) {
   // Query distinct days from pomodoro_sessions
   // Provide a specialized RPC for this in production for performance
@@ -440,14 +494,21 @@ export async function getTotalActiveDays(userId: string) {
 }
 
 export async function getDailySessionCount(userId: string) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+  const now = new Date();
+  const today = new Date(now);
+  
+  // Virtual Day Logic: Day starts at 04:00 AM
+  if (now.getHours() < 4) {
+      today.setDate(today.getDate() - 1);
+  }
+  today.setHours(4, 0, 0, 0);
 
   const { count, error } = await supabase
     .from('pomodoro_sessions')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId)
-    .gte('started_at', today.toISOString());
+    .gte('started_at', today.toISOString())
+    .gte('total_work_time', 60); // Only count "meaningful" sessions (at least 1 minute)
 
   if (error) console.error("Error fetching daily session count:", error);
   return count || 0;
@@ -459,7 +520,6 @@ export async function getLatestActiveSession(userId: string) {
     .select('*, course:courses(*, category:categories(*))')
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
-    // @ts-ignore - is_completed kolonu migration sonrasında aktif olacaktır
     .neq('is_completed', true)
     .limit(1)
     .maybeSingle();
@@ -468,9 +528,9 @@ export async function getLatestActiveSession(userId: string) {
   return data;
 }
 
-export async function getStreak(userId: string) {
-  // Should call a specialized streak function
-  if (!userId) return 0;
+export async function getStreak(_userId: string) {
+  // Deprecated: Consolidated into getUserStats logic or handled via generic stats.
+  // Returning 0 to avoid breaking legacy calls until fully removed.
   return 0;
 }
 
@@ -564,25 +624,11 @@ export async function toggleVideoProgress(
 
   if (error) {
     console.error('Error toggling video progress:', error);
-  } else if (completed) {
-      // Log to video_logs for stats
-      const { error: logError } = await supabase
-        .from('video_logs')
-        .insert({
-            user_id: userId,
-            video_id: video.id,
-            course_id: courseId
-        });
-        
-      if (logError) console.error('Error logging video completion:', logError);
   }
+  // video_logs artık kullanılmıyor - completed_at zaten video_progress'te kaydediliyor
 }
 
-export async function completePomodoroSession(_userId: string, _durationMinutes: number) {
-  // Logic to save session if needed, or trigger celebration?
-  // Previously added XP. Now maybe just nothing or logs?
-
-}
+// completePomodoroSession fonksiyonu kaldırıldı (kullanılmıyordu)
 
 export async function toggleVideoProgressBatch(
   userId: string,
@@ -617,24 +663,8 @@ export async function toggleVideoProgressBatch(
 
   if (error) {
     console.error('Error batch toggling video progress:', error);
-  } else if (completed) {
-    // Batch log
-    const logData = videos.map(v => ({
-        user_id: userId,
-        video_id: v.id,
-        course_id: courseId
-    }));
-    
-    const { error: logError } = await supabase
-        .from('video_logs')
-        .insert(logData);
-
-    if (logError) console.error('Error logging batch video completion:', logError);
   }
-
-  if (error) {
-    console.error('Error batch toggling video progress:', error);
-  }
+  // video_logs artık kullanılmıyor - completed_at zaten video_progress'te kaydediliyor
 }
 
 export async function getDailyStats(userId: string): Promise<DailyStats> {
@@ -660,7 +690,8 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     .select("total_work_time, total_break_time, total_pause_time")
     .eq("user_id", userId)
     .gte("started_at", today.toISOString())
-    .lt("started_at", tomorrow.toISOString());
+    .lt("started_at", tomorrow.toISOString())
+    .gte('total_work_time', 60); // Consistency: Only count meaningful sessions
 
   if (todayError) {
     console.error("Error fetching daily stats:", todayError);
@@ -674,24 +705,32 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     .gte("started_at", yesterday.toISOString())
     .lt("started_at", today.toISOString());
 
-  // 3. Fetch Today's Video Stats using video_logs (NEW LOGIC)
-  const { data: todayVideoLogs, error: videoError } = await supabase
-    .from("video_logs")
-    .select("video:videos(duration_minutes)")
+  // 3. Fetch Today's Video Stats using video_progress.completed_at
+  const { data: todayVideos, error: videoError } = await supabase
+    .from("video_progress")
+    .select("video_id, video:videos(duration_minutes)")
     .eq("user_id", userId)
-    .gte("created_at", today.toISOString())
-    .lt("created_at", tomorrow.toISOString());
+    .eq("completed", true)
+    .gte("completed_at", today.toISOString())
+    .lt("completed_at", tomorrow.toISOString());
 
-  const totalWorkMinutes =
+  // DB stores Seconds. UI expects Minutes.
+  const totalWorkSeconds =
     todaySessions?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
-  const totalBreakMinutes =
+  const totalBreakSeconds =
     todaySessions?.reduce((acc, s) => acc + (s.total_break_time || 0), 0) || 0;
-  const totalPauseMinutes = 
+  const totalPauseSeconds = 
     todaySessions?.reduce((acc, s) => acc + (s.total_pause_time || 0), 0) || 0;
+  
+  const totalWorkMinutes = Math.round(totalWorkSeconds / 60);
+  const totalBreakMinutes = Math.round(totalBreakSeconds / 60);
+  const totalPauseMinutes = Math.round(totalPauseSeconds / 60);
+
   const sessionCount = todaySessions?.length || 0;
 
-  const yesterdayWorkMinutes = 
+  const yesterdayWorkSeconds = 
     yesterdaySessions?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
+  const yesterdayWorkMinutes = Math.round(yesterdayWorkSeconds / 60);
 
   // Calculate Trend
   let trendPercentage = 0;
@@ -701,14 +740,13 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     trendPercentage = Math.round(((totalWorkMinutes - yesterdayWorkMinutes) / yesterdayWorkMinutes) * 100);
   }
 
-  // Calculate Video Stats from Logs
+  // Calculate Video Stats from video_progress
   let totalVideoMinutes = 0;
-  const completedVideosCount = todayVideoLogs?.length || 0;
+  const completedVideosCount = todayVideos?.length || 0;
 
-  if (todayVideoLogs) {
-    totalVideoMinutes = todayVideoLogs.reduce((acc, log) => {
-      // @ts-ignore
-      const duration = log.video?.duration_minutes || 0;
+  if (todayVideos) {
+    totalVideoMinutes = todayVideos.reduce((acc, vp) => {
+      const duration = (vp.video as { duration_minutes?: number })?.duration_minutes || 0;
       return acc + duration;
     }, 0);
   }
@@ -748,11 +786,14 @@ export async function getLast30DaysActivity(userId: string): Promise<DayActivity
     return [];
   }
 
-  const dailyCounts: Record<string, number> = {};
+  const dailyCounts: Record<string, { count: number; minutes: number }> = {};
   data?.forEach((s) => {
     const d = new Date(s.started_at);
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    dailyCounts[dateStr] = (dailyCounts[dateStr] || 0) + 1;
+    dailyCounts[dateStr] = {
+        count: (dailyCounts[dateStr]?.count || 0) + 1,
+        minutes: (dailyCounts[dateStr]?.minutes || 0) + (s.total_work_time || 0)
+    };
   });
 
   const heatmap: DayActivity[] = [];
@@ -763,7 +804,7 @@ export async function getLast30DaysActivity(userId: string): Promise<DayActivity
     const d = new Date(today);
     d.setDate(d.getDate() - (30 - i));
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    const count = dailyCounts[dateStr] || 0;
+    const count = dailyCounts[dateStr]?.count || 0;
     
     let level: 0 | 1 | 2 | 3 | 4 = 0;
     if (count >= 5) level = 4;
@@ -776,7 +817,7 @@ export async function getLast30DaysActivity(userId: string): Promise<DayActivity
       count, 
       level, 
       intensity: level,
-      totalMinutes: count * 25 // Rough estimate if we don't have exact duration
+      totalMinutes: Math.round((dailyCounts[dateStr]?.minutes || 0) / 60)
     });
   }
 
@@ -802,13 +843,14 @@ export async function getEfficiencyRatio(userId: string): Promise<EfficiencyData
     .gte("started_at", today.toISOString())
     .lt("started_at", tomorrow.toISOString());
 
-  // 2. Fetch Today's Video Stats using video_logs (NEW LOGIC)
-  const { data: todayVideoLogs, error: videoError } = await supabase
-    .from("video_logs")
-    .select("video:videos(duration_minutes)")
+  // 2. Fetch Today's Video Stats using video_progress
+  const { data: todayVideos, error: videoError } = await supabase
+    .from("video_progress")
+    .select("video_id, video:videos(duration_minutes)")
     .eq("user_id", userId)
-    .gte("created_at", today.toISOString())
-    .lt("created_at", tomorrow.toISOString());
+    .eq("completed", true)
+    .gte("completed_at", today.toISOString())
+    .lt("completed_at", tomorrow.toISOString());
 
   if (sessionError || videoError) {
     console.error("Error fetching efficiency metrics:", sessionError || videoError);
@@ -817,18 +859,20 @@ export async function getEfficiencyRatio(userId: string): Promise<EfficiencyData
   const totalWork = todaySessions?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
   
   let totalVideoMinutes = 0;
-  if (todayVideoLogs) {
-    totalVideoMinutes = todayVideoLogs.reduce((acc, log) => {
-      // @ts-ignore
-      const duration = (log.video as any)?.duration_minutes || 0;
+  if (todayVideos) {
+    totalVideoMinutes = todayVideos.reduce((acc, vp) => {
+      const duration = (vp.video as { duration_minutes?: number })?.duration_minutes || 0;
       return acc + duration;
     }, 0);
   }
 
+  // DB stores Seconds. Convert to Minutes.
+  const totalWorkMinutes = Math.round(totalWork / 60);
+
   // Calculate Learning Quotient: Pomodoro Minutes / Video Minutes
   // If Video duration is 0, we avoid division by zero
   const ratio = totalVideoMinutes > 0 
-    ? Math.round((totalWork / totalVideoMinutes) * 10) / 10 
+    ? Math.round((totalWorkMinutes / totalVideoMinutes) * 10) / 10 
     : 0.0;
 
   return {
@@ -836,7 +880,7 @@ export async function getEfficiencyRatio(userId: string): Promise<EfficiencyData
     trend: "stable",
     isAlarm: false, // You can implement a check here: e.g. ratio > 3.0
     videoMinutes: Math.round(totalVideoMinutes),
-    pomodoroMinutes: totalWork
+    pomodoroMinutes: totalWorkMinutes
   };
 }
 
@@ -853,28 +897,24 @@ export async function getCumulativeStats(userId: string): Promise<CumulativeStat
     .select("total_work_time")
     .eq("user_id", userId);
 
-   // 2. Total Video (Using video_progress for historically accurate total count, 
-   // or video_logs if we trust backfill. Let's use video_logs for consistency with learning quotient logic)
-   // Actually for "Cumulative Learning Coefficient", we should probably use ALL logs.
-   const { data: allLogs, error: logError } = await supabase
-    .from("video_logs")
-    .select("video:videos(duration_minutes)")
-    .eq("user_id", userId);
+   // 2. Total Video (Using video_progress for historically accurate total count)
+   const { data: allVideos, error: videoError } = await supabase
+    .from("video_progress")
+    .select("video_id, video:videos(duration_minutes)")
+    .eq("user_id", userId)
+    .eq("completed", true);
 
-    if (sessionError || logError) {
-        console.error("Error fetching cumulative stats:", sessionError || logError);
-    } else {
-        // Debug Log
-        console.log("Cumulative Logs Found:", allLogs?.length, "Samples:", allLogs?.slice(0, 3));
+    if (sessionError || videoError) {
+        console.error("Error fetching cumulative stats:", sessionError || videoError);
     }
 
-    const totalWorkMinutes = allSessions?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
+    const totalWorkSeconds = allSessions?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
+    const totalWorkMinutes = Math.round(totalWorkSeconds / 60);
     
     let totalVideoMinutes = 0;
-    if (allLogs) {
-        totalVideoMinutes = allLogs.reduce((acc, log) => {
-            // @ts-ignore
-            const duration = (log.video as any)?.duration_minutes || 0;
+    if (allVideos) {
+        totalVideoMinutes = allVideos.reduce((acc, vp) => {
+            const duration = (vp.video as { duration_minutes?: number })?.duration_minutes || 0;
             return acc + duration;
         }, 0);
     }
@@ -917,15 +957,16 @@ export async function getHistoryStats(userId: string, days: number = 7): Promise
         .eq("user_id", userId)
         .gte("started_at", startDate.toISOString());
 
-    // 2. Fetch Video Logs
-    const { data: logs, error: logError } = await supabase
-        .from("video_logs")
-        .select("created_at, video:videos(duration_minutes)")
+    // 2. Fetch Video Progress
+    const { data: videoProgress, error: videoError } = await supabase
+        .from("video_progress")
+        .select("completed_at, video_id, video:videos(duration_minutes)")
         .eq("user_id", userId)
-        .gte("created_at", startDate.toISOString());
+        .eq("completed", true)
+        .gte("completed_at", startDate.toISOString());
 
-    if (sessionError || logError) {
-        console.error("Error fetching history stats:", sessionError || logError);
+    if (sessionError || videoError) {
+        console.error("Error fetching history stats:", sessionError || videoError);
         return [];
     }
 
@@ -951,23 +992,27 @@ export async function getHistoryStats(userId: string, days: number = 7): Promise
         }
     });
 
-    logs?.forEach(l => {
-        const d = new Date(l.created_at);
+    videoProgress?.forEach(vp => {
+        if (!vp.completed_at) return;
+        const d = new Date(vp.completed_at);
         // Virtual Day Shift for Mapping
         if (d.getHours() < 4) d.setDate(d.getDate() - 1);
 
         const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
         if (statsMap[dateKey]) {
-            // @ts-ignore
-            statsMap[dateKey].video += (l.video?.duration_minutes || 0);
+            const duration = (vp.video as { duration_minutes?: number })?.duration_minutes || 0;
+            statsMap[dateKey].video += duration;
         }
     });
 
     // Convert to array and sort
+    // DB stores seconds, convert to minutes for display
     return Object.entries(statsMap)
         .map(([date, values]) => ({
             date, // Keeps YYYY-MM-DD for sorting
-            ...values
+            pomodoro: Math.round(values.pomodoro / 60), // Saniye → Dakika
+            video: values.video // Video zaten dakika cinsinden
         }))
         .sort((a, b) => a.date.localeCompare(b.date));
 }
@@ -1000,10 +1045,10 @@ export async function getRecentSessions(userId: string, limit: number = 20): Pro
       courseName: s.course_name || "Bilinmeyen Ders",
       startTime: s.started_at,
       endTime: s.ended_at,
-      duration: workTime,
-      durationMinutes: workTime + breakTime, // Total session span
-      pauseMinutes: pauseTime,
-      breakMinutes: breakTime,
+      durationSeconds: workTime,
+      totalDurationSeconds: workTime + breakTime + pauseTime, 
+      pauseSeconds: pauseTime,
+      breakSeconds: breakTime,
       type: (breakTime > workTime) ? "break" : "work",
       timeline: timeline,
     };
@@ -1098,10 +1143,10 @@ export async function getTopicQuestionCount(courseId: string, topic: string) {
 
 export interface TopicCompletionStats {
   completed: boolean;
-  antrenman: { solved: number; total: number };
-  deneme: { solved: number; total: number };
-  arsiv: { solved: number; total: number };
-  mistakes: { solved: number; total: number };
+  antrenman: { solved: number; total: number; quota: number; existing: number };
+  deneme: { solved: number; total: number; quota: number; existing: number };
+  arsiv: { solved: number; total: number; quota: number; existing: number };
+  mistakes: { solved: number; total: number; existing: number };
 }
 
 import { calculateQuota } from './ai/quiz-api';
@@ -1137,10 +1182,10 @@ export async function getTopicCompletionStatus(userId: string, courseId: string,
     console.error('Error fetching questions for status:', questionsError);
     return {
         completed: false,
-        antrenman: { solved: 0, total: quota.antrenmanCount },
-        deneme: { solved: 0, total: quota.denemeCount },
-        arsiv: { solved: 0, total: quota.arsivCount },
-        mistakes: { solved: 0, total: 0 }
+        antrenman: { solved: 0, total: quota.antrenmanCount, quota: quota.antrenmanCount, existing: 0 },
+        deneme: { solved: 0, total: quota.denemeCount, quota: quota.denemeCount, existing: 0 },
+        arsiv: { solved: 0, total: quota.arsivCount, quota: quota.arsivCount, existing: 0 },
+        mistakes: { solved: 0, total: 0, existing: 0 }
     };
   }
 
@@ -1184,10 +1229,10 @@ export async function getTopicCompletionStatus(userId: string, courseId: string,
       console.error('Error fetching solved stats:', solvedError);
        return {
         completed: false,
-        antrenman: { solved: 0, total: quota.antrenmanCount },
-        deneme: { solved: 0, total: quota.denemeCount },
-        arsiv: { solved: 0, total: quota.arsivCount },
-        mistakes: { solved: 0, total: 0 }
+        antrenman: { solved: 0, total: quota.antrenmanCount, quota: quota.antrenmanCount, existing: existingCounts.antrenman },
+        deneme: { solved: 0, total: quota.denemeCount, quota: quota.denemeCount, existing: existingCounts.deneme },
+        arsiv: { solved: 0, total: quota.arsivCount, quota: quota.arsivCount, existing: existingCounts.arsiv },
+        mistakes: { solved: 0, total: existingCounts.mistakes, existing: existingCounts.mistakes }
     };
   }
 
@@ -1220,10 +1265,29 @@ export async function getTopicCompletionStatus(userId: string, courseId: string,
 
   return {
       completed: isCompleted,
-      antrenman: { solved: solvedCounts.antrenman, total: antrenmanTotal },
-      deneme: { solved: solvedCounts.deneme, total: denemeTotal },
-      arsiv: { solved: solvedCounts.arsiv, total: arsivTotal },
-      mistakes: { solved: solvedCounts.mistakes, total: mistakesTotal }
+      antrenman: { 
+          solved: solvedCounts.antrenman, 
+          total: antrenmanTotal,
+          quota: quota.antrenmanCount,
+          existing: existingCounts.antrenman
+      },
+      deneme: { 
+          solved: solvedCounts.deneme, 
+          total: denemeTotal, 
+          quota: quota.denemeCount,
+          existing: existingCounts.deneme
+      },
+      arsiv: { 
+          solved: solvedCounts.arsiv, 
+          total: arsivTotal, 
+          quota: quota.arsivCount,
+          existing: existingCounts.arsiv
+      },
+      mistakes: { 
+          solved: solvedCounts.mistakes, 
+          total: mistakesTotal,
+          existing: existingCounts.mistakes
+      }
   };
 };
 
@@ -1401,6 +1465,24 @@ export async function getFirstChunkIdForTopic(courseId: string, topic: string) {
   return data?.id || null;
 }
 
+export interface ChunkGenerationStatus {
+  status: Database["public"]["Enums"]["chunk_generation_status"] | null;
+  is_ready: boolean | null;
+  error_message: string | null;
+  attempts: number | null;
+}
+
+export async function getChunkGenerationStatus(chunkId: string): Promise<ChunkGenerationStatus | null> {
+  const { data, error } = await supabase
+    .from('note_chunks')
+    .select('status, is_ready, error_message, attempts')
+    .eq('id', chunkId)
+    .single();
+
+  if (error || !data) return null;
+  return data as ChunkGenerationStatus;
+}
+
 // --- New Statistics Functions ---
 
 export interface QuizStats {
@@ -1576,9 +1658,9 @@ export async function getFocusTrend(userId: string): Promise<FocusTrend[]> {
         dailyMap[day] = (dailyMap[day] || 0) + (s.total_work_time || 0);
     });
 
-    return Object.entries(dailyMap).map(([date, minutes]) => ({
+    return Object.entries(dailyMap).map(([date, seconds]) => ({
         date,
-        minutes
+        minutes: Math.round(seconds / 60)
     })).sort((a,b) => a.date.localeCompare(b.date));
 }
 

@@ -111,28 +111,31 @@ export function DailyGoalCard({ data }: DailyGoalCardProps) {
                 onOpenChange={setIsModalOpen}
                 title="Günlük İstatistikler"
             >
-                <div className="space-y-4">
+                <div className="space-y-4 py-4">
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-muted/30 rounded-xl p-4">
-                            <p className="text-sm text-muted-foreground">Çalışma Süresi</p>
-                            <p className="text-2xl font-bold">{data.totalWorkMinutes} dk</p>
+                        <div className="bg-sky-500/10 border border-sky-500/20 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-1">
+                            <p className="text-xs font-medium text-sky-500 uppercase tracking-widest">Çalışma</p>
+                            <p className="text-2xl font-black text-foreground">{data.totalWorkMinutes} dk</p>
                         </div>
-                        <div className="bg-muted/30 rounded-xl p-4">
-                            <p className="text-sm text-muted-foreground">Mola Süresi</p>
-                            <p className="text-2xl font-bold">{data.totalBreakMinutes} dk</p>
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-1">
+                            <p className="text-xs font-medium text-emerald-500 uppercase tracking-widest">Mola</p>
+                            <p className="text-2xl font-black text-foreground">{data.totalBreakMinutes} dk</p>
                         </div>
-                        <div className="bg-muted/30 rounded-xl p-4">
-                            <p className="text-sm text-muted-foreground">Duraklatma</p>
-                            <p className="text-2xl font-bold">{data.totalPauseMinutes} dk</p>
+                        <div className="bg-slate-500/10 border border-slate-500/20 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-1">
+                            <p className="text-xs font-medium text-slate-500 uppercase tracking-widest">Duraklatma</p>
+                            <p className="text-2xl font-black text-foreground">{data.totalPauseMinutes} dk</p>
                         </div>
-                        <div className="bg-muted/30 rounded-xl p-4">
-                            <p className="text-sm text-muted-foreground">Video İzleme</p>
-                            <p className="text-2xl font-bold">{data.totalVideoMinutes} dk</p>
+                        <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-1">
+                            <p className="text-xs font-medium text-indigo-500 uppercase tracking-widest">İzleme</p>
+                            <p className="text-2xl font-black text-foreground">{data.totalVideoMinutes} dk</p>
                         </div>
                     </div>
-                    <div className="bg-primary/10 rounded-xl p-4">
-                        <p className="text-sm text-muted-foreground">Tamamlanan Video</p>
-                        <p className="text-2xl font-bold text-primary">{data.completedVideos} adet</p>
+                    <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 flex items-center justify-between">
+                        <div>
+                            <p className="text-xs font-medium text-primary uppercase tracking-widest mb-0.5">Tamamlanan Video</p>
+                            <p className="text-sm text-muted-foreground">Bugünkü izleme performansı</p>
+                        </div>
+                        <p className="text-3xl font-black text-primary">{data.completedVideos}</p>
                     </div>
                 </div>
             </StatDetailModal>

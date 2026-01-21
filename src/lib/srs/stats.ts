@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { getStreak } from '@/lib/streak';
+import { getUserStats } from '@/lib/client-db';
 
 export interface CourseStats {
   totalQuestionsSolved: number;
@@ -38,8 +38,9 @@ export async function getCourseStats(
     const chunkCount = masteryData?.length || 1;
     const averageMastery = Math.round(totalMasteryScore / chunkCount);
 
-    // 2. Get current streak from streak module (localStorage-based tracking)
-    const currentStreak = getStreak();
+    // 2. Get current streak from DB
+    const stats = await getUserStats(userId);
+    const currentStreak = stats?.streak || 0;
     
     return {
       totalQuestionsSolved,

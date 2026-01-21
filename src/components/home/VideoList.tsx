@@ -7,7 +7,7 @@ import {
   toggleVideoProgress,
   toggleVideoProgressBatch,
 } from "@/lib/client-db";
-import { recordActivity } from "@/lib/streak";
+
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -32,7 +32,7 @@ import coursesData from "@/data/courses.json";
 interface CourseData {
   id: string;
   name: string;
-  lessonType: string;
+  instructor: string;
   totalVideos: number;
   totalHours: number;
   playlistUrl: string;
@@ -216,9 +216,7 @@ export function VideoList({ courseId, dbCourseId }: VideoListProps) {
         );
       }
 
-      // Sync successful! Now update local streak data
-      if (newlyCompletedCount > 0) recordActivity(newlyCompletedCount);
-      else if (newlyRemovedCount > 0) recordActivity(-newlyRemovedCount);
+
 
       // Re-refresh progress to ensure consistency (optional, but good for safety)
       refreshProgress();

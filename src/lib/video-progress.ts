@@ -1,6 +1,6 @@
 "use client";
 
-import { recordActivity } from "./streak";
+
 
 // LocalStorage key prefix
 const STORAGE_KEY_PREFIX = "video-progress-";
@@ -63,12 +63,10 @@ export function toggleVideoProgress(
   if (completed) {
     if (!progress.has(videoNumber)) {
       progress.add(videoNumber);
-      recordActivity(1);
     }
   } else {
     if (progress.has(videoNumber)) {
       progress.delete(videoNumber);
-      recordActivity(-1);
     }
   }
 
@@ -97,12 +95,6 @@ export function toggleVideoProgressBatch(
         newlyRemovedCount++;
       }
     }
-  }
-
-  if (newlyCompletedCount > 0) {
-    recordActivity(newlyCompletedCount);
-  } else if (newlyRemovedCount > 0) {
-    recordActivity(-newlyRemovedCount);
   }
 
   saveProgress(courseId, progress);

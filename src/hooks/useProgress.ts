@@ -21,6 +21,7 @@ export interface ProgressStats {
   rankProgress?: number;
   progressPercentage?: number;
   estimatedDays?: number;
+  todayVideoCount?: number;
 }
 
 export interface ProgressContextType {

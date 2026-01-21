@@ -1,7 +1,7 @@
 // supabase import removed
 
 export interface Note {
-  lessonType: string;
+  courseId: string;
   content: string;
   updatedAt: Date;
 }
@@ -22,7 +22,7 @@ export async function getNote(slug: string): Promise<Note | null> {
           const content = await res.text();
           if (content && !content.startsWith("<!DOCTYPE html>")) {
             return {
-              lessonType: slug, 
+              courseId: slug, 
               content,
               updatedAt: new Date(),
             };

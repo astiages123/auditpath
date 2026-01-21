@@ -234,7 +234,11 @@ export async function generateFollowUpQuestion(
   const guidelines = await getSubjectGuidelines(noteContext.courseName);
 
   // 3. Build prompt
-  const prompt = buildFollowUpPrompt(context, noteContext.content, guidelines);
+  const prompt = buildFollowUpPrompt(
+    context, 
+    noteContext.content, 
+    guidelines as { instruction?: string; few_shot_example?: QuizQuestion } | null
+  );
 
   // 4. Call API
   const responseText = await callOpenRouterAPI(prompt);

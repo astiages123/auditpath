@@ -19,41 +19,45 @@ export function SubjectRadar({ data }: SubjectRadarProps) {
     }
 
     return (
-        <div className="h-full flex flex-col group">
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold bg-linear-to-r from-foreground to-foreground/60 bg-clip-text text-transparent">
-                    Konu Yetkinliği
-                </h3>
-                <Target className="w-5 h-5 text-primary/40 group-hover:text-primary transition-colors duration-500" />
+        <div className="h-full flex flex-col group animate-in fade-in zoom-in-95 duration-700">
+            <div className="flex items-center justify-between mb-8 px-2">
+                <div>
+                    <h3 className="text-xl font-black text-foreground tracking-tight">Konu Yetkinliği</h3>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Ders Bazlı Başarı Analizi</p>
+                </div>
+                <div className="p-2.5 rounded-2xl bg-primary/10 text-primary group-hover:scale-110 transition-transform duration-500">
+                    <Target className="w-5 h-5" />
+                </div>
             </div>
 
-            <div className="flex-1 min-h-[250px] w-full">
+            <div className="flex-1 min-h-[300px] w-full relative">
+                <div className="absolute inset-0 bg-primary/5 blur-[80px] rounded-full -z-10" />
                 <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="70%" data={data}>
-                        <PolarGrid stroke="oklch(0.4 0 0 / 0.3)" />
+                    <RadarChart cx="50%" cy="50%" outerRadius="75%" data={data}>
+                        <PolarGrid stroke="oklch(0.4 0 0 / 0.15)" strokeWidth={1} />
                         <PolarAngleAxis 
                             dataKey="subject" 
-                            tick={{ fill: 'oklch(0.9 0 0)', fontSize: 11, fontWeight: 600 }} 
+                            tick={{ fill: 'oklch(0.7 0 0)', fontSize: 10, fontWeight: 800, letterSpacing: '0.05em' }} 
                         />
                         <Radar
                             name="Başarı"
                             dataKey="score"
-                            stroke="oklch(0.85 0.2 160)"
-                            fill="oklch(0.85 0.2 160)"
-                            fillOpacity={0.4}
-                            animationDuration={1500}
+                            stroke="var(--primary)"
+                            strokeWidth={3}
+                            fill="var(--primary)"
+                            fillOpacity={0.15}
                         />
                         <Tooltip 
                             content={({ active, payload }) => {
                                 if (active && payload && payload.length) {
                                     return (
-                                        <div className="bg-card border-2 border-border/80 p-3 rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.5)]">
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
+                                        <div className="bg-card/80 backdrop-blur-md border border-border/50 p-4 rounded-2xl shadow-2xl">
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-2">
                                                 {payload[0].payload.subject}
                                             </p>
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-2 h-2 rounded-full bg-primary" />
-                                                <span className="text-lg font-black text-foreground">%{payload[0].value}</span>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_var(--primary)]" />
+                                                <span className="text-2xl font-black text-foreground">%{payload[0].value}</span>
                                             </div>
                                         </div>
                                     );
@@ -65,10 +69,10 @@ export function SubjectRadar({ data }: SubjectRadarProps) {
                 </ResponsiveContainer>
             </div>
             
-            <div className="mt-4 flex justify-center gap-6">
-                <div className="flex items-center gap-1.5">
-                    <div className="w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_oklch(0.85_0.2_160/0.5)]" />
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Performans</span>
+            <div className="mt-8 flex justify-center">
+                <div className="flex items-center gap-3 px-4 py-2 bg-muted/20 rounded-full border border-border/50">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_var(--primary)]" />
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">Süreç Performansı</span>
                 </div>
             </div>
         </div>

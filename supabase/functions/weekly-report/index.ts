@@ -411,7 +411,8 @@ Deno.serve(async (req: Request) => {
     const resend = new Resend(RESEND_API_KEY);
     const openai = OPENAI_API_KEY ? new OpenAI({ 
       apiKey: OPENAI_API_KEY,
-      baseURL: 'https://openrouter.ai/api/v1'
+      baseURL: 'https://openrouter.ai/api/v1',
+      maxRetries: 5,
     }) : null;
 
     // 4. Logic

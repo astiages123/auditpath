@@ -12,7 +12,6 @@ import {
   type QuizResponseType,
 } from './srs-algorithm';
 import { DebugLogger } from '../debug-logger';
-import { generateFollowUpQuestion } from '@/lib/ai/wrong-answer-handler';
 
 // --- Types ---
 export interface SessionInfo {
@@ -307,19 +306,7 @@ export async function recordQuizResponse(
             .upsert({ user_id: userId, question_id: questionId, status: 'pending_followup' as const }, { onConflict: 'user_id,question_id' });
           DebugLogger.process('Status -> Pending Followup');
 
-          // Trigger AI Follow-up (logic kept)
-          if (chunkId && selectedAnswer !== null) {
-              qData.id = questionId;
-              generateFollowUpQuestion({
-                  chunkId,
-                  originalQuestion: qData,
-                  incorrectOptionIndex: selectedAnswer,
-                  correctOptionIndex: qData.a,
-                  topic: questionDb.section_title || '',
-                  courseId,
-                  userId
-              }).catch(err => console.error('AI Followup Gen Error:', err));
-          }
+          // Trigger AI Follow-up (Logic moved to centralized Edge Function via QuizEngine)
       } else if (responseType === 'blank') {
           // Blank -> Active
           // "İlk Boş Geçme: Soru Active kalır"

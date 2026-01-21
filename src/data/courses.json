@@ -4,8 +4,7 @@
     "courses": [
       {
         "id": "mikro-iktisat",
-        "name": "Mikro İktisat - Bilge Beyaz",
-        "lessonType": "Mikro İktisat",
+        "name": "Mikro İktisat",
         "totalVideos": 111,
         "totalHours": 60.67,
         "playlistUrl": "https://www.youtube.com/playlist?list=PLPhEmM6X--Wefl2MTmJ67Uv851yYQTfB4",
@@ -676,12 +675,12 @@
             "duration": "13:27",
             "durationMinutes": 13.45
           }
-        ]
+        ],
+        "instructor": "Bilge Beyaz"
       },
       {
         "id": "makro-iktisat",
-        "name": "Makro İktisat - Mesut Güzelli",
-        "lessonType": "Makro İktisat",
+        "name": "Makro İktisat",
         "totalVideos": 91,
         "totalHours": 46.48,
         "playlistUrl": "https://www.youtube.com/playlist?list=PLPhEmM6X--WfdZ2ntwO2Kmw6J285ajpTG",
@@ -1232,12 +1231,12 @@
             "duration": "29:19",
             "durationMinutes": 29.32
           }
-        ]
+        ],
+        "instructor": "Mesut Güzelli"
       },
       {
         "id": "para-banka-ve-kredi",
-        "name": "Para, Banka ve Kredi - Emel Aksaç",
-        "lessonType": "Para, Banka ve Kredi",
+        "name": "Para, Banka ve Kredi",
         "totalVideos": 31,
         "totalHours": 11.9,
         "playlistUrl": "https://www.youtube.com/playlist?list=PLPhEmM6X--WfGpm2Hn2g0YnRuHmp3UwL6",
@@ -1428,12 +1427,12 @@
             "duration": "23:11",
             "durationMinutes": 23.18
           }
-        ]
+        ],
+        "instructor": "Emel Aksaç"
       },
       {
         "id": "uluslararasi-ticaret",
-        "name": "Uluslararası Ticaret - Emel Aksaç",
-        "lessonType": "Uluslararası Ticaret",
+        "name": "Uluslararası Ticaret",
         "totalVideos": 33,
         "totalHours": 12.64,
         "playlistUrl": "https://youtube.com/playlist?list=PLPhEmM6X--WencoL45la-rJqdjP6MQ6ce&si=QRfrSYIzub-VrZkp",
@@ -1636,12 +1635,12 @@
             "duration": "14:16",
             "durationMinutes": 14.27
           }
-        ]
+        ],
+        "instructor": "Emel Aksaç"
       },
       {
         "id": "turkiye-ekonomisi",
-        "name": "Türkiye Ekonomisi - Emel Aksaç",
-        "lessonType": "Türkiye Ekonomisi",
+        "name": "Türkiye Ekonomisi",
         "totalVideos": 31,
         "totalHours": 11.85,
         "playlistUrl": "https://www.youtube.com/playlist?list=PLPhEmM6X--Wf28W5rVGC5mp8BE4eNNODX",
@@ -1832,7 +1831,8 @@
             "duration": "30:19",
             "durationMinutes": 30.32
           }
-        ]
+        ],
+        "instructor": "Emel Aksaç"
       }
     ]
   },
@@ -1841,8 +1841,7 @@
     "courses": [
       {
         "id": "medeni-hukuk",
-        "name": "Medeni Hukuk - Eyüp İpek",
-        "lessonType": "Medeni Hukuk",
+        "name": "Medeni Hukuk",
         "totalVideos": 61,
         "totalHours": 41.25,
         "playlistUrl": "https://youtube.com/playlist?list=PLPhEmM6X--WcZPK4H0J9OLNwvxLh_pU_5&si=KNpiTQYkvc6SX4U5",
@@ -2213,12 +2212,12 @@
             "duration": "27:40",
             "durationMinutes": 27.67
           }
-        ]
+        ],
+        "instructor": "Eyüp İpek"
       },
       {
         "id": "borclar-hukuku",
-        "name": "Borçlar Hukuku - Eyüp İpek",
-        "lessonType": "Borçlar Hukuku",
+        "name": "Borçlar Hukuku",
         "totalVideos": 49,
         "totalHours": 31.31,
         "playlistUrl": "https://www.youtube.com/playlist?list=PLPhEmM6X--WdUk5T5GDpER6-00xTX--2s",
@@ -2517,12 +2516,12 @@
             "duration": "32:33",
             "durationMinutes": 32.55
           }
-        ]
+        ],
+        "instructor": "Eyüp İpek"
       },
       {
         "id": "ticaret-hukuku",
-        "name": "Ticaret Hukuku - Elif Kendüzler",
-        "lessonType": "Ticaret Hukuku",
+        "name": "Ticaret Hukuku",
         "totalVideos": 68,
         "totalHours": 29.33,
         "playlistUrl": "https://youtube.com/playlist?list=PLPhEmM6X--WccJilJRVA_BMRqKV_zsx9H&si=qbFKaDTQ-Ov2ddmL",
@@ -2935,12 +2934,12 @@
             "duration": "37:29",
             "durationMinutes": 37.48
           }
-        ]
+        ],
+        "instructor": "Elif Kendüzler"
       },
       {
         "id": "bankacilik-hukuku",
-        "name": "Bankacılık Hukuku - Davut Gürses",
-        "lessonType": "Bankacılık Hukuku",
+        "name": "Bankacılık Hukuku",
         "totalVideos": 7,
         "totalHours": 3.93,
         "playlistUrl": "https://youtube.com/playlist?list=PLc6OXSkSGbhf4kW77b8v0iB0cIR2_LNpr&si=oxug-AFNHy3m4OgP",
@@ -2987,12 +2986,12 @@
             "duration": "16:45",
             "durationMinutes": 16.75
           }
-        ]
+        ],
+        "instructor": "Davut Gürses"
       },
       {
         "id": "icra-ve-iflas-hukuku",
-        "name": "İcra ve İflas - Muhammet Özekes",
-        "lessonType": "İcra ve İflas Hukuku",
+        "name": "İcra ve İflas",
         "totalVideos": 24,
         "totalHours": 18.68,
         "playlistUrl": "https://youtube.com/playlist?list=PLc6OXSkSGbheXlJKwuHzl4hce6LwvxDrk&si=0PiAN2Y-2S9bMACf",
@@ -3141,12 +3140,12 @@
             "duration": "1:04:41",
             "durationMinutes": 64.68
           }
-        ]
+        ],
+        "instructor": "Muhammet Özekes"
       },
       {
         "id": "ceza-hukuku",
-        "name": "Türk Ceza Kanunu - Hukuk Öğretir",
-        "lessonType": "Ceza Hukuku",
+        "name": "Türk Ceza Kanunu",
         "totalVideos": 36,
         "totalHours": 13.86,
         "playlistUrl": "https://youtube.com/playlist?list=PLQQ4ignJI779FA95yMNPjp6uhLEUC4A3E&si=escVX-_q6O9IjIDS",
@@ -3367,12 +3366,12 @@
             "duration": "26:31",
             "durationMinutes": 26.52
           }
-        ]
+        ],
+        "instructor": "Hukuk Öğretir"
       },
       {
         "id": "is-hukuku",
-        "name": "İş Hukuku - Mehmet Bağcı",
-        "lessonType": "İş Hukuku",
+        "name": "İş Hukuku",
         "totalVideos": 9,
         "totalHours": 5.94,
         "playlistUrl": "https://www.youtube.com/playlist?list=PLQQ4ignJI778D3I0O-f_7KkQ6QByayR0l",
@@ -3431,12 +3430,12 @@
             "duration": "28:32",
             "durationMinutes": 28.53
           }
-        ]
+        ],
+        "instructor": "Mehmet Bağcı"
       },
       {
         "id": "medeni-usul-hukuku",
-        "name": "Medeni Usul Hukuku - Kamusal Alan Hukuk Akademi",
-        "lessonType": "Medeni Usul Hukuku",
+        "name": "Medeni Usul Hukuku",
         "totalVideos": 51,
         "totalHours": 16.256944444444443,
         "notePath": null,
@@ -3748,7 +3747,8 @@
             "duration": "28:56",
             "durationMinutes": 28.933333333333334
           }
-        ]
+        ],
+        "instructor": "Kamusal Alan Hukuk Akademi"
       }
     ]
   },
@@ -3757,8 +3757,7 @@
     "courses": [
       {
         "id": "muhasebe",
-        "name": "Genel Muhasebe - Sinan Öztürk",
-        "lessonType": "Muhasebe",
+        "name": "Genel Muhasebe",
         "totalVideos": 124,
         "totalHours": 42.61,
         "playlistUrl": "https://youtube.com/playlist?list=PLPhEmM6X--WfpyELg1RTSCI6zqpe8lTCV&si=YUeLZcBv-GH2wmHG",
@@ -4507,12 +4506,12 @@
             "duration": "23:58",
             "durationMinutes": 23.97
           }
-        ]
+        ],
+        "instructor": "Sinan Öztürk"
       },
       {
         "id": "maliye",
-        "name": "Maliye Teorisi - Murat Güzelli",
-        "lessonType": "Maliye",
+        "name": "Maliye Teorisi",
         "totalVideos": 72,
         "totalHours": 34.58,
         "playlistUrl": "https://www.youtube.com/playlist?list=PLPhEmM6X--WfxX96Dz0lfKLeRKWS8YTOd",
@@ -4949,12 +4948,12 @@
             "duration": "15:49",
             "durationMinutes": 15.82
           }
-        ]
+        ],
+        "instructor": "Murat Güzelli"
       },
       {
         "id": "banka-muhasebesi",
-        "name": "Banka Muhasebesi - Cemal Hoca",
-        "lessonType": "Banka Muhasebesi",
+        "name": "Banka Muhasebesi",
         "totalVideos": 5,
         "totalHours": 1.89,
         "playlistUrl": "https://youtube.com/playlist?list=PLYBtq65-tdImjW164SnSprjf0OMVITkE_&si=9W2QlBM8uStvblgg",
@@ -4989,12 +4988,12 @@
             "duration": "20:55",
             "durationMinutes": 20.92
           }
-        ]
+        ],
+        "instructor": "Cemal Hoca"
       },
       {
         "id": "isletme-yonetimi",
-        "name": "İşletme Yönetimi (AÖF)",
-        "lessonType": "İşletme Yönetimi",
+        "name": "İşletme Yönetimi",
         "totalVideos": 8,
         "totalHours": 1.39,
         "playlistUrl": "https://www.youtube.com/playlist?list=PLfFz63YLe29oga382t4p0ACkU9PTErzIR",
@@ -5047,12 +5046,12 @@
             "duration": "11:05",
             "durationMinutes": 11.08
           }
-        ]
+        ],
+        "instructor": "AÖF"
       },
       {
         "id": "pazarlama-yonetimi",
-        "name": "Pazarlama Yönetimi (AÖF)",
-        "lessonType": "Pazarlama Yönetimi",
+        "name": "Pazarlama Yönetimi",
         "totalVideos": 8,
         "totalHours": 1.41,
         "playlistUrl": "https://www.youtube.com/playlist?list=PLfFz63YLe29qFsfcr0xu43U0_EycrMYEP",
@@ -5105,12 +5104,12 @@
             "duration": "07:49",
             "durationMinutes": 7.82
           }
-        ]
+        ],
+        "instructor": "AÖF"
       },
       {
         "id": "finansal-yonetim",
-        "name": "Finansal Yönetim (AÖF)",
-        "lessonType": "Finansal Yönetim",
+        "name": "Finansal Yönetim",
         "totalVideos": 8,
         "totalHours": 1.57,
         "playlistUrl": "https://youtube.com/playlist?list=PLfFz63YLe29pGOq7BTtyqrVpx8E1l9aXA&si=HxiyG8eKl5pYmx-E",
@@ -5163,7 +5162,8 @@
             "duration": "12:40",
             "durationMinutes": 12.67
           }
-        ]
+        ],
+        "instructor": "AÖF"
       }
     ]
   },
@@ -5172,8 +5172,7 @@
     "courses": [
       {
         "id": "finans-matematigi",
-        "name": "Finans Matematiği - BUders",
-        "lessonType": "Finans Matematiği",
+        "name": "Finans Matematiği",
         "totalVideos": 32,
         "totalHours": 4.61,
         "playlistUrl": "https://youtube.com/playlist?list=PLcNWqzWzYG2sHIneJFRvfHCtFifbtQU3A&si=zFjseeSlFtpVPzTp",
@@ -5370,12 +5369,12 @@
             "duration": "14:10",
             "durationMinutes": 14.17
           }
-        ]
+        ],
+        "instructor": "BUders"
       },
       {
         "id": "matematik-sayisal-mantik",
-        "name": "Matematik & Sayısal Mantık - İlyas Güneş",
-        "lessonType": "Matematik & Sayısal Mantık",
+        "name": "Matematik & Sayısal Mantık",
         "totalVideos": 79,
         "totalHours": 59.41,
         "playlistUrl": "https://youtube.com/playlist?list=PLPlLdubQ1fMsIk3Kujy9yqJOyFLHsfQlp&si=xEU2K9BmKlCcxtOX",
@@ -5854,12 +5853,12 @@
             "duration": "51:31",
             "durationMinutes": 51.52
           }
-        ]
+        ],
+        "instructor": "İlyas Güneş"
       },
       {
         "id": "istatistik",
-        "name": "İstatistik - XDERS",
-        "lessonType": "İstatistik",
+        "name": "İstatistik",
         "totalVideos": 15,
         "totalHours": 6.52,
         "playlistUrl": "https://www.youtube.com/playlist?list=PL4G1-wcRc1jG1tCySPIJTT_gdQ0I8fwGP",
@@ -5954,12 +5953,12 @@
             "duration": "19:46",
             "durationMinutes": 19.77
           }
-        ]
+        ],
+        "instructor": "XDERS"
       },
       {
         "id": "sozel-mantik",
-        "name": "Sözel Mantık - Aker Kartal",
-        "lessonType": "Sözel Mantık",
+        "name": "Sözel Mantık",
         "totalVideos": 18,
         "totalHours": 5.39,
         "notePath": null,
@@ -6073,12 +6072,12 @@
             "duration": "16:49",
             "durationMinutes": 16.816666666666666
           }
-        ]
+        ],
+        "instructor": "Aker Kartal"
       },
       {
         "id": "ingilizce",
-        "name": "İngilizce - Fatih Çömez",
-        "lessonType": "İngilizce",
+        "name": "İngilizce",
         "totalVideos": 45,
         "totalHours": 14.916666666666666,
         "notePath": null,
@@ -6354,7 +6353,8 @@
             "duration": "01:04:57",
             "durationMinutes": 64.95
           }
-        ]
+        ],
+        "instructor": "Fatih Çömez"
       }
     ]
   }

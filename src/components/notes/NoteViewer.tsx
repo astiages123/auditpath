@@ -16,7 +16,7 @@ import { Heading } from "mdast";
 
 interface NoteViewerProps {
   content: string;
-  lessonType?: string;
+  courseId?: string;
   className?: string;
 }
 
@@ -187,7 +187,7 @@ const remarkCustomDirectives: Plugin = () => {
 
 export function NoteViewer({
   content,
-  lessonType,
+  courseId,
   className = "",
 }: NoteViewerProps) {
   
@@ -195,9 +195,11 @@ export function NoteViewer({
     let newContent = content;
 
     // 1. Ensure Lesson Name is H1 at the top
-    if (lessonType) {
+    if (courseId) {
         if (!/^#\s/.test(newContent)) {
-             newContent = `# ${lessonType}\n\n${newContent}`;
+             // Use courseId directly or formatted name? Previously used lessonType (which was slug)
+             // Keeping consistent with previous behavior: just inserting the string.
+             newContent = `# ${courseId}\n\n${newContent}`;
         }
     }
 
@@ -247,7 +249,7 @@ export function NoteViewer({
     });
 
     return newContent;
-  }, [content, lessonType]);
+  }, [content, courseId]);
 
   const components: Components = {
     // 2. Heading Typography Rules
@@ -282,7 +284,7 @@ export function NoteViewer({
     img: ({ src, node, ..._props }) => {
       let imageSrc = src;
       if (
-        lessonType &&
+        courseId &&
         typeof src === "string" &&
         !src.startsWith("http") &&
         !src.startsWith("/api/")
@@ -294,7 +296,7 @@ export function NoteViewer({
         } else {
           cleanPath = src.replace(/^\.?\//, "");
         }
-        imageSrc = `/notes/${encodeURIComponent(lessonType)}/${cleanPath}`;
+        imageSrc = `/notes/${encodeURIComponent(courseId)}/${cleanPath}`;
       }
       return (
         <img

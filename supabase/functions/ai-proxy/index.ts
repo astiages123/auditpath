@@ -38,28 +38,47 @@ serve(async (req: Request) => {
       throw new Error(`API Key for ${provider} not found in secrets`)
     }
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-    })
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 2000;
+    let response;
+    let responseText;
 
-    const responseText = await response.text();
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      throw new Error(`AI Provider response was not valid JSON: ${responseText.substring(0, 200)}`);
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      if (attempt > 0) {
+        await new Promise(r => setTimeout(r, RETRY_DELAY * Math.pow(2, attempt - 1)));
+      }
+
+      response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://auditpath.app',
+        },
+        body: JSON.stringify(body),
+      })
+
+      responseText = await response.text();
+      
+      if (response.ok) break;
+      
+      if (response.status !== 429 && response.status < 500) break; // Don't retry client errors other than 429
+      
+      console.warn(`AI Proxy attempt ${attempt} failed with ${response.status}. Retrying...`);
     }
 
-    if (!response.ok) {
+    let data;
+    try {
+      data = JSON.parse(responseText || '{}');
+    } catch (e) {
+      throw new Error(`AI Provider response was not valid JSON: ${responseText?.substring(0, 200)}`);
+    }
+
+    if (!response?.ok) {
       const errorMsg = data.error?.message || data.error || responseText || 'Unknown AI Provider error';
-      return new Response(JSON.stringify({ error: errorMsg, status: response.status }), {
+      return new Response(JSON.stringify({ error: errorMsg, status: response?.status }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: response.status,
+        status: response?.status || 500,
       })
     }
 

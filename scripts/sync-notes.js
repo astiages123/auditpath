@@ -94,11 +94,64 @@ export async function syncNotes() {
         }
 
         console.log("Sync completed successfully.");
-        await triggerWorker();
+
+        // 3. Auto-Trigger for Immediate Processing (Antrenman/Standard)
+        // We trigger the Edge Function for chunks that are PENDING and NOT marked for nightly processing.
+        // This replaces the need for a Database Webhook for the "morning workflow".
+        if (process.env.VITE_SUPABASE_URL && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY)) {
+            await triggerInstantProcessing(pool);
+        } else {
+            console.warn("⚠️ Supabase credentials missing. Skipping auto-trigger.");
+        }
+
     } catch (err) {
         console.error("Sync failed:", err);
     } finally {
         await pool.end();
+    }
+}
+
+async function triggerInstantProcessing(pool) {
+    const supabaseUrl = process.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    console.log("🔍 [Auto-Trigger] Checking for chunks to process immediately...");
+
+    // Fetch pending chunks that are NOT for nightly processing
+    // We use the pool here for a direct efficient query, but we could also use supabase client.
+    // Using pool to stay consistent with the existing connection.
+    const res = await pool.query(`
+        SELECT id, section_title, course_name 
+        FROM note_chunks 
+        WHERE status = 'PENDING' 
+          AND is_ready = true 
+          AND process_at_night = false
+    `);
+
+    if (res.rows.length === 0) {
+        console.log("✅ No immediate chunks to process.");
+        return;
+    }
+
+    console.log(`🚀 Found ${res.rows.length} chunks for immediate processing.`);
+
+    for (const row of res.rows) {
+        console.log(`▶️ Triggering: [${row.course_name}] ${row.section_title}`);
+        
+        // Fire and forget (or await if we want to throttle)? 
+        // Awaiting is safer to avoid overwhelming the database/edge function limits 
+        // since we are running this from a local script.
+        const { error } = await supabase.functions.invoke('quiz-generator', {
+            body: { chunkId: row.id }
+        });
+
+        if (error) {
+            console.error(`❌ Failed to trigger for ${row.id}:`, error);
+        } else {
+            console.log(`✅ Triggered successfully.`);
+        }
     }
 }
 
@@ -152,19 +205,21 @@ function getSlug(filename) {
     const content = fs.readFileSync(filePath, 'utf-8');
     const fileHash = crypto.createHash('md5').update(content).digest('hex');
 
+    // Archive/Trial detection (Gece Vardiyası)
+    // Checks if "arsiv" or "deneme" is in the full path or filename
+    const lowerPath = filePath.toLowerCase();
+    const isNightly = lowerPath.includes('arsiv') || lowerPath.includes('deneme');
+
     const courseRes = await pool.query('SELECT id, name, last_hash FROM courses WHERE course_slug = $1', [slug]);
     if (courseRes.rows.length === 0) return;
 
     const course = courseRes.rows[0];
-    // Check if chunks actually exist (in case of previous partial failure or manual deletion)
+    
+    // Check if chunks actually exist
     const chunkCountRes = await pool.query('SELECT COUNT(*) as count FROM note_chunks WHERE course_id = $1', [course.id]);
     const chunkCount = parseInt(chunkCountRes.rows[0].count, 10);
 
-    // Force sync if structure is changing, but user passed flag control... we assume if hash matches and chunkCount > 0, it's fine.
-    // However, since we are changing logic, all files *should* be reprocessed.
-    // The user will likely run with --force manually or we rely on hash change.
-    // Since this is a structural change, existing hashes might match but content structure is different.
-    // We recommend running with --force for full migration.
+    // Force sync check
     if (course.last_hash === fileHash && !forceSync && chunkCount > 0) {
         console.log(`[${filename}] Değişiklik yok.`);
         return;
@@ -176,7 +231,7 @@ function getSlug(filename) {
     try {
         await client.query('BEGIN');
 
-        // Mevcut chunk başlıklarını takip etmek için bir liste
+        // Existing section titles list for cleanup
         const currentSectionTitles = chunks.map(c => c.title);
 
         for (let i = 0; i < chunks.length; i++) {
@@ -185,57 +240,101 @@ function getSlug(filename) {
             const wordCount = chunk.content.split(/\s+/).filter(Boolean).length;
             const chunkChecksum = crypto.createHash('md5').update(chunk.content).digest('hex');
 
-            // UPSERT Mekanizması: Çakışma (Conflict) durumunda checksum farklıysa GÜNCELLE
+            // --- NEXT HEADING LOGIC ---
+            // If it is NOT the last chunk, it means we have moved to the next heading.
+            // So the previous one is likely "done" writing (unless we are editing the middle).
+            // Logic: 
+            // - Last chunk -> Always DRAFT (user is still writing)
+            // - Not last chunk -> PENDING (ready for AI)
+            const isLastChunk = (i === chunks.length - 1);
+            
+            // Default states for NEW chunks
+            let newStatus = isLastChunk ? 'DRAFT' : 'PENDING';
+            let newIsReady = !isLastChunk;
+
+            // Override for nightly processing
+            // If nightly, we still follow the DRAFT/PENDING logic, but we mark process_at_night=true
+            // Note: If isLastChunk is true, it stays DRAFT. When user adds a new heading, 
+            // this one will verify as !isLastChunk next time and become PENDING + Nightly.
+            const processAtNight = isNightly;
+
+            // UPSERT Logic with Status Transitions
+            // We need to be careful NOT to reset 'COMPLETED', 'PROCESSING' or 'FAILED' statuses 
+            // if the content hasn't meaningfully changed, OR if we are just "promoting" a DRAFT to PENDING.
+            
+            // The logic handles two main cases:
+            // 1. Content Changed (checksum distinct): Update content, reset status if it was COMPLETED?? 
+            //    - Usually if content changes, we might want to re-generate (reset to PENDING).
+            //    - But if it's the last chunk, it goes to DRAFT.
+            // 2. Content Same, but Position Changed (e.g. became not-last):
+            //    - If it was DRAFT, promote to PENDING.
+            
             await client.query(
                 `INSERT INTO note_chunks 
-                (course_id, course_name, section_title, content, chunk_order, char_count, word_count, checksum, parent_h1_id, parent_h2) 
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                (course_id, course_name, section_title, content, chunk_order, heading_order, char_count, word_count, checksum, parent_h1_id, parent_h2, status, is_ready, process_at_night) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                 ON CONFLICT (course_id, section_title) 
                 DO UPDATE SET 
                     content = EXCLUDED.content,
                     chunk_order = EXCLUDED.chunk_order,
+                    heading_order = EXCLUDED.heading_order,
                     char_count = EXCLUDED.char_count,
                     word_count = EXCLUDED.word_count,
                     checksum = EXCLUDED.checksum,
                     parent_h1_id = EXCLUDED.parent_h1_id,
-                    parent_h2 = EXCLUDED.parent_h2
-                WHERE note_chunks.checksum IS DISTINCT FROM EXCLUDED.checksum`, 
-                [course.id, course.name, chunk.title, chunk.content, i, charCount, wordCount, chunkChecksum, chunk.h1, chunk.h2]
+                    parent_h2 = EXCLUDED.parent_h2,
+                    process_at_night = EXCLUDED.process_at_night,
+                    
+                    -- Intelligent Status Update:
+                    -- 1. If content changed (checksum mismatch):
+                    --    - If it's now the last chunk: Force DRAFT, Not Ready
+                    --    - If it's NOT the last chunk: Force PENDING, Ready (Re-generation needed)
+                    -- 2. If content is SAME (checksum match):
+                    --    - If older status was DRAFT and now it is NOT last chunk: Promote to PENDING, Ready
+                    --    - Otherwise, keep existing status (don't re-run COMPLETED or processing)
+                    
+                    status = CASE 
+                        WHEN note_chunks.checksum IS DISTINCT FROM EXCLUDED.checksum THEN
+                             CASE WHEN $15 = true THEN 'DRAFT'::chunk_generation_status ELSE 'PENDING'::chunk_generation_status END
+                        WHEN note_chunks.status = 'DRAFT' AND $15 = false THEN 'PENDING'::chunk_generation_status
+                        ELSE note_chunks.status
+                    END,
+
+                    is_ready = CASE 
+                        WHEN note_chunks.checksum IS DISTINCT FROM EXCLUDED.checksum THEN
+                             CASE WHEN $15 = true THEN false ELSE true END
+                        WHEN note_chunks.status = 'DRAFT' AND $15 = false THEN true
+                        ELSE note_chunks.is_ready
+                    END
+
+                WHERE 
+                    -- Update if content changed OR if we need to promote DRAFT->PENDING
+                    note_chunks.checksum IS DISTINCT FROM EXCLUDED.checksum 
+                    OR (note_chunks.status = 'DRAFT' AND $15 = false)
+                    OR note_chunks.chunk_order IS DISTINCT FROM EXCLUDED.chunk_order
+                    OR note_chunks.heading_order IS DISTINCT FROM EXCLUDED.heading_order
+                `, 
+                [
+                    course.id, 
+                    course.name, 
+                    chunk.title, 
+                    chunk.content, 
+                    i,              // chunk_order
+                    i,              // heading_order (same for now)
+                    charCount, 
+                    wordCount, 
+                    chunkChecksum, 
+                    chunk.h1, 
+                    chunk.h2,
+                    newStatus,      // for INSERT
+                    newIsReady,     // for INSERT
+                    processAtNight, // for INSERT
+                    isLastChunk     // $15 param for logic
+                ]
             );
-
-
-            // AUTO-GENERATION TRIGGER (Linear Logic)
-            // min(30, 8 + ((wordCount / 100) * 1.1))
-            const MIN_BASE = 8;
-            const GROWTH = 1.1;
-            const MAX_BASE = 30;
-            
-            const rawBase = MIN_BASE + (Math.max(0, wordCount) / 100 * GROWTH);
-            const quota = Math.ceil(Math.min(MAX_BASE, rawBase)); // Assuming multiplier=1.0 for initial sync
-
-
-
-            // Insert Job if not exists and needed
-            await client.query(`
-                INSERT INTO generation_jobs (chunk_id, job_type, target_count, priority)
-                SELECT 
-                    id, 
-                    'ANTRENMAN', 
-                    ($3 - (SELECT COUNT(*) FROM questions WHERE chunk_id = note_chunks.id AND usage_type = 'antrenman')), 
-                    1
-                FROM note_chunks 
-                WHERE course_id=$1 AND section_title=$2
-                AND ($3 - (SELECT COUNT(*) FROM questions WHERE chunk_id = note_chunks.id AND usage_type = 'antrenman')) > 0
-                AND NOT EXISTS (
-                    SELECT 1 FROM generation_jobs 
-                    WHERE chunk_id=note_chunks.id 
-                    AND job_type='ANTRENMAN' 
-                    AND status IN ('PENDING', 'PROCESSING')
-                )
-            `, [course.id, chunk.title, quota]);
         }
 
-        // TEMİZLİK: Dosyadan silinen başlıklarını veritabanından da sil
+        // Clean up deleted chunks
         await client.query(
             `DELETE FROM note_chunks 
              WHERE course_id = $1 AND section_title != ALL($2)`,
@@ -244,7 +343,7 @@ function getSlug(filename) {
 
         await client.query('UPDATE courses SET last_hash = $1 WHERE id = $2', [fileHash, course.id]);
         await client.query('COMMIT');
-        console.log(`[${slug}] Akıllı UPSERT tamamlandı (H3 Tabanlı).`);
+        console.log(`[${slug}] Akıllı UPSERT tamamlandı (Status: ${isNightly ? 'Nightly' : 'Standard'}).`);
     } catch (e) {
         await client.query('ROLLBACK');
         console.error(`[${filename}] Sync Error:`, e);
@@ -311,30 +410,7 @@ function parseMarkdownChunks(content, courseName) {
     return chunks;
 }
 
-async function triggerWorker() {
-    console.log("Triggering generation worker...");
-    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-    const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
-    
-    if (!supabaseUrl || !anonKey) {
-        console.log("Worker trigger skipped: Missing ENV");
-        return;
-    }
-    
-    try {
-        await fetch(`${supabaseUrl}/functions/v1/process-queue`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${anonKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ trigger: 'sync' })
-        });
-        console.log("Worker triggered successfully.");
-    } catch (e) { 
-        console.error("Worker trigger failed (non-fatal):", e.message); 
-    }
-}
+
 
 function createChunkObj(title, lines, h1, h2) {
     // Unused legacy helper, keeping just in case or remove if strict

@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Brain, FileText, ChevronRight, Loader2, Sparkles, AlertCircle, CheckCircle } from "lucide-react";
-import { getTopicQuestionCount, getFirstChunkIdForTopic, getCourseTopicsWithCounts, TopicWithCounts, getTopicCompletionStatus } from "@/lib/client-db";
+import { getTopicQuestionCount, getFirstChunkIdForTopic, getCourseTopicsWithCounts, TopicWithCounts, getTopicCompletionStatus, TopicCompletionStats, ChunkGenerationStatus, getChunkGenerationStatus } from "@/lib/client-db";
 import { QuizEngine } from "@/components/features/quiz/QuizEngine";
 import { QuizSessionProvider } from "@/components/features/quiz/QuizSessionProvider";
-import { QuizQuestion } from "@/lib/ai/quiz-api";
+import { QuizQuestion, generateQuizQuestionBatch, getChunkQuotaStatus } from "@/lib/ai/quiz-api";
 import { useAuth } from "@/hooks/useAuth"; 
+import { toast } from "sonner"; 
 
 interface QuizModalProps {
   isOpen: boolean;
@@ -24,13 +25,8 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
   const [loading, setLoading] = useState(true);
   
   // Status State
-  const [completionStatus, setCompletionStatus] = useState<{
-        completed: boolean;
-        antrenman: { solved: number; total: number };
-        deneme: { solved: number; total: number };
-        arsiv: { solved: number; total: number };
-        mistakes: { solved: number; total: number };
-  } | null>(null);
+  const [completionStatus, setCompletionStatus] = useState<TopicCompletionStats | null>(null);
+  const [generationStatus, setGenerationStatus] = useState<ChunkGenerationStatus | null>(null);
 
   const [loadingCount, setLoadingCount] = useState(false);
   
@@ -57,28 +53,36 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
     async function loadData() {
       if (selectedTopic && courseId && user) {
         setLoadingCount(true);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const [_count, chunkId, status] = await Promise.all([
+        
+
+
+        const chunkRes = await getFirstChunkIdForTopic(courseId, selectedTopic.name);
+        setTargetChunkId(chunkRes);
+
+        const [_, status] = await Promise.all([
             getTopicQuestionCount(courseId, selectedTopic.name),
-            getFirstChunkIdForTopic(courseId, selectedTopic.name),
             getTopicCompletionStatus(user.id, courseId, selectedTopic.name)
         ]);
         
-        setTargetChunkId(chunkId);
         setCompletionStatus(status);
-        setLoadingCount(false);
 
-        // Auto-Refill Trigger: Check and fill quota for this topic in background
-        if (chunkId) {
-             console.log(`[QuizModal] Triggering background check for chunk: ${chunkId}`);
-             import('@/lib/ai/background-generator').then(({ checkAndTriggerBackgroundGeneration }) => {
-                 checkAndTriggerBackgroundGeneration(chunkId, [], courseId, user.id);
-             });
+        if (chunkRes) {
+            const genStatus = await getChunkGenerationStatus(chunkRes);
+            setGenerationStatus(genStatus);
+            
+            // Auto-Refill Trigger (Only if manually triggered or already running?)
+            // We removed the auto-trigger here effectively by not calling checkAndTriggerBackgroundGeneration
+            // relying on the new "Instant" webhook or manual button.
+        } else {
+            setGenerationStatus(null);
         }
+
+        setLoadingCount(false);
 
       } else {
         setTargetChunkId(null);
         setCompletionStatus(null);
+        setGenerationStatus(null);
       }
     }
     loadData();
@@ -87,10 +91,12 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
   const handleStartQuiz = () => {
     // If completed is true, maybe block? But user might want to re-solve? 
     // Requirement: "Tebrikler" shows instead of Button. So user cannot start logic from here if completed.
-    if (completionStatus?.completed) return; 
+    // if (completionStatus?.completed) return; 
     setExistingQuestions([]);
     setIsQuizActive(true);
   };
+
+
 
   const handleBackToTopics = () => {
       setSelectedTopic(null);
@@ -151,7 +157,7 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
                     </QuizSessionProvider>
                 </div>
             ) : (
-                <div className="grid md:grid-cols-2 h-full">
+                <div className="grid md:grid-cols-[400px_1fr] h-full">
                     {/* Left: Topic List */}
                     <div className="border-r border-border/40 overflow-y-auto p-4 space-y-2">
                         {loading ? (
@@ -175,18 +181,18 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
                                             : "hover:bg-muted/50 border-transparent hover:border-border/50"
                                     }`}
                                 >
-                                    <div className="flex items-center justify-between gap-4">
-                                        <div className="flex items-center gap-3">
-                                            <FileText className={`w-4 h-4 shrink-0 ${selectedTopic?.name === topic.name ? "text-primary" : "text-muted-foreground"}`} />
-                                            <span className={`font-medium text-sm line-clamp-1 ${selectedTopic?.name === topic.name ? "text-foreground" : "text-muted-foreground"}`}>
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="flex items-start gap-3 pt-0.5">
+                                            <FileText className={`w-4 h-4 shrink-0 mt-0.5 ${selectedTopic?.name === topic.name ? "text-primary" : "text-muted-foreground"}`} />
+                                            <span className={`font-medium text-[15px] leading-snug ${selectedTopic?.name === topic.name ? "text-foreground" : "text-muted-foreground"}`}>
                                                 {topic.name}
                                             </span>
                                         </div>
                                         {/* Status Icon */}
                                         <div className="flex items-center gap-2 shrink-0">
                                             {topic.isCompleted && (
-                                                <div className="flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-2 py-0.5 rounded-full text-[10px] font-bold">
-                                                    <CheckCircle className="w-3 h-3" />
+                                                <div className="flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full text-[11px] font-bold">
+                                                    <CheckCircle className="w-3.5 h-3.5" />
                                                     <span>Tamamlandı</span>
                                                 </div>
                                             )}
@@ -199,91 +205,140 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
                     </div>
 
                     {/* Right: Detail Panel */}
-                    <div className="bg-muted/5 p-6 flex flex-col items-center justify-center h-full text-center">
+                    <div className="bg-muted/5 p-4 flex flex-col items-center justify-center h-full text-center">
                         {selectedTopic ? (
-                            <div className="max-w-md w-full space-y-5 animate-in fade-in zoom-in-95 duration-200">
-                                <div className="space-y-2">
-                                    <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 text-primary">
+                            <div className="max-w-xl w-full space-y-3 animate-in fade-in zoom-in-95 duration-200">
+                                {/* Header: Icon + Title Horizontal - More Compact */}
+                                <div className="flex items-center gap-3 px-4 text-left border-b border-border/10 pb-3 mb-1">
+                                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 text-primary">
                                         {completionStatus?.completed ? (
                                             <CheckCircle className="w-6 h-6 text-emerald-500" />
-                                        ) : (
-                                            <FileText className="w-8 h-8" />
+                                        ) : (   
+                                            <FileText className="w-6 h-6" />
                                         )}
                                     </div>
-                                    <h3 className="text-2xl font-bold">{selectedTopic.name}</h3>
-                                    
-                                    {completionStatus?.completed ? (
-                                        <div className="space-y-3">
-                                            <h2 className="text-xl font-bold text-emerald-500">Tebrikler, konuyu tamamladınız!</h2>
-                                            <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-600">
-                                                <p className="font-medium">Bu konudaki tüm antrenman sorularını bitirdiniz.</p>
-                                                <p className="text-sm opacity-80 mt-1">Tekrar yapmak için arşiv modunu veya aralıklı tekrarı kullanabilirsiniz.</p>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <p className="text-muted-foreground">
-                                            Bu konuyla ilgili hedefiniz antrenman sorularını tamamlamak.
+                                    <div className="space-y-0.5">
+                                        <h3 className="text-lg font-bold leading-tight text-foreground">{selectedTopic.name}</h3>
+                                        <p className="text-[13px] text-muted-foreground leading-none">
+                                            {completionStatus?.completed 
+                                                ? "Konu tamamlandı." 
+                                                : "Hedef: Antrenman soruları."}
                                         </p>
-                                    )}
+                                    </div>
                                 </div>
 
-                                {/* Stats Grid - Updated */}
-                                <div className="grid grid-cols-2 gap-3 w-full">
+                                {completionStatus?.completed && (
+                                    <div className="px-4 mb-1">
+                                        <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-600 text-xs flex items-center gap-2">
+                                            <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+                                            <p className="font-semibold text-left">Tüm antrenman soruları bitirildi.</p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Stats Grid - Balanced */}
+                                <div className="grid grid-cols-2 gap-3 w-full px-2">
                                     {/* 1. Antrenman */}
-                                    <div className="bg-background p-3 rounded-xl border border-border/50 shadow-sm flex flex-col items-center justify-center">
-                                         <div className="text-xs text-muted-foreground mb-1 font-medium">Antrenman</div>
-                                         <div className="text-lg font-bold flex items-baseline gap-1">
-                                             <span className={completionStatus?.completed ? "text-emerald-500" : "text-primary"}>{completionStatus?.antrenman.solved || 0}</span>
-                                             <span className="text-muted-foreground text-sm font-normal">/ {completionStatus?.antrenman.total || 0}</span>
+                                    <div className="bg-background p-4 rounded-xl border border-border/50 shadow-sm flex flex-col items-center justify-center relative overflow-hidden group">
+                                         <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wider">Antrenman</div>
+                                         <div className="flex flex-col items-center gap-1">
+                                            <div className="text-2xl font-bold flex items-baseline gap-1.5">
+                                                <span className={completionStatus?.completed ? "text-emerald-500" : "text-primary"}>{completionStatus?.antrenman.solved || 0}</span>
+                                                <span className="text-muted-foreground text-sm font-normal">/ {completionStatus?.antrenman.existing || 0}</span>
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border border-border/50">
+                                                Hedef: {completionStatus?.antrenman.quota || 0}
+                                            </div>
                                          </div>
                                     </div>
 
-                                    <div className="bg-background p-3 rounded-xl border border-border/50 shadow-sm flex flex-col items-center justify-center">
-                                         <div className="text-xs font-medium text-red-500/80 mb-1">Hata Telafisi</div>
-                                         <div className="text-lg font-bold flex items-baseline gap-1">
-                                             <span className="text-red-500">{completionStatus?.mistakes.solved || 0}</span>
-                                             <span className="text-muted-foreground text-sm font-normal">/ {completionStatus?.mistakes.total || 0}</span>
+                                    {/* 2. Hata Telafisi */}
+                                    <div className="bg-background p-4 rounded-xl border border-border/50 shadow-sm flex flex-col items-center justify-center">
+                                         <div className="text-xs font-medium text-red-500/80 mb-2 uppercase tracking-wider">Hata Telafisi</div>
+                                         <div className="flex flex-col items-center gap-1">
+                                             <div className="text-2xl font-bold flex items-baseline gap-1.5">
+                                                 <span className="text-red-500">{completionStatus?.mistakes.solved || 0}</span>
+                                                 <span className="text-muted-foreground text-sm font-normal">/ {completionStatus?.mistakes.existing || 0}</span>
+                                             </div>
                                          </div>
                                     </div>
                                     
                                     {/* 3. Deneme */}
-                                    <div className="bg-background p-3 rounded-xl border border-border/50 shadow-sm flex flex-col items-center justify-center opacity-80">
-                                         <div className="text-xs text-muted-foreground mb-1 font-medium">Deneme</div>
-                                         <div className="text-lg font-bold flex items-baseline gap-1">
-                                             <span>{completionStatus?.deneme.solved || 0}</span>
-                                             <span className="text-muted-foreground text-sm font-normal">/ {completionStatus?.deneme.total || 0}</span>
+                                    <div className="bg-background p-4 rounded-xl border border-border/50 shadow-sm flex flex-col items-center justify-center opacity-90">
+                                         <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wider">Deneme</div>
+                                         <div className="flex flex-col items-center gap-1">
+                                             <div className="text-2xl font-bold flex items-baseline gap-1.5">
+                                                 <span>{completionStatus?.deneme.solved || 0}</span>
+                                                 <span className="text-muted-foreground text-sm font-normal">/ {completionStatus?.deneme.existing || 0}</span>
+                                             </div>
+                                             <div className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border border-border/50">
+                                                Hedef: {completionStatus?.deneme.quota || 0}
+                                            </div>
                                          </div>
                                     </div>
 
                                      {/* 4. Arşiv */}
-                                     <div className="bg-background p-3 rounded-xl border border-border/50 shadow-sm flex flex-col items-center justify-center opacity-80">
-                                         <div className="text-xs text-muted-foreground mb-1 font-medium">Arşiv</div>
-                                         <div className="text-lg font-bold flex items-baseline gap-1">
-                                             <span>{completionStatus?.arsiv.solved || 0}</span>
-                                             <span className="text-muted-foreground text-sm font-normal">/ {completionStatus?.arsiv.total || 0}</span>
+                                     <div className="bg-background p-4 rounded-xl border border-border/50 shadow-sm flex flex-col items-center justify-center opacity-90">
+                                         <div className="text-xs text-muted-foreground mb-2 font-medium uppercase tracking-wider">Arşiv</div>
+                                         <div className="flex flex-col items-center gap-1">
+                                             <div className="text-2xl font-bold flex items-baseline gap-1.5">
+                                                 <span>{completionStatus?.arsiv.solved || 0}</span>
+                                                 <span className="text-muted-foreground text-sm font-normal">/ {completionStatus?.arsiv.existing || 0}</span>
+                                             </div>
+                                             <div className="text-[10px] text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full border border-border/50">
+                                                Hedef: {completionStatus?.arsiv.quota || 0}
+                                            </div>
                                          </div>
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col gap-3 w-full">
-                                    {!completionStatus?.completed && (
-                                        <button
-                                            onClick={handleStartQuiz}
-                                            disabled={loadingCount}
-                                            className="w-full py-4 bg-primary/70 text-primary-foreground rounded-xl font-bold text-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            {loadingCount ? (
-                                                <>
-                                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                                    Hazırlanıyor...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <Sparkles className="w-5 h-5" />
-                                                    Soru Üret ve Başla
-                                                </>
+                                <div className="flex flex-col gap-3 w-full px-2">
+                                    {/* GENERATION STATUS UI */}
+                                    {generationStatus && (
+                                        <div className="w-full mb-1">
+                                            {generationStatus.status === 'DRAFT' && (
+                                                <div className="p-3 bg-amber-500/10 text-amber-600 rounded-lg text-sm border border-amber-500/20 flex items-center gap-2">
+                                                    <AlertCircle className="w-4 h-4 shrink-0" />
+                                                    <span>Konu taslak aşamasında. Sonraki başlık bekleniyor.</span>
+                                                </div>
                                             )}
-                                        </button>
+                                            {generationStatus.status === 'PENDING' && (
+                                                <div className="p-3 bg-blue-500/10 text-blue-600 rounded-lg text-sm border border-blue-500/20 flex items-center gap-2">
+                                                    <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
+                                                    <span>Sırada: Otomatik üretim bekleniyor.</span>
+                                                </div>
+                                            )}
+                                            {generationStatus.status === 'PROCESSING' && (
+                                                <div className="p-3 bg-purple-500/10 text-purple-600 rounded-lg text-sm border border-purple-500/20 flex items-center gap-2 animate-pulse">
+                                                    <Sparkles className="w-4 h-4 shrink-0" />
+                                                    <span>Yapay zeka soruları üretiyor...</span>
+                                                </div>
+                                            )}
+                                            {generationStatus.status === 'FAILED' && (
+                                                <div className="p-3 bg-red-500/10 text-red-600 rounded-lg text-sm border border-red-500/20 flex items-center gap-2">
+                                                    <AlertCircle className="w-4 h-4 shrink-0" />
+                                                    <span>Üretim başarısız. Tekrar deneniyor...</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {!completionStatus?.completed && (
+                                        <>
+                                            {(completionStatus?.antrenman.existing || 0) < (completionStatus?.antrenman.quota || 1) ? (
+                                                  <div className="w-full py-4 text-center text-muted-foreground text-sm border border-dashed border-border/50 rounded-xl bg-muted/20">
+                                                      Otomatik soru üretimi sıraya alındı...
+                                                  </div>
+                                            ) : (
+                                                <button
+                                                    onClick={handleStartQuiz}
+                                                    className="w-full py-4 bg-emerald-600 text-white rounded-xl font-bold text-lg hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
+                                                >
+                                                    <Brain className="w-5 h-5" />
+                                                    Antrenmana Başla
+                                                </button>
+                                            )}
+                                        </>
                                     )}
                                     
                                     {completionStatus?.completed && (

@@ -150,8 +150,8 @@ export type Database = {
           course_slug: string
           created_at: string | null
           id: string
+          instructor: string | null
           last_hash: string | null
-          lesson_type: string
           name: string
           playlist_url: string | null
           sort_order: number | null
@@ -163,8 +163,8 @@ export type Database = {
           course_slug: string
           created_at?: string | null
           id?: string
+          instructor?: string | null
           last_hash?: string | null
-          lesson_type: string
           name: string
           playlist_url?: string | null
           sort_order?: number | null
@@ -176,8 +176,8 @@ export type Database = {
           course_slug?: string
           created_at?: string | null
           id?: string
+          instructor?: string | null
           last_hash?: string | null
-          lesson_type?: string
           name?: string
           playlist_url?: string | null
           sort_order?: number | null
@@ -194,55 +194,9 @@ export type Database = {
           },
         ]
       }
-      generation_jobs: {
-        Row: {
-          attempts: number
-          chunk_id: string
-          created_at: string
-          error_message: string | null
-          id: string
-          job_type: string
-          priority: number
-          status: string
-          target_count: number
-          updated_at: string
-        }
-        Insert: {
-          attempts?: number
-          chunk_id: string
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          job_type: string
-          priority?: number
-          status?: string
-          target_count?: number
-          updated_at?: string
-        }
-        Update: {
-          attempts?: number
-          chunk_id?: string
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          job_type?: string
-          priority?: number
-          status?: string
-          target_count?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "generation_jobs_chunk_id_fkey"
-            columns: ["chunk_id"]
-            isOneToOne: false
-            referencedRelation: "note_chunks"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       note_chunks: {
         Row: {
+          attempts: number | null
           char_count: number | null
           checksum: string | null
           chunk_order: number
@@ -250,14 +204,20 @@ export type Database = {
           course_id: string
           course_name: string
           created_at: string | null
+          error_message: string | null
+          heading_order: number | null
           id: string
+          is_ready: boolean | null
           metadata: Json | null
           parent_h1_id: string | null
           parent_h2: string | null
+          process_at_night: boolean | null
           section_title: string
+          status: Database["public"]["Enums"]["chunk_generation_status"] | null
           word_count: number | null
         }
         Insert: {
+          attempts?: number | null
           char_count?: number | null
           checksum?: string | null
           chunk_order: number
@@ -265,14 +225,20 @@ export type Database = {
           course_id: string
           course_name: string
           created_at?: string | null
+          error_message?: string | null
+          heading_order?: number | null
           id?: string
+          is_ready?: boolean | null
           metadata?: Json | null
           parent_h1_id?: string | null
           parent_h2?: string | null
+          process_at_night?: boolean | null
           section_title: string
+          status?: Database["public"]["Enums"]["chunk_generation_status"] | null
           word_count?: number | null
         }
         Update: {
+          attempts?: number | null
           char_count?: number | null
           checksum?: string | null
           chunk_order?: number
@@ -280,11 +246,16 @@ export type Database = {
           course_id?: string
           course_name?: string
           created_at?: string | null
+          error_message?: string | null
+          heading_order?: number | null
           id?: string
+          is_ready?: boolean | null
           metadata?: Json | null
           parent_h1_id?: string | null
           parent_h2?: string | null
+          process_at_night?: boolean | null
           section_title?: string
+          status?: Database["public"]["Enums"]["chunk_generation_status"] | null
           word_count?: number | null
         }
         Relationships: [
@@ -434,6 +405,7 @@ export type Database = {
       }
       subject_guidelines: {
         Row: {
+          bad_few_shot_example: Json | null
           created_at: string | null
           few_shot_example: Json
           id: string
@@ -442,6 +414,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          bad_few_shot_example?: Json | null
           created_at?: string | null
           few_shot_example: Json
           id?: string
@@ -450,6 +423,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          bad_few_shot_example?: Json | null
           created_at?: string | null
           few_shot_example?: Json
           id?: string
@@ -622,45 +596,6 @@ export type Database = {
         }
         Relationships: []
       }
-      video_logs: {
-        Row: {
-          course_id: string | null
-          created_at: string
-          id: string
-          user_id: string
-          video_id: string
-        }
-        Insert: {
-          course_id?: string | null
-          created_at?: string
-          id?: string
-          user_id: string
-          video_id: string
-        }
-        Update: {
-          course_id?: string | null
-          created_at?: string
-          id?: string
-          user_id?: string
-          video_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "video_logs_course_id_fkey"
-            columns: ["course_id"]
-            isOneToOne: false
-            referencedRelation: "courses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "video_logs_video_id_fkey"
-            columns: ["video_id"]
-            isOneToOne: false
-            referencedRelation: "videos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       video_progress: {
         Row: {
           completed: boolean | null
@@ -784,6 +719,12 @@ export type Database = {
     }
     Enums: {
       bloom_level: "knowledge" | "application" | "analysis"
+      chunk_generation_status:
+        | "DRAFT"
+        | "PENDING"
+        | "PROCESSING"
+        | "COMPLETED"
+        | "FAILED"
       question_status: "active" | "archived" | "pending_followup"
       question_usage_type: "antrenman" | "arsiv" | "deneme"
       quiz_response_type: "correct" | "incorrect" | "blank"
@@ -916,6 +857,13 @@ export const Constants = {
   public: {
     Enums: {
       bloom_level: ["knowledge", "application", "analysis"],
+      chunk_generation_status: [
+        "DRAFT",
+        "PENDING",
+        "PROCESSING",
+        "COMPLETED",
+        "FAILED",
+      ],
       question_status: ["active", "archived", "pending_followup"],
       question_usage_type: ["antrenman", "arsiv", "deneme"],
       quiz_response_type: ["correct", "incorrect", "blank"],

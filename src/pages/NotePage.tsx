@@ -88,7 +88,7 @@ export default function NotePage() {
                         </Button>
                     </div>
                     <article className="note-content-limit w-full max-w-none mx-auto">
-                        <NoteViewer content={processedContent} lessonType={note.lessonType} />
+                        <NoteViewer content={processedContent} courseId={note.courseId} />
                     </article>
                 </main>
             </div>

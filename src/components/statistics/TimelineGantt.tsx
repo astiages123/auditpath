@@ -15,7 +15,9 @@ interface GroupedSession {
   key: string;
   date: string;
   courseName: string;
-  totalDuration: number;
+  totalWorkDuration: number; // Net work in mins
+  totalSessionDuration: number; // Total in mins
+  workSessionCount: number;
   sessions: TimelineBlock[];
 }
 
@@ -52,14 +54,31 @@ export function TimelineGantt({ data }: TimelineGanttProps) {
         key,
         date: dateStr,
         courseName: session.courseName,
-        totalDuration: 0,
+        totalWorkDuration: 0,
+        totalSessionDuration: 0,
+        workSessionCount: 0,
         sessions: [],
       });
     }
 
     const group = map.get(key)!;
     group.sessions.push(session);
-    group.totalDuration += session.durationMinutes;
+    
+    // Calculate Net Work Time: Total Duration - (Break + Pause)
+    // TimelineBlock fields are in seconds.
+    const totalSec = session.totalDurationSeconds || session.durationSeconds || 0;
+    const breakSec = session.breakSeconds || 0;
+    const pauseSec = session.pauseSeconds || 0;
+    
+    const workSec = Math.max(0, totalSec - breakSec - pauseSec);
+
+    group.totalWorkDuration += Math.floor(workSec / 60);
+    group.totalSessionDuration += Math.floor(totalSec / 60);
+
+    // Only count as "Oturum" if it's primarily a work session (Work > Break)
+    if (session.type?.toLowerCase() === 'work' || workSec > breakSec) {
+        group.workSessionCount += 1;
+    }
   });
 
   // Convert map to array and sort by date (most recent first)
@@ -106,8 +125,8 @@ export function TimelineGantt({ data }: TimelineGanttProps) {
                  <div className="text-right">
                     <div className="flex items-center justify-end gap-1.5 text-sm font-medium text-foreground">
                         <Clock className="w-4 h-4 text-muted-foreground" />
-                        {Math.floor(group.totalDuration / 60) > 0 && `${Math.floor(group.totalDuration / 60)} sa `}
-                        {group.totalDuration % 60} dk
+                        {Math.floor(group.totalWorkDuration / 60) > 0 && `${Math.floor(group.totalWorkDuration / 60)} sa `}
+                        {group.totalWorkDuration % 60} dk
                     </div>
                  </div>
                  <ChevronRight className="w-5 h-5 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
@@ -129,8 +148,9 @@ export function TimelineGantt({ data }: TimelineGanttProps) {
                     <h2 className="text-2xl font-bold text-foreground leading-none">{selectedGroup?.courseName}</h2>
                     <p className="text-muted-foreground text-sm mt-2">{selectedGroup?.date} oturum analizi</p>
                 </div>
-                <Badge variant="outline" className="px-4 py-1.5 rounded-full border-primary/20 bg-primary/5 text-primary font-semibold">
-                    {selectedGroup?.sessions.length} Oturum
+                <Badge variant="outline" className="px-4 py-1.5 rounded-full border-indigo-500/20 bg-indigo-500/5 text-indigo-400 font-semibold flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5" />
+                    {selectedGroup?.workSessionCount} Oturum
                 </Badge>
             </div>
 
@@ -193,7 +213,7 @@ export function TimelineGantt({ data }: TimelineGanttProps) {
                                                     <div key={time} className="absolute flex flex-col items-center" style={{ left: `${pos}%` }}>
                                                         <span className="text-[10px] font-bold text-foreground mb-3 font-mono">
                                                             {/* UTC formatında saati yazdırıyoruz */}
-                                                            {new Date(time).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}
+                                                            {new Date(time).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                                                         </span>
                                                         <div className="w-px h-[120px] bg-linear-to-b from-border/30 via-border/10 to-transparent" />
                                                     </div>
@@ -219,13 +239,18 @@ export function TimelineGantt({ data }: TimelineGanttProps) {
                                                             width: `calc(${sessionWidth}% - 4px)` 
                                                         }}
                                                     >
+                                                    
                                                         {/* Activity Segments Inside Session */}
                                                         {session.timeline && Array.isArray(session.timeline) ? (
-                                                            (session.timeline as any[]).map((event, eIdx) => {
+                                                            (session.timeline as any[]).map((event, eIdx, arr) => {
+                                                                const nextEvent = arr[eIdx + 1];
                                                                 const eStart = event.start;
-                                                                const eEnd = event.end || end;
+                                                                // Fix Overlap: If end is missing, use next start or session end
+                                                                const eEnd = event.end || (nextEvent ? nextEvent.start : end);
+                                                                
                                                                 const pLeft = ((eStart - start) / (end - start)) * 100;
                                                                 const pWidth = ((eEnd - eStart) / (end - start)) * 100;
+                                                                // Duration in minutes (rounded)
                                                                 const eventDuration = Math.round((eEnd - eStart) / 1000 / 60);
 
                                                                 let segmentClass = "bg-sky-800 border-sky-900 text-sky-100/90"; // Work
@@ -281,7 +306,25 @@ export function TimelineGantt({ data }: TimelineGanttProps) {
             )}
 
             {/* Metrics Overview */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="p-6 rounded-3xl bg-indigo-500/10 border border-indigo-500/20 flex flex-col gap-2 items-center md:items-start transition-all hover:bg-indigo-500/20 hover:scale-[1.02]">
+                    <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                            <Clock className="w-4 h-4 text-indigo-300" />
+                        </div>
+                        <span className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.15em]">Oturum Süresi</span>
+                    </div>
+                    <span className="text-xl font-black text-white ml-1">
+                        {(() => {
+                            const totalMinutes = selectedGroup?.totalSessionDuration || 0;
+                            const h = Math.floor(totalMinutes / 60);
+                            const m = totalMinutes % 60;
+                            if (h > 0) return `${h}sa ${m}dk`;
+                            return `${m}dk`;
+                        })()}
+                    </span>
+                </div>
+
                 <div className="p-6 rounded-3xl bg-sky-500/10 border border-sky-500/20 flex flex-col gap-2 items-center md:items-start transition-all hover:bg-sky-500/20 hover:scale-[1.02]">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-xl bg-sky-500/20 flex items-center justify-center">
@@ -291,8 +334,11 @@ export function TimelineGantt({ data }: TimelineGanttProps) {
                     </div>
                     <span className="text-xl font-black text-white ml-1">
                         {(() => {
-                            const totalWork = selectedGroup?.sessions.reduce((acc, s) => acc + (s.duration || 0), 0) || 0;
-                            return `${Math.floor(totalWork / 60)}sa ${totalWork % 60}dk`;
+                            const totalMinutes = selectedGroup?.totalWorkDuration || 0;
+                            const h = Math.floor(totalMinutes / 60);
+                            const m = totalMinutes % 60;
+                            if (h > 0) return `${h}sa ${m}dk`;
+                            return `${m}dk`;
                         })()}
                     </span>
                 </div>
@@ -305,19 +351,27 @@ export function TimelineGantt({ data }: TimelineGanttProps) {
                         <span className="text-[10px] font-black text-emerald-300 uppercase tracking-[0.15em]">Mola Süresi</span>
                     </div>
                     <span className="text-xl font-black text-white ml-1">
-                        {selectedGroup?.sessions.reduce((acc, s) => acc + ((s as any).breakMinutes || 0), 0) || 0}dk
+                        {(() => {
+                             const totalSeconds = selectedGroup?.sessions.reduce((acc, s) => acc + (s.breakSeconds || 0), 0) || 0;
+                             const m = Math.floor(totalSeconds / 60);
+                             return `${m}dk`;
+                        })()}
                     </span>
                 </div>
                 
-                <div className="p-6 rounded-3xl bg-slate-500/10 border border-slate-500/20 flex flex-col gap-2 items-center md:items-start col-span-2 md:col-span-1 transition-all hover:bg-slate-500/20 hover:scale-[1.02]">
+                <div className="p-6 rounded-3xl bg-slate-500/10 border border-slate-500/20 flex flex-col gap-2 items-center md:items-start transition-all hover:bg-slate-500/20 hover:scale-[1.02]">
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-xl bg-slate-500/20 flex items-center justify-center">
                             <Pause className="w-4 h-4 text-slate-300" />
                         </div>
-                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.15em]">Duraklama</span>
+                        <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.15em]">Duraklama Süresi</span>
                     </div>
                     <span className="text-xl font-black text-white ml-1">
-                        {selectedGroup?.sessions.reduce((acc, s) => acc + s.pauseMinutes, 0) || 0}dk
+                        {(() => {
+                             const totalSeconds = selectedGroup?.sessions.reduce((acc, s) => acc + (s.pauseSeconds || 0), 0) || 0;
+                             const m = Math.floor(totalSeconds / 60);
+                             return `${m}dk`;
+                        })()}
                     </span>
                 </div>
             </div>

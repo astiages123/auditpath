@@ -114,6 +114,7 @@ export function useProgressQuery(userId?: string, initialStats?: Partial<Progres
         rankProgress: dbStats.rankProgress,
         progressPercentage: dbStats.progressPercentage,
         estimatedDays: dbStats.estimatedDays,
+        todayVideoCount: dbStats.todayVideoCount || 0,
       } as ProgressStats;
     },
     enabled: !!userId,
@@ -156,10 +157,24 @@ export function useOptimisticProgress() {
         },
       };
 
+      const currentTodayCount = old.todayVideoCount || 0;
+      const newTodayCount = Math.max(0, currentTodayCount + deltaVideos);
+      
+      let newStreak = old.streak;
+      if (currentTodayCount === 0 && newTodayCount > 0) {
+          // First activity today -> Streak + 1
+          newStreak += 1;
+      } else if (currentTodayCount > 0 && newTodayCount === 0) {
+          // Last activity removed -> Streak - 1
+          newStreak = Math.max(0, newStreak - 1);
+      }
+
       return {
         ...old,
         completedVideos: old.completedVideos + deltaVideos,
         completedHours: old.completedHours + deltaHours,
+        streak: newStreak,
+        todayVideoCount: newTodayCount,
         courseProgress: {
           ...old.courseProgress,
           [courseId]: (old.courseProgress[courseId] || 0) + deltaVideos,

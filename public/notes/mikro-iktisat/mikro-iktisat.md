@@ -6,7 +6,7 @@
 
 İktisadi analizlerin temelinde değişkenler arasındaki ilişkileri anlamak yatar. Bu ilişkiler matematiksel olarak fonksiyonlar aracılığıyla ifade edilir.
 
-- **Bağımlı ve Bağımsız Değişkenler**: Bir fonksiyon yazılırken (örneğin $y = f(x)$), bu ifadeyi \"y eşittir f(x)\" yerine \"y, x\'e bağlıdır\" şeklinde okumak iktisadi mantığı kavramayı kolaylaştırır. Burada bağımsız değişken (x) belirleyen konumundayken, bağımlı değişken (y) x\'ten etkilenen ve onun tarafından belirlenen unsurdur.
+- **Bağımlı ve Bağımsız Değişkenler**: Bir fonksiyon yazılırken (örneğin $y = f(x)$), bu ifadeyi \"$y$ eşittir $f(x)$\" yerine \"y, x\'e bağlıdır\" şeklinde okumak iktisadi mantığı kavramayı kolaylaştırır. Burada bağımsız değişken (x) belirleyen konumundayken, bağımlı değişken (y) x\'ten etkilenen ve onun tarafından belirlenen unsurdur.
 
 - **Kapalı ve Açık Fonksiyonlar:**
 
@@ -172,7 +172,7 @@ Bu konu hem KPSS hem de kurum sınavlarında sıklıkla soru olarak gelmektedir.
 
 **Sınavda Çıkabilir**: \"Kardinalist fayda fonksiyonunun iç bükey olma nedeni nedir?\" sorusunun cevabı azalan eğim (azalan marjinal fayda) ile ilgilidir. İktisadi kavramların isimleri değişse de matematiksel mantığı (eğim-şekil ilişkisi) her zaman aynı kalır.
 
-### Toplam, Marjinal ve Ortalama Kavramlarına Giriş 
+### Toplam, Marjinal ve Ortalama Kavramlarına Giriş
 
 Mikro iktisadın üretim, maliyet, hasılat ve fayda gibi ana başlıklarının tümünde bu üçlü yapı karşımıza çıkar. Bir konuyu anlamak için önce o konunun Toplam fonksiyonunu, ardından ondan türetilen Marjinal ve Ortalama değerlerini incelemek gerekir.
 
@@ -398,7 +398,7 @@ Fayda, malların ihtiyacı giderme özelliğidir veya tüketim sonucu elde edile
 
   - Analizlerinde farksızlık eğrilerini kullanırlar (Antonelli, Pareto, Edgeworth).
 
-### Kardinalist (Sayısalcı) Tüketim Kuramı
+### Kardinalist (Sayısalcı) Tüketim Kuramı 
 
 #### Toplam Fayda (Total Utility - TU) 
 

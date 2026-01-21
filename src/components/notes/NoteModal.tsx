@@ -8,14 +8,14 @@ import { NoteViewer } from "./NoteViewer";
 import { TableOfContents } from "./TableOfContents";
 
 interface NoteModalProps {
-    lessonType: string;
+    courseId: string;
     lessonName: string;
     isOpen: boolean;
     onClose: () => void;
 }
 
-export function NoteModal({ lessonType, lessonName, isOpen, onClose }: NoteModalProps) {
-    const { data: noteData, isLoading, error: queryError } = useNotes(lessonType);
+export function NoteModal({ courseId, lessonName, isOpen, onClose }: NoteModalProps) {
+    const { data: noteData, isLoading, error: queryError } = useNotes(courseId);
     const [content, setContent] = useState<string>("");
     const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -79,7 +79,8 @@ export function NoteModal({ lessonType, lessonName, isOpen, onClose }: NoteModal
                 <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800 shrink-0">
                     <div>
                         <h2 className="text-xl font-bold text-zinc-100">{lessonName}</h2>
-                        <p className="text-sm text-zinc-500">{lessonType}</p>
+                        {/* Removed duplicate/redundant lessonType/courseId display if not needed, or show ID */}
+                        {/* <p className="text-sm text-zinc-500">{courseId}</p> */} 
                     </div>
                     <div className="flex items-center gap-2">
                         <Button

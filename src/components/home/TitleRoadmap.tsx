@@ -128,7 +128,7 @@ export default function TitleRoadmap({ watchedVideos, requiredVideos }: TitleRoa
                                     <img
                                         src={milestone.imagePath}
                                         alt={milestone.title}
-                                        className={cn("w-full h-full object-contain drop-shadow-md", isLocked && "grayscale opacity-30")}
+                                        className={cn("w-full h-full object-contain ", isLocked && "grayscale opacity-30")}
                                     />
                                     {isCurrent && <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full -z-10 animate-pulse" />}
                                 </div>

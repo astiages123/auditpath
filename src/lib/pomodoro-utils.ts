@@ -14,10 +14,22 @@ export interface TimelineEvent {
  * @param now - Optional current timestamp to use for ongoing events. Defaults to Date.now()
  * @returns Object containing total minutes for work, break, and pause.
  */
+export interface SessionTotals {
+  totalWork: number;
+  totalBreak: number;
+  totalPause: number;
+}
+
+/**
+ * Calculates the total duration for each activity type in seconds.
+ * @param timeline - The array of timeline events
+ * @param now - Optional current timestamp to use for ongoing events. Defaults to Date.now()
+ * @returns Object containing total seconds for work, break, and pause.
+ */
 export function calculateSessionTotals(
   timeline: TimelineEvent[] | unknown, 
   now: number = Date.now()
-): { totalWork: number; totalBreak: number; totalPause: number } {
+): SessionTotals {
   if (!Array.isArray(timeline)) {
     return { totalWork: 0, totalBreak: 0, totalPause: 0 };
   }
@@ -47,14 +59,10 @@ export function calculateSessionTotals(
     }
   }
 
-  // Convert to minutes, rounding down (or nearest? usually minutes are floor or round)
-  // Let's use Math.floor to be conservative, or Math.round? 
-  // Standard practice for 'billed' time is often minutes. 
-  // But for stats, maybe 1.9 minutes should be 2? 
-  // Let's use Math.round to average out small errors.
+  // Return totals in SECONDS (rounded to nearest second)
   return {
-    totalWork: Math.round(workMs / 1000 / 60),
-    totalBreak: Math.round(breakMs / 1000 / 60),
-    totalPause: Math.round(pauseMs / 1000 / 60),
+    totalWork: Math.round(workMs / 1000),
+    totalBreak: Math.round(breakMs / 1000),
+    totalPause: Math.round(pauseMs / 1000),
   };
 }

@@ -1,85 +1,107 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, TrendingUp } from "lucide-react";
-import type { EfficiencyData, CumulativeStats } from "@/lib/client-db";
+import { AlertTriangle, TrendingUp, Video, Clock } from "lucide-react";
+import type { EfficiencyData, CumulativeStats, SubjectCompetency } from "@/lib/client-db";
 import { StatDetailModal } from "./StatDetailModal";
 import { HistoryView } from "./HistoryView";
 import { GeneralProgress } from "./GeneralProgress";
+import { SubjectRadar } from "./SubjectRadar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface EfficiencyCardProps {
     data: EfficiencyData;
     cumulativeData: CumulativeStats | null;
     userId: string;
+    subjectData?: SubjectCompetency[];
 }
 
-export function EfficiencyCard({ data, cumulativeData, userId }: EfficiencyCardProps) {
+export function EfficiencyCard({ data, cumulativeData, userId, subjectData }: EfficiencyCardProps) {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const maxValue = Math.max(data.videoMinutes, data.pomodoroMinutes, 1);
     const videoPercentage = (data.videoMinutes / maxValue) * 100;
     const pomodoroPercentage = (data.pomodoroMinutes / maxValue) * 100;
 
+    // Helper for color coding
+    const getRatioColor = (r: number) => {
+        if (r < 1.0) return "text-red-500";
+        if (r >= 1.2 && r <= 1.7) return "text-green-500";
+        if (r >= 1.8 && r <= 2.2) return "text-yellow-500";
+        if (r > 2.2) return "text-red-500";
+        return "text-muted-foreground"; // 1.0 - 1.2 gap -> fallback or consider "low"
+    };
+
+    const getRatioBg = (r: number) => {
+        if (r < 1.0) return "bg-red-500/10";
+        if (r >= 1.2 && r <= 1.7) return "bg-green-500/10";
+        if (r >= 1.8 && r <= 2.2) return "bg-yellow-500/10";
+        if (r > 2.2) return "bg-red-500/10";
+        return "bg-muted/10";
+    };
+
+    const ratioColor = getRatioColor(data.ratio);
+    const ratioBg = getRatioBg(data.ratio);
+
+    const activeColor = data.isAlarm ? "text-destructive" : ratioColor;
+    const activeBg = data.isAlarm ? "bg-destructive/10" : ratioBg;
+    const activeFill = data.isAlarm ? "bg-destructive" : (
+        ratioColor.includes("green") ? "bg-green-500" :
+        ratioColor.includes("yellow") ? "bg-yellow-500" :
+        ratioColor.includes("red") ? "bg-red-500" : "bg-primary"
+    );
+
     return (
         <>
             <div
                 onClick={() => setIsModalOpen(true)}
-                className="flex flex-col h-full cursor-pointer"
+                className="group flex flex-col h-full cursor-pointer p-4 transition-all duration-300 hover:scale-105"
             >
-                {/* Title with alarm icon */}
+                {/* Title and Icon */}
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-muted-foreground">
-                        Verimlilik
-                    </h3>
+                    <div className="flex items-center gap-2">
+                        <TrendingUp className={`h-4 w-4 ${activeColor}`} />
+                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                            Verimlilik
+                        </h3>
+                    </div>
                     {data.isAlarm && (
-                        <AlertTriangle className="h-5 w-5 text-destructive animate-pulse" />
+                        <AlertTriangle className="h-4 w-4 text-destructive animate-pulse" />
                     )}
                 </div>
 
-                {/* Ratio display */}
-                <div className="flex-1 flex flex-col justify-center items-center">
-                    <div className={`text-5xl font-bold ${data.isAlarm ? "text-destructive" : "text-primary"}`}>
+                {/* Main Ratio Display */}
+                <div className="flex-1 flex flex-col justify-center items-center py-2">
+                    <div className={`text-6xl font-black tracking-tighter transition-colors ${activeColor}`}>
                         {data.ratio > 0 ? `${data.ratio}x` : "-"}
                     </div>
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-2">
                         Öğrenme Katsayısı
                     </p>
-
-                    {/* Alarm message */}
-                    {data.isAlarm && (
-                        <div className="mt-4 px-3 py-2 bg-destructive/20 border border-destructive/50 rounded-lg">
-                            <p className="text-sm text-destructive font-medium flex items-center gap-2">
-                                <AlertTriangle className="h-4 w-4" />
-                                Verimlilik Alarmı
-                            </p>
-                        </div>
-                    )}
                 </div>
 
-                {/* Bar comparison */}
+                {/* Compact Progress Bars */}
                 <div className="space-y-3 mt-4">
-                    <div>
-                        <div className="flex justify-between text-sm mb-1">
-                            <span className="text-muted-foreground">Video Süresi</span>
-                            <span className="font-medium">{data.videoMinutes} dk</span>
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-[9px] font-black uppercase tracking-widest">
+                            <span className="text-muted-foreground/50">Video</span>
+                            <span className="text-muted-foreground">{data.videoMinutes}dk</span>
                         </div>
-                        <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+                        <div className="h-1 bg-muted/20 rounded-full overflow-hidden">
                             <div
-                                className="h-full bg-accent rounded-full transition-all duration-500"
+                                className="h-full bg-accent/60 transition-all duration-700"
                                 style={{ width: `${videoPercentage}%` }}
                             />
                         </div>
                     </div>
-                    <div>
-                        <div className="flex justify-between text-sm mb-1">
-                            <span className="text-muted-foreground">Pomodoro Süresi</span>
-                            <span className="font-medium">{data.pomodoroMinutes} dk</span>
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-[9px] font-black uppercase tracking-widest">
+                            <span className="text-muted-foreground/50">Pomodoro</span>
+                            <span className="text-muted-foreground">{data.pomodoroMinutes}dk</span>
                         </div>
-                        <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+                        <div className="h-1 bg-muted/20 rounded-full overflow-hidden">
                             <div
-                                className={`h-full rounded-full transition-all duration-500 ${data.isAlarm ? "bg-destructive" : "bg-primary"
-                                    }`}
+                                className={`h-full transition-all duration-700 ${activeFill}`}
                                 style={{ width: `${pomodoroPercentage}%` }}
                             />
                         </div>
@@ -92,84 +114,94 @@ export function EfficiencyCard({ data, cumulativeData, userId }: EfficiencyCardP
                 onOpenChange={setIsModalOpen}
                 title="Verimlilik Detayları"
             >
-                <div className="space-y-4">
+                <div className="space-y-6">
                     <Tabs defaultValue="details" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3">
-                            <TabsTrigger value="details">Detaylar</TabsTrigger>
-                            <TabsTrigger value="history">Geçmiş</TabsTrigger>
-                            <TabsTrigger value="cumulative">Genel</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-3 bg-muted/20 p-1 rounded-2xl h-12">
+                            <TabsTrigger value="details" className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm">Detaylar</TabsTrigger>
+                            <TabsTrigger value="history" className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm">Geçmiş</TabsTrigger>
+                            <TabsTrigger value="cumulative" className="rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm">Genel</TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="details" className="space-y-4 mt-4">
-                            <div className="bg-muted/30 rounded-xl p-4">
-                                <p className="text-sm text-muted-foreground">Net Video Süresi</p>
-                                <p className="text-2xl font-bold">{data.videoMinutes} dakika</p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    Bugün tamamlanan videoların toplam süresi
-                                </p>
-                            </div>
-
-                            <div className="bg-muted/30 rounded-xl p-4">
-                                <p className="text-sm text-muted-foreground">Pomodoro Çalışma Süresi</p>
-                                <p className="text-2xl font-bold">{data.pomodoroMinutes} dakika</p>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    Bugün çalışarak geçirilen toplam süre
-                                </p>
-                            </div>
-
-                            <div className={`rounded-xl p-4 ${
-                                data.ratio < 1.0 || data.ratio > 2.2 ? "bg-red-500/10" : 
-                                data.ratio >= 1.2 && data.ratio <= 1.7 ? "bg-green-500/10" :
-                                data.ratio >= 1.8 && data.ratio <= 2.2 ? "bg-yellow-500/10" :
-                                "bg-primary/10"
-                            }`}>
-                                <p className="text-sm text-muted-foreground">Öğrenme Katsayısı</p>
-                                <div className="flex items-center gap-2 group">
-                                    <p className={`text-3xl font-bold ${
-                                        data.ratio < 1.0 || data.ratio > 2.2 ? 'text-red-500' : 
-                                        data.ratio >= 1.2 && data.ratio <= 1.7 ? 'text-green-500' :
-                                        data.ratio >= 1.8 && data.ratio <= 2.2 ? 'text-yellow-500' :
-                                        'text-primary'
-                                    }`}>
-                                        {data.ratio > 0 ? `${data.ratio}x` : "-"}
+                        <TabsContent value="details" className="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                            {/* Stats Overview */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="group bg-card/40 border border-border/50 p-6 rounded-3xl hover:border-accent/40 transition-all duration-300">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="p-2 rounded-xl bg-accent/10 text-accent">
+                                            <Video className="h-5 w-5" />
+                                        </div>
+                                        <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Video Süresi</p>
+                                    </div>
+                                    <p className="text-4xl font-black text-foreground mb-1">{data.videoMinutes} <span className="text-lg font-medium text-muted-foreground">dakika</span></p>
+                                    <p className="text-xs text-muted-foreground/70 leading-relaxed font-medium">
+                                        Bugün tamamlanan videoların toplam süresi.
                                     </p>
                                 </div>
-                                <p className="text-xs font-medium mt-1">
-                                    {data.ratio > 0 ? (
-                                        data.ratio < 1.0 ? (
-                                            <span className="text-red-500">Yüzeysel: Videoyu 1.5x hızda bitirip notlara neredeyse hiç bakmamışsın. Öğrenme kalıcılığı riskte.</span>
-                                        ) : data.ratio <= 1.7 ? (
-                                            <span className="text-green-500">Altın Oran: Teknolojiyi en verimli kullandığın aralık. Hızlı izleme + AI notlarını akıllıca sentezleme.</span>
-                                        ) : data.ratio <= 2.2 ? (
-                                            <span className="text-yellow-500">Yoğun Mesai: Konu ya çok zor ya da notları düzenlerken detaylarda boğulmaya başlıyorsun.</span>
-                                        ) : (
-                                            <span className="text-red-500">Verim Kaybı: AI desteğine rağmen bu süredeysen, öğrenmekten ziyade "not süsleme" veya "odak dağılması" yaşıyorsun.</span>
-                                        )
-                                    ) : "Henüz veri yok"}
-                                </p>
+
+                                <div className="group bg-card/40 border border-border/50 p-6 rounded-3xl hover:border-primary/40 transition-all duration-300">
+                                    <div className="flex items-center gap-3 mb-4">
+                                        <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                                            <Clock className="h-5 w-5" />
+                                        </div>
+                                        <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Pomodoro Süresi</p>
+                                    </div>
+                                    <p className="text-4xl font-black text-foreground mb-1">{data.pomodoroMinutes} <span className="text-lg font-medium text-muted-foreground">dakika</span></p>
+                                    <p className="text-xs text-muted-foreground/70 leading-relaxed font-medium">
+                                        Bugün aktif çalışarak geçirilen süre.
+                                    </p>
+                                </div>
                             </div>
 
-                            <div className="bg-muted/20 rounded-xl p-4 text-sm text-muted-foreground">
-                                <p className="font-medium mb-3 flex items-center gap-2">
-                                    <TrendingUp className="h-4 w-4" />
-                                    Verimlilik Skalası
-                                </p>
-                                <div className="space-y-3 text-[11px] leading-snug">
-                                    <div className="flex gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1 shrink-0" />
-                                        <p><span className="text-red-500 font-bold">&lt; 1.0x (Düşük):</span> Yüzeysel çalışma, düşük kalıcılık.</p>
+                            {/* Ratio Visualizer */}
+                            <div className={`relative overflow-hidden p-8 rounded-[32px] border border-border/50 backdrop-blur-md ${ratioBg} transition-all duration-500`}>
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <div className="h-2 w-2 rounded-full bg-foreground/20 animate-pulse" />
+                                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground">Sizin Oranınız</p>
+                                        </div>
+                                        <h4 className={`text-6xl font-black tracking-tighter ${ratioColor}`}>
+                                            {data.ratio > 0 ? `${data.ratio}x` : "-"}
+                                        </h4>
+                                        <p className="mt-4 text-sm font-semibold leading-relaxed text-foreground/80 max-w-md">
+                                            {data.ratio > 0 ? (
+                                                data.ratio < 1.0 ? "Yüzeysel: Videoyu hızlı bitirip notlara bakmamışsın. Öğrenme kalıcılığı riskte." :
+                                                data.ratio <= 1.7 ? (data.ratio >= 1.2 ? "Altın Oran: Teknolojiyi en verimli kullandığın aralık. Akıllı sentez." : "Düşük Verilik: Henüz ideal verimlilikte değilsin.") :
+                                                data.ratio <= 2.2 ? "Yoğun Mesai: Konu zor olabilir veya detaylarda boğuluyor olabilirsin." :
+                                                "Verim Kaybı: 'Not süsleme' veya 'odak dağılması' yaşıyor olabilirsin."
+                                            ) : "Henüz yeterli veri girişi yapılmadı."}
+                                        </p>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 mt-1 shrink-0" />
-                                        <p><span className="text-green-500 font-bold">1.2x - 1.7x (İdeal):</span> Altın Oran. En verimli sentez.</p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-yellow-500 mt-1 shrink-0" />
-                                        <p><span className="text-yellow-500 font-bold">1.8x - 2.2x (Limit):</span> Detaylarda boğulma riski.</p>
-                                    </div>
-                                    <div className="flex gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1 shrink-0" />
-                                        <p><span className="text-red-500 font-bold">&gt; 2.2x (Aşırı):</span> Odak dağılması veya not süsleme.</p>
+
+                                    {/* Visual Scale Bar */}
+                                    <div className="w-full md:w-64 space-y-4">
+                                        <div className="flex justify-between text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                            <span>Düşük</span>
+                                            <span>İdeal</span>
+                                            <span>Limit</span>
+                                        </div>
+                                        <div className="relative h-4 w-full bg-background/40 rounded-full border border-border/30 overflow-hidden flex shadow-inner">
+                                            <div className="h-full bg-red-500/40 w-1/4 border-r border-white/5" />
+                                            <div className="h-full bg-green-500/60 w-1/4 border-r border-white/5" />
+                                            <div className="h-full bg-yellow-500/40 w-1/4 border-r border-white/5" />
+                                            <div className="h-full bg-red-500/40 w-1/4" />
+                                            
+                                            {/* Indicator */}
+                                            {data.ratio > 0 && (
+                                                <div 
+                                                    className="absolute top-0 bottom-0 w-1 bg-foreground shadow-[0_0_10px_white] z-10 transition-all duration-1000 ease-out"
+                                                    style={{ 
+                                                        left: `${Math.min(Math.max((data.ratio / 3) * 100, 2), 98)}%` 
+                                                    }}
+                                                />
+                                            )}
+                                        </div>
+                                        <div className="flex justify-between gap-1">
+                                            <span className="h-1 flex-1 bg-red-500/20 rounded-full" />
+                                            <span className="h-1 flex-1 bg-green-500/50 rounded-full" />
+                                            <span className="h-1 flex-1 bg-yellow-500/20 rounded-full" />
+                                            <span className="h-1 flex-1 bg-red-500/20 rounded-full" />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -179,11 +211,20 @@ export function EfficiencyCard({ data, cumulativeData, userId }: EfficiencyCardP
                              <HistoryView userId={userId} />
                         </TabsContent>
 
-                        <TabsContent value="cumulative" className="mt-4">
+                        <TabsContent value="cumulative" className="mt-4 space-y-6">
                             {cumulativeData ? (
                                 <GeneralProgress data={cumulativeData} />
                             ) : (
                                 <div className="text-center py-8 text-muted-foreground">Yükleniyor...</div>
+                            )}
+                            
+                            {subjectData && subjectData.length > 0 && (
+                                <div className="pt-4 border-t border-border/50">
+                                    <h4 className="text-sm font-semibold mb-3">Konu Dağılımı</h4>
+                                     <div className="h-[300px] w-full">
+                                        <SubjectRadar data={subjectData} />
+                                     </div>
+                                </div>
                             )}
                         </TabsContent>
                     </Tabs>

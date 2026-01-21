@@ -7,17 +7,20 @@ import {
   getStreak,
   deletePomodoroSession,
 } from "@/lib/client-db";
+import { calculateSessionTotals } from "@/lib/pomodoro-utils";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 export type PomodoroMode = "work" | "break";
+
+// ... (playNotificationSound stays same)
 
 const playNotificationSound = () => {
   try {
     const AudioContextClass =
       window.AudioContext ||
-      (window as Window & { webkitAudioContext?: typeof AudioContext })
-        .webkitAudioContext;
+      (window as any).webkitAudioContext;
     if (!AudioContextClass) return;
 
     const ctx = new AudioContextClass();
@@ -29,7 +32,7 @@ const playNotificationSound = () => {
       osc.frequency.setValueAtTime(freq, startTime);
       
       gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.1, startTime + 0.02);
+      gain.gain.linearRampToValueAtTime(0.2, startTime + 0.01);
       gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
       
       osc.connect(gain);
@@ -40,10 +43,10 @@ const playNotificationSound = () => {
     };
 
     const now = ctx.currentTime;
-    // Yumuşak bir "Ding" akoru (A Major)
-    playNote(880, now, 1.0); // A5
-    playNote(1108.73, now + 0.05, 1.0); // C#6
-    playNote(1318.51, now + 0.1, 1.0); // E6
+    // 3 tane net biip sesi (0.5 saniye arayla)
+    for (let i = 0; i < 3; i++) {
+      playNote(1046.50, now + (i * 0.5), 0.3); // C6 notası
+    }
   } catch (e) {
     console.error("Audio play failed", e);
   }
@@ -74,32 +77,24 @@ export function usePomodoro() {
     setSessionCount,
     hasRestored,
     setHasRestored,
+    endTime
   } = useTimerStore();
 
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const userId = user?.id;
   const [streak, setStreak] = useState(0);
 
   // Restore active session or sync daily count
-
-
   useEffect(() => {
     if (!userId) return;
 
     // 1. Sync daily session count from DB
-    // We only do this if there's no active session to avoid jumping numbers during a session
     const syncSessionCount = async () => {
       const count = await getDailySessionCount(userId);
-      if (sessionId) {
-        // If we have an active session, ensure its count is at least the current one
-        // and that it matches DB if it was already saved today.
-        // For now, we trust the restored sessionCount but count can be used for verification.
-        // setSessionCount(count); // Not safe if count includes current session or not
-      } else {
+      if (!sessionId) {
         setSessionCount(count + 1);
       }
     };
-
     syncSessionCount();
 
     // 2. Update Streak
@@ -107,45 +102,51 @@ export function usePomodoro() {
 
     // 3. Restore active session if idle
     if (userId && !hasRestored) {
-      if (sessionId || isActive || startTime !== null) {
-        // If we already have a session state, don't try to restore
         setHasRestored(true);
-      } else {
-        // Mark as attempt made immediately to avoid double-triggers
-        setHasRestored(true);
-        getLatestActiveSession(userId).then((session) => {
-          if (session) {
-            const sessionAge = Date.now() - new Date(session.started_at).getTime();
-            const isRecent = sessionAge < 12 * 60 * 60 * 1000; // 12 hours
-
-            if (isRecent) {
-              setSessionId(session.id);
-              if (session.course_id && session.course_name && !selectedCourse) {
-                setCourse({
-                  id: session.course_id,
-                  name: session.course_name,
-                  category: session.course?.category?.name || "General",
-                });
-              }
-
-              // Prevent duplicate toasts
-              toast.info("Önceki oturumunuzdan devam ediliyor.");
+        
+        // Check local persistence validity
+        if (isActive && endTime) {
+            const now = Date.now();
+            if (now > endTime) {
+                 // Session finished while away
+                 // We could trigger finish logic here, but for now just let the tick handle it
+                 // or maybe just pause it?
+                 // Let's settle for simple resume.
             }
-          }
-        });
-      }
+        } else if (!sessionId) {
+             // Only fetch from DB if we don't have a local active session
+             getLatestActiveSession(userId).then((session) => {
+              if (session) {
+                const sessionAge = Date.now() - new Date(session.started_at).getTime();
+                const isRecent = sessionAge < 12 * 60 * 60 * 1000; // 12 hours
+
+                if (isRecent) {
+                  setSessionId(session.id);
+                  if (session.course_id && session.course_name && !selectedCourse) {
+                    setCourse({
+                      id: session.course_id,
+                      name: session.course_name,
+                      category: session.course?.category?.name || "General",
+                    });
+                  }
+                  toast.info("Önceki oturumunuzdan devam ediliyor.");
+                }
+              }
+            });
+        }
     }
   }, [
-    userId,
-    sessionId,
-    isActive,
-    startTime,
-    setSessionId,
-    setCourse,
-    selectedCourse,
-    setSessionCount,
-    hasRestored,
-    setHasRestored,
+      userId,
+      sessionId,
+      isActive,
+      startTime,
+      setSessionId,
+      setCourse,
+      selectedCourse,
+      setSessionCount,
+      hasRestored,
+      setHasRestored,
+      endTime
   ]);
 
   // Sync State to DB
@@ -153,11 +154,8 @@ export function usePomodoro() {
     if (!userId || !selectedCourse || !sessionId) return;
 
     const save = async () => {
-      // Boş veya hiç ilerleme kaydedilmemiş oturumları kaydetme
       const hasStarted = timeline.length > 0;
-      const hasProgress = timeline.some((e) => e.end && e.end - e.start > 1000); // En az 1 saniye
-
-      if (!hasStarted && !hasProgress) return;
+      if (!hasStarted) return;
 
       const result = await upsertPomodoroSession(
         {
@@ -177,15 +175,71 @@ export function usePomodoro() {
 
     save();
   }, [
-    isActive,
-    isBreak,
     sessionId,
     userId,
     timeline,
     selectedCourse,
     startTime,
     originalStartTime,
+    // Reduced dependencies to avoid excessive saves on tick updates
+    // Removing isActive/isBreak unless they trigger significant state changes captured in timeline
+    // Timeline changes when pause/start happens, so that's covered.
   ]);
+
+  // Zombie Session Handling (Beacon)
+  useEffect(() => {
+      const handleUnload = () => {
+          if (userId && sessionId && selectedCourse && timeline.length > 0) {
+              const { totalWork, totalBreak, totalPause } = calculateSessionTotals(timeline);
+              
+              // Construct the payload for Supabase REST API
+              const payload = {
+                  id: sessionId,
+                  user_id: userId,
+                  course_id: selectedCourse.id, // Note: This might need UUID resolution if it's a slug, which is tricky synchronously.
+                  // Ideally we store UUID in selectedCourse.id.
+                  course_name: selectedCourse.name,
+                  timeline: timeline,
+                  started_at: new Date(originalStartTime || startTime || Date.now()).toISOString(),
+                  ended_at: new Date().toISOString(),
+                  total_work_time: totalWork,
+                  total_break_time: totalBreak,
+                  total_pause_time: totalPause,
+                  is_completed: false // Not necessarily completed
+              };
+
+              const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+              
+              const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+              const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+              
+              // We need to use SendBeacon or fetch with keepalive
+              // SendBeacon is more reliable for unload
+              // But Supabase expects headers.
+              // sendBeacon doesn't support custom headers easily without Blob hack?
+              // Actually, standard sendBeacon sends POST.
+              // But we need Authorization header if RLS is on, or apikey at least.
+              // Supabase allows passing apikey in query param? Yes in some configs.
+              // But cleanest is fetch with keepalive: true
+              
+              fetch(`${supabaseUrl}/rest/v1/pomodoro_sessions`, {
+                  method: 'POST',
+                  headers: {
+                      'Content-Type': 'application/json',
+                      'apikey': supabaseKey,
+                      'Authorization': `Bearer ${session?.access_token || supabaseKey}`,
+                      'Prefer': 'resolution=merge-duplicates'
+                  },
+                  body: JSON.stringify(payload),
+                  keepalive: true
+              }).catch(err => console.error("Beacon Error:", err));
+          }
+      };
+
+      window.addEventListener('beforeunload', handleUnload);
+      return () => window.removeEventListener('beforeunload', handleUnload);
+  }, [userId, sessionId, selectedCourse, timeline, startTime, originalStartTime, session]);
+
 
   // Start/Resume Wrapper
   const handleStart = async () => {
@@ -201,18 +255,42 @@ export function usePomodoro() {
       const newId = crypto.randomUUID();
       setSessionId(newId);
     }
+    // Request notification permission on user action
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    }
+
     startTimer();
   };
 
   // Handle session completion/notifications
   useEffect(() => {
     if (timeLeft === 0 && isActive) {
-      if (Notification.permission === "granted") {
-        new Notification("Süre Doldu!", {
-          body: !isBreak
-            ? "Harika iş çıkardın! Şimdi kısa bir mola zamanı. ☕"
-            : "Mola bitti, tekrar odaklanmaya hazır mısın? 💪",
+      const message = !isBreak
+        ? "Harika iş çıkardın! Şimdi kısa bir mola zamanı. ☕"
+        : "Mola bitti, tekrar odaklanmaya hazır mısın? 💪";
+
+      const sendNotification = () => {
+        new Notification("Pomodoro: Süre Doldu!", {
+          body: message,
           icon: "/favicon.svg",
+        });
+      };
+
+      // Always show a toast
+      toast.success(message, {
+        duration: 10000,
+      });
+
+      if (Notification.permission === "granted") {
+        sendNotification();
+      } else if (Notification.permission !== "denied") {
+        Notification.requestPermission().then((permission) => {
+          if (permission === "granted") {
+            sendNotification();
+          }
         });
       }
       playNotificationSound();
@@ -229,14 +307,16 @@ export function usePomodoro() {
             isCompleted: true,
           },
           userId
-        ).then((res) => {
+        ).then(async (res) => {
           if (res && "error" in res && res.error) {
             toast.error(
               "Oturum kaydedilemedi! Lütfen internet bağlantınızı kontrol edin."
             );
           } else {
             setSessionId(null);
-            incrementSession();
+            // Re-fetch actual count from DB for accuracy
+            const actualCount = await getDailySessionCount(userId);
+            setSessionCount(actualCount + 1);
           }
         });
       }
@@ -253,6 +333,7 @@ export function usePomodoro() {
     originalStartTime,
     incrementSession,
     setSessionId,
+    setSessionCount,
   ]);
 
   const formatTime = (seconds: number) => {
@@ -272,10 +353,26 @@ export function usePomodoro() {
   const switchMode = useCallback(() => {
     const newMode = isBreak ? "work" : "break";
     setMode(newMode);
-    if (newMode === "work") incrementSession();
+    
+    // Request notification permission if not already granted
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+    }
+
+    if (newMode === "work") {
+      if (userId) {
+        getDailySessionCount(userId).then(count => {
+          setSessionCount(count + 1);
+        });
+      } else {
+        incrementSession();
+      }
+    }
     // Auto-start timer
     startTimer();
-  }, [isBreak, setMode, incrementSession, startTimer]);
+  }, [isBreak, setMode, incrementSession, startTimer, userId, setSessionCount]);
 
   const resetAndClose = async () => {
     if (userId && sessionId) {
@@ -286,6 +383,12 @@ export function usePomodoro() {
     setSessionId(null);
     setHasRestored(true); // Prevent re-restoring after explicit close
     setWidgetOpen(false);
+    
+    // Refresh count on close/reset to stay synced
+    if (userId) {
+      const count = await getDailySessionCount(userId);
+      setSessionCount(count + 1);
+    }
   };
 
   return {

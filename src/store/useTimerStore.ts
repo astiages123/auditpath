@@ -53,11 +53,8 @@ export const useTimerStore = create<TimerState>()(
                 const now = Date.now();
                 const newTimeline = [...state.timeline];
 
-                // If resuming from pause, close the pause gap? 
-                // Actually standard Pomodoro: Work -> Pause -> Work.
-                // If we were paused, close the pause.
-                if (!state.isActive && state.startTime === null && state.timeLeft !== state.duration) {
-                    // This is a resume
+                // Resume logic: If resuming from pause, close the pause gap strictly
+                if (!state.isActive && state.timeLeft !== state.duration && newTimeline.length > 0) {
                     const lastEvent = newTimeline[newTimeline.length - 1];
                     if (lastEvent && lastEvent.type === 'pause' && !lastEvent.end) {
                         lastEvent.end = now;
@@ -65,12 +62,16 @@ export const useTimerStore = create<TimerState>()(
                 }
 
                 // Add Work or Break event
-                newTimeline.push({
-                    type: state.isBreak ? 'break' : 'work',
-                    start: now
-                });
+                // Only add if not already active (prevent double start)
+                if (!state.isActive) {
+                    newTimeline.push({
+                        type: state.isBreak ? 'break' : 'work',
+                        start: now
+                    });
+                }
 
-                // Calculate endTime based on current timeLeft or start fresh
+                // Calculate endTime based on current timeLeft
+                // We trust timeLeft to be accurate from the last pause or reset.
                 const endTime = now + (state.timeLeft * 1000);
 
                 return {
@@ -83,9 +84,13 @@ export const useTimerStore = create<TimerState>()(
                 };
             }),
             pauseTimer: () => set((state) => {
+                if (!state.isActive) return state; // Already paused
+
                 const now = Date.now();
                 const newTimeline = [...state.timeline];
                 const lastEvent = newTimeline[newTimeline.length - 1];
+                
+                // Close the current work/break event
                 if (lastEvent && !lastEvent.end) {
                     lastEvent.end = now;
                 }
@@ -96,10 +101,10 @@ export const useTimerStore = create<TimerState>()(
                     start: now
                 });
 
-                // Recalculate timeLeft one last time to be precise before pausing
+                // Recalculate timeLeft precisely
                 let newTimeLeft = state.timeLeft;
-                if (state.isActive && state.endTime) {
-                    newTimeLeft = Math.ceil((state.endTime - now) / 1000);
+                if (state.endTime) {
+                    newTimeLeft = Math.max(0, Math.ceil((state.endTime - now) / 1000));
                 }
 
                 return {
@@ -125,6 +130,9 @@ export const useTimerStore = create<TimerState>()(
                 if (!state.isActive || !state.endTime) return state;
                 const now = Date.now();
                 const newTimeLeft = Math.ceil((state.endTime - now) / 1000);
+                
+                // If time is up, we don't automatically stop here, 
+                // the hook handles completion logic. We just update timeLeft.
                 return { timeLeft: newTimeLeft };
             }),
 

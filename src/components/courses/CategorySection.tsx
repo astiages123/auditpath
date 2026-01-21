@@ -16,7 +16,7 @@ interface Course {
   id: string;
   courseId: string;
   name: string;
-  lessonType: string;
+  instructor: string;
   totalVideos: number;
   totalHours: number;
   playlistUrl?: string | null;
@@ -125,7 +125,7 @@ export function CategorySection({
             id={course.id}
             courseId={course.courseId}
             name={course.name}
-            lessonType={course.lessonType}
+            instructor={course.instructor}
             totalVideos={course.totalVideos}
             totalHours={course.totalHours}
             variant={index === 0 ? "large" : "default"}

@@ -8,7 +8,7 @@
 import { supabase } from '../supabase';
 
 // --- Configuration ---
-const VALIDATOR_MODEL = 'openai/gpt-oss-120b';
+const VALIDATOR_MODEL = 'openai/gpt-oss-120b:free';
 const VALIDATION_THRESHOLD = 80;
 
 // --- Types ---

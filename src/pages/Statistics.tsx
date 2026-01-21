@@ -210,6 +210,7 @@ export default function StatisticsPage() {
                                 data={efficiencyData} 
                                 cumulativeData={cumulativeStats}
                                 userId={userId}
+                                subjectData={subjectStats}
                             />
                         ) : "Veri yok"}
                     </BentoCard>

@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Loader2, Sparkles, Box, ScrollText } from 'lucide-react';
-import { generateQuizQuestion, getChunkQuotaStatus, type QuotaStatus } from '@/lib/ai/quiz-api';
+import { generateQuizQuestionBatch, getChunkQuotaStatus, type QuotaStatus } from '@/lib/ai/quiz-api';
 import { toast } from 'sonner';
 
 interface GenerateQuestionButtonProps {
@@ -50,21 +50,38 @@ export function GenerateQuestionButton({ chunkId }: GenerateQuestionButtonProps)
     let currentUsed = status.used;
     const targetTotal = status.quota.total;
     let errorOccurred = false;
+    const BATCH_SIZE = 4;
 
     try {
       while (currentUsed < targetTotal) {
-        setProgressMessage(`Soru üretiliyor... (${currentUsed + 1}/${targetTotal})`);
+        const remaining = targetTotal - currentUsed;
+        // Show range in progress message
+        const rangeText = `${currentUsed + 1}-${Math.min(currentUsed + BATCH_SIZE, targetTotal)}`;
+        setProgressMessage(`Soru üretiliyor... (${rangeText}/${targetTotal})`);
         
-        const result = await generateQuizQuestion(chunkId);
+        // Use batch generation (Always 4)
+        const { success, results } = await generateQuizQuestionBatch(chunkId);
         
-        if (result.success) {
-          currentUsed++;
+        if (success) {
+          const successCount = results.filter(r => r.success).length;
+          currentUsed += successCount;
+          
           // Update status locally for UI feedback
           setStatus(prev => prev ? { ...prev, used: currentUsed, isFull: currentUsed >= targetTotal } : null);
+          
+          // If we requested N but got 0 successes (should be caught by success check, but double check)
+          if (successCount === 0) {
+             const firstError = results.find(r => !r.success)?.error;
+             toast.error(firstError || "Soru üretilemedi, işlem durduruldu.");
+             errorOccurred = true;
+             break;
+          }
         } else {
-          toast.error(result.error || "Bir soru üretilemedi, işlem durduruldu.");
+          // All failed
+          const firstError = results[0]?.error;
+          toast.error(firstError || "Toplu üretim hatası, işlem durduruldu.");
           errorOccurred = true;
-          break; // Stop on error provided by API (after internal retries)
+          break; 
         }
       }
 

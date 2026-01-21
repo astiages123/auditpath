@@ -22,7 +22,7 @@ interface CourseCardProps {
   id: string;
   courseId: string;
   name: string;
-  lessonType: string;
+  instructor: string;
   totalVideos: number;
   totalHours: number;
   completedVideos?: number;
@@ -33,7 +33,7 @@ interface CourseCardProps {
 export function CourseCard({
   courseId,
   name,
-  lessonType,
+  instructor,
   totalVideos,
   totalHours,
   completedVideos = 0,
@@ -77,7 +77,7 @@ export function CourseCard({
               <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
                   <Badge variant="secondary" className="mb-2 text-xs">
-                    {lessonType}
+                    {instructor}
                   </Badge>
                   <h3 className="font-semibold text-base leading-tight line-clamp-2 group-hover:text-primary transition-colors">
                     {name}

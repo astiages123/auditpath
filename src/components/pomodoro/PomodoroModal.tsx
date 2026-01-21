@@ -48,6 +48,7 @@ export function PomodoroModal() {
     duration,
     sessionCount,
     timeLeft,
+    isOvertime,
   } = usePomodoro();
 
   const { user } = useAuth();
@@ -273,22 +274,29 @@ export function PomodoroModal() {
           >
             {/* Dynamic Background Mesh */}
             <div className={cn(
-              "absolute inset-0 opacity-10 pointer-events-none",
+              "absolute inset-0 opacity-20 pointer-events-none transition-all duration-700",
               isWorking 
-                ? "bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-primary via-transparent to-transparent" 
-                : "bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-emerald-500 via-transparent to-transparent"
+                ? "bg-linear-to-br from-primary/30 via-primary/5 to-transparent" 
+                : "bg-linear-to-br from-emerald-500/30 via-emerald-500/5 to-transparent"
+            )} />
+            
+            {/* Additional Glow for Focus/Break */}
+            <div className={cn(
+              "absolute -top-24 -left-24 w-48 h-48 blur-[80px] rounded-full transition-colors duration-1000",
+              isWorking ? "bg-primary/40" : "bg-emerald-500/40"
             )} />
 
-            <div className="relative z-10 flex flex-col items-center w-full">
+             <div className="relative z-10 flex flex-col items-center w-full">
               
               {/* Header Info */}
               <div className="w-full flex items-center justify-between px-5 pt-4 mb-2">
-                 <motion.div layout className="flex items-center gap-2">
+                 <motion.div layout className="flex items-center gap-2 max-w-[70%]">
                     <div className={cn(
-                      "w-1.5 h-1.5 rounded-full animate-pulse",
-                      isWorking ? "bg-primary" : "bg-emerald-500"
+                      "w-2 h-2 rounded-full",
+                      isRunning ? "animate-pulse" : "",
+                      isWorking ? "bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]" : "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
                     )} />
-                    <span className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase truncate max-w-[80px]">
+                    <span className="text-[11px] font-black text-foreground/90 tracking-tighter uppercase leading-none">
                       {selectedCourse.name}
                     </span>
                  </motion.div>
@@ -296,13 +304,13 @@ export function PomodoroModal() {
                  <motion.div layout className="flex gap-1">
                    <button 
                      onClick={() => setIsExpanded(!isExpanded)}
-                     className="p-1.5 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                     className="p-1.5 rounded-full hover:bg-secondary text-muted-foreground hover:text-foreground transition-all hover:scale-110 active:scale-90"
                    >
                      {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
                    </button>
                    <button 
                      onClick={() => setShowCloseAlert(true)}
-                     className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                     className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all hover:scale-110 active:scale-90"
                    >
                      <X size={14} />
                    </button>
@@ -351,8 +359,9 @@ export function PomodoroModal() {
                   <motion.span 
                     layout
                     className={cn(
-                      "font-heading font-medium tracking-tight text-foreground tabular-nums leading-none",
-                      isExpanded ? "text-6xl" : "text-4xl"
+                      "font-heading font-black tracking-tighter tabular-nums leading-none drop-shadow-sm transition-colors",
+                      isExpanded ? "text-7xl" : "text-4xl",
+                      isOvertime ? "text-red-500" : "text-foreground"
                     )}
                   >
                     {minutes}:{seconds}
@@ -364,7 +373,7 @@ export function PomodoroModal() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 5 }}
                         className={cn(
-                          "mt-4 text-[13px] font-bold tracking-[0.2em] uppercase transition-colors duration-500 opacity-60",
+                          "mt-4 text-[13px] font-black tracking-[0.3em] uppercase transition-colors duration-500",
                           isWorking ? "text-primary" : "text-emerald-400"
                         )}
                       >
@@ -382,14 +391,18 @@ export function PomodoroModal() {
               )}>
                  <motion.div layout className="flex flex-col gap-3 w-full">
                     {/* Primary Action: Start/Pause */}
-                    <button
+                    <motion.button
+                        whileHover={{ scale: 1.02, translateY: -2 }}
+                        whileTap={{ scale: 0.98 }}
                         onClick={isRunning ? pause : start}
                         className={cn(
-                          "transition-all active:scale-95 flex items-center justify-center rounded-2xl shadow-lg group w-full",
+                          "transition-all flex items-center justify-center rounded-2xl shadow-xl group w-full",
                           isExpanded ? "h-14" : "h-11",
                           isRunning 
-                            ? "bg-secondary text-foreground hover:bg-secondary/80" 
-                            : (isWorking ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-emerald-500 text-white hover:bg-emerald-600")
+                            ? "bg-secondary text-foreground hover:bg-secondary/80 border border-border" 
+                            : (isWorking 
+                                ? "bg-primary text-primary-foreground hover:shadow-primary/25 hover:bg-primary/95" 
+                                : "bg-emerald-500 text-white hover:shadow-emerald-500/25 hover:bg-emerald-600")
                         )}
                     >
                         {isRunning ? (
@@ -397,10 +410,10 @@ export function PomodoroModal() {
                         ) : (
                           <Play size={isExpanded ? 20 : 16} fill="currentColor" className="mr-2" />
                         )}
-                        <motion.span layout className={cn("font-bold tracking-tight", isExpanded ? "text-base" : "text-xs")}>
+                        <motion.span layout className={cn("font-black tracking-tight", isExpanded ? "text-base" : "text-xs")}>
                           {isRunning ? "DURAKLAT" : "BAŞLAT"}
                         </motion.span>
-                    </button>
+                    </motion.button>
                     
                     {/* Secondary Actions Row */}
                     <AnimatePresence mode="popLayout">
@@ -415,7 +428,7 @@ export function PomodoroModal() {
                             variant="ghost"
                             onClick={handleSwitchMode}
                             className={cn(
-                              "h-12 flex-1 rounded-xl gap-2 text-sm font-bold transition-all",
+                              "h-12 flex-1 rounded-xl gap-2 text-sm font-black transition-all hover:scale-[1.02] hover:-translate-y-0.5",
                               isWorking 
                                 ? "bg-blue-500/10 text-blue-500 hover:bg-blue-500/20" 
                                 : "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20"
@@ -427,7 +440,7 @@ export function PomodoroModal() {
                           <Button
                             variant="ghost"
                             onClick={() => setShowFinishAlert(true)}
-                            className="h-12 flex-1 rounded-xl gap-2 text-sm font-bold bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+                            className="h-12 flex-1 rounded-xl gap-2 text-sm font-black bg-destructive/10 text-destructive hover:bg-destructive/20 hover:scale-[1.02] hover:-translate-y-0.5 transition-all"
                           >
                              <CheckCircle2 size={18} />
                              <span>Günü Bitir</span>
@@ -443,11 +456,11 @@ export function PomodoroModal() {
                 {isExpanded && (
                   <motion.div 
                     initial={{ opacity: 0 }}
-                    animate={{ opacity: 0.5 }}
+                    animate={{ opacity: 0.8 }}
                     exit={{ opacity: 0 }}
-                    className="w-full px-5 pb-4 flex items-center justify-center text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] border-t border-border/20 pt-3"
+                    className="w-full px-5 pb-4 flex items-center justify-center text-[10px] font-black text-primary uppercase tracking-[0.3em] border-t border-primary/10 pt-4"
                   >
-                      <span>OTURUM {sessionCount}</span>
+                      <span className="bg-primary/10 px-3 py-1 rounded-full">OTURUM {sessionCount}</span>
                   </motion.div>
                 )}
               </AnimatePresence>
