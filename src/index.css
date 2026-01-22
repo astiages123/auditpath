@@ -358,3 +358,22 @@
   overflow-x: auto;
   overflow-y: hidden;
 }
+
+/* Evidence Highlight Animation (Quiz -> Notes) */
+@keyframes evidence-pulse {
+  0%, 100% {
+    background-color: oklch(0.7 0.15 85 / 0.2);
+    box-shadow: 0 0 0 0 oklch(0.7 0.15 85 / 0.4);
+  }
+  50% {
+    background-color: oklch(0.7 0.15 85 / 0.4);
+    box-shadow: 0 0 20px 5px oklch(0.7 0.15 85 / 0.2);
+  }
+}
+
+.evidence-highlight {
+  animation: evidence-pulse 1s ease-in-out 3;
+  border-radius: 4px;
+  padding: 2px 4px;
+  margin: -2px -4px;
+}

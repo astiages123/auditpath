@@ -1,98 +1,124 @@
-/// <reference types="deno" />
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
+/**
+ * AI Proxy Edge Function
+ * 
+ * Tarayıcıdan gelen istekleri MiMo ve Cerebras API'lerine yönlendirir.
+ * - CORS sorununu çözer
+ * - API anahtarlarını güvende tutar
+ */
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { corsHeaders } from '../_shared/cors.ts';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+const MIMO_API_URL = 'https://api.xiaomimimo.com/v1/chat/completions';
+const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
+
+interface ProxyRequest {
+  provider: 'mimo' | 'cerebras';
+  messages: { role: string; content: string }[];
+  model?: string;
+  temperature?: number;
+  max_tokens?: number;
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
+  // CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const { prompt, systemPrompt, model, provider, temperature = 0.7 } = await req.json()
+    const { provider, messages, model, temperature, max_tokens } = await req.json() as ProxyRequest;
 
-    let apiUrl = ''
-    let apiKey = ''
-    let body = {}
+    if (!provider || !messages) {
+      return new Response(
+        JSON.stringify({ error: 'provider ve messages gerekli' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    if (provider === 'openrouter') {
-      apiUrl = 'https://openrouter.ai/api/v1/chat/completions'
-      apiKey = Deno.env.get('OPENROUTER_API_KEY') || ''
+    let apiUrl: string;
+    let headers: HeadersInit;
+    let body: Record<string, unknown>;
+
+    if (provider === 'mimo') {
+      const mimoKey = Deno.env.get('MIMO_API_KEY');
+      if (!mimoKey) {
+        return new Response(
+          JSON.stringify({ error: 'MIMO_API_KEY not configured' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      apiUrl = MIMO_API_URL;
+      headers = {
+        'Content-Type': 'application/json',
+        'api-key': mimoKey
+      };
       body = {
-        model: model || 'xiaomi/mimo-v2-flash:free',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: prompt },
-        ],
-        temperature,
-      }
-    }
-
-    if (!apiKey) {
-      throw new Error(`API Key for ${provider} not found in secrets`)
-    }
-
-    const MAX_RETRIES = 3;
-    const RETRY_DELAY = 2000;
-    let response;
-    let responseText;
-
-    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
-      if (attempt > 0) {
-        await new Promise(r => setTimeout(r, RETRY_DELAY * Math.pow(2, attempt - 1)));
+        model: model || 'mimo-v2-flash',
+        messages,
+        max_completion_tokens: max_tokens || 4096,
+        temperature: temperature ?? 0.7,
+        top_p: 0.95,
+        stream: false,
+        thinking: { type: 'disabled' }
+      };
+    } else if (provider === 'cerebras') {
+      const cerebrasKey = Deno.env.get('CEREBRAS_API_KEY');
+      if (!cerebrasKey) {
+        return new Response(
+          JSON.stringify({ error: 'CEREBRAS_API_KEY not configured' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
-      response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://auditpath.app',
-        },
-        body: JSON.stringify(body),
-      })
-
-      responseText = await response.text();
-      
-      if (response.ok) break;
-      
-      if (response.status !== 429 && response.status < 500) break; // Don't retry client errors other than 429
-      
-      console.warn(`AI Proxy attempt ${attempt} failed with ${response.status}. Retrying...`);
+      apiUrl = CEREBRAS_API_URL;
+      headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${cerebrasKey}`
+      };
+      body = {
+        model: model || 'gpt-oss-120b',
+        messages,
+        temperature: temperature ?? 0.3,
+        max_tokens: max_tokens || 4096
+      };
+    } else {
+      return new Response(
+        JSON.stringify({ error: 'Geçersiz provider. mimo veya cerebras olmalı.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    let data;
-    try {
-      data = JSON.parse(responseText || '{}');
-    } catch (e) {
-      throw new Error(`AI Provider response was not valid JSON: ${responseText?.substring(0, 200)}`);
+    console.log(`[AI Proxy] ${provider} API çağrılıyor...`);
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body)
+    });
+
+    const responseText = await response.text();
+
+    if (!response.ok) {
+      console.error(`[AI Proxy] ${provider} API hatası:`, response.status, responseText);
+      return new Response(
+        JSON.stringify({ error: `${provider} API Error: ${response.status}`, details: responseText }),
+        { status: response.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
-    if (!response?.ok) {
-      const errorMsg = data.error?.message || data.error || responseText || 'Unknown AI Provider error';
-      return new Response(JSON.stringify({ error: errorMsg, status: response?.status }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: response?.status || 500,
-      })
-    }
+    console.log(`[AI Proxy] ${provider} API başarılı`);
 
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    })
+    return new Response(responseText, {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
 
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : String(error);
-    console.error('AI Proxy Error:', msg);
-    return new Response(JSON.stringify({ error: msg }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    })
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('[AI Proxy] Error:', errorMessage);
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    );
   }
-})
+});

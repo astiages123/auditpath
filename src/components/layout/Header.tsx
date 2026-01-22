@@ -26,6 +26,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProgramModal } from "../program/ProgramModal";
@@ -157,13 +158,17 @@ export function Header() {
                       variant="ghost"
                       className="h-10 pl-1 pr-2 py-1 gap-2.5 rounded-full hover:bg-accent/50 border border-transparent hover:border-border/40 transition-all"
                     >
-                      <div className="flex h-8 w-8 overflow-hidden rounded-full ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
-                        <img
-                          src={user.user_metadata?.avatar_url || "https://github.com/shadcn.png"}
+                      <Avatar className="h-8 w-8 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+                        <AvatarImage 
+                          src={user.user_metadata?.avatar_url} 
                           alt={user.user_metadata?.full_name || "User"}
-                          className="h-full w-full object-cover"
+                          className="object-cover"
+                          referrerPolicy="no-referrer"
                         />
-                      </div>
+                        <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                          {user.user_metadata?.full_name?.slice(0, 2).toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
                       <div className="hidden xl:flex flex-col items-start leading-tight">
                         <span className="text-sm font-semibold truncate max-w-[100px]">
                           {user.user_metadata?.full_name?.split(" ")[0] || "Öğrenci"}
@@ -178,13 +183,17 @@ export function Header() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-64 p-2 rounded-2xl shadow-xl border-border/40 backdrop-blur-xl">
                     <DropdownMenuLabel className="px-3 py-2 flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full overflow-hidden ring-1 ring-border">
-                        <img
-                          src={user.user_metadata?.avatar_url || "https://github.com/shadcn.png"}
+                      <Avatar className="h-10 w-10 ring-1 ring-border">
+                        <AvatarImage 
+                          src={user.user_metadata?.avatar_url} 
                           alt="Avatar"
-                          className="h-full w-full object-cover"
+                          className="object-cover"
+                          referrerPolicy="no-referrer"
                         />
-                      </div>
+                        <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                          {user.user_metadata?.full_name?.slice(0, 2).toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
                       <div className="flex flex-col">
                         <span className="text-sm font-bold truncate">
                           {user.user_metadata?.full_name || "Kullanıcı"}
@@ -224,13 +233,17 @@ export function Header() {
         {/* Mobile Menu Toggle */}
         <div className="flex lg:hidden items-center gap-2">
           {user && (
-            <div className="h-8 w-8 rounded-full overflow-hidden ring-2 ring-primary/10 mr-1">
-              <img
-                src={user.user_metadata?.avatar_url || "https://github.com/shadcn.png"}
+            <Avatar className="h-8 w-8 ring-2 ring-primary/10 mr-1">
+              <AvatarImage 
+                src={user.user_metadata?.avatar_url} 
                 alt="User"
-                className="h-full w-full object-cover"
+                className="object-cover"
+                referrerPolicy="no-referrer"
               />
-            </div>
+              <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+                {user.user_metadata?.full_name?.slice(0, 2).toUpperCase() || "U"}
+              </AvatarFallback>
+            </Avatar>
           )}
           <Button
             variant="ghost"
@@ -299,13 +312,17 @@ export function Header() {
                 {user ? (
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-4 p-3 rounded-2xl bg-secondary/30">
-                      <div className="h-12 w-12 rounded-full overflow-hidden shadow-inner ring-2 ring-primary/10">
-                        <img
-                          src={user.user_metadata?.avatar_url || "https://github.com/shadcn.png"}
+                      <Avatar className="h-12 w-12 shadow-inner ring-2 ring-primary/10">
+                        <AvatarImage 
+                          src={user.user_metadata?.avatar_url} 
                           alt="Avatar"
-                          className="h-full w-full object-cover"
+                          className="object-cover"
+                          referrerPolicy="no-referrer"
                         />
-                      </div>
+                        <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                          {user.user_metadata?.full_name?.slice(0, 2).toUpperCase() || "U"}
+                        </AvatarFallback>
+                      </Avatar>
                       <div className="flex flex-col">
                         <span className="font-bold">{user.user_metadata?.full_name || "Öğrenci"}</span>
                         <span className="text-xs text-muted-foreground">{user.email}</span>

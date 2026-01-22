@@ -11,13 +11,15 @@ import { Components } from "react-markdown";
 import remarkDirective from "remark-directive";
 import { visit } from "unist-util-visit";
 import { Plugin } from "unified";
-import { Node, Parent, Literal } from "unist";
+import { Node, Literal } from "unist";
 import { Heading } from "mdast";
 
 interface NoteViewerProps {
   content: string;
   courseId?: string;
   className?: string;
+  /** Text to highlight (from URL query or EvidenceCard) */
+  highlightText?: string;
 }
 
 // Helper to convert number to letter (0 -> A, 1 -> B, etc.)
@@ -189,7 +191,54 @@ export function NoteViewer({
   content,
   courseId,
   className = "",
+  highlightText,
 }: NoteViewerProps) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  
+  // Highlight and scroll to evidence text
+  React.useEffect(() => {
+    if (!highlightText || !containerRef.current) return;
+    
+    // Wait for content to render
+    const timer = setTimeout(() => {
+      const container = containerRef.current;
+      if (!container) return;
+      
+      // Find the text in the rendered content
+      const walker = document.createTreeWalker(
+        container,
+        NodeFilter.SHOW_TEXT,
+        null
+      );
+      
+      let domNode: globalThis.Node | null;
+      let foundElement: HTMLElement | null = null;
+      
+      while ((domNode = walker.nextNode())) {
+        const textContent = (domNode as Text).textContent || '';
+        // Check if this text node contains part of the highlight text
+        if (textContent.toLowerCase().includes(highlightText.toLowerCase().slice(0, 50))) {
+          foundElement = (domNode as Text).parentElement;
+          break;
+        }
+      }
+      
+      if (foundElement) {
+        // Add highlight class
+        foundElement.classList.add('evidence-highlight');
+        
+        // Smooth scroll to element
+        foundElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Remove highlight after animation
+        setTimeout(() => {
+          foundElement?.classList.remove('evidence-highlight');
+        }, 3000);
+      }
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [highlightText]);
   
   const processedContent = React.useMemo(() => {
     let newContent = content;
@@ -380,7 +429,7 @@ export function NoteViewer({
   };
 
   return (
-    <div className={`note-viewer max-w-none bg-card p-8 md:p-12 shadow-sm rounded-xl border border-border prose prose-invert prose-zinc prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 ${className}`}>
+    <div ref={containerRef} className={`note-viewer max-w-none bg-card p-8 md:p-12 shadow-sm rounded-xl border border-border prose prose-invert prose-zinc prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-a:text-primary hover:prose-a:text-primary/80 ${className}`}>
       <ReactMarkdown
         remarkPlugins={[
           remarkGfm,

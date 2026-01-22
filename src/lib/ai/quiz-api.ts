@@ -1,11 +1,11 @@
 /**
- * AuditPath Quiz API (Unified)
+ * AuditPath Quiz API
  * 
- * All question generation is now centralized in the 'quiz-generator' Edge Function.
- * This module purely handles database fetching and Edge Function invocation.
+ * Soru üretimi artık client-side'da yapılıyor (quiz-generator.ts).
+ * Bu modül veritabanı işlemleri ve kota hesaplama için kullanılır.
  */
 
-import { supabase } from '../supabase';
+import { supabase } from '@/lib/supabase';
 
 // --- Types ---
 export interface QuizQuestion {
@@ -27,22 +27,20 @@ export interface QuizGenerationResult {
   status?: 'generated' | 'quota_reached' | 'error';
 }
 
-/**
- * Trigger question generation for a chunk via Edge Function
- */
-export async function triggerQuizGeneration(chunkId: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const { error } = await supabase.functions.invoke('quiz-generator', {
-      body: { chunkId }
-    });
+export interface QuotaStatus {
+  used: number;
+  quota: { total: number };
+  wordCount: number;
+  conceptCount: number;
+  isFull: boolean;
+}
 
-    if (error) throw error;
-    return { success: true };
-  } catch (err: unknown) {
-    const error = err as Error;
-    console.error('[QuizApi] Error triggering generation:', error);
-    return { success: false, error: error.message || 'Üretim tetiklenemedi.' };
-  }
+/**
+ * @deprecated Edge Function kaldırıldı. Bunun yerine quiz-generator.ts kullanın.
+ */
+export async function triggerQuizGeneration(_chunkId: string): Promise<{ success: boolean; error?: string }> {
+  console.warn('[QuizApi] triggerQuizGeneration deprecated. quiz-generator.ts kullanın.');
+  return { success: false, error: 'Edge Function kaldırıldı. Client-side generator kullanın.' };
 }
 
 /**
@@ -99,24 +97,36 @@ export async function fetchQuestionsForSession(
 /**
  * Get quota status for a chunk (UI info)
  */
-export async function getChunkQuotaStatus(chunkId: string) {
+export async function getChunkQuotaStatus(chunkId: string): Promise<QuotaStatus | null> {
   const { data: chunk } = await supabase
     .from('note_chunks')
-    .select('*, questions(count)')
+    .select('id, word_count, metadata')
     .eq('id', chunkId)
     .single();
 
   if (!chunk) return null;
 
-  // Since we removed local calculateQuota, we rely on the metadata/stats from Edge Function if saved,
-  // or we just return the counts we have.
-  const chunkData = chunk as unknown as { status: string; questions?: { count: number }[] };
-  const questionsCount = chunkData.questions?.[0]?.count || 0;
-  
+  const wordCount = chunk.word_count || 0;
+  const metadata = chunk.metadata as Record<string, unknown> || {};
+  const conceptMap = (metadata.concept_map as unknown[]) || [];
+  const conceptCount = conceptMap.length;
+
+  const quota = calculateQuota(wordCount, conceptCount);
+
+  // Get existing question count
+  const { count: usedCount } = await supabase
+    .from('questions')
+    .select('*', { count: 'exact', head: true })
+    .eq('chunk_id', chunkId);
+
+  const used = usedCount || 0;
+
   return {
-    status: chunkData.status,
-    count: questionsCount,
-    isReady: chunkData.status === 'COMPLETED'
+    used,
+    quota: { total: quota.total },
+    wordCount,
+    conceptCount,
+    isFull: used >= quota.total
   };
 }
 
@@ -132,7 +142,7 @@ export async function getQuizQuotaAction() {
 }
 
 // These are now empty as logic moved to Edge Function
-export async function generateQuizQuestionBatch() {
+export async function generateQuizQuestionBatch(): Promise<{ success: boolean; results: { success: boolean; error?: string }[] }> {
     return { success: false, results: [] };
 }
 export async function generateQuizQuestionFromContentBatch() {
@@ -215,4 +225,3 @@ export async function getSubjectGuidelines(subject: string) {
 
   return base;
 }
-

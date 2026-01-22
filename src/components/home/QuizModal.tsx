@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Brain, FileText, ChevronRight, Loader2, Sparkles, AlertCircle, CheckCircle } from "lucide-react";
-import { getTopicQuestionCount, getFirstChunkIdForTopic, getCourseTopicsWithCounts, TopicWithCounts, getTopicCompletionStatus, TopicCompletionStats, ChunkGenerationStatus, getChunkGenerationStatus } from "@/lib/client-db";
+import { getTopicQuestionCount, getFirstChunkIdForTopic, getCourseTopicsWithCounts, TopicWithCounts, getTopicCompletionStatus, TopicCompletionStats } from "@/lib/client-db";
 import { QuizEngine } from "@/components/features/quiz/QuizEngine";
 import { QuizSessionProvider } from "@/components/features/quiz/QuizSessionProvider";
-import { QuizQuestion, generateQuizQuestionBatch, getChunkQuotaStatus } from "@/lib/ai/quiz-api";
+import { GenerateQuestionButton } from "@/components/features/quiz/GenerateQuestionButton";
+import { QuizQuestion } from "@/lib/ai/quiz-api";
 import { useAuth } from "@/hooks/useAuth"; 
-import { toast } from "sonner"; 
 
 interface QuizModalProps {
   isOpen: boolean;
@@ -26,7 +26,6 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
   
   // Status State
   const [completionStatus, setCompletionStatus] = useState<TopicCompletionStats | null>(null);
-  const [generationStatus, setGenerationStatus] = useState<ChunkGenerationStatus | null>(null);
 
   const [loadingCount, setLoadingCount] = useState(false);
   
@@ -67,14 +66,7 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
         setCompletionStatus(status);
 
         if (chunkRes) {
-            const genStatus = await getChunkGenerationStatus(chunkRes);
-            setGenerationStatus(genStatus);
-            
-            // Auto-Refill Trigger (Only if manually triggered or already running?)
-            // We removed the auto-trigger here effectively by not calling checkAndTriggerBackgroundGeneration
-            // relying on the new "Instant" webhook or manual button.
-        } else {
-            setGenerationStatus(null);
+            // No longer checking generation status for automatic triggers
         }
 
         setLoadingCount(false);
@@ -82,7 +74,6 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
       } else {
         setTargetChunkId(null);
         setCompletionStatus(null);
-        setGenerationStatus(null);
       }
     }
     loadData();
@@ -293,42 +284,26 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
                                 </div>
 
                                 <div className="flex flex-col gap-3 w-full px-2">
-                                    {/* GENERATION STATUS UI */}
-                                    {generationStatus && (
-                                        <div className="w-full mb-1">
-                                            {generationStatus.status === 'DRAFT' && (
-                                                <div className="p-3 bg-amber-500/10 text-amber-600 rounded-lg text-sm border border-amber-500/20 flex items-center gap-2">
-                                                    <AlertCircle className="w-4 h-4 shrink-0" />
-                                                    <span>Konu taslak aşamasında. Sonraki başlık bekleniyor.</span>
-                                                </div>
-                                            )}
-                                            {generationStatus.status === 'PENDING' && (
-                                                <div className="p-3 bg-blue-500/10 text-blue-600 rounded-lg text-sm border border-blue-500/20 flex items-center gap-2">
-                                                    <Loader2 className="w-4 h-4 shrink-0 animate-spin" />
-                                                    <span>Sırada: Otomatik üretim bekleniyor.</span>
-                                                </div>
-                                            )}
-                                            {generationStatus.status === 'PROCESSING' && (
-                                                <div className="p-3 bg-purple-500/10 text-purple-600 rounded-lg text-sm border border-purple-500/20 flex items-center gap-2 animate-pulse">
-                                                    <Sparkles className="w-4 h-4 shrink-0" />
-                                                    <span>Yapay zeka soruları üretiyor...</span>
-                                                </div>
-                                            )}
-                                            {generationStatus.status === 'FAILED' && (
-                                                <div className="p-3 bg-red-500/10 text-red-600 rounded-lg text-sm border border-red-500/20 flex items-center gap-2">
-                                                    <AlertCircle className="w-4 h-4 shrink-0" />
-                                                    <span>Üretim başarısız. Tekrar deneniyor...</span>
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-
                                     {!completionStatus?.completed && (
                                         <>
                                             {(completionStatus?.antrenman.existing || 0) < (completionStatus?.antrenman.quota || 1) ? (
-                                                  <div className="w-full py-4 text-center text-muted-foreground text-sm border border-dashed border-border/50 rounded-xl bg-muted/20">
-                                                      Otomatik soru üretimi sıraya alındı...
-                                                  </div>
+                                                targetChunkId && (
+                                                    <div className="flex flex-col gap-3 items-center w-full py-4 border border-dashed border-border/50 rounded-xl bg-muted/20">
+                                                        <p className="text-sm text-muted-foreground text-center px-4">
+                                                            Bu konuda henüz yeterli soru yok. Üretmek için aşağıdaki butona tıklayın.
+                                                        </p>
+                                                        <GenerateQuestionButton 
+                                                            chunkId={targetChunkId} 
+                                                            onComplete={async () => {
+                                                                // Reload completion status after generation
+                                                                if (user && courseId && selectedTopic) {
+                                                                    const newStatus = await getTopicCompletionStatus(user.id, courseId, selectedTopic.name);
+                                                                    setCompletionStatus(newStatus);
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )
                                             ) : (
                                                 <button
                                                     onClick={handleStartQuiz}

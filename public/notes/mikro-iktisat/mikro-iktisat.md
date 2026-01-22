@@ -625,3 +625,467 @@ Eğer fayda fonksiyonu $u = q^{2}$ gibi bir yapıdaysa: $MU = \frac{du}{dq} = 2q
 :::**Örnek Soru 4**: $TU = 60x - 2x^{2}$ fonksiyonuna göre doyum noktasında tüketim miktarı nedir?
 
 **Çözüm**: $MU\  = \ 60\  - \ 4x\  \Rightarrow 60 - 4x = 0 \Rightarrow 4x\  = \ 60\  \Rightarrow x\  = \ 15$ :::
+
+**Tüketici Dengesi ve Fayda Maksimizasyonu Kavramı**
+
+Tüketici dengesi, bir tüketicinin kısıtlı geliriyle kendisine en yüksek faydayı sağlayacak mal bileşimini seçmesidir. Bu durum optimal mal bileşimi olarak da adlandırılır.
+
+**Temel Varsayımlar:**
+
+- **İki Mallı Dünya**: Analiz kolaylığı için tüketicinin sadece X ve Y gibi iki mal tükettiği varsayılır.
+
+- **Sabit Gelir**: Tüketicinin geliri (bütçesi) belirlidir ve değişmez (Esnaf gibi değişken değil, memur maaşı gibi sabit düşünülmelidir).
+
+- **Veri Fiyatlar**: Malların fiyatları piyasada belirlenir ve tüketici için sabittir. Tüketici fiyatı etkileyemez (Tam rekabet piyasası varsayımı).
+
+**Fayda Maksimizasyonunun Birinci Koşulu: Bütçenin Tamamını Harcamak**
+
+Kardinalist analize göre, tüketici faydasını maksimize etmek istiyorsa mevcut bütçesinin tamamını harcamalıdır. Klasik ve neoklasik iktisat döneminde finansal piyasalar gelişmediği için para biriktirme (tasarruf) bir seçenek olarak görülmez; her kuruş tüketime gider.
+
+- **Bütçe Denklemi (Bütçe Kısıtı):** Tüketicinin X ve Y mallarına harcadığı tutarların toplamı, toplam gelirine eşit olmalıdır.
+
+> $$M = \left( P_{x} \cdot X \right) + \left( P_{y} \cdot Y \right)$$
+
+- $M$: Tüketicinin bütçesi / geliri.
+
+- $P_{x}$: $X$ malının fiyatı.
+
+- $X$: $X$ malı miktarı.
+
+- $P_{y}$: $Y$ malının fiyatı.
+
+- $Y$: $Y$ malı miktarı.
+
+<!-- -->
+
+- **Sınavda Çıkabilir / Kritik Not**: Size verilen bir bütçe denklemindeki katsayılar doğrudan kesin fiyatları göstermeyebilir.
+
+  - **Örnek**: $120 = X + 3Y$ şeklinde bir denklem verildiğinde \"Tüketicinin geliri 120 TL\'dir\" veya \"X\'in fiyatı 1 TL\'dir\" demek her zaman kesin değildir. Çünkü denklem sadeleştirilmiş olabilir (örneğin orijinali $240 = 2X + 6Y$ olabilir).
+
+  - Kesin Olan Bilgi: X ve Y mallarının fiyatlarının birbirine oranıdır. Bu denklemde fiyatların oranı ($P_{x}\text{/}P_{y}$) kesinlikle 1/3\'tür.
+
+**Fayda Maksimizasyonunun İkinci Koşulu: Eş Marjinal Fayda İlkesi**
+
+Tüketicinin dengeye gelebilmesi için her mala harcadığı son liranın marjinal faydasını birbirine eşitlemesi gerekir. Bu kurala Eş Marjinal Fayda İlkesi veya Gossen II. Yasası denir.
+
+$$\frac{MU_{x}}{P_{x}} = \frac{MU_{y}}{P_{y}}$$
+
+Bu formül, \"Lira başına düşen marjinal fayda\" anlamına gelir. Tüketici, parasını hangi mala yatırdığında birim başına daha fazla keyif/fayda alıyorsa ona yönelir. Denge anında ise bu oranlar eşitlenir.
+
+:::**Örnek**: Bir mont alacağınızı düşünelim.
+
+- **Marka Ürün (Mavi Jeans):** Marjinal faydası 1000 util, fiyatı 500 TL olsun. Son liranın faydası: $1000/500 = 2$ util.
+
+- **Pazar Ürünü (Sosyete Pazarı):** Marjinal faydası 400 util, fiyatı 100 TL olsun. Son liranın faydası: $400/100 = 4$ util.
+
+- **Sonuç**: Rasyonel bir tüketici, pazar ürününden aldığı her 1 TL\'lik harcamayla daha fazla (4 util) fayda sağladığı için tercihini oradan yana kullanır. Denge, bu oranlar eşitlenene kadar tüketim miktarını değiştirmekle kurulur.:::
+
+**Çok Mallı (n Mallı) Dünyada Denge**
+
+Eğer dünyada sadece iki mal değil de \"n\" tane mal varsa, denge koşulu tüm mallar için şu şekilde genişletilir:
+
+$$\frac{MU_{x}}{P_{x}} = \frac{MU_{y}}{P_{y}} = \frac{MU_{z}}{P_{z}} = \ldots = \frac{MU_{n}}{P_{n}}$$
+
+:::**Örnek**: Tüketicinin geliri 500 TL, $P_{x} = 2$ TL ve $P_{y} = 5$ TL olsun. Hangi mal bileşimi bütçe kısıtına uygundur?
+
+**Cevap**:
+
+- $50X$ ve $50Y$ bileşimi: $(2 \cdot 50) + (5 \cdot 50) = 100 + 250 = 350$ TL. 150 TL artar, denge değildir.
+
+- $200X$ ve $50Y$ bileşimi: $(2 \cdot 200) + (5 \cdot 50) = 400 + 250 = 650$ TL. Para yetmez, seçilemez.
+
+- $200X$ ve $20Y$ bileşimi: $(2 \cdot 200) + (5 \cdot 20) = 400 + 100 = 500$ TL. Bütçenin tamamı harcanmıştır, uygun bir bileşimdir. :::
+
+**Denge Dışı Durumlar ve Ayarlanma Mekanizması**
+
+Tüketici her zaman dengede olmayabilir. Bu durumlarda faydayı maksimize etmek için yapılması gereken hamleler \"son liranın marjinal faydası\" üzerinden belirlenir.
+
+- **Durum 1**: X Malına Harcanan Son Liranın Faydası Daha Büyükse
+
+> $$\frac{MU_{x}}{P_{x}} > \frac{MU_{y}}{P_{y}}$$
+
+- **Analiz**: X malından alınan birim fayda, Y\'den daha yüksektir.
+
+- **Çözüm**: Tüketici X malı tüketimini artırmalıdır.
+
+- **Mekanizma**: Azalan Marjinal Fayda Yasası gereği, X tüketimi arttıkça $MU_{x}$ azalacak ve oran düşerek karşı tarafla eşitlenecektir.
+
+<!-- -->
+
+- **Durum 2**: Y Malına Harcanan Son Liranın Faydası Daha Büyükse
+
+> $$\frac{MU_{x}}{P_{x}} < \frac{MU_{y}}{P_{y}}$$
+
+- **Analiz**: Y malına harcanan son lira daha fazla keyif vermektedir.
+
+- **Çözüm**: Tüketici Y malı tüketimini artırmalıdır.
+
+- **Mekanizma**: Y tüketimi arttıkça $MU_{y}$ azalacak, böylece oran düşerek denge sağlanacaktır.
+
+<!-- -->
+
+- **Sınavda Çıkabilir**: Eğer soruda \"Bütçenin tamamı harcanmış ancak denge sağlanamamıştır\" deniliyorsa; tüketici faydası düşük olan maldan vazgeçip (azaltıp), elde ettiği parayla faydası yüksek olan malı almalıdır. Eğer bütçede boşluk varsa, sadece faydası yüksek olan malın miktarını artırması yeterlidir.
+
+**Önemli Kavramsal Uyarı**: $MU$ vs. $MU/P$
+
+Bir malın sadece marjinal faydasının ($MU$) yüksek olması, o malın daha çok tüketilmesi gerektiği anlamına gelmez. Rasyonel tüketici her zaman fiyatı da dikkate alan oranlara ($MU/P$) bakmalıdır.
+
+:::Örnek: A malının marjinal faydası ($MU_{a}$), B malının marjinal faydasından ($MU_{b}$) büyükse tüketici ne yapmalıdır?
+
+- **Hatalı Cevap**: Hemen \"A tüketilmelidir\" demek yanlıştır.
+
+- **Doğru Yaklaşım**: Tüketici her iki malın fiyatını bilmeden karar veremez. Malların fiyatlarına oranlarına (son liranın faydasına) bakar, hangi oran daha büyükse o malı daha çok tüketir. :::
+
+:::**Örnek 1:**
+
+**Soru 1**: Bir tüketicinin geliri 9 TL, X malının fiyatı 2 TL ve Y malının fiyatı 1 TL\'dir. Tüketicinin mallardan elde ettiği marjinal fayda ($MU$) değerleri tabloda verilmiştir. Tüketicinin faydasını maksimize eden (X,Y) mal bileşimini bulunuz.
+
+<table style="width:37%;">
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 12%" />
+<col style="width: 12%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: center;">Miktar (Q)</th>
+<th style="text-align: center;"><span class="math display"><em>M</em><em>U</em><sub><em>x</em></sub></span></th>
+<th style="text-align: center;"><span class="math inline"><em>M</em><em>U</em><sub><em>y</em></sub></span>​</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">11</td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">14</td>
+<td style="text-align: center;">10</td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">12</td>
+<td style="text-align: center;">9</td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">10</td>
+<td style="text-align: center;">8</td>
+</tr>
+<tr>
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">7</td>
+</tr>
+<tr>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">6</td>
+</tr>
+<tr>
+<td style="text-align: center;">7</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">5</td>
+</tr>
+</tbody>
+</table>
+
+**Çözüm**
+
+Tüketicinin dengesi (fayda maksimizasyonu), her mala harcanan son liranın sağladığı marjinal faydaların birbirine eşit olduğu noktada gerçekleşir. Bu durumun sağlanması için iki temel şartın yerine gelmesi gerekir:
+
+- **Eş-Marjinal Fayda Prensibi:**
+
+> $$\frac{MU_{x}}{P_{x}} = \frac{MU_{y}}{P_{y}}$$
+
+- **Bütçe Kısıtı:**
+
+> $$M = \left( P_{x} \cdot X \right) + \left( P_{y} \cdot Y \right)$$
+
+- **Adım 1**: $\frac{MU}{P}$ Oranlarının Hesaplanması
+
+  - Öncelikle her bir mal miktarı için marjinal faydaları fiyatlara bölerek, harcanan 1 TL başına düşen fayda oranlarını hesaplayalım ($P_{x} = 2$, $P_{y} = 1$).
+
+<table style="width:45%;">
+<colgroup>
+<col style="width: 7%" />
+<col style="width: 7%" />
+<col style="width: 11%" />
+<col style="width: 7%" />
+<col style="width: 11%" />
+</colgroup>
+<thead>
+<tr>
+<th style="text-align: center;">Q</th>
+<th style="text-align: center;"><span class="math display"><em>M</em><em>U</em><sub><em>x</em></sub></span></th>
+<th style="text-align: center;"><span class="math display"><em>M</em><em>U</em><sub><em>x</em></sub>/<em>P</em><sub><em>x</em></sub></span></th>
+<th style="text-align: center;"><span class="math display"><em>M</em><em>U</em><sub><em>y</em></sub></span></th>
+<th style="text-align: center;"><span class="math inline"><em>M</em><em>U</em><sub><em>y</em></sub>/<em>P</em><sub><em>y</em></sub></span> ​​</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">16</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">11</td>
+<td style="text-align: center;">11</td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">14</td>
+<td style="text-align: center;">7</td>
+<td style="text-align: center;">10</td>
+<td style="text-align: center;">10</td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">12</td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">9</td>
+<td style="text-align: center;">9</td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">10</td>
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">8</td>
+</tr>
+<tr>
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">8</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">7</td>
+<td style="text-align: center;">7</td>
+</tr>
+<tr>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">6</td>
+<td style="text-align: center;">6</td>
+</tr>
+<tr>
+<td style="text-align: center;">7</td>
+<td style="text-align: center;">4</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">5</td>
+<td style="text-align: center;">5</td>
+</tr>
+</tbody>
+</table>
+
+- Tablodaki $\frac{MU_{x}}{P_{x}} = \frac{MU_{y}}{P_{y}}$​ eşitlik noktalarını tespit edelim:
+
+- $\frac{MU_{x}}{P_{x}} = 8\text{ (X=1 iken) ve }\frac{MU_{y}}{P_{y}} = 8\text{ (Y=4 iken)}$
+
+- $\frac{MU_{x}}{P_{x}} = 7\text{ (X=2 iken) ve }\frac{MU_{y}}{P_{y}} = 7\text{ (Y=5 iken)}$
+
+- $\frac{MU_{x}}{P_{x}} = 6\text{ (X=3 iken) ve }\frac{MU_{y}}{P_{y}} = 6\text{ (Y=6 iken)}$
+
+- $\frac{MU_{x}}{P_{x}} = 5\text{ (X=4 iken) ve }\frac{MU_{y}}{P_{y}} = 5\text{ (Y=7 iken)}$
+
+<!-- -->
+
+- **Adım 2: Bütçe Kısıtının Kontrol Edilmesi**
+
+  - Şimdi bulduğumuz bu olası sepetlerin toplam maliyetinin, tüketicinin bütçesi olan 9 TL\'ye eşit olup olmadığını kontrol edelim.
+
+  - **Durum A (**$\mathbf{X = 1,Y = 4}$**):**
+
+    - $M = (2 \cdot 1) + (1 \cdot 4) = 2 + 4 = 6$ (Bu bileşim bütçenin altındadır, tüketici henüz tüm parasını harcamamıştır.)
+
+  - **Durum B (**$\mathbf{X = 2,Y = 5}$**):**
+
+    - $M = (2 \cdot 2) + (1 \cdot 5) = 4 + 5 = 9$ (Bu bileşim bütçeye tam olarak eşittir.)
+
+  - **Durum C (**$\mathbf{X = 3,Y = 6}$**):**
+
+    - $M = (2 \cdot 3) + (1 \cdot 6) = 6 + 6 = 12$ (Bu bileşim bütçeyi aşmaktadır, tüketicinin gücü yetmez.)
+
+  - **Sonuç**
+
+    - Tüketici, faydasını maksimize etmek için geliriyle 2 birim X malı ve 5 birim Y malı satın almalıdır. Bu noktada hem birim başına düşen marjinal faydalar eşitlenmiş ($\frac{14}{2} = \frac{7}{1}$) hem de bütçenin tamamı harcanmıştır.
+
+**Soru 2**: Tüketicinin elde ettiği maksimum fayda kaçtır?
+
+**Çözüm:**
+
+- X malından gelen fayda ($TU_{x}$):
+
+  - 1\. birimden 16 + 2. birimden 14 = 30 util
+
+- Y malından gelen fayda ($TU_{y}$):
+
+  - $11\  + \ 10\  + \ 9\  + \ 8\  + \ 7\  = \ 45$ util
+
+- **Maksimum Toplam Fayda:**
+
+> $$U_{\max} = TU_{x} + TU_{y} = 30 + 45 = 75\text{ util}$$
+
+:::
+
+### Ordinalist (Sırasalcı) Tüketim Kuramı
+
+**Ordinalist Yaklaşım ve Temel Kavramlar**
+
+Ordinalistlere göre fayda, kardinalistlerin aksine sayısal olarak ölçülemez; ancak sıralanabilir. Bir tüketici \"A malı, B malından daha faydalıdır\" diyebilir ama aradaki farkı birimle ifade edemez. Bu yaklaşımın temel analiz aracı Farksızlık (Kayıtsızlık / Eş Fayda) Eğrileri\'dir.
+
+- **Farksızlık Eğrisi Tanımı**: Üzerindeki her noktada tüketicinin elde ettiği toplam faydanın aynı olduğu, farklı mal bileşimlerinin geometrik yeridir.
+
+- **Mal Düzlemi**: Yatay eksen (X malı miktarı) ve dikey eksen (Y malı miktarı) arasında kalan alandır. Bu eksenlerdeki değerler fiyat değil, miktar belirtir. Miktarlar negatif olamayacağı için analizler birinci bölgede yapılır.
+
+**Farksızlık Eğrisinin Mantığı: Değiş-Tokuş ve Fayda**
+
+Farksızlık eğrisi üzerindeki her noktada toplam fayda sabit kalırken, tüketilen mal bileşimleri değişir.
+
+- **Örnek Senaryo (Elma ve Portakal Takası):**
+
+  - **Başlangıç (A Noktası):** Elinizde 1 elma ve 70 portakal olduğunu varsayalım. Bu bileşimden $U_{1}$kadar fayda alıyorsunuz.
+
+  - **Değişim (B Noktası):** Canınız elma çektiğinde, 1 elma daha almak için elinizdeki bol olan portakallardan 10 tanesini feda etmeye razı olabilirsiniz. Bu durumda 2 elma ve 60 portakal bileşimi de size aynı $U_{1}$faydasını sağlar.
+
+  - **Kıtlık ve Değer İlişkisi (C Noktası):** Elinizdeki portakal miktarı azaldıkça (60\'a düştüğünde), her bir portakal sizin için daha kıymetli hale gelir. 3. elmayı almak istediğinizde, artık 10 değil, sadece 5 portakaldan vazgeçmek istersiniz.
+
+- **Hoca Notu**: Bir malın eldeki miktarı azaldıkça o malın değeri artar. Bu durum, aynı fayda düzeyini korumak için bir maldan daha fazla alırken diğerinden vazgeçilen miktarın giderek azalmasına (azalan marjinal ikame oranı) neden olur.
+
+![U1 (sürekli çizgi), U2 (kesikli çizgi) ve U3 (noktalı çizgi) farksızlık eğrileri, orijinden uzaklaştıkça artan toplam fayda düzeylerini (U3 \> U2 \> U1) temsil eden bir farksızlık paftasıdır. Eğriler negatif eğimli ve orijine göre dışbükey (convex) bir yapıdadır; bu geometrik yapı Azalan Marjinal İkame Oranı prensibini akademik olarak doğrular. U1 eğrisi üzerinde tanımlanan A(1,70), B(2,60) ve C(3,55) noktaları arasındaki teknik değişim oranları, tüketicinin aynı fayda düzeyini korumak için vazgeçtiği Portakal (Y malı) miktarının Elma (X malı) miktarı arttıkça azaldığını gösterir.](/Users/vedatdiyar/Desktop/Banka Sınavı Ders Notları/Mikro İktisat/media/image9.webp){width="6.299212598425197in" height="4.409448818897638in"}
+
+**Farksızlık Eğrilerinin Temel Özellikleri**
+
+Farksızlık eğrileri beş temel özelliğe sahiptir. İlk üç özellik hem tipik hem de atipik tüm eğriler için geçerlidir:
+
+- **Aynı Fayda Düzeyi**: Eğri üzerindeki her noktada fayda aynıdır. Değişen tek şey mal bileşimidir.
+
+- **Orijinden Uzaklaştıkça Fayda Artar**: Daha sağda ve yukarıda yer alan bir farksızlık eğrisi, her iki maldan da (veya en az birinden) daha fazla tüketimi temsil ettiği için daha yüksek bir doyum seviyesini ($U_{3} > U_{2} > U_{1}$) ifade eder. Bir kişinin tüm farksızlık eğrilerinin gösterildiği bu bütüne farksızlık paftası (haritası) denir.
+
+- **Birbirlerini Asla Kesmezler**: Eğrilerin kesişmesi durumu iktisadi mantığa aykırıdır.
+
+  - **Sınavda Çıkabilir**: Eğer farksızlık eğrileri birbirini keserse, tüketicinin tutarlılık (geçişkenlik) varsayımı ihlal edilmiş olur.
+
+- **Negatif Eğimlidirler**: Toplam faydanın sabit kalması için, bir malın tüketimi artırılırken (X artarken), diğer malın tüketiminin azaltılması (Y azalması) gerekir. Bu, malların birbiri yerine ikame edildiğini gösterir.
+
+- **Orijine Göre Dış Bükeydirler**: Eğrinin şeklinin dış bükey olmasının nedeni azalan marjinal ikame oranıdır (MRS).
+
+**Matematiksel Gösterim ve Fonksiyonel Yapı**
+
+Farksızlık eğrileri hem matematiksel hem de iktisadi fonksiyonlarla ifade edilir:
+
+- **Hiperbol Biçimi**: Matematiksel olarak ($y = a.x^{- n}$) şeklinde ifade edilir. Bu denklemin grafiği hiperbolik bir yapı sunar.
+
+- **Cobb-Douglas Fayda Fonksiyonu**: İktisatta en sık karşılaşılan ve sınavların %99\'unda sorgulanan fonksiyondur.
+
+  - **Formül**:
+
+> $$U = a.X^{\alpha}.Y^{\beta}$$
+
+- **Hoca Notu**: Eğer bir soruda bu formatta bir fonksiyon görürseniz, bu fonksiyonun grafiksel karşılığının orijine göre dış bükey bir farksızlık eğrisi olduğunu hemen anlamalısınız.
+
+**Marjinal İkame Oranı Kavramı ve Tanımı**
+
+Marjinal İkame Oranı (MRS), farksızlık eğrisinin eğimidir. İktisatta toplam kavramların eğimi marjinal kavramları verir (Örneğin: Toplam Maliyetin eğimi Marjinal Maliyettir). Ancak farksızlık eğrisinin eğimi doğrudan marjinal ikame oranı olarak adlandırılır.
+
+- **Tanım**: Tüketicinin aynı fayda düzeyi üzerinde kalabilmek (farksızlık eğrisi üzerinde hareket etmek) şartıyla, X malı tüketimini 1 birim artırdığında vazgeçmeye razı olduğu Y malı miktarıdır.
+
+- **İlişki Türü**: İki değişken arasında ters yönlü bir ilişki söz konusu olduğu için eğim negatiftir.
+
+**Matematiksel Formülasyon**
+
+Marjinal ikame oranı, dikey eksendeki değişim ile yatay eksendeki değişim arasındaki oran ile bulunur:
+
+$$\text{MRS} = \frac{\Delta Y}{\Delta X}$$
+
+- **Hoca Notu**: Eğim bulurken her zaman yukarıya dikey eksendeki değişkenin değişimi (ΔY), aşağıya ise yatay eksendeki değişkenin değişimi (ΔX) yazılır. Bu, \"vazgeçilen / yerine alınan\" oranını verir.
+
+![Marjinal İkame Oranı (MRS) ve Farksızlık Eğrisi Analizi - U1 farksızlık eğrisi, orijine göre dışbükey (konveks) ve negatif eğimli bir seyir izleyerek azalan marjinal ikame oranı prensibini temsil etmektedir. A noktası (X=4,Y=4.0) koordinatlarında farksızlık eğrisi üzerindeki spesifik bir denge veya tüketim sepeti bileşimini ifade eder. A noktasına teğet geçen kırmızı doğru, farksızlık eğrisinin ilgili noktadaki türevini yani Marjinal İkame Oranı'nı (MRSxy) belirler. Bu teknik yapı, tüketicinin aynı fayda seviyesini (U1) koruyarak bir birim daha X malı tüketmek için vazgeçmek zorunda olduğu Y malı miktarını gösterir. X ekseni: Mal X (Miktar), Y ekseni: Mal Y (Miktar). Tür: eğri ve teğet doğrusu.](/Users/vedatdiyar/Desktop/Banka Sınavı Ders Notları/Mikro İktisat/media/image10.webp){width="6.299212598425197in" height="4.409448818897638in"}
+
+:::**Örnek**: X\'in Y\'ye marjinal ikame oranı −4 ise aşağıdakilerden hangisi doğrudur?
+
+**Cevap**: X tüketimi 1 birim artırıldığında, faydanın aynı kalması için Y tüketiminden 4 birim vazgeçilmeli/azaltılmalıdır. :::
+
+- **Kritik**: Seçeneklerde X\'in artış miktarının 1 birim olduğundan ve Y\'nin azalış yönünde (negatiflikten dolayı) olduğundan emin olunmalıdır.
+
+**Fonksiyonel Yapılara Göre MRS Hesaplama**
+
+Farksızlık eğrisinin iki farklı fonksiyonel gösterimi mevcuttur. Her iki durumda da eğim (türev) üzerinden MRS\'ye ulaşılır.
+
+- **Kendi Fonksiyonu (Matematiksel Hiperbol)**
+
+Matematiksel olarak y bağımlı, x bağımsız değişkendir. Fonksiyon y=a⋅x −n biçiminde bir hiperbol olarak ifade edilir.
+
+- **MRS Bulma**: y\'nin x\'e göre türevi alınır ($\frac{d_{x}}{d_{y}}$).
+
+:::**Örnek**: $y = 20 \cdot x^{( - 2)}$ farksızlık eğrisi fonksiyonu için marjinal ikame oranını bulunuz.
+
+**Çözüm**: Üssü öndeki sayıyla çarpıp üssü 1 azaltıyoruz:
+
+$$\text{MRS} = - 40 \cdot x^{- 3}$$
+
+:::
+
+- **Hoca Notu**: Üzeri eksi olan sayılar paydaya artı olarak geçer. Yani $- 40 \cdot x^{- 3}$ ifadesi $\frac{- 40}{x^{3}}\ $ile aynıdır. Burada x arttıkça payda büyüyeceği için MRS\'nin değeri (mutlak değerce) azalır. Bu da farksızlık eğrisi üzerinde aşağı inildikçe eğimin azaldığını (azalan MRS) kanıtlar.
+
+<!-- -->
+
+- **Fayda Fonksiyonu (Cobb-Douglas Tipi)**
+
+İktisatçıların kullandığı, faydanın mal miktarlarına bağlı olduğu fonksiyondur:
+
+$$U = a \cdot X^{\alpha} \cdot Y^{\beta}$$
+
+**Hoca Notu:** Bu fonksiyondan MRS bulmak için marjinal faydaların oranına bakılır:
+
+$$\text{MRS} = - \frac{MU_{X}}{MU_{Y}}$$
+
+:::**Örnek 1**: $U = X^{2}.Y^{2}$ fonksiyonuna göre X\'in marjinal faydası ($MU_{X}$) nedir?
+
+**Çözüm**:
+
+$$MU_{X} = 40 \cdot X \cdot Y^{2}$$
+
+**Yorum**: X arttıkça $MU_{X}$ artar, Y arttıkça $MU_{X}$ artar. :::
+
+::: **Örnek 2**: $U = (X \cdot Y)^{\frac{1}{2}}$ fayda fonksiyonuna göre X\'in marjinal faydası ile ilgili hangisi doğrudur?
+
+**Çözüm:**
+
+Önce parantezi açalım: $U = X^{\left( 1\text{/}2 \right)}.Y^{\left( 1\text{/}2 \right)}$
+
+$$MU_{X} = \frac{1}{2} \cdot X^{- 1\text{/}2} \cdot Y^{1\text{/}2}$$
+
+**Yorum**: X arttıkça (üzeri eksi olduğu için) $MU_{X}$ ​ azalır. Y arttıkça (üzeri artı olduğu için) $MU_{X}$ artar. :::
+
+**:::Örnek 3**: $U = 4.X^{\left( 1\text{/}2 \right)}.Y^{\left( 1\text{/}4 \right)}$ fonksiyonuna göre Y\'nin marjinal faydası ($MU_{Y}$) nedir?
+
+**Çözüm**:
+
+$$MU_{Y} = X^{1\text{/}2} \cdot Y^{- \frac{3}{4}}$$
+
+**Yorum**: X arttıkça MU_Y artar, Y arttıkça MU_Y azalır. :::
+
+**MRS Formülünün İspatı (Fayda Değişimi Üzerinden)**
+
+Farksızlık eğrisi üzerinde fayda değişimi sıfırdır (ΔU=0).
+
+- **X artışının faydaya etkisi**: $MU_{X}.\Delta X$
+
+- **Y azalışının faydaya etkisi**: $MU_{Y}.\Delta Y$
+
+- **Toplam değişim**: $\left( MU_{X}.\Delta X \right) + \left( MU_{Y}.\Delta Y \right) = 0$
+
+Bu eşitlikten $\Delta Y/\Delta X$ çekildiğinde:
+
+$$\frac{\Delta Y}{\Delta X} = - \frac{MU_{X}}{MU_{Y}} = \text{MRS}$$
+
+**Önemli Hatırlatma: Sembollerin Yer Değiştirmesi**
+
+Sınavda her zaman X ve Y kullanılmayabilir. Örneğin \"Portakalın (P) Elmaya (E) marjinal ikame oranı\" sorulduğunda:
+
+- Yatay eksende Portakal (X gibi), dikey eksende Elma (Y gibi) olduğu varsayılır.
+
+- **Formül**: $\text{MRS}\mathbf{=}\frac{\mathbf{\Delta E}}{\mathbf{\Delta P}}\mathbf{= -}\frac{\mathbf{M}\mathbf{U}_{\mathbf{P}}}{\mathbf{MU}_{\mathbf{E}}}$​
+
+**Hoca Notu**: Hangi malın hangi mala ikame edildiği söylendiğinde, ilk söylenen mal yatay eksene, ikinci söylenen mal dikey eksene yerleştirilerek formülize edilir. Bu ayrım dikey/yatay oranlamasını doğru yapmak için kritiktir.

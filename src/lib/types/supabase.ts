@@ -321,6 +321,44 @@ export type Database = {
           },
         ]
       }
+      question_generation_logs: {
+        Row: {
+          chunk_id: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          message: string
+          session_id: string
+          step: Database["public"]["Enums"]["generation_log_step"]
+        }
+        Insert: {
+          chunk_id: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          message: string
+          session_id: string
+          step: Database["public"]["Enums"]["generation_log_step"]
+        }
+        Update: {
+          chunk_id?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          message?: string
+          session_id?: string
+          step?: Database["public"]["Enums"]["generation_log_step"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_generation_logs_chunk_id_fkey"
+            columns: ["chunk_id"]
+            isOneToOne: false
+            referencedRelation: "note_chunks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       questions: {
         Row: {
           bloom_level: Database["public"]["Enums"]["bloom_level"] | null
@@ -328,6 +366,7 @@ export type Database = {
           course_id: string
           created_at: string | null
           created_by: string | null
+          evidence: string | null
           id: string
           is_global: boolean | null
           parent_question_id: string | null
@@ -347,6 +386,7 @@ export type Database = {
           course_id: string
           created_at?: string | null
           created_by?: string | null
+          evidence?: string | null
           id?: string
           is_global?: boolean | null
           parent_question_id?: string | null
@@ -366,6 +406,7 @@ export type Database = {
           course_id?: string
           created_at?: string | null
           created_by?: string | null
+          evidence?: string | null
           id?: string
           is_global?: boolean | null
           parent_question_id?: string | null
@@ -725,6 +766,14 @@ export type Database = {
         | "PROCESSING"
         | "COMPLETED"
         | "FAILED"
+      generation_log_step:
+        | "INIT"
+        | "MAPPING"
+        | "GENERATING"
+        | "VALIDATING"
+        | "REVISION"
+        | "COMPLETED"
+        | "ERROR"
       question_status: "active" | "archived" | "pending_followup"
       question_usage_type: "antrenman" | "arsiv" | "deneme"
       quiz_response_type: "correct" | "incorrect" | "blank"
@@ -863,6 +912,15 @@ export const Constants = {
         "PROCESSING",
         "COMPLETED",
         "FAILED",
+      ],
+      generation_log_step: [
+        "INIT",
+        "MAPPING",
+        "GENERATING",
+        "VALIDATING",
+        "REVISION",
+        "COMPLETED",
+        "ERROR",
       ],
       question_status: ["active", "archived", "pending_followup"],
       question_usage_type: ["antrenman", "arsiv", "deneme"],
