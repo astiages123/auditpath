@@ -260,17 +260,7 @@ function RecentSessionsTab({ userId }: { userId?: string }) {
                  <div className="text-right">
                     <div className="flex items-center justify-end gap-1.5 text-sm font-medium text-foreground">
                         <Clock className="w-4 h-4 text-muted-foreground" />
-                        {(() => {
-                            const totalMins = Math.round(group.totalWorkSeconds / 60);
-                            const h = Math.floor(totalMins / 60);
-                            const m = totalMins % 60;
-                            return (
-                                <>
-                                    {h > 0 && `${h} sa `}
-                                    {m} dk
-                                </>
-                            );
-                        })()}
+                        {formatTime(group.totalWorkSeconds)}
                     </div>
                  </div>
                  <ChevronRight className="w-5 h-5 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
@@ -461,12 +451,7 @@ function RecentSessionsTab({ userId }: { userId?: string }) {
                         <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">Oturum Süresi</span>
                     </div>
                     <span className="text-xl font-black text-white ml-1">
-                        {(() => {
-                            const totalMinutes = Math.round((selectedGroup?.totalSessionSeconds || 0) / 60);
-                            const h = Math.floor(totalMinutes / 60);
-                            const m = totalMinutes % 60;
-                            return h > 0 ? `${h}sa ${m}dk` : `${m}dk`;
-                        })()}
+                        {formatTime(selectedGroup?.totalSessionSeconds || 0)}
                     </span>
                 </div>
 
@@ -478,12 +463,7 @@ function RecentSessionsTab({ userId }: { userId?: string }) {
                         <span className="text-[10px] font-black text-sky-300 uppercase tracking-widest">Odak Süresi</span>
                     </div>
                     <span className="text-xl font-black text-white ml-1">
-                        {(() => {
-                            const totalMinutes = Math.round((selectedGroup?.totalWorkSeconds || 0) / 60);
-                            const h = Math.floor(totalMinutes / 60);
-                            const m = totalMinutes % 60;
-                            return h > 0 ? `${h}sa ${m}dk` : `${m}dk`;
-                        })()}
+                        {formatTime(selectedGroup?.totalWorkSeconds || 0)}
                     </span>
                 </div>
                 
@@ -497,10 +477,7 @@ function RecentSessionsTab({ userId }: { userId?: string }) {
                     <span className="text-xl font-black text-white ml-1">
                         {(() => {
                              const totalSeconds = selectedGroup?.sessions?.reduce((acc, s) => acc + (s.breakSeconds || 0), 0) || 0;
-                             const totalMinutes = Math.round(totalSeconds / 60);
-                             const h = Math.floor(totalMinutes / 60);
-                             const m = totalMinutes % 60;
-                             return h > 0 ? `${h}sa ${m}dk` : `${m}dk`;
+                             return formatTime(totalSeconds);
                         })()}
                     </span>
                 </div>
@@ -515,10 +492,7 @@ function RecentSessionsTab({ userId }: { userId?: string }) {
                     <span className="text-xl font-black text-white ml-1">
                         {(() => {
                              const totalSeconds = selectedGroup?.sessions?.reduce((acc, s) => acc + (s.pauseSeconds || 0), 0) || 0;
-                             const totalMinutes = Math.round(totalSeconds / 60);
-                             const h = Math.floor(totalMinutes / 60);
-                             const m = totalMinutes % 60;
-                             return h > 0 ? `${h}sa ${m}dk` : `${m}dk`;
+                             return formatTime(totalSeconds);
                         })()}
                     </span>
                 </div>
