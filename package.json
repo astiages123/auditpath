@@ -11,9 +11,15 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "type-check": "tsc --noEmit",
-    "sync-notes": "node scripts/sync-notes.js",
-    "sync-notes:force": "node scripts/sync-notes.js --force",
-    "update-types": "npx supabase gen types typescript --project-id ccnvhimlbkkydpcqtraw > src/lib/types/supabase.ts"
+    "db:seed": "tsx scripts/db/seed-db.ts",
+    "db:seed:stats": "tsx scripts/db/seed-statistics-test-data.ts",
+    "notes:sync": "node scripts/sync/sync-notes.js",
+    "notes:sync:force": "node scripts/sync/sync-notes.js --force",
+    "notes:export": "tsx scripts/sync/export-notes.ts",
+    "ai:test": "tsx scripts/ai/test-cerebras.ts",
+    "ai:verify": "tsx scripts/ai/verify-ai.ts",
+    "ai:sync-guidelines": "tsx scripts/ai/sync-subject-guidelines.ts",
+    "update-types": "npx supabase gen types typescript --project-id ccnvhimlbkkydpcqtraw > src/shared/types/supabase.ts"
   },
   "dependencies": {
     "@cerebras/cerebras_cloud_sdk": "^1.64.1",

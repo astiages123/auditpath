@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
-import { syncNotes } from './scripts/sync-notes'
+import { syncNotes } from './scripts/sync/sync-notes.js'
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({

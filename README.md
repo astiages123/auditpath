@@ -1,6 +1,6 @@
 # AuditPath 🚀
 
-**AuditPath**, hukuk öğrencileri ve profesyoneller için geliştirilmiş, **AI destekli** yeni nesil bir öğrenme ve sınav hazırlık asistanıdır. Kullanıcıların ders notlarını yükleyerek kişiselleştirilmiş quizler oluşturmasını, aralıklı tekrar sistemi (SRS) ile bilgileri kalıcı hale getirmesini ve detaylı analizlerle gelişimlerini takip etmesini sağlar.
+**AuditPath**, profesyoneller için geliştirilmiş, **AI destekli** yeni nesil bir öğrenme ve sınav hazırlık asistanıdır. Kullanıcıların ders notlarını yükleyerek kişiselleştirilmiş quizler oluşturmasını, aralıklı tekrar sistemi (SRS) ile bilgileri kalıcı hale getirmesini ve detaylı analizlerle gelişimlerini takip etmesini sağlar.
 
 ## 🌟 Temel Özellikler
 
