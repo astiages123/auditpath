@@ -80,19 +80,15 @@ export function toggleVideoProgressBatch(
   completed: boolean
 ): Set<number> {
   const progress = loadProgress(courseId);
-  let newlyCompletedCount = 0;
-  let newlyRemovedCount = 0;
 
   for (const videoNumber of videoNumbers) {
     if (completed) {
       if (!progress.has(videoNumber)) {
         progress.add(videoNumber);
-        newlyCompletedCount++;
       }
     } else {
       if (progress.has(videoNumber)) {
         progress.delete(videoNumber);
-        newlyRemovedCount++;
       }
     }
   }

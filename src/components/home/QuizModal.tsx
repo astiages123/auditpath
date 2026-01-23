@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Brain, FileText, ChevronRight, Loader2, Sparkles, AlertCircle, CheckCircle } from "lucide-react";
+import { Brain, FileText, ChevronRight, Loader2, AlertCircle, CheckCircle } from "lucide-react";
 import { getTopicQuestionCount, getFirstChunkIdForTopic, getCourseTopicsWithCounts, TopicWithCounts, getTopicCompletionStatus, TopicCompletionStats } from "@/lib/client-db";
 import { QuizEngine } from "@/components/features/quiz/QuizEngine";
 import { QuizSessionProvider } from "@/components/features/quiz/QuizSessionProvider";
@@ -27,7 +27,7 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
   // Status State
   const [completionStatus, setCompletionStatus] = useState<TopicCompletionStats | null>(null);
 
-  const [loadingCount, setLoadingCount] = useState(false);
+
   
   const [existingQuestions, setExistingQuestions] = useState<QuizQuestion[]>([]);
   
@@ -51,14 +51,14 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
   useEffect(() => {
     async function loadData() {
       if (selectedTopic && courseId && user) {
-        setLoadingCount(true);
+
         
 
 
         const chunkRes = await getFirstChunkIdForTopic(courseId, selectedTopic.name);
         setTargetChunkId(chunkRes);
 
-        const [_, status] = await Promise.all([
+        const [, status] = await Promise.all([
             getTopicQuestionCount(courseId, selectedTopic.name),
             getTopicCompletionStatus(user.id, courseId, selectedTopic.name)
         ]);
@@ -69,7 +69,7 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
             // No longer checking generation status for automatic triggers
         }
 
-        setLoadingCount(false);
+
 
       } else {
         setTargetChunkId(null);

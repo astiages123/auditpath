@@ -1,9 +1,7 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { TrendingUp, Clock, Video, BrainCircuit } from "lucide-react";
 import type { CumulativeStats } from "@/lib/client-db";
-import { BentoCard } from "@/components/statistics/BentoGrid";
 
 import {
     Tooltip,
@@ -17,12 +15,36 @@ interface GeneralProgressProps {
 }
 
 export function GeneralProgress({ data }: GeneralProgressProps) {
-    const getMeaning = (ratio: number) => {
-        if (ratio < 1.0) return "Yüzeysel: Videoyu 1.5x hızda bitirip notlara neredeyse hiç bakmamışsın. Öğrenme kalıcılığı riskte.";
-        if (ratio <= 1.7) return "Altın Oran: Teknolojiyi en verimli kullandığın aralık. Hızlı izleme + AI notlarını akıllıca sentezleme.";
-        if (ratio <= 2.2) return "Yoğun Mesai: Konu ya çok zor ya da notları düzenlerken detaylarda boğulmaya başlıyorsun.";
-        return "Verim Kaybı: AI desteğine rağmen bu süredeysen, öğrenmekten ziyade 'not süsleme' veya 'odak dağılması' yaşıyorsun.";
+    const calculateScore = (r: number) => {
+        if (r <= 0) return 0;
+        let score = 0;
+        if (r < 0.5) score = 30 + (r * 40);
+        else if (r < 1.0) score = 50 + ((r - 0.5) * 60);
+        else if (r <= 1.5) score = 80 + ((r - 1.0) * 40);
+        else if (r <= 2.0) score = 100 - ((r - 1.5) * 40);
+        else score = Math.max(20, 80 - ((r - 2.0) * 20));
+        return Math.round(score);
     };
+
+    const score = calculateScore(data.ratio);
+
+    const getScoreColor = (s: number) => {
+        if (s < 40) return "text-red-500";
+        if (s < 70) return "text-amber-500";
+        if (s < 90) return "text-emerald-500";
+        return "text-indigo-500";
+    };
+
+    const getScoreLabel = (ratio: number) => {
+        if (ratio < 1.0) return "Hızlı İzleme: Not alımı düşük";
+        if (ratio >= 1.0 && ratio <= 1.2) return "Verimli: Dengeli tempo";
+        if (ratio > 1.2 && ratio <= 1.7) return "Mükemmel: İdeal öğrenme";
+        if (ratio > 1.7 && ratio <= 2.2) return "Yoğun Çalışma: Biraz hızlanabilirsin";
+        return "Yavaş İlerleme: Detaylara takıldın";
+    };
+
+    const scoreColor = getScoreColor(score);
+    const feedback = getScoreLabel(data.ratio);
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
@@ -31,7 +53,7 @@ export function GeneralProgress({ data }: GeneralProgressProps) {
                     <div className="p-2 rounded-xl bg-primary/10 text-primary">
                         <TrendingUp className="w-5 h-5" />
                     </div>
-                    <h2 className="text-xl font-black text-foreground tracking-tight">Genel İlerleme</h2>
+                    <h2 className="text-xl font-black text-foreground tracking-tight">Genel İlerleme Analizi</h2>
                 </div>
                 <div className="h-px flex-1 bg-border/30 mx-6 hidden md:block" />
             </div>
@@ -80,33 +102,27 @@ export function GeneralProgress({ data }: GeneralProgressProps) {
                             <TooltipTrigger asChild>
                                 <div className="cursor-help">
                                     <div className="flex items-center gap-4 mb-4">
-                                        <div className="p-2.5 rounded-2xl bg-purple-500/10 text-purple-500 border border-purple-500/20">
+                                        <div className="p-2.5 rounded-2xl bg-purple-500/10 text-purple-500 border border-purple-500/20 shadow-sm">
                                             <BrainCircuit className="w-6 h-6" />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Genel Katsayı</p>
-                                            <p className={`text-2xl font-black ${
-                                                data.ratio < 1.0 || data.ratio > 2.2 ? 'text-red-500' : 
-                                                data.ratio >= 1.2 && data.ratio <= 1.7 ? 'text-green-500' :
-                                                data.ratio >= 1.8 && data.ratio <= 2.2 ? 'text-yellow-500' :
-                                                'text-foreground'
-                                            }`}>
-                                                {data.ratio > 0 ? `${data.ratio}x` : "-"}
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest leading-none mb-1">Genel Skor</p>
+                                            <p className={`text-2xl font-black leading-none ${scoreColor}`}>
+                                                {score > 0 ? score : "-"}
                                             </p>
                                         </div>
                                     </div>
-                                    <div className="h-1 w-full bg-muted/20 rounded-full overflow-hidden">
-                                        <div className={`h-full rounded-full w-full opacity-60 ${
-                                            data.ratio < 1.0 || data.ratio > 2.2 ? 'bg-red-500' : 
-                                            data.ratio >= 1.2 && data.ratio <= 1.7 ? 'bg-green-500' :
-                                            data.ratio >= 1.8 && data.ratio <= 2.2 ? 'bg-yellow-500' :
-                                            'bg-foreground'
-                                        }`} />
+                                    <div className="h-1.5 w-full bg-muted/20 rounded-full overflow-hidden flex p-px">
+                                        <div className={`h-full rounded-full transition-all duration-1000 ${scoreColor.replace('text-', 'bg-')}`} 
+                                             style={{ width: `${score}%` }} />
                                     </div>
                                 </div>
                             </TooltipTrigger>
-                            <TooltipContent side="top" className="max-w-[280px] bg-card/90 backdrop-blur-md border border-border/50 p-4 rounded-2xl shadow-2xl text-[11px] font-bold leading-relaxed">
-                                {getMeaning(data.ratio)}
+                            <TooltipContent side="top" className="max-w-[280px] bg-popover/95 backdrop-blur-xl border border-border p-4 rounded-2xl shadow-2xl text-[11px] font-bold leading-relaxed text-popover-foreground">
+                                <div className="space-y-1">
+                                    <p className="text-foreground">{feedback}</p>
+                                    <p className="text-muted-foreground font-normal">Tüm zamanların video/etüt dengesi gözetilerek hesaplanmıştır.</p>
+                                </div>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>

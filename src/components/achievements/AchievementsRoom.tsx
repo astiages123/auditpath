@@ -166,7 +166,7 @@ export function AchievementsRoom() {
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Page Header */}
-      <div className="mb-12 max-w-6xl mx-auto px-4">
+      <div className="mt-5 max-w-6xl mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}

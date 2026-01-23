@@ -1,12 +1,4 @@
-/**
- * Cerebras API Client (via Supabase Proxy)
- * 
- * Supabase Edge Function üzerinden Cerebras API çağrısı yapar.
- * - CORS sorunu yok
- * - API anahtarı güvende
- */
-
-import { supabase } from '@/lib/supabase';
+import { callCerebras, type LogCallback } from '../clients/cerebras';
 
 // Types
 export interface QuestionToValidate {
@@ -14,6 +6,8 @@ export interface QuestionToValidate {
   o: string[];
   a: number;
   exp: string;
+  bloomLevel?: 'knowledge' | 'application' | 'analysis';
+  img?: string | null;
 }
 
 export interface ValidationCriteriaBreakdown {
@@ -32,17 +26,6 @@ export interface ValidationResult {
   improvement_suggestion: string;
   decision: 'APPROVED' | 'REJECTED';
 }
-
-interface CerebrasResponse {
-  id: string;
-  choices: {
-    message: {
-      content: string;
-    };
-  }[];
-}
-
-type LogCallback = (message: string, details?: Record<string, unknown>) => void;
 
 // --- System Prompt ---
 const VALIDATOR_SYSTEM_PROMPT = `Sen AuditPath için bir Üst Düzey Eğitim Denetçisisin. Görevin, verilen kaynak metin ile üretilen soruyu karşılaştırıp 'Sıfır Hata' prensibiyle puanlamaktır.
@@ -78,37 +61,6 @@ KARAR MEKANİZMASI:
   "improvement_suggestion": "string veya boş",
   "decision": "APPROVED" | "REJECTED"
 }`;
-
-/**
- * Call Cerebras API via Supabase Proxy
- */
-async function callCerebras(systemPrompt: string, userPrompt: string, onLog?: LogCallback): Promise<string> {
-  onLog?.('Cerebras API çağrısı başlatılıyor (Supabase Proxy)...', { promptLength: userPrompt.length });
-
-  const { data, error } = await supabase.functions.invoke('ai-proxy', {
-    body: {
-      provider: 'cerebras',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.1, // Low temperature for consistent grading
-      max_tokens: 4096
-    }
-  });
-
-  if (error) {
-    onLog?.('Cerebras API hatası', { error: error.message });
-    throw new Error(`Cerebras API Hatası: ${error.message}`);
-  }
-
-  const response = data as CerebrasResponse;
-  const content = response.choices?.[0]?.message?.content || '';
-  
-  onLog?.('Cerebras API yanıtı alındı', { responseLength: content.length });
-  
-  return content;
-}
 
 /**
  * Parse validator JSON response
@@ -168,7 +120,7 @@ function parseValidationResponse(responseText: string): Omit<ValidationResult, '
 /**
  * Build validation prompt
  */
-function buildValidationPrompt(question: QuestionToValidate, sourceContent: string): string {
+export function buildValidationPrompt(question: QuestionToValidate, sourceContent: string): string {
   const optionsText = question.o
     .map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`)
     .join('\n');

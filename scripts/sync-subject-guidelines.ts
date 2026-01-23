@@ -32,7 +32,7 @@ function parseGuidelines(content: string) {
     const subjects = [];
     const lines = content.split('\n');
     
-    let currentSubject: any = null;
+    let currentSubject: { name: string; instruction: string; fewShot: unknown; badFewShot: unknown } | null = null;
     let buffer: string[] = [];
     let state: 'NONE' | 'INSTRUCTION' | 'FEW_SHOT' | 'BAD_FEW_SHOT' = 'NONE';
 
@@ -133,10 +133,10 @@ async function sync() {
         for (const subj of subjects) {
             console.log(`Syncing: ${subj.name}`);
             
-            let match = dbSubjects.find(s => s.subject_name === subj.name);
+            let match = dbSubjects.find((s: { subject_name: string }) => s.subject_name === subj.name);
             
             if (!match) {
-                 match = dbSubjects.find(s => 
+                 match = dbSubjects.find((s: { subject_name: string }) => 
                     subj.name.includes(s.subject_name) || s.subject_name.includes(subj.name)
                  );
             }

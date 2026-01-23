@@ -56,20 +56,17 @@ export const useTimerStore = create<TimerState>()(
                 const now = Date.now();
                 const newTimeline = [...state.timeline];
 
-                // Resume logic
-                if (!state.isActive && state.timeLeft !== state.duration && newTimeline.length > 0) {
-                    const lastEvent = newTimeline[newTimeline.length - 1];
-                    if (lastEvent && lastEvent.type === 'pause' && !lastEvent.end) {
-                        lastEvent.end = now;
+                // Ensure all existing events are closed before adding a new one
+                newTimeline.forEach(event => {
+                    if (!event.end) {
+                        event.end = now;
                     }
-                }
+                });
 
-                if (!state.isActive) {
-                    newTimeline.push({
-                        type: state.isBreak ? 'break' : 'work',
-                        start: now
-                    });
-                }
+                newTimeline.push({
+                    type: state.isBreak ? 'break' : 'work',
+                    start: now
+                });
 
                 const endTime = now + (state.timeLeft * 1000);
 
@@ -188,7 +185,7 @@ export const useTimerStore = create<TimerState>()(
         {
             name: 'pomodoro-storage',
             partialize: (state) => {
-                const { hasRestored, ...rest } = state;
+                const { ...rest } = state;
                 return rest;
             },
         }

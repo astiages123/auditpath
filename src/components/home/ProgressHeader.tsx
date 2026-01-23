@@ -35,8 +35,9 @@ interface ProgressHeaderProps {
 }
 
 function formatDuration(decimalHours: number): string {
-  const hours = Math.floor(decimalHours);
-  const minutes = Math.round((decimalHours - hours) * 60);
+  const totalMinutes = Math.round(decimalHours * 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
   return `${hours}s ${minutes}d`;
 }
 
@@ -78,7 +79,7 @@ export function ProgressHeader({
     "Hukuk", // 2 Tuesday
     "Ekonomi", // 3 Wednesday
     "Hukuk", // 4 Thursday
-    "Genel Yetenek - İngilizce", // 5 Friday
+    "Genel Yetenek ve İngilizce", // 5 Friday
     "Muhasebe ve Maliye", // 6 Saturday
   ];
 

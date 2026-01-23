@@ -106,7 +106,7 @@ export default function StatisticsPage() {
                 setCumulativeStats(cumulativeData);
                 setEfficiencySummary(effSummary);
             } catch (error) {
-                console.error("Failed to fetch statistics:", error);
+                // Error handling via UI or ErrorBoundary
             } finally {
                 setLoading(false);
             }

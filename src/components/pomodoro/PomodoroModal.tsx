@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { 
   Play, Pause, X, Coffee, Briefcase, CheckCircle2, 
-  Target, Search, ChevronUp, Maximize2, Minimize2 
+  Target, Search, Maximize2, Minimize2 
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,6 @@ export function PomodoroModal() {
     sessionCount,
     timeLeft,
     isOvertime,
-    totalElapsed,
     originalStartTime,
     pauseStartTime,
   } = usePomodoro();
@@ -64,7 +63,7 @@ export function PomodoroModal() {
         setPauseDuration(Math.floor((Date.now() - pauseStartTime) / 1000));
       }, 1000);
     } else {
-      setPauseDuration(0);
+      Promise.resolve().then(() => setPauseDuration(0));
     }
     return () => {
       if (interval) clearInterval(interval);
@@ -82,7 +81,7 @@ export function PomodoroModal() {
   const [isExpanded, setIsExpanded] = useState(true);
 
   useEffect(() => {
-    setMounted(true);
+    Promise.resolve().then(() => setMounted(true));
   }, []);
 
   useEffect(() => {
@@ -129,7 +128,7 @@ export function PomodoroModal() {
 
   const performSave = async () => {
     if (!selectedCourse || !startTime) return;
-    const closedTimeline = timeline.map((e: any) => ({
+    const closedTimeline = timeline.map((e: { start: number; end?: number; type: string }) => ({
       ...e,
       end: e.end || Date.now(),
     }));

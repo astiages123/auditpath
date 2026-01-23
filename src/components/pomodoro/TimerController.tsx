@@ -6,13 +6,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { 
     getDailySessionCount, 
     getLatestActiveSession, 
-    upsertPomodoroSession, 
-    updatePomodoroHeartbeat,
-    getStreak
+    updatePomodoroHeartbeat
 } from '@/lib/client-db';
 import { calculateSessionTotals } from '@/lib/pomodoro-utils';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
 
 const playNotificationSound = () => {
     try {
@@ -29,8 +26,7 @@ export function TimerController() {
     const { 
         isActive, tick, timeLeft, isBreak, sessionId, 
         selectedCourse, timeline, originalStartTime, startTime,
-        setSessionCount, setSessionId, setCourse, hasRestored, setHasRestored,
-        endTime, setMode, resetTimer, startTimer
+        setSessionCount, setSessionId, setCourse, hasRestored, setHasRestored
     } = useTimerStore();
 
     const { user, session } = useAuth();
@@ -39,16 +35,25 @@ export function TimerController() {
     // To prevent double notifications for the same event
     const lastNotifiedRef = useRef<string | null>(null);
 
-    // 1. Core Tick
+    // 1. Core Tick using Web Worker
     useEffect(() => {
-        let interval: NodeJS.Timeout | null = null;
-        if (isActive) {
-            interval = setInterval(() => {
+        const worker = new Worker(new URL('/workers/timerWorker.ts', import.meta.url));
+
+        worker.onmessage = (e) => {
+            if (e.data === 'TICK') {
                 tick();
-            }, 1000);
+            }
+        };
+
+        if (isActive) {
+            worker.postMessage('START');
+        } else {
+            worker.postMessage('STOP');
         }
+
         return () => {
-            if (interval) clearInterval(interval);
+            worker.postMessage('STOP');
+            worker.terminate();
         };
     }, [isActive, tick]);
 
@@ -66,9 +71,9 @@ export function TimerController() {
             }
 
             // Restore active session if idle
-            if (!hasRestored && !(window as any)._isPomodoroRestoring) {
+            if (!hasRestored && !(window as unknown as { _isPomodoroRestoring?: boolean })._isPomodoroRestoring) {
                 setHasRestored(true);
-                (window as any)._isPomodoroRestoring = true;
+                (window as unknown as { _isPomodoroRestoring?: boolean })._isPomodoroRestoring = true;
 
                 if (!isActive && !sessionId) {
                     try {
@@ -92,10 +97,10 @@ export function TimerController() {
                     } catch (e) {
                         console.error("Restoration failed", e);
                     } finally {
-                        (window as any)._isPomodoroRestoring = false;
+                        (window as unknown as { _isPomodoroRestoring?: boolean })._isPomodoroRestoring = false;
                     }
                 } else {
-                    (window as any)._isPomodoroRestoring = false;
+                    (window as unknown as { _isPomodoroRestoring?: boolean })._isPomodoroRestoring = false;
                 }
             }
         };

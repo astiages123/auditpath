@@ -30,20 +30,37 @@ export function calculateSessionTotals(
   timeline: TimelineEvent[] | unknown, 
   now: number = Date.now()
 ): SessionTotals {
-  if (!Array.isArray(timeline)) {
+  if (!Array.isArray(timeline) || timeline.length === 0) {
     return { totalWork: 0, totalBreak: 0, totalPause: 0 };
   }
+
+  // Sort timeline by start time to ensure sequential processing
+  const sortedTimeline = [...(timeline as TimelineEvent[])]
+    .filter(e => e && e.start !== undefined && e.start !== null)
+    .sort((a, b) => a.start - b.start);
 
   let workMs = 0;
   let breakMs = 0;
   let pauseMs = 0;
 
-  for (const event of timeline as TimelineEvent[]) {
-    // Skip invalid events
-    if (event.start === undefined || event.start === null) continue;
+  for (let i = 0; i < sortedTimeline.length; i++) {
+    const event = sortedTimeline[i];
+    const nextEvent = sortedTimeline[i + 1];
 
-    const endTime = event.end || now;
-    // Prevent negative duration if system time changes or logic is weird
+    // The effective end of an event is:
+    // 1. Its own end time (if provided)
+    // 2. BUT it cannot exceed the start of the NEXT event (precedence/overlap prevention)
+    // 3. IF no end time and no next event, use 'now'
+    
+    let endTime = event.end || now;
+    
+    // If there is a next event, this event MUST end when the next one starts 
+    // to prevent double counting if they overlap.
+    if (nextEvent && nextEvent.start < endTime) {
+      endTime = nextEvent.start;
+    }
+
+    // Ensure duration isn't negative
     const duration = Math.max(0, endTime - event.start);
 
     const eventType = (event.type || 'work').toLowerCase();

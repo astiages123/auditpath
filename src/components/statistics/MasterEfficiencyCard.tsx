@@ -34,8 +34,9 @@ export function MasterEfficiencyCard({ data, userId }: MasterEfficiencyCardProps
 
   // Format time from seconds
   const formatTime = (seconds: number) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
+    const totalMinutes = Math.round(seconds / 60);
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
     if (h > 0) return `${h}sa ${m}dk`;
     return `${m}dk`;
   };

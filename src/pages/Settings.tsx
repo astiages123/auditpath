@@ -62,7 +62,7 @@ export default function Settings() {
       const workStartTime = new Date(`${date}T${workStart}:00`).getTime();
       const workEndTime = new Date(`${date}T${workEnd}:00`).getTime();
       
-      const timeline: any[] = [
+      const timeline: { type: string; start: number; end: number }[] = [
         { type: "work", start: workStartTime, end: workEndTime }
       ];
 
@@ -101,9 +101,9 @@ export default function Settings() {
         setBreakEnd(`${String(nextBreakEnd.getHours()).padStart(2, '0')}:${String(nextBreakEnd.getMinutes()).padStart(2, '0')}`);
       }
 
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error("Hata: " + e.message);
+      toast.error("Hata: " + (e instanceof Error ? e.message : "Bilinmeyen hata"));
     } finally {
       setLoading(false);
     }

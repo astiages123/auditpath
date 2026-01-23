@@ -27,9 +27,10 @@ const toUpperLetter = (num: number) => String.fromCharCode(65 + num);
 const toLowerLetter = (num: number) => String.fromCharCode(97 + num);
 
 // Helper to extract text from heading nodes
-const getHeadingText = (node: any): string => {
-  if (node.type === "text" || node.type === "inlineCode") return node.value || "";
-  if (node.children) return node.children.map(getHeadingText).join("");
+const getHeadingText = (node: Node): string => {
+  if (node.type === "text" || node.type === "inlineCode") return (node as Literal).value as string || "";
+  const children = (node as { children?: Node[] }).children;
+  if (children) return children.map(getHeadingText).join("");
   return "";
 };
 
@@ -56,7 +57,8 @@ const remarkHeadingNumbering: Plugin = () => {
       const textContent = getHeadingText(node);
       const id = slugify(textContent);
       
-      const data = (node as any).data || ((node as any).data = {});
+      const nodeWithData = node as Node & { data?: { hProperties?: { id?: string } } };
+      const data = nodeWithData.data || (nodeWithData.data = {});
       const props = data.hProperties || (data.hProperties = {});
       props.id = id;
 
@@ -88,7 +90,7 @@ const remarkHeadingNumbering: Plugin = () => {
       if (firstChild.type === "text") {
         (firstChild as Literal).value = `${prefix}${(firstChild as Literal).value}`;
       } else {
-        node.children.unshift({ type: "text", value: prefix } as unknown as Node as any);
+        (node.children as Array<{ type: string; value: string }>).unshift({ type: "text", value: prefix });
       }
     }
   }
@@ -99,11 +101,11 @@ const remarkCustomDirectives: Plugin = () => {
     visit(tree, (node: Node, index, parent) => {
       // CLEANUP: Remove technical artifacts like :::question-generator
       if (node.type === "containerDirective" || node.type === "leafDirective" || node.type === "textDirective") {
-         const d = node as any;
+         const d = node as Node & { name: string; children: Node[] };
          if (d.name === 'question-generator') {
             // Remove the node from the tree
             if (parent && typeof index === 'number') {
-               (parent as any).children.splice(index, 1);
+               (parent as { children: Node[] }).children.splice(index, 1);
                return index; // Return same index to visit next node correctly
             }
          }
@@ -114,7 +116,7 @@ const remarkCustomDirectives: Plugin = () => {
         node.type === "leafDirective" ||
         node.type === "textDirective"
       ) {
-        const d = node as any;
+        const d = node as Node & { name: string; data?: { hName?: string; hProperties?: { className: string[] } } };
         const data = d.data || (d.data = {});
 
         // 3. Example Cards (Generic ":::" blocks or named directive blocks)
@@ -176,10 +178,10 @@ const remarkCustomDirectives: Plugin = () => {
     });
 
     // Clean up <p ... node="[object Object]"> artifacts
-    visit(tree, "raw", (node: any, index, parent) => {
+    visit(tree, "raw", (node: Node & { value?: string }, index, parent) => {
         if (node.value && node.value.includes('[object Object]')) {
              if (parent && typeof index === 'number') {
-                 (parent as any).children.splice(index, 1);
+                 (parent as { children: Node[] }).children.splice(index, 1);
                  return index;
              }
         }
@@ -302,35 +304,35 @@ export function NoteViewer({
 
   const components: Components = {
     // 2. Heading Typography Rules
-    h1: ({ children, node, ...props }) => (
+    h1: ({ children, ...props }) => (
       <h1 className="text-3xl font-bold tracking-tight text-primary text-center mb-10 pb-4 border-b border-border scroll-mt-20" {...props}>
         {children}
       </h1>
     ),
-    h2: ({ children, node, ...props }) => (
+    h2: ({ children, ...props }) => (
       <h2 className="text-2xl font-bold text-violet-400 text-center mt-12 mb-6 scroll-mt-20" {...props}>
         {children}
       </h2>
     ),
-    h3: ({ children, node, ...props }) => (
+    h3: ({ children, ...props }) => (
       <h3 className="text-xl font-semibold text-indigo-400 text-center mt-10 mb-4 scroll-mt-20" {...props}>
         {children}
       </h3>
     ),
-    h4: ({ children, node, ...props }) => (
+    h4: ({ children, ...props }) => (
       <h4 className="text-lg font-medium text-amber-500 mt-8 mb-3 scroll-mt-20" {...props}>
         {children}
       </h4>
     ),
-    h5: ({ children, node, ...props }) => (
+    h5: ({ children, ...props }) => (
         <h5 className="text-base font-medium text-emerald-500 mt-6 mb-2" {...props}>{children}</h5>
     ),
-    h6: ({ children, node, ...props }) => (
+    h6: ({ children, ...props }) => (
         <h6 className="text-sm font-medium text-muted-foreground mt-4 mb-2" {...props}>{children}</h6>
     ),
     
     // Images
-    img: ({ src, node, ..._props }) => {
+    img: ({ src, ..._props }) => {
       let imageSrc = src;
       if (
         courseId &&
@@ -358,35 +360,35 @@ export function NoteViewer({
       );
     },
     // Tables
-    table: ({ children, node, ...props }) => (
+    table: ({ children, ...props }) => (
       <div className="overflow-x-auto my-6 rounded-lg border border-border bg-card">
         <table className="min-w-full divide-y divide-border" {...props}>
           {children}
         </table>
       </div>
     ),
-    colgroup: ({ children, node, ...props }) => {
+    colgroup: ({ children, ...props }) => {
       const cleanChildren = React.Children.toArray(children).filter(
         child => typeof child !== 'string' || child.trim() !== ''
       );
       return <colgroup {...props}>{cleanChildren}</colgroup>;
     },
-    th: ({ children, node, ...props }) => (
+    th: ({ children, ...props }) => (
       <th className="bg-muted px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider" {...props}>
         {children}
       </th>
     ),
-    td: ({ children, node, ...props }) => (
+    td: ({ children, ...props }) => (
       <td className="px-4 py-3 text-sm text-foreground border-t border-border whitespace-pre-wrap" {...props}>
         {children}
       </td>
     ),
-    blockquote: ({ children, node, ...props }) => (
+    blockquote: ({ children, ...props }) => (
       <blockquote className="border-l-4 border-primary pl-4 italic text-muted-foreground my-4 bg-muted/20 py-1 pr-2 rounded-r" {...props}>
         {children}
       </blockquote>
     ),
-    a: ({ children, href, node, ...props }) => (
+    a: ({ children, href, ...props }) => (
       <a
         href={href}
         className="text-primary hover:text-primary/80 underline decoration-primary/30 underline-offset-2 transition-colors"
@@ -397,14 +399,14 @@ export function NoteViewer({
         {children}
       </a>
     ),
-    ul: ({ children, node, ...props }) => <ul className="list-disc ml-6 my-4 space-y-1 text-foreground marker:text-primary" {...props}>{children}</ul>,
-    ol: ({ children, node, ...props }) => <ol className="list-decimal ml-6 my-4 space-y-1 text-foreground marker:text-primary" {...props}>{children}</ol>,
-    li: ({ children, node, ...props }) => <li className="pl-1" {...props}>{children}</li>,
-    p: ({ children, node, ...props }) => <p className="my-3 leading-7 text-foreground/90" {...props}>{children}</p>,
-    hr: ({ node, ...props }: any) => <hr className="my-8 border-border" {...props} />,
+    ul: ({ children, ...props }) => <ul className="list-disc ml-6 my-4 space-y-1 text-foreground marker:text-primary" {...props}>{children}</ul>,
+    ol: ({ children, ...props }) => <ol className="list-decimal ml-6 my-4 space-y-1 text-foreground marker:text-primary" {...props}>{children}</ol>,
+    li: ({ children, ...props }) => <li className="pl-1" {...props}>{children}</li>,
+    p: ({ children, ...props }) => <p className="my-3 leading-7 text-foreground/90" {...props}>{children}</p>,
+    hr: ({ ...props }) => <hr className="my-8 border-border" {...props} />,
     
     // Code blocks
-    code: ({ className, children, node, ...props }) => {
+    code: ({ className, children, ...props }) => {
       const match = /language-(\w+)/.exec(className || "");
       const isInline = !match;
 
@@ -421,7 +423,7 @@ export function NoteViewer({
         </code>
       );
     },
-    pre: ({ children, node, ...props }) => (
+    pre: ({ children, ...props }) => (
       <pre className="my-4 overflow-x-auto" {...props}>
         {children}
       </pre>

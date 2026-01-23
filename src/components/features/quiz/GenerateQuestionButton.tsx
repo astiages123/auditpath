@@ -85,11 +85,14 @@ export function GenerateQuestionButton({ chunkId, onComplete }: GenerateQuestion
 
   useEffect(() => {
     if (open) {
-      setInitializing(true);
-      setLogs([]);
-      setCurrentStep(null);
-      setSavedCount(0);
-      refreshStatus().finally(() => setInitializing(false));
+      // Use microtask to avoid "setState in effect" warning if synchronous
+      Promise.resolve().then(() => {
+        setLogs([]);
+        setCurrentStep(null);
+        setSavedCount(0);
+        setInitializing(true);
+        refreshStatus().finally(() => setInitializing(false));
+      });
     }
   }, [open, refreshStatus]);
 

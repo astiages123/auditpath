@@ -267,8 +267,8 @@ export function QuizEngine({
                 });
                 
                 // 2. Background Generation (Follow-up + Refill)
-                if (chunkId) {
-                    checkAndTriggerBackgroundGeneration(chunkId, incorrectIdsRef.current, courseId, user.id);
+                if (chunkId && user?.id) {
+                    checkAndTriggerBackgroundGeneration(chunkId, incorrectIdsRef.current, courseId);
                 }
            }
 

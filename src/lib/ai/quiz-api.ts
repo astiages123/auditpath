@@ -38,7 +38,7 @@ export interface QuotaStatus {
 /**
  * @deprecated Edge Function kaldırıldı. Bunun yerine quiz-generator.ts kullanın.
  */
-export async function triggerQuizGeneration(_chunkId: string): Promise<{ success: boolean; error?: string }> {
+export async function triggerQuizGeneration(): Promise<{ success: boolean; error?: string }> {
   console.warn('[QuizApi] triggerQuizGeneration deprecated. quiz-generator.ts kullanın.');
   return { success: false, error: 'Edge Function kaldırıldı. Client-side generator kullanın.' };
 }

@@ -1,12 +1,10 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback } from "react";
 import { useTimerStore } from "@/store/useTimerStore";
 import {
   getDailySessionCount,
   deletePomodoroSession,
-  getStreak,
 } from "@/lib/client-db";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 
 export type PomodoroMode = "work" | "break";
 
@@ -39,14 +37,6 @@ export function usePomodoro() {
 
   const { user } = useAuth();
   const userId = user?.id;
-  const [streak, setStreak] = useState(0);
-
-  // Still fetch streak here as it's purely for UI display in this hook's consumers
-  useEffect(() => {
-    if (userId) {
-      getStreak(userId).then((s) => setStreak(s));
-    }
-  }, [userId]);
 
   // Start/Resume Wrapper
   const handleStart = async () => {
@@ -106,7 +96,7 @@ export function usePomodoro() {
     }
     
     startTimer();
-  }, [isBreak, setMode, incrementSession, startTimer, userId, setSessionCount, setSessionId]);
+  }, [isBreak, setMode, incrementSession, startTimer, userId, setSessionCount]);
 
   const resetAndClose = async () => {
     if (userId && sessionId) {
@@ -151,7 +141,6 @@ export function usePomodoro() {
     timeLeft,
     isOpen: isWidgetOpen,
     setOpen: setWidgetOpen,
-    streak,
     originalStartTime,
     pauseStartTime,
   };

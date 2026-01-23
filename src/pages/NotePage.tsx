@@ -42,9 +42,10 @@ export default function NotePage() {
     }, [loading, note, location.hash]);
 
     const processedContent = React.useMemo(() => {
-        if (!note?.content) return "";
-        return note.content.replace(/\\"/g, '"');
-    }, [note?.content]);
+        const content = note?.content;
+        if (!content) return "";
+        return content.replace(/\\"/g, '"');
+    }, [note]);
 
     if (loading) {
         return (

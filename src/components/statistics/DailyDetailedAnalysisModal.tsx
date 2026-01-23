@@ -7,7 +7,7 @@ import { Clock, Target, Coffee, Pause, Info, History, BarChart3, Calendar, Chevr
 import type { DailyEfficiencySummary, DetailedSession, TimelineBlock } from "@/lib/client-db";
 import { getRecentSessions } from "@/lib/client-db";
 import { cn } from "@/lib/utils";
-import type { Json } from "@/lib/types/supabase";
+// Json import removed as unused
 import { getCycleCount } from "@/lib/pomodoro-utils";
 import { Badge } from "@/components/ui/badge";
 
@@ -33,8 +33,9 @@ const getScoreBg = (score: number) => {
 
 // Format time from seconds
 const formatTime = (seconds: number) => {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
+  const totalMinutes = Math.round(seconds / 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
   if (h > 0) return `${h}sa ${m}dk`;
   return `${m}dk`;
 };

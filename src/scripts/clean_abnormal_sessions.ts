@@ -35,14 +35,11 @@ async function cleanAbnormalSessions() {
   }
 
   let updatedCount = 0;
-  let deletedCount = 0;
-
   for (const session of sessions) {
     let needsUpdate = false;
     let newWork = session.total_work_time;
     let newBreak = session.total_break_time;
     let newPause = session.total_pause_time;
-    let shouldDelete = false;
 
     // Report Logic: 
     // User sees "11280 dk" in UI.

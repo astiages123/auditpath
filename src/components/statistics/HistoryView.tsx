@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { format, subDays } from "date-fns";
+import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend } from "recharts";
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 import { getHistoryStats, type HistoryStats } from "@/lib/client-db";
 import { Loader2 } from "lucide-react";
 
@@ -13,7 +13,7 @@ interface HistoryViewProps {
 
 export function HistoryView({ userId }: HistoryViewProps) {
     const [loading, setLoading] = useState(true);
-    const [data, setData] = useState<HistoryStats[]>([]);
+    const [data, setData] = useState<(HistoryStats & { displayDate: string })[]>([]);
 
     useEffect(() => {
         if (!userId) return;
@@ -26,8 +26,7 @@ export function HistoryView({ userId }: HistoryViewProps) {
                     ...s,
                     displayDate: format(new Date(s.date), "d MMM", { locale: tr })
                 }));
-                // @ts-ignore
-                setData(formattedStats);
+                setData(formattedStats as (HistoryStats & { displayDate: string })[]);
             } catch (error) {
                 console.error("Failed to fetch history:", error);
             } finally {
@@ -118,7 +117,7 @@ export function HistoryView({ userId }: HistoryViewProps) {
                                              <div className="bg-card/80 backdrop-blur-md border border-border/50 p-4 rounded-2xl shadow-xl">
                                                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider mb-3 pb-2 border-b border-border/50">{label}</p>
                                                  <div className="space-y-2">
-                                                     {payload.map((item: any, idx: number) => (
+                                                     {(payload as { name: string; value: number; fill: string }[]).map((item, idx) => (
                                                          <div key={idx} className="flex items-center justify-between gap-8">
                                                              <div className="flex items-center gap-2">
                                                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.fill === 'url(#barGradientPrimary)' ? 'var(--primary)' : 'var(--accent)' }} />
@@ -161,7 +160,7 @@ export function HistoryView({ userId }: HistoryViewProps) {
                 </div>
                 
                 <div className="grid gap-3">
-                    {data.slice().reverse().map((day: any, i) => {
+                    {[...data].reverse().map((day, i) => {
                         const ratio = day.video > 0 ? day.pomodoro / day.video : 0;
                         const ratioColor = ratio < 1.0 || ratio > 2.2 ? 'text-red-500' : 
                                          ratio >= 1.2 && ratio <= 1.7 ? 'text-green-500' :

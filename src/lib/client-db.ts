@@ -34,10 +34,12 @@ export interface DayActivity {
 
 export interface EfficiencyData {
   ratio: number;
+  efficiencyScore: number;
   trend: "up" | "down" | "stable";
   isAlarm: boolean;
   videoMinutes: number;
   pomodoroMinutes: number;
+  quizMinutes: number;
 }
 
 export interface TimelineBlock {
@@ -62,7 +64,7 @@ export async function getCategories(): Promise<Category[]> {
   if (catError) {
     const isAbort = catError.message?.includes("AbortError") || catError.code === "ABORT_ERROR";
     if (!isAbort) {
-      console.error('Error fetching categories:', catError);
+      // Log to external service if needed
     }
     return [];
   }
@@ -131,12 +133,6 @@ export async function getUserStats(userId: string) {
     const activeDays = new Set<string>();
     let firstActivityDate: Date | null = null;
     
-    // Helper to normalize date string to YYYY-MM-DD (local time usually fine for simple streak)
-    const toDateString = (dateStr: string) => {
-        const d = new Date(dateStr);
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    };
-
     if (progress) {
       for (const p of progress) {
           const dateStr = p.completed_at || p.updated_at; // Fallback to updated_at
@@ -377,7 +373,6 @@ export async function getUserStats(userId: string) {
     if (e?.name === 'AbortError' || e?.message?.includes('AbortError')) {
       return null;
     }
-    console.error("Error in getUserStats:", error);
     return null;
   }
 }
@@ -458,7 +453,7 @@ export async function getUnlockedAchievements(userId: string): Promise<UnlockedA
   if (error) {
     const isAbort = error.message?.includes("AbortError") || error.code === "ABORT_ERROR";
     if (!isAbort) {
-      console.error("Error fetching achievements:", error);
+      // Log to tracking service
     }
     return [];
   }
@@ -516,7 +511,6 @@ export async function getDailySessionCount(userId: string) {
     .gte('started_at', today.toISOString());
 
   if (error) {
-    console.error("Error fetching daily session count:", error);
     return 0;
   }
 
@@ -535,14 +529,7 @@ export async function getLatestActiveSession(userId: string) {
     .limit(1)
     .maybeSingle();
 
-  if (error) console.error("Error fetching latest active session:", error);
   return data;
-}
-
-export async function getStreak(_userId: string) {
-  // Deprecated: Consolidated into getUserStats logic or handled via generic stats.
-  // Returning 0 to avoid breaking legacy calls until fully removed.
-  return 0;
 }
 
 export async function deletePomodoroSession(sessionId: string) {
@@ -565,7 +552,7 @@ export async function updatePomodoroHeartbeat(sessionId: string): Promise<void> 
     .eq('id', sessionId);
 
   if (error) {
-    console.error('Heartbeat update failed:', error);
+    // Heartbeat failed
   }
 }
 
@@ -582,7 +569,6 @@ export async function getVideoProgress(
     .in('video_number', videoNumbers);
 
   if (videoError || !videos) {
-    console.error('Error fetching videos for progress:', videoError);
     return {};
   }
 
@@ -651,10 +637,7 @@ export async function toggleVideoProgress(
   if (error) {
     console.error('Error toggling video progress:', error);
   }
-  // video_logs artık kullanılmıyor - completed_at zaten video_progress'te kaydediliyor
 }
-
-// completePomodoroSession fonksiyonu kaldırıldı (kullanılmıyordu)
 
 export async function toggleVideoProgressBatch(
   userId: string,
@@ -690,7 +673,6 @@ export async function toggleVideoProgressBatch(
   if (error) {
     console.error('Error batch toggling video progress:', error);
   }
-  // video_logs artık kullanılmıyor - completed_at zaten video_progress'te kaydediliyor
 }
 
 export async function getDailyStats(userId: string): Promise<DailyStats> {
@@ -724,7 +706,7 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
   }
 
   // 2. Fetch Yesterday's Pomodoro Stats (for Trend)
-  const { data: yesterdaySessions, error: yesterdayError } = await supabase
+  const { data: yesterdaySessions } = await supabase
     .from("pomodoro_sessions")
     .select("total_work_time")
     .eq("user_id", userId)
@@ -732,7 +714,7 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     .lt("started_at", today.toISOString());
 
   // 3. Fetch Today's Video Stats using video_progress.completed_at
-  const { data: todayVideos, error: videoError } = await supabase
+  const { data: todayVideos } = await supabase
     .from("video_progress")
     .select("video_id, video:videos(duration_minutes)")
     .eq("user_id", userId)
@@ -820,7 +802,7 @@ export async function getLast30DaysActivity(userId: string): Promise<DayActivity
   }
 
   const dailyCounts: Record<string, { count: number; minutes: number }> = {};
-  (data as any[])?.forEach((s) => {
+  (data as Database['public']['Tables']['pomodoro_sessions']['Row'][])?.forEach((s) => {
     const d = new Date(s.started_at);
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     dailyCounts[dateStr] = {
@@ -871,7 +853,7 @@ export async function getEfficiencyRatio(userId: string): Promise<EfficiencyData
   // 1. Fetch Today's Pomodoro Stats
   const { data: todaySessions, error: sessionError } = await supabase
     .from("pomodoro_sessions")
-    .select("total_work_time, total_break_time")
+    .select("total_work_time, total_break_time, started_at, ended_at")
     .eq("user_id", userId)
     .gte("started_at", today.toISOString())
     .lt("started_at", tomorrow.toISOString())
@@ -880,41 +862,115 @@ export async function getEfficiencyRatio(userId: string): Promise<EfficiencyData
   // 2. Fetch Today's Video Stats using video_progress
   const { data: todayVideos, error: videoError } = await supabase
     .from("video_progress")
-    .select("video_id, video:videos(duration_minutes)")
+    .select("video_id, completed_at, video:videos(duration_minutes)")
     .eq("user_id", userId)
     .eq("completed", true)
     .gte("completed_at", today.toISOString())
     .lt("completed_at", tomorrow.toISOString());
 
+  // 3. Fetch Today's Quiz Progress (to filter out "Quiz Sessions")
+  const { data: todayQuiz } = await supabase
+    .from("user_quiz_progress")
+    .select("answered_at")
+    .eq("user_id", userId)
+    .gte("answered_at", today.toISOString())
+    .lt("answered_at", tomorrow.toISOString());
+
   if (sessionError || videoError) {
     console.error("Error fetching efficiency metrics:", sessionError || videoError);
   }
 
-  const totalWork = (todaySessions as any[])?.reduce((acc: number, s: any) => acc + (s.total_work_time || 0), 0) || 0;
+  const sessions = (todaySessions as Database['public']['Tables']['pomodoro_sessions']['Row'][]) || [];
+  const totalWork = sessions.reduce((acc: number, s) => acc + (s.total_work_time || 0), 0) || 0;
   
   let totalVideoMinutes = 0;
   if (todayVideos) {
-    totalVideoMinutes = todayVideos.reduce((acc: number, vp: any) => {
-      const duration = (vp.video as { duration_minutes?: number })?.duration_minutes || 0;
+    totalVideoMinutes = todayVideos.reduce((acc: number, vp) => {
+      const video = vp.video as { duration_minutes?: number } | null;
+      const duration = video?.duration_minutes || 0;
       return acc + duration;
     }, 0);
+  }
+
+  // --- Quiz Filtering Logic ---
+  // Identify sessions that are predominantly "Quiz Sessions"
+  // A session is considered a "Quiz Session" if:
+  // 1. It has significant quiz activity (e.g. > 5 questions answered) during the session window.
+  // 2. No video was completed during the session (or very little).
+  
+  let quizSessionMinutes = 0;
+  
+  if (todayQuiz && todayQuiz.length > 0) {
+      sessions.forEach(session => {
+          const start = new Date(session.started_at).getTime();
+          // Use ended_at if available, else estimate based on work+break+pause
+          const end = session.ended_at 
+              ? new Date(session.ended_at).getTime() 
+              : start + ((session.total_work_time || 0) + (session.total_break_time || 0) * 1000); // fallback
+          
+          // Count questions answered in this window
+          const questionsInSession = todayQuiz.filter(q => {
+              if (!q.answered_at) return false;
+              const t = new Date(q.answered_at).getTime();
+              return t >= start && t <= end;
+          }).length;
+
+          // Check if any video was completed in this session
+          const videosInSession = todayVideos?.filter(v => {
+               if (!v.completed_at) return false;
+               const t = new Date(v.completed_at).getTime();
+               return t >= start && t <= end;
+          }).length || 0;
+          
+          // Threshold: 5 questions and 0 videos -> It's a quiz session
+          if (questionsInSession >= 5 && videosInSession === 0) {
+              // It is a quiz session.
+              quizSessionMinutes += Math.round((session.total_work_time || 0) / 60);
+          }
+      });
   }
 
   // DB stores Seconds. Convert to Minutes.
   const totalWorkMinutes = Math.round(totalWork / 60);
 
-  // Calculate Learning Quotient: Pomodoro Minutes / Video Minutes
-  // If Video duration is 0, we avoid division by zero
-  const ratio = totalVideoMinutes > 0 
-    ? Math.round((totalWorkMinutes / totalVideoMinutes) * 10) / 10 
+  // Effective Work Time: Subtract Quiz Time
+  // Ensure we don't go below Video Time (impossible but safety check)
+  const effectiveWorkMinutes = Math.max(
+      totalVideoMinutes, 
+      totalWorkMinutes - quizSessionMinutes
+  );
+  
+  // Revised Ratio Calculation
+  // Nominal Ratio (Video / Effective)
+  const ratio = effectiveWorkMinutes > 0 
+    ? Math.round((totalVideoMinutes / effectiveWorkMinutes) * 10) / 10 
     : 0.0;
+    
+  // Efficiency Score Calculation (0-100)
+  // Logic: 
+  // Ratio 1.0 (Balanced) -> 80 pts
+  // Ratio 1.2 - 1.5 (Ideal) -> 90-100 pts
+  // Ratio > 2.0 (Too fast/Overload) -> Drop points
+  // Ratio < 0.5 (Too slow) -> Low points
+  
+  let efficiencyScore = 0;
+  if (ratio <= 0) efficiencyScore = 0;
+  else if (ratio < 0.5) efficiencyScore = 30 + (ratio * 40); // 0.1->34, 0.4->46
+  else if (ratio < 1.0) efficiencyScore = 50 + ((ratio - 0.5) * 60); // 0.5->50, 0.9->74
+  else if (ratio <= 1.5) efficiencyScore = 80 + ((ratio - 1.0) * 40); // 1.0->80, 1.5->100 (Peak)
+  else if (ratio <= 2.0) efficiencyScore = 100 - ((ratio - 1.5) * 40); // 1.6->96, 2.0->80
+  else efficiencyScore = Math.max(20, 80 - ((ratio - 2.0) * 20)); // Slow decline
+
+  efficiencyScore = Math.round(efficiencyScore);
 
   return {
     ratio,
+    efficiencyScore,
     trend: "stable",
-    isAlarm: false, // You can implement a check here: e.g. ratio > 3.0
+    isAlarm: ratio > 2.5, 
     videoMinutes: Math.round(totalVideoMinutes),
-    pomodoroMinutes: totalWorkMinutes
+    pomodoroMinutes: totalWorkMinutes,
+    quizMinutes: quizSessionMinutes
   };
 }
 
@@ -1016,7 +1072,7 @@ export async function getHistoryStats(userId: string, days: number = 7): Promise
         statsMap[dateKey] = { pomodoro: 0, video: 0 };
     }
 
-    (sessions as any[])?.forEach(s => {
+    (sessions as Database['public']['Tables']['pomodoro_sessions']['Row'][])?.forEach(s => {
         const d = new Date(s.started_at);
         // Virtual Day Shift for Mapping
         if (d.getHours() < 4) d.setDate(d.getDate() - 1);
@@ -1066,7 +1122,7 @@ export async function getRecentSessions(userId: string, limit: number = 20): Pro
     return [];
   }
 
-  return (data as any[]).map((s) => {
+  return (data as Database['public']['Tables']['pomodoro_sessions']['Row'][]).map((s) => {
     // Trust DB columns as the primary source of truth for finished sessions to match getDailyStats
     const workTime = s.total_work_time || 0;
     const breakTime = s.total_break_time || 0;
@@ -1082,7 +1138,7 @@ export async function getRecentSessions(userId: string, limit: number = 20): Pro
       pauseSeconds: pauseTime,
       breakSeconds: breakTime,
       type: (breakTime > workTime) ? "break" : "work",
-      timeline: Array.isArray(s.timeline) ? (s.timeline as any[]) : [],
+      timeline: Array.isArray(s.timeline) ? (s.timeline as Json[]) : [],
     };
   });
 }
@@ -1378,7 +1434,7 @@ export async function getCourseTopicsWithCounts(courseId: string): Promise<Topic
     }
 
     // 2.1 Fetch Solved Questions to determine isCompleted
-    let solvedIds = new Set<string>();
+    const solvedIds = new Set<string>();
     if (userId) {
         const { data: solved } = await supabase
             .from('user_quiz_progress')

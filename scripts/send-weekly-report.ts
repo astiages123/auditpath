@@ -127,7 +127,7 @@ async function getMasteryUpdates(userId: string) {
     }));
 }
 
-async function generateAIInsight(current: any, previous: any) {
+async function generateAIInsight(current: { totalWorkHours: number; totalQuestions: number; successRate: number }, previous: { totalWorkHours: number; totalQuestions: number; successRate: number }) {
   if (!openai) return "Harika bir hafta geçirdin! İstikrarını korumaya devam et. 🚀";
 
   const prompt = `
@@ -158,7 +158,7 @@ async function generateAIInsight(current: any, previous: any) {
   }
 }
 
-function getComparisonBadge(current: number, previous: number, suffix: string = '') {
+function getComparisonBadge(current: number, previous: number) {
     const diff = current - previous;
     const isPositive = diff > 0;
     const isZero = diff === 0;
@@ -172,11 +172,11 @@ function getComparisonBadge(current: number, previous: number, suffix: string = 
 function generateEmailHtml(
   currentStats: Awaited<ReturnType<typeof getWeeklyStats>>,
   prevStats: Awaited<ReturnType<typeof getWeeklyStats>>,
-  masteryUpdates: any[],
+  masteryUpdates: Array<{ chunk_id: string; mastery_score: number; updated_at: string | null; title: string }>,
   aiMessage: string,
   radarChartUrl: string
 ) {
-  const { totalWorkHours, totalQuestions, successRate, totalVideos, questionStats, radarData } = currentStats;
+  const { totalQuestions, successRate, totalVideos, questionStats } = currentStats;
   const formattedTime = formatTime(currentStats.totalWorkSeconds);
 
   return `
@@ -346,9 +346,11 @@ function generateRadarChartUrl(radarData: { subject: string, hours: number }[]) 
       
       return `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(chartConfig))}&w=400&h=400&bkg=%231f2937`; 
 }
-function calculateTrend(current: number, previous: number) {
-    if (previous === 0) return current > 0 ? '+∞%' : '0%';
-    const diff = ((current - previous) / previous) * 100;
+/** @deprecated unused */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function calculateTrend(_current: number, _previous: number) {
+    if (_previous === 0) return _current > 0 ? '+∞%' : '0%';
+    const diff = ((_current - _previous) / _previous) * 100;
     const sign = diff > 0 ? '+' : '';
     return `${sign}${Math.round(diff)}%`;
 }

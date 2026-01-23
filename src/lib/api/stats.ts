@@ -69,7 +69,7 @@ export async function getUserDashboardStats(userId: string): Promise<DashboardSt
                 .order('answered_at', { ascending: true }), // Sorted for trend
                 
             // Total Completed (Archived Questions for User)
-            supabase.from('user_question_status' as 'questions') // Cast to existing table type to satisfy TS if missing
+            supabase.from('user_question_status')
                 .select('*', { count: 'exact', head: true })
                 .eq('user_id', userId)
                 .eq('status', 'archived'), 
@@ -158,9 +158,9 @@ export async function getUserDashboardStats(userId: string): Promise<DashboardSt
             }
         });
 
-        // Calculate mastery per course (aggregating chunk_mastery)
+        // Calculate mastery per course (aggregating chunk_mastery for current user)
         const courseMasteryMap = new Map<string, { totalScore: number; count: number }>();
-        const { data: allChunkMasteries } = await supabase.from('chunk_mastery').select('course_id, mastery_score');
+        const { data: allChunkMasteries } = await supabase.from('chunk_mastery').select('course_id, mastery_score').eq('user_id', userId);
         allChunkMasteries?.forEach(m => {
             const current = courseMasteryMap.get(m.course_id) || { totalScore: 0, count: 0 };
             current.totalScore += m.mastery_score;
@@ -189,7 +189,7 @@ export async function getUserDashboardStats(userId: string): Promise<DashboardSt
         
         const [totalQuestions, useStatusCounts] = await Promise.all([
              supabase.from('questions').select('*', { count: 'exact', head: true }),
-             supabase.from('user_question_status' as 'questions')
+             supabase.from('user_question_status')
                 .select('status')
                 .eq('user_id', userId)
         ]);

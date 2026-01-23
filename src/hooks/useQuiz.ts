@@ -108,7 +108,7 @@ export function useQuiz(): UseQuizReturn {
               
               if (chunk?.status === 'PENDING') {
                   console.log('[useQuiz] Triggering generation via Edge Function...');
-                  await triggerQuizGeneration(params.chunkId);
+                  await triggerQuizGeneration();
                   // Wait a bit or poll? For now, just show error and user can retry
                   setState((prev) => ({
                       ...prev,

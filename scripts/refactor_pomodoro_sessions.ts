@@ -97,7 +97,7 @@ async function refactor() {
     const fields = parseCSVLine(line);
     const timelineStr = fields[6].replace(/""/g, '"');
     let timeline = [];
-    try { timeline = JSON.parse(timelineStr); } catch (e) {}
+    try { timeline = JSON.parse(timelineStr); } catch { /* ignore parse error */ }
     
     return {
       id: fields[0],

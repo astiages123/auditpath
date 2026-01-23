@@ -13,8 +13,9 @@
 
 import { supabase } from '@/lib/supabase';
 import type { Json } from '@/lib/types/supabase';
-import { generateConceptMap, generateQuestionBatch, type ConceptMapItem, type GeneratedQuestion } from './mimo-client';
-import { validateQuestionBatch, type ValidationResult, type QuestionToValidate } from './cerebras-client';
+import { generateConceptMap, type ConceptMapItem } from './mapping';
+import { generateQuestionBatch } from './question-generation';
+import { validateQuestionBatch, type QuestionToValidate } from './validation';
 
 // Constants
 const BATCH_SIZE = 1; // Tek tek üretim - JSON hatalarını azaltır
@@ -386,8 +387,8 @@ export async function generateQuestionsForChunk(
  * Generate a single follow-up question for a wrong answer
  */
 export async function generateFollowUpSingle(
-  context: import('./mimo-client').WrongAnswerContext,
-  onLog: (msg: string, details?: any) => void
+  context: import('./question-generation').WrongAnswerContext,
+  onLog: (msg: string, details?: unknown) => void
 ): Promise<string | null> {
   try {
     // 1. Fetch chunk and course data
@@ -410,7 +411,7 @@ export async function generateFollowUpSingle(
       .maybeSingle();
 
     // 3. Generate question (no validation stage for follow-ups to keep it fast/adaptive)
-    const question = await import('./mimo-client').then(m => 
+    const question = await import('./question-generation').then(m => 
       m.generateFollowUpQuestion(
         context,
         chunk.course_name,

@@ -68,7 +68,7 @@ async function importSessions() {
   console.log(`📊 Found ${dataLines.length} records to import\n`);
 
   // Test connection first
-  const { data: testData, error: testError } = await supabase.from('pomodoro_sessions').select('id').limit(1);
+  const { error: testError } = await supabase.from('pomodoro_sessions').select('id').limit(1);
   if (testError) {
     console.error('❌ Connection test failed:', testError.message);
     return;
@@ -93,7 +93,7 @@ async function importSessions() {
       const timelineStr = fields[6];
       const startedAt = fields[7]?.trim();
       const endedAt = fields[8]?.trim();
-      const createdAt = fields[9]?.trim();
+      // const createdAt = fields[9]?.trim();
       const courseName = fields[10]?.trim();
       const isCompleted = fields[11]?.trim() === 'true';
 

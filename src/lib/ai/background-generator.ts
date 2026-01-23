@@ -17,8 +17,7 @@ import { supabase } from '../supabase';
 export async function checkAndTriggerBackgroundGeneration(
   chunkId: string,
   incorrectQuestionIds: string[],
-  courseId: string,
-  _userId: string
+  courseId: string
 ): Promise<void> {
   try {
     // For incorrect questions, we could generate follow-up questions
