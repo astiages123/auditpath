@@ -18,12 +18,14 @@
     "jsx": "react-jsx",
     "incremental": true,
     "baseUrl": ".",
+    "paths": {
       "@/*": ["./src/*"],
       "@/app/*": ["./src/app/*"],
       "@/features/*": ["./src/features/*"],
       "@/shared/*": ["./src/shared/*"],
       "@/config/*": ["./src/config/*"],
       "@/styles/*": ["./src/styles/*"]
+    }
   },
   "include": [
     "src/vite-env.d.ts",
