@@ -46,14 +46,20 @@ export function calculateSessionTotals(
     // Prevent negative duration if system time changes or logic is weird
     const duration = Math.max(0, endTime - event.start);
 
-    switch (event.type) {
+    const eventType = (event.type || 'work').toLowerCase();
+    switch (eventType) {
       case 'work':
+      case 'çalışma':
+      case 'odak':
         workMs += duration;
         break;
       case 'break':
+      case 'mola':
         breakMs += duration;
         break;
       case 'pause':
+      case 'duraklatma':
+      case 'duraklama':
         pauseMs += duration;
         break;
     }
@@ -65,4 +71,54 @@ export function calculateSessionTotals(
     totalBreak: Math.round(breakMs / 1000),
     totalPause: Math.round(pauseMs / 1000),
   };
+}
+
+/**
+ * Counts the number of pause events in the timeline.
+ * @param timeline - The array of timeline events
+ * @returns The count of pause events
+ */
+export function calculatePauseCount(timeline: TimelineEvent[] | unknown): number {
+  if (!Array.isArray(timeline)) {
+    return 0;
+  }
+
+  return timeline.filter(event => {
+    const eventType = (event.type || '').toLowerCase();
+    return eventType === 'pause' || eventType === 'duraklatma' || eventType === 'duraklama';
+  }).length;
+}
+
+/**
+ * Calculates the efficiency score based on session totals.
+ * Formula: (work / (work + break + pause)) * 100
+ * @param totals - Object containing totalWork, totalBreak, totalPause in seconds
+ * @returns Efficiency score as a percentage (0-100)
+ */
+export function calculateEfficiencyScore(totals: SessionTotals): number {
+  const { totalWork, totalBreak, totalPause } = totals;
+  const totalTime = totalWork + totalBreak + totalPause;
+  
+  if (totalTime === 0) {
+    return 0;
+  }
+  
+  // Round to 2 decimal places
+  return Math.round((totalWork / totalTime) * 10000) / 100;
+}
+
+/**
+ * Calculates the number of 'work' cycles in a session based on the timeline.
+ * @param timeline - The array of timeline events
+ * @returns The number of work cycles
+ */
+export function getCycleCount(timeline: TimelineEvent[] | unknown): number {
+  if (!Array.isArray(timeline)) {
+    return 0;
+  }
+
+  return timeline.filter(event => {
+    const eventType = (event.type || '').toLowerCase();
+    return eventType === 'work' || eventType === 'çalışma' || eventType === 'odak';
+  }).length;
 }

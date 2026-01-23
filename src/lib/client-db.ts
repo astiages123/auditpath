@@ -1,6 +1,6 @@
 import { supabase } from './supabase';
 import type { Database, Json } from './types/supabase';
-import { calculateSessionTotals } from './pomodoro-utils';
+import { calculateSessionTotals, calculatePauseCount, calculateEfficiencyScore, getCycleCount } from './pomodoro-utils';
 
 
 export type Category = Database['public']['Tables']['categories']['Row'] & {
@@ -21,6 +21,7 @@ export interface DailyStats {
   totalPauseMinutes: number;
   totalVideoMinutes: number;
   completedVideos: number;
+  totalCycles: number;
 }
 
 export interface DayActivity {
@@ -393,7 +394,9 @@ export async function upsertPomodoroSession(
   },
   userId: string
 ) {
-  const { totalWork, totalBreak, totalPause } = calculateSessionTotals(session.timeline);
+  const totals = calculateSessionTotals(session.timeline);
+  const pauseCount = calculatePauseCount(session.timeline);
+  const efficiencyScore = calculateEfficiencyScore(totals);
 
   // Validate if courseId is a UUID
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -427,9 +430,12 @@ export async function upsertPomodoroSession(
       timeline: session.timeline,
       started_at: new Date(session.startedAt).toISOString(),
       ended_at: new Date().toISOString(),
-      total_work_time: totalWork, // Now in seconds (INTEGER)
-      total_break_time: totalBreak, // Now in seconds
-      total_pause_time: totalPause, // Now in seconds
+      total_work_time: totals.totalWork,
+      total_break_time: totals.totalBreak,
+      total_pause_time: totals.totalPause,
+      pause_count: pauseCount,
+      efficiency_score: efficiencyScore,
+      last_active_at: new Date().toISOString(),
       is_completed: session.isCompleted || false,
     })
     .select()
@@ -503,15 +509,20 @@ export async function getDailySessionCount(userId: string) {
   }
   today.setHours(4, 0, 0, 0);
 
-  const { count, error } = await supabase
+  const { data, error } = await supabase
     .from('pomodoro_sessions')
-    .select('*', { count: 'exact', head: true })
+    .select('timeline')
     .eq('user_id', userId)
-    .gte('started_at', today.toISOString())
-    .gte('total_work_time', 60); // Only count "meaningful" sessions (at least 1 minute)
+    .gte('started_at', today.toISOString());
 
-  if (error) console.error("Error fetching daily session count:", error);
-  return count || 0;
+  if (error) {
+    console.error("Error fetching daily session count:", error);
+    return 0;
+  }
+
+  // Count work cycles in all sessions today
+  const totalCycles = (data || []).reduce((acc, s) => acc + getCycleCount(s.timeline), 0);
+  return totalCycles;
 }
 
 export async function getLatestActiveSession(userId: string) {
@@ -541,6 +552,21 @@ export async function deletePomodoroSession(sessionId: string) {
     .eq('id', sessionId);
 
   if (error) console.error('Error deleting session:', error);
+}
+
+/**
+ * Updates the heartbeat timestamp for zombie session detection.
+ * Should be called every 30 seconds during active sessions.
+ */
+export async function updatePomodoroHeartbeat(sessionId: string): Promise<void> {
+  const { error } = await supabase
+    .from('pomodoro_sessions')
+    .update({ last_active_at: new Date().toISOString() })
+    .eq('id', sessionId);
+
+  if (error) {
+    console.error('Heartbeat update failed:', error);
+  }
 }
 
 export async function getVideoProgress(
@@ -687,11 +713,11 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
   // 1. Fetch Today's Pomodoro Stats
   const { data: todaySessions, error: todayError } = await supabase
     .from("pomodoro_sessions")
-    .select("total_work_time, total_break_time, total_pause_time")
+    .select("total_work_time, total_break_time, total_pause_time, timeline")
     .eq("user_id", userId)
     .gte("started_at", today.toISOString())
     .lt("started_at", tomorrow.toISOString())
-    .gte('total_work_time', 60); // Consistency: Only count meaningful sessions
+    .or('total_work_time.gte.60,total_break_time.gte.60'); // Anlamlı süreleri (1dk+) dahil et
 
   if (todayError) {
     console.error("Error fetching daily stats:", todayError);
@@ -715,18 +741,23 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     .lt("completed_at", tomorrow.toISOString());
 
   // DB stores Seconds. UI expects Minutes.
+  const todaySessionsData = todaySessions || [];
   const totalWorkSeconds =
-    todaySessions?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
+    todaySessionsData.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
   const totalBreakSeconds =
-    todaySessions?.reduce((acc, s) => acc + (s.total_break_time || 0), 0) || 0;
+    todaySessionsData.reduce((acc, s) => acc + (s.total_break_time || 0), 0) || 0;
   const totalPauseSeconds = 
-    todaySessions?.reduce((acc, s) => acc + (s.total_pause_time || 0), 0) || 0;
+    todaySessionsData.reduce((acc, s) => acc + (s.total_pause_time || 0), 0) || 0;
+
+  // Calculate total cycles
+  const totalCycles = todaySessionsData.reduce((acc, s) => acc + getCycleCount(s.timeline), 0);
   
   const totalWorkMinutes = Math.round(totalWorkSeconds / 60);
   const totalBreakMinutes = Math.round(totalBreakSeconds / 60);
   const totalPauseMinutes = Math.round(totalPauseSeconds / 60);
 
-  const sessionCount = todaySessions?.length || 0;
+  // User expects "Oturum" to mean "Pomodoro Work Cycle"
+  const sessionCount = totalCycles;
 
   const yesterdayWorkSeconds = 
     yesterdaySessions?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
@@ -752,7 +783,7 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
   }
 
   // Default goal 4 hours (240 mins)
-  const goalMinutes = 240;
+  const goalMinutes = 200;
   const progress = Math.min(100, Math.round((totalWorkMinutes / goalMinutes) * 100));
 
   return {
@@ -767,6 +798,7 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     totalPauseMinutes,
     totalVideoMinutes: Math.round(totalVideoMinutes),
     completedVideos: completedVideosCount,
+    totalCycles,
   };
 }
 
@@ -779,7 +811,8 @@ export async function getLast30DaysActivity(userId: string): Promise<DayActivity
     .from("pomodoro_sessions")
     .select("started_at, total_work_time")
     .eq("user_id", userId)
-    .gte("started_at", thirtyDaysAgo.toISOString());
+    .gte("started_at", thirtyDaysAgo.toISOString())
+    .or('total_work_time.gte.60,total_break_time.gte.60');
 
   if (error) {
     console.error("Error fetching activity heatmap:", error);
@@ -787,7 +820,7 @@ export async function getLast30DaysActivity(userId: string): Promise<DayActivity
   }
 
   const dailyCounts: Record<string, { count: number; minutes: number }> = {};
-  data?.forEach((s) => {
+  (data as any[])?.forEach((s) => {
     const d = new Date(s.started_at);
     const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     dailyCounts[dateStr] = {
@@ -841,7 +874,8 @@ export async function getEfficiencyRatio(userId: string): Promise<EfficiencyData
     .select("total_work_time, total_break_time")
     .eq("user_id", userId)
     .gte("started_at", today.toISOString())
-    .lt("started_at", tomorrow.toISOString());
+    .lt("started_at", tomorrow.toISOString())
+    .or('total_work_time.gte.60,total_break_time.gte.60');
 
   // 2. Fetch Today's Video Stats using video_progress
   const { data: todayVideos, error: videoError } = await supabase
@@ -856,11 +890,11 @@ export async function getEfficiencyRatio(userId: string): Promise<EfficiencyData
     console.error("Error fetching efficiency metrics:", sessionError || videoError);
   }
 
-  const totalWork = todaySessions?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
+  const totalWork = (todaySessions as any[])?.reduce((acc: number, s: any) => acc + (s.total_work_time || 0), 0) || 0;
   
   let totalVideoMinutes = 0;
   if (todayVideos) {
-    totalVideoMinutes = todayVideos.reduce((acc, vp) => {
+    totalVideoMinutes = todayVideos.reduce((acc: number, vp: any) => {
       const duration = (vp.video as { duration_minutes?: number })?.duration_minutes || 0;
       return acc + duration;
     }, 0);
@@ -955,7 +989,8 @@ export async function getHistoryStats(userId: string, days: number = 7): Promise
         .from("pomodoro_sessions")
         .select("started_at, total_work_time")
         .eq("user_id", userId)
-        .gte("started_at", startDate.toISOString());
+        .gte("started_at", startDate.toISOString())
+        .or('total_work_time.gte.60,total_break_time.gte.60');
 
     // 2. Fetch Video Progress
     const { data: videoProgress, error: videoError } = await supabase
@@ -981,7 +1016,7 @@ export async function getHistoryStats(userId: string, days: number = 7): Promise
         statsMap[dateKey] = { pomodoro: 0, video: 0 };
     }
 
-    sessions?.forEach(s => {
+    (sessions as any[])?.forEach(s => {
         const d = new Date(s.started_at);
         // Virtual Day Shift for Mapping
         if (d.getHours() < 4) d.setDate(d.getDate() - 1);
@@ -1012,7 +1047,7 @@ export async function getHistoryStats(userId: string, days: number = 7): Promise
         .map(([date, values]) => ({
             date, // Keeps YYYY-MM-DD for sorting
             pomodoro: Math.round(values.pomodoro / 60), // Saniye → Dakika
-            video: values.video // Video zaten dakika cinsinden
+            video: Math.round(values.video) // Video zaten dakika cinsinden
         }))
         .sort((a, b) => a.date.localeCompare(b.date));
 }
@@ -1022,6 +1057,7 @@ export async function getRecentSessions(userId: string, limit: number = 20): Pro
     .from("pomodoro_sessions")
     .select("id, course_name, started_at, ended_at, total_work_time, total_break_time, total_pause_time, timeline")
     .eq("user_id", userId)
+    .or('total_work_time.gte.60,total_break_time.gte.60') // Molaları da getir
     .order("started_at", { ascending: false })
     .limit(limit);
 
@@ -1030,15 +1066,11 @@ export async function getRecentSessions(userId: string, limit: number = 20): Pro
     return [];
   }
 
-  return data.map((s) => {
-    // Calculate totals directly from timeline for 100% accuracy
-    const timeline = Array.isArray(s.timeline) ? (s.timeline as any[]) : [];
-    const { totalWork, totalBreak, totalPause } = calculateSessionTotals(timeline, new Date(s.ended_at).getTime());
-    
-    // Fallback to DB columns if timeline is empty/invalid but columns exist
-    const workTime = totalWork > 0 ? totalWork : (s.total_work_time || 0);
-    const breakTime = totalBreak > 0 ? totalBreak : s.total_break_time || 0; // Keep 0 if computed is 0
-    const pauseTime = totalPause > 0 ? totalPause : s.total_pause_time || 0;
+  return (data as any[]).map((s) => {
+    // Trust DB columns as the primary source of truth for finished sessions to match getDailyStats
+    const workTime = s.total_work_time || 0;
+    const breakTime = s.total_break_time || 0;
+    const pauseTime = s.total_pause_time || 0;
 
     return {
       id: s.id,
@@ -1050,7 +1082,7 @@ export async function getRecentSessions(userId: string, limit: number = 20): Pro
       pauseSeconds: pauseTime,
       breakSeconds: breakTime,
       type: (breakTime > workTime) ? "break" : "work",
-      timeline: timeline,
+      timeline: Array.isArray(s.timeline) ? (s.timeline as any[]) : [],
     };
   });
 }
@@ -1719,5 +1751,112 @@ export async function finishQuizSession(stats: SessionResultStats) {
   return {
     success: true,
     sessionComplete: true
+  };
+}
+
+// --- Daily Efficiency Summary for Master Card ---
+
+export interface DetailedSession {
+  id: string;
+  courseName: string;
+  workTimeSeconds: number;
+  breakTimeSeconds: number;
+  pauseTimeSeconds: number;
+  efficiencyScore: number;
+  timeline: Json[];
+  startedAt: string;
+}
+
+export interface DailyEfficiencySummary {
+  efficiencyScore: number;
+  totalCycles: number;
+  netWorkTimeSeconds: number;
+  totalBreakTimeSeconds: number;
+  totalPauseTimeSeconds: number;
+  pauseCount: number;
+  sessions: DetailedSession[];
+}
+
+export async function getDailyEfficiencySummary(userId: string): Promise<DailyEfficiencySummary> {
+  const now = new Date();
+  const today = new Date(now);
+  
+  // Virtual Day Logic: Day starts at 04:00 AM
+  if (now.getHours() < 4) {
+    today.setDate(today.getDate() - 1);
+  }
+  today.setHours(4, 0, 0, 0);
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const { data: todaySessions, error } = await supabase
+    .from("pomodoro_sessions")
+    .select("id, course_name, started_at, total_work_time, total_break_time, total_pause_time, pause_count, efficiency_score, timeline")
+    .eq("user_id", userId)
+    .gte("started_at", today.toISOString())
+    .lt("started_at", tomorrow.toISOString())
+    .or('total_work_time.gte.60,total_break_time.gte.60')
+    .order("started_at", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching daily efficiency summary:", error);
+  }
+
+  const sessionsData = todaySessions || [];
+
+  // Calculate aggregates
+  let totalWork = 0;
+  let totalBreak = 0;
+  let totalPause = 0;
+  let totalPauseCount = 0;
+  let totalEfficiency = 0;
+  let validEfficiencyCount = 0;
+  let totalCycles = 0;
+
+  const detailedSessions: DetailedSession[] = sessionsData.map((s) => {
+    const work = s.total_work_time || 0;
+    const brk = s.total_break_time || 0;
+    const pause = s.total_pause_time || 0;
+    const eff = s.efficiency_score || 0;
+    const pCount = s.pause_count || 0;
+
+    totalWork += work;
+    totalBreak += brk;
+    totalPause += pause;
+    totalPauseCount += pCount;
+    
+    if (eff > 0) {
+      totalEfficiency += eff;
+      validEfficiencyCount++;
+    }
+
+    totalCycles += getCycleCount(s.timeline);
+
+    return {
+      id: s.id,
+      courseName: s.course_name || "Bilinmeyen Ders",
+      workTimeSeconds: work,
+      breakTimeSeconds: brk,
+      pauseTimeSeconds: pause,
+      efficiencyScore: eff,
+      timeline: Array.isArray(s.timeline) ? (s.timeline as Json[]) : [],
+      startedAt: s.started_at,
+    };
+  });
+
+  // Calculate average efficiency score
+  const avgEfficiency = validEfficiencyCount > 0 
+    ? Math.round(totalEfficiency / validEfficiencyCount) 
+    : 0;
+
+  return {
+    efficiencyScore: avgEfficiency,
+    totalCycles,
+    netWorkTimeSeconds: totalWork,
+    totalBreakTimeSeconds: totalBreak,
+    totalPauseTimeSeconds: totalPause,
+    pauseCount: totalPauseCount,
+    sessions: detailedSessions,
   };
 }

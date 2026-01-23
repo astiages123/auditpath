@@ -55,14 +55,14 @@ export function EfficiencyCard({ data, cumulativeData, userId, subjectData }: Ef
         <>
             <div
                 onClick={() => setIsModalOpen(true)}
-                className="group flex flex-col h-full cursor-pointer p-4 transition-all duration-300 hover:scale-105"
+                className="group flex flex-col h-full"
             >
                 {/* Title and Icon */}
                 <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
-                        <TrendingUp className={`h-4 w-4 ${activeColor}`} />
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                            Verimlilik
+                        <TrendingUp className={`h-6 w-6 ${activeColor}`} />
+                        <h3 className="text-lg font-semibold text-muted-foreground">
+                            Aktif Çalışma Endeksi
                         </h3>
                     </div>
                     {data.isAlarm && (
@@ -75,7 +75,7 @@ export function EfficiencyCard({ data, cumulativeData, userId, subjectData }: Ef
                     <div className={`text-6xl font-black tracking-tighter transition-colors ${activeColor}`}>
                         {data.ratio > 0 ? `${data.ratio}x` : "-"}
                     </div>
-                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-[0.2em] mt-2">
+                    <p className="text-[12px] font-bold text-foreground uppercase tracking-[0.2em] mt-2">
                         Öğrenme Katsayısı
                     </p>
                 </div>
@@ -83,9 +83,9 @@ export function EfficiencyCard({ data, cumulativeData, userId, subjectData }: Ef
                 {/* Compact Progress Bars */}
                 <div className="space-y-3 mt-4">
                     <div className="space-y-1">
-                        <div className="flex justify-between text-[9px] font-black uppercase tracking-widest">
-                            <span className="text-muted-foreground/50">Video</span>
-                            <span className="text-muted-foreground">{data.videoMinutes}dk</span>
+                        <div className="flex justify-between text-[12px] font-black uppercase tracking-widest">
+                            <span className="text-foreground">Video</span>
+                            <span className="text-foreground">{data.videoMinutes}dk</span>
                         </div>
                         <div className="h-1 bg-muted/20 rounded-full overflow-hidden">
                             <div
@@ -95,9 +95,9 @@ export function EfficiencyCard({ data, cumulativeData, userId, subjectData }: Ef
                         </div>
                     </div>
                     <div className="space-y-1">
-                        <div className="flex justify-between text-[9px] font-black uppercase tracking-widest">
-                            <span className="text-muted-foreground/50">Pomodoro</span>
-                            <span className="text-muted-foreground">{data.pomodoroMinutes}dk</span>
+                        <div className="flex justify-between text-[12px] font-black uppercase tracking-widest">
+                            <span className="text-foreground">Pomodoro</span>
+                            <span className="text-foreground">{data.pomodoroMinutes}dk</span>
                         </div>
                         <div className="h-1 bg-muted/20 rounded-full overflow-hidden">
                             <div

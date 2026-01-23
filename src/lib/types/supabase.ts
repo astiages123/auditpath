@@ -273,9 +273,12 @@ export type Database = {
           course_id: string | null
           course_name: string | null
           created_at: string | null
+          efficiency_score: number | null
           ended_at: string
           id: string
           is_completed: boolean | null
+          last_active_at: string | null
+          pause_count: number | null
           started_at: string
           timeline: Json | null
           total_break_time: number | null
@@ -287,9 +290,12 @@ export type Database = {
           course_id?: string | null
           course_name?: string | null
           created_at?: string | null
+          efficiency_score?: number | null
           ended_at: string
           id?: string
           is_completed?: boolean | null
+          last_active_at?: string | null
+          pause_count?: number | null
           started_at: string
           timeline?: Json | null
           total_break_time?: number | null
@@ -301,9 +307,12 @@ export type Database = {
           course_id?: string | null
           course_name?: string | null
           created_at?: string | null
+          efficiency_score?: number | null
           ended_at?: string
           id?: string
           is_completed?: boolean | null
+          last_active_at?: string | null
+          pause_count?: number | null
           started_at?: string
           timeline?: Json | null
           total_break_time?: number | null

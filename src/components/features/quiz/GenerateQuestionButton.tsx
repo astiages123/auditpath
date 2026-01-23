@@ -262,13 +262,13 @@ export function GenerateQuestionButton({ chunkId, onComplete }: GenerateQuestion
               <div className="rounded-md bg-yellow-500/10 p-3 text-sm text-yellow-600 border border-yellow-500/20">
                 <p className="font-semibold mb-1">Nasıl Çalışır?</p>
                 <ul className="list-disc list-inside space-y-1 opacity-90">
-                  <li>Önce içerik haritası çıkarılır (MiMo).</li>
-                  <li>3'lü gruplar halinde sorular üretilir.</li>
-                  <li>Her soru Llama ile doğrulanır (Cerebras).</li>
+                  <li>Önce içerik haritası çıkarılır.</li>
+                  <li>Sorular üretilir.</li>
+                  <li>Her soru doğrulanır.</li>
                   <li>Onaylanan sorular kaydedilir.</li>
                 </ul>
                 <p className="mt-2 text-[10px] opacity-70">
-                  Tüm işlem tarayıcında gerçekleşir - her adımı canlı izleyebilirsin.
+                  Her adımı canlı izleyebilirsin.
                 </p>
               </div>
             )}

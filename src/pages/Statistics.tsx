@@ -1,41 +1,38 @@
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import {
     getDailyStats,
     getLast30DaysActivity,
     getEfficiencyRatio,
-    getRecentSessions,
     getQuizStats,
     getSubjectCompetency,
     getBloomStats,
     getSRSStats,
     getFocusTrend,
+    getDailyEfficiencySummary,
     type DailyStats,
     type DayActivity,
     type EfficiencyData,
-    type TimelineBlock,
     type QuizStats,
     type SubjectCompetency,
     type BloomStats,
     type SRSStats,
     type FocusTrend,
     getCumulativeStats,
-    type CumulativeStats
+    type CumulativeStats,
+    type DailyEfficiencySummary
 } from "@/lib/client-db";
 import { BentoGrid, BentoCard } from "@/components/statistics/BentoGrid";
-import { GeneralProgress } from "@/components/statistics/GeneralProgress";
-import { HistoryView } from "@/components/statistics/HistoryView";
-// Tabs removed from page level
 import { DailyGoalCard } from "@/components/statistics/DailyGoalCard";
 import { ConsistencyHeatmap } from "@/components/statistics/ConsistencyHeatmap";
 import { EfficiencyCard } from "@/components/statistics/EfficiencyCard";
-import { TimelineGantt } from "@/components/statistics/TimelineGantt";
 import { LearningOverview } from "@/components/statistics/LearningOverview";
 import { SubjectRadar } from "@/components/statistics/SubjectRadar";
 import { BloomAnalysis } from "@/components/statistics/BloomAnalysis";
 import { SRSDistribution } from "@/components/statistics/SRSDistribution";
 import { FocusTrend as FocusTrendChart } from "@/components/statistics/FocusTrend";
+import { MasterEfficiencyCard } from "@/components/statistics/MasterEfficiencyCard";
 import { Loader2, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -49,7 +46,6 @@ export default function StatisticsPage() {
     const [dailyStats, setDailyStats] = useState<DailyStats | null>(null);
     const [heatmapData, setHeatmapData] = useState<DayActivity[]>([]);
     const [efficiencyData, setEfficiencyData] = useState<EfficiencyData | null>(null);
-    const [timelineData, setTimelineData] = useState<TimelineBlock[]>([]);
     const [cumulativeStats, setCumulativeStats] = useState<CumulativeStats | null>(null);
     
     // New Stats
@@ -58,6 +54,7 @@ export default function StatisticsPage() {
     const [bloomStats, setBloomStats] = useState<BloomStats[]>([]);
     const [srsStats, setSrsStats] = useState<SRSStats | null>(null);
     const [focusTrend, setFocusTrend] = useState<FocusTrend[]>([]);
+    const [efficiencySummary, setEfficiencySummary] = useState<DailyEfficiencySummary | null>(null);
 
     useEffect(() => {
         document.title = "İstatistikler | AuditPath";
@@ -78,36 +75,36 @@ export default function StatisticsPage() {
                     stats, 
                     heatmap, 
                     efficiency, 
-                    timeline,
                     quiz,
                     subjects,
                     bloom,
                     srs,
                     trend,
-                    cumulativeData
+                    cumulativeData,
+                    effSummary
                 ] = await Promise.all([
                     getDailyStats(userId!),
                     getLast30DaysActivity(userId!),
                     getEfficiencyRatio(userId!),
-                    getRecentSessions(userId!, 50),
                     getQuizStats(userId!),
                     getSubjectCompetency(userId!),
                     getBloomStats(userId!),
                     getSRSStats(userId!),
                     getFocusTrend(userId!),
                     getCumulativeStats(userId!),
+                    getDailyEfficiencySummary(userId!),
                 ]);
 
                 setDailyStats(stats);
                 setHeatmapData(heatmap);
                 setEfficiencyData(efficiency);
-                setTimelineData(timeline);
                 setQuizStats(quiz);
                 setSubjectStats(subjects);
                 setBloomStats(bloom);
                 setSrsStats(srs);
                 setFocusTrend(trend);
                 setCumulativeStats(cumulativeData);
+                setEfficiencySummary(effSummary);
             } catch (error) {
                 console.error("Failed to fetch statistics:", error);
             } finally {
@@ -141,18 +138,21 @@ export default function StatisticsPage() {
                     animate={{ opacity: 1, y: 0 }}
                     className="flex flex-col md:flex-row md:items-center justify-between gap-6"
                 >
-                    <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-xl bg-primary/10">
-                            <TrendingUp className="w-8 h-8 text-primary" />
+                    <div className="flex items-center gap-5">
+                        <div className="relative group">
+                            <div className="absolute -inset-1 bg-linear-to-r rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+                            <div className="relative p-4 rounded-xl bg-card border border-border/50 leading-none flex items-center">
+                                <TrendingUp className="w-8 h-8 text-primary" />
+                            </div>
                         </div>
                         <div>
                             <h1
-                                className="text-2xl md:text-3xl font-bold text-foreground"
+                                className="text-3xl md:text-4xl font-black text-foreground tracking-tight"
                                 style={{ fontFamily: "var(--font-heading)" }}
                             >
                                 Performans Analizi
                             </h1>
-                            <p className="text-muted-foreground text-sm">
+                            <p className="text-muted-foreground text-sm font-medium">
                                 Öğrenme yolculuğunuzun detaylı grafikleri ve verimlilik metrikleri.
                             </p>
                         </div>
@@ -160,16 +160,19 @@ export default function StatisticsPage() {
 
                     {/* Quick Stats Summary */}
                     {dailyStats && (
-                        <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-card border border-border">
-                            <div className="p-2 rounded-lg bg-orange-500/10">
-                                <span className="text-orange-500 font-bold block leading-none">⚡</span>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-lg font-bold text-foreground">
-                                    {Math.round(dailyStats.totalWorkMinutes / 60)}s {dailyStats.totalWorkMinutes % 60}d
+                        <div className="relative group">
+                            <div className="absolute -inset-0.5 rounded-2xl blur opacity-20 group-hover:opacity-40 transition duration-500"></div>
+                            <div className="relative flex items-center gap-4 px-6 py-3 rounded-2xl bg-card border border-border/50 backdrop-blur-sm">
+                                <div className="p-2.5 rounded-xl bg-orange-500/10 border border-orange-500/20">
+                                    <span className="text-xl leading-none">⚡</span>
                                 </div>
-                                <div className="text-xs text-muted-foreground">
-                                    Bugünkü Çalışma
+                                <div className="text-right">
+                                    <div className="text-xl font-black text-foreground tabular-nums">
+                                        {Math.floor(dailyStats.totalWorkMinutes / 60)}s {dailyStats.totalWorkMinutes % 60}dk
+                                    </div>
+                                    <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                        Bugünkü Çalışma
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -195,16 +198,27 @@ export default function StatisticsPage() {
                 </motion.div>
             ) : (
                 <BentoGrid>
+                    {/* Hero: Master Efficiency Card */}
+                    <BentoCard colSpan={3} isClickable>
+                        {efficiencySummary ? (
+                            <MasterEfficiencyCard data={efficiencySummary} userId={userId} />
+                        ) : (
+                            <div className="flex h-40 items-center justify-center">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                        )}
+                    </BentoCard>
+
                     {/* Row 1: Daily Goals, Learning Overview, Efficiency */}
-                    <BentoCard className="bg-linear-to-br from-primary/5 to-transparent">
+                    <BentoCard isClickable>
                         {dailyStats ? <DailyGoalCard data={dailyStats} /> : "Yükleniyor..."}
                     </BentoCard>
 
-                    <BentoCard className="bg-linear-to-bl from-green-500/5 to-transparent">
+                    <BentoCard>
                         {quizStats ? <LearningOverview data={quizStats} /> : "Yükleniyor..."}
                     </BentoCard>
 
-                    <BentoCard isAlarm={efficiencyData?.isAlarm} className="bg-linear-to-br from-accent/5 to-transparent">
+                    <BentoCard isAlarm={efficiencyData?.isAlarm} isClickable>
                         {efficiencyData ? (
                             <EfficiencyCard 
                                 data={efficiencyData} 
@@ -216,11 +230,11 @@ export default function StatisticsPage() {
                     </BentoCard>
 
                     {/* Row 2: Radar, Focus Trend */}
-                    <BentoCard className="">
-                            <SubjectRadar data={subjectStats} />
+                    <BentoCard>
+                        <SubjectRadar data={subjectStats} />
                     </BentoCard>
 
-                    <BentoCard colSpan={2} className="bg-linear-to-r from-blue-500/5 to-purple-500/5">
+                    <BentoCard colSpan={2}>
                         <FocusTrendChart data={focusTrend} />
                     </BentoCard>
 
@@ -233,15 +247,8 @@ export default function StatisticsPage() {
                         <BloomAnalysis data={bloomStats} />
                     </BentoCard>
 
-                    <BentoCard className="bg-linear-to-br from-primary/5 to-transparent">
+                    <BentoCard>
                         <ConsistencyHeatmap data={heatmapData} />
-                    </BentoCard>
-
-                    {/* Row 4: Timeline */}
-                    <BentoCard colSpan={3} className="min-h-[400px]">
-                        <div className="h-full overflow-hidden">
-                            <TimelineGantt data={timelineData} />
-                        </div>
                     </BentoCard>
                 </BentoGrid>
             )}

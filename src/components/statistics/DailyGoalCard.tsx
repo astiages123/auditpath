@@ -32,7 +32,7 @@ export function DailyGoalCard({ data }: DailyGoalCardProps) {
         <>
             <div
                 onClick={() => setIsModalOpen(true)}
-                className="flex flex-col items-center justify-center h-full min-h-[320px] cursor-pointer"
+                className="flex flex-col items-center justify-center h-full min-h-[320px]"
             >
                 {/* Title */}
                 <h3 className="text-lg font-semibold text-muted-foreground mb-6">
@@ -128,6 +128,10 @@ export function DailyGoalCard({ data }: DailyGoalCardProps) {
                         <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-1">
                             <p className="text-xs font-medium text-indigo-500 uppercase tracking-widest">İzleme</p>
                             <p className="text-2xl font-black text-foreground">{data.totalVideoMinutes} dk</p>
+                        </div>
+                        <div className="bg-orange-500/10 border border-orange-500/20 rounded-2xl p-4 flex flex-col items-center justify-center text-center gap-1">
+                            <p className="text-xs font-medium text-orange-500 uppercase tracking-widest">Pomodoro</p>
+                            <p className="text-2xl font-black text-foreground">{data.totalCycles} Oturum</p>
                         </div>
                     </div>
                     <div className="bg-primary/5 border border-primary/20 rounded-2xl p-5 flex items-center justify-between">

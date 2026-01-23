@@ -107,7 +107,7 @@ export function HistoryView({ userId }: HistoryViewProps) {
                                  fontWeight={700}
                                  tickLine={false} 
                                  axisLine={false} 
-                                 tickFormatter={(value) => `${value}dk`} 
+                                 tickFormatter={(value) => `${Math.round(value)}dk`} 
                                  className="text-muted-foreground/40"
                              />
                              <Tooltip 
@@ -124,7 +124,7 @@ export function HistoryView({ userId }: HistoryViewProps) {
                                                                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.fill === 'url(#barGradientPrimary)' ? 'var(--primary)' : 'var(--accent)' }} />
                                                                  <span className="text-xs font-bold text-foreground/80">{item.name}</span>
                                                              </div>
-                                                             <span className="text-sm font-black text-foreground">{item.value} dk</span>
+                                                             <span className="text-sm font-black text-foreground">{Math.round(item.value)} dk</span>
                                                          </div>
                                                      ))}
                                                  </div>

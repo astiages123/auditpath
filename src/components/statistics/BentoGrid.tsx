@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { ReactNode } from "react";
+import { Maximize2 } from "lucide-react";
 
 interface BentoGridProps {
     children: ReactNode;
@@ -32,6 +33,17 @@ interface BentoCardProps {
     onClick?: () => void;
     className?: string;
     isAlarm?: boolean;
+    isClickable?: boolean;
+}
+
+interface BentoCardProps {
+    children: ReactNode;
+    colSpan?: 1 | 2 | 3;
+    rowSpan?: 1 | 2;
+    onClick?: () => void;
+    className?: string;
+    isAlarm?: boolean;
+    isClickable?: boolean;
 }
 
 export function BentoCard({
@@ -41,6 +53,7 @@ export function BentoCard({
     onClick,
     className = "",
     isAlarm = false,
+    isClickable = false,
 }: BentoCardProps) {
     const colSpanClasses = {
         1: "",
@@ -62,12 +75,14 @@ export function BentoCard({
         show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
     };
 
+    const showClickIndicator = onClick || isClickable;
+
     return (
         <motion.div
             variants={itemVariants}
             onClick={onClick}
             className={`
-                bento-card
+                bento-card group
                 ${colSpanClasses[colSpan]}
                 ${rowSpanClasses[rowSpan]}
                 ${alarmClasses}
@@ -75,15 +90,26 @@ export function BentoCard({
                 rounded-[2.5rem] border
                 p-6 md:p-8
                 backdrop-blur-xl
-                transition-all duration-500 ease-out
-                hover:shadow-2xl hover:shadow-primary/5
-                hover:-translate-y-1
-                ${onClick ? "cursor-pointer" : ""}
+                transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)]
+                hover:shadow-2xl hover:shadow-primary/10
+                hover:-translate-y-2 hover:scale-[1.02]
+                hover:border-primary/40
+                ${showClickIndicator ? "cursor-pointer" : ""}
                 ${className}
             `}
         >
             {/* Glossy overlay effect */}
             <div className="absolute inset-0 bg-linear-to-br from-white/5 to-transparent pointer-events-none" />
+            
+            {/* Click indicator icon - GÜNCELLENDİ: Opacity sınıfları kaldırıldı */}
+            {showClickIndicator && (
+                <div className="absolute top-4 right-6 z-20">
+                    <div className="w-4 h-4 rounded-xl flex items-center justify-center">
+                        <Maximize2 className="w-4 h-4 text-white" />
+                    </div>
+                </div>
+            )}
+            
             <div className="relative z-10 h-full">
                 {children}
             </div>

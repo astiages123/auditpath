@@ -38,11 +38,12 @@ export function AuthForms({ onSuccess, view, onToggleView }: AuthFormProps) {
         toast.success("Giriş başarılı!");
         onSuccess?.();
       } else {
+        const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
         const { error, data } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: `${siteUrl}/`,
           },
         });
         if (error) throw error;
