@@ -43,6 +43,11 @@ export default defineConfig(({ mode }) => ({
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
+            '@/app': path.resolve(__dirname, './src/app'),
+            '@/features': path.resolve(__dirname, './src/features'),
+            '@/shared': path.resolve(__dirname, './src/shared'),
+            '@/config': path.resolve(__dirname, './src/config'),
+            '@/styles': path.resolve(__dirname, './src/styles'),
         },
     },
     envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
