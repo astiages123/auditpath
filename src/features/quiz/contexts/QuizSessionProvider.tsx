@@ -30,7 +30,7 @@ import {
 import {
   type QuizResponseType,
 } from '@/features/quiz/modules/srs/srs-algorithm';
-import { getCourseStats } from '@/features/statistics/services/course-stats';
+import { getCourseStats } from '@/features/statistics/services/srs-stats';
 
 const STORAGE_PREFIX = 'auditpath_quiz_session_';
 

@@ -141,23 +141,13 @@ const remarkCustomDirectives: Plugin = () => {
         }
 
         // 4. Badge Styling
-        // "Cevap", "Çözüm", "Not", "İpucu"
-        const badgeKeywords = ["Cevap", "Çözüm", "Cozum", "Not", "İpucu", "Ipucu"];
+        // "Örnek" variations
+        const badgeKeywords = ["Örnek", "Ornek"];
         if (badgeKeywords.includes(d.name)) {
              data.hName = "span";
              
-             // Default (Notes) -> Primary Color
-             let colorClass = "bg-primary/10 text-primary border-primary/20"; 
-             
-             if (d.name === "Cevap" || d.name === "Çözüm" || d.name === "Cozum") {
-                 // Answer -> Emerald implies success, but let's stick to theme if desired.
-                 // User asked to align with project colors. 
-                 // If project has 'success' var we use it, otherwise use hardcoded colors that match dark theme well.
-                 colorClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-             } else if (d.name === "İpucu" || d.name === "Ipucu") {
-                 // Hint -> Amber
-                 colorClass = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-             }
+             // Answer/Example -> Emerald (success-like theme)
+             const colorClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
 
              data.hProperties = {
                 className: [
@@ -293,11 +283,30 @@ export function NoteViewer({
 
     // 6. Fix Turkish characters in Math formulas
     // KaTeX struggles with Turkish chars inside math mode unless wrapped in \text{}
-    newContent = newContent.replace(/(\$\$?)([\s\S]+?)\1/g, (match, sign, math) => {
-      // Replace Turkish characters with \text{char}
+    // We separate block and inline math to prevent matching across large sections of normal text.
+    
+    // Block Math: $$...$$ (can span multiple lines)
+    newContent = newContent.replace(/\$\$([\s\S]+?)\$\$/g, (match, math) => {
       const fixedMath = math.replace(/[çğıöşüÇĞİÖŞÜ]/g, (char: string) => `\\text{${char}}`);
-      return `${sign}${fixedMath}${sign}`;
+      return `$$${fixedMath}$$`;
     });
+
+    // Inline Math: $...$ (must NOT span lines, 200 chars limit to avoid false positives)
+    newContent = newContent.replace(/\$([^$\n]{1,200})\$/g, (match, math) => {
+      const fixedMath = math.replace(/[çğıöşüÇĞİÖŞÜ]/g, (char: string) => `\\text{${char}}`);
+      return `$${fixedMath}$`;
+    });
+
+    // 7. Auto-badge for Example markers
+    // Finds "Örnek 1:", "Örnek Hesaplama:" etc. at start of lines and converts to badges.
+    // We removed Soru, Cevap, Çözüm etc. as per user request.
+    newContent = newContent.replace(
+      /^(?:\*\*|__)?(Örnek(?:\s*[^:*]*)?)(?:\*\*|__)?\s*:\s*(?:\*\*|__)?/gm,
+      (match, label) => {
+        const cleanLabel = label.trim();
+        return `:Örnek[${cleanLabel}:] `;
+      }
+    );
 
     return newContent;
   }, [content, courseId]);

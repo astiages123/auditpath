@@ -63,10 +63,10 @@ export default function TitleRoadmap({ watchedVideos, requiredVideos }: TitleRoa
                 </div>
             </CardHeader>
 
-            <CardContent className="p-6 md:p-8 space-y-10">
+            <CardContent className="p-4 md:p-6 space-y-6">
 
                 {/* İlerleme Çubuğu: Dengeli yükseklik */}
-                <div className="relative mx-4 mb-12 mt-2">
+                <div className="relative mx-4 mb-10 mt-2">
                     <div className="h-2.5 bg-muted/60 rounded-full overflow-hidden ring-1 ring-border/10 shadow-inner">
                         <motion.div
                             initial={{ width: 0 }}
@@ -102,7 +102,7 @@ export default function TitleRoadmap({ watchedVideos, requiredVideos }: TitleRoa
                 </div>
 
                 {/* Rütbe Grid: 4'lü yapı, optimize boyutlar */}
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                     {milestones.map((milestone, index) => {
                         const isCompleted = progress >= milestone.threshold;
                         const isCurrent = index === currentRankIndex;
@@ -115,7 +115,7 @@ export default function TitleRoadmap({ watchedVideos, requiredVideos }: TitleRoa
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: index * 0.05 }}
                                 className={cn(
-                                    "relative flex flex-col items-center p-4 rounded-2xl border transition-all duration-300",
+                                    "relative flex flex-col items-center p-3 rounded-2xl border transition-all duration-300",
                                     isCurrent
                                         ? "bg-primary/5 border-primary/30 ring-1 ring-primary/20 shadow-lg"
                                         : "bg-card/50 border-border/40"
@@ -124,11 +124,11 @@ export default function TitleRoadmap({ watchedVideos, requiredVideos }: TitleRoa
                                 {isLocked && <Lock className="absolute top-3 right-3 w-3 h-3 text-muted-foreground/40" />}
 
                                 {/* Görsel: Ne devasa ne minik */}
-                                <div className="relative w-24 h-24 mb-3 transition-transform duration-500 group-hover:scale-105">
+                                <div className="relative w-24 h-24 mb-2 transition-transform duration-500 group-hover:scale-105">
                                     <img
                                         src={milestone.imagePath}
                                         alt={milestone.title}
-                                        className={cn("w-full h-full object-contain ", isLocked && "grayscale opacity-30")}
+                                        className={cn("w-full h-full object-contain ", isLocked && "grayscale opacity-60")}
                                     />
                                     {isCurrent && <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full -z-10 animate-pulse" />}
                                 </div>
@@ -138,15 +138,12 @@ export default function TitleRoadmap({ watchedVideos, requiredVideos }: TitleRoa
                                         {milestone.title}
                                     </h3>
 
-                                    {isCurrent ? (
-                                        <p className="text-[12px] leading-tight text-foreground italic mt-2 line-clamp-2 px-1">
-                                            "{milestone.motto}"
-                                        </p>
-                                    ) : (
-                                        <div className="mt-2 inline-block px-2 py-0.5 rounded-md bg-muted/50 text-[10px] font-bold text-foreground uppercase tracking-normal">
-                                            Hedef %{milestone.threshold}
-                                        </div>
-                                    )}
+                                    <p className={cn(
+                                        "text-[12px] leading-tight mt-1 px-1",
+                                        isCurrent ? "text-foreground" : "text-muted-foreground"
+                                    )}>
+                                        "{milestone.motto}"
+                                    </p>
                                 </div>
                             </motion.div>
                         );

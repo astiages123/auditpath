@@ -28,8 +28,8 @@ export function JourneyModal({ open, onOpenChange }: JourneyModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl bg-background/95 backdrop-blur-md border-border/50 p-6">
-        <DialogHeader className="mb-4">
+      <DialogContent className="max-w-4xl bg-background/95 backdrop-blur-md border-border/50 p-4 sm:p-6">
+        <DialogHeader className="mb-2">
           <div className="flex items-center justify-between">
             <div>
               <DialogTitle className="text-2xl font-bold">

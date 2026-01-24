@@ -69,14 +69,18 @@ export function TableOfContents({ content, activeId, onItemClick }: TableOfConte
 
         const handleIntersection = (entries: IntersectionObserverEntry[]) => {
             entries.forEach(entry => {
+                // We want to track the heading that is most likely the current one.
+                // Usually the one that entered the top half of the screen.
                 if (entry.isIntersecting) {
                     setCurrentActiveId(entry.target.id);
                 }
             });
         };
 
+        // rootMargin matches NoteViewer's scroll-mt-20 (~80px)
+        // We use a narrow top field to capture precisely what's at the top.
         const observer = new IntersectionObserver(handleIntersection, {
-            rootMargin: '-20% 0% -35% 0%',
+            rootMargin: '-80px 0% -70% 0%',
             threshold: 0
         });
 
@@ -96,8 +100,12 @@ export function TableOfContents({ content, activeId, onItemClick }: TableOfConte
     }, [headings]);
 
     const handleClick = (id: string) => {
+        // Optimistically set active ID
+        setCurrentActiveId(id);
+        
         const element = document.getElementById(id);
         if (element) {
+            // Respecting scroll-mt-20 in NoteViewer
             element.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
         onItemClick?.(id);
@@ -110,38 +118,49 @@ export function TableOfContents({ content, activeId, onItemClick }: TableOfConte
     }
 
     return (
-        <nav className="space-y-2 font-sans">
-            <h2 className="text-xl font-semibold text-zinc-300 text-center uppercase tracking-wider mb-4 pb-2 border-b border-zinc-800">
-                İçindekiler
-            </h2>
+        <nav className="space-y-4 font-sans">
+            <div className="px-3">
+                <h2 className="text-xl text-center font-bold text-primary  tracking-normal mb-4">
+                    İçindekiler
+                </h2>
+            </div>
             <ul className="space-y-1">
                 {headings.map((heading, index) => {
                     // Indentation level relative to the highest level present in the note
                     const indent = heading.level - highestLevel;
+                    const isActive = effectiveActiveId === heading.id;
                     
                     return (
-                        <li key={`${heading.id}-${index}`}>
+                        <li key={`${heading.id}-${index}`} className="relative">
+                            {/* Active Indicator Line */}
+                            {isActive && (
+                                <div className="absolute left-0 top-1 bottom-1 w-1 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary),0.5)] z-10" />
+                            )}
+                            
                             <button
                                 onClick={() => handleClick(heading.id)}
                                 style={{
-                                    paddingLeft: `${0.75 + indent * 1.5}rem`
+                                    paddingLeft: `${0.75 + indent * 1.25}rem`
                                 }}
                                 className="w-full text-left group border-none bg-transparent block"
                             >
                                 <div className={`
-                                    flex items-start px-3 py-1.5 rounded-lg
-                                    ${effectiveActiveId === heading.id
-                                        ? 'bg-accent text-foreground shadow-lg'
-                                        : 'group-hover:bg-accent group-hover:text-foreground text-zinc-300'
+                                    flex items-start px-3 py-2 rounded-lg transition-all duration-200
+                                    ${isActive
+                                        ? 'bg-primary/10 text-primary'
+                                        : 'text-foreground/90 hover:text-foreground/70 hover:bg-zinc-800/50'
                                     }
                                 `}>
-                                    <span className="mr-2 font-sans shrink-0 mt-0.5 text-sm">
+                                    <span className={`
+                                        mr-2 font-mono shrink-0 mt-0.5 text-sm 
+                                        ${isActive ? 'text-primary' : 'text-foreground/90 group-hover:text-foreground/70'}
+                                    `}>
                                         {heading.prefix}
                                     </span>
                                     <span className={`
-                                        ${indent === 0 
-                                            ? 'font-semibold' 
-                                            : 'text-sm'}
+                                        leading-tight transition-colors
+                                        ${indent === 0 ? 'font-medium' : 'text-sm'}
+                                        ${isActive ? 'font-semibold' : ''}
                                     `}>
                                         {heading.text}
                                     </span>
