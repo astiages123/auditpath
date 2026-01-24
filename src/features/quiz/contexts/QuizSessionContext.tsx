@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import { SessionInfo, QuotaInfo, ReviewItem } from '@/features/quiz/modules/srs';
+import { CourseStats } from '@/features/statistics/services/srs-stats';
 import { QuizResponseType } from '@/features/quiz/modules/srs/srs-algorithm';
 
 export interface QuizSessionState {
@@ -11,7 +12,7 @@ export interface QuizSessionState {
   reviewQueue: ReviewItem[];
   currentReviewIndex: number;
   isReviewPhase: boolean;
-  courseStats: import('@/features/statistics/services/course-stats').CourseStats | null;
+  courseStats: CourseStats | null;
 }
 
 export interface QuizSessionContextValue {
