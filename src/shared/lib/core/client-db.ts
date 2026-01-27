@@ -7,6 +7,11 @@ import {
   getCycleCount,
 } from "@/shared/lib/domain/pomodoro-utils";
 import { calculateQuota } from "@/shared/lib/core/quota";
+import {
+  formatDateKey,
+  getVirtualDate,
+  getVirtualDateKey,
+} from "@/shared/lib/utils/date-utils";
 
 export type Category = Database["public"]["Tables"]["categories"]["Row"] & {
   courses: Course[];
@@ -78,6 +83,19 @@ export async function getCategories(): Promise<Category[]> {
   return categories as Category[];
 }
 
+export async function getAllCourses(): Promise<Course[]> {
+  const { data, error } = await supabase
+    .from("courses")
+    .select("*")
+    .order("sort_order");
+
+  if (error) {
+    console.error("Error fetching all courses:", error);
+    return [];
+  }
+  return data || [];
+}
+
 // --- Rank System ---
 import { getRankForPercentage, Rank, RANKS } from "@/config/constants";
 export type { Rank } from "@/config/constants";
@@ -108,13 +126,21 @@ export async function getUserStats(userId: string) {
       });
     });
 
+    const globalTotalHours = categories.reduce((sum, cat) =>
+      sum + (cat.total_hours || 0), 0) || 1;
+    const globalTotalVideos = categories.reduce((sum, cat) =>
+      sum + cat.courses.reduce((s, c) =>
+        s + (c.total_videos || 0), 0), 0) || 1;
+
     const { data: progress, error: progressError } = await supabase
       .from("video_progress")
       .select("*, video:videos(duration_minutes, course_id)")
       .eq("user_id", userId)
       .eq("completed", true);
 
-    if (progressError) throw progressError;
+    if (progressError) {
+      throw progressError;
+    }
 
     const completedVideos = progress?.length || 0;
     let completedHours = 0;
@@ -141,21 +167,11 @@ export async function getUserStats(userId: string) {
         const dateStr = p.completed_at || p.updated_at; // Fallback to updated_at
         if (dateStr) {
           const d = new Date(dateStr);
-          // Virtual Day Adjustment for Activity Check
-          if (d.getHours() < 4) {
-            d.setDate(d.getDate() - 1);
-          }
-          // Manual formatting to ensure consistency with toDateString isn't needed if we stick to this block
-          // But let's replicate the string generation exactly:
-          const formattedDate = `${d.getFullYear()}-${
-            String(d.getMonth() + 1).padStart(2, "0")
-          }-${String(d.getDate()).padStart(2, "0")}`;
+          const formattedDate = getVirtualDateKey(d);
 
           activeDays.add(formattedDate);
 
-          // For firstActivityDate, we use the raw date (approx is fine) or the adjusted one?
-          // Let's use raw for absolute timeline start, or adjusted?
-          // Raw is safer for "when did I start".
+          // For firstActivityDate, we use the raw date
           const rawDate = new Date(dateStr);
           if (!firstActivityDate || rawDate < firstActivityDate) {
             firstActivityDate = rawDate;
@@ -179,7 +195,9 @@ export async function getUserStats(userId: string) {
           if (catName) {
             if (!categoryProgress[catName]) {
               // Initialize with totals from categories array
-              const cat = categories.find((c) => c.name === catName);
+              const cat = categories.find((c) =>
+                c.name === catName
+              );
               categoryProgress[catName] = {
                 completedVideos: 0,
                 completedHours: 0,
@@ -195,11 +213,9 @@ export async function getUserStats(userId: string) {
       }
     }
 
-    // Total videos could be 0 if no categories
-    const totalVideos = Object.values(categoryProgress).reduce((acc, curr) =>
-      acc + curr.totalVideos, 0) || 1;
+    // Calculate progress percentage based on HOURS instead of counts
     const progressPercentage = Math.round(
-      (completedVideos / totalVideos) * 100,
+      (completedHours / globalTotalHours) * 100,
     );
 
     let currentRank: Rank | undefined;
@@ -245,23 +261,19 @@ export async function getUserStats(userId: string) {
     // If neither -> streak 0.
 
     let streak = 0;
-    const nowLocal = new Date();
-    // Virtual day adjustment (04:00 AM)
-    if (nowLocal.getHours() < 4) {
-      nowLocal.setDate(nowLocal.getDate() - 1);
-    }
-
-    // Check consecutive days
-    const checkDate = new Date(nowLocal);
+    // Check consecutive days starting from the virtual "Today"
+    const checkDate = getVirtualDate();
     let consecutiveDays = 0;
     let gapCount = 0; // Track weekdays gaps
 
+    // Convert firstActivityDate to virtual key for consistent day-only comparison
+    const firstActivityKey = firstActivityDate
+      ? getVirtualDateKey(firstActivityDate)
+      : null;
+
     // We check explicitly day-by-day backwards
     while (true) {
-      const checkYear = checkDate.getFullYear();
-      const checkMonth = String(checkDate.getMonth() + 1).padStart(2, "0");
-      const checkDay = String(checkDate.getDate()).padStart(2, "0");
-      const dateStr = `${checkYear}-${checkMonth}-${checkDay}`;
+      const dateStr = formatDateKey(checkDate);
 
       if (activeDays.has(dateStr)) {
         consecutiveDays++;
@@ -289,8 +301,8 @@ export async function getUserStats(userId: string) {
         }
       }
 
-      // Güvenlik: çok eski tarihlere gitmeyi önle
-      if (firstActivityDate && checkDate < firstActivityDate) {
+      // Güvenlik: ilk aktivite gününün ötesine gitmeyi önle (sadece gün bazlı kontrol)
+      if (firstActivityKey && formatDateKey(checkDate) < firstActivityKey) {
         break;
       }
 
@@ -306,39 +318,36 @@ export async function getUserStats(userId: string) {
     // Daily Average = Total Completed Hours / Days Active (from first activity to today)
 
     let estimatedDays = 0;
-    const totalHours = Math.round(
-      Object.values(categoryProgress).reduce((acc, curr) =>
-        acc + curr.totalHours, 0),
-    );
+    const totalHours = globalTotalHours;
     const hoursRemaining = Math.max(0, totalHours - completedHours);
 
     if (hoursRemaining > 0) {
-      if (firstActivityDate && completedHours > 0) {
-        const now = new Date();
-        // Diff in days between now and first activity
-        // Ensure at least 1 day to avoid division by zero or infinity on first day
-        const diffTime = Math.abs(now.getTime() - firstActivityDate.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+      if (activeDays.size > 0 && completedHours > 0) {
+        // Daily Average based ONLY on active study days (excluding holidays)
+        const dailyAveragePerActiveDay = completedHours / activeDays.size;
 
-        const dailyAverage = completedHours / diffDays;
-
-        if (dailyAverage > 0) {
-          estimatedDays = Math.ceil(hoursRemaining / dailyAverage);
+        if (dailyAveragePerActiveDay > 0) {
+          // Calculate pure work days remaining (excluding future holiday padding)
+          estimatedDays = Math.ceil(hoursRemaining / dailyAveragePerActiveDay);
         } else {
-          estimatedDays = 999; // Fallback
+          estimatedDays = 999;
         }
       } else {
-        // No activity yet, assume a default average (e.g., 2 hours/day) or just return a placeholder
+        // No activity yet, assume 2 hours per day
         estimatedDays = Math.ceil(hoursRemaining / 2);
       }
     } else {
       estimatedDays = 0;
     }
 
+    // Export dailyAverage as "Hours per Active Day" for the UI
+    const dailyAverage = activeDays.size > 0
+      ? completedHours / activeDays.size
+      : 0;
+
     return {
       completedVideos,
-      totalVideos: Object.values(categoryProgress).reduce((acc, curr) =>
-        acc + curr.totalVideos, 0),
+      totalVideos: globalTotalVideos,
       completedHours: Math.round(completedHours * 10) / 10,
       totalHours,
       streak,
@@ -349,16 +358,9 @@ export async function getUserStats(userId: string) {
       rankProgress,
       progressPercentage,
       estimatedDays,
+      dailyAverage,
       todayVideoCount: (() => {
-        // Use the EXACT same logic as activeDays to ensure consistency
-        // Re-calculate todayStr using the same toDateString logic with Virtual Day
-        const now = new Date();
-        if (now.getHours() < 4) {
-          now.setDate(now.getDate() - 1);
-        }
-        const checkTodayStr = `${now.getFullYear()}-${
-          String(now.getMonth() + 1).padStart(2, "0")
-        }-${String(now.getDate()).padStart(2, "0")}`;
+        const checkTodayStr = getVirtualDateKey();
 
         if (!progress) {
           return 0;
@@ -371,15 +373,7 @@ export async function getUserStats(userId: string) {
             return false;
           }
 
-          const d = new Date(dateStr);
-          // Apply Same Virtual Day Logic to the record's date
-          if (d.getHours() < 4) {
-            d.setDate(d.getDate() - 1);
-          }
-          const pStr = `${d.getFullYear()}-${
-            String(d.getMonth() + 1).padStart(2, "0")
-          }-${String(d.getDate()).padStart(2, "0")}`;
-
+          const pStr = getVirtualDateKey(new Date(dateStr));
           return pStr === checkTodayStr;
         }).length;
       })(),
@@ -1210,9 +1204,18 @@ export async function getRecentSessions(
       const workTime = s.total_work_time || 0;
       const breakTime = s.total_break_time || 0;
       const pauseTime = s.total_pause_time || 0;
-      let timeline: any[] = [];
+
+      // Define a local interface or usage based type for timeline events
+      // to avoid 'any' usage.
+      interface TimelineEvent {
+        start?: number;
+        end?: number;
+        [key: string]: Json | undefined;
+      }
+
+      let timeline: TimelineEvent[] = [];
       if (Array.isArray(s.timeline)) {
-        timeline = s.timeline as any[];
+        timeline = s.timeline as unknown as TimelineEvent[];
       } else if (typeof s.timeline === "string") {
         try {
           timeline = JSON.parse(s.timeline);
@@ -1228,14 +1231,21 @@ export async function getRecentSessions(
 
       if (timeline.length > 0) {
         const tStart = Math.min(
-          ...timeline.filter((e) => e && typeof e.start === "number").map((e) =>
-            e.start
-          ),
+          ...timeline
+            .filter(
+              (e): e is TimelineEvent & { start: number } =>
+                typeof e?.start === "number",
+            )
+            .map((e) => e.start),
         );
         const tEnd = Math.max(
-          ...timeline.filter((e) =>
-            e && (typeof e.end === "number" || typeof e.start === "number")
-          ).map((e) => e.end || e.start),
+          ...timeline
+            .filter(
+              (e): e is TimelineEvent & ({ start: number } | { end: number }) =>
+                e !== null &&
+                (typeof e.end === "number" || typeof e.start === "number"),
+            )
+            .map((e) => (e.end ?? e.start) as number),
         );
 
         if (tStart < Infinity) {
@@ -1318,6 +1328,21 @@ export async function getCourseTopics(
     ...c,
     questionCount: 0,
   }));
+}
+
+export async function getCourseIdBySlug(slug: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from("courses")
+    .select("id")
+    .eq("course_slug", slug)
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) {
+    console.warn(`Course not found for slug: ${slug}`, error);
+    return null;
+  }
+  return data.id;
 }
 
 // --- Quiz Engine & Smart Start ---

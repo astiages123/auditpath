@@ -152,8 +152,6 @@ export function QuizEngine({
     const question = state.currentQuestion;
     if (question) {
          const isCorrect = index === question.a;
-         
-         console.log(`Quiz Result: ${isCorrect ? 'Correct' : 'Incorrect'}`);
 
          setResults(prev => ({
             ...prev,
@@ -170,8 +168,6 @@ export function QuizEngine({
     // 1. Log and Record Response immediately
     const question = state.currentQuestion;
     if (question && question.id && courseId) {
-        console.log('Quiz Result: Blank'); // Log for user visibility
-        
         const timeSpent = Date.now() - startTimeRef.current;
         
         await recordResponse(
@@ -268,7 +264,7 @@ export function QuizEngine({
                 
                 // 2. Background Generation (Follow-up + Refill)
                 if (chunkId && user?.id) {
-                    checkAndTriggerBackgroundGeneration(chunkId, incorrectIdsRef.current, courseId);
+                    checkAndTriggerBackgroundGeneration(chunkId, incorrectIdsRef.current);
                 }
            }
 
@@ -281,9 +277,7 @@ export function QuizEngine({
 
   // Handle start logic
   const handleStart = useCallback(() => {
-    startQuiz(); // Hook state update
-    // Timer will reset reliably via existing useEffect on currentQuestion dependency
-    console.log('Quiz Started Manually');
+    startQuiz();
   }, [startQuiz]);
 
 

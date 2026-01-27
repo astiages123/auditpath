@@ -1,5 +1,5 @@
 import { callCerebras, type LogCallback } from "../clients/cerebras";
-import { type Message, PromptArchitect } from "../prompt-architect";
+import { PromptArchitect } from "../prompt-architect";
 import pLimit from "p-limit";
 
 const validatorLimit = pLimit(5); // Validation concurrency limit
@@ -209,7 +209,7 @@ export async function validateQuestionBatch(
         callCerebras(
           messages,
           model,
-          (msg, details) => {
+          () => {
             // Optional: detailed logging
           },
         )

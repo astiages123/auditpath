@@ -104,7 +104,6 @@ export async function generateQuestionsForChunk(
   ) => {
     const logEntry = createLog(step, message, details);
     onLog(logEntry);
-    console.log(`[QuizGen][${step}] ${message}`, details);
   };
 
   try {

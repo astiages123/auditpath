@@ -8,11 +8,11 @@
 
 import { supabase } from "@/shared/lib/core/supabase";
 
-interface MiMoResponse {
-  id: string;
+interface MiMoFnResponse {
   choices: {
     message: {
       content: string;
+      reasoning_content?: string;
     };
   }[];
 }
@@ -65,7 +65,7 @@ export async function callMiMo(
   // MiMo returns reasoning_content if applicable (e.g. for cote models)
   // We need to check the exact response structure from the proxy/provider
   // Assuming standard OpenAI-compatible format with potential extra fields
-  const choice = (data as any).choices?.[0];
+  const choice = (data as MiMoFnResponse).choices?.[0];
   const message = choice?.message;
 
   const content = message?.content || "";
@@ -104,8 +104,7 @@ export function parseJsonResponse(
     if (!match) return null;
 
     return JSON.parse(match[0]);
-  } catch (e) {
-    console.warn("JSON Parse Error:", e, text.slice(0, 100));
+  } catch {
     return null;
   }
 }

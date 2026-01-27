@@ -18,7 +18,6 @@ import { generateQuestionsForChunk } from "./quiz-generator";
 export async function checkAndTriggerBackgroundGeneration(
   chunkId: string,
   incorrectQuestionIds: string[],
-  courseId: string,
 ): Promise<void> {
   try {
     // For incorrect questions, we could generate follow-up questions

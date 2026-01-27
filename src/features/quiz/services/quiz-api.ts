@@ -34,21 +34,7 @@ export interface QuotaStatus {
   wordCount: number;
   conceptCount: number;
   isFull: boolean;
-}
-
-/**
- * @deprecated Edge Function kaldırıldı. Bunun yerine quiz-generator.ts kullanın.
- */
-export async function triggerQuizGeneration(): Promise<
-  { success: boolean; error?: string }
-> {
-  console.warn(
-    "[QuizApi] triggerQuizGeneration deprecated. quiz-generator.ts kullanın.",
-  );
-  return {
-    success: false,
-    error: "Edge Function kaldırıldı. Client-side generator kullanın.",
-  };
+  status: string; // "SYNCED" | "PROCESSING" | "COMPLETED" | "FAILED"
 }
 
 /**
@@ -102,6 +88,8 @@ export async function fetchQuestionsForSession(
   }
 }
 
+// ...
+
 /**
  * Get quota status for a chunk (UI info)
  */
@@ -110,7 +98,7 @@ export async function getChunkQuotaStatus(
 ): Promise<QuotaStatus | null> {
   const { data: chunk } = await supabase
     .from("note_chunks")
-    .select("id, word_count, metadata")
+    .select("id, word_count, metadata, status")
     .eq("id", chunkId)
     .single();
 
@@ -140,6 +128,7 @@ export async function getChunkQuotaStatus(
     wordCount,
     conceptCount,
     isFull: used >= quota.total,
+    status: chunk.status || "SYNCED",
   };
 }
 

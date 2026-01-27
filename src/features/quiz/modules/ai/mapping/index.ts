@@ -70,7 +70,10 @@ Cevabın dışında hiçbir metin, yorum veya markdown karakteri bulunmamalıdı
 ]`;
 
   // Temperature 0.2 for more deterministic and structured output
-  const contextPrompt = PromptArchitect.buildContext(content);
+  const contextPrompt = PromptArchitect.buildContext(
+    // AI'a görsel URL'lerini gönderme - sadece metin içeriği
+    content.replace(/!\[[^\]]*\]\([^)]+\)/g, "[GÖRSEL]"),
+  );
   const messages = PromptArchitect.assemble(
     systemPrompt,
     contextPrompt,

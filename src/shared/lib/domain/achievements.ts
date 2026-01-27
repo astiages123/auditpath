@@ -65,7 +65,10 @@ export const GUILDS: Record<GuildType, GuildInfo> = {
 
 export type RequirementType =
     | { type: "category_progress"; category: string; percentage: number }
-    | { type: "multi_category_progress"; categories: { category: string; percentage: number }[] }
+    | {
+        type: "multi_category_progress";
+        categories: { category: string; percentage: number }[];
+    }
     | { type: "all_progress"; percentage: number }
     | { type: "streak"; days: number }
     | { type: "daily_progress"; count: number }
@@ -93,10 +96,15 @@ export const ACHIEVEMENTS: Achievement[] = [
     {
         id: "hukuk_10",
         title: "Yasa Tozu",
-        motto: "Kadim tabletlerdeki ilk çatlakları ve tozlu yasaları fark ettin.",
+        motto:
+            "Kadim tabletlerdeki ilk çatlakları ve tozlu yasaları fark ettin.",
         imagePath: "/badges/hukuk-10.webp",
         guild: "HUKUK",
-        requirement: { type: "category_progress", category: "HUKUK", percentage: 10 },
+        requirement: {
+            type: "category_progress",
+            category: "HUKUK",
+            percentage: 10,
+        },
         order: 1,
     },
     {
@@ -105,25 +113,39 @@ export const ACHIEVEMENTS: Achievement[] = [
         motto: "Sarsılmaz kuralların anahtarını sıkıca kavrıyorsun.",
         imagePath: "/badges/hukuk-25.webp",
         guild: "HUKUK",
-        requirement: { type: "category_progress", category: "HUKUK", percentage: 25 },
+        requirement: {
+            type: "category_progress",
+            category: "HUKUK",
+            percentage: 25,
+        },
         order: 2,
     },
     {
         id: "hukuk_50",
         title: "Rün Mürekkebi",
-        motto: "Karmaşık yazıtların arasındaki gizli rünleri deşifre etmeye başladın.",
+        motto:
+            "Karmaşık yazıtların arasındaki gizli rünleri deşifre etmeye başladın.",
         imagePath: "/badges/hukuk-50.webp",
         guild: "HUKUK",
-        requirement: { type: "category_progress", category: "HUKUK", percentage: 50 },
+        requirement: {
+            type: "category_progress",
+            category: "HUKUK",
+            percentage: 50,
+        },
         order: 3,
     },
     {
         id: "hukuk_100",
         title: "Adalet Asası",
-        motto: "Kadim yasaların mutlak koruyucusu; adaletin keskin ve parlayan kılıcı.",
+        motto:
+            "Kadim yasaların mutlak koruyucusu; adaletin keskin ve parlayan kılıcı.",
         imagePath: "/badges/hukuk-100.webp",
         guild: "HUKUK",
-        requirement: { type: "category_progress", category: "HUKUK", percentage: 100 },
+        requirement: {
+            type: "category_progress",
+            category: "HUKUK",
+            percentage: 100,
+        },
         order: 4,
     },
 
@@ -131,10 +153,15 @@ export const ACHIEVEMENTS: Achievement[] = [
     {
         id: "eko_10",
         title: "Bakır Yol",
-        motto: "Ticaret kervanlarının geçtiği tozlu yollarda ilk adımını attın.",
+        motto:
+            "Ticaret kervanlarının geçtiği tozlu yollarda ilk adımını attın.",
         imagePath: "/badges/ekonomi-10.webp",
         guild: "EKONOMI",
-        requirement: { type: "category_progress", category: "EKONOMİ", percentage: 10 },
+        requirement: {
+            type: "category_progress",
+            category: "EKONOMİ",
+            percentage: 10,
+        },
         order: 5,
     },
     {
@@ -143,25 +170,39 @@ export const ACHIEVEMENTS: Achievement[] = [
         motto: "Altın sikkelerin sesini ve servetin yönünü anlamaya başladın.",
         imagePath: "/badges/ekonomi-25.webp",
         guild: "EKONOMI",
-        requirement: { type: "category_progress", category: "EKONOMİ", percentage: 25 },
+        requirement: {
+            type: "category_progress",
+            category: "EKONOMİ",
+            percentage: 25,
+        },
         order: 6,
     },
     {
         id: "eko_50",
         title: "Denge Gözetmeni",
-        motto: "Arz ve talebin fırtınalı denizinde, sükuneti ve düzeni görebiliyorsun.",
+        motto:
+            "Arz ve talebin fırtınalı denizinde, sükuneti ve düzeni görebiliyorsun.",
         imagePath: "/badges/ekonomi-50.webp",
         guild: "EKONOMI",
-        requirement: { type: "category_progress", category: "EKONOMİ", percentage: 50 },
+        requirement: {
+            type: "category_progress",
+            category: "EKONOMİ",
+            percentage: 50,
+        },
         order: 7,
     },
     {
         id: "eko_100",
         title: "Altın Dokunuş Üstadı",
-        motto: "Altın akışının sırrına erdin; görünmez eller artık senin iradene boyun eğiyor.",
+        motto:
+            "Altın akışının sırrına erdin; görünmez eller artık senin iradene boyun eğiyor.",
         imagePath: "/badges/ekonomi-100.webp",
         guild: "EKONOMI",
-        requirement: { type: "category_progress", category: "EKONOMİ", percentage: 100 },
+        requirement: {
+            type: "category_progress",
+            category: "EKONOMİ",
+            percentage: 100,
+        },
         order: 8,
     },
 
@@ -172,34 +213,52 @@ export const ACHIEVEMENTS: Achievement[] = [
         motto: "Sayıların karmaşık düğümlerini teker teker çözmeye başladın.",
         imagePath: "/badges/muhasebe-10.webp",
         guild: "MUHASEBE_MALIYE",
-        requirement: { type: "category_progress", category: "MUHASEBE VE MALİYE", percentage: 10 },
+        requirement: {
+            type: "category_progress",
+            category: "MUHASEBE VE MALİYE",
+            percentage: 10,
+        },
         order: 9,
     },
     {
         id: "muh_25",
         title: "Hazine Muhafızı",
         motto: "Hazine kapısındaki ağır kilidin mekanizmasını çözüyorsun.",
-        imagePath: "/badges/muhasebe-25.webp", 
+        imagePath: "/badges/muhasebe-25.webp",
         guild: "MUHASEBE_MALIYE",
-        requirement: { type: "category_progress", category: "MUHASEBE VE MALİYE", percentage: 25 },
+        requirement: {
+            type: "category_progress",
+            category: "MUHASEBE VE MALİYE",
+            percentage: 25,
+        },
         order: 10,
     },
     {
         id: "muh_50",
         title: "Gümüş Sayacı",
-        motto: "Krallığın sandığını koruyan, her sikkenin fısıltısını duyan keskin göz.",
+        motto:
+            "Krallığın sandığını koruyan, her sikkenin fısıltısını duyan keskin göz.",
         imagePath: "/badges/muhasebe-50.webp", // UNDERSCORE
         guild: "MUHASEBE_MALIYE",
-        requirement: { type: "category_progress", category: "MUHASEBE VE MALİYE", percentage: 50 },
+        requirement: {
+            type: "category_progress",
+            category: "MUHASEBE VE MALİYE",
+            percentage: 50,
+        },
         order: 11,
     },
     {
         id: "muh_100",
         title: "Kusursuz Mizân Üstadı",
-        motto: "Sayıların kaosunu ilahi bir düzene sokan, mutlak dengenin mimarı.",
+        motto:
+            "Sayıların kaosunu ilahi bir düzene sokan, mutlak dengenin mimarı.",
         imagePath: "/badges/muhasebe-100.webp", // UNDERSCORE
         guild: "MUHASEBE_MALIYE",
-        requirement: { type: "category_progress", category: "MUHASEBE VE MALİYE", percentage: 100 },
+        requirement: {
+            type: "category_progress",
+            category: "MUHASEBE VE MALİYE",
+            percentage: 100,
+        },
         order: 12,
     },
 
@@ -210,7 +269,11 @@ export const ACHIEVEMENTS: Achievement[] = [
         motto: "Zihnin karanlık koridorlarında ilk meşaleyi sen yaktın.",
         imagePath: "/badges/genel-10.webp",
         guild: "GENEL_YETENEK",
-        requirement: { type: "category_progress", category: "GENEL YETENEK VE İNGİLİZCE", percentage: 10 },
+        requirement: {
+            type: "category_progress",
+            category: "GENEL YETENEK VE İNGİLİZCE",
+            percentage: 10,
+        },
         order: 13,
     },
     {
@@ -219,25 +282,39 @@ export const ACHIEVEMENTS: Achievement[] = [
         motto: "Bilgi uçsuz bucaksız diyarlardan sana doğru kanat çırpıyor.",
         imagePath: "/badges/genel-25.webp",
         guild: "GENEL_YETENEK",
-        requirement: { type: "category_progress", category: "GENEL YETENEK VE İNGİLİZCE", percentage: 25 },
+        requirement: {
+            type: "category_progress",
+            category: "GENEL YETENEK VE İNGİLİZCE",
+            percentage: 25,
+        },
         order: 14,
     },
     {
         id: "genel_50",
         title: "Yedi Dilin Elçisi",
-        motto: "Uzak diyarların kadim dillerini konuşan, halklar arasındaki köprü.",
+        motto:
+            "Uzak diyarların kadim dillerini konuşan, halklar arasındaki köprü.",
         imagePath: "/badges/genel-50.webp",
         guild: "GENEL_YETENEK",
-        requirement: { type: "category_progress", category: "GENEL YETENEK VE İNGİLİZCE", percentage: 50 },
+        requirement: {
+            type: "category_progress",
+            category: "GENEL YETENEK VE İNGİLİZCE",
+            percentage: 50,
+        },
         order: 15,
     },
     {
         id: "genel_100",
         title: "Hakikat Arayıcısı",
-        motto: "Zihninle en karanlık labirentleri aydınlatan, bilmeceleri parçalayan bilge.",
+        motto:
+            "Zihninle en karanlık labirentleri aydınlatan, bilmeceleri parçalayan bilge.",
         imagePath: "/badges/genel-100.webp",
         guild: "GENEL_YETENEK",
-        requirement: { type: "category_progress", category: "GENEL YETENEK VE İNGİLİZCE", percentage: 100 },
+        requirement: {
+            type: "category_progress",
+            category: "GENEL YETENEK VE İNGİLİZCE",
+            percentage: 100,
+        },
         order: 16,
     },
 
@@ -245,36 +322,48 @@ export const ACHIEVEMENTS: Achievement[] = [
     {
         id: "hybrid_01",
         title: "Ticaret Valisi",
-        motto: "Hukuk ve Ekonomi: Altının akışını yasaların gücüyle dizginliyorsun.",
+        motto:
+            "Hukuk ve Ekonomi: Altının akışını yasaların gücüyle dizginliyorsun.",
         imagePath: "/badges/hybrid-01.webp",
         guild: "HYBRID",
         requirement: {
             type: "multi_category_progress",
-            categories: [{ category: "HUKUK", percentage: 25 }, { category: "EKONOMİ", percentage: 25 }]
+            categories: [{ category: "HUKUK", percentage: 25 }, {
+                category: "EKONOMİ",
+                percentage: 25,
+            }],
         },
         order: 17,
     },
     {
         id: "hybrid_02",
         title: "İmparatorluk Nazırı",
-        motto: "Ekonomi ve Muhasebe: Hem serveti yönetiyor hem de tartabiliyorsun.",
+        motto:
+            "Ekonomi ve Muhasebe: Hem serveti yönetiyor hem de tartabiliyorsun.",
         imagePath: "/badges/hybrid-02.webp",
         guild: "HYBRID",
         requirement: {
             type: "multi_category_progress",
-            categories: [{ category: "EKONOMİ", percentage: 50 }, { category: "MUHASEBE VE MALİYE", percentage: 50 }]
+            categories: [{ category: "EKONOMİ", percentage: 50 }, {
+                category: "MUHASEBE VE MALİYE",
+                percentage: 50,
+            }],
         },
         order: 18,
     },
     {
         id: "hybrid_03",
         title: "Bilge Diplomat",
-        motto: "Hukuk ve Genel Yetenek: Keskin bir zeka ve sarsılmaz bir adalet.",
+        motto:
+            "Hukuk ve Genel Yetenek: Keskin bir zeka ve sarsılmaz bir adalet.",
         imagePath: "/badges/hybrid-03.webp",
         guild: "HYBRID",
         requirement: {
             type: "multi_category_progress",
-            categories: [{ category: "HUKUK", percentage: 50 }, { category: "GENEL YETENEK VE İNGİLİZCE", percentage: 50 }]
+            categories: [{ category: "HUKUK", percentage: 50 }, {
+                category: "GENEL YETENEK VE İNGİLİZCE",
+                percentage: 50,
+            }],
         },
         order: 19,
     },
@@ -286,14 +375,18 @@ export const ACHIEVEMENTS: Achievement[] = [
         guild: "HYBRID",
         requirement: {
             type: "multi_category_progress",
-            categories: [{ category: "MUHASEBE VE MALİYE", percentage: 25 }, { category: "GENEL YETENEK VE İNGİLİZCE", percentage: 25 }]
+            categories: [{ category: "MUHASEBE VE MALİYE", percentage: 25 }, {
+                category: "GENEL YETENEK VE İNGİLİZCE",
+                percentage: 25,
+            }],
         },
         order: 20,
     },
     {
         id: "hybrid_05",
         title: "Büyük Konsey Üyesi",
-        motto: "Beş disiplin tek zihinde: Tüm loncaların saygısını kazanan bir bilge.",
+        motto:
+            "Beş disiplin tek zihinde: Tüm loncaların saygısını kazanan bir bilge.",
         imagePath: "/badges/hybrid-05.webp",
         guild: "HYBRID",
         requirement: { type: "all_progress", percentage: 50 },
@@ -304,25 +397,26 @@ export const ACHIEVEMENTS: Achievement[] = [
     {
         id: "special-01",
         title: "Gece Nöbetçisi",
-        motto: "Tek bir tefekkür oturumunda tam 10 parşömen bitirdin.",
+        motto: "Tek bir tefekkür oturumunda tam 5 parşömen bitirdin.",
         imagePath: "/badges/special-01.webp",
         guild: "SPECIAL",
-        requirement: { type: "daily_progress", count: 10 },
+        requirement: { type: "daily_progress", count: 5 },
         order: 22,
     },
     {
         id: "special-02",
         title: "Zihinsel Maraton",
-        motto: "Zihnin sınırlarını zorlayan 20 videoluk devasa bir adım.",
+        motto: "Zihnin sınırlarını zorlayan 10 videoluk devasa bir adım.",
         imagePath: "/badges/special-02.webp",
         guild: "SPECIAL",
-        requirement: { type: "daily_progress", count: 20 },
+        requirement: { type: "daily_progress", count: 10 },
         order: 23,
     },
     {
         id: "special-03",
         title: "Sönmeyen Meşale",
-        motto: "Yedi gün boyunca karanlığı ilminle dağıttın; meşalen hiç sönmedi.",
+        motto:
+            "Yedi gün boyunca karanlığı ilminle dağıttın; meşalen hiç sönmedi.",
         imagePath: "/badges/special-03.webp",
         guild: "SPECIAL",
         requirement: { type: "streak", days: 7 },
@@ -340,7 +434,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     {
         id: "special-05",
         title: "Zamanın Yolcusu",
-        motto: "Bilgelik koridorlarında toplam 60 gün geçirdin; artık burası senin evin.",
+        motto:
+            "Bilgelik koridorlarında toplam 60 gün geçirdin; artık burası senin evin.",
         imagePath: "/badges/special-05.webp",
         guild: "SPECIAL",
         requirement: { type: "total_active_days", days: 60 },
@@ -349,7 +444,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     {
         id: "special-06",
         title: "Uyanmış Ruh",
-        motto: "Yolun yarısını aştın; artık tüm disiplinler senin varlığınla uyumlu.",
+        motto:
+            "Yolun yarısını aştın; artık tüm disiplinler senin varlığınla uyumlu.",
         imagePath: "/badges/special-06.webp",
         guild: "SPECIAL",
         requirement: { type: "all_progress", percentage: 50 },
@@ -358,7 +454,8 @@ export const ACHIEVEMENTS: Achievement[] = [
     {
         id: "special-07",
         title: "Yüce Üstad (Archmage)",
-        motto: "Tüm mühürler toplandı, tüm isimler öğrenildi. Sen artık yaşayan bir efsanesin.",
+        motto:
+            "Tüm mühürler toplandı, tüm isimler öğrenildi. Sen artık yaşayan bir efsanesin.",
         imagePath: "/badges/special-07.webp",
         guild: "SPECIAL",
         requirement: { type: "all_progress", percentage: 100 },
@@ -485,67 +582,106 @@ export interface TopicMasteryStats {
 export function checkTopicMastery(
     topicStats: TopicMasteryStats[],
     topicId: string,
-    courseId: string
+    courseId: string,
 ): boolean {
     const topic = topicStats.find(
-        (t) => t.topicId === topicId && t.courseId === courseId
+        (t) => t.topicId === topicId && t.courseId === courseId,
     );
     return topic?.isMastered ?? false;
 }
 
-export function calculateAchievements(stats: ProgressStats, log: ActivityLog): string[] {
-    return ACHIEVEMENTS.filter(acc => isAchievementUnlocked(acc, stats, log)).map(acc => acc.id);
+export function calculateAchievements(
+    stats: ProgressStats,
+    log: ActivityLog,
+): string[] {
+    return ACHIEVEMENTS.filter((acc) => isAchievementUnlocked(acc, stats, log))
+        .map((acc) => acc.id);
 }
 
 function isAchievementUnlocked(
     achievement: Achievement,
     stats: ProgressStats,
-    log: ActivityLog
+    log: ActivityLog,
 ): boolean {
     const req = achievement.requirement;
     switch (req.type) {
         case "category_progress": {
             const cat = stats.categoryProgress[req.category];
-            return cat && cat.totalVideos > 0 ? (cat.completedVideos / cat.totalVideos) * 100 >= req.percentage : false;
+            return cat && cat.totalVideos > 0
+                ? (cat.completedVideos / cat.totalVideos) * 100 >=
+                    req.percentage
+                : false;
         }
         case "multi_category_progress": {
-            return req.categories.every(c => {
+            return req.categories.every((c) => {
                 const p = stats.categoryProgress[c.category];
-                return p && p.totalVideos > 0 ? (p.completedVideos / p.totalVideos) * 100 >= c.percentage : false;
+                return p && p.totalVideos > 0
+                    ? (p.completedVideos / p.totalVideos) * 100 >= c.percentage
+                    : false;
             });
         }
         case "all_progress": {
-            return stats.totalVideos > 0 ? (stats.completedVideos / stats.totalVideos) * 100 >= req.percentage : false;
+            return stats.totalVideos > 0
+                ? (stats.completedVideos / stats.totalVideos) * 100 >=
+                    req.percentage
+                : false;
         }
-        case "streak": return log.currentStreak >= req.days;
-        case "daily_progress": return log.dailyVideosCompleted >= req.count;
-        case "total_active_days": return log.totalActiveDays >= req.days;
+        case "streak":
+            return log.currentStreak >= req.days;
+        case "daily_progress":
+            return log.dailyVideosCompleted >= req.count;
+        case "total_active_days":
+            return log.totalActiveDays >= req.days;
         // New RPG Requirements Logic
-        case "quiz_honesty": return log.honestyUsageCount >= req.count;
-        case "first_time_perfect": return log.firstTimePerfectCount >= (1); // Assuming req for single event, or count if needed
-        case "clear_debt": return log.debtClearedInSession;
-        case "consecutive_correct": return log.consecutiveCorrectStreak >= req.count;
-        case "weekly_review_streak": return log.weeklyStudyDays >= req.days;
-        case "topic_mastery_count": return log.masteredTopicsCount >= req.count;
-        default: return false;
+        case "quiz_honesty":
+            return log.honestyUsageCount >= req.count;
+        case "first_time_perfect":
+            return log.firstTimePerfectCount >= (1); // Assuming req for single event, or count if needed
+        case "clear_debt":
+            return log.debtClearedInSession;
+        case "consecutive_correct":
+            return log.consecutiveCorrectStreak >= req.count;
+        case "weekly_review_streak":
+            return log.weeklyStudyDays >= req.days;
+        case "topic_mastery_count":
+            return log.masteredTopicsCount >= req.count;
+        default:
+            return false;
     }
 }
 
-export function getRequirementDescription(requirement: RequirementType): string {
+export function getRequirementDescription(
+    requirement: RequirementType,
+): string {
     switch (requirement.type) {
-        case "category_progress": return `${requirement.category} öğretilerinde %${requirement.percentage} aydınlanma`;
-        case "multi_category_progress": return requirement.categories.map(c => `${c.category} %${c.percentage}`).join(" + ");
-        case "all_progress": return `Tüm ilimlerde %${requirement.percentage} ilerleme`;
-        case "streak": return `${requirement.days} gün kesintisiz çalışma`;
-        case "daily_progress": return `Bugün ${requirement.count}+ video tamamla`;
-        case "total_active_days": return `Toplam ${requirement.days} gün aktif bilgelik`;
+        case "category_progress":
+            return `${requirement.category} öğretilerinde %${requirement.percentage} aydınlanma`;
+        case "multi_category_progress":
+            return requirement.categories.map((c) =>
+                `${c.category} %${c.percentage}`
+            ).join(" + ");
+        case "all_progress":
+            return `Tüm ilimlerde %${requirement.percentage} ilerleme`;
+        case "streak":
+            return `${requirement.days} gün kesintisiz çalışma`;
+        case "daily_progress":
+            return `Bugün ${requirement.count}+ video tamamla`;
+        case "total_active_days":
+            return `Toplam ${requirement.days} gün aktif bilgelik`;
         // New RPG Requirements Descriptions
-        case "quiz_honesty": return `${requirement.count} kez dürüstlük göstergesi`;
-        case "first_time_perfect": return "İlk denemede kusursuz başarı";
-        case "clear_debt": return "Tüm borçları tek seferde temizle";
-        case "consecutive_correct": return `${requirement.count} ardışık doğru cevap`;
-        case "weekly_review_streak": return `Haftada ${requirement.days} gün tekrar`;
-        case "topic_mastery_count": return `${requirement.count} konuda tam ustalık`;
-        default: return "Gizli gereksinim";
+        case "quiz_honesty":
+            return `${requirement.count} kez dürüstlük göstergesi`;
+        case "first_time_perfect":
+            return "İlk denemede kusursuz başarı";
+        case "clear_debt":
+            return "Tüm borçları tek seferde temizle";
+        case "consecutive_correct":
+            return `${requirement.count} ardışık doğru cevap`;
+        case "weekly_review_streak":
+            return `Haftada ${requirement.days} gün tekrar`;
+        case "topic_mastery_count":
+            return `${requirement.count} konuda tam ustalık`;
+        default:
+            return "Gizli gereksinim";
     }
 }

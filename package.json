@@ -16,11 +16,11 @@
     "ai:test": "tsx scripts/ai/test-cerebras.ts",
     "ai:verify": "tsx scripts/ai/verify-ai.ts",
     "ai:sync-guidelines": "tsx scripts/ai/sync-subject-guidelines.ts",
+    "sync": "npx tsx scripts/manual-sync.ts",
     "update-types": "npx supabase gen types typescript --project-id ccnvhimlbkkydpcqtraw > src/shared/types/supabase.ts"
   },
   "dependencies": {
     "@cerebras/cerebras_cloud_sdk": "^1.64.1",
-    "@google/genai": "^1.35.0",
     "@notionhq/client": "^2.2.15",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.11",
@@ -44,7 +44,6 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.25.0",
-    "groq-sdk": "^0.37.0",
     "katex": "^0.16.27",
     "lucide-react": "^0.562.0",
     "next-themes": "^0.4.6",
@@ -75,7 +74,6 @@
     "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
-    "@vercel/node": "^5.5.28",
     "@vitejs/plugin-react": "^5.1.2",
     "dotenv": "^17.2.3",
     "eslint": "^9",

@@ -1,11 +1,9 @@
-
-import { supabase } from '@/shared/lib/core/supabase';
+import { supabase } from "@/shared/lib/core/supabase";
 
 export async function verifyQuestionCount(chunkId: string) {
     const { count } = await supabase
-        .from('questions')
-        .select('*', { count: 'exact', head: true })
-        .eq('chunk_id', chunkId);
-    console.log(`Questions for chunk ${chunkId}: ${count}`);
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .eq("chunk_id", chunkId);
     return count;
 }

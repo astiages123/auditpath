@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getUserStats } from "@/shared/lib/core/client-db";
 import type { Rank } from "@/config/constants";
@@ -13,7 +13,12 @@ export interface ProgressStats {
   todayVideoCount?: number;
   categoryProgress: Record<
     string,
-    { completedVideos: number; completedHours: number; totalVideos: number; totalHours: number }
+    {
+      completedVideos: number;
+      completedHours: number;
+      totalVideos: number;
+      totalHours: number;
+    }
   >;
   courseProgress: Record<string, number>;
   currentRank?: Rank;
@@ -21,6 +26,7 @@ export interface ProgressStats {
   rankProgress?: number;
   progressPercentage?: number;
   estimatedDays?: number;
+  dailyAverage?: number;
 }
 
 export const progressKeys = {
@@ -55,8 +61,8 @@ const calculateStaticTotals = () => {
   let totalAllHours = 0;
 
   categories.forEach((cat) => {
-    const categoryName =
-      cat.category.split(" (")[0].split(". ")[1] || cat.category;
+    const categoryName = cat.category.split(" (")[0].split(". ")[1] ||
+      cat.category;
     let catTotalVideos = 0;
     let catTotalHours = 0;
 
@@ -96,25 +102,34 @@ export interface ProgressContextType {
   refreshProgress: () => void;
   isLoading: boolean;
   streak: number;
-  updateProgressOptimistically: (courseId: string, deltaVideos: number, deltaHours: number) => void;
+  updateProgressOptimistically: (
+    courseId: string,
+    deltaVideos: number,
+    deltaHours: number,
+  ) => void;
 }
 
-export const ProgressContext = createContext<ProgressContextType | undefined>(undefined);
+export const ProgressContext = createContext<ProgressContextType | undefined>(
+  undefined,
+);
 
 export function useProgress() {
   const context = useContext(ProgressContext);
   if (context === undefined) {
-    throw new Error('useProgress must be used within a ProgressProvider');
+    throw new Error("useProgress must be used within a ProgressProvider");
   }
   return context;
 }
 
-export function useProgressQuery(userId?: string, initialStats?: Partial<ProgressStats>) {
+export function useProgressQuery(
+  userId?: string,
+  initialStats?: Partial<ProgressStats>,
+) {
   return useQuery({
     queryKey: progressKeys.user(userId || "guest"),
     queryFn: async () => {
       if (!userId) return defaultStats;
-      
+
       const dbStats = await getUserStats(userId);
       if (!dbStats) return defaultStats;
 
@@ -125,7 +140,7 @@ export function useProgressQuery(userId?: string, initialStats?: Partial<Progres
         Object.entries(dbStats.categoryProgress).forEach(
           ([catName, stats]: [
             string,
-            { completedVideos: number; completedHours: number }
+            { completedVideos: number; completedHours: number },
           ]) => {
             if (mergedCategoryProgress[catName]) {
               mergedCategoryProgress[catName] = {
@@ -134,7 +149,7 @@ export function useProgressQuery(userId?: string, initialStats?: Partial<Progres
                 completedHours: stats.completedHours || 0,
               };
             }
-          }
+          },
         );
       }
 
@@ -151,11 +166,14 @@ export function useProgressQuery(userId?: string, initialStats?: Partial<Progres
         rankProgress: dbStats.rankProgress,
         progressPercentage: dbStats.progressPercentage,
         estimatedDays: dbStats.estimatedDays,
+        dailyAverage: dbStats.dailyAverage,
         todayVideoCount: dbStats.todayVideoCount || 0,
       } as ProgressStats;
     },
     enabled: !!userId,
-    initialData: initialStats ? { ...defaultStats, ...initialStats } : undefined,
+    initialData: initialStats
+      ? { ...defaultStats, ...initialStats }
+      : undefined,
     staleTime: 5 * 60 * 1000, // 5 mins
   });
 }
@@ -163,62 +181,70 @@ export function useProgressQuery(userId?: string, initialStats?: Partial<Progres
 export function useOptimisticProgress() {
   const queryClient = useQueryClient();
 
-  const updateProgress = (userId: string, courseId: string, deltaVideos: number, deltaHours: number) => {
-    queryClient.setQueryData(progressKeys.user(userId), (old: ProgressStats | undefined) => {
-      if (!old) return old;
+  const updateProgress = (
+    userId: string,
+    courseId: string,
+    deltaVideos: number,
+    deltaHours: number,
+  ) => {
+    queryClient.setQueryData(
+      progressKeys.user(userId),
+      (old: ProgressStats | undefined) => {
+        if (!old) return old;
 
-      const categories = coursesData as Category[];
-      const categoryData = categories.find((cat) =>
-        cat.courses.some((c) => c.id === courseId)
-      );
+        const categories = coursesData as Category[];
+        const categoryData = categories.find((cat) =>
+          cat.courses.some((c) => c.id === courseId)
+        );
 
-      if (!categoryData) return old;
+        if (!categoryData) return old;
 
-      const categoryName =
-        categoryData.category.split(" (")[0].split(". ")[1] ||
-        categoryData.category;
+        const categoryName =
+          categoryData.category.split(" (")[0].split(". ")[1] ||
+          categoryData.category;
 
-      const existingCatStats = old.categoryProgress[categoryName] || {
-        completedVideos: 0,
-        completedHours: 0,
-        totalVideos: 0,
-        totalHours: 0,
-      };
+        const existingCatStats = old.categoryProgress[categoryName] || {
+          completedVideos: 0,
+          completedHours: 0,
+          totalVideos: 0,
+          totalHours: 0,
+        };
 
-      const newCategoryProgress = {
-        ...old.categoryProgress,
-        [categoryName]: {
-          ...existingCatStats,
-          completedVideos: existingCatStats.completedVideos + deltaVideos,
-          completedHours: existingCatStats.completedHours + deltaHours,
-        },
-      };
+        const newCategoryProgress = {
+          ...old.categoryProgress,
+          [categoryName]: {
+            ...existingCatStats,
+            completedVideos: existingCatStats.completedVideos + deltaVideos,
+            completedHours: existingCatStats.completedHours + deltaHours,
+          },
+        };
 
-      const currentTodayCount = old.todayVideoCount || 0;
-      const newTodayCount = Math.max(0, currentTodayCount + deltaVideos);
-      
-      let newStreak = old.streak;
-      if (currentTodayCount === 0 && newTodayCount > 0) {
+        const currentTodayCount = old.todayVideoCount || 0;
+        const newTodayCount = Math.max(0, currentTodayCount + deltaVideos);
+
+        let newStreak = old.streak;
+        if (currentTodayCount === 0 && newTodayCount > 0) {
           // First activity today -> Streak + 1
           newStreak += 1;
-      } else if (currentTodayCount > 0 && newTodayCount === 0) {
+        } else if (currentTodayCount > 0 && newTodayCount === 0) {
           // Last activity removed -> Streak - 1
           newStreak = Math.max(0, newStreak - 1);
-      }
+        }
 
-      return {
-        ...old,
-        completedVideos: old.completedVideos + deltaVideos,
-        completedHours: old.completedHours + deltaHours,
-        streak: newStreak,
-        todayVideoCount: newTodayCount,
-        courseProgress: {
-          ...old.courseProgress,
-          [courseId]: (old.courseProgress[courseId] || 0) + deltaVideos,
-        },
-        categoryProgress: newCategoryProgress,
-      };
-    });
+        return {
+          ...old,
+          completedVideos: old.completedVideos + deltaVideos,
+          completedHours: old.completedHours + deltaHours,
+          streak: newStreak,
+          todayVideoCount: newTodayCount,
+          courseProgress: {
+            ...old.courseProgress,
+            [courseId]: (old.courseProgress[courseId] || 0) + deltaVideos,
+          },
+          categoryProgress: newCategoryProgress,
+        };
+      },
+    );
   };
 
   return { updateProgress };

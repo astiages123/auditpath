@@ -82,6 +82,21 @@ export function GenerateQuestionButton({ chunkId, onComplete }: GenerateQuestion
     }
   }, [chunkId]);
 
+  // Load status on mount
+  useEffect(() => {
+    // Use microtask to avoid "setState in effect" warning
+    Promise.resolve().then(() => refreshStatus());
+  }, [refreshStatus]);
+
+  // Poll every 5 seconds if processing
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (status?.status === 'PROCESSING') {
+        interval = setInterval(refreshStatus, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [refreshStatus, status?.status]);
+
   useEffect(() => {
     if (open) {
       // Use microtask to avoid "setState in effect" warning if synchronous
@@ -98,8 +113,6 @@ export function GenerateQuestionButton({ chunkId, onComplete }: GenerateQuestion
   const handleGenerate = async () => {
     if (!status) return;
 
-    console.log('%c[QuizGen] 🖱️ Soru üretimi başlatılıyor (Client-Side)', 'color: #8b5cf6; font-weight: bold;');
-    
     setLoading(true);
     setLogs([]);
     setCurrentStep('INIT');
@@ -139,6 +152,7 @@ export function GenerateQuestionButton({ chunkId, onComplete }: GenerateQuestion
 
   const percentage = status ? Math.min(100, (status.used / status.quota.total) * 100) : 0;
   const progress = currentStep ? stepProgress[currentStep] : 0;
+  const isProcessing = status?.status === 'PROCESSING';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -146,10 +160,20 @@ export function GenerateQuestionButton({ chunkId, onComplete }: GenerateQuestion
         <Button 
           variant="outline" 
           size="sm" 
+          disabled={isProcessing}
           className="gap-2 text-xs border-dashed border-zinc-700 hover:border-zinc-500"
         >
-          <Sparkles className="w-3 h-3 text-yellow-500" />
-          Soru Üret
+          {isProcessing ? (
+             <>
+                <Loader2 className="w-3 h-3 animate-spin text-yellow-500" />
+                İşleniyor...
+             </>
+          ) : (
+             <>
+                <Sparkles className="w-3 h-3 text-yellow-500" />
+                Soru Üret
+             </>
+          )}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col">

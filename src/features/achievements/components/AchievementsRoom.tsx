@@ -105,7 +105,6 @@ export function AchievementsRoom() {
           sessionVideos > 0 &&
           dbUnlocked.length === 0
         ) {
-          console.warn("Detected stale session data. Resetting.");
           sessionVideos = 0;
           if (typeof window !== "undefined") {
             sessionStorage.removeItem("achievement-session");

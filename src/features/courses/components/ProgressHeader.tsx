@@ -9,13 +9,13 @@ import {
   Target,
   ChevronRight,
 } from "lucide-react";
-// import { Progress } from "@/shared/components/ui/progress"; // Unused
 import { useProgress } from "@/shared/hooks/useProgress";
 import { useState, useMemo, useSyncExternalStore } from "react";
 import { RANKS, type Rank } from "@/shared/lib/core/client-db";
 import { JourneyModal } from "./JourneyModal";
 import { motion } from "framer-motion";
 import { cn } from "@/shared/lib/core/utils";
+import { formatDurationShort } from "@/shared/lib/utils/formatters";
 
 // Local helper for legacy props, but prefer importing shared type
 interface RankInfo extends Rank {
@@ -32,13 +32,6 @@ interface ProgressHeaderProps {
   totalHours: number;
   progressPercentage: number;
   estimatedDays: number;
-}
-
-function formatDuration(decimalHours: number): string {
-  const totalMinutes = Math.round(decimalHours * 60);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  return `${hours}s ${minutes}d`;
 }
 
 export function ProgressHeader({
@@ -86,10 +79,10 @@ export function ProgressHeader({
   const today = new Date();
   const todaysSubject = schedule[today.getDay()];
 
-  // Calculate overall percentage based on VIDEOS
+  // Calculate overall percentage based on HOURS for more accuracy
   const displayPercentage = isHydrated
-    ? displayTotalVideos > 0
-      ? Math.round((displayCompletedVideos / displayTotalVideos) * 100)
+    ? displayTotalHours > 0
+      ? Math.round((displayCompletedHours / displayTotalHours) * 100)
       : 0
     : initialProgressPercentage;
 
@@ -118,14 +111,22 @@ export function ProgressHeader({
     }
   }
 
-  // Recalculate estimated days
-  let displayEstimatedDays = initialEstimatedDays;
-  if (isHydrated && stats && nextRank && displayTotalHours > 0) {
+  // Calculate estimated days strictly until NEXT RANK based on real daily average
+  const displayEstimatedDays = useMemo(() => {
+    if (!isHydrated || !stats || !nextRank || displayTotalHours <= 0) {
+      return initialEstimatedDays;
+    }
+
     const targetThreshold = nextRank.minPercentage ?? 0;
     const targetHours = (displayTotalHours * targetThreshold) / 100;
     const hoursRemaining = Math.max(0, targetHours - displayCompletedHours);
-    displayEstimatedDays = Math.ceil(hoursRemaining / 2); // Assuming 2 hours study per day
-  }
+    
+    const dailyRate = (stats.dailyAverage && stats.dailyAverage > 0) 
+      ? stats.dailyAverage 
+      : 2;
+
+    return Math.ceil(hoursRemaining / dailyRate);
+  }, [isHydrated, stats, nextRank, displayTotalHours, displayCompletedHours, initialEstimatedDays]);
 
   const currentRankImage = useMemo(() => {
     if (!currentRank) return "/ranks/rank1.webp";
@@ -313,8 +314,8 @@ export function ProgressHeader({
             <div className="space-y-0.5">
               <p className="text-[10px] text-muted-foreground">Süre</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-white">{formatDuration(displayCompletedHours)}</span>
-                <span className="text-[8px] text-muted-foreground">/{formatDuration(displayTotalHours)}</span>
+                <span className="text-sm font-bold text-white">{formatDurationShort(displayCompletedHours)}</span>
+                <span className="text-[8px] text-muted-foreground">/{formatDurationShort(displayTotalHours)}</span>
               </div>
             </div>
             <div className="space-y-0.5 border-l border-white/5 pl-2">

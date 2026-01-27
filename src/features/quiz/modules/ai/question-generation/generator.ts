@@ -74,7 +74,7 @@ async function generateWithRetry<T>(
       const isRetry = attempt > 0;
 
       // If retry, append retry instruction to the last message
-      let currentMessages = [...messages];
+      const currentMessages = [...messages];
       if (isRetry) {
         // Add retry prompt as a new user message
         currentMessages.push({ role: "user", content: RETRY_PROMPT_TEMPLATE });
@@ -201,7 +201,9 @@ export async function reviseQuestion(
   const systemPrompt =
     "Sen deneyimli bir eğitim teknoloğu ve soru revizyon uzmanısın. Hatalı soruları düzeltmekle görevlisin. SADECE JSON formatında çıktı ver. Cevabın dışında hiçbir metin, yorum veya markdown karakteri bulunmamalıdır.";
 
-  const contextPrompt = PromptArchitect.buildContext(content); // Re-build context (less ideal for cache but safe)
+  // AI'a görsel URL'lerini gönderme
+  const cleanContent = content.replace(/!\[[^\]]*\]\([^)]+\)/g, "[GÖRSEL]");
+  const contextPrompt = PromptArchitect.buildContext(cleanContent); // Re-build context (less ideal for cache but safe)
 
   const revisionTask = `Aşağıdaki soru, belirtilen nedenlerle REDDEDİLMİŞTİR.
 Lütfen geri bildirimi dikkate alarak soruyu revize et.
@@ -291,10 +293,11 @@ export async function generateQuestionBatch(
 
   // Pre-build the SHARED context prompt once for the whole batch
   // ensuring the string reference is identical for cache hits
-  // Pre-build the SHARED context prompt once for the whole batch
-  // ensuring the string reference is identical for cache hits
+  // AI'a görsel URL'lerini gönderme - sadece metin içeriği
+  const cleanContent = content.replace(/!\[[^\]]*\]\([^)]+\)/g, "[GÖRSEL]");
+
   const sharedContextPrompt = PromptArchitect.buildContext(
-    content,
+    cleanContent,
     courseName,
     sectionTitle,
     subjectGuidelines,

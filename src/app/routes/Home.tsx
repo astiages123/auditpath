@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth";
 import { ProgressHeader, CategoryGrid } from "@/features/courses";
-import { getCategories, getUserStats, type Category } from "@/shared/lib/core/client-db";
+import { getCategories, getUserStats, getAllCourses, type Category } from "@/shared/lib/core/client-db";
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
@@ -27,9 +27,32 @@ export default function HomePage() {
     async function loadData() {
       try {
         setLoading(true);
-        // Load categories
-        const cats = await getCategories();
-        setCategories(cats);  
+        // Load categories and all courses
+        const [cats, allCourses] = await Promise.all([
+          getCategories(),
+          getAllCourses()
+        ]);
+
+        // Check for uncategorized courses
+        const categorizedCourseIds = new Set<string>();
+        cats.forEach(c => c.courses.forEach(course => categorizedCourseIds.add(course.id)));
+
+        const uncategorized = allCourses.filter(c => !categorizedCourseIds.has(c.id));
+
+        if (uncategorized.length > 0) {
+            const otherCategory: Category = {
+                id: "uncategorized",
+                name: "Diğer Dersler",
+                slug: "diger-dersler",
+                courses: uncategorized,
+                total_hours: uncategorized.reduce((acc, c) => acc + (c.total_hours || 0), 0),
+                sort_order: 999,
+                created_at: new Date().toISOString()
+            };
+            setCategories([...cats, otherCategory]);
+        } else {
+            setCategories(cats);  
+        }
 
         // Load stats if user is logged in
         if (userId) {

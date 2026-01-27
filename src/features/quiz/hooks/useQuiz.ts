@@ -8,9 +8,9 @@
 import { useCallback, useState } from "react";
 import {
   fetchQuestionsForSession,
-  generateQuestionsForChunk,
-  QuizQuestion,
-} from "@/features/quiz";
+  type QuizQuestion,
+} from "@/features/quiz/services/quiz-api";
+import { generateQuestionsForChunk } from "@/features/quiz/services/quiz-generator";
 import { supabase } from "@/shared/lib/core/supabase";
 
 export interface QuizState {
@@ -147,14 +147,9 @@ export function useQuiz(): UseQuizReturn {
           ).eq("id", params.chunkId).single();
 
           if (chunk?.status === "PENDING" || chunk?.status === "FAILED") {
-            console.log("[useQuiz] Triggering client-side generation...");
-
             generateQuestionsForChunk(params.chunkId, {
-              onLog: (log) =>
-                console.log(`[QuizGen][${log.step}] ${log.message}`),
-              onQuestionSaved: (total) => {
-                console.log(`[useQuiz] Question saved: ${total}`);
-              },
+              onLog: () => {},
+              onQuestionSaved: () => {},
               onComplete: async () => {
                 const updated = await fetchQuestionsForSession(
                   params.chunkId,

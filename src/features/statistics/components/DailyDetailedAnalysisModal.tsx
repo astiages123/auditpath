@@ -7,9 +7,10 @@ import { Clock, Target, Coffee, Pause, Info, History, BarChart3, Calendar, Chevr
 import type { DailyEfficiencySummary, DetailedSession, TimelineBlock } from "@/shared/lib/core/client-db";
 import { getRecentSessions } from "@/shared/lib/core/client-db";
 import { cn } from "@/shared/lib/core/utils";
-// Json import removed as unused
 import { getCycleCount } from "@/shared/lib/domain/pomodoro-utils";
 import { Badge } from "@/shared/components/ui/badge";
+import { formatTimeFromSeconds } from "@/shared/lib/utils/formatters";
+import { getVirtualDate } from "@/shared/lib/utils/date-utils";
 
 interface DailyDetailedAnalysisModalProps {
   open: boolean;
@@ -31,14 +32,7 @@ const getScoreBg = (score: number) => {
   return "bg-red-500/20";
 };
 
-// Format time from seconds
-const formatTime = (seconds: number) => {
-  const totalMinutes = Math.round(seconds / 60);
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  if (h > 0) return `${h}sa ${m}dk`;
-  return `${m}dk`;
-};
+// formatTimeFromSeconds is imported from @/shared/lib/utils/formatters
 
 // Timeline event type
 interface TimelineEvent {
@@ -186,10 +180,7 @@ function RecentSessionsTab({ userId }: { userId?: string }) {
 
   sessions.forEach((session) => {
     const dateObj = new Date(session.startTime);
-    const virtualDate = new Date(dateObj);
-    if (dateObj.getHours() < 4) {
-      virtualDate.setDate(virtualDate.getDate() - 1);
-    }
+    const virtualDate = getVirtualDate(dateObj);
 
     const dateStr = virtualDate.toLocaleDateString("tr-TR", {
       day: "numeric",
@@ -261,7 +252,7 @@ function RecentSessionsTab({ userId }: { userId?: string }) {
                  <div className="text-right">
                     <div className="flex items-center justify-end gap-1.5 text-sm font-medium text-foreground">
                         <Clock className="w-4 h-4 text-muted-foreground" />
-                        {formatTime(group.totalWorkSeconds)}
+                        {formatTimeFromSeconds(group.totalWorkSeconds)}
                     </div>
                  </div>
                  <ChevronRight className="w-5 h-5 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
@@ -485,7 +476,7 @@ function RecentSessionsTab({ userId }: { userId?: string }) {
                         <span className="text-[10px] font-black text-indigo-300 uppercase tracking-widest">Oturum Süresi</span>
                     </div>
                     <span className="text-xl font-black text-white ml-1">
-                        {formatTime(selectedGroup?.totalSessionSeconds || 0)}
+                        {formatTimeFromSeconds(selectedGroup?.totalSessionSeconds || 0)}
                     </span>
                 </div>
 
@@ -497,7 +488,7 @@ function RecentSessionsTab({ userId }: { userId?: string }) {
                         <span className="text-[10px] font-black text-sky-300 uppercase tracking-widest">Odak Süresi</span>
                     </div>
                     <span className="text-xl font-black text-white ml-1">
-                        {formatTime(selectedGroup?.totalWorkSeconds || 0)}
+                        {formatTimeFromSeconds(selectedGroup?.totalWorkSeconds || 0)}
                     </span>
                 </div>
                 
@@ -511,7 +502,7 @@ function RecentSessionsTab({ userId }: { userId?: string }) {
                     <span className="text-xl font-black text-white ml-1">
                         {(() => {
                              const totalSeconds = selectedGroup?.sessions?.reduce((acc, s) => acc + (s.breakSeconds || 0), 0) || 0;
-                             return formatTime(totalSeconds);
+                             return formatTimeFromSeconds(totalSeconds);
                         })()}
                     </span>
                 </div>
@@ -526,7 +517,7 @@ function RecentSessionsTab({ userId }: { userId?: string }) {
                     <span className="text-xl font-black text-white ml-1">
                         {(() => {
                              const totalSeconds = selectedGroup?.sessions?.reduce((acc, s) => acc + (s.pauseSeconds || 0), 0) || 0;
-                             return formatTime(totalSeconds);
+                             return formatTimeFromSeconds(totalSeconds);
                         })()}
                     </span>
                 </div>
@@ -777,21 +768,21 @@ function EfficiencyAnalysisTab({ data }: { data: DailyEfficiencySummary }) {
             <Target className="w-5 h-5 text-indigo-400" />
             <div>
               <p className="text-xs text-muted-foreground">Çalışma</p>
-              <p className="text-sm font-bold text-foreground">{formatTime(data.netWorkTimeSeconds)}</p>
+              <p className="text-sm font-bold text-foreground">{formatTimeFromSeconds(data.netWorkTimeSeconds)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-500/10 border border-slate-500/20">
             <Coffee className="w-5 h-5 text-slate-400" />
             <div>
               <p className="text-xs text-muted-foreground">Mola</p>
-              <p className="text-sm font-bold text-foreground">{formatTime(data.totalBreakTimeSeconds)}</p>
+              <p className="text-sm font-bold text-foreground">{formatTimeFromSeconds(data.totalBreakTimeSeconds)}</p>
             </div>
           </div>
           <div className="flex items-center gap-3 p-3 rounded-xl bg-orange-500/10 border border-orange-500/20">
             <Pause className="w-5 h-5 text-orange-400" />
             <div>
               <p className="text-xs text-muted-foreground">Duraklatma</p>
-              <p className="text-sm font-bold text-foreground">{formatTime(data.totalPauseTimeSeconds)}</p>
+              <p className="text-sm font-bold text-foreground">{formatTimeFromSeconds(data.totalPauseTimeSeconds)}</p>
             </div>
           </div>
         </div>

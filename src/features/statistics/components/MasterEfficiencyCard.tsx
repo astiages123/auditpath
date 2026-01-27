@@ -1,9 +1,8 @@
-"use client";
-
 import { useState } from "react";
 import { Zap, Clock, RotateCcw, Pause } from "lucide-react";
 import type { DailyEfficiencySummary } from "@/shared/lib/core/client-db";
 import { DailyDetailedAnalysisModal } from "@/features/statistics";
+import { formatTimeFromSeconds } from "@/shared/lib/utils/formatters";
 
 interface MasterEfficiencyCardProps {
   data: DailyEfficiencySummary;
@@ -30,15 +29,6 @@ export function MasterEfficiencyCard({ data, userId }: MasterEfficiencyCardProps
     if (score >= 80) return "border-emerald-500/30";
     if (score >= 50) return "border-amber-500/30";
     return "border-red-500/30";
-  };
-
-  // Format time from seconds
-  const formatTime = (seconds: number) => {
-    const totalMinutes = Math.round(seconds / 60);
-    const h = Math.floor(totalMinutes / 60);
-    const m = totalMinutes % 60;
-    if (h > 0) return `${h}sa ${m}dk`;
-    return `${m}dk`;
   };
 
   const scoreColor = getScoreColor(data.efficiencyScore);
@@ -116,7 +106,7 @@ export function MasterEfficiencyCard({ data, userId }: MasterEfficiencyCardProps
               </span>
             </div>
             <span className="text-xl font-black text-white">
-              {formatTime(data.netWorkTimeSeconds)}
+              {formatTimeFromSeconds(data.netWorkTimeSeconds)}
             </span>
           </div>
 
@@ -131,7 +121,7 @@ export function MasterEfficiencyCard({ data, userId }: MasterEfficiencyCardProps
               </span>
             </div>
             <span className="text-xl font-black text-white">
-              {formatTime(data.totalBreakTimeSeconds)}
+              {formatTimeFromSeconds(data.totalBreakTimeSeconds)}
             </span>
           </div>
 
