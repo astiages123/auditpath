@@ -1,10 +1,11 @@
 import { useCallback } from "react";
 import { useTimerStore } from "@/shared/store/useTimerStore";
 import {
-  getDailySessionCount,
   deletePomodoroSession,
+  getDailySessionCount,
 } from "@/shared/lib/core/client-db";
 import { useAuth } from "@/features/auth";
+import { unlockAudio } from "../components/TimerController";
 
 export type PomodoroMode = "work" | "break";
 
@@ -44,12 +45,14 @@ export function usePomodoro() {
 
     if (!sessionId) {
       if (userId) {
-        getDailySessionCount(userId).then(count => setSessionCount(count + 1));
+        getDailySessionCount(userId).then((count) =>
+          setSessionCount(count + 1)
+        );
       }
       const newId = crypto.randomUUID();
       setSessionId(newId);
     }
-    
+
     // Request notification permission on user action
     if (typeof window !== "undefined" && "Notification" in window) {
       if (Notification.permission === "default") {
@@ -57,52 +60,60 @@ export function usePomodoro() {
       }
     }
 
+    // Unlock audio context for later background play
+    unlockAudio();
+
     startTimer();
   };
 
   const getDisplayTime = () => {
     const isOvertime = timeLeft < 0;
-    const totalSeconds = isOvertime ? (duration + Math.abs(timeLeft)) : timeLeft;
-    
+    const totalSeconds = isOvertime
+      ? (duration + Math.abs(timeLeft))
+      : timeLeft;
+
     const format = (sec: number) => {
-        const m = Math.floor(sec / 60).toString().padStart(2, "0");
-        const s = (sec % 60).toString().padStart(2, "0");
-        return { m, s };
+      const m = Math.floor(sec / 60).toString().padStart(2, "0");
+      const s = (sec % 60).toString().padStart(2, "0");
+      return { m, s };
     };
 
     const main = format(Math.max(0, totalSeconds));
     const over = isOvertime ? format(Math.abs(timeLeft)) : null;
 
-    return { 
-        minutes: main.m, 
-        seconds: main.s, 
-        overtimeMinutes: over?.m, 
-        overtimeSeconds: over?.s 
+    return {
+      minutes: main.m,
+      seconds: main.s,
+      overtimeMinutes: over?.m,
+      overtimeSeconds: over?.s,
     };
   };
 
-  const { minutes: m, seconds: s, overtimeMinutes: om, overtimeSeconds: os } = getDisplayTime();
+  const { minutes: m, seconds: s, overtimeMinutes: om, overtimeSeconds: os } =
+    getDisplayTime();
 
   const switchMode = useCallback(() => {
     const newMode = isBreak ? "work" : "break";
     setMode(newMode);
-    
+
     if (newMode === "work" && isBreak) {
-        if (userId) {
-          getDailySessionCount(userId).then(count => setSessionCount(count + 1));
-        } else {
-          incrementSession();
-        }
+      if (userId) {
+        getDailySessionCount(userId).then((count) =>
+          setSessionCount(count + 1)
+        );
+      } else {
+        incrementSession();
+      }
     }
-    
+
     startTimer();
   }, [isBreak, setMode, incrementSession, startTimer, userId, setSessionCount]);
 
   const resetAndClose = async () => {
     if (userId && sessionId) {
-       await deletePomodoroSession(sessionId);
+      await deletePomodoroSession(sessionId);
     }
-    
+
     const { resetAll } = useTimerStore.getState();
     resetAll();
     setHasRestored(true);
@@ -132,7 +143,7 @@ export function usePomodoro() {
     timeline,
     sessionId,
     finishDay: async () => {
-      // The actual saving/sealing is handled by the finishDay action 
+      // The actual saving/sealing is handled by the finishDay action
       // but since we want to clear the store:
       const { resetAll } = useTimerStore.getState();
       resetAll();

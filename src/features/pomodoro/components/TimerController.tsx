@@ -12,10 +12,15 @@ import { calculateSessionTotals } from '@/shared/lib/domain/pomodoro-utils';
 import { toast } from 'sonner';
 import { env } from '@/config/env';
 
+import { useFaviconManager } from '@/features/pomodoro/hooks/useFaviconManager';
+
+const notificationAudio = typeof window !== 'undefined' ? new Audio("/audio/alarm_ring.mp3") : null;
+
 const playNotificationSound = () => {
+    if (!notificationAudio) return;
     try {
-        const audio = new Audio("/audio/alarm_ring.mp3");
-        audio.play().catch((e) => {
+        notificationAudio.currentTime = 0;
+        notificationAudio.play().catch((e) => {
             console.warn("Audio play failed (waiting for user interaction):", e);
         });
     } catch (e) {
@@ -23,12 +28,28 @@ const playNotificationSound = () => {
     }
 };
 
+/**
+ * Browsers block audio in background unless unlocked by a user gesture.
+*/
+export const unlockAudio = () => {
+    if (!notificationAudio) return;
+    notificationAudio.play().then(() => {
+        notificationAudio.pause();
+        notificationAudio.currentTime = 0;
+    }).catch(() => {
+        // Safe to ignore, we are just warming it up
+    });
+};
+
 export function TimerController() {
     const { 
-        isActive, tick, timeLeft, isBreak, sessionId, 
+        isActive, tick, timeLeft, isBreak, sessionId, duration,
         selectedCourse, timeline, originalStartTime, startTime,
         setSessionCount, setSessionId, setCourse, hasRestored, setHasRestored
     } = useTimerStore();
+
+    // Dynamic Favicon & Title Manager
+    useFaviconManager(timeLeft, duration, isActive, isBreak ? 'break' : 'work', !!sessionId);
 
     const { user, session } = useAuth();
     const userId = user?.id;
@@ -38,7 +59,7 @@ export function TimerController() {
 
     // 1. Core Tick using Web Worker
     useEffect(() => {
-        const worker = new Worker(new URL('/workers/timerWorker.ts', import.meta.url));
+        const worker = new Worker(new URL('../../../workers/timerWorker.ts', import.meta.url), { type: 'module' });
 
         worker.onmessage = (e) => {
             if (e.data === 'TICK') {
@@ -122,55 +143,70 @@ export function TimerController() {
 
     // 4. Session Completion & Notifications
     useEffect(() => {
-        // We use <= 0 to catch any skips
-        if (timeLeft <= 0 && isActive && sessionId) {
-            const notificationKey = `${sessionId}-${isBreak ? 'break' : 'work'}`;
-            
-            // PREVENT DOUBLE FIRE
-            if (lastNotifiedRef.current === notificationKey) return;
-            lastNotifiedRef.current = notificationKey;
+        const checkCompletion = () => {
+            // We use <= 0 to catch any skips
+            if (timeLeft <= 0 && isActive && sessionId) {
+                const notificationKey = `${sessionId}-${isBreak ? 'break' : 'work'}`;
+                
+                // PREVENT DOUBLE FIRE
+                if (lastNotifiedRef.current === notificationKey) return;
+                lastNotifiedRef.current = notificationKey;
 
-            const message = !isBreak
-                ? "Harika iş çıkardın! Şimdi kısa bir mola zamanı. ☕"
-                : "Mola bitti, tekrar odaklanmaya hazır mısın? 💪";
+                const message = !isBreak
+                    ? "Harika iş çıkardın! Şimdi kısa bir mola zamanı. ☕"
+                    : "Mola bitti, tekrar odaklanmaya hazır mısın? 💪";
 
-            // Sonner Toast
-            toast.success(message, { duration: 2000 });
+                // Sonner Toast
+                toast.success(message, { duration: 2000 });
 
-            // Notification Tool
-            const sendNotification = () => {
-                if ("Notification" in window && Notification.permission === "granted") {
-                    try {
-                        const notification = new Notification("Pomodoro: Süre Doldu!", {
-                            body: message,
-                            icon: "/favicon.svg",
-                        });
-                        // Some browsers need a manual close or focus handling
-                        notification.onclick = () => {
-                            window.focus();
-                            notification.close();
-                        };
-                    } catch (e) {
-                        console.error("Desktop Notification failed", e);
+                // Notification Tool
+                const sendNotification = () => {
+                    if ("Notification" in window && Notification.permission === "granted") {
+                        try {
+                            const notification = new Notification("Pomodoro: Süre Doldu!", {
+                                body: message,
+                                icon: "/favicon.svg",
+                                tag: notificationKey, // Same tag prevents duplicate notifications
+                                requireInteraction: true // Keep notification until user interacts
+                            });
+                            
+                            notification.onclick = () => {
+                                window.focus();
+                                notification.close();
+                            };
+                        } catch (e) {
+                            console.error("Desktop Notification failed", e);
+                        }
                     }
+                };
+
+                if (Notification.permission === "granted") {
+                    sendNotification();
+                } else if (Notification.permission === "default") {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === "granted") sendNotification();
+                    });
+                } else if (Notification.permission === "denied") {
+                    toast.error("Masaüstü bildirimleri tarayıcı tarafından engellenmiş!", {
+                        id: "notification-denied-error"
+                    });
                 }
-            };
 
-            if (Notification.permission === "granted") {
-                sendNotification();
-            } else if (Notification.permission === "default") {
-                Notification.requestPermission().then(permission => {
-                    if (permission === "granted") sendNotification();
-                });
-            } else if (Notification.permission === "denied") {
-                // Bilgilendirme ekleyelim
-                toast.error("Masaüstü bildirimleri tarayıcı tarafından engellenmiş! Lütfen adres çubuğundaki kilit simgesinden izin verin.", {
-                    id: "notification-denied-error"
-                });
+                playNotificationSound();
             }
+        };
 
-            playNotificationSound();
-        }
+        checkCompletion();
+
+        // Catch-up when tab becomes visible
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                checkCompletion();
+            }
+        };
+        
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, [
         timeLeft, isActive, isBreak, sessionId, userId, selectedCourse, 
         timeline, originalStartTime, startTime
