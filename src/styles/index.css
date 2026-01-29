@@ -370,6 +370,7 @@
   max-width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
+  margin-bottom: 15px !important;
 }
 
 .formula-block .katex-display {

@@ -14,8 +14,9 @@ export interface QuizQuestion {
   o: string[]; // 5 options
   a: number; // Correct index
   exp: string; // Explanation
-  img?: string | null;
-  imgPath?: string | null;
+  img?: number | null; // Index of the image in imageUrls array
+  imageUrls?: string[]; // Array of image URLs for the chunk
+  imgPath?: string | null; // Legacy/Optional path override
   id?: string;
 }
 
@@ -59,7 +60,9 @@ export async function fetchQuestionsForSession(
     // 2. Fetch available questions
     const query = supabase
       .from("questions")
-      .select("id, question_data, course:courses(course_slug)")
+      .select(
+        "id, question_data, chunk:note_chunks(metadata), course:courses(course_slug)",
+      )
       .eq("chunk_id", chunkId)
       .eq("usage_type", usageType)
       .limit(count + solvedIds.size);
@@ -75,9 +78,16 @@ export async function fetchQuestionsForSession(
       .map((q) => {
         const question = q.question_data as unknown as QuizQuestion;
         question.id = q.id;
-        // Inject local path for images if present
+
+        // Inject image URLs from chunk metadata
+        const chunkMeta = q.chunk?.metadata as { images?: string[] } | null;
+        if (chunkMeta?.images) {
+          question.imageUrls = chunkMeta.images;
+        }
+
+        // Legacy: Inject local path for images if present (though we prefer index now)
         const course = q.course as unknown as { course_slug: string };
-        if (question.img && course?.course_slug) {
+        if (typeof question.img === "string" && course?.course_slug) {
           question.imgPath = `/notes/${course.course_slug}/media/`;
         }
         return question;

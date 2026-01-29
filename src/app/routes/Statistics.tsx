@@ -107,6 +107,7 @@ export default function StatisticsPage() {
                 setFocusTrend(trend);
                 setCumulativeStats(cumulativeData);
                 setEfficiencySummary(effSummary);
+                console.log("Gelen Veriler:", { stats, effSummary, quiz });
             } catch {
                 // Error handling via UI or ErrorBoundary
             } finally {

@@ -58,7 +58,11 @@ function MathText({ content }: { content: string }) {
   
   // Clean content: remove (image.ext) references
   // Regex to match (filename.ext) where ext is typical image format
-  const cleanContent = content.replace(/\([\w-]+\.(webp|png|jpg|jpeg|gif)\)/gi, '');
+  // Clean content: remove (image.ext) references AND [GÖRSEL: X] markers
+  // Regex to match (filename.ext) where ext is typical image format AND [GÖRSEL: number]
+  const cleanContent = content
+      .replace(/\([\w-]+\.(webp|png|jpg|jpeg|gif)\)/gi, '')
+      .replace(/\[GÖRSEL:\s*\d+\]/gi, '');
 
   return (
     <ReactMarkdown
@@ -192,10 +196,15 @@ function QuizCardComponent({
 
         {/* Question Text & Image */}
         <div className="p-6">
-          {question.img && (
+          {question.img !== undefined && question.img !== null && (
             <div className="mb-6 rounded-xl overflow-hidden border border-border bg-muted/20">
               <img 
-                src={`${question.imgPath || ''}${question.img}`} 
+                src={
+                    // New logic: resolve from imageUrls array using index
+                    (typeof question.img === 'number' && question.imageUrls?.[question.img])
+                        ? question.imageUrls[question.img]
+                        : (typeof question.img === 'string' ? `${question.imgPath || ''}${question.img}` : '')
+                }
                 alt="Soru Görseli" 
                 className="w-full max-h-[300px] object-contain mx-auto"
                 onError={(e) => {

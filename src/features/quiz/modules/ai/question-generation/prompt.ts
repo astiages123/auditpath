@@ -63,7 +63,8 @@ Lütfen geçerli bir JSON döndür.
 Şema kuralları:
 1. "o" dizisi TAM 5 elemanlı olmalı.
 2. "a" (doğru cevap indexi) 0 ile 4 arasında bir sayı olmalı.
-3. Cevabın dışında hiçbir yorum veya açıklama ekleme. Sadece JSON verisi gerekli.`;
+3. "img" görsel index numarası olmalıdır (Eğer görsel yoksa null).
+4. Cevabın dışında hiçbir yorum veya açıklama ekleme. Sadece JSON verisi gerekli.`;
 
 /**
  * Build question generation prompt

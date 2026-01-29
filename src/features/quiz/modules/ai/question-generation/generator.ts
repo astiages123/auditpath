@@ -23,12 +23,13 @@ export const GeneratedQuestionSchema = z.object({
     .min(0, "Cevap indexi 0'dan küçük olamaz")
     .max(4, "Cevap indexi 4'ten büyük olamaz"),
   exp: z.string().min(10, "Açıklama metni çok kısa"),
+  img: z.number().nullable().optional(),
 });
 
 export type GeneratedQuestionType = z.infer<typeof GeneratedQuestionSchema>;
 
 export interface GeneratedQuestion extends GeneratedQuestionType {
-  img?: string | null;
+  img?: number | null;
   bloomLevel: "knowledge" | "application" | "analysis";
 }
 
@@ -40,7 +41,7 @@ export interface WrongAnswerContext {
     o: string[];
     a: number;
     exp: string;
-    img?: string | null;
+    img?: number | null;
     bloomLevel?: string;
   };
   incorrectOptionIndex: number;
@@ -179,7 +180,7 @@ async function generateSingleQuestionWithRetry(
     return {
       ...result,
       bloomLevel: strategy.bloomLevel,
-      img: concept.gorsel || null,
+      img: result.img ?? null,
     };
   }
 
@@ -423,7 +424,7 @@ Kullanıcı bir önceki soruyu YANLIŞ cevapladı. Sana verilen soruyla MANTIK O
     o: context.originalQuestion.o,
     a: context.originalQuestion.a,
     exp: context.originalQuestion.exp,
-    img: context.originalQuestion.img || null,
+    img: context.originalQuestion.img ?? null,
   };
 
   const userPrompt = `## DERS: ${courseName}
@@ -476,7 +477,7 @@ Cevabını YALNIZCA JSON formatında ver.
     return {
       ...result,
       bloomLevel: defaultBloomLevel,
-      img: context.originalQuestion.img || null,
+      img: context.originalQuestion.img ?? null,
     };
   }
 
