@@ -178,11 +178,15 @@ export function useFaviconManager(
     };
 
     const updateTitle = () => {
-        const minutes = Math.floor(timeLeft / 60);
-        const seconds = timeLeft % 60;
-        const formattedTime = `${minutes.toString().padStart(2, "0")}:${
-            seconds.toString().padStart(2, "0")
-        }`;
+        const isOvertime = timeLeft < 0;
+        const absTime = Math.abs(timeLeft);
+        const minutes = Math.floor(absTime / 60);
+        const seconds = Math.floor(absTime % 60);
+
+        const timeSign = isOvertime ? "+" : "";
+        const formattedTime = `${timeSign}${
+            minutes.toString().padStart(2, "0")
+        }:${seconds.toString().padStart(2, "0")}`;
 
         let prefix = "";
         if (!isActive) {

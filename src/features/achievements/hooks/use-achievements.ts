@@ -59,11 +59,15 @@ async function syncAchievements({ stats, userId }: SyncContext) {
         masteredTopicsCount: 0
     };
 
+    // C. Fetch Current DB State
+    const dbUnlocked = await getUnlockedAchievements(userId);
+    const dbIds = new Set(dbUnlocked.map(x => x.id));
+
     // B. Calculate Eligible IDs
     const eligibleIds = new Set<string>();
 
     // 1. Algorithmic
-    const algoIds = calculateAchievements(stats, activityLog);
+    const algoIds = calculateAchievements(stats, activityLog, dbIds);
     algoIds.forEach(id => eligibleIds.add(id));
 
     // 2. Rank
@@ -97,10 +101,6 @@ async function syncAchievements({ stats, userId }: SyncContext) {
             eligibleIds.add(`CATEGORY_COMPLETION:${cat.category}`);
         }
     });
-
-    // C. Fetch Current DB State
-    const dbUnlocked = await getUnlockedAchievements(userId);
-    const dbIds = new Set(dbUnlocked.map(x => x.id));
 
     // D. Determine Unlocks
     const toUnlock = [...eligibleIds].filter(id => !dbIds.has(id));

@@ -18,6 +18,9 @@ export interface QuizQuestion {
   imageUrls?: string[]; // Array of image URLs for the chunk
   imgPath?: string | null; // Legacy/Optional path override
   id?: string;
+  diagnosis?: string;
+  insight?: string;
+  evidence?: string;
 }
 
 export type QuestionUsageType = "antrenman" | "arsiv" | "deneme";

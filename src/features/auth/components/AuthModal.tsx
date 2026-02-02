@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+
 import {
     Dialog,
     DialogContent,
@@ -13,18 +13,9 @@ import { AuthForms } from "./AuthForms";
 interface AuthModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    defaultView?: "signin" | "signup";
 }
 
-export function AuthModal({ open, onOpenChange, defaultView = "signin" }: AuthModalProps) {
-    const [view, setView] = useState<"signin" | "signup">(defaultView);
-
-    // Sync view with default if opened freshly (optional, but keep state local mostly)
-
-    const toggleView = () => {
-        setView(v => v === "signin" ? "signup" : "signin");
-    };
-
+export function AuthModal({ open, onOpenChange }: AuthModalProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[400px] border-border/40 bg-background/95 backdrop-blur-xl shadow-2xl p-6 gap-6">
@@ -37,18 +28,14 @@ export function AuthModal({ open, onOpenChange, defaultView = "signin" }: AuthMo
                         />
                     </div>
                     <DialogTitle className="text-2xl font-bold tracking-tight">
-                        {view === "signin" ? "Tekrar Hoşgeldiniz" : "Hesap Oluşturun"}
+                        Tekrar Hoşgeldiniz
                     </DialogTitle>
                     <DialogDescription className="text-base text-muted-foreground max-w-[280px]">
-                        {view === "signin"
-                            ? "Devam etmek için giriş yapın."
-                            : "Müfettişlik yolculuğunuza başlamak için kayıt olun."}
+                        Devam etmek için giriş yapın.
                     </DialogDescription>
                 </DialogHeader>
 
                 <AuthForms
-                    view={view}
-                    onToggleView={toggleView}
                     onSuccess={() => onOpenChange(false)}
                 />
             </DialogContent>

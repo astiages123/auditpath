@@ -4,7 +4,7 @@ import { NotionToMarkdown } from "notion-to-md";
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import pLimit from "p-limit";
-import type { Database } from "../src/shared/types/supabase";
+import type { Database } from "@/shared/types/supabase";
 import type {
     PageObjectResponse,
     RichTextItemResponse,
@@ -257,6 +257,81 @@ async function processImagesInMarkdown(
     return { content: processedContent, imageUrls: validUrls };
 }
 
+/**
+ * Splits content into chunks based on H2 and H3 headers.
+ * Adds ~10% overlap from the previous chunk to the start of the next chunk.
+ * Returns an object with both the overlapped content (for AI) and cleanup display content.
+ */
+export function chunkContent(
+    content: string,
+    overlapRatio: number = 0.1,
+): { content: string; displayContent: string }[] {
+    const lines = content.split("\n");
+    const chunks: { content: string; displayContent: string }[] = [];
+    let currentChunkLines: string[] = [];
+    let currentOverlapLineCount = 0;
+
+    // Regex to match H2 (## ) and H3 (### ) headers at start of line
+    const isHeader = (line: string) => /^(##|###)\s/.test(line);
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        if (isHeader(line) && currentChunkLines.length > 0) {
+            // Finish current chunk
+            const chunkText = currentChunkLines.join("\n");
+
+            // Display content (remove the overlap lines from the start)
+            const displayLines = currentChunkLines.slice(
+                currentOverlapLineCount,
+            );
+            const displayText = displayLines.join("\n");
+
+            chunks.push({ content: chunkText, displayContent: displayText });
+
+            // Prepare for next chunk with overlap
+            const charCount = chunkText.length;
+            const overlapTarget = Math.floor(charCount * overlapRatio);
+
+            let accumulatedOverlap = "";
+            let overlapLines: string[] = [];
+
+            // Go backwards from the end of currentChunkLines to find enough overlap
+            for (let j = currentChunkLines.length - 1; j >= 0; j--) {
+                const overlapLine = currentChunkLines[j];
+                // Prepend line
+                if (accumulatedOverlap) {
+                    accumulatedOverlap = overlapLine + "\n" +
+                        accumulatedOverlap;
+                } else {
+                    accumulatedOverlap = overlapLine;
+                }
+
+                overlapLines.unshift(overlapLine);
+                if (accumulatedOverlap.length >= overlapTarget) {
+                    break;
+                }
+            }
+
+            // Start new chunk with overlap lines
+            currentChunkLines = [...overlapLines];
+            currentOverlapLineCount = overlapLines.length; // Key: track overlap for display removal
+        }
+
+        currentChunkLines.push(line);
+    }
+
+    // Add valid remaining chunk
+    if (currentChunkLines.length > 0) {
+        const chunkText = currentChunkLines.join("\n");
+        const displayLines = currentChunkLines.slice(currentOverlapLineCount);
+        const displayText = displayLines.join("\n");
+        chunks.push({ content: chunkText, displayContent: displayText });
+    }
+
+    return chunks;
+}
+
 // --- Main Execution ---
 
 /**
@@ -383,49 +458,78 @@ async function processPage(
 
         // 5. Upsert to Supabase
 
+        // Chunk the content
+        const chunks = chunkContent(content, 0.1); // 10% overlap
+
         // Prepare metadata with notion_last_edited_time
-        const finalMetadata = {
+        const baseMetadata = {
             images: imageUrls,
             notion_last_edited_time: lastEditedTimeStr, // Store ISO string
         };
 
         if (DRY_RUN) {
             console.log(
-                `[DRY RUN] Would upsert section: [${courseId}] ${sectionTitle}`,
+                `[DRY RUN] Would upsert ${chunks.length} chunks for: [${courseId}] ${sectionTitle}`,
             );
             return { status: "SYNCED" };
         } else {
-            const { error: upsertError } = await supabase.from("note_chunks")
-                .upsert(
-                    {
-                        course_id: courseId,
-                        course_name: courseName,
-                        section_title: sectionTitle,
-                        content: content,
-                        chunk_order: chunkOrder,
-                        is_ready: true,
-                        status: "SYNCED",
-                        char_count: content.length,
-                        word_count: content.split(/\s+/).filter(Boolean).length,
-                        metadata: finalMetadata,
-                    },
-                    {
-                        onConflict: "course_id,section_title",
-                    },
-                );
+            let successCount = 0;
 
-            if (upsertError) {
-                console.error(
-                    `Upsert error for '${sectionTitle}':`,
-                    upsertError.message,
-                );
-                return {
-                    status: "ERROR",
-                    details: upsertError.message,
-                };
-            } else {
-                return { status: "SYNCED" };
+            for (let i = 0; i < chunks.length; i++) {
+                const chunkObj = chunks[i];
+                const chunkText = chunkObj.content;
+                const displayText = chunkObj.displayContent;
+
+                const { error: upsertError } = await supabase.from(
+                    "note_chunks",
+                )
+                    .upsert(
+                        {
+                            course_id: courseId,
+                            course_name: courseName,
+                            section_title: sectionTitle,
+                            content: chunkText,
+                            display_content: displayText, // New column
+                            chunk_order: chunkOrder, // Page order
+                            sequence_order: i, // Chunk index within page
+                            is_ready: true,
+                            status: "SYNCED",
+                            word_count:
+                                chunkText.split(/\s+/).filter(Boolean).length,
+                            metadata: baseMetadata,
+                        },
+                        {
+                            onConflict:
+                                "course_id,section_title,sequence_order",
+                        },
+                    );
+
+                if (upsertError) {
+                    console.error(
+                        `Upsert error for '${sectionTitle}' (seq: ${i}):`,
+                        upsertError.message,
+                    );
+                    return {
+                        status: "ERROR",
+                        details: upsertError.message,
+                    };
+                }
+                successCount++;
             }
+
+            // Cleanup stale chunks (if any) since we might have fewer chunks now
+            const { error: cleanupError } = await supabase
+                .from("note_chunks")
+                .delete()
+                .eq("course_id", courseId)
+                .eq("section_title", sectionTitle)
+                .gt("sequence_order", chunks.length - 1);
+
+            if (cleanupError) {
+                console.warn("Error cleaning up stale chunks:", cleanupError);
+            }
+
+            return { status: "SYNCED" };
         }
     } catch (err) {
         console.error(`Error processing page ${page.id}:`, err);

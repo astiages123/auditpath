@@ -25,12 +25,14 @@ import {
   recordQuizResponse,
   getQuotaInfo,
   getReviewQueue,
+  getContentVersion,
   type ReviewItem,
 } from '@/features/quiz/modules/srs/session-manager';
+import { toast } from 'sonner';
 import {
   type QuizResponseType,
 } from '@/features/quiz/modules/srs/srs-algorithm';
-import { getCourseStats } from '@/features/statistics/services/srs-stats';
+import { getCourseStats } from '@/features/quiz/services/srs-stats';
 
 const STORAGE_PREFIX = 'auditpath_quiz_session_';
 
@@ -87,6 +89,25 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
         // Initialize stats
         const courseStats = await getCourseStats(user.id, courseId);
 
+        // --- Version Guard ---
+        const contentVersion = await getContentVersion(courseId);
+        const versionKey = `${STORAGE_PREFIX}${user.id}_${courseId}_version`;
+        
+        if (contentVersion) {
+            const storedVersion = localStorage.getItem(versionKey);
+            if (storedVersion && storedVersion !== contentVersion) {
+                toast.warning('İçerik güncellendi, taze veriler için oturumu yenilemeniz önerilir', {
+                    duration: 8000,
+                    action: {
+                        label: 'Yenile',
+                        onClick: () => window.location.reload(),
+                    },
+                });
+            }
+            // Always update to latest
+            localStorage.setItem(versionKey, contentVersion);
+        }
+
         // Check for saved session in localStorage
         const storageKey = `${STORAGE_PREFIX}${user.id}_${courseId}`;
         const savedSessionStr = localStorage.getItem(storageKey);
@@ -112,7 +133,8 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
           }
         }
 
-        if (!restoredQueue && quotaInfo.pendingReviewCount > 0) {
+        if (!restoredQueue) {
+          // Always fetch queue in Waterfall model (it handles Pending + Active + Archived)
           reviewQueue = await getReviewQueue(
             user.id,
             courseId,
@@ -168,7 +190,10 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
       chunkId: string | null,
       responseType: QuizResponseType,
       selectedAnswer: number | null,
-      timeSpentMs: number
+
+      timeSpentMs: number,
+      diagnosis?: string,
+      insight?: string
     ) => {
       if (!user?.id || !state.sessionInfo) {
         console.warn('[QuizSession] Cannot record - no session');
@@ -183,7 +208,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
         const isReviewQuestion = currentItem ? currentItem.status !== 'active' : false;
 
         // Record response (updates progress, mastery, and handles shelf system)
-        await recordQuizResponse(
+        const result = await recordQuizResponse(
           user.id,
           questionId,
           chunkId,
@@ -191,8 +216,11 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
           responseType,
           selectedAnswer,
           sessionInfo.currentSession,
+
           isReviewQuestion, // Use specific item status
-          timeSpentMs
+          timeSpentMs,
+          diagnosis,
+          insight
         );
 
         // Update local stats (Simplified)
@@ -205,6 +233,8 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
                 } : null
              }));
         }
+
+        return result;
 
       } catch (err) {
         console.error('[QuizSession] Error recording response:', err);
@@ -251,12 +281,48 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
     });
   }, [user?.id]);
 
+  // Inject scaffolding question (Immediate Priority)
+  const injectScaffolding = useCallback((questionId: string, chunkId: string) => {
+    if (!state.sessionInfo) return;
+
+    setState((prev) => {
+        const newItem: ReviewItem = {
+            questionId,
+            chunkId,
+            courseId: prev.sessionInfo!.courseId,
+            priority: 0,
+            status: 'pending_followup'
+        };
+
+        const newQueue = [...prev.reviewQueue];
+        // Insert AFTER current index so it appears next
+        newQueue.splice(prev.currentReviewIndex + 1, 0, newItem);
+
+        // Update local storage to persist the injection
+        if (state.sessionInfo && user?.id) {
+            const storageKey = `${STORAGE_PREFIX}${user.id}_${state.sessionInfo.courseId}`;
+            localStorage.setItem(storageKey, JSON.stringify({
+                sessionId: state.sessionInfo.currentSession,
+                reviewQueue: newQueue,
+                currentReviewIndex: prev.currentReviewIndex // Index hasn't changed yet
+            }));
+        }
+
+        return {
+            ...prev,
+            reviewQueue: newQueue,
+            isReviewPhase: true
+        };
+    });
+  }, [state.sessionInfo, user?.id]);
+
   const value: QuizSessionContextValue = {
     state,
     initializeSession,
     recordResponse,
     getNextReviewItem,
     markReviewComplete,
+    injectScaffolding,
   };
 
   return (

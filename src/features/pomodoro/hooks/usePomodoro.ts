@@ -97,17 +97,11 @@ export function usePomodoro() {
     setMode(newMode);
 
     if (newMode === "work" && isBreak) {
-      if (userId) {
-        getDailySessionCount(userId).then((count) =>
-          setSessionCount(count + 1)
-        );
-      } else {
-        incrementSession();
-      }
+      incrementSession();
     }
 
     startTimer();
-  }, [isBreak, setMode, incrementSession, startTimer, userId, setSessionCount]);
+  }, [isBreak, setMode, incrementSession, startTimer]);
 
   const resetAndClose = async () => {
     if (userId && sessionId) {

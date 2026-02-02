@@ -158,8 +158,8 @@ const MarkdownSection = memo(({ chunk, components }: { chunk: CourseTopic, compo
     const sectionId = slugify(chunk.section_title);
     return (
         <div id={sectionId} className="chunk-container relative group scroll-mt-24">
-            {/* Section Title */}
-            {chunk.section_title && (
+            {/* Section Title - Only show for the first chunk in a sequence */}
+            {chunk.section_title && (chunk.sequence_order === 0 || chunk.sequence_order === undefined) && (
                 <div className="mb-8 pb-3 border-b border-border/40 flex items-center justify-center">
                     <h2 className="text-[2rem] font-semibold tracking-tight m-0 text-foreground text-center [counter-increment:section] flex items-center justify-center gap-3">
                         <span className="before:content-[counter(section)'.']"></span>
@@ -323,7 +323,8 @@ export default function NotesPage() {
                     const metadata = chunk.metadata as any;
                     const imageUrls = metadata?.images || [];
                     
-                    let content = chunk.content;
+                    // Use display_content (clean) if available, otherwise fallback to content (overlap)
+                    let content = chunk.display_content || chunk.content;
 
                     // 1. Sanitize invisible characters (User request + LaTeX fix)
                     content = content.replace(/[\u2000-\u200B\u00A0]/g, ' ');

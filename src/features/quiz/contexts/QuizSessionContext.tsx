@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 import { SessionInfo, QuotaInfo, ReviewItem } from '@/features/quiz/modules/srs';
-import { CourseStats } from '@/features/statistics/services/srs-stats';
+import { CourseStats } from '@/features/quiz/services/srs-stats';
 import { QuizResponseType } from '@/features/quiz/modules/srs/srs-algorithm';
 
 export interface QuizSessionState {
@@ -23,10 +23,14 @@ export interface QuizSessionContextValue {
     chunkId: string | null,
     responseType: QuizResponseType,
     selectedAnswer: number | null,
-    timeSpentMs: number
-  ) => Promise<void>;
+
+    timeSpentMs: number,
+    diagnosis?: string,
+    insight?: string
+  ) => Promise<{ isTopicRefreshed: boolean; isChainBonusApplied?: boolean } | void>;
   getNextReviewItem: () => ReviewItem | null;
   markReviewComplete: () => void;
+  injectScaffolding: (questionId: string, chunkId: string) => void;
 }
 
 export const QuizSessionContext = createContext<QuizSessionContextValue | null>(null);

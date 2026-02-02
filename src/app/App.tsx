@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import RootLayout from '@/shared/components/layout/RootLayout'
 import Home from '@/app/routes/Home'
@@ -8,8 +8,8 @@ import { Loader2 } from 'lucide-react'
 // Lazy load non-critical pages for better initial bundle size
 const Achievements = lazy(() => import('@/app/routes/Achievements'))
 const Statistics = lazy(() => import('@/app/routes/Statistics'))
-const Settings = lazy(() => import('@/app/routes/Settings'))
-const NotesPage = lazy(() => import('@/pages/notes/NotesPage'))
+const EfficiencyPage = lazy(() => import('@/features/efficiency/EfficiencyPage'))
+const NotesPage = lazy(() => import('@/app/routes/Notes'))
 
 
 // Loading fallback component
@@ -29,9 +29,12 @@ function App() {
                     <Route path="/" element={<AuthGuard><Home /></AuthGuard>} />
                     <Route path="/achievements" element={<AuthGuard><Achievements /></AuthGuard>} />
                     <Route path="/statistics" element={<AuthGuard><Statistics /></AuthGuard>} />
-                    <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
-                    <Route path="/notes/:courseId" element={<AuthGuard><NotesPage /></AuthGuard>} />
+                    <Route path="/efficiency" element={<AuthGuard><EfficiencyPage /></AuthGuard>} />
 
+                    <Route path="/notes/:courseId" element={<AuthGuard><NotesPage /></AuthGuard>} />
+                    
+                    {/* Redirect unknown routes to home */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
             </Suspense>
         </RootLayout>

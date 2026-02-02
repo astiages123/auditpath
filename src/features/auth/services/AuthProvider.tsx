@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { getSupabase } from "@/shared/lib/core/supabase";
 import { AuthContext } from "../hooks/useAuth";
-import { env } from "@/config/env";
+
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -30,17 +30,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
 
-  const signInWithGoogle = async () => {
-    const siteUrl = env.app.siteUrl;
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${siteUrl}/`,
-      },
-    });
-    if (error) console.error("Google Sign In Error:", error);
-  };
-
   const signOut = async () => {
     await supabase.auth.signOut();
     setUser(null);
@@ -51,7 +40,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     session,
     loading,
-    signInWithGoogle,
     signOut,
   };
 

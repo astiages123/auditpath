@@ -11,7 +11,8 @@
 
 import { memo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, GraduationCap, RefreshCw, Loader2, ChevronDown, SkipForward } from 'lucide-react';
+import { Check, X, GraduationCap, RefreshCw, Loader2, ChevronDown, SkipForward, Brain } from 'lucide-react';
+import { EvidenceCard } from './EvidenceCard';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -31,6 +32,8 @@ interface QuizCardProps {
   onRetry: () => void;
   /** Called when user clicks "Boş Bırak" - skips question without answering */
   onBlank?: () => void;
+  /** Course ID for evidence navigation */
+  courseId?: string;
 }
 
 const optionLabels = ['A', 'B', 'C', 'D', 'E'];
@@ -87,6 +90,7 @@ function QuizCardComponent({
   onToggleExplanation,
   onRetry,
   onBlank,
+  courseId,
 }: QuizCardProps) {
 
   // Keyboard navigation handler
@@ -365,6 +369,29 @@ function QuizCardComponent({
                                   Yanlış cevap. Doğru cevap: {optionLabels[question.a]}
                                 </p>
                               )}
+
+                              {question.insight && (
+                                <div className="mb-4 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
+                                  <div className="flex items-center gap-2 mb-1 text-indigo-400 font-semibold">
+                                    <Brain className="w-4 h-4" />
+                                    <span>AuditPath Teşhisi</span>
+                                  </div>
+                                  <p className="text-sm text-foreground/90 italic">
+                                    {question.insight}
+                                  </p>
+                                </div>
+                              )}
+
+                              {/* Evidence Card */}
+                              {question.evidence && courseId && !isCorrect && (
+                                <div className="mb-4">
+                                  <EvidenceCard 
+                                    evidence={question.evidence} 
+                                    courseId={courseId} 
+                                  />
+                                </div>
+                              )}
+
                               <MathText content={question.exp} />
                             </div>
                           </div>

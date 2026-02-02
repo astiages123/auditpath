@@ -593,8 +593,9 @@ export function checkTopicMastery(
 export function calculateAchievements(
     stats: ProgressStats,
     log: ActivityLog,
+    alreadyUnlockedIds: Set<string> = new Set(),
 ): string[] {
-    return ACHIEVEMENTS.filter((acc) => isAchievementUnlocked(acc, stats, log))
+    return ACHIEVEMENTS.filter((acc) => isAchievementUnlocked(acc, stats, log, alreadyUnlockedIds))
         .map((acc) => acc.id);
 }
 
@@ -602,8 +603,10 @@ function isAchievementUnlocked(
     achievement: Achievement,
     stats: ProgressStats,
     log: ActivityLog,
+    alreadyUnlockedIds: Set<string> = new Set(),
 ): boolean {
     const req = achievement.requirement;
+    const isAlreadyUnlocked = alreadyUnlockedIds.has(achievement.id);
     switch (req.type) {
         case "category_progress": {
             const cat = stats.categoryProgress[req.category];
@@ -629,7 +632,8 @@ function isAchievementUnlocked(
         case "streak":
             return log.currentStreak >= req.days;
         case "daily_progress":
-            return log.dailyVideosCompleted >= req.count;
+            // Tek seferlik başarımlar için sadece ilk günde kazanılabilir
+            return log.dailyVideosCompleted >= req.count && !isAlreadyUnlocked;
         case "total_active_days":
             return log.totalActiveDays >= req.days;
         // New RPG Requirements Logic

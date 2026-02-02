@@ -10,11 +10,12 @@
 import { useCallback, useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw, ArrowRight, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { useQuiz } from '@/features/quiz';
 import { QuizCard } from './QuizCard';
 import { QuizQuestion } from '@/features/quiz';
 import { useQuizSession } from '../contexts/QuizSessionContext';
-import { checkAndTriggerBackgroundGeneration } from '@/features/quiz';
+import { checkAndTriggerBackgroundGeneration, generateFollowUpSingle } from '@/features/quiz';
 import { QuizTimer } from './QuizTimer';
 import { useAuth } from '@/features/auth';
 import { PostTestDashboard } from './PostTestDashboard';
@@ -68,7 +69,7 @@ export function QuizEngine({
 
   const { user } = useAuth();
 
-  const { initializeSession, recordResponse, state: sessionState } = useQuizSession();
+  const { initializeSession, recordResponse, state: sessionState, injectScaffolding } = useQuizSession();
 
   const [count] = useState<number>(5); // Default to 5 questions
   const hasStartedAutoRef = useRef(false);
@@ -175,7 +176,9 @@ export function QuizEngine({
             chunkId || null,
             'blank',
             null,
-            timeSpent
+            timeSpent,
+            question.diagnosis,
+            question.insight
         );
     }
 
@@ -218,6 +221,48 @@ export function QuizEngine({
         // Track incorrects
         if (responseType === 'incorrect') {
             incorrectIdsRef.current.push(question.id);
+
+            // --- SCAFFOLDING TRIGGER (Correction Loop) ---
+            // If we have a valid chunk/course context, generate immediate follow-up
+            if (user?.id && courseId && validChunkId) { // usage of validChunkId (chunkId || null)
+                // We block navigation briefly to generate the scaffolding
+                // This ensures the "Hemen ardından" experience
+                toast.loading("Hatayı analiz ediyorum, sana özel telafi sorusu hazırlanıyor...", { id: "scaffold-gen" });
+                
+                try {
+                    // map question to context
+                    // We cast to any because QuizQuestion might lack some backend fields like evidence/concept
+                    // But generateFollowUpSingle fetches missing fields from DB if needed
+                     const context = {
+                           chunkId: validChunkId,
+                           originalQuestion: { 
+                               id: question.id, 
+                               q: question.q, 
+                               o: question.o ?? [], 
+                               a: question.a, 
+                               exp: question.exp,
+                               evidence: (question as any).evidence || "Kanıt yüklenemedi",
+                               bloomLevel: (question as any).bloom_level,
+                               concept: (question as any).concept_title
+                           },
+                           incorrectOptionIndex: selectedIndex!,
+                           correctOptionIndex: question.a,
+                           courseId,
+                           userId: user.id
+                       };
+
+                    // Call generator
+                    const scaffoldId = await generateFollowUpSingle(context as any, (msg) => console.log("[Scaffold]", msg));
+
+                    if (scaffoldId) {
+                        injectScaffolding(scaffoldId, validChunkId);
+                        toast.success("Hatasız kul olmaz! Telafi sorusu hazırlandı.", { id: "scaffold-gen" });
+                    }
+                } catch (e) {
+                    console.error("Scaffold gen failed", e);
+                }
+                setTimeout(() => toast.dismiss("scaffold-gen"), 2000);
+            }
         }
         
         // If it was blank, selectedAnswer is null.
@@ -225,33 +270,41 @@ export function QuizEngine({
         const timeSpent = Date.now() - startTimeRef.current;
         totalTimeRef.current += timeSpent;
 
-        await recordResponse(
+        const result = await recordResponse(
             question.id, 
             validChunkId,
             responseType,
             selectedIndex,
-            timeSpent
+            timeSpent,
+            question.diagnosis,
+            question.insight
         );
+        
+        if (result?.isTopicRefreshed) {
+             toast.success('Konu Tazelendi!', {
+                description: 'Bu konudaki ustalığını kanıtladın, tozlanma sayacı sıfırlandı.',
+                duration: 4000
+             });
+        }
+
+        if (result?.isChainBonusApplied) {
+             toast("🛡️ Zincir Koruması Aktif!", {
+                description: "Ustalık Zincirin sayesinde bu konusu artık daha seyrek karşına çıkacak.",
+                duration: 5000
+             });
+        }
     }
 
     // 2. Move to next question or finish
     if (state.queue.length > 0) {
       nextQuestion();
     } else {
-      // If queue is empty but we are still loading (background generation), 
-      // we should wait or show loading.
-      // But typically queue fills up. 
-      // If totalToGenerate > generatedCount, we might be waiting.
-      // nextQuestion handles empty queue by setting current=null.
-      // If we are finished logic:
       if (!state.isLoading && state.generatedCount === state.totalToGenerate) {
            setFinalTime(totalTimeRef.current);
            setIsFinished(true);
            
            // Finish Session Logic
            if (user?.id && courseId) {
-                // 1. Save Session Reults
-                // ANOMALY-005 FIX: resultsRef.current kullanarak güncel değerleri al
                 await finishQuizSession({
                     totalQuestions: state.totalToGenerate,
                     correctCount: resultsRef.current.correct,
@@ -262,15 +315,33 @@ export function QuizEngine({
                     userId: user.id
                 });
                 
-                // 2. Background Generation (Follow-up + Refill)
+                // --- MASTERY CHAIN CHECK IMPL ---
+                // We check if this session triggered a chain.
+                // Since we don't have full chain state here, we can infer or fetch.
+                // For "confetti", we can optimistically show it if score is high (Shelf system 80+).
+                // Or we can fire a toast.
+                
+                // Let's deduce from local results for immediate feedback:
+                const sessionScore = (resultsRef.current.correct / state.totalToGenerate) * 100;
+                if (sessionScore >= 80) {
+                     toast("Muazzam Performans! 🚀", {
+                        description: "Bu konudaki ustalığın artıyor. Yeni bir Bilişsel Zincir halkası güçlenmiş olabilir!",
+                        action: {
+                            label: "Atlasa Bak",
+                            onClick: () => window.location.href = '/efficiency'
+                        }
+                     });
+                     // Trigger confetti (using a library if available, otherwise just toast is safer for now without installing 'canvas-confetti')
+                     // If 'canvas-confetti' is not in package.json, we skip it or use a simple CSS animation.
+                }
+
                 if (chunkId && user?.id) {
                     checkAndTriggerBackgroundGeneration(chunkId, incorrectIdsRef.current);
                 }
            }
 
       } else {
-          // Waiting for more questions...
-          nextQuestion(); // This will clear current and show "Waiting" state in UI if implemented
+          nextQuestion();
       }
     }
   }, [state, courseId, chunkId, recordResponse, nextQuestion, user]);
@@ -416,6 +487,7 @@ export function QuizEngine({
               onToggleExplanation={toggleExplanation}
               onRetry={retry}
               onBlank={handleBlank}
+              courseId={courseId}
             />
         </div>
       )}

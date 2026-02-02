@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { supabase } from "@/shared/lib/core/supabase";
 import { callMiMo, type LogCallback, parseJsonResponse } from "../clients/mimo";
 import { callCerebras } from "../clients/cerebras"; // Add Cerebras import
 import type { ConceptMapItem } from "../mapping";
@@ -23,7 +24,10 @@ export const GeneratedQuestionSchema = z.object({
     .min(0, "Cevap indexi 0'dan küçük olamaz")
     .max(4, "Cevap indexi 4'ten büyük olamaz"),
   exp: z.string().min(10, "Açıklama metni çok kısa"),
+  evidence: z.string().min(1, "Kanıt cümlesi zorunludur"),
   img: z.number().nullable().optional(),
+  diagnosis: z.string().max(150).optional(),
+  insight: z.string().max(200).optional(),
 });
 
 export type GeneratedQuestionType = z.infer<typeof GeneratedQuestionSchema>;
@@ -31,6 +35,7 @@ export type GeneratedQuestionType = z.infer<typeof GeneratedQuestionSchema>;
 export interface GeneratedQuestion extends GeneratedQuestionType {
   img?: number | null;
   bloomLevel: "knowledge" | "application" | "analysis";
+  concept: string; // Added concept title
 }
 
 export interface WrongAnswerContext {
@@ -41,8 +46,10 @@ export interface WrongAnswerContext {
     o: string[];
     a: number;
     exp: string;
+    evidence: string;
     img?: number | null;
     bloomLevel?: string;
+    concept: string; // Added concept title
   };
   incorrectOptionIndex: number;
   correctOptionIndex: number;
@@ -151,6 +158,8 @@ async function generateSingleQuestionWithRetry(
     instruction: string;
   },
   onLog?: LogCallback,
+  usageType: "antrenman" | "deneme" | "arsiv" = "antrenman",
+  isFallbackActive: boolean = false,
 ): Promise<GeneratedQuestion | null> {
   const systemPrompt =
     "Sen KPSS formatında, akademik dille soru yazan uzman bir yapay zekasın. SADECE JSON formatında çıktı ver. Cevabın dışında hiçbir metin, yorum veya markdown karakteri bulunmamalıdır.";
@@ -163,16 +172,22 @@ async function generateSingleQuestionWithRetry(
   );
 
   // Router Logic: Knowledge -> Cerebras, Others -> MiMo
-  const provider = strategy.bloomLevel === "knowledge" ? "cerebras" : "mimo";
+  // NOTE: For 'deneme', maybe always force MiMo for higher reasoning capability?
+  // Let's stick to standard routing for now but add log context
+  // Router Logic: Knowledge -> Cerebras, Others -> MiMo
+  // NOTE: If Fallback is active, FORCE Cerebras (Stronger Model)
+  const provider = isFallbackActive
+    ? "cerebras"
+    : (strategy.bloomLevel === "knowledge" ? "cerebras" : "mimo");
 
   const result = await generateWithRetry(
     messages,
     provider, // Use determined provider
     GeneratedQuestionSchema,
     {
-      temperature: 0.4,
+      temperature: usageType === "deneme" ? 0.5 : 0.4, // Slightly higher temp for Deneme for variety
       onLog,
-      logContext: { concept: concept.baslik, provider },
+      logContext: { concept: concept.baslik, provider, usageType },
     },
   );
 
@@ -181,6 +196,7 @@ async function generateSingleQuestionWithRetry(
       ...result,
       bloomLevel: strategy.bloomLevel,
       img: result.img ?? null,
+      concept: concept.baslik,
     };
   }
 
@@ -234,6 +250,7 @@ ${feedback.improvement_suggestion}
 Soruyu revize et.
 - Hataları gider.
 - Akademik dili ve KPSS formatını koru.
+- Kanıt (evidence) alanını koru veya gerekirse güncelle.
 - JSON formatında döndür. Temperature düşük tutulmalı (0.3).
 
 ${RETRY_PROMPT_TEMPLATE}`;
@@ -262,6 +279,7 @@ ${RETRY_PROMPT_TEMPLATE}`;
       ...result,
       bloomLevel: originalQuestion.bloomLevel,
       img: originalQuestion.img,
+      concept: originalQuestion.concept,
     };
   }
 
@@ -282,8 +300,11 @@ export async function generateQuestionBatch(
     | { instruction?: string; few_shot_example?: unknown }
     | null,
   onLog?: LogCallback,
+  usageType: "antrenman" | "deneme" | "arsiv" = "antrenman",
+  chunkId?: string,
+  isFallbackActive: boolean = false,
 ): Promise<GeneratedQuestion[]> {
-  onLog?.("Batch üretimi başlıyor (Cache Warm-up + Paralel)", {
+  onLog?.(`Batch üretimi başlıyor (${usageType} modunda)`, {
     batchSize: concepts.length,
     startIndex: conceptIndex,
   });
@@ -297,11 +318,39 @@ export async function generateQuestionBatch(
   // AI'a görsel URL'lerini gönderme - sadece metin içeriği
   const cleanContent = content.replace(/!\[[^\]]*\]\([^)]+\)/g, "[GÖRSEL]");
 
+  // Fetch Diagnoses if chunkId is present
+  let previousDiagnoses: string[] = [];
+  if (chunkId) {
+    const { data: pastDiagnoses } = await supabase
+      .from("user_quiz_progress")
+      .select("ai_diagnosis")
+      .eq("chunk_id", chunkId) // We don't have userId passed here easily without auth context?
+      // Actually generateQuestionBatch is usually client side or has auth context.
+      // Wait, typical usage of this function is from `quiz-generator.ts` which is client side.
+      // So `supabase` usage will use the authenticated user safely.
+      .not("ai_diagnosis", "is", null)
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    if (pastDiagnoses) {
+      previousDiagnoses = (pastDiagnoses as any[]).map((p) => p.ai_diagnosis)
+        .filter(
+          Boolean,
+        );
+      if (previousDiagnoses.length > 0) {
+        onLog?.("Kognitif Hafıza: Geçmiş teşhisler bulundu", {
+          count: previousDiagnoses.length,
+        });
+      }
+    }
+  }
+
   const sharedContextPrompt = PromptArchitect.buildContext(
     cleanContent,
     courseName,
     sectionTitle,
     subjectGuidelines,
+    previousDiagnoses,
   );
 
   const results: (GeneratedQuestion | null)[] = [];
@@ -322,6 +371,7 @@ export async function generateQuestionBatch(
   const firstTaskPrompt = buildTaskPrompt(
     firstConcept,
     firstStrategy,
+    usageType,
   );
 
   const firstResult = await generateSingleQuestionWithRetry(
@@ -330,6 +380,8 @@ export async function generateQuestionBatch(
     firstConcept,
     firstStrategy,
     onLog,
+    usageType,
+    isFallbackActive,
   );
 
   results.push(firstResult);
@@ -356,6 +408,7 @@ export async function generateQuestionBatch(
       const taskPrompt = buildTaskPrompt(
         concept,
         strategy,
+        usageType,
       );
 
       return generateSingleQuestionWithRetry(
@@ -364,6 +417,8 @@ export async function generateQuestionBatch(
         concept,
         strategy,
         onLog,
+        usageType,
+        isFallbackActive,
       );
     });
 
@@ -407,17 +462,96 @@ export async function generateFollowUpQuestion(
      For now, let's keep follow-ups using generic `generateWithRetry` but we need to adapt it.
      Wait, `generateWithRetry` now accepts `Message[]`. I need to adapt follow-up logic to build messages manually or via architect.
   */
+  // --- SCAFFOLDING LOGIC ---
+  // 1. Get Consecutive Fails
+  const { data: statusData } = await supabase
+    .from("user_question_status")
+    .select("consecutive_fails")
+    .eq("user_id", context.userId)
+    .eq("question_id", context.originalQuestion.id)
+    .maybeSingle();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const consecutiveFails = (statusData as any)?.consecutive_fails ?? 0;
+
+  // 2. Adjust Bloom Level
+  let targetBloomLevel = context.originalQuestion.bloomLevel || "application";
+  let scaffoldingNote = "";
+
+  if (consecutiveFails >= 2) {
+    if (targetBloomLevel === "analysis") targetBloomLevel = "application";
+    else if (targetBloomLevel === "application") targetBloomLevel = "knowledge";
+
+    scaffoldingNote =
+      `\n**SCAFFOLDING AKTİF**: Kullanıcı bu konuda zorlanıyor (Hata #${consecutiveFails}). Soruyu BİR ALT BİLİŞSEL SEVİYEYE (${targetBloomLevel}) indir. Daha temel kavramlara odaklan, karmaşıklığı azalt.`;
+  }
+
+  // --- COGNITIVE MEMORY (DIAGNOSIS) ---
+  // Fetch recent diagnoses for this chunk to see patterns
+  const { data: pastDiagnoses } = await supabase
+    .from("user_quiz_progress")
+    .select("ai_diagnosis")
+    .eq("user_id", context.userId)
+    .eq("chunk_id", context.chunkId)
+    .not("ai_diagnosis", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(3);
+
+  const memoryContext =
+    (pastDiagnoses as any[])?.map((p) => p.ai_diagnosis).filter(Boolean).join(
+      "\n- ",
+    ) ||
+    "";
+  const memoryPrompt = memoryContext
+    ? `\n\nKullanıcının Geçmiş Hataları (DİKKATE AL):\n- ${memoryContext}`
+    : "";
+
+  // --- CONCEPT FOCUS EXTRACTION ---
+  let focusText = "";
+  let prerequisites: string[] = [];
+
+  try {
+    const { data: chunkData } = await supabase
+      .from("note_chunks")
+      .select("metadata")
+      .eq("id", context.chunkId)
+      .single();
+
+    if (chunkData?.metadata) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const concepts = (chunkData.metadata as any)
+        .concept_map as ConceptMapItem[];
+      const targetConcept = concepts?.find((c) =>
+        c.baslik === context.originalQuestion.concept
+      );
+      if (targetConcept) {
+        focusText = targetConcept.odak;
+        prerequisites = targetConcept.prerequisites || [];
+        onLog?.("Konu Odağı Bulundu", { focus: focusText, prerequisites });
+      }
+    }
+  } catch (e) {
+    console.error("Konu odağı çekilemedi", e);
+  }
+
+  const focusInstruction = focusText
+    ? `\n**TEKNİK ODAK**: Bu sorunun temel teknik kazanımı şudur: "${focusText}". Takip sorusunu genel kültürüne göre değil, bu odak noktasına sadık kalarak üret.`
+    : "";
+
   const systemPrompt =
     `Sen, Türkiye'deki KPSS için profesyonel soru hazırlayan bir yapay zeka asistanısın.
 Kullanıcı bir önceki soruyu YANLIŞ cevapladı. Sana verilen soruyla MANTIK OLARAK BENZER ama AYNI OLMAYAN yeni bir soru üretmelisin.
 
 ## ZORUNLU KURALLAR:
 1. **JSON FORMATI**: Cevabını YALNIZCA JSON formatında ver. Cevabın dışında hiçbir metin, yorum veya markdown karakteri bulunmamalıdır.
-2. **MANTİKSAL BENZERLİK**: Aynı kavramı/konuyu test et ama farklı bir senaryo veya bağlam kullan. ASLA aynı soru metnini kopyalama.
-3. **ZORLUK**: Orijinal soruyla AYNI seviyede ol (${
-      context.originalQuestion.bloomLevel || "application"
-    }).
-4. **OLUMSUZ VURGU**: Olumsuz ifadeler (değildir, yoktur vb.) **kalın** yazılmalı.`;
+2. **TEŞHİS ODAKLI (DIAGNOSTIC)**: Kullanıcının hatası "rastgele" değildir; iki kavramı birbirine karıştırmıştır. Yeni soru, tam olarak bu kavramsal karışıklığı hedef almalı ve ayrımı netleştirmelidir.
+3. **MANTİKSAL BENZERLİK**: Aynı kazanımı test et ama farklı bir senaryo veya bağlam kullan. ASLA aynı soru metnini kopyalama.
+4. **ZORLUK**: Hedef Seviye: ${targetBloomLevel}. (Original: ${context.originalQuestion.bloomLevel})${scaffoldingNote}
+5. **OLUMSUZ VURGU**: Olumsuz ifadeler (değildir, yoktur vb.) **kalın** yazılmalı.
+6. **TEŞHİS VE İÇGÖRÜ**: JSON çıktısına "diagnosis" (hatanın teknik analizi) ve "insight" (kullanıcıya ipucu/hap bilgi) alanlarını ekle.
+7. **KANIT**: Her soru için not içerisinden cevabı kanıtlayan cümleyi harfiyen (verbatim) alıntıla ve "evidence" alanına yaz. Eğer metinde doğrudan bir kanıt yoksa o soruyu üretme.${focusInstruction}
+
+${memoryPrompt}`;
 
   const originalQuestionJson = {
     q: context.originalQuestion.q,
@@ -440,17 +574,15 @@ Doğru cevap: ${["A", "B", "C", "D", "E"][context.correctOptionIndex]} ("${
     context.originalQuestion.o[context.correctOptionIndex]
   }")
 
-Kullanıcının [Yanlış Şık] cevabını vermiş olması, [Doğru Şık] ile [Yanlış Şık] arasındaki kavramsal ayrımı tam yapamadığını gösterir. Yeni soruyu, özellikle bu iki kavram arasındaki ince ayrımı test edecek şekilde kurgula.
+## TEŞHİS VE GÖREV:
+Kullanıcının [Yanlış Şık] seçeneğini işaretlemesi, [Doğru Şık] ile [Yanlış Şık] kavramları arasındaki ayrımı yapamadığını gösteriyor.
 
-${
-    guidelines?.instruction
-      ? `## DERS ÖZEL TALİMATI:\n${guidelines.instruction}\n`
-      : ""
-  }
+GÖREVİN:
+Tam olarak bu iki kavram arasındaki "ince çizgiyi" test eden yeni bir soru (Follow-up) üret.
+- Soru, kullanıcının bu hatayı tekrar yapıp yapmayacağını "kontrol" etmelidir.
+- Senaryoyu değiştir, ancak test edilen bilişsel süreci (kazanımı) koru.
+- Cevabını YALNIZCA JSON formatında ver.
 
-## GÖREV:
-Yukarıdaki soruyla MANTIK OLARAK BENZER ama AYNI OLMAYAN yeni bir soru üret.
-Cevabını YALNIZCA JSON formatında ver.
 { "q": "...", "o": ["...", "...", "...", "...", "..."], "a": 0, "exp": "..." }`;
 
   // Use MiMo for followups
@@ -478,6 +610,7 @@ Cevabını YALNIZCA JSON formatında ver.
       ...result,
       bloomLevel: defaultBloomLevel,
       img: context.originalQuestion.img ?? null,
+      concept: context.originalQuestion.concept,
     };
   }
 

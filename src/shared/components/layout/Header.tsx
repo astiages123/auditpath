@@ -59,7 +59,7 @@ export function Header() {
 
   const navItems = [
     { label: "Eğitim", href: "/", icon: BookCheck, color: "text-amber-500", auth: true },
-    { label: "İstatistikler", href: "/statistics", icon: ChartScatter, color: "text-blue-500", auth: true },
+    { label: "İstatistikler", href: "/efficiency", icon: ChartScatter, color: "text-blue-500", auth: true },
     { label: "Yolculuk", action: () => setJourneyOpen(true), icon: LineSquiggle, color: "text-emerald-500", auth: true },
     { label: "Başarımlar", href: "/achievements", icon: Trophy, color: "text-yellow-500", auth: true },
     { label: "Kronometre", action: () => setPomodoroOpen(true), icon: Timer, color: "text-rose-500", auth: true },
@@ -208,12 +208,6 @@ export function Header() {
                       </div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator className="my-1 opacity-50" />
-                    <Link to="/settings">
-                      <DropdownMenuItem className="rounded-xl px-3 py-2.5 gap-3 cursor-pointer">
-                        <UserIcon className="h-4 w-4 text-primary" />
-                        <span className="font-medium">Ayarlar</span>
-                      </DropdownMenuItem>
-                    </Link>
                     <DropdownMenuItem onClick={() => signOut()} className="rounded-xl px-3 py-2.5 gap-3 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
                       <LogOut className="h-4 w-4" />
                       <span className="font-medium">Güvenli Çıkış</span>

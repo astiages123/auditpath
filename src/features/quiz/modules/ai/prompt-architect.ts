@@ -41,6 +41,7 @@ export class PromptArchitect {
             few_shot_example?: unknown;
             bad_few_shot_example?: unknown;
         } | null,
+        previousDiagnoses?: string[],
     ): string {
         const parts = [];
 
@@ -98,6 +99,14 @@ Eğer soruyu kurgularken metindeki bir görseli [GÖRSEL: X] referans alıyorsan
 
         parts.push("## BAĞLAM METNİ:");
         parts.push(content);
+
+        if (previousDiagnoses && previousDiagnoses.length > 0) {
+            parts.push("## KULLANICININ GEÇMİŞ HATALARI (BU KONUDA):");
+            parts.push(
+                "Kullanıcı bu konuda daha önce şu hataları yaptı. Soruları üretirken bu zayıf noktaları özellikle test etmeye çalış:",
+            );
+            parts.push(previousDiagnoses.map((d) => `- ${d}`).join("\n"));
+        }
 
         return parts.join("\n\n");
     }

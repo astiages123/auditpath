@@ -31,6 +31,7 @@ export interface DailyStats {
   totalPauseMinutes: number;
   totalVideoMinutes: number;
   completedVideos: number;
+  videoTrendPercentage: number;
   totalCycles: number;
 }
 
@@ -735,7 +736,7 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     .gte("started_at", yesterday.toISOString())
     .lt("started_at", today.toISOString());
 
-  // 3. Fetch Today's Video Stats using video_progress.completed_at
+  // 3. Fetch Video Stats (Today & Yesterday)
   const { data: todayVideos } = await supabase
     .from("video_progress")
     .select("video_id, video:videos(duration_minutes)")
@@ -743,6 +744,14 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     .eq("completed", true)
     .gte("completed_at", today.toISOString())
     .lt("completed_at", tomorrow.toISOString());
+
+  const { data: yesterdayVideos } = await supabase
+    .from("video_progress")
+    .select("video_id")
+    .eq("user_id", userId)
+    .eq("completed", true)
+    .gte("completed_at", yesterday.toISOString())
+    .lt("completed_at", today.toISOString());
 
   // DB stores Seconds. UI expects Minutes.
   const todaySessionsData = todaySessions || [];
@@ -796,6 +805,17 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     }, 0);
   }
 
+  const yesterdayVideoCount = yesterdayVideos?.length || 0;
+  let videoTrendPercentage = 0;
+  if (yesterdayVideoCount === 0) {
+    videoTrendPercentage = completedVideosCount > 0 ? 100 : 0;
+  } else {
+    videoTrendPercentage = Math.round(
+      ((completedVideosCount - yesterdayVideoCount) / yesterdayVideoCount) *
+        100,
+    );
+  }
+
   // Default goal 4 hours (240 mins)
   const goalMinutes = 200;
   const progress = Math.min(
@@ -815,6 +835,7 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     totalPauseMinutes,
     totalVideoMinutes: Math.round(totalVideoMinutes),
     completedVideos: completedVideosCount,
+    videoTrendPercentage,
     totalCycles,
   };
 }
@@ -1313,7 +1334,8 @@ export async function getCourseTopics(
     .from("note_chunks")
     .select("*")
     .eq("course_id", courseId)
-    .order("chunk_order", { ascending: true });
+    .order("chunk_order", { ascending: true })
+    .order("sequence_order", { ascending: true });
 
   if (chunksError) {
     console.error("Error fetching course topics:", chunksError);
@@ -1594,7 +1616,8 @@ export async function getCourseTopicsWithCounts(
     .from("note_chunks")
     .select("section_title, chunk_order")
     .eq("course_id", courseId)
-    .order("chunk_order", { ascending: true });
+    .order("chunk_order", { ascending: true })
+    .order("sequence_order", { ascending: true });
 
   if (chunksError) {
     console.error("Error fetching course topics:", chunksError);
@@ -1947,6 +1970,11 @@ export interface FocusTrend {
   minutes: number;
 }
 
+export interface EfficiencyTrend {
+  date: string;
+  score: number;
+}
+
 export async function getFocusTrend(userId: string): Promise<FocusTrend[]> {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -1971,6 +1999,40 @@ export async function getFocusTrend(userId: string): Promise<FocusTrend[]> {
   return Object.entries(dailyMap).map(([date, seconds]) => ({
     date,
     minutes: Math.round(seconds / 60),
+  })).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+export async function getEfficiencyTrend(
+  userId: string,
+): Promise<EfficiencyTrend[]> {
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const dateStr = thirtyDaysAgo.toISOString();
+
+  const { data, error } = await supabase
+    .from("pomodoro_sessions")
+    .select("started_at, efficiency_score")
+    .eq("user_id", userId)
+    .gte("started_at", dateStr)
+    .order("started_at", { ascending: true });
+
+  if (error || !data) return [];
+
+  const dailyMap: Record<string, { total: number; count: number }> = {};
+
+  data.forEach((s) => {
+    const day = s.started_at.split("T")[0];
+    const score = s.efficiency_score || 0;
+    if (score > 0) {
+      if (!dailyMap[day]) dailyMap[day] = { total: 0, count: 0 };
+      dailyMap[day].total += score;
+      dailyMap[day].count += 1;
+    }
+  });
+
+  return Object.entries(dailyMap).map(([date, stats]) => ({
+    date,
+    score: Math.round(stats.total / stats.count),
   })).sort((a, b) => a.date.localeCompare(b.date));
 }
 
@@ -2049,6 +2111,187 @@ export interface DailyEfficiencySummary {
   totalPauseTimeSeconds: number;
   pauseCount: number;
   sessions: DetailedSession[];
+}
+
+export interface RecentSession {
+  id: string;
+  courseName: string;
+  date: string; // ISO string
+  durationMinutes: number;
+  efficiencyScore: number;
+  timeline: Json[];
+}
+
+export async function getRecentActivitySessions(
+  userId: string,
+  limit: number = 5,
+): Promise<RecentSession[]> {
+  const { data, error } = await supabase
+    .from("pomodoro_sessions")
+    .select(
+      "id, course_name, started_at, total_work_time, efficiency_score, timeline",
+    )
+    .eq("user_id", userId)
+    .order("started_at", { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error("Error fetching recent sessions:", error);
+    return [];
+  }
+
+  return (data || []).map((s) => ({
+    id: s.id,
+    courseName: s.course_name || "Bilinmeyen Ders",
+    date: s.started_at,
+    durationMinutes: Math.round((s.total_work_time || 0) / 60),
+    efficiencyScore: s.efficiency_score || 0,
+    timeline: Array.isArray(s.timeline) ? (s.timeline as Json[]) : [],
+  }));
+}
+
+export interface RecentQuizSession {
+  uniqueKey: string;
+  courseName: string;
+  sessionNumber: number;
+  date: string;
+  correct: number;
+  incorrect: number;
+  blank: number;
+  total: number;
+  successRate: number;
+}
+
+export async function getRecentQuizSessions(
+  userId: string,
+  limit: number = 5,
+): Promise<RecentQuizSession[]> {
+  // Fetch last 500 answers to reconstruct sessions
+  // We explicitly cast the response to handle the joined table type safety
+  const { data: rawData, error } = await supabase
+    .from("user_quiz_progress")
+    .select(`
+            course_id,
+            session_number,
+            response_type,
+            answered_at,
+            course:courses(name)
+        `)
+    .eq("user_id", userId)
+    .order("answered_at", { ascending: false })
+    .limit(500);
+
+  if (error || !rawData) {
+    console.error("Error fetching quiz sessions:", error);
+    return [];
+  }
+
+  const sessionsMap = new Map<string, RecentQuizSession>();
+
+  rawData.forEach((row: any) => {
+    // If session_number is missing, we can't group easily. Fallback to 0 or skip?
+    // Based on schema it is non-nullable 'number'.
+    const sNum = row.session_number || 0;
+    const key = `${row.course_id}-${sNum}`;
+
+    if (!sessionsMap.has(key)) {
+      sessionsMap.set(key, {
+        uniqueKey: key,
+        // @ts-ignore - Supabase join types can be tricky
+        courseName: row.course?.name || "Kavram Testi",
+        sessionNumber: sNum,
+        date: row.answered_at || new Date().toISOString(),
+        correct: 0,
+        incorrect: 0,
+        blank: 0,
+        total: 0,
+        successRate: 0,
+      });
+    }
+
+    const session = sessionsMap.get(key)!;
+    session.total++;
+    if (row.response_type === "correct") session.correct++;
+    else if (row.response_type === "incorrect") session.incorrect++;
+    else session.blank++;
+
+    // Keep the latest timestamp for the session
+    if (row.answered_at && new Date(row.answered_at) > new Date(session.date)) {
+      session.date = row.answered_at;
+    }
+  });
+
+  const sessions = Array.from(sessionsMap.values())
+    .map((s) => ({
+      ...s,
+      successRate: s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0,
+    }))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  return sessions.slice(0, limit);
+}
+
+export interface CognitiveInsight {
+  id: string;
+  courseId: string;
+  questionId: string;
+  diagnosis: string | null;
+  insight: string | null;
+  consecutiveFails: number;
+  responseType: string;
+  date: string;
+}
+
+export async function getRecentCognitiveInsights(
+  userId: string,
+  limit: number = 30,
+): Promise<CognitiveInsight[]> {
+  // 1. Fetch recent progress with diagnosis or insight
+  const { data: progressData, error } = await supabase
+    .from("user_quiz_progress")
+    .select(
+      "id, course_id, question_id, ai_diagnosis, ai_insight, response_type, answered_at",
+    )
+    .eq("user_id", userId)
+    .or("ai_diagnosis.neq.null,ai_insight.neq.null")
+    .order("answered_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !progressData) {
+    console.error("Error fetching cognitive insights:", error);
+    return [];
+  }
+
+  // 2. Fetch current consecutive_fails for these questions
+  // We need to map question_id -> consecutive_fails
+  const questionIds = Array.from(
+    new Set(progressData.map((p) => p.question_id)),
+  );
+
+  const { data: statusData } = await supabase
+    .from("user_question_status")
+    .select("question_id, consecutive_fails")
+    .eq("user_id", userId)
+    .in("question_id", questionIds);
+
+  const failsMap = new Map<string, number>();
+  if (statusData) {
+    statusData.forEach((s) => {
+      failsMap.set(s.question_id, s.consecutive_fails || 0);
+    });
+  }
+
+  // 3. Merge data
+  return progressData.map((p) => ({
+    id: p.id,
+    courseId: p.course_id,
+    questionId: p.question_id,
+    diagnosis: p.ai_diagnosis,
+    insight: p.ai_insight,
+    consecutiveFails: failsMap.get(p.question_id) || 0,
+    responseType: p.response_type,
+    date: p.answered_at || new Date().toISOString(),
+  }));
 }
 
 export async function getDailyEfficiencySummary(
@@ -2137,4 +2380,92 @@ export async function getDailyEfficiencySummary(
     pauseCount: totalPauseCount,
     sessions: detailedSessions,
   };
+}
+
+export interface CourseMastery {
+  courseId: string;
+  courseName: string;
+  videoProgress: number; // 0-100
+  questionProgress: number; // 0-100
+  masteryScore: number; // (video * 0.6) + (question * 0.4)
+}
+
+export async function getCourseMastery(
+  userId: string,
+): Promise<CourseMastery[]> {
+  // 1. Get all courses to map names and see total videos
+  const { data: courses, error: coursesError } = await supabase
+    .from("courses")
+    .select("id, name, total_videos");
+
+  if (coursesError || !courses) return [];
+
+  // 2. Get video progress counts per course
+  const { data: vProgress } = await supabase
+    .from("video_progress")
+    .select("video:videos(course_id)")
+    .eq("user_id", userId)
+    .eq("completed", true);
+
+  const vCompletedMap: Record<string, number> = {};
+  if (vProgress) {
+    vProgress.forEach((p: any) => {
+      const courseId = p.video?.course_id;
+      if (courseId) {
+        vCompletedMap[courseId] = (vCompletedMap[courseId] || 0) + 1;
+      }
+    });
+  }
+
+  // 3. Get total questions count per course
+  // We'll fetch just course_id from questions table to count
+  const { data: qCounts } = await supabase
+    .from("questions")
+    .select("course_id");
+
+  const qTotalMap: Record<string, number> = {};
+  if (qCounts) {
+    qCounts.forEach((q) => {
+      qTotalMap[q.course_id] = (qTotalMap[q.course_id] || 0) + 1;
+    });
+  }
+
+  // 4. Get solved questions count per course
+  const { data: solvedQs } = await supabase
+    .from("user_quiz_progress")
+    .select("course_id")
+    .eq("user_id", userId);
+
+  const qSolvedMap: Record<string, number> = {};
+  if (solvedQs) {
+    solvedQs.forEach((s) => {
+      qSolvedMap[s.course_id] = (qSolvedMap[s.course_id] || 0) + 1;
+    });
+  }
+
+  // 5. Calculate Mastery
+  return courses.map((c) => {
+    const totalVideos = c.total_videos || 0;
+    const completedVideos = vCompletedMap[c.id] || 0;
+    const totalQuestions = qTotalMap[c.id] || 200; // Fallback to 200 if no questions found? Or 0.
+    const solvedQuestions = qSolvedMap[c.id] || 0;
+
+    const videoRatio = totalVideos > 0 ? (completedVideos / totalVideos) : 0;
+    const questRatio = totalQuestions > 0
+      ? (solvedQuestions / totalQuestions)
+      : 0;
+
+    // Use 60% video, 40% question weight
+    const mastery = Math.round(
+      (videoRatio * 60) + (Math.min(1, questRatio) * 40),
+    );
+
+    return {
+      courseId: c.id,
+      courseName: c.name,
+      videoProgress: Math.round(videoRatio * 100),
+      questionProgress: Math.round(Math.min(1, questRatio) * 100),
+      masteryScore: mastery,
+    };
+  }).sort((a, b) => b.masteryScore - a.masteryScore);
 }

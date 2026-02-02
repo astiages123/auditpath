@@ -64,7 +64,8 @@ Lütfen geçerli bir JSON döndür.
 1. "o" dizisi TAM 5 elemanlı olmalı.
 2. "a" (doğru cevap indexi) 0 ile 4 arasında bir sayı olmalı.
 3. "img" görsel index numarası olmalıdır (Eğer görsel yoksa null).
-4. Cevabın dışında hiçbir yorum veya açıklama ekleme. Sadece JSON verisi gerekli.`;
+4. "evidence" alanı kanıt cümlesini içermelidir (Boş olamaz).
+5. Cevabın dışında hiçbir yorum veya açıklama ekleme. Sadece JSON verisi gerekli.`;
 
 /**
  * Build question generation prompt
@@ -75,11 +76,19 @@ Lütfen geçerli bir JSON döndür.
 export function buildTaskPrompt(
   concept: ConceptMapItem | null,
   strategy: { bloomLevel: string; instruction: string },
+  usageType: "antrenman" | "deneme" | "arsiv" = "antrenman",
 ): string {
   const parts = [
     `AMAÇ: Metni analiz ederek, belirtilen pedagojik stratejiye uygun tek bir soru üretmek.`,
     `---`,
   ];
+
+  if (usageType === "deneme") {
+    parts.push(`!!! DENEME (SİMÜLASYON) MODU !!! / ZORLUK ARTIRILMIŞTIR
+- **Çeldiriciler:** Şıklar birbirine ÇOK yakın olmalı. "Bariz yanlış" şık kesinlikle olmamalı.
+- **Tuzak:** Doğru cevaba en yakın, güçlü bir çeldirici (distractor) mutlaka ekle.
+- **Kapsam:** Soru, sadece bu ünitedeki izole bilgiyi değil, kurs genelinde bu kavramla karıştırılabilecek diğer terimleri de çağrıştırmalıdır.`);
+  }
 
   if (concept) {
     parts.push(`HEDEF KAVRAM VE ODAK:
@@ -99,7 +108,10 @@ export function buildTaskPrompt(
   }
 
   parts.push(`PEDAGOJİK STRATEJİ:
-${strategy.instruction}`);
+${strategy.instruction}
+
+KANIT ZORUNLULUĞU:
+Her soru için not içerisinden cevabı kanıtlayan cümleyi harfiyen (verbatim) alıntıla ve "evidence" alanına yaz. Eğer metinde doğrudan bir kanıt yoksa o soruyu üretme.`);
 
   // Reminder for JSON format (brief)
   parts.push(
