@@ -41,69 +41,72 @@ async function mergeCourses() {
         console.log(`Donor:  ${target.donorId}`);
 
         // 1. Move Note Chunks
-        const { error: chunkError, count: chunkCount } = await supabase
+        const { error: chunkError, data: movedChunks } = await supabase
             .from("note_chunks")
             .update({ course_id: target.keeperId })
             .eq("course_id", target.donorId)
-            .select("id", { count: "exact" });
+            .select("id");
 
         if (chunkError) {
             console.error("Error moving chunks:", chunkError);
             continue;
         }
+        const chunkCount = movedChunks?.length || 0;
         console.log(`Moved ${chunkCount} chunks.`);
 
         // 2. Move Questions
-        const { error: qError, count: qCount } = await supabase
+        const { error: qError, data: movedQuestions } = await supabase
             .from("questions")
             .update({ course_id: target.keeperId })
             .eq("course_id", target.donorId)
-            .select("id", { count: "exact" });
+            .select("id");
 
         if (qError) {
             console.error("Error moving questions:", qError);
         } else {
+            const qCount = movedQuestions?.length || 0;
             console.log(`Moved ${qCount} questions.`);
         }
 
         // 3. Move User Quiz Progress
-        // Note: Use try/catch or ignore conflicts if user already has progress on keeper (unlikely for chunks, but possible)
-        // For simplicity, we update. If constraints fail, we might need a smarter approach.
-        const { error: pError, count: pCount } = await supabase
+        const { error: pError, data: movedProgress } = await supabase
             .from("user_quiz_progress")
             .update({ course_id: target.keeperId })
             .eq("course_id", target.donorId)
-            .select("id", { count: "exact" });
+            .select("id");
 
         if (pError) {
             console.error("Error moving quiz progress:", pError);
         } else {
+            const pCount = movedProgress?.length || 0;
             console.log(`Moved ${pCount} progress records.`);
         }
 
         // 4. Move Chunk Mastery
-        const { error: mError, count: mCount } = await supabase
+        const { error: mError, data: movedMastery } = await supabase
             .from("chunk_mastery")
             .update({ course_id: target.keeperId })
             .eq("course_id", target.donorId)
-            .select("id", { count: "exact" });
+            .select("id");
 
         if (mError) {
             console.error("Error moving chunk mastery:", mError);
         } else {
+            const mCount = movedMastery?.length || 0;
             console.log(`Moved ${mCount} mastery records.`);
         }
 
         // 5. Move Pomodoro Sessions (if any accidently linked to donor)
-        const { error: sError, count: sCount } = await supabase
+        const { error: sError, data: movedSessions } = await supabase
             .from("pomodoro_sessions")
             .update({ course_id: target.keeperId })
             .eq("course_id", target.donorId)
-            .select("id", { count: "exact" });
+            .select("id");
 
         if (sError) {
             console.error("Error moving sessions:", sError);
         } else {
+            const sCount = movedSessions?.length || 0;
             console.log(`Moved ${sCount} sessions.`);
         }
 
