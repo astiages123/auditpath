@@ -1,6 +1,8 @@
 // Implemented locally to avoid import issues with Supabase in a standalone script
 function extractPrerequisites(
-    chunkMetadata: any,
+    chunkMetadata: {
+        concept_map?: { baslik: string; prerequisites: string[] }[];
+    } | null,
     targetConcept: string,
 ): string[] {
     if (!chunkMetadata || !chunkMetadata.concept_map) {
@@ -9,7 +11,7 @@ function extractPrerequisites(
 
     const conceptMap = chunkMetadata.concept_map;
     const targetItem = conceptMap.find(
-        (c: any) =>
+        (c) =>
             c.baslik.trim().toLowerCase() ===
                 targetConcept.trim().toLowerCase(),
     );

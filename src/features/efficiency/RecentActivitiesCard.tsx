@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { GlassCard } from "../../shared/components/GlassCard";
 import { Clock, BookOpen, ChevronRight, Maximize2 } from "lucide-react";
 import { RecentSession } from "@/shared/lib/core/client-db";
@@ -6,7 +5,6 @@ import { SessionGanttChart } from "./EfficiencyCharts";
 import { cn } from "@/shared/lib/core/utils";
 import { Session } from "./types";
 import { EfficiencyModal } from "./EfficiencyModals";
-import { calculateSessionTotals, getCycleCount } from "@/shared/lib/domain/pomodoro-utils";
 import { Zap, Coffee, Pause as PauseIcon, LayoutGrid } from "lucide-react";
 
 interface RecentActivitiesCardProps {
@@ -25,11 +23,13 @@ const SessionListItem = ({ session, convertToSession }: { session: RecentSession
     });
 
     const getEfficiencyColor = (score: number) => {
-        if (score >= 80) return "text-emerald-400";
-        if (score >= 60) return "text-amber-400";
+        if (score >= 90) return "text-emerald-400";
+        if (score >= 70) return "text-amber-400";
         if (score > 0) return "text-rose-400";
         return "text-muted-foreground";
     };
+
+    const focusPower = Math.round(session.efficiencyScore);
 
     return (
         <EfficiencyModal
@@ -57,24 +57,23 @@ const SessionListItem = ({ session, convertToSession }: { session: RecentSession
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {session.efficiencyScore > 0 && (
-                            <div className="flex flex-col items-end">
-                                <span className={cn("text-base font-semibold", getEfficiencyColor(session.efficiencyScore))}>
-                                    %{session.efficiencyScore}
-                                </span>
-                            </div>
-                        )}
+                        <div className="flex flex-col items-end">
+                            <span className={cn("text-[10px] font-bold text-muted-foreground/60 uppercase tracking-tighter mb-0.5")}>
+                                Odak Gücü
+                            </span>
+                            <span className={cn("text-base font-semibold", getEfficiencyColor(focusPower))}>
+                                {focusPower}
+                            </span>
+                        </div>
                         <ChevronRight className="w-5 h-5 text-muted-foreground/40 group-hover:text-white/60 transition-colors" />
                     </div>
                 </div>
             }
         >
             {(() => {
-                const totals = calculateSessionTotals(session.timeline);
-                const cycles = getCycleCount(session.timeline);
-                const workMins = Math.round(totals.totalWork / 60);
-                const breakMins = Math.round(totals.totalBreak / 60);
-                const pauseMins = Math.round(totals.totalPause / 60);
+                const workMins = Math.round(session.totalWorkTime / 60);
+                const breakMins = Math.round(session.totalBreakTime / 60);
+                const pauseMins = Math.round(session.totalPauseTime / 60);
 
                 return (
                     <div className="space-y-6">
@@ -90,8 +89,8 @@ const SessionListItem = ({ session, convertToSession }: { session: RecentSession
                                 icon={LayoutGrid}
                                 iconBg="bg-primary/10"
                                 iconColor="text-primary"
-                                label="Oturum"
-                                value={`${cycles} Adet`}
+                                label="Durdurma"
+                                value={`${session.pauseCount} Adet`}
                             />
                             <StatCard 
                                 icon={Zap}
@@ -118,19 +117,19 @@ const SessionListItem = ({ session, convertToSession }: { session: RecentSession
 
                         <div className="bg-white/3 rounded-xl p-5 border border-white/5">
                             <div className="flex items-center justify-between mb-4">
-                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Verimlilik</span>
-                                <span className={cn("text-xl font-bold", getEfficiencyColor(session.efficiencyScore))}>
-                                    %{session.efficiencyScore}
+                                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Odak Gücü</span>
+                                <span className={cn("text-xl font-bold", getEfficiencyColor(focusPower))}>
+                                    {focusPower} <span className="text-xs font-medium opacity-50 uppercase tracking-normal">puan</span>
                                 </span>
                             </div>
                             <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
                                 <div 
                                     className={cn(
                                         "h-full transition-all duration-700 rounded-full",
-                                        session.efficiencyScore >= 80 ? "bg-emerald-500" : 
-                                        session.efficiencyScore >= 60 ? "bg-amber-500" : "bg-rose-500"
+                                        focusPower >= 90 ? "bg-emerald-500" : 
+                                        focusPower >= 70 ? "bg-amber-500" : "bg-rose-500"
                                     )}
-                                    style={{ width: `${session.efficiencyScore}%` }}
+                                    style={{ width: `${Math.min(100, focusPower)}%` }}
                                 />
                             </div>
                         </div>
@@ -168,7 +167,7 @@ export const RecentActivitiesCard = ({ sessions }: RecentActivitiesCardProps) =>
         const start = new Date(rs.date);
         const end = new Date(start.getTime() + rs.durationMinutes * 60000);
         
-        const timeline = (rs.timeline as any[]).map(t => {
+        const timeline = (rs.timeline as { type: string; start: string | number; end: string | number }[]).map(t => {
             const bStart = new Date(t.start).getTime();
             const bEnd = new Date(t.end).getTime();
             return {

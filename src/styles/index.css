@@ -170,7 +170,7 @@
 
 /* Card hover effect */
 .card-hover {
-  transition: all 0.2s ease-out;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-hover:hover {
@@ -359,6 +359,14 @@
   align-items: center;
   width: 100%;
   transition: all 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  .formula-block {
+    max-width: 100vw;
+    padding: 1rem;
+    overflow-x: auto;
+  }
 }
 
 /* Force center alignment ONLY for katex-display (block math) */

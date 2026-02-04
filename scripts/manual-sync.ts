@@ -38,21 +38,22 @@ const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
 // --- Custom Transformers ---
 n2m.setCustomTransformer("callout", async (block) => {
-    const { id, has_children } = block as any;
-    const { callout } = block as any;
+    const { id, has_children } = block as { id: string; has_children: boolean };
+    const { callout } = block as {
+        callout: {
+            icon:
+                | { type: string; emoji?: string; external?: { url: string } }
+                | null;
+            rich_text: RichTextItemResponse[];
+        };
+    };
     if (!callout || !callout.rich_text) return false;
 
     // 1. Get Icon
     let icon = "";
     if (callout.icon) {
         if (callout.icon.type === "emoji") {
-            icon = callout.icon.emoji;
-        } else if (callout.icon.type === "external") {
-            // User requested to take it as string, roughly implies keeping it if possible or logic dictates.
-            // For markdown blockquotes, we'll try to just ignore external URLs to keep it clean,
-            // OR if user strictly wants it, we'd put the url.
-            // But "bunu string olarak al" for emoji works.
-            // Let's stick to emoji.
+            icon = callout.icon.emoji || "";
         }
     }
 
@@ -64,34 +65,41 @@ n2m.setCustomTransformer("callout", async (block) => {
             type: "paragraph",
             paragraph: { rich_text: callout.rich_text },
         };
-        const mdResult = await n2m.blockToMarkdown(tempBlock as any);
+        const mdResult = await n2m.blockToMarkdown(
+            tempBlock as Parameters<typeof n2m.blockToMarkdown>[0],
+        );
 
         if (typeof mdResult === "string") {
             titleContent = mdResult;
         } else if (
             mdResult && typeof mdResult === "object" && "parent" in mdResult
         ) {
-            titleContent = (mdResult as any).parent;
+            titleContent = (mdResult as { parent: string }).parent;
         } else {
             // Fallback array handling
-            const strObj = n2m.toMarkdownString(mdResult);
+            const strObj = n2m.toMarkdownString(
+                mdResult as Parameters<typeof n2m.toMarkdownString>[0],
+            );
             titleContent = typeof strObj === "string" ? strObj : strObj.parent;
         }
-    } catch (e) {
-        titleContent = callout.rich_text.map((t: any) => t.plain_text).join("");
+    } catch {
+        titleContent = callout.rich_text.map((t: RichTextItemResponse) =>
+            t.plain_text
+        ).join("");
     }
 
     // 3. Process Children
     let childrenContent = "";
     if (has_children) {
-        let children = (block as any).children;
+        let children =
+            (block as { children?: Record<string, unknown>[] }).children;
         // If children are missing but has_children is true, fetch manually
         if (!children || children.length === 0) {
             try {
                 const response = await notion.blocks.children.list({
                     block_id: id,
                 });
-                children = response.results;
+                children = response.results as Record<string, unknown>[];
             } catch (err) {
                 console.error(
                     `Error fetching children for callout ${id}:`,
@@ -101,7 +109,9 @@ n2m.setCustomTransformer("callout", async (block) => {
         }
 
         if (children && children.length > 0) {
-            const mdBlocks = await n2m.blocksToMarkdown(children);
+            const mdBlocks = await n2m.blocksToMarkdown(
+                children as Parameters<typeof n2m.blocksToMarkdown>[0],
+            );
             const mdStringObj = n2m.toMarkdownString(mdBlocks);
             childrenContent = typeof mdStringObj === "string"
                 ? mdStringObj
@@ -258,78 +268,19 @@ async function processImagesInMarkdown(
 }
 
 /**
- * Splits content into chunks based on H2 and H3 headers.
- * Adds ~10% overlap from the previous chunk to the start of the next chunk.
- * Returns an object with both the overlapped content (for AI) and cleanup display content.
+ * Returns the content as a single chunk.
+ * No splitting by headers, no overlap.
+ * 1 Notion Page = 1 Chunk.
  */
 export function chunkContent(
     content: string,
-    overlapRatio: number = 0.1,
 ): { content: string; displayContent: string }[] {
-    const lines = content.split("\n");
-    const chunks: { content: string; displayContent: string }[] = [];
-    let currentChunkLines: string[] = [];
-    let currentOverlapLineCount = 0;
-
-    // Regex to match H2 (## ) and H3 (### ) headers at start of line
-    const isHeader = (line: string) => /^(##|###)\s/.test(line);
-
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-
-        if (isHeader(line) && currentChunkLines.length > 0) {
-            // Finish current chunk
-            const chunkText = currentChunkLines.join("\n");
-
-            // Display content (remove the overlap lines from the start)
-            const displayLines = currentChunkLines.slice(
-                currentOverlapLineCount,
-            );
-            const displayText = displayLines.join("\n");
-
-            chunks.push({ content: chunkText, displayContent: displayText });
-
-            // Prepare for next chunk with overlap
-            const charCount = chunkText.length;
-            const overlapTarget = Math.floor(charCount * overlapRatio);
-
-            let accumulatedOverlap = "";
-            let overlapLines: string[] = [];
-
-            // Go backwards from the end of currentChunkLines to find enough overlap
-            for (let j = currentChunkLines.length - 1; j >= 0; j--) {
-                const overlapLine = currentChunkLines[j];
-                // Prepend line
-                if (accumulatedOverlap) {
-                    accumulatedOverlap = overlapLine + "\n" +
-                        accumulatedOverlap;
-                } else {
-                    accumulatedOverlap = overlapLine;
-                }
-
-                overlapLines.unshift(overlapLine);
-                if (accumulatedOverlap.length >= overlapTarget) {
-                    break;
-                }
-            }
-
-            // Start new chunk with overlap lines
-            currentChunkLines = [...overlapLines];
-            currentOverlapLineCount = overlapLines.length; // Key: track overlap for display removal
-        }
-
-        currentChunkLines.push(line);
-    }
-
-    // Add valid remaining chunk
-    if (currentChunkLines.length > 0) {
-        const chunkText = currentChunkLines.join("\n");
-        const displayLines = currentChunkLines.slice(currentOverlapLineCount);
-        const displayText = displayLines.join("\n");
-        chunks.push({ content: chunkText, displayContent: displayText });
-    }
-
-    return chunks;
+    // Return the full content as a single chunk.
+    // displayContent is same as content since there's no overlap to hide.
+    return [{
+        content: content,
+        displayContent: content,
+    }];
 }
 
 // --- Main Execution ---
@@ -431,7 +382,7 @@ async function processPage(
     try {
         const mdBlocks = await n2m.pageToMarkdown(
             page.id,
-            { recursive: true } as any, // Notion Client type uyumsuzluğu için cast
+            null, // totalPage=null means fetch all blocks
         );
 
         const mdString = n2m.toMarkdownString(mdBlocks);
@@ -459,7 +410,7 @@ async function processPage(
         // 5. Upsert to Supabase
 
         // Chunk the content
-        const chunks = chunkContent(content, 0.1); // 10% overlap
+        const chunks = chunkContent(content);
 
         // Prepare metadata with notion_last_edited_time
         const baseMetadata = {
@@ -473,7 +424,7 @@ async function processPage(
             );
             return { status: "SYNCED" };
         } else {
-            let successCount = 0;
+            // let successCount = 0;
 
             for (let i = 0; i < chunks.length; i++) {
                 const chunkObj = chunks[i];
@@ -514,7 +465,7 @@ async function processPage(
                         details: upsertError.message,
                     };
                 }
-                successCount++;
+                // successCount++;
             }
 
             // Cleanup stale chunks (if any) since we might have fewer chunks now
@@ -578,8 +529,10 @@ async function syncNotionToSupabase() {
         allChunks.forEach((chunk) => {
             const key = `${chunk.course_id}:::${chunk.section_title}`;
             if (chunk.metadata) {
-                const meta = chunk.metadata as any;
-                if (meta.notion_last_edited_time) {
+                const meta = chunk.metadata as {
+                    notion_last_edited_time?: string;
+                } | null;
+                if (meta && meta.notion_last_edited_time) {
                     existingChunksMap.set(
                         key,
                         new Date(meta.notion_last_edited_time).getTime(),

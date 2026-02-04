@@ -21,7 +21,7 @@ export interface PrerequisiteQuestion {
  * Extracts prerequisite concepts for a given target concept from chunk metadata.
  */
 export function extractPrerequisites(
-    chunkMetadata: any,
+    chunkMetadata: { concept_map?: ConceptMapItem[] } | null,
     targetConcept: string,
 ): string[] {
     if (!chunkMetadata || !chunkMetadata.concept_map) {
@@ -67,7 +67,10 @@ export async function getPrerequisiteQuestions(
 
         if (!chunk || !chunk.metadata) continue;
 
-        const prereqs = extractPrerequisites(chunk.metadata, fail.conceptTitle);
+        const prereqs = extractPrerequisites(
+            chunk.metadata as { concept_map?: ConceptMapItem[] } | null,
+            fail.conceptTitle,
+        );
 
         if (prereqs.length === 0) continue;
 

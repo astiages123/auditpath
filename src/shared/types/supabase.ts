@@ -205,7 +205,6 @@ export type Database = {
           display_content: string | null
           error_message: string | null
           id: string
-          is_ready: boolean | null
           last_synced_at: string | null
           metadata: Json | null
           section_title: string
@@ -223,7 +222,6 @@ export type Database = {
           display_content?: string | null
           error_message?: string | null
           id?: string
-          is_ready?: boolean | null
           last_synced_at?: string | null
           metadata?: Json | null
           section_title: string
@@ -241,7 +239,6 @@ export type Database = {
           display_content?: string | null
           error_message?: string | null
           id?: string
-          is_ready?: boolean | null
           last_synced_at?: string | null
           metadata?: Json | null
           section_title?: string
@@ -331,16 +328,10 @@ export type Database = {
           created_by: string | null
           evidence: string | null
           id: string
-          is_global: boolean | null
           parent_question_id: string | null
-          quality_score: number | null
           question_data: Json
           section_title: string
           usage_type: Database["public"]["Enums"]["question_usage_type"] | null
-          validation_status:
-            | Database["public"]["Enums"]["validation_status"]
-            | null
-          validator_feedback: string | null
         }
         Insert: {
           bloom_level?: Database["public"]["Enums"]["bloom_level"] | null
@@ -351,16 +342,10 @@ export type Database = {
           created_by?: string | null
           evidence?: string | null
           id?: string
-          is_global?: boolean | null
           parent_question_id?: string | null
-          quality_score?: number | null
           question_data: Json
           section_title: string
           usage_type?: Database["public"]["Enums"]["question_usage_type"] | null
-          validation_status?:
-            | Database["public"]["Enums"]["validation_status"]
-            | null
-          validator_feedback?: string | null
         }
         Update: {
           bloom_level?: Database["public"]["Enums"]["bloom_level"] | null
@@ -371,16 +356,10 @@ export type Database = {
           created_by?: string | null
           evidence?: string | null
           id?: string
-          is_global?: boolean | null
           parent_question_id?: string | null
-          quality_score?: number | null
           question_data?: Json
           section_title?: string
           usage_type?: Database["public"]["Enums"]["question_usage_type"] | null
-          validation_status?:
-            | Database["public"]["Enums"]["validation_status"]
-            | null
-          validator_feedback?: string | null
         }
         Relationships: [
           {
@@ -502,8 +481,10 @@ export type Database = {
       user_question_status: {
         Row: {
           consecutive_fails: number | null
+          consecutive_success: number | null
           id: string
           next_review_at: string | null
+          next_review_session: number | null
           question_id: string
           status: Database["public"]["Enums"]["question_status"]
           updated_at: string | null
@@ -511,8 +492,10 @@ export type Database = {
         }
         Insert: {
           consecutive_fails?: number | null
+          consecutive_success?: number | null
           id?: string
           next_review_at?: string | null
+          next_review_session?: number | null
           question_id: string
           status?: Database["public"]["Enums"]["question_status"]
           updated_at?: string | null
@@ -520,8 +503,10 @@ export type Database = {
         }
         Update: {
           consecutive_fails?: number | null
+          consecutive_success?: number | null
           id?: string
           next_review_at?: string | null
+          next_review_session?: number | null
           question_id?: string
           status?: Database["public"]["Enums"]["question_status"]
           updated_at?: string | null
@@ -714,41 +699,6 @@ export type Database = {
           },
         ]
       }
-      weekly_schedule: {
-        Row: {
-          created_at: string | null
-          id: string
-          match_days: number[]
-          subject: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          match_days: number[]
-          subject: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          match_days?: number[]
-          subject?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "weekly_schedule_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -779,14 +729,6 @@ export type Database = {
         | "COMPLETED"
         | "FAILED"
         | "SYNCED"
-      generation_log_step:
-        | "INIT"
-        | "MAPPING"
-        | "GENERATING"
-        | "VALIDATING"
-        | "REVISION"
-        | "COMPLETED"
-        | "ERROR"
       question_status: "active" | "archived" | "pending_followup"
       question_usage_type: "antrenman" | "arsiv" | "deneme"
       quiz_response_type: "correct" | "incorrect" | "blank"
@@ -926,15 +868,6 @@ export const Constants = {
         "COMPLETED",
         "FAILED",
         "SYNCED",
-      ],
-      generation_log_step: [
-        "INIT",
-        "MAPPING",
-        "GENERATING",
-        "VALIDATING",
-        "REVISION",
-        "COMPLETED",
-        "ERROR",
       ],
       question_status: ["active", "archived", "pending_followup"],
       question_usage_type: ["antrenman", "arsiv", "deneme"],

@@ -1,8 +1,8 @@
 import { callCerebras, type LogCallback } from "../clients/cerebras";
 import { PromptArchitect } from "../prompt-architect";
 import pLimit from "p-limit";
-
-const validatorLimit = pLimit(5); // Validation concurrency limit
+import { rateLimiter } from "../config/rate-limiter";
+const validatorLimit = pLimit(1); // Validation concurrency limit (Strictly 1 for Cerebras)
 
 // Types
 export interface QuestionToValidate {
@@ -59,6 +59,9 @@ Aşağıdaki 5 kriter üzerinden puanla. Her kriterin ağırlığı ve "Hard-Fai
 ## KARAR MEKANİZMASI
 - Toplam Skor ($S_{total}$) >= 85 ve Groundedness = 30 ise: "APPROVED"
 - Toplam Skor < 85 veya Groundedness < 30 ise: "REJECTED"
+
+## STRATEJİK KATILIK (STRICTNESS)
+- **WHEN IN DOUBT, REJECT:** Eğer sorunun doğruluğu, cevap anahtarı veya kanıta dayalı olması konusunda en ufak bir şüphen varsa, riske girme ve kararını doğrudan "REJECTED" olarak ver. Yanlış bilgi vermektense soru üretmemek daha iyidir.
 
 ## ÇIKTI FORMATI (YALNIZCA JSON)
 {
@@ -200,23 +203,57 @@ export async function validateQuestionBatch(
       taskPrompt,
     );
 
-    try {
-      // Determine model based on bloom level
-      // Explicitly select model to ensure consistency and proper logging
-      const model = "gpt-oss-120b"; // Always use 120B for validation as per rules
+    let responseText = "";
+    const maxRetries = 3;
 
-      const responseText = await validatorLimit(() =>
-        callCerebras(
-          messages,
-          model,
-          () => {
-            // Optional: detailed logging
-          },
-        )
-      );
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        // Determine model based on bloom level
+        // Explicitly select model to ensure consistency and proper logging
+        const model = "qwen-3-32b"; // Always use Qwen-32B for validation as per rules
 
-      if (!responseText) {
-        onLog?.(`Soru ${i + 1} validator yanıt boş, REJECTED`, {});
+        responseText = await validatorLimit(async () => {
+          await rateLimiter.waitForSlot(model);
+          return callCerebras(
+            messages,
+            model,
+            () => {
+              // Optional: detailed logging
+            },
+          );
+        });
+
+        if (!responseText) {
+          throw new Error("Validator yanıt boş");
+        }
+
+        // If successful (and non-empty), break retry loop
+        break;
+      } catch (e) {
+        const errorMsg = String(e);
+        const isRateLimit = errorMsg.includes("429");
+        let baseWait = isRateLimit ? 10000 : 2000;
+
+        if (isRateLimit) {
+          baseWait = Math.max(baseWait, 10000);
+        }
+
+        if (attempt < maxRetries) {
+          const waitTime = Math.pow(2, attempt) * baseWait;
+          onLog?.(
+            `Soru ${i + 1} ${
+              isRateLimit ? "Hız sınırı (429)" : "Hata"
+            } algılandı, ${waitTime}ms bekleniyor... (Deneme ${attempt + 1}/${
+              maxRetries + 1
+            })`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
+          continue;
+        }
+
+        // If max retries exceeded
+        onLog?.(`Soru ${i + 1} doğrulama hatası (Son)`, { error: errorMsg });
+
         return {
           questionIndex: i,
           total_score: 0,
@@ -227,42 +264,15 @@ export async function validateQuestionBatch(
             clarity: 0,
             explanation: 0,
           },
-          critical_faults: ["Validator yanıt vermedi"],
-          improvement_suggestion: "Tekrar deneyin",
+          critical_faults: ["Sistem hatası: " + errorMsg],
+          improvement_suggestion: "",
           decision: "REJECTED",
         } as ValidationResult;
       }
+    }
 
-      const parsed = parseValidationResponse(responseText);
-
-      if (!parsed) {
-        onLog?.(`Soru ${i + 1} parse başarısız, REJECTED`, {});
-        return {
-          questionIndex: i,
-          total_score: 0,
-          criteria_breakdown: {
-            groundedness: 0,
-            pedagogy: 0,
-            distractors: 0,
-            clarity: 0,
-            explanation: 0,
-          },
-          critical_faults: ["JSON parse hatası"],
-          improvement_suggestion: "Format hatası",
-          decision: "REJECTED",
-        } as ValidationResult;
-      }
-
-      onLog?.(
-        `Soru ${i + 1} doğrulandı: ${parsed.decision} (${parsed.total_score})`,
-      );
-
-      return {
-        questionIndex: i,
-        ...parsed,
-      } as ValidationResult;
-    } catch (e) {
-      onLog?.(`Soru ${i + 1} doğrulama hatası`, { error: String(e) });
+    if (!responseText) {
+      // This should ideally be caught by the loop's logic, but just in case
       return {
         questionIndex: i,
         total_score: 0,
@@ -273,11 +283,40 @@ export async function validateQuestionBatch(
           clarity: 0,
           explanation: 0,
         },
-        critical_faults: ["Sistem hatası: " + String(e)],
+        critical_faults: ["Yanıt alınamadı"],
         improvement_suggestion: "",
         decision: "REJECTED",
       } as ValidationResult;
     }
+
+    const parsed = parseValidationResponse(responseText);
+
+    if (!parsed) {
+      onLog?.(`Soru ${i + 1} parse başarısız, REJECTED`, {});
+      return {
+        questionIndex: i,
+        total_score: 0,
+        criteria_breakdown: {
+          groundedness: 0,
+          pedagogy: 0,
+          distractors: 0,
+          clarity: 0,
+          explanation: 0,
+        },
+        critical_faults: ["JSON parse hatası"],
+        improvement_suggestion: "Format hatası",
+        decision: "REJECTED",
+      } as ValidationResult;
+    }
+
+    onLog?.(
+      `Soru ${i + 1} doğrulandı: ${parsed.decision} (${parsed.total_score})`,
+    );
+
+    return {
+      questionIndex: i,
+      ...parsed,
+    } as ValidationResult;
   });
 
   const results = await Promise.all(promises);

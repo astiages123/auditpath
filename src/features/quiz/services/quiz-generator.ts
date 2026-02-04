@@ -26,7 +26,7 @@ import { subjectKnowledgeService } from "@/shared/services/knowledge/subject-kno
 import { calculateQuota } from "@/shared/lib/core/quota";
 
 // Constants
-const BATCH_SIZE = 3; // Paralel üretim, her biri bağımsız retry mekanizmasına sahip
+// BATCH_SIZE removed - RateLimiter manages batching dynamically
 
 // Types
 export type LogStep =
@@ -110,10 +110,12 @@ export async function generateQuestionsForChunk(
     // === STEP 1: INIT ===
     log("INIT", "Chunk bilgileri yükleniyor...", { chunkId });
 
-    // 1. Fetch target chunk metadata
+    // Single Chunk prensibi: Sadece hedef chunk'ı çek
     const { data: targetChunk, error: targetError } = await supabase
       .from("note_chunks")
-      .select("course_id, section_title")
+      .select(
+        "id, content, display_content, word_count, course_id, course_name, section_title, metadata",
+      )
       .eq("id", chunkId)
       .single();
 
@@ -128,54 +130,17 @@ export async function generateQuestionsForChunk(
       };
     }
 
-    // 2. Fetch ALL chunks for this section to reconstruct full context
-    const { data: allChunks, error: allChunksError } = await supabase
-      .from("note_chunks")
-      .select(
-        "id, content, display_content, word_count, course_id, course_name, section_title, metadata",
-      )
-      .eq("course_id", targetChunk.course_id)
-      .eq("section_title", targetChunk.section_title)
-      .order("sequence_order", { ascending: true });
-
-    if (allChunksError || !allChunks || allChunks.length === 0) {
-      log("ERROR", "Bölüm içeriği yüklenemedi", {
-        error: allChunksError?.message,
-      });
-      onError("Section content not found");
-      return {
-        success: false,
-        generated: 0,
-        quota: 0,
-        error: "Section content not found",
-      };
-    }
-
-    // 3. Aggregate Content
-    // Use display_content if available for clean text, joined by newlines.
-    // Ideally, we join them to reconstruct the original flow.
-    const fullContent = allChunks.map((c) => c.display_content || c.content)
-      .join("\n\n");
-    const totalWordCount = allChunks.reduce(
-      (sum, c) => sum + (c.word_count || 0),
-      0,
-    );
-
-    // Use the first chunk's metadata as base, or merge?
-    // Usually concept map is generated per section or per chunk?
-    // If per chunk, we might need to merge concept maps.
-    // For now, let's use the target chunk's metadata or re-generate map for the whole text.
-    // If we re-generate map for WHOLE text, it's better.
-    // Let's assume we use the target chunk object structure but override content/word_count.
-
-    // Find the actual target chunk object in the array to keep specific ID ref if needed
-    const limitChunk = allChunks.find((c) => c.id === chunkId) || allChunks[0];
-
+    // chunkData direkt targetChunk'tan oluştur (birleştirme yok!)
     const chunkData: ChunkData = {
-      ...limitChunk,
-      content: fullContent,
-      word_count: totalWordCount,
-      metadata: limitChunk.metadata as any,
+      id: targetChunk.id,
+      content: targetChunk.display_content || targetChunk.content,
+      word_count: targetChunk.word_count || 0,
+      course_id: targetChunk.course_id,
+      course_name: targetChunk.course_name,
+      section_title: targetChunk.section_title,
+      metadata: targetChunk.metadata as
+        | { concept_map?: ConceptMapItem[] }
+        | null,
     };
 
     // Update chunk status
@@ -286,7 +251,6 @@ export async function generateQuestionsForChunk(
       });
       await supabase.from("note_chunks").update({
         status: "COMPLETED",
-        is_ready: true,
       }).eq("id", chunkId);
       const result: GenerationResult = {
         success: true,
@@ -317,10 +281,9 @@ export async function generateQuestionsForChunk(
     };
 
     existingQuestionsData?.forEach((q) => {
-      // @ts-ignore
-      if (existingBreakdown[q.usage_type] !== undefined) {
-        // @ts-ignore
-        existingBreakdown[q.usage_type]++;
+      const type = q.usage_type as keyof typeof existingBreakdown;
+      if (existingBreakdown[type] !== undefined) {
+        existingBreakdown[type]++;
       }
     });
 
@@ -353,9 +316,6 @@ export async function generateQuestionsForChunk(
     let totalGenerated = 0;
     let consecutiveBatchFailures = 0; // Track consecutive failures for Fallback
     let isFallbackActive = false; // Safe Mode flag
-
-    const sleep = (ms: number) =>
-      new Promise((resolve) => setTimeout(resolve, ms));
 
     for (const phase of phases) {
       const remainingForPhase = Math.max(0, phase.quota - phase.existing);
@@ -404,10 +364,8 @@ export async function generateQuestionsForChunk(
         // If Quota >> Concept Count, we loop.
 
         // Get next batch
-        const batchSize = Math.min(
-          BATCH_SIZE,
-          remainingForPhase - phaseGenerated,
-        );
+        // RateLimiter handles pacing, so we can request the full needed amount at once.
+        const batchSize = remainingForPhase - phaseGenerated;
         const batchConcepts: ConceptMapItem[] = [];
 
         for (let k = 0; k < batchSize; k++) {
@@ -417,15 +375,16 @@ export async function generateQuestionsForChunk(
           conceptCursor++;
         }
 
-        const batchNum = Math.floor(conceptCursor / BATCH_SIZE) + 1;
+        log(
+          "GENERATING",
+          `[${phase.type}] Batch işleniyor (RateLimiter Managed)...`,
+          {
+            batchSize: batchConcepts.length,
+            concepts: batchConcepts.map((c) => c.baslik),
+          },
+        );
 
-        log("GENERATING", `[${phase.type}] Batch işleniyor...`, {
-          batchSize: batchConcepts.length,
-          concepts: batchConcepts.map((c) => c.baslik),
-        });
-
-        // Small delay between batches
-        if (conceptCursor > BATCH_SIZE) await sleep(1500);
+        // No sleep needed - RateLimiter handles it.
 
         if (consecutiveBatchFailures >= 3 && !isFallbackActive) {
           isFallbackActive = true;
@@ -448,7 +407,6 @@ export async function generateQuestionsForChunk(
             log("GENERATING", msg, details as Record<string, unknown>),
           phase.type, // Pass usage type!
           chunkId, // Pass chunkId for Cognitive Memory
-          isFallbackActive, // Pass fallback flag
         );
 
         if (generated.length === 0) {
@@ -487,10 +445,13 @@ export async function generateQuestionsForChunk(
           if (
             validation.decision === "REJECTED" || validation.total_score < 85
           ) {
-            // Logic identical to original...
+            // Prefix caching için aynı context parametrelerini geç
             const revisedQuestion = await reviseQuestion(
               question,
               chunkData.content,
+              chunkData.course_name,
+              chunkData.section_title,
+              guidelines,
               {
                 critical_faults: validation.critical_faults,
                 improvement_suggestion: validation.improvement_suggestion,
@@ -520,12 +481,6 @@ export async function generateQuestionsForChunk(
                 section_title: chunkData.section_title,
                 usage_type: phase.type, // CORRECT TAGGING
                 bloom_level: question.bloomLevel || "knowledge",
-                quality_score: validation.total_score,
-                validation_status: "APPROVED",
-                validator_feedback: JSON.stringify({
-                  criteria_breakdown: validation.criteria_breakdown,
-                  critical_faults: validation.critical_faults,
-                }),
                 question_data: {
                   q: question.q,
                   o: question.o,
@@ -587,7 +542,6 @@ export async function generateQuestionsForChunk(
     // === STEP 6: COMPLETED ===
     await supabase.from("note_chunks").update({
       status: "COMPLETED",
-      is_ready: true,
     }).eq("id", chunkId);
 
     log("COMPLETED", `Üretim tamamlandı: ${totalGenerated} yeni soru`, {
@@ -625,30 +579,54 @@ export async function generateQuestionsForChunk(
 
 /**
  * Generate a single follow-up question for a wrong answer
+ * Token Optimizasyonu: Chunk yerine sadece evidence kullanılır
  */
 export async function generateFollowUpSingle(
   context: import("../modules/ai/question-generation").WrongAnswerContext,
   onLog: (msg: string, details?: unknown) => void,
 ): Promise<string | null> {
   try {
-    // 1. Fetch chunk and course data
-    const { data: chunk, error: chunkError } = await supabase
+    // Chunk metadata için sadece course_name ve section_title çek
+    const { data: targetChunk, error: chunkError } = await supabase
       .from("note_chunks")
-      .select("course_name, section_title")
+      .select("course_id, course_name, section_title, content, display_content") // Added content fields
       .eq("id", context.chunkId)
       .single();
 
-    if (chunkError || !chunk) {
+    if (chunkError || !targetChunk) {
       onLog("HATA: Chunk bulunamadı");
       return null;
     }
 
-    // 2. Fetch guidelines
-    const guidelines = await subjectKnowledgeService.getGuidelines(
-      chunk.course_name,
+    // Evidence'ı originalQuestion'dan al (context'te zaten var)
+    // Eğer yoksa veritabanından çek
+    let evidence = context.originalQuestion.evidence;
+
+    if (!evidence) {
+      const { data: qData } = await supabase
+        .from("questions")
+        .select("question_data")
+        .eq("id", context.originalQuestion.id)
+        .single();
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      evidence = (qData?.question_data as any)?.evidence || "";
+    }
+
+    // Fetch guidelines
+    const guidelinesData = await subjectKnowledgeService.getGuidelines(
+      targetChunk.course_name,
     );
 
-    // 2.1 Ensure Concept Title is present
+    // Guidelines'ı doğru formata çevir
+    const guidelines = guidelinesData
+      ? {
+        instruction: guidelinesData.instruction,
+        few_shot_example: guidelinesData.few_shot_example as unknown,
+      }
+      : null;
+
+    // Ensure Concept Title is present
     if (!context.originalQuestion.concept) {
       const { data: qData } = await supabase
         .from("questions")
@@ -656,19 +634,20 @@ export async function generateFollowUpSingle(
         .eq("id", context.originalQuestion.id)
         .single();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if ((qData as any)?.concept_title) {
-        context.originalQuestion.concept = (qData as any).concept_title;
+      if (qData?.concept_title) {
+        context.originalQuestion.concept = qData.concept_title;
       }
     }
 
-    // 3. Generate question (no validation stage for follow-ups to keep it fast/adaptive)
+    // Generate question with evidence only (token efficient)
     const question = await import("../modules/ai/question-generation").then(
       (m) =>
         m.generateFollowUpQuestion(
           context,
-          chunk.course_name,
-          chunk.section_title,
+          evidence,
+          targetChunk.display_content || targetChunk.content, // STRATEGY 3: Pass full content
+          targetChunk.course_name,
+          targetChunk.section_title,
           guidelines,
           (msg: string, details?: Record<string, unknown>) =>
             onLog(msg, details),
@@ -680,17 +659,14 @@ export async function generateFollowUpSingle(
       return null;
     }
 
-    // 4. Save to DB
+    // 6. Save to DB
     const { data: qData, error: qError } = await supabase.from("questions")
       .insert({
         chunk_id: context.chunkId,
         course_id: context.courseId,
-        section_title: chunk.section_title,
+        section_title: targetChunk.section_title,
         usage_type: "antrenman",
         bloom_level: question.bloomLevel,
-        quality_score: 80, // Default for follow-up
-        validation_status: "APPROVED",
-        is_global: false, // User-specific follow-up
         created_by: context.userId,
         parent_question_id: context.originalQuestion.id,
         question_data: {

@@ -77,6 +77,7 @@ export function QuizEngine({
   // ANOMALY-005 FIX: useRef ile güncel değerleri takip et (closure sorunu çözümü)
   const resultsRef = useRef<QuizResults>(results);
   const [isFinished, setIsFinished] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [finalTime, setFinalTime] = useState(0);
   
   // Track incorrect questions for follow-up generation
@@ -89,6 +90,11 @@ export function QuizEngine({
   // Initialize startTimeRef
   useEffect(() => {
     startTimeRef.current = Date.now();
+  }, []);
+
+  // Helper to get elapsed time
+  const getElapsedTime = useCallback(() => {
+    return Date.now() - startTimeRef.current;
   }, []);
 
   // Reset timer when question changes
@@ -166,39 +172,50 @@ export function QuizEngine({
 
   // Handle blank - skip question without answering
   const handleBlank = useCallback(async () => {
-    // 1. Log and Record Response immediately
-    const question = state.currentQuestion;
-    if (question && question.id && courseId) {
-        const timeSpent = Date.now() - startTimeRef.current;
-        
-        await recordResponse(
-            question.id, 
-            chunkId || null,
-            'blank',
-            null,
-            timeSpent,
-            question.diagnosis,
-            question.insight
-        );
-    }
+    if (isSubmitting) return;
 
-    // 2. Update local results
-    setResults(prev => ({ ...prev, blank: prev.blank + 1 }));
+    try {
+        setIsSubmitting(true);
+        // 1. Log and Record Response immediately
+        const question = state.currentQuestion;
+        if (question && question.id && courseId) {
+            const timeSpent = getElapsedTime();
+            
+            await recordResponse(
+                question.id, 
+                chunkId || null,
+                'blank',
+                null,
+                timeSpent,
+                question.diagnosis,
+                question.insight
+            );
+        }
 
-    // 3. Auto-advance immediately (skip explanation)
-    if (state.queue.length > 0) {
-      nextQuestion();
-    } else {
-       // Check if finished
-       if (!state.isLoading && state.generatedCount === state.totalToGenerate) {
-           setIsFinished(true);
-       } else {
-           nextQuestion(); // Wait/loading state
-       }
+        // 2. Update local results
+        setResults(prev => ({ ...prev, blank: prev.blank + 1 }));
+
+        // 3. Auto-advance immediately (skip explanation)
+        if (state.queue.length > 0) {
+          nextQuestion();
+        } else {
+           // Check if finished
+           if (!state.isLoading && state.generatedCount === state.totalToGenerate) {
+               setIsFinished(true);
+           } else {
+               nextQuestion(); // Wait/loading state
+           }
+        }
+    } finally {
+        setIsSubmitting(false);
     }
-  }, [state, courseId, chunkId, recordResponse, nextQuestion]);
+  }, [state, courseId, chunkId, recordResponse, nextQuestion, isSubmitting, getElapsedTime]);
 
   const handleNext = useCallback(async () => {
+    if (isSubmitting) return;
+
+    try {
+        setIsSubmitting(true);
     // 1. Record Response to DB
     const question = state.currentQuestion;
     if (question && question.id && courseId) {
@@ -230,8 +247,7 @@ export function QuizEngine({
                 toast.loading("Hatayı analiz ediyorum, sana özel telafi sorusu hazırlanıyor...", { id: "scaffold-gen" });
                 
                 try {
-                    // map question to context
-                    // We cast to any because QuizQuestion might lack some backend fields like evidence/concept
+                    // We cast to WrongAnswerContext because QuizQuestion might lack some backend fields like evidence/concept
                     // But generateFollowUpSingle fetches missing fields from DB if needed
                      const context = {
                            chunkId: validChunkId,
@@ -241,9 +257,9 @@ export function QuizEngine({
                                o: question.o ?? [], 
                                a: question.a, 
                                exp: question.exp,
-                               evidence: (question as any).evidence || "Kanıt yüklenemedi",
-                               bloomLevel: (question as any).bloom_level,
-                               concept: (question as any).concept_title
+                               evidence: (question as { evidence?: string }).evidence || "Kanıt yüklenemedi",
+                               bloomLevel: (question as { bloom_level?: string }).bloom_level,
+                               concept: (question as { concept_title?: string }).concept_title
                            },
                            incorrectOptionIndex: selectedIndex!,
                            correctOptionIndex: question.a,
@@ -251,8 +267,11 @@ export function QuizEngine({
                            userId: user.id
                        };
 
-                    // Call generator
-                    const scaffoldId = await generateFollowUpSingle(context as any, (msg) => console.log("[Scaffold]", msg));
+                    // Call generator with minimum delay for better UX
+                    const [scaffoldId] = await Promise.all([
+                        generateFollowUpSingle(context as import("../modules/ai/question-generation").WrongAnswerContext, (msg) => console.log("[Scaffold]", msg)),
+                        new Promise(resolve => setTimeout(resolve, 1500)) // Min 1.5s wait to prevent flicker
+                    ]);
 
                     if (scaffoldId) {
                         injectScaffolding(scaffoldId, validChunkId);
@@ -267,7 +286,7 @@ export function QuizEngine({
         
         // If it was blank, selectedAnswer is null.
         
-        const timeSpent = Date.now() - startTimeRef.current;
+        const timeSpent = getElapsedTime();
         totalTimeRef.current += timeSpent;
 
         const result = await recordResponse(
@@ -344,7 +363,10 @@ export function QuizEngine({
           nextQuestion();
       }
     }
-  }, [state, courseId, chunkId, recordResponse, nextQuestion, user]);
+    } finally {
+        setIsSubmitting(false);
+    }
+  }, [state, courseId, chunkId, recordResponse, nextQuestion, user, injectScaffolding, isSubmitting, getElapsedTime]);
 
   // Handle start logic
   const handleStart = useCallback(() => {
@@ -501,10 +523,21 @@ export function QuizEngine({
         >
           <button
             onClick={handleNext}
-            className="flex-1 flex items-center justify-center gap-2 px-6 py-4 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors"
+            disabled={isSubmitting}
+            className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-primary-foreground rounded-xl font-medium transition-colors ${
+              isSubmitting ? 'bg-primary/70 cursor-not-allowed' : 'bg-primary hover:bg-primary/90'
+            }`}
           >
-            <ArrowRight className="w-5 h-5" />
-            {state.queue.length > 0 ? `Sıradaki Soru (${state.queue.length})` : 'Testi Bitir'}
+            {isSubmitting ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <ArrowRight className="w-5 h-5" />
+            )}
+            {isSubmitting
+              ? 'İşleniyor...'
+              : state.queue.length > 0
+              ? `Sıradaki Soru (${state.queue.length})`
+              : 'Testi Bitir'}
           </button>
         </motion.div>
       )}

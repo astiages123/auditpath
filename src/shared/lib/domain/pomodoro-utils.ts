@@ -108,22 +108,32 @@ export function calculatePauseCount(
   }).length;
 }
 
+export function calculateLearningFlow(
+  workMinutes: number,
+  videoMinutes: number,
+): number {
+  if (workMinutes <= 0) return 0; // No work done = 0 flow
+
+  const ratio = videoMinutes / workMinutes;
+
+  // Return raw multiplier with 2 decimals precision
+  return Number(ratio.toFixed(2));
+}
+
 /**
- * Calculates the efficiency score based on session totals.
- * Formula: (work / (work + break + pause)) * 100
- * @param totals - Object containing totalWork, totalBreak, totalPause in seconds
- * @returns Efficiency score as a percentage (0-100)
+ * Calculates the Focus Score based on the ratio of Work Time to Total Session Time (Work + Break).
+ * Formula: (Work / (Work + Break)) * 100
+ *
+ * @param totals - Object containing totalWork and totalBreak in SECONDS
+ * @returns Focus score (0-100)
  */
-export function calculateEfficiencyScore(totals: SessionTotals): number {
-  const { totalWork, totalBreak, totalPause } = totals;
-  const totalTime = totalWork + totalBreak + totalPause;
+export function calculateFocusScore(totals: SessionTotals): number {
+  const totalDuration = totals.totalWork + totals.totalBreak;
 
-  if (totalTime === 0) {
-    return 0;
-  }
+  if (totalDuration <= 0) return 0;
 
-  // Round to 2 decimal places
-  return Math.round((totalWork / totalTime) * 10000) / 100;
+  const score = (totals.totalWork / totalDuration) * 100;
+  return Math.max(0, Math.min(100, Math.round(score)));
 }
 
 /**
@@ -161,3 +171,16 @@ export function getCycleCount(timeline: TimelineEvent[] | unknown): number {
 
   return count;
 }
+
+/**
+ * Efficiency thresholds for learning flow analysis.
+ * Symmetric around 1.0x (Optimal)
+ */
+export const EFFICIENCY_THRESHOLDS = {
+  STUCK: 0.25, // < 0.25: Critical Slow (Rose)
+  DEEP: 0.75, // 0.25 - 0.75: Warning Slow (Amber)
+  OPTIMAL_MIN: 0.75, // 0.75 - 1.25: Ideal (Emerald)
+  OPTIMAL_MAX: 1.25,
+  SPEED: 1.75, // 1.25 - 1.75: Warning Fast (Amber)
+  SHALLOW: 1.75, // > 1.75: Critical Fast (Rose)
+};

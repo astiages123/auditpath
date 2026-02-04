@@ -26,6 +26,7 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
   
   // Status State
   const [completionStatus, setCompletionStatus] = useState<TopicCompletionStats | null>(null);
+  const [isInnerModalOpen, setIsInnerModalOpen] = useState(false);
 
 
   
@@ -109,8 +110,13 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
         }
         onOpenChange(open);
     }}>
-      <DialogContent className="max-w-6xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden bg-background">
+      <DialogContent 
+        className="max-w-6xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden bg-background"
+      >
         {/* Header */}
+        <div 
+          className="flex flex-col h-full overflow-hidden"
+        >
         <DialogHeader className="p-6 border-b border-border/40 bg-muted/20">
             <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
@@ -294,6 +300,7 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
                                                         </p>
                                                         <GenerateQuestionButton 
                                                             chunkId={targetChunkId} 
+                                                            onOpenChange={setIsInnerModalOpen}
                                                             onComplete={async () => {
                                                                 // Reload completion status after generation
                                                                 if (user && courseId && selectedTopic) {
@@ -338,6 +345,7 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
                     </div>
                 </div>
             )}
+        </div>
         </div>
       </DialogContent>
     </Dialog>

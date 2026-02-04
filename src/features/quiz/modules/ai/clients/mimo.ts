@@ -85,26 +85,50 @@ export async function callMiMo(
 export function parseJsonResponse(
   text: string | null | undefined,
   type: "object" | "array",
-): unknown | null {
+): any | null {
   if (!text || typeof text !== "string") return null;
 
   try {
     let cleanText = text.trim();
 
-    // 1. Markdown bloklarını temizle (```json ... ```)
+    // 1. Markdown bloklarını temizle (```json ... ``` veya sadece ``` ... ```)
+    // Sadece ilk eşleşen bloğu al
     const markdownMatch = cleanText.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (markdownMatch) {
       cleanText = markdownMatch[1].trim();
     }
 
-    // 2. Ham JSON desenini bul
+    // 2. Ham JSON desenini bul (Dışta kalan metinleri temizlemek için)
     const pattern = type === "array" ? /\[[\s\S]*\]/ : /\{[\s\S]*\}/;
     const match = cleanText.match(pattern);
 
-    if (!match) return null;
+    if (match) {
+      cleanText = match[0];
+    } else {
+      // Eşleşme yoksa, muhtemelen temizlenemedi veya format bozuk.
+      // Yine de devam edip şansımızı deneyebiliriz veya null dönebiliriz.
+      // Orijinal koda sadık kalarak, match yoksa null dönüyoruz.
+      return null;
+    }
 
-    return JSON.parse(match[0]);
-  } catch {
+    // 3. LaTeX Backslash Düzeltme (PRE-PROCESS)
+    // Regex: Geçerli JSON escape'lerini (örn: \n, \", \\) koru, diğer tüm \ karakterlerini çiftle (\\).
+    // NOT: \b (backspace) ve \f (form feed) geçerli escape olsa da, LaTeX çıktıları (\beta, \frac) ile
+    // karışmaması için onları da "geçersiz" kabul edip çiftliyoruz.
+    // Böylece "\beta" -> "\\beta" olarak parse ediliyor (backspace yerine string olarak).
+
+    // Geçerli escape'ler: \" \\ \/ \n \r \t \uXXXX
+    const regex = /(\\["\\/nrt]|\\u[0-9a-fA-F]{4})|(\\)/g;
+
+    cleanText = cleanText.replace(regex, (match, valid, invalid) => {
+      if (valid) return valid; // Geçerli escape, dokunma
+      if (invalid) return "\\\\"; // Geçersiz backslash (veya \b, \f), çiftle
+      return match;
+    });
+
+    return JSON.parse(cleanText);
+  } catch (e) {
+    // console.error("JSON Parse Error:", e);
     return null;
   }
 }

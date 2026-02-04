@@ -77,6 +77,7 @@ export function buildTaskPrompt(
   concept: ConceptMapItem | null,
   strategy: { bloomLevel: string; instruction: string },
   usageType: "antrenman" | "deneme" | "arsiv" = "antrenman",
+  previousDiagnoses?: string[],
 ): string {
   const parts = [
     `AMAÇ: Metni analiz ederek, belirtilen pedagojik stratejiye uygun tek bir soru üretmek.`,
@@ -89,6 +90,18 @@ export function buildTaskPrompt(
 - **Tuzak:** Doğru cevaba en yakın, güçlü bir çeldirici (distractor) mutlaka ekle.
 - **Kapsam:** Soru, sadece bu ünitedeki izole bilgiyi değil, kurs genelinde bu kavramla karıştırılabilecek diğer terimleri de çağrıştırmalıdır.`);
   }
+
+  // STRATEGY 1: DISTRACTOR VARIETY & STRATEGY 2: LATEX STANDARDIZATION
+  parts.push(`ÇELDİRİCİ (DISTRACTOR) KURALLARI:
+Yanlış seçenekler rastgele üretilmemeli, şu üç kategoriden en az birine dayanmalıdır:
+1. **Kavram Karmaşası:** Doğru cevaba benzeyen ancak farklı bir bağlamda kullanılan terimler.
+2. **İşlem/Mantık Hatası:** Doğru muhakeme sürecindeki yaygın bir hatanın sonucu.
+3. **Yarım Doğru:** Doğru başlayan ancak yanlış biten (veya tam tersi) ifadeler.
+*Rastgele veya saçma yanlışlar üretme.*
+
+LATEX FORMAT ZORUNLULUĞU:
+- Tüm sayısal verileri, matematiksel formülleri, değişkenleri ($x, y, P, Q$) ve teknik sembolleri ($IS-LM, \\sigma^2, \\alpha$ vb.) **hem soru metninde (q) hem de açıklamada (exp)** KESİNLİKLE LaTeX formatında yaz.
+- Örn: "faiz oranı %5" yerine "$r = 5\\%$" veya "$P = 100$" şeklinde.`);
 
   if (concept) {
     parts.push(`HEDEF KAVRAM VE ODAK:
@@ -111,7 +124,14 @@ export function buildTaskPrompt(
 ${strategy.instruction}
 
 KANIT ZORUNLULUĞU:
-Her soru için not içerisinden cevabı kanıtlayan cümleyi harfiyen (verbatim) alıntıla ve "evidence" alanına yaz. Eğer metinde doğrudan bir kanıt yoksa o soruyu üretme.`);
+Eğer soru bir senaryo veya analiz içeriyorsa; evidence alanına metindeki dayanak kuralı/tanımı yaz ve yanına kısa bir notla bu kuralın sorudaki duruma nasıl bağlandığını açıkla. Eğer metinde doğrudan bir kanıt veya dayanak yoksa o soruyu üretme.`);
+
+  // Kullanıcının geçmiş hataları (dinamik - Task prompt'ta)
+  if (previousDiagnoses && previousDiagnoses.length > 0) {
+    parts.push(`KULLANICININ GEÇMİŞ HATALARI (BU KONUDA):
+Kullanıcı bu konuda daha önce şu hataları yaptı. Soruları üretirken bu zayıf noktaları özellikle test etmeye çalış:
+${previousDiagnoses.map((d) => `- ${d}`).join("\n")}`);
+  }
 
   // Reminder for JSON format (brief)
   parts.push(

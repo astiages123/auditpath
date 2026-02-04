@@ -1,31 +1,53 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
+import { EFFICIENCY_THRESHOLDS } from "@/shared/lib/domain/pomodoro-utils";
 
-// Using a 3:1 ratio: 3 mins of learning for 1 min of Pomodoro is the ideal baseline?
-// Wait, the formula in the prompt is: (Completed Video Time * 3 / Spent Pomodoro Time) * 100
-// If Video = 50min, Pomodoro = 50min -> (50*3/50)*100 = 300%?
-// Logic check: "Efficiency = (Tamamlanan Video Süresi * 3 / Harcanan Pomodoro Süresi) * 100"
-// Example: If I watched 20 mins of video in a 60 min session. (20 * 3 / 60) * 100 = 60/60 * 100 = 100%
-// If I watched only 10 mins of video in 60 mins: (10 * 3 / 60) * 100 = 50% (Inefficient)
-// If I watched 30 mins: (30 * 3 / 60) * 100 = 150% (Super efficient?)
+// Using a 1.0x centered symmetric spectrum for flow states
+// New thresholds: 0.25, 0.75, 1.25, 1.75
 
 interface EfficiencyMetrics {
     totalVideoTime: number; // minutes
     totalPomodoroTime: number; // minutes
 }
 
+export type flowState = "stuck" | "deep" | "optimal" | "speed" | "shallow";
+
 export function useEfficiencyLogic(todayMetrics: EfficiencyMetrics) {
     const DAILY_GOAL_MINUTES = 200;
 
-    const effectivenessScore = useMemo(() => {
-        if (todayMetrics.totalPomodoroTime === 0) return 0;
-        return Math.round(
-            (todayMetrics.totalVideoTime * 3 / todayMetrics.totalPomodoroTime) *
-                100,
-        );
+    const learningFlowMetrics = useMemo(() => {
+        // Safety Guard: if no work done, flow is 0
+        if (todayMetrics.totalPomodoroTime === 0) {
+            return { score: 0, state: "stuck" as const };
+        }
+
+        // 1. Calculate Ratio (Video / Pomodoro)
+        const ratio = todayMetrics.totalVideoTime /
+            todayMetrics.totalPomodoroTime;
+        const score = Number(ratio.toFixed(2));
+
+        // 2. Determine State based on 1.0x centered symmetric spectrum
+        let state: flowState;
+
+        if (score < EFFICIENCY_THRESHOLDS.STUCK) {
+            state = "stuck";
+        } else if (score < EFFICIENCY_THRESHOLDS.DEEP) {
+            state = "deep";
+        } else if (score <= EFFICIENCY_THRESHOLDS.OPTIMAL_MAX) {
+            state = "optimal";
+        } else if (score <= EFFICIENCY_THRESHOLDS.SPEED) {
+            state = "speed";
+        } else {
+            state = "shallow";
+        }
+
+        return { score, state };
     }, [todayMetrics.totalVideoTime, todayMetrics.totalPomodoroTime]);
 
-    // If score < 100%, it might be a warning zone
-    const isWarning = effectivenessScore < 100;
+    const learningFlow = learningFlowMetrics.score;
+    const flowState = learningFlowMetrics.state;
+
+    // Warning is now handled by flowState colors in UI, but we keep a boolean for backward compat if needed
+    const isWarning = flowState !== "optimal";
 
     const goalProgress = useMemo(() => {
         return Math.min(
@@ -43,7 +65,8 @@ export function useEfficiencyLogic(todayMetrics: EfficiencyMetrics) {
     };
 
     return {
-        effectivenessScore,
+        learningFlow,
+        flowState,
         isWarning,
         goalProgress,
         goalMinutes: DAILY_GOAL_MINUTES,

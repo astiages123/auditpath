@@ -12,6 +12,7 @@
 import { memo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, GraduationCap, RefreshCw, Loader2, ChevronDown, SkipForward, Brain } from 'lucide-react';
+import { toast } from 'sonner';
 import { EvidenceCard } from './EvidenceCard';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -56,16 +57,15 @@ const markdownComponents = {
 };
 
 // Markdown renderer with KaTeX support
-function MathText({ content }: { content: string }) {
+const MathText = memo(function MathText({ content }: { content: string }) {
   if (!content) return null;
   
-  // Clean content: remove (image.ext) references
-  // Regex to match (filename.ext) where ext is typical image format
-  // Clean content: remove (image.ext) references AND [GÖRSEL: X] markers
-  // Regex to match (filename.ext) where ext is typical image format AND [GÖRSEL: number]
+  // Clean content: remove (image.ext) references, [GÖRSEL: X] markers and excessive newlines
   const cleanContent = content
       .replace(/\([\w-]+\.(webp|png|jpg|jpeg|gif)\)/gi, '')
-      .replace(/\[GÖRSEL:\s*\d+\]/gi, '');
+      .replace(/\[GÖRSEL:\s*\d+\]/gi, '')
+      .replace(/\n\s*\n/g, '\n\n')
+      .trim();
 
   return (
     <ReactMarkdown
@@ -76,7 +76,84 @@ function MathText({ content }: { content: string }) {
       {cleanContent}
     </ReactMarkdown>
   );
+});
+
+interface OptionButtonProps {
+    option: string;
+    index: number;
+    label: string;
+    variant: 'default' | 'correct' | 'incorrect' | 'dimmed';
+    onClick: () => void;
+    disabled: boolean;
 }
+
+const OptionButton = memo(function OptionButton({ 
+    option, 
+    index, 
+    label, 
+    variant, 
+    onClick, 
+    disabled 
+}: OptionButtonProps) {
+    let containerStyle = 'border-border hover:border-primary/50 hover:bg-muted/30';
+    let iconComponent = null;
+    let labelStyle = 'bg-muted text-muted-foreground';
+
+    switch (variant) {
+        case 'correct':
+            containerStyle = 'border-emerald-500 bg-emerald-500/10';
+            labelStyle = 'bg-emerald-500 text-white';
+            iconComponent = (
+                <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                    <Check className="w-4 h-4 text-white" />
+                </div>
+            );
+            break;
+        case 'incorrect':
+            containerStyle = 'border-red-500 bg-red-500/10';
+            labelStyle = 'bg-red-500 text-white';
+            iconComponent = (
+                <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shrink-0">
+                    <X className="w-4 h-4 text-white" />
+                </div>
+            );
+            break;
+        case 'dimmed':
+            containerStyle = 'border-border opacity-50';
+            break;
+        case 'default':
+        default:
+            // kept initials
+            break;
+    }
+
+    return (
+        <motion.button
+            onClick={onClick}
+            disabled={disabled}
+            whileHover={!disabled ? { scale: 1.01 } : {}}
+            whileTap={!disabled ? { scale: 0.99 } : {}}
+            className={cn(
+                'w-full flex items-start gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left',
+                containerStyle,
+                !disabled && 'cursor-pointer'
+            )}
+        >
+            <span
+                className={cn(
+                    'w-8 h-8 min-w-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0',
+                    labelStyle
+                )}
+            >
+                {label}
+            </span>
+            <div className="flex-1 pt-1 prose prose-sm dark:prose-invert max-w-none">
+                <MathText content={option} />
+            </div>
+            {iconComponent}
+        </motion.button>
+    );
+});
 
 function QuizCardComponent({
   question,
@@ -120,6 +197,7 @@ function QuizCardComponent({
     // Escape key for blank
     if (e.key === 'Escape' && onBlank) {
       e.preventDefault();
+      toast.info('Soru boş bırakıldı');
       onBlank();
     }
   }, [isAnswered, question, onSelectAnswer, onBlank]);
@@ -228,62 +306,34 @@ function QuizCardComponent({
             const isSelected = selectedAnswer === index;
             const isCorrectOption = question.a === index;
 
-            let optionStyle = 'border-border hover:border-primary/50 hover:bg-muted/30';
-            let iconComponent = null;
+            let variant: 'default' | 'correct' | 'incorrect' | 'dimmed' = 'default';
 
             if (isAnswered) {
-              // Only reveal correctness if selectedAnswer is not null (i.e. not blank)
-              const showCorrectness = selectedAnswer !== null;
-
-              if (showCorrectness && isCorrectOption) {
-                optionStyle = 'border-emerald-500 bg-emerald-500/10';
-                iconComponent = (
-                  <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
-                    <Check className="w-4 h-4 text-white" />
-                  </div>
-                );
-              } else if (isSelected && !isCorrectOption) {
-                optionStyle = 'border-red-500 bg-red-500/10';
-                iconComponent = (
-                  <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shrink-0">
-                    <X className="w-4 h-4 text-white" />
-                  </div>
-                );
-              } else {
-                optionStyle = 'border-border opacity-50';
-              }
+                const showCorrectness = selectedAnswer !== null;
+                if (showCorrectness) {
+                    if (isCorrectOption) {
+                        variant = 'correct';
+                    } else if (isSelected && !isCorrectOption) {
+                        variant = 'incorrect';
+                    } else {
+                        variant = 'dimmed';
+                    }
+                } else {
+                    // Blank answer -> dim all
+                    variant = 'dimmed';
+                }
             }
 
             return (
-              <motion.button
+              <OptionButton
                 key={index}
+                index={index}
+                option={option}
+                label={optionLabels[index]}
+                variant={variant}
                 onClick={() => !isAnswered && onSelectAnswer(index)}
                 disabled={isAnswered}
-                whileHover={!isAnswered ? { scale: 1.01 } : {}}
-                whileTap={!isAnswered ? { scale: 0.99 } : {}}
-                className={cn(
-                  'w-full flex items-start gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left',
-                  optionStyle,
-                  !isAnswered && 'cursor-pointer'
-                )}
-              >
-                <span
-                  className={cn(
-                    'w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0',
-                    isAnswered && selectedAnswer !== null && isCorrectOption
-                      ? 'bg-emerald-500 text-white'
-                      : isAnswered && isSelected && !isCorrectOption
-                        ? 'bg-red-500 text-white'
-                        : 'bg-muted text-muted-foreground'
-                  )}
-                >
-                  {optionLabels[index]}
-                </span>
-                <div className="flex-1 pt-1 prose prose-sm dark:prose-invert max-w-none">
-                  <MathText content={option} />
-                </div>
-                {iconComponent}
-              </motion.button>
+              />
             );
           })}
         </div>
@@ -383,7 +433,7 @@ function QuizCardComponent({
                               )}
 
                               {/* Evidence Card */}
-                              {question.evidence && courseId && !isCorrect && (
+                              {question.evidence && courseId && (
                                 <div className="mb-4">
                                   <EvidenceCard 
                                     evidence={question.evidence} 

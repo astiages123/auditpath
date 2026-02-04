@@ -237,7 +237,6 @@ export function useQuiz(): UseQuizReturn {
           showExplanation: false,
           isCorrect: null,
           error: null,
-          // isStruggled: false, // Reset struggled state (Removed as it's not in interface)
         };
       } else {
         // No more questions in queue
@@ -249,7 +248,6 @@ export function useQuiz(): UseQuizReturn {
           showExplanation: false,
           isCorrect: null,
           error: null,
-          // isStruggled: false,
         };
       }
     });

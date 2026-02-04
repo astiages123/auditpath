@@ -13,7 +13,6 @@ import {
   Trophy,
   ChevronDown,
   LogOut,
-  User as UserIcon,
   Sparkles,
   Timer,
 } from "lucide-react";

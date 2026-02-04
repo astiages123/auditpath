@@ -9,7 +9,6 @@ import {
   BloomKeyChart,
   GoalProgressRing,
   LearningLoadChart,
-  SessionGanttChart,
 } from './EfficiencyCharts';
 import { useEfficiencyLogic } from './useEfficiencyLogic';
 import { useEfficiencyData } from './useEfficiencyData';
@@ -88,16 +87,33 @@ export const FocusHubCard = () => {
     trendPercentage
   } = useEfficiencyData();
 
-  const { effectivenessScore, goalProgress, isWarning, goalMinutes } = useEfficiencyLogic({
+  const { learningFlow, flowState, goalProgress } = useEfficiencyLogic({
     totalVideoTime: todayVideoMinutes,
     totalPomodoroTime: currentWorkMinutes, 
   });
+
+  const getFlowColor = () => {
+    if (flowState === "optimal") return "text-emerald-400";
+    if (flowState === "deep" || flowState === "speed") return "text-amber-400";
+    return "text-rose-500"; // stuck or shallow
+  };
+
+  const getFlowStatusLabel = () => {
+    switch (flowState) {
+      case "stuck": return "Yüksek Zaman Maliyeti / Takılma";
+      case "deep": return "Yoğun ve Derin İnceleme";
+      case "optimal": return "Optimal Akış / Denge";
+      case "speed": return "Seri Tarama / Hızlı İlerleme";
+      case "shallow": return "Çok Hızlı / Olası Yüzeysellik";
+      default: return "";
+    }
+  };
 
   if (loading) return <GlassCard className="h-full"><LoadingState /></GlassCard>;
 
   return (
     <EfficiencyModal
-      title="Odak Merkezi Analizi"
+      title="Öğrenme Akışı Analizi"
       trigger={
         <div className="h-full w-full">
           <GlassCard className="h-full flex flex-col p-6">
@@ -105,8 +121,8 @@ export const FocusHubCard = () => {
               icon={Target}
               iconColor="text-emerald-400"
               iconBg="bg-emerald-500/10"
-              title="Odak Merkezi"
-              subtitle="Günlük hedef ve efektiflik analizi"
+              title="Öğrenme Akışı"
+              subtitle="Video hızı ve çalışma süresi oranı (Multiplier). İdeal: 1.0x"
               action={<Maximize2 className="w-5 h-5 text-muted-foreground/30 hover:text-white transition-colors" />}
             />
             
@@ -115,13 +131,22 @@ export const FocusHubCard = () => {
               
               <div className="text-center md:text-left space-y-4">
                 <div className="space-y-1">
-                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Efektiflik Skoru</p>
-                  <p className={cn(
-                    "text-4xl font-bold font-heading",
-                    isWarning ? "text-amber-400" : "text-emerald-400"
-                  )}>
-                    %{effectivenessScore}
-                  </p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Öğrenme Akışı</p>
+                  <div className="flex flex-col md:flex-row md:items-baseline gap-x-3 gap-y-1 justify-center md:justify-start">
+                    <p className={cn(
+                      "text-4xl font-bold font-heading",
+                      getFlowColor()
+                    )}>
+                      {learningFlow.toFixed(2)}x
+                    </p>
+                    <p className={cn(
+                      "text-[11px] font-bold tracking-wide lowercase",
+                      getFlowColor(),
+                      "opacity-90"
+                    )}>
+                      {getFlowStatusLabel()}
+                    </p>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-6">
@@ -180,15 +205,7 @@ export const FocusHubCard = () => {
         </div>
       }
     >
-      <FocusHubContent trendData={efficiencyTrend}>
-        {sessions.length > 0 ? (
-          <SessionGanttChart sessions={sessions} />
-        ) : (
-          <div className="p-8 text-center text-muted-foreground">
-            Bugün hiç oturum kaydı bulunamadı.
-          </div>
-        )}
-      </FocusHubContent>
+      <FocusHubContent trendData={efficiencyTrend} sessions={sessions} />
     </EfficiencyModal>
   );
 };
@@ -233,7 +250,6 @@ export const LearningLoadCard = () => {
 // 3. Practice Center Card
 export const PracticeCenterCard = () => {
   const { loading, bloomStats } = useEfficiencyData();
-  const totalSolved = bloomStats.reduce((acc, curr) => acc + curr.questionsSolved, 0);
 
   if (loading) return <GlassCard className="h-full"><LoadingState /></GlassCard>;
 
@@ -346,7 +362,7 @@ export const ConsistencyHeatmapCard = () => {
         iconColor="text-emerald-400"
         iconBg="bg-emerald-500/10"
         title="Tutarlılık Analizi"
-        subtitle="Son 35 günlük çalışma disiplini"
+        subtitle="Son 30 günlük çalışma disiplini"
       />
 
       <div className="flex-1 flex items-center justify-center bg-white/2 rounded-xl p-5 mt-5 border border-white/5 h-full">

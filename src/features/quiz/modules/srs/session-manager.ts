@@ -7,10 +7,11 @@
  */
 
 import { supabase } from "@/shared/lib/core/supabase";
+import { Database } from "@/shared/types/supabase";
 import {
-  calculateNextReview,
-  calculateResilienceBonus,
+  calculateNextReviewSession,
   calculateScoreChange,
+  calculateShelfStatus,
   type QuizResponseType,
 } from "./srs-algorithm";
 import { DebugLogger } from "@/shared/lib/ui/debug-logger";
@@ -18,7 +19,6 @@ import {
   type FailedConceptInfo,
   getPrerequisiteQuestions,
 } from "./prerequisite-engine";
-import { calculateMasteryChains } from "@/features/efficiency/logic/mastery-logic";
 
 // --- Types ---
 export interface SessionInfo {
@@ -32,36 +32,6 @@ export interface SessionInfo {
 // --- Session Counter Functions ---
 
 /**
- * Get today's scheduled courses for a user
- * Strictly checks weekly_schedule table for the current day index.
- */
-export async function getTodaysCourses(userId: string): Promise<string[]> {
-  const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
-
-  // We explicitly check if multiple match_days contain the current day index
-  const { data, error } = await supabase
-    .from("weekly_schedule")
-    .select("subject, match_days")
-    .eq("user_id", userId);
-
-  if (error) {
-    console.error("[SessionManager] Error fetching schedule:", error);
-    return [];
-  }
-
-  // Filter in memory to be safe with array containment if needed,
-  // or trust a .contains query if we used it.
-  // Here we filter manually for robustness.
-  const todaysSubjects = data
-    ?.filter((schedule) =>
-      schedule.match_days && schedule.match_days.includes(today)
-    )
-    .map((s) => s.subject) ?? [];
-
-  return todaysSubjects;
-}
-
-/**
  * Get or create session counter for a course
  * Implements Daily Increment & Reset logic.
  */
@@ -72,9 +42,9 @@ export async function getSessionInfo(
   const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
   DebugLogger.group("SessionManager: Get Session Info", {
-    userId,
-    courseId,
-    today,
+    userId: userId,
+    courseId: courseId,
+    today: today,
   });
 
   // First, get course name
@@ -93,12 +63,22 @@ export async function getSessionInfo(
   // Use RPC for atomic increment to avoid race conditions
   // Cast to any because generated types are not updated yet
   // Cast with explicit function signature to satisfy lint
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
   const { data: rpcResult, error: rpcError } =
-    await (supabase.rpc as unknown as Function)("increment_course_session", {
-      p_user_id: userId,
-      p_course_id: courseId,
-    });
+    await (supabase.rpc as unknown as (
+      name: string,
+      args: Record<string, unknown>,
+    ) => Promise<
+      {
+        data: { current_session: number; is_new_session: boolean }[] | null;
+        error: { message: string } | null;
+      }
+    >)(
+      "increment_course_session",
+      {
+        p_user_id: userId,
+        p_course_id: courseId,
+      },
+    );
 
   let finalSession = 1;
   let isNewSession = false;
@@ -226,7 +206,6 @@ export async function recordQuizResponse(
   timeSpentMs: number = 0,
   diagnosis?: string,
   insight?: string,
-  extraScoreBonus: number = 0,
 ): Promise<{ isTopicRefreshed: boolean; isChainBonusApplied?: boolean }> {
   DebugLogger.group("SessionManager: Record Response & Shelf Update", {
     userId,
@@ -243,6 +222,12 @@ export async function recordQuizResponse(
     return { isTopicRefreshed: false };
   }
 
+  if (chunkId && !uuidRegex.test(chunkId)) {
+    DebugLogger.error("Invalid chunkId UUID", { chunkId });
+    // We can continue without chunk update, treating it as general practice
+    chunkId = null;
+  }
+
   // 1. Check for previous attempts (State Tracking)
   // TASARIM KARARI: isRepeated aynı question_id bazında kontrol edilir.
   // Yani aynı konudan farklı sorular yanlış cevaplansa bile her biri "ilk hata" sayılır.
@@ -255,7 +240,7 @@ export async function recordQuizResponse(
     .eq("question_id", questionId);
 
   const isRepeated = (priorAttempts || 0) > 0;
-  let resilienceBonus = 1.0;
+  const resilienceBonus = 1.0;
 
   // 2. Record User Response
   const payload = {
@@ -336,7 +321,8 @@ export async function recordQuizResponse(
     // Fetch density score from chunk metadata if not provided
     // Used to adjust WPM (Words Per Minute) expectation
     let densityCoeff = 1.0;
-    const targetChunkId = chunkId || (questionDb as any).chunk_id;
+    const targetChunkId = chunkId ||
+      (questionDb as { chunk_id: string | null }).chunk_id;
 
     if (targetChunkId) {
       const { data: chunkMeta } = await supabase
@@ -346,7 +332,8 @@ export async function recordQuizResponse(
         .single();
 
       if (chunkMeta?.metadata) {
-        const density = (chunkMeta.metadata as any).density_score || 2;
+        const density =
+          (chunkMeta.metadata as { density_score?: number }).density_score || 2;
         // Mapping: 1-2 -> 1.0, 3 -> 0.75, 4-5 -> 0.6
         if (density >= 4) densityCoeff = 0.6;
         else if (density === 3) densityCoeff = 0.75;
@@ -375,122 +362,57 @@ export async function recordQuizResponse(
       userTimeMs: timeSpentMs,
     });
 
-    // Determine Status
-    let newStatus: "archived" | "pending_followup" | "active" | "retired" =
-      "active";
-    let nextReviewAt: string | null = null;
-
-    if (responseType === "correct") {
-      // --- Mastery Chain Check (Real-time Advantage) ---
-      if (questionDb.concept_title) {
-        try {
-          const { data: chunks } = await supabase
-            .from("note_chunks")
-            .select("id, metadata")
-            .eq("course_id", courseId);
-
-          const { data: mastery } = await supabase
-            .from("chunk_mastery")
-            .select("chunk_id, mastery_score")
-            .eq("user_id", userId)
-            .eq("course_id", courseId);
-
-          if (chunks && mastery) {
-            const chunkMasteryMap = new Map<string, number>();
-            mastery.forEach((m) =>
-              chunkMasteryMap.set(m.chunk_id, m.mastery_score)
-            );
-
-            const allConcepts: any[] = [];
-            const conceptScoreMap: Record<string, number> = {};
-
-            chunks.forEach((c) => {
-              const meta = c.metadata as any;
-              if (meta?.concept_map && Array.isArray(meta.concept_map)) {
-                const score = chunkMasteryMap.get(c.id) || 0;
-                meta.concept_map.forEach((item: any) => {
-                  allConcepts.push(item);
-                  conceptScoreMap[item.baslik] = Math.max(
-                    conceptScoreMap[item.baslik] || 0,
-                    score,
-                  );
-                });
-              }
-            });
-
-            const nodes = calculateMasteryChains(allConcepts, conceptScoreMap);
-            const currentNode = nodes.find((n) =>
-              n.id === questionDb.concept_title
-            );
-
-            if (currentNode?.isChainComplete) {
-              resilienceBonus = calculateResilienceBonus(true);
-              console.log(
-                `[SRS] Concept [${questionDb.concept_title}] is part of a chain. Interval expanded by 1.4x.`,
-              );
-            }
-          }
-        } catch (e) {
-          DebugLogger.error("Chain check failed", e);
-        }
-      }
-
-      // Check against T_max
-      if (timeSpentMs <= TmaxMs) {
-        // Correct & Fast enough -> Check for Retirement (3-Strike Rule)
-        newStatus = "archived";
-
-        // Query last 3 attempts
-        const { data: lastAttempts } = await supabase
-          .from("user_quiz_progress")
-          .select("response_type, time_spent_ms")
-          .eq("user_id", userId)
-          .eq("question_id", questionId)
-          .order("created_at", { ascending: false })
-          .limit(3);
-
-        if (lastAttempts && lastAttempts.length === 3) {
-          const allGood = lastAttempts.every((attempt) =>
-            attempt.response_type === "correct" &&
-            (attempt.time_spent_ms ?? 999999) <= TmaxMs
-          );
-
-          if (allGood) {
-            newStatus = "retired";
-            DebugLogger.process("Status -> Retired (3x Correct & Fast match)");
-          }
-        }
-
-        // Calculate Next Review (Only for archived/retired)
-        nextReviewAt = calculateNextReview(resilienceBonus).toISOString();
-      } else {
-        // Correct but Slow -> Pending Followup
-        newStatus = "pending_followup";
-        DebugLogger.process("Status -> Pending Followup (DTS Fail: Too Slow)");
-      }
-    } else if (responseType === "incorrect") {
-      newStatus = "pending_followup";
-      DebugLogger.process("Status -> Pending Followup");
-    } else if (responseType === "blank") {
-      newStatus = "active";
-      DebugLogger.process("Status -> Active (Blank)");
-    }
-
-    // 2.5 Get Current Consecutive Fails (for Scaffolding)
-    const { data: currentStatus } = await supabase
+    // 2.5 Get Current Status for 3-Strike Logic
+    const { data: currentStatusData } = await supabase
       .from("user_question_status")
-      .select("consecutive_fails")
+      .select("consecutive_success, consecutive_fails")
       .eq("user_id", userId)
       .eq("question_id", questionId)
       .maybeSingle();
 
-    let consecutiveFails = (currentStatus as any)?.consecutive_fails ?? 0;
+    const currentConsecutiveSuccess = (currentStatusData as
+      | Database["public"]["Tables"]["user_question_status"]["Row"]
+      | null)?.consecutive_success ?? 0;
+    const isCorrect = responseType === "correct";
+    // TmaxMs check for "Fast"
+    const isFast = timeSpentMs <= TmaxMs;
 
+    // Calculate New Status using Shelf System
+    const { newStatus, newSuccessCount } = calculateShelfStatus(
+      currentConsecutiveSuccess,
+      isCorrect,
+      isFast,
+    );
+
+    // Calculate Next Review Session
+    let nextReviewSession: number | null = null;
+    // Archive = No more reviews (or special handling).
+    // Pending Followup = Schedule next review.
+    if (newStatus === "pending_followup") {
+      nextReviewSession = calculateNextReviewSession(
+        sessionNumber,
+        newSuccessCount,
+      );
+    }
+
+    // Consecutive fails tracking (kept for metrics, separate from success chain)
+    let consecutiveFails = (currentStatusData as
+      | Database["public"]["Tables"]["user_question_status"]["Row"]
+      | null)?.consecutive_fails ?? 0;
     if (responseType === "incorrect") {
       consecutiveFails += 1;
     } else if (responseType === "correct") {
       consecutiveFails = 0;
     }
+
+    DebugLogger.process("SRS Status Update", {
+      oldSuccess: currentConsecutiveSuccess,
+      newSuccess: newSuccessCount,
+      isCorrect,
+      isFast,
+      newStatus,
+      nextSession: nextReviewSession,
+    });
 
     // Apply Status Update
     await supabase
@@ -498,9 +420,13 @@ export async function recordQuizResponse(
       .upsert({
         user_id: userId,
         question_id: questionId,
-        status: newStatus as any,
+        status: newStatus,
         consecutive_fails: consecutiveFails,
-        next_review_at: nextReviewAt, // Set calculated date
+        consecutive_success: newSuccessCount,
+        next_review_session: nextReviewSession,
+        // Remove or nullify date-based next_review_at to avoid confusion?
+        // Let's keep it null if we are moving away, or update it optionally.
+        // For now, we focus on next_review_session.
       }, { onConflict: "user_id,question_id" });
   }
 
@@ -508,75 +434,71 @@ export async function recordQuizResponse(
   let isTopicRefreshed = false;
 
   if (chunkId) {
-    await incrementQuestionsSeen(userId, chunkId, courseId);
+    // 3. Update Mastery Score (Unique Question Tracking)
+    // "Unique Coverage" logic: count questions with status 'archived' or 'pending_followup' inside this chunk.
+    // NOTE: 'pending_followup' means at least 1 success in Shelf System.
 
-    // Fetch up-to-date mastery data including questions seen
+    // Correct join syntax for counting:
+    const { count: realUniqueCount } = await supabase
+      .from("user_question_status")
+      .select("question_id, questions!inner(chunk_id)", {
+        count: "exact",
+        head: true,
+      })
+      .eq("user_id", userId)
+      .eq("questions.chunk_id", chunkId)
+      .in("status", ["archived", "pending_followup"]);
+
+    const uniqueSolved = realUniqueCount ?? 0;
+    const totalQuestionsInChunk = await getChunkQuestionCount(chunkId);
+
+    // Formula: MasteryScore = (UniqueSolved / Total * 60) + (SRS_Score * 0.4)
+    const coverageRatio = Math.min(1, uniqueSolved / totalQuestionsInChunk);
+    const coverageScore = coverageRatio * 60;
+
     const { data: chunkMasteryData } = await supabase
       .from("chunk_mastery")
-      .select("mastery_score, total_questions_seen")
+      .select("mastery_score")
       .eq("user_id", userId)
       .eq("chunk_id", chunkId)
       .maybeSingle();
 
-    const currentScore = chunkMasteryData?.mastery_score ?? 0;
-    const totalQuestionsSeen = chunkMasteryData?.total_questions_seen ?? 1; // Default to 1 if just created
+    const previousMastery = chunkMasteryData?.mastery_score ?? 0;
 
-    // Calculate Coverage Rate
-    const totalQuestionsInChunk = await getChunkQuestionCount(chunkId);
-    const coverageRate = Math.min(
-      1,
-      totalQuestionsSeen / totalQuestionsInChunk,
-    );
-
-    // Calculate standard SRS Score Change
-    const { newScore: srsBasedScore } = calculateScoreChange(
+    const { newScore: srsComponent } = calculateScoreChange(
       responseType,
-      currentScore,
+      previousMastery,
       isRepeated,
     );
 
-    // Check for Scaffolding Recovery Bonus
-    // If this is a follow-up question (has parent) and is correct, we add bonus.
-    let appliedBonus = extraScoreBonus;
-    if (responseType === "correct" && (questionDb as any).parent_question_id) {
-      appliedBonus += 5; // Fixed +5 Recovery Bonus
-      DebugLogger.process("Recovery Bonus Applied", {
-        bonus: 5,
-        parentId: (questionDb as any).parent_question_id,
-      });
-    }
+    const finalCalculatedScore = Math.round(
+      coverageScore + (srsComponent * 0.4),
+    );
 
-    // Hybrid Scoring Logic
-    // Formula: ([(SRS_Score + ExtraBonus) * 0.6]) + (Coverage_Rate * 100 * 0.4)
-    // We add ExtraBonus (Recovery) to SRS Score part.
-    let finalCalculatedScore = ((srsBasedScore + appliedBonus) * 0.6) +
-      (coverageRate * 100 * 0.4);
-
-    // "Coverage Lock" (The 80% Rule)
-    // If coverage < 80%, cap score at 70
-    if (coverageRate < 0.8) {
-      finalCalculatedScore = Math.min(70, finalCalculatedScore);
-    }
-
-    DebugLogger.process("Hybrid Mastery Calculation", {
-      srsScore: srsBasedScore,
-      questionsSeen: totalQuestionsSeen,
-      totalInChunk: totalQuestionsInChunk,
-      coverageRate: coverageRate.toFixed(2),
-      isLocked: coverageRate < 0.8,
-      finalScore: finalCalculatedScore.toFixed(2),
+    DebugLogger.process("New Mastery Formula", {
+      uniqueSolved,
+      totalQuestions: totalQuestionsInChunk,
+      coverageRatio,
+      coverageScore,
+      srsInput: srsComponent,
+      finalScore: finalCalculatedScore,
     });
 
-    const shouldUpdateReviewTime = coverageRate >= 0.8;
+    let safeFinalScore = finalCalculatedScore;
+    if (
+      Number.isNaN(finalCalculatedScore) ||
+      !Number.isFinite(finalCalculatedScore)
+    ) {
+      safeFinalScore = 0;
+    }
 
-    // Determine if we should notify user (Toast)
     isTopicRefreshed = await updateChunkMastery(
       userId,
       chunkId,
       courseId,
-      finalCalculatedScore,
+      safeFinalScore,
       sessionNumber,
-      shouldUpdateReviewTime,
+      uniqueSolved / totalQuestionsInChunk >= 0.8,
     );
   }
 
@@ -627,17 +549,33 @@ export async function updateChunkMastery(
     }
   }
 
-  const payload: any = {
+  const payload: {
+    user_id: string;
+    chunk_id: string;
+    course_id: string;
+    mastery_score: number;
+    last_reviewed_session: number;
+    updated_at: string;
+    last_full_review_at?: string;
+  } = {
     user_id: userId,
     chunk_id: chunkId,
     course_id: courseId,
-    mastery_score: newScore,
+    mastery_score: Math.round(newScore),
     last_reviewed_session: currentSession,
-    updated_at: now.toISOString(), // Always update technical timestamp
+    updated_at: now.toISOString(),
   };
 
   if (shouldUpdateReviewTime && newReviewTime) {
     payload.last_full_review_at = newReviewTime;
+  }
+
+  // Sanitization
+  if (Number.isNaN(newScore) || !Number.isFinite(newScore)) {
+    console.error("[SessionManager] Invalid mastery score detected", {
+      newScore,
+    });
+    return false; // Abort update to prevent 400
   }
 
   await supabase
@@ -647,43 +585,6 @@ export async function updateChunkMastery(
     });
 
   return isRefreshedForToast;
-}
-
-/**
- * Increment total questions seen for a chunk
- */
-export async function incrementQuestionsSeen(
-  userId: string,
-  chunkId: string,
-  courseId: string,
-): Promise<void> {
-  const { data: existing } = await supabase
-    .from("chunk_mastery")
-    .select("total_questions_seen")
-    .eq("user_id", userId)
-    .eq("chunk_id", chunkId)
-    .maybeSingle();
-
-  if (existing) {
-    await supabase
-      .from("chunk_mastery")
-      .update({
-        total_questions_seen: (existing.total_questions_seen ?? 0) + 1,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("user_id", userId)
-      .eq("chunk_id", chunkId);
-  } else {
-    // Create new record if it doesn't exist
-    await supabase.from("chunk_mastery").insert({
-      user_id: userId,
-      chunk_id: chunkId,
-      course_id: courseId,
-      total_questions_seen: 1,
-      mastery_score: 0,
-      updated_at: new Date().toISOString(),
-    });
-  }
 }
 
 /**
@@ -803,7 +704,7 @@ export async function getReviewQueue(
     const activeFollowUps: ReviewItem[] = [];
 
     for (const f of followUps) {
-      const uStatusArr = f.user_question_status as any[];
+      const uStatusArr = f.user_question_status as { status: string }[];
       const uStatus = uStatusArr && uStatusArr.length > 0
         ? uStatusArr[0].status
         : null;
@@ -818,7 +719,10 @@ export async function getReviewQueue(
         questionId: f.id,
         courseId,
         priority: 0, // CRITICAL: Highest Priority
-        status: uStatus || "active",
+        status: (uStatus || "active") as
+          | "active"
+          | "archived"
+          | "pending_followup",
       });
     }
 
@@ -849,10 +753,10 @@ export async function getReviewQueue(
 
   if (recentFailures && recentFailures.length > 0) {
     const failedConcepts: FailedConceptInfo[] = recentFailures
-      .filter((f: any) => f.questions?.concept_title && f.questions?.chunk_id)
-      .map((f: any) => ({
-        chunkId: f.questions.chunk_id,
-        conceptTitle: f.questions.concept_title,
+      .filter((f) => f.questions?.concept_title && f.questions?.chunk_id)
+      .map((f) => ({
+        chunkId: f.questions?.chunk_id || "",
+        conceptTitle: f.questions?.concept_title || "",
         consecutiveFails: f.consecutive_fails || 1,
       }));
 
@@ -888,7 +792,7 @@ export async function getReviewQueue(
     .from("user_question_status")
     .select(`
         question_id,
-        created_at, 
+        updated_at, 
         questions!inner (
             id, chunk_id, course_id
         )
@@ -896,13 +800,13 @@ export async function getReviewQueue(
     .eq("user_id", userId)
     .eq("questions.course_id", courseId)
     .eq("status", "pending_followup")
-    .order("created_at", { ascending: true })
+    .order("updated_at", { ascending: true })
     .limit(MAX_PENDING);
 
   if (pendingError) {
     console.error("Error fetching pending questions:", pendingError);
   } else if (pendingData) {
-    const items: ReviewItem[] = pendingData.map((p: any) => ({
+    const items: ReviewItem[] = pendingData.map((p) => ({
       chunkId: p.questions?.chunk_id || "",
       questionId: p.question_id,
       courseId,
@@ -921,12 +825,11 @@ export async function getReviewQueue(
     `Waterfall Step 1: Added ${finalQueue.length} Pending questions`,
   );
 
-  // --- 1.5 Aging (Tozlanma) Injection (Max 5) ---
+  // 1.5 Aging (Tozlanma) Injection (Max 5)
   const AGING_LIMIT = 5;
-  const NOW = new Date().toISOString();
 
-  // Prefer next_review_at if available
-  const { data: nextReviewAged } = await supabase
+  // Changed: Use next_review_session instead of timestamp
+  const { data: sessionAged } = await supabase
     .from("user_question_status")
     .select(`
         question_id,
@@ -935,27 +838,28 @@ export async function getReviewQueue(
         )
     `)
     .eq("user_id", userId)
-    .eq("status", "archived")
+    .eq("status", "archived") // Only archived/retired items come back for review?
     .eq("questions.course_id", courseId)
-    .lte("next_review_at", NOW)
+    .lte("next_review_session", currentSession) // Session-based check
     .limit(AGING_LIMIT);
 
-  if (nextReviewAged && nextReviewAged.length > 0) {
-    const agedItems: ReviewItem[] = nextReviewAged.map((p: any) => ({
+  if (sessionAged && sessionAged.length > 0) {
+    const agedItems: ReviewItem[] = sessionAged.map((p) => ({
       chunkId: p.questions?.chunk_id || "",
       questionId: p.question_id,
       courseId,
       priority: 1.5,
       status: "archived",
+      reason: "Session Due",
     }));
     finalQueue.push(...agedItems);
     DebugLogger.process(
-      `Waterfall Step 1.5: Injected ${agedItems.length} questions due by next_review_at`,
+      `Waterfall Step 1.5: Injected ${agedItems.length} questions due by next_review_session`,
     );
   }
 
   // Fallback: Old chunk-based aging for questions without next_review_at
-  const neededFallback = AGING_LIMIT - (nextReviewAged?.length || 0);
+  const neededFallback = AGING_LIMIT - (sessionAged?.length || 0);
   if (neededFallback > 0) {
     const SEVEN_DAYS_AGO = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
       .toISOString();
@@ -993,7 +897,7 @@ export async function getReviewQueue(
         const shuffled = agedQuestions.sort(() => 0.5 - Math.random());
         const selectedAged = shuffled.slice(0, AGING_LIMIT);
 
-        const agedItems: ReviewItem[] = selectedAged.map((p: any) => ({
+        const agedItems: ReviewItem[] = selectedAged.map((p) => ({
           chunkId: p.questions?.chunk_id || "",
           questionId: p.question_id,
           courseId,
@@ -1042,14 +946,6 @@ export async function getReviewQueue(
     // Use existing 'rawQuestions' approach but optimize?
     // Given the requirement, let's try fetching 50 candidates and filtering.
 
-    const { data: candidates } = await supabase
-      .from("questions")
-      .select(`
-            id, chunk_id
-        `)
-      .eq("course_id", courseId)
-      .limit(100); // Fetch pool
-
     // We also need to know which ones have status.
     // It's better to fetch questions + status and filter in memory since we limit to 100 which is cheap.
 
@@ -1057,43 +953,29 @@ export async function getReviewQueue(
       .from("questions")
       .select(`
             id, chunk_id,
-            user_question_status (
+            user_question_status!left (
                 status
             )
         `)
       .eq("course_id", courseId)
-      .limit(200); // Increased limit to find enough new ones
+      // Bu kullanıcının kendi statülerini filtrele (RLS varsa otomatik, yoksa manuel gerekebilir)
+      // Ancak LEFT JOIN'de NULL'ları kaybetmemek için .or() içinde kontrol ediyoruz.
+      .or(
+        `status.is.null,status.eq.active`,
+        { foreignTable: "user_question_status" },
+      )
+      .limit(neededActive);
 
     if (rawQuestions) {
-      const activeCandidates: ReviewItem[] = [];
-      for (const q of rawQuestions) {
-        const statusArr = q.user_question_status as any[];
-        const status = statusArr && statusArr.length > 0
-          ? statusArr[0].status
-          : null;
+      const activeCandidates: ReviewItem[] = rawQuestions.map((q) => ({
+        chunkId: q.chunk_id || "",
+        questionId: q.id,
+        courseId,
+        priority: 2,
+        status: "active",
+      }));
 
-        // We want "New" (null) or "Active" (blank)
-        // Ensure NOT 'retired'
-        if ((!status || status === "active") && status !== "retired") {
-          activeCandidates.push({
-            chunkId: q.chunk_id || "",
-            questionId: q.id,
-            courseId,
-            priority: 2,
-            status: "active",
-          });
-        }
-      }
-
-      // Verify we aren't adding duplicates from Pending step?
-      // Pending step added specific IDs.
-      // 'activeCandidates' should not contain 'pending_followup' status so no overlap.
-      // BUT 'activeCandidates' logic: (!status || status === 'active').
-      // Pending questions have status 'pending_followup', so they are excluded naturally.
-
-      // Add needed amount
-      const toAdd = activeCandidates.slice(0, neededActive);
-      finalQueue.push(...toAdd);
+      finalQueue.push(...activeCandidates);
     }
   }
 
@@ -1102,20 +984,14 @@ export async function getReviewQueue(
   );
 
   // --- 3. Archived / Backfill (Fill rest up to 25) ---
-  const TOTAL_TARGET = 25; // Or slotCount if we want to respect it
-  // Use user requested 25 explicitly or slotCount? User said "seansı 25'e tamamlamak".
-  // Let's use Math.max(slotCount, 25) ?
-  // Actually, we should just use the passed slotCount which we default to 25.
   const finalTarget = slotCount;
-
-  if (finalQueue.length < finalTarget) {
-    const neededArchived = finalTarget - finalQueue.length;
+  const neededArchived = finalTarget - finalQueue.length;
+  if (neededArchived > 0) {
     DebugLogger.process(
       `Waterfall Step 3: Backfilling ${neededArchived} archived questions`,
     );
 
     // Strategy: Fetch chunky mastery with low scores, then questions.
-
     const { data: weakChunks } = await supabase
       .from("chunk_mastery")
       .select("chunk_id")
@@ -1124,31 +1000,14 @@ export async function getReviewQueue(
       .order("mastery_score", { ascending: true }) // Lowest score first
       .limit(20);
 
-    const chunkIds = weakChunks?.map((c) => c.chunk_id) || [];
-
-    let archivedCandidates: ReviewItem[] = [];
+    const chunkIds = weakChunks?.map((c: { chunk_id: string }) => c.chunk_id) ||
+      [];
+    const archivedCandidates: ReviewItem[] = [];
 
     // Fetch archived questions
     // We prioritize those in weak chunks.
-    let query = supabase
-      .from("user_question_status")
-      .select(`
-            question_id,
-            questions!inner (
-                id, chunk_id, course_id
-            )
-        `)
-      .eq("user_id", userId)
-      .eq("status", "archived")
-      .eq("questions.course_id", courseId);
-
-    if (chunkIds.length > 0) {
-      // Ideally we sort by the chunk mastery order...
-      // But SQL 'in' doesn't preserve order.
-      // We can fetch, then sort in memory by looking up chunk scores?
-      // Or just fetch constrained to these chunks.
-      // Let's fetch strict from these chunks first.
-      const { data: weakArchived } = await supabase
+    const { data: weakArchived } = await (chunkIds.length > 0
+      ? supabase
         .from("user_question_status")
         .select(`
                 question_id,
@@ -1160,67 +1019,58 @@ export async function getReviewQueue(
         .eq("status", "archived")
         .eq("questions.course_id", courseId)
         .in("questions.chunk_id", chunkIds)
-        .limit(50);
+        .limit(50)
+      : Promise.resolve({
+        data: null as {
+          question_id: string;
+          questions: { id: string; chunk_id: string; course_id: string } | null;
+        }[] | null,
+        error: null,
+      }));
 
-      if (weakArchived) {
-        // We need to sort these by the chunk's mastery score.
-        // Map chunkId -> Score
-        const scoreMap = new Map();
-        weakChunks?.forEach((c: any) =>
-          scoreMap.set(c.chunk_id, c.mastery_score ?? 0)
-        ); // Actually we didn't fetch score in weakChunks select?
-        // Wait, line above selected 'chunk_id'. Need 'mastery_score' too.
-        // I'll assume I can just use the order of chunks.
+    if (weakArchived) {
+      const items: ReviewItem[] = weakArchived.map((p) => ({
+        chunkId: p.questions?.chunk_id || "",
+        questionId: p.question_id,
+        courseId,
+        priority: 3,
+        status: "archived" as const,
+      }));
 
-        const items = weakArchived.map((p: any) => ({
-          chunkId: p.questions?.chunk_id || "",
-          questionId: p.question_id,
-          courseId,
-          priority: 3,
-          status: "archived" as const,
-        }));
+      // Sort items by existing chunk order in 'chunkIds' (which is sorted by score)
+      items.sort((a, b) => {
+        const idxA = chunkIds.indexOf(a.chunkId);
+        const idxB = chunkIds.indexOf(b.chunkId);
+        // If not found (shouldn't happen), push to end
+        return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+      });
 
-        // Sort items by existing chunk order in 'chunkIds' (which is sorted by score)
-        items.sort((a, b) => {
-          const idxA = chunkIds.indexOf(a.chunkId);
-          const idxB = chunkIds.indexOf(b.chunkId);
-          // If not found (shouldn't happen), push to end
-          return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
-        });
-
-        archivedCandidates.push(...items);
-      }
+      archivedCandidates.push(...items);
     }
 
-    // If we still need more, fetch ANY archived (sorted by oldest update? or random?)
-    // User says "mastery_scoreu en düşük". If we exhausted weak chunks, then we get others.
+    // If we still need more, fetch ANY archived
     if (archivedCandidates.length < neededArchived) {
       const { data: otherArchived } = await supabase
         .from("user_question_status")
         .select(`
-                question_id,
-                questions!inner (
-                    id, chunk_id, course_id
-                )
-             `)
+                    question_id,
+                    questions!inner (
+                        id, chunk_id, course_id
+                    )
+                 `)
         .eq("user_id", userId)
         .eq("status", "archived")
         .eq("questions.course_id", courseId)
         .limit(neededArchived + 10);
 
       if (otherArchived) {
-        const items = otherArchived.map((p: any) => ({
+        const items: ReviewItem[] = otherArchived.map((p) => ({
           chunkId: p.questions?.chunk_id || "",
           questionId: p.question_id,
           courseId,
           priority: 3,
           status: "archived" as const,
         }));
-        // Filter out 'retired' if accidentally fetched (though we query status='archived')
-        // The query .eq("status", "archived") handles it.
-        // But just in case, verify logic consistency. It's fine.
-
-        // Filter out duplicates if any (though weak fetch used IN chunk_id, this doesn't exclude them, so we must dedupe)
         archivedCandidates.push(...items);
       }
     }
@@ -1239,6 +1089,7 @@ export async function getReviewQueue(
   DebugLogger.groupEnd();
   return finalQueue;
 }
+
 // --- Version Guard ---
 
 /**
@@ -1248,8 +1099,10 @@ export async function getReviewQueue(
 export async function getContentVersion(
   courseId: string,
 ): Promise<string | null> {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-  const { data, error } = await (supabase.rpc as unknown as Function)(
+  const { data, error } = await (supabase.rpc as unknown as (
+    name: string,
+    args: Record<string, unknown>,
+  ) => Promise<{ data: string | null; error: { message: string } | null }>)(
     "get_course_content_version",
     {
       p_course_id: courseId,

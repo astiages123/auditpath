@@ -14,32 +14,7 @@ import { env } from '@/config/env';
 
 import { useFaviconManager } from '@/features/pomodoro/hooks/useFaviconManager';
 
-const notificationAudio = typeof window !== 'undefined' ? new Audio("/audio/alarm_ring.mp3") : null;
-
-const playNotificationSound = () => {
-    if (!notificationAudio) return;
-    try {
-        notificationAudio.currentTime = 0;
-        notificationAudio.play().catch((e) => {
-            console.warn("Audio play failed (waiting for user interaction):", e);
-        });
-    } catch (e) {
-        console.error("Audio initialization failed", e);
-    }
-};
-
-/**
- * Browsers block audio in background unless unlocked by a user gesture.
-*/
-export const unlockAudio = () => {
-    if (!notificationAudio) return;
-    notificationAudio.play().then(() => {
-        notificationAudio.pause();
-        notificationAudio.currentTime = 0;
-    }).catch(() => {
-        // Safe to ignore, we are just warming it up
-    });
-};
+import { playNotificationSound } from '../lib/audio-utils';
 
 export function TimerController() {
     const { 
@@ -105,6 +80,9 @@ export function TimerController() {
                             const isRecent = sessionAge < 12 * 60 * 60 * 1000;
 
                             if (isRecent) {
+                                // Double check if we already have a session in local state avoiding race connection
+                                if (useTimerStore.getState().sessionId) return;
+
                                 setSessionId(activeSession.id);
                                 if (activeSession.course_id && activeSession.course_name && !selectedCourse) {
                                     setCourse({
@@ -113,6 +91,13 @@ export function TimerController() {
                                         category: activeSession.course?.category?.name || "General",
                                     });
                                 }
+                                
+                                // Restore timeline if available to ensure pause calculations are correct
+                                if (activeSession.timeline && Array.isArray(activeSession.timeline)) {
+                                    // casting to any to bypass strict type check for now, ensuring shape matches
+                                    useTimerStore.setState({ timeline: activeSession.timeline as any });
+                                }
+
                                 toast.info("Önceki oturumunuzdan devam ediliyor.");
                             }
                         }
@@ -130,16 +115,44 @@ export function TimerController() {
         sync();
     }, [userId, sessionId, isActive, hasRestored, setSessionCount, setSessionId, setCourse, setHasRestored, selectedCourse]);
 
-    // 3. Heartbeat
+    // 3. Heartbeat & Stats Sync
     useEffect(() => {
         if (!sessionId || !isActive) return;
 
         const heartbeatInterval = setInterval(() => {
-            updatePomodoroHeartbeat(sessionId);
+            // Calculate current stats from timeline
+            // We need to calculate pause time dynamically
+            const currentPauseDuration = timeline.reduce((acc, event) => {
+                 if (event.type === 'pause') {
+                    const end = event.end || Date.now();
+                    return acc + (end - event.start);
+                }
+                return acc;
+            }, 0);
+            
+            // Calculate efficiency (work / (work + break + pause))
+            // This is an approximation since we don't have the exact closed timeline here easily without duplicating logic
+            // But we can estimate or just send pause time for now as requested.
+            // Let's use the helper if we can, or just send pause time.
+            // The prompt asked for: "efficiency_score ve total_paused_time"
+            
+            // Re-calculating full stats might be heavy every 30s but acceptable.
+            const now = Date.now();
+            const currentTimeline = timeline.map(e => ({ ...e, end: e.end || now }));
+            const { totalWork, totalBreak, totalPause } = calculateSessionTotals(currentTimeline);
+            
+            // Efficiency = Total Work / (Total Work + Total Break + Total Pause)
+            const totalDuration = totalWork + totalBreak + totalPause;
+            const efficiency = totalDuration > 0 ? (totalWork / totalDuration) * 100 : 100;
+
+            updatePomodoroHeartbeat(sessionId, {
+                efficiency_score: Math.round(efficiency),
+                total_paused_time: totalPause
+            });
         }, 30000);
 
         return () => clearInterval(heartbeatInterval);
-    }, [sessionId, isActive]);
+    }, [sessionId, isActive, timeline]);
 
     // 4. Session Completion & Notifications
     useEffect(() => {

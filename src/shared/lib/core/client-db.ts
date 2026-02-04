@@ -1,7 +1,8 @@
 import { supabase } from "@/shared/lib/core/supabase";
 import type { Database, Json } from "@/shared/types/supabase";
 import {
-  calculateEfficiencyScore,
+  calculateFocusScore,
+  calculateLearningFlow,
   calculatePauseCount,
   calculateSessionTotals,
   getCycleCount,
@@ -107,9 +108,6 @@ export function getNextRank(currentRankId: string): Rank | null {
   if (currentIndex === -1 || currentIndex === RANKS.length - 1) return null;
   return RANKS[currentIndex + 1];
 }
-
-// Transactional XP Addition
-// Transactional XP Addition via RPC
 
 // -------------------------
 
@@ -402,7 +400,10 @@ export async function upsertPomodoroSession(
 ) {
   const totals = calculateSessionTotals(session.timeline);
   const pauseCount = calculatePauseCount(session.timeline);
-  const efficiencyScore = calculateEfficiencyScore(totals);
+
+  // Calculate Efficiency Score (Golden Ratio)
+  // Use Focus Score (Work / Total Time) for Database
+  const efficiencyScore = calculateFocusScore(totals);
 
   // Validate if courseId is a UUID
   const uuidRegex =
@@ -568,10 +569,22 @@ export async function deletePomodoroSession(sessionId: string) {
  */
 export async function updatePomodoroHeartbeat(
   sessionId: string,
+  stats?: {
+    efficiency_score?: number;
+    total_paused_time?: number;
+  },
 ): Promise<void> {
   const { error } = await supabase
     .from("pomodoro_sessions")
-    .update({ last_active_at: new Date().toISOString() })
+    .update({
+      last_active_at: new Date().toISOString(),
+      ...(stats?.efficiency_score !== undefined
+        ? { efficiency_score: stats.efficiency_score }
+        : {}),
+      ...(stats?.total_paused_time !== undefined
+        ? { total_pause_time: stats.total_paused_time }
+        : {}),
+    })
     .eq("id", sessionId);
 
   if (error) {
@@ -644,13 +657,14 @@ export async function toggleVideoProgress(
     return;
   }
 
+  const now = new Date().toISOString();
   const { error } = await supabase.from("video_progress").upsert(
     {
       user_id: userId,
       video_id: video.id,
       completed,
-      updated_at: new Date().toISOString(),
-      completed_at: completed ? new Date().toISOString() : null,
+      updated_at: now,
+      completed_at: completed ? now : null,
     },
     {
       onConflict: "user_id,video_id",
@@ -1022,22 +1036,12 @@ export async function getEfficiencyRatio(
     ? Math.round((totalVideoMinutes / effectiveWorkMinutes) * 10) / 10
     : 0.0;
 
-  // Efficiency Score Calculation (0-100)
-  // Logic:
-  // Ratio 1.0 (Balanced) -> 80 pts
-  // Ratio 1.2 - 1.5 (Ideal) -> 90-100 pts
-  // Ratio > 2.0 (Too fast/Overload) -> Drop points
-  // Ratio < 0.5 (Too slow) -> Low points
-
-  let efficiencyScore = 0;
-  if (ratio <= 0) efficiencyScore = 0;
-  else if (ratio < 0.5) efficiencyScore = 30 + (ratio * 40); // 0.1->34, 0.4->46
-  else if (ratio < 1.0) efficiencyScore = 50 + ((ratio - 0.5) * 60); // 0.5->50, 0.9->74
-  else if (ratio <= 1.5) efficiencyScore = 80 + ((ratio - 1.0) * 40); // 1.0->80, 1.5->100 (Peak)
-  else if (ratio <= 2.0) efficiencyScore = 100 - ((ratio - 1.5) * 40); // 1.6->96, 2.0->80
-  else efficiencyScore = Math.max(20, 80 - ((ratio - 2.0) * 20)); // Slow decline
-
-  efficiencyScore = Math.round(efficiencyScore);
+  // Efficiency Score Calculation (Golden Ratio Strategy)
+  // Uses shared utility for consistency across the app
+  const efficiencyScore = calculateLearningFlow(
+    effectiveWorkMinutes,
+    totalVideoMinutes,
+  );
 
   return {
     ratio,
@@ -1319,9 +1323,14 @@ export async function getNoteChunkById(chunkId: string) {
   return data as unknown;
 }
 
-export type CourseTopic = Database["public"]["Tables"]["note_chunks"]["Row"] & {
-  questionCount?: number;
-};
+export type CourseTopic =
+  & Omit<
+    Database["public"]["Tables"]["note_chunks"]["Row"],
+    "attempts" | "error_message"
+  >
+  & {
+    questionCount?: number;
+  };
 
 export async function getCourseTopics(
   userId: string,
@@ -1332,7 +1341,9 @@ export async function getCourseTopics(
   // 1. Get all chunks for this course (sorted by chunk_order)
   const { data: chunks, error: chunksError } = await supabase
     .from("note_chunks")
-    .select("*")
+    .select(
+      "id, created_at, course_id, course_name, section_title, chunk_order, sequence_order, content, display_content, word_count, status, last_synced_at, metadata",
+    )
     .eq("course_id", courseId)
     .order("chunk_order", { ascending: true })
     .order("sequence_order", { ascending: true });
@@ -1780,26 +1791,6 @@ export async function getFirstChunkIdForTopic(courseId: string, topic: string) {
   return data?.id || null;
 }
 
-export interface ChunkGenerationStatus {
-  status: Database["public"]["Enums"]["chunk_generation_status"] | null;
-  is_ready: boolean | null;
-  error_message: string | null;
-  attempts: number | null;
-}
-
-export async function getChunkGenerationStatus(
-  chunkId: string,
-): Promise<ChunkGenerationStatus | null> {
-  const { data, error } = await supabase
-    .from("note_chunks")
-    .select("status, is_ready, error_message, attempts")
-    .eq("id", chunkId)
-    .single();
-
-  if (error || !data) return null;
-  return data as ChunkGenerationStatus;
-}
-
 // --- New Statistics Functions ---
 
 export interface QuizStats {
@@ -1929,7 +1920,7 @@ export async function getBloomStats(userId: string): Promise<BloomStats[]> {
   });
 
   return Object.entries(levels).map(([key, val]) => ({
-    level: key.charAt(0).toUpperCase() + key.slice(1),
+    level: key,
     correct: val.correct,
     total: val.total,
     score: val.total > 0 ? Math.round((val.correct / val.total) * 100) : 0,
@@ -1973,6 +1964,8 @@ export interface FocusTrend {
 export interface EfficiencyTrend {
   date: string;
   score: number;
+  workMinutes: number;
+  videoMinutes: number;
 }
 
 export async function getFocusTrend(userId: string): Promise<FocusTrend[]> {
@@ -2006,34 +1999,75 @@ export async function getEfficiencyTrend(
   userId: string,
 ): Promise<EfficiencyTrend[]> {
   const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setHours(0, 0, 0, 0);
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const dateStr = thirtyDaysAgo.toISOString();
 
-  const { data, error } = await supabase
+  const { data: sessions, error: sessionError } = await supabase
     .from("pomodoro_sessions")
-    .select("started_at, efficiency_score")
+    .select("started_at, total_work_time")
     .eq("user_id", userId)
-    .gte("started_at", dateStr)
-    .order("started_at", { ascending: true });
+    .gte("started_at", dateStr);
 
-  if (error || !data) return [];
+  const { data: videoProgress, error: videoError } = await supabase
+    .from("video_progress")
+    .select("completed_at, video:videos(duration_minutes)")
+    .eq("user_id", userId)
+    .eq("completed", true)
+    .gte("completed_at", dateStr);
 
-  const dailyMap: Record<string, { total: number; count: number }> = {};
+  if (sessionError || videoError) return [];
 
-  data.forEach((s) => {
-    const day = s.started_at.split("T")[0];
-    const score = s.efficiency_score || 0;
-    if (score > 0) {
-      if (!dailyMap[day]) dailyMap[day] = { total: 0, count: 0 };
-      dailyMap[day].total += score;
-      dailyMap[day].count += 1;
-    }
+  const dailyMap: Record<
+    string,
+    { workSeconds: number; videoMinutes: number }
+  > = {};
+
+  sessions?.forEach((s) => {
+    if (!s.started_at) return;
+    const d = new Date(s.started_at);
+    const day = getVirtualDateKey(d);
+    if (!dailyMap[day]) dailyMap[day] = { workSeconds: 0, videoMinutes: 0 };
+    dailyMap[day].workSeconds += Number(s.total_work_time || 0);
   });
 
-  return Object.entries(dailyMap).map(([date, stats]) => ({
-    date,
-    score: Math.round(stats.total / stats.count),
-  })).sort((a, b) => a.date.localeCompare(b.date));
+  videoProgress?.forEach((vp) => {
+    if (!vp.completed_at) return;
+    const d = new Date(vp.completed_at);
+    const day = getVirtualDateKey(d);
+
+    const video = (Array.isArray(vp.video) ? vp.video[0] : vp.video) as {
+      duration_minutes?: number;
+    } | null;
+    if (!video) return;
+
+    const duration = video.duration_minutes || 0;
+
+    if (!dailyMap[day]) dailyMap[day] = { workSeconds: 0, videoMinutes: 0 };
+    dailyMap[day].videoMinutes += Number(duration);
+  });
+
+  // Calculate high-fidelity Multiplier (x)
+  return Object.entries(dailyMap)
+    .map(([date, stats]) => {
+      const workSeconds = stats.workSeconds;
+      const videoMinutes = stats.videoMinutes;
+
+      let multiplier = 0;
+      if (workSeconds > 0) {
+        // Multiplier = Video Minutes / (Work Seconds / 60)
+        multiplier = videoMinutes / (workSeconds / 60);
+      }
+
+      return {
+        date,
+        // score contains the raw multiplier (e.g. 1.25, 3.0)
+        score: Number(multiplier.toFixed(2)),
+        workMinutes: Math.round(workSeconds / 60),
+        videoMinutes: Math.round(videoMinutes),
+      };
+    })
+    .sort((a, b) => a.date.localeCompare(b.date));
 }
 
 // --- Session Finalization ---
@@ -2120,6 +2154,10 @@ export interface RecentSession {
   durationMinutes: number;
   efficiencyScore: number;
   timeline: Json[];
+  totalWorkTime: number;
+  totalBreakTime: number;
+  totalPauseTime: number;
+  pauseCount: number;
 }
 
 export async function getRecentActivitySessions(
@@ -2129,7 +2167,7 @@ export async function getRecentActivitySessions(
   const { data, error } = await supabase
     .from("pomodoro_sessions")
     .select(
-      "id, course_name, started_at, total_work_time, efficiency_score, timeline",
+      "id, course_name, started_at, total_work_time, total_break_time, total_pause_time, pause_count, efficiency_score, timeline",
     )
     .eq("user_id", userId)
     .order("started_at", { ascending: false })
@@ -2147,6 +2185,10 @@ export async function getRecentActivitySessions(
     durationMinutes: Math.round((s.total_work_time || 0) / 60),
     efficiencyScore: s.efficiency_score || 0,
     timeline: Array.isArray(s.timeline) ? (s.timeline as Json[]) : [],
+    totalWorkTime: s.total_work_time || 0,
+    totalBreakTime: s.total_break_time || 0,
+    totalPauseTime: s.total_pause_time || 0,
+    pauseCount: s.pause_count || 0,
   }));
 }
 
@@ -2188,38 +2230,49 @@ export async function getRecentQuizSessions(
 
   const sessionsMap = new Map<string, RecentQuizSession>();
 
-  rawData.forEach((row: any) => {
-    // If session_number is missing, we can't group easily. Fallback to 0 or skip?
-    // Based on schema it is non-nullable 'number'.
-    const sNum = row.session_number || 0;
-    const key = `${row.course_id}-${sNum}`;
+  rawData.forEach(
+    (
+      row: {
+        course_id: string;
+        session_number: number;
+        response_type: string;
+        answered_at: string | null;
+        course: { name: string } | null;
+      },
+    ) => {
+      // If session_number is missing, we can't group easily. Fallback to 0 or skip?
+      // Based on schema it is non-nullable 'number'.
+      const sNum = row.session_number || 0;
+      const key = `${row.course_id}-${sNum}`;
 
-    if (!sessionsMap.has(key)) {
-      sessionsMap.set(key, {
-        uniqueKey: key,
-        // @ts-ignore - Supabase join types can be tricky
-        courseName: row.course?.name || "Kavram Testi",
-        sessionNumber: sNum,
-        date: row.answered_at || new Date().toISOString(),
-        correct: 0,
-        incorrect: 0,
-        blank: 0,
-        total: 0,
-        successRate: 0,
-      });
-    }
+      if (!sessionsMap.has(key)) {
+        sessionsMap.set(key, {
+          uniqueKey: key,
+          courseName: row.course?.name || "Kavram Testi",
+          sessionNumber: sNum,
+          date: row.answered_at || new Date().toISOString(),
+          correct: 0,
+          incorrect: 0,
+          blank: 0,
+          total: 0,
+          successRate: 0,
+        });
+      }
 
-    const session = sessionsMap.get(key)!;
-    session.total++;
-    if (row.response_type === "correct") session.correct++;
-    else if (row.response_type === "incorrect") session.incorrect++;
-    else session.blank++;
+      const session = sessionsMap.get(key)!;
+      session.total++;
+      if (row.response_type === "correct") session.correct++;
+      else if (row.response_type === "incorrect") session.incorrect++;
+      else session.blank++;
 
-    // Keep the latest timestamp for the session
-    if (row.answered_at && new Date(row.answered_at) > new Date(session.date)) {
-      session.date = row.answered_at;
-    }
-  });
+      // Keep the latest timestamp for the session
+      if (
+        row.answered_at && new Date(row.answered_at) > new Date(session.date)
+      ) {
+        session.date = row.answered_at;
+      }
+    },
+  );
 
   const sessions = Array.from(sessionsMap.values())
     .map((s) => ({
@@ -2409,7 +2462,7 @@ export async function getCourseMastery(
 
   const vCompletedMap: Record<string, number> = {};
   if (vProgress) {
-    vProgress.forEach((p: any) => {
+    vProgress.forEach((p: { video: { course_id: string | null } | null }) => {
       const courseId = p.video?.course_id;
       if (courseId) {
         vCompletedMap[courseId] = (vCompletedMap[courseId] || 0) + 1;

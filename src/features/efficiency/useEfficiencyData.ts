@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
+import type { ConceptMapItem } from "@/features/quiz/modules/ai/mapping";
 import {
     BloomStats,
     CognitiveInsight,
@@ -65,7 +66,7 @@ export function useEfficiencyData() {
                     summary,
                     bloom,
                     daily,
-                    focusTrend,
+                    , // focusTrend unused
                     mastery,
                     effTrend,
                     recent,
@@ -114,12 +115,8 @@ export function useEfficiencyData() {
 
                 const focusDailyMap: Record<string, number> = {};
                 recentSessionsData?.forEach((s) => {
-                    // Use standard calendar day (no 4AM shift) for chart clarity
-                    const d = new Date(s.started_at);
-                    const year = d.getFullYear();
-                    const month = String(d.getMonth() + 1).padStart(2, "0");
-                    const day = String(d.getDate()).padStart(2, "0");
-                    const dateKey = `${year}-${month}-${day}`;
+                    // Standardize date key using getVirtualDateKey (handles 04:00 offset appropriately)
+                    const dateKey = getVirtualDateKey(new Date(s.started_at));
 
                     const mins = Math.round((s.total_work_time || 0) / 60);
                     focusDailyMap[dateKey] = (focusDailyMap[dateKey] || 0) +
@@ -136,10 +133,7 @@ export function useEfficiencyData() {
                         d.setDate(d.getDate() - i);
 
                         // Standard calendar format: YYYY-MM-DD
-                        const year = d.getFullYear();
-                        const month = String(d.getMonth() + 1).padStart(2, "0");
-                        const day = String(d.getDate()).padStart(2, "0");
-                        const dateKey = `${year}-${month}-${day}`;
+                        const dateKey = getVirtualDateKey(d);
 
                         const dayName = d.toLocaleDateString("tr-TR", {
                             day: "numeric",
@@ -220,17 +214,15 @@ export function useEfficiencyData() {
                 const rawHeatmap: DayActivity[] = [];
                 const todayForLoop = new Date();
 
-                for (let i = 34; i >= 0; i--) {
+                for (let i = 44; i >= 0; i--) {
                     const d = new Date(todayForLoop);
                     d.setDate(todayForLoop.getDate() - i);
 
-                    const year = d.getFullYear();
-                    const month = String(d.getMonth() + 1).padStart(2, "0");
-                    const dayFormatted = String(d.getDate()).padStart(2, "0");
-                    const dateKey = `${year}-${month}-${dayFormatted}`;
+                    // Sabit saat: 12:00 (Gece yarısı hatalarını önlemek için)
+                    d.setHours(12, 0, 0, 0);
 
-                    const virtualKey = getVirtualDateKey(d);
-                    const mins = focusDailyMap[virtualKey] || 0;
+                    const dateKey = getVirtualDateKey(d);
+                    const mins = focusDailyMap[dateKey] || 0;
 
                     rawHeatmap.push({
                         date: dateKey,
@@ -241,11 +233,11 @@ export function useEfficiencyData() {
                     });
                 }
 
-                // Filter out weekend off-days:
-                // If Sat is 0 and Sun > 0, hide Sat.
-                // If Sun is 0 and Sat > 0, hide Sun.
+                // Filter logic: Hide weekend day if it has 0 mins but the other day of the same weekend has > 0 mins
                 const filteredHeatmap = rawHeatmap.filter((day, idx, arr) => {
-                    const d = new Date(day.date);
+                    // Safe parsing to allow local day check
+                    const [y, m, dt] = day.date.split("-").map(Number);
+                    const d = new Date(y, m - 1, dt);
                     const dayOfWeek = d.getDay(); // 0: Sunday, 6: Saturday
                     const mins = day.totalMinutes || 0;
 
@@ -253,20 +245,21 @@ export function useEfficiencyData() {
                         if (dayOfWeek === 6) { // Saturday
                             const nextDay = arr[idx + 1];
                             if (nextDay && (nextDay.totalMinutes || 0) > 0) {
-                                return false;
+                                return false; // Hide empty Saturday if Sunday is active
                             }
                         }
                         if (dayOfWeek === 0) { // Sunday
                             const prevDay = arr[idx - 1];
                             if (prevDay && (prevDay.totalMinutes || 0) > 0) {
-                                return false;
+                                return false; // Hide empty Sunday if Saturday is active
                             }
                         }
                     }
                     return true;
                 });
 
-                setConsistencyData(filteredHeatmap);
+                // Take exactly the last 30 days from the filtered list to fill 6x5 grid
+                setConsistencyData(filteredHeatmap.slice(-30));
             } catch (error) {
                 console.error("Failed to fetch efficiency data", error);
             } finally {
@@ -290,6 +283,36 @@ export function useEfficiencyData() {
                 startDate.getTime() + totalDurationSec * 1000,
             );
 
+            // Access timeline safely
+            const rawTimeline =
+                (Array.isArray(s.timeline) ? s.timeline : []) as {
+                    type?: string;
+                    start: string | number;
+                    end: string | number;
+                }[];
+            const timeline = rawTimeline.map((item) => ({
+                type: item.type?.toLowerCase() || "work",
+                start: Number(item.start),
+                end: Number(item.end),
+                duration: Math.round(
+                    (Number(item.end) - Number(item.start)) / 1000 / 60,
+                ),
+            }));
+
+            // Extract pause intervals for backward compatibility if needed
+            const pauseIntervals = timeline
+                .filter((t) => t.type === "pause")
+                .map((t) => ({
+                    start: new Date(t.start).toLocaleTimeString("tr-TR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    }),
+                    end: new Date(t.end).toLocaleTimeString("tr-TR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    }),
+                }));
+
             return {
                 id: s.id,
                 lessonName: s.courseName || "Genel Çalışma",
@@ -303,27 +326,22 @@ export function useEfficiencyData() {
                     minute: "2-digit",
                 }),
                 duration: Math.round(s.workTimeSeconds / 60),
-                pauseIntervals: [],
+                timeline,
+                pauseIntervals,
             };
         });
     }, [efficiencySummary]);
 
     const bloomRadarData: BloomStat[] = useMemo(() => {
         const order = [
-            "Hatırla",
-            "Anla",
-            "Uygula",
+            "Bilgi",
             "Analiz",
-            "Değerlendir",
-            "Yarat",
+            "Uygula",
         ];
         const mapLevel: Record<string, string> = {
-            "Knowledge": "Hatırla",
-            "Comprehension": "Anla",
-            "Application": "Uygula",
-            "Analysis": "Analiz",
-            "Evaluation": "Değerlendir",
-            "Creation": "Yarat",
+            "knowledge": "Bilgi",
+            "application": "Uygula",
+            "analysis": "Analiz",
         };
 
         if (!bloomStats || bloomStats.length === 0) {
@@ -428,8 +446,8 @@ export function useEfficiencyData() {
         {
             totalChains: number;
             resilienceBonusDays: number;
-            nodes: any[];
-            edges: any[];
+            nodes: unknown[];
+            edges: unknown[];
         } | null
     >(null);
 
@@ -459,17 +477,19 @@ export function useEfficiencyData() {
 
             // Flatten ALL Concepts and assign scores
             // Logic: Concept Score = Chunk Score (Approximation)
-            const allConcepts: any[] = [];
+            const allConcepts: ConceptMapItem[] = [];
             const conceptScoreMap: Record<string, number> = {};
 
             chunksData.forEach((chunk) => {
-                const metadata = chunk.metadata as any;
+                const metadata = chunk.metadata as {
+                    concept_map?: ConceptMapItem[];
+                } | null;
                 if (
                     metadata?.concept_map && Array.isArray(metadata.concept_map)
                 ) {
                     const score = chunkMasteryMap.get(chunk.id) || 0;
 
-                    metadata.concept_map.forEach((c: any) => {
+                    metadata.concept_map.forEach((c) => {
                         allConcepts.push(c);
                         // Store max score if concept appears in multiple chunks (unlikely but safe)
                         const current = conceptScoreMap[c.baslik] || 0;

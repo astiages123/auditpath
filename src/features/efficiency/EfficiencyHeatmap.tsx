@@ -24,15 +24,15 @@ export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
     return 0;
   };
 
-  const getLevelStyles = (level: number) => {
+ const getLevelStyles = (level: number) => {
     switch (level) {
-      case 0: return "bg-white/[0.03] border-white/5";
-      case 1: return "bg-emerald-500/10 border-emerald-500/5";
-      case 2: return "bg-emerald-500/25 border-emerald-500/10";
-      case 3: return "bg-emerald-500/45 border-emerald-500/20";
-      case 4: return "bg-emerald-400/65 border-emerald-400/30 shadow-[0_0_10px_rgba(52,211,153,0.1)]";
-      case 5: return "bg-emerald-400 border-emerald-300 shadow-[0_0_15px_rgba(52,211,153,0.2)]";
-      default: return "bg-white/[0.03] border-white/5";
+      case 0: return "bg-white/[0.02] border-white/[0.04]";
+      case 1: return "bg-green-400/10 border-green-400/5";
+      case 2: return "bg-green-400/25 border-green-400/10";
+      case 3: return "bg-green-400/45 border-green-400/20";
+      case 4: return "bg-green-500/65 border-green-500/30";
+      case 5: return "bg-green-500/85 border-green-500/40";
+      default: return "bg-white/[0.02] border-white/[0.04]";
     }
   };
 
@@ -55,7 +55,7 @@ export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
         <div 
           className="grid gap-2 w-full max-w-[500px]"
           style={{
-            gridTemplateColumns: "repeat(7, 1fr)",
+            gridTemplateColumns: "repeat(6, 1fr)",
             gridTemplateRows: "repeat(5, 1fr)",
             height: "auto"
           }}
@@ -80,7 +80,7 @@ export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
                       <p className="flex items-center gap-1.5 text-muted-foreground">
                           <span className={cn(
                             "w-2 h-2 rounded-full", 
-                            level === 0 ? "bg-white/10" : "bg-emerald-400"
+                            level === 0 ? "bg-white/10" : "bg-emerald-500"
                           )} />
                           {day.totalMinutes} dk odaklanma
                       </p>

@@ -8,7 +8,6 @@ import { Label } from "@/shared/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { getSupabase } from "@/shared/lib/core/supabase";
 import { toast } from "sonner";
-import { env } from "@/config/env";
 
 
 
@@ -32,7 +31,7 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
 
       if (!isEmail) {
         // Kullanıcı adı ile email bulmaya çalış
-        const { data: emailData, error: emailError } = await (supabase as any)
+        const { data: emailData, error: emailError } = await supabase
           .rpc('get_email_by_username', { username_input: email });
 
         if (emailError || !emailData) {

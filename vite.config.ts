@@ -17,7 +17,7 @@ export default defineConfig(({ mode }) => ({
             "@/styles": path.resolve(__dirname, "./src/styles"),
         },
     },
-    envPrefix: ["VITE_", "NEXT_PUBLIC_"],
+    envPrefix: ["VITE_"],
     define: {
         "process.env.NODE_ENV": JSON.stringify(mode),
     },

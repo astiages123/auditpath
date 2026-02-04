@@ -5,6 +5,8 @@
  */
 
 import { supabase } from "@/shared/lib/core/supabase";
+import { env } from "@/config/env";
+import { rateLimiter } from "../config/rate-limiter";
 
 interface CerebrasResponse {
   id: string;
@@ -21,10 +23,7 @@ export type LogCallback = (
 ) => void;
 
 /**
- * Call Cerebras API via Supabase Proxy
- */
-/**
- * Call Cerebras API via Supabase Proxy
+ * Call Cerebras API via Supabase Proxy using native fetch to access headers
  */
 export async function callCerebras(
   messages: { role: string; content: string }[],
@@ -45,23 +44,42 @@ export async function callCerebras(
     messageCount: messages.length,
   });
 
-  const { data, error } = await supabase.functions.invoke("ai-proxy", {
-    body: {
-      provider: "cerebras",
-      messages: messages,
-      model, // Pass model to proxy
-      temperature: 0.1, // Low temperature for consistent grading
-      max_tokens: 4096,
-    },
-  });
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData.session?.access_token;
 
-  if (error) {
-    onLog?.("Cerebras API hatası", { error: error.message });
-    throw new Error(`Cerebras API Hatası: ${error.message}`);
+  if (!token) {
+    throw new Error("No active session for AI request");
   }
 
-  const response = data as CerebrasResponse;
-  const content = response.choices?.[0]?.message?.content || "";
+  const response = await fetch(`${env.supabase.url}/functions/v1/ai-proxy`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      provider: "cerebras",
+      messages: messages,
+      model: effectiveModel,
+      temperature: 0.1,
+      max_tokens: 4096,
+    }),
+  });
+
+  // --- HEADER SYNC ---
+  rateLimiter.syncHeaders(response.headers);
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    onLog?.("Cerebras API hatası", {
+      status: response.status,
+      body: errorText,
+    });
+    throw new Error(`Cerebras API Hatası (${response.status}): ${errorText}`);
+  }
+
+  const data = (await response.json()) as CerebrasResponse;
+  const content = data.choices?.[0]?.message?.content || "";
 
   onLog?.("Cerebras API yanıtı alındı", { responseLength: content.length });
 

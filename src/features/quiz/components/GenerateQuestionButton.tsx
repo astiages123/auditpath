@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 interface GenerateQuestionButtonProps {
   chunkId: string;
   onComplete?: () => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const stepIcons: Record<LogStep, React.ReactNode> = {
@@ -52,7 +53,7 @@ const stepProgress: Record<LogStep, number> = {
   ERROR: 0
 };
 
-export function GenerateQuestionButton({ chunkId, onComplete }: GenerateQuestionButtonProps) {
+export function GenerateQuestionButton({ chunkId, onComplete, onOpenChange }: GenerateQuestionButtonProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<QuotaStatus | null>(null);
@@ -152,10 +153,15 @@ export function GenerateQuestionButton({ chunkId, onComplete }: GenerateQuestion
 
   const percentage = status ? Math.min(100, (status.used / status.quota.total) * 100) : 0;
   const progress = currentStep ? stepProgress[currentStep] : 0;
-  const isProcessing = status?.status === 'PROCESSING';
+  // Ignore DB status 'PROCESSING' because client-side generation might have been interrupted, leaving it stuck.
+  // We rely on local 'loading' state for the active session.
+  const isProcessing = loading;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(val) => {
+      setOpen(val);
+      onOpenChange?.(val);
+    }}>
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
@@ -176,7 +182,9 @@ export function GenerateQuestionButton({ chunkId, onComplete }: GenerateQuestion
           )}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent 
+        className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-yellow-500" />

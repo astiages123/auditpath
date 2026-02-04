@@ -81,12 +81,12 @@ export const CATEGORY_DISTRIBUTIONS: Record<
         "analysis", // 9
     ],
 
-    // THEORY_BASED: %40 Bilgi (0-3), %40 Uygulama (4-7), %20 Analiz (8-9)
+    // THEORY_BASED: %20 Bilgi (0-1), %60 Uygulama (2-7), %20 Analiz (8-9) - STRATEGY 5: REDUCED KNOWLEDGE
     THEORY_BASED: [
         "knowledge", // 0
         "knowledge", // 1
-        "knowledge", // 2
-        "knowledge", // 3
+        "application", // 2
+        "application", // 3
         "application", // 4
         "application", // 5
         "application", // 6
@@ -101,7 +101,7 @@ export const BLOOM_INSTRUCTIONS = {
     knowledge:
         "Temel bilgi ve kavrama düzeyinde, akademik bir dille hazırlanmış öğretici bir soru üret. Tanım, ilke veya kavramsal özelliklere odaklan.",
     application:
-        "Öğrenilen bilgiyi somut bir örnek, vaka veya senaryo üzerinden test eden, uygulama düzeyinde bir soru üret.",
+        "Kuru tanım sorma. Kullanıcının günlük hayatta karşılaşabileceği, isimler ve olaylar içeren spesifik bir 'vaka/senaryo' (vignette) kurgula.",
     analysis:
-        "Kavramlar arası derin ilişkileri, neden-sonuç bağlarını veya kritik ayrımları sorgulayan, analiz gücü yüksek bir soru üret.",
+        "Metindeki iki farklı kavramı karşılaştıran veya bir kuralın istisnasını sorgulayan 'muhakeme' odaklı bir soru üret. Soru, 'X olursa Y nasıl etkilenir?' gibi neden-sonuç zinciri kurdurmalıdır.",
 };

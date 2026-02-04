@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { callMiMo, type LogCallback, parseJsonResponse } from "../clients/mimo";
+import { callGroq, type LogCallback } from "../clients/groq";
+import { parseJsonResponse } from "../clients/mimo"; // Helper can stay or move, assuming it's generic
 import { PromptArchitect } from "../prompt-architect";
 
 // Zod Schema Definition
@@ -60,7 +61,10 @@ export async function generateConceptMap(
 ): Promise<ConceptMapResult> {
   const targetCount = calculateTargetCount(wordCount);
 
-  onLog?.("Kavram haritası oluşturuluyor", { wordCount, targetCount });
+  onLog?.("Kavram haritası oluşturuluyor (Groq - Kimi)", {
+    wordCount,
+    targetCount,
+  });
 
   const systemPrompt = `Sen Uzman bir Eğitim İçerik Analistisin (KPSS A Grubu). 
 Görevin: Metni analiz ederek soru üretimine uygun ${targetCount} adet ana durak (kavram) belirlemektir. Ayrıca metnin "Bilişsel Yoğunluk Skorunu" (1-5) hesaplamalısın.
@@ -120,9 +124,14 @@ Sadece saf JSON objesi döndür. Markdown bloğu (\`\`\`) veya giriş cümlesi e
     "Lütfen kavram haritasını ve yoğunluk skorunu oluştur.",
   );
 
-  const response = await callMiMo(messages, 0.2, onLog);
+  const response = await callGroq(
+    messages,
+    "moonshotai/kimi-k2-instruct-0905",
+    0.2, // Low temp for structure
+    onLog,
+  );
 
-  const rawData = parseJsonResponse(response.content, "object");
+  const rawData = parseJsonResponse(response, "object");
 
   // Runtime Validation with Zod
   const validationResult = ConceptMapResponseSchema.safeParse(rawData);

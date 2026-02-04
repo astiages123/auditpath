@@ -35,6 +35,8 @@ const POINTS_CORRECT = 10;
 const PENALTY_INCORRECT_FIRST = 5;
 const PENALTY_BLANK_FIRST = 2;
 const PENALTY_REPEATED = 10;
+const SESSION_GAPS = [1, 2, 5, 10, 20]; // 1. başarıdan sonra +1 seans, 2. den sonra +2 seans...
+const SLOW_SUCCESS_INCREMENT = 0.5;
 
 // --- Bloom Coefficients ---
 const BLOOM_COEFFICIENTS: Record<BloomLevel, number> = {
@@ -45,15 +47,99 @@ const BLOOM_COEFFICIENTS: Record<BloomLevel, number> = {
 
 // --- Target Times (ms) ---
 const TARGET_TIMES_MS: Record<BloomLevel, number> = {
-  knowledge: 20_000, // 20 saniye
-  application: 35_000, // 35 saniye
-  analysis: 50_000, // 50 saniye
+  knowledge: 20_000,
+  application: 35_000,
+  analysis: 50_000,
 };
 
-// --- SRS Intervals ---
-const BASE_REVIEW_INTERVAL_DAYS = 7;
-
 // --- Core Functions ---
+
+/**
+ * Bir sorunun yeni durumunu ve başarı zincirini belirler.
+ * Raf Sistemi (Shelf System) - 3-Strike Rule
+ */
+export function calculateShelfStatus(
+  consecutiveSuccess: number,
+  isCorrect: boolean,
+  isFast: boolean,
+): {
+  newStatus: "archived" | "pending_followup" | "active";
+  newSuccessCount: number;
+} {
+  if (!isCorrect) {
+    // Hata varsa zincir sıfırlanır, soru "active" döner.
+    return { newStatus: "active", newSuccessCount: 0 };
+  }
+
+  // Doğru cevap: Hızlı mı Yavaş mı?
+  // isFast -> +1.0
+  // !isFast -> +0.5 (Slow Success Increment)
+  const increment = isFast ? 1.0 : SLOW_SUCCESS_INCREMENT;
+  const newSuccessCount = consecutiveSuccess + increment;
+
+  if (newSuccessCount >= 3) {
+    // 3 veya üzeri tam puan: MEZUNİYET (Rafa kaldır)
+    return { newStatus: "archived", newSuccessCount };
+  } else if (newSuccessCount >= 0.5) {
+    // En az 0.5 puan (ilk yavaş doğru veya daha fazlası): Takip aşaması
+    return { newStatus: "pending_followup", newSuccessCount };
+  }
+
+  // Teorik olarak buraya düşmemeli çünkü doğru cevap en az +0.5 ekler
+  // ve newSuccessCount >= 0.5 olur. Ancak güvenlik için:
+  return { newStatus: "active", newSuccessCount };
+}
+
+/**
+ * Bir sonraki tekrarın hangi seans numarasında olacağını hesaplar.
+ */
+export function calculateNextReviewSession(
+  currentSession: number,
+  successCount: number,
+): number {
+  // successCount ondalıklı olabilir (örn: 0.5, 1.5, 2.5)
+  // Math.floor ile tam sayı kısmını alıyoruz.
+  // 0.5 -> index 0 (gap 1) -> "İlk yavaş doğru" için varsayılan 1 seans gap
+  // 1.0 -> index 0 (gap 1)
+  // 1.5 -> index 1 (gap 2)
+  // 2.0 -> index 1 (gap 2)
+  // ...
+
+  // Safe floor calculation & Index Mapping
+  // Logic:
+  // 0 <= count < 1  --> index 0 (Gap: 1)
+  // 1 <= count < 2  --> index 0 (Gap: 1) ??
+  // Wait, array mapping:
+  // Index 0: Gap 1
+  // Index 1: Gap 2
+  // Index 2: Gap 5
+  // ...
+  //
+  // If successCount is 0.5 (Slow Success), we want Gap 1.
+  // If successCount is 1.0 (Fast Success), we want Gap 1.
+  // If successCount is 1.5, we want Gap 2? Or Gap 1?
+  // Usually SRS escalates.
+  // Let's use standard index = floor(successCount) - 1 logic but handle 0.5 specially.
+
+  let gapIndex = 0;
+
+  if (successCount < 1) {
+    // 0.5 gibi değerler için en küçük gap (1 seans)
+    gapIndex = 0;
+  } else {
+    // 1.0 ve üzeri için: (1 -> index 0, 2 -> index 1, 3 -> index 2...)
+    gapIndex = Math.floor(successCount) - 1;
+  }
+
+  // Clamp to array bounds
+  const safeIndex = Math.max(
+    0,
+    Math.min(gapIndex, SESSION_GAPS.length - 1),
+  );
+
+  const gap = SESSION_GAPS[safeIndex];
+  return currentSession + gap;
+}
 
 /**
  * Calculate score change based on response type and state tracking (Basic Shelf System)
@@ -150,69 +236,4 @@ export function calculateAdvancedScore(
   DebugLogger.groupEnd();
 
   return result;
-}
-
-/**
- * Calculate Resilience Bonus for Aging (Mastery Chains)
- *
- * If a concept is part of a "Mastery Chain" (Kırılmaz Zincir), it gets a 40% bonus
- * to its "aging" duration (concepts collect dust slower).
- *
- * @param isPartOfChain - Whether the concept is part of a completed mastery chain
- * @returns Multiplier for aging duration (e.g. 1.4 for bonus, 1.0 for standard)
- */
-export function calculateResilienceBonus(isPartOfChain: boolean): number {
-  if (isPartOfChain) {
-    return 1.4; // %40 Bonus
-  }
-  return 1.0;
-}
-/**
- * Calculate Next Review Date
- *
- * Determines when the question should reappear in the review queue.
- * Final Interval = Base Interval (7d) * Resilience Bonus (1.4x if chain)
- *
- * @param bonus - Resilience bonus multiplier (default 1.0)
- * @returns Date object for the next review
- */
-export function calculateNextReview(bonus: number = 1.0): Date {
-  const nextDate = new Date();
-  const totalDays = BASE_REVIEW_INTERVAL_DAYS * bonus;
-
-  // Add partial days by converting to milliseconds for precision
-  const msToAdd = totalDays * 24 * 60 * 60 * 1000;
-  nextDate.setTime(nextDate.getTime() + msToAdd);
-
-  return nextDate;
-}
-
-/**
- * Calculate Overdue Penalty for Shelf System
- *
- * Formula: P_final = P_shelf - max(0, floor(T_overdue / 7) * 2)
- *
- * @param currentShelfScore - Current Shelf Score (P_shelf)
- * @param overdueDays - Number of days past due (T_overdue)
- * @returns Final score after penalty (P_final)
- */
-export function calculateOverduePenalty(
-  currentShelfScore: number,
-  overdueDays: number,
-): number {
-  if (overdueDays <= 0) {
-    return currentShelfScore;
-  }
-
-  const penaltyPoints = Math.floor(overdueDays / 7) * 2;
-  const penalty = Math.max(0, penaltyPoints);
-
-  // Apply penalty
-  // We don't clamp to 0 here because the requirement says "not permanent",
-  // so we might want to see the negative impact or just clamped 0.
-  // "P_final = P_shelf - ..." suggests it could go lower, but logic dictates a score minimal 0 usually.
-  // Let's assume clamping to 0 is safer for display/mastery.
-  // The user prompt says: P_final = P_shelf - ...
-
-  return Math.max(0, currentShelfScore - penalty);
 }
