@@ -412,3 +412,111 @@ td > .katex {
   padding: 2px 4px;
   margin: -2px -4px;
 }
+/* Notes Page Counters & Typography Overrides */
+
+/* List Hierarchy & Typography */
+.prose ul {
+  list-style-type: disc;
+}
+
+.prose ul ul {
+  list-style-type: circle;
+}
+
+.prose ul ul ul {
+  list-style-type: square;
+}
+
+.prose li {
+  @apply mb-1 leading-relaxed;
+}
+
+.prose li strong {
+  @apply font-semibold text-foreground/90;
+}
+
+/* Modern Table Styles */
+.prose table {
+  @apply w-full border-collapse my-8 rounded-xl overflow-hidden shadow-sm;
+}
+
+.prose thead {
+  @apply bg-muted/60 border-b border-border/40;
+}
+
+.prose th {
+  @apply px-6 py-4 font-heading font-semibold text-foreground text-left align-middle;
+}
+
+.prose td {
+  @apply px-6 py-4 border-b border-border/30 text-muted-foreground align-top;
+}
+
+.prose tr:nth-child(even) {
+  @apply bg-muted/20;
+}
+
+.prose tr:hover {
+  @apply bg-muted/40 transition-colors;
+}
+
+
+/* Improved Counters */
+.chunk-container {
+    counter-reset: h3-counter;
+}
+
+.chunk-container h3 {
+    counter-increment: h3-counter;
+    counter-reset: h4-counter;
+}
+
+.chunk-container h3::before {
+    content: counter(h3-counter) ".";
+    @apply tabular-nums mr-1.5;
+    font-family: inherit;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+.chunk-container h4 {
+    counter-increment: h4-counter;
+    counter-reset: h5-counter;
+}
+
+.chunk-container h4::before {
+    content: counter(h3-counter) "." counter(h4-counter) ".";
+    @apply tabular-nums mr-1.5;
+    font-family: inherit;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+.chunk-container h5 {
+    counter-increment: h5-counter;
+}
+
+.chunk-container h5::before {
+    content: counter(h3-counter) "." counter(h4-counter) "." counter(h5-counter) ".";
+    @apply tabular-nums mr-1.5;
+    font-family: inherit;
+    color: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+}
+
+/* Custom Zoom Modal Overlay */
+[data-rmiz-modal-overlay="visible"] {
+  background-color: var(--background) !important;
+  opacity: 0.95 !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+[data-rmiz-modal-img] {
+  border-radius: var(--radius-xl);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  border: 1px solid var(--border);
+}

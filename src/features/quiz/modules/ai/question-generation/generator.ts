@@ -103,7 +103,7 @@ async function generateWithRetry<T>(
       responseContent = await rateLimiter.schedule(() =>
         callCerebras(
           currentMessages,
-          "qwen-3-235b-a22b-instruct-2507", // Updated Model
+          "qwen-3-32b", // Free tier compatible model
           onLog,
         )
       );
@@ -586,14 +586,28 @@ SADECE JSON formatında çıktı ver. Cevabın dışında hiçbir metin, yorum v
     );
   }
 
-  // STRATEGY 1 & 2 REINFORCEMENT
+  // STRATEGY 1 & 2 REINFORCEMENT + COGNITIVE DIAGNOSIS
   taskParts.push(`EK KURALLAR:
 1. **Çeldiriciler:** Kavram karmaşası yaratan, metinden beslenen ama bu soru için yanlış olan şıklar.
 2. **LaTeX:** Sayısal veriler KESİNLİKLE LaTeX ($P=10$ vb.).
-3. **Kanıt:** "evidence" alanına yukarıdaki "TEK KAYNAK" cümlesini aynen yaz.`);
+3. **Kanıt:** "evidence" alanına yukarıdaki "TEK KAYNAK" cümlesini aynen yaz.
+4. **Teşhis (diagnosis):** Kullanıcının neden hata yaptığını analiz et ve kısa, profesyonel bir teşhis yaz. Örn: "Y kavramı ile X kavramı karıştırılıyor", "Zamansal sıralama hatası", "İstisna kuralının gözden kaçırılması".
+5. **Bilişsel Not (insight):** Bu konu hakkında akılda kalıcı, öğretici bir ipucu yaz. Bu not, kullanıcının aynı hatayı tekrar yapmaması için bir "hafıza çengeli" olmalı.`);
 
   taskParts.push(
-    `GÖREVİN: Belirtilen kanıt cümlesine odaklanarak yeni bir follow-up soru üret. SADECE JSON döndür.`,
+    `GÖREVİN: Belirtilen kanıt cümlesine odaklanarak yeni bir follow-up soru üret.
+
+ÇIKTI FORMATI (SADECE JSON):
+{
+  "q": "Soru metni...",
+  "o": ["A", "B", "C", "D", "E"],
+  "a": 0,
+  "exp": "Açıklama...",
+  "evidence": "Kanıt cümlesi...",
+  "img": null,
+  "diagnosis": "Kullanıcının hata nedeni (kısa teşhis)",
+  "insight": "Akılda kalıcı ipucu"
+}`,
   );
 
   const taskPrompt = taskParts.join("\n\n");

@@ -213,7 +213,7 @@ export async function validateQuestionBatch(
         const model = "qwen-3-32b"; // Always use Qwen-32B for validation as per rules
 
         responseText = await validatorLimit(async () => {
-          await rateLimiter.waitForSlot(model);
+          await rateLimiter.waitForSlot();
           return callCerebras(
             messages,
             model,

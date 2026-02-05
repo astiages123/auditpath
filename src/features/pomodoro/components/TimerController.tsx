@@ -94,8 +94,7 @@ export function TimerController() {
                                 
                                 // Restore timeline if available to ensure pause calculations are correct
                                 if (activeSession.timeline && Array.isArray(activeSession.timeline)) {
-                                    // casting to any to bypass strict type check for now, ensuring shape matches
-                                    useTimerStore.setState({ timeline: activeSession.timeline as any });
+                                    useTimerStore.setState({ timeline: activeSession.timeline as { type: 'work' | 'break' | 'pause'; start: number; end?: number }[] });
                                 }
 
                                 toast.info("Önceki oturumunuzdan devam ediliyor.");
@@ -122,7 +121,7 @@ export function TimerController() {
         const heartbeatInterval = setInterval(() => {
             // Calculate current stats from timeline
             // We need to calculate pause time dynamically
-            const currentPauseDuration = timeline.reduce((acc, event) => {
+            timeline.reduce((acc, event) => {
                  if (event.type === 'pause') {
                     const end = event.end || Date.now();
                     return acc + (end - event.start);

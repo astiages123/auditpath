@@ -15,8 +15,6 @@ import {
 import { motion } from "framer-motion";
 import {
   getUnlockedAchievements as getDbUnlocked,
-  unlockAchievement as unlockDb,
-  getTotalActiveDays as getDbTotalActiveDays,
   UnlockedAchievement,
 } from "@/shared/lib/core/client-db";
 import {
@@ -25,7 +23,6 @@ import {
   GuildType,
   getAchievementsByGuild,
   ACHIEVEMENTS,
-  calculateAchievements,
 } from "@/shared/lib/domain/achievements";
 import { useProgress } from "@/shared/hooks/useProgress";
 import { SealCard } from "./SealCard";
@@ -66,91 +63,26 @@ export function AchievementsRoom() {
   useEffect(() => {
     if (isLoading || !user || !stats) return;
 
-    const syncAchievements = async () => {
+    const fetchUnlockedAchievements = async () => {
       try {
-
-        
-        const totalActiveDays = await getDbTotalActiveDays(user.id);
         const dbUnlocked = await getDbUnlocked(user.id);
-
-        // Hard Reset: If DB is completely empty but LocalStorage has data, wipe LocalStorage
-        if (
-          totalActiveDays === 0 &&
-          dbUnlocked.length === 0 &&
-          stats.completedVideos === 0
-        ) {
-          if (typeof window !== "undefined") {
-            const keysToClear = [
-              "unlocked-achievements",
-              "achievement-session",
-              "achievement-celebration-queue",
-              "user-streak-data",
-            ];
-            keysToClear.forEach((k) => localStorage.removeItem(k));
-          }
-        }
-
-        // Ghost Data Check (Simplified)
-        let sessionVideos = 0;
-        try {
-          const sessionData = JSON.parse(sessionStorage.getItem("achievement-session") || '{"videosCompleted": 0}');
-          sessionVideos = sessionData.videosCompleted || 0;
-        } catch {
-          // ignore error
-        }
-
-        if (
-          totalActiveDays === 0 &&
-          stats.completedVideos === 0 &&
-          sessionVideos > 0 &&
-          dbUnlocked.length === 0
-        ) {
-          sessionVideos = 0;
-          if (typeof window !== "undefined") {
-            sessionStorage.removeItem("achievement-session");
-          }
-        }
-
-        const activityLog = {
-          currentStreak: stats.streak || 0,
-          totalActiveDays: totalActiveDays,
-          dailyVideosCompleted: sessionVideos,
-          // Default values for new RPG stats (these should ideally come from backend/stats)
-          honestyUsageCount: 0,
-          firstTimePerfectCount: 0,
-          debtClearedInSession: false,
-          consecutiveCorrectStreak: 0,
-          weeklyStudyDays: 0,
-          masteredTopicsCount: 0,
-        };
-
-        const currentlyEligible = calculateAchievements(stats, activityLog);
-
-        const newUnlocks: string[] = [];
-        const currentIds = new Set(dbUnlocked.map((a: UnlockedAchievement) => a.id));
-        for (const id of currentlyEligible) {
-          if (!currentIds.has(id)) {
-            newUnlocks.push(id);
-          }
-        }
-
-        if (newUnlocks.length > 0) {
-          for (const id of newUnlocks) {
-            await unlockDb(user.id, id);
-            // addToCelebrationQueue(id); // useCelebration hook will pick this up from DB
-          }
-          // Refresh after unlocking
-          const updatedDbUnlocked = await getDbUnlocked(user.id);
-          setUnlockedAchievements(new Map(updatedDbUnlocked.map((a: UnlockedAchievement) => [a.id, a.unlockedAt])));
-        } else {
-          setUnlockedAchievements(new Map(dbUnlocked.map((a: UnlockedAchievement) => [a.id, a.unlockedAt])));
-        }
+        
+        // Update state with achievements from database
+        // Using achievement_id as the key in the map
+        setUnlockedAchievements(
+          new Map(
+            dbUnlocked.map((a: UnlockedAchievement) => [
+              a.achievement_id,
+              a.unlockedAt,
+            ])
+          )
+        );
       } catch (error) {
-        console.error("Bilgelik Arşivi senkronizasyon hatası:", error);
+        console.error("Bilgelik Arşivi veri çekme hatası:", error);
       }
     };
 
-    syncAchievements();
+    fetchUnlockedAchievements();
   }, [stats, isLoading, user]);
 
   const handleSealClick = useCallback((achievement: Achievement) => {

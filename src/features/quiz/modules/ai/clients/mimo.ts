@@ -85,7 +85,7 @@ export async function callMiMo(
 export function parseJsonResponse(
   text: string | null | undefined,
   type: "object" | "array",
-): any | null {
+): unknown {
   if (!text || typeof text !== "string") return null;
 
   try {
@@ -127,7 +127,7 @@ export function parseJsonResponse(
     });
 
     return JSON.parse(cleanText);
-  } catch (e) {
+  } catch {
     // console.error("JSON Parse Error:", e);
     return null;
   }

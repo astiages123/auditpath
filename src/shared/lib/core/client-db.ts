@@ -1,7 +1,7 @@
 import { supabase } from "@/shared/lib/core/supabase";
 import type { Database, Json } from "@/shared/types/supabase";
 import {
-  calculateFocusScore,
+  calculateFocusPower,
   calculateLearningFlow,
   calculatePauseCount,
   calculateSessionTotals,
@@ -13,6 +13,7 @@ import {
   getVirtualDate,
   getVirtualDateKey,
 } from "@/shared/lib/utils/date-utils";
+import coursesData from "@/features/courses/data/courses.json";
 
 export type Category = Database["public"]["Tables"]["categories"]["Row"] & {
   courses: Course[];
@@ -125,11 +126,42 @@ export async function getUserStats(userId: string) {
       });
     });
 
-    const globalTotalHours = categories.reduce((sum, cat) =>
-      sum + (cat.total_hours || 0), 0) || 1;
-    const globalTotalVideos = categories.reduce((sum, cat) =>
-      sum + cat.courses.reduce((s, c) =>
-        s + (c.total_videos || 0), 0), 0) || 1;
+    // Use static data for totals to ensure consistency even if categories table is transiently empty or partial
+    const totalHoursFromJSON = coursesData.reduce(
+      (sum: number, cat) =>
+        sum +
+        ((cat as { courses?: { totalHours?: number }[] }).courses?.reduce(
+          (s: number, c) => s + (c.totalHours || 0),
+          0,
+        ) || 0),
+      0,
+    );
+    const totalVideosFromJSON = coursesData.reduce(
+      (sum: number, cat) =>
+        sum +
+        ((cat as { courses?: { totalVideos?: number }[] }).courses?.reduce(
+          (s: number, c) => s + (c.totalVideos || 0),
+          0,
+        ) || 0),
+      0,
+    );
+
+    const dbTotalHours = categories.reduce(
+      (sum, cat) => sum + (cat.total_hours || 0),
+      0,
+    );
+    const dbTotalVideos = categories.reduce(
+      (sum, cat) =>
+        sum + cat.courses.reduce((s, c) => s + (c.total_videos || 0), 0),
+      0,
+    );
+
+    const globalTotalHours = dbTotalHours > 0
+      ? dbTotalHours
+      : totalHoursFromJSON || 280;
+    const globalTotalVideos = dbTotalVideos > 0
+      ? dbTotalVideos
+      : totalVideosFromJSON || 550;
 
     const { data: progress, error: progressError } = await supabase
       .from("video_progress")
@@ -194,9 +226,7 @@ export async function getUserStats(userId: string) {
           if (catName) {
             if (!categoryProgress[catName]) {
               // Initialize with totals from categories array
-              const cat = categories.find((c) =>
-                c.name === catName
-              );
+              const cat = categories.find((c) => c.name === catName);
               categoryProgress[catName] = {
                 completedVideos: 0,
                 completedHours: 0,
@@ -401,9 +431,13 @@ export async function upsertPomodoroSession(
   const totals = calculateSessionTotals(session.timeline);
   const pauseCount = calculatePauseCount(session.timeline);
 
-  // Calculate Efficiency Score (Golden Ratio)
-  // Use Focus Score (Work / Total Time) for Database
-  const efficiencyScore = calculateFocusScore(totals);
+  // Calculate Focus Power (Odak Gücü)
+  // Formula: (Work / [Break + Pause]) * 20
+  const efficiencyScore = calculateFocusPower(
+    totals.totalWork,
+    totals.totalBreak,
+    totals.totalPause,
+  );
 
   // Validate if courseId is a UUID
   const uuidRegex =
@@ -453,7 +487,7 @@ export async function upsertPomodoroSession(
 }
 
 export interface UnlockedAchievement {
-  id: string;
+  achievement_id: string;
   unlockedAt: string;
 }
 
@@ -476,7 +510,7 @@ export async function getUnlockedAchievements(
 
   return (data as Database["public"]["Tables"]["user_achievements"]["Row"][])
     .map((a) => ({
-      id: a.achievement_id,
+      achievement_id: a.achievement_id,
       unlockedAt: a.unlocked_at,
     }));
 }
@@ -2384,8 +2418,6 @@ export async function getDailyEfficiencySummary(
   let totalBreak = 0;
   let totalPause = 0;
   let totalPauseCount = 0;
-  let totalEfficiency = 0;
-  let validEfficiencyCount = 0;
   let totalCycles = 0;
 
   const detailedSessions: DetailedSession[] = sessionsData.map((s) => {
@@ -2400,10 +2432,8 @@ export async function getDailyEfficiencySummary(
     totalPause += pause;
     totalPauseCount += pCount;
 
-    if (eff > 0) {
-      totalEfficiency += eff;
-      validEfficiencyCount++;
-    }
+    // Not calculating average efficiency here for now
+    // if (eff > 0) { ... }
 
     totalCycles += getCycleCount(s.timeline);
 
@@ -2419,13 +2449,15 @@ export async function getDailyEfficiencySummary(
     };
   });
 
-  // Calculate average efficiency score
-  const avgEfficiency = validEfficiencyCount > 0
-    ? Math.round(totalEfficiency / validEfficiencyCount)
-    : 0;
+  // Calculate daily total Focus Power (Odak Gücü)
+  const dailyFocusPower = calculateFocusPower(
+    totalWork,
+    totalBreak,
+    totalPause,
+  );
 
   return {
-    efficiencyScore: avgEfficiency,
+    efficiencyScore: dailyFocusPower,
     totalCycles,
     netWorkTimeSeconds: totalWork,
     totalBreakTimeSeconds: totalBreak,

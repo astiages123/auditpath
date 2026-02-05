@@ -89,12 +89,11 @@ interface OptionButtonProps {
 
 const OptionButton = memo(function OptionButton({ 
     option, 
-    index, 
     label, 
     variant, 
     onClick, 
     disabled 
-}: OptionButtonProps) {
+}: Omit<OptionButtonProps, 'index'>) {
     let containerStyle = 'border-border hover:border-primary/50 hover:bg-muted/30';
     let iconComponent = null;
     let labelStyle = 'bg-muted text-muted-foreground';
@@ -300,7 +299,6 @@ function QuizCardComponent({
           </div>
         </div>
 
-        {/* Options */}
         <div className="px-6 pb-6 space-y-3">
           {question.o.map((option, index) => {
             const isSelected = selectedAnswer === index;
@@ -327,7 +325,6 @@ function QuizCardComponent({
             return (
               <OptionButton
                 key={index}
-                index={index}
                 option={option}
                 label={optionLabels[index]}
                 variant={variant}

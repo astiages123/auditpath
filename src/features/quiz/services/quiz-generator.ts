@@ -659,7 +659,7 @@ export async function generateFollowUpSingle(
       return null;
     }
 
-    // 6. Save to DB
+    // 6. Save to DB with cognitive diagnosis data
     const { data: qData, error: qError } = await supabase.from("questions")
       .insert({
         chunk_id: context.chunkId,
@@ -675,6 +675,9 @@ export async function generateFollowUpSingle(
           a: question.a,
           exp: question.exp,
           img: question.img || null,
+          evidence: question.evidence || null,
+          diagnosis: question.diagnosis || null,
+          insight: question.insight || null,
         },
       }).select("id").single();
 

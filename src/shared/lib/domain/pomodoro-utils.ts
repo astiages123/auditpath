@@ -121,7 +121,35 @@ export function calculateLearningFlow(
 }
 
 /**
+ * Calculates the Focus Power score based on the formula: (Work / [Break + Pause]) * 20
+ *
+ * @param workSeconds - Total work time in seconds
+ * @param breakSeconds - Total break time in seconds
+ * @param pauseSeconds - Total pause time in seconds
+ * @returns Focus power score
+ */
+export function calculateFocusPower(
+  workSeconds: number,
+  breakSeconds: number,
+  pauseSeconds: number,
+): number {
+  if (workSeconds <= 0) return 0;
+
+  const totalInterruptionSeconds = breakSeconds + pauseSeconds;
+  // Use minimum 60 seconds (1 minute) for interruption to avoid division by zero
+  // and match the minute-based logic used elsewhere
+  const effectiveInterruptionSeconds = Math.max(60, totalInterruptionSeconds);
+
+  // Formula: (WorkMinutes / InterruptionMinutes) * 20
+  // Which is equivalent to (WorkSeconds / InterruptionSeconds) * 20
+  const score = (workSeconds / effectiveInterruptionSeconds) * 20;
+
+  return Math.round(score);
+}
+
+/**
  * Calculates the Focus Score based on the ratio of Work Time to Total Session Time (Work + Break).
+ * This is a classic percentage-based efficiency score.
  * Formula: (Work / (Work + Break)) * 100
  *
  * @param totals - Object containing totalWork and totalBreak in SECONDS

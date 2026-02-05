@@ -31,7 +31,7 @@ function App() {
                     <Route path="/statistics" element={<AuthGuard><Statistics /></AuthGuard>} />
                     <Route path="/efficiency" element={<AuthGuard><EfficiencyPage /></AuthGuard>} />
 
-                    <Route path="/notes/:courseId" element={<AuthGuard><NotesPage /></AuthGuard>} />
+                    <Route path="/notes/:courseSlug" element={<AuthGuard><NotesPage /></AuthGuard>} />
                     
                     {/* Redirect unknown routes to home */}
                     <Route path="*" element={<Navigate to="/" replace />} />

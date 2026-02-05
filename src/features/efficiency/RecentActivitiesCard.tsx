@@ -6,6 +6,7 @@ import { cn } from "@/shared/lib/core/utils";
 import { Session } from "./types";
 import { EfficiencyModal } from "./EfficiencyModals";
 import { Zap, Coffee, Pause as PauseIcon, LayoutGrid } from "lucide-react";
+import { calculateFocusPower } from "@/shared/lib/domain/pomodoro-utils";
 
 interface RecentActivitiesCardProps {
     sessions: RecentSession[];
@@ -23,13 +24,17 @@ const SessionListItem = ({ session, convertToSession }: { session: RecentSession
     });
 
     const getEfficiencyColor = (score: number) => {
-        if (score >= 90) return "text-emerald-400";
+        if (score >= 100) return "text-emerald-400";
         if (score >= 70) return "text-amber-400";
         if (score > 0) return "text-rose-400";
         return "text-muted-foreground";
     };
 
-    const focusPower = Math.round(session.efficiencyScore);
+    const focusPower = calculateFocusPower(
+        session.totalWorkTime,
+        session.totalBreakTime,
+        session.totalPauseTime
+    );
 
     return (
         <EfficiencyModal
@@ -126,7 +131,7 @@ const SessionListItem = ({ session, convertToSession }: { session: RecentSession
                                 <div 
                                     className={cn(
                                         "h-full transition-all duration-700 rounded-full",
-                                        focusPower >= 90 ? "bg-emerald-500" : 
+                                        focusPower >= 100 ? "bg-emerald-500" : 
                                         focusPower >= 70 ? "bg-amber-500" : "bg-rose-500"
                                     )}
                                     style={{ width: `${Math.min(100, focusPower)}%` }}

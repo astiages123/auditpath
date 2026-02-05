@@ -26,7 +26,6 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
   
   // Status State
   const [completionStatus, setCompletionStatus] = useState<TopicCompletionStats | null>(null);
-  const [isInnerModalOpen, setIsInnerModalOpen] = useState(false);
 
 
   
@@ -300,7 +299,7 @@ export function QuizModal({ isOpen, onOpenChange, courseId, courseName }: QuizMo
                                                         </p>
                                                         <GenerateQuestionButton 
                                                             chunkId={targetChunkId} 
-                                                            onOpenChange={setIsInnerModalOpen}
+                                                            onOpenChange={() => {}}
                                                             onComplete={async () => {
                                                                 // Reload completion status after generation
                                                                 if (user && courseId && selectedTopic) {

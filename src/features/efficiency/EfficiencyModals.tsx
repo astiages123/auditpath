@@ -21,6 +21,7 @@ import {
   Timer
 } from 'lucide-react';
 import { cn } from '@/shared/lib/core/utils';
+import { calculateFocusPower } from '@/shared/lib/domain/pomodoro-utils';
 
 interface ModalProps {
   title: string;
@@ -68,17 +69,15 @@ const DistractionAnalysis = ({ sessions }: { sessions: Session[] }) => {
 
     const totalWorkMinutes = sessions.reduce((acc, s) => acc + s.duration, 0);
     
-    // Focus Power Formula: (Work / [Break + Pause]) * 20
-    // Use min 1 min for interruption to avoid div by zero
-    const totalInterruption = totalBreakMinutes + totalPauseMinutes;
-    const effectiveInterruption = Math.max(1, totalInterruption);
-    const focusPower = totalWorkMinutes > 0 
-        ? Math.round((totalWorkMinutes / effectiveInterruption) * 20)
-        : 0;
+    const focusPower = calculateFocusPower(
+        totalWorkMinutes * 60,
+        totalBreakMinutes * 60,
+        totalPauseMinutes * 60
+    );
 
     const getStabilityColor = (score: number) => {
-        if (score >= 120) return 'text-emerald-400';
-        if (score >= 80) return 'text-amber-400';
+        if (score >= 100) return 'text-emerald-400';
+        if (score >= 70) return 'text-amber-400';
         return 'text-rose-400';
     };
 

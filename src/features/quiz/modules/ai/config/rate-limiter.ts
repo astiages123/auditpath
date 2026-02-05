@@ -54,7 +54,7 @@ class RateLimiter {
      * Waits for a concurrency slot AND token budget.
      * Decrements estimated usage immediately to prevent bursts.
      */
-    public async waitForSlot(_model?: string): Promise<void> {
+    public async waitForSlot(): Promise<void> {
         // 1. Concurrency Gate
         // We cannot just use limit() to run the function because we need to wait BEFORE calling.
         // However, p-limit wraps the execution.

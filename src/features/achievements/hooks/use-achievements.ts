@@ -22,10 +22,11 @@ export const achievementKeys = {
 interface SyncContext {
     stats: ProgressStats;
     userId: string;
+    queryClient: ReturnType<typeof useQueryClient>;
 }
 
 // Helper to keep the mutation function clean
-async function syncAchievements({ stats, userId }: SyncContext) {
+async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
     if (!userId || !stats) return;
 
     // A. Gather Data
@@ -53,21 +54,14 @@ async function syncAchievements({ stats, userId }: SyncContext) {
     }
 
     const activityLog = {
-        currentStreak: stats.streak || 0,
+        currentStreak: stats.streak,
         totalActiveDays,
         dailyVideosCompleted: dailyVideosCount || 0,
-        // Default values for missing stats to satisfy interface
-        honestyUsageCount: 0,
-        firstTimePerfectCount: 0,
-        debtClearedInSession: false,
-        consecutiveCorrectStreak: 0,
-        weeklyStudyDays: 0,
-        masteredTopicsCount: 0,
     };
 
     // C. Fetch Current DB State
     const dbUnlocked = await getUnlockedAchievements(userId);
-    const dbIds = new Set(dbUnlocked.map((x) => x.id));
+    const dbIds = new Set(dbUnlocked.map((x) => x.achievement_id));
 
     // B. Calculate Eligible IDs
     const eligibleIds = new Set<string>();
@@ -131,6 +125,11 @@ async function syncAchievements({ stats, userId }: SyncContext) {
             onConflict: "user_id,achievement_id",
             ignoreDuplicates: true,
         });
+
+        // Anlık kutlama tetiklemesi - 10 saniye beklemeye gerek yok
+        queryClient.invalidateQueries({
+            queryKey: achievementKeys.uncelebrated(userId),
+        });
     }
 
     // F. Revoke Logic (SAFEGUARDED)
@@ -157,8 +156,8 @@ async function syncAchievements({ stats, userId }: SyncContext) {
                 staticIds.includes(id);
             if (!isManaged) return false;
 
-            // Extra safety for Rank-Up
-            if (id.startsWith("RANK_UP:") && !currentRankId) return false;
+            // Extra safety for Rank-Up - NEVER revoke rank achievements
+            if (id.startsWith("RANK_UP:")) return false;
 
             // CHECK: Is this an achievement we want to allow revoking?
             // We only allow revoking if it is NOT an event-based one.
@@ -169,16 +168,12 @@ async function syncAchievements({ stats, userId }: SyncContext) {
                     "daily_progress",
                     "streak",
                     "total_active_days",
-                    "quiz_honesty",
-                    "first_time_perfect",
-                    "clear_debt",
-                    "consecutive_correct",
-                    "weekly_review_streak",
-                    "topic_mastery_count",
                 ].includes(type);
                 if (isEventBased) return false; // Never revoke event-based ones
             }
 
+            // If it's already in DB and not event-based, but somehow lost its "eligible" status
+            // we check if it should be revoked only if it's NOT an event-based one.
             return !eligibleIds.has(id);
         });
 
@@ -198,10 +193,12 @@ export function useSyncAchievementsMutation() {
     const queryClient = useQueryClient();
 
     return useMutation({
-        mutationFn: syncAchievements,
+        mutationFn: (context: Omit<SyncContext, "queryClient">) =>
+            syncAchievements({ ...context, queryClient }),
         onSuccess: (hasNewUnlocks, variables) => {
+            // The immediate invalidation is now done inside syncAchievements
+            // This onSuccess is kept for backward compatibility but may be redundant
             if (hasNewUnlocks) {
-                // Invalidate uncelebrated query to trigger celebration check
                 queryClient.invalidateQueries({
                     queryKey: achievementKeys.uncelebrated(variables.userId),
                 });

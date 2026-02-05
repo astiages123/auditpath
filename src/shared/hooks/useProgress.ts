@@ -45,6 +45,17 @@ interface Category {
   courses: Course[];
 }
 
+// Normalize category names to database slugs for consistent matching with achievements
+function normalizeCategorySlug(rawName: string): string {
+  const slugMap: Record<string, string> = {
+    "EKONOMİ": "EKONOMI",
+    "HUKUK": "HUKUK",
+    "MUHASEBE VE MALİYE": "MUHASEBE_MALIYE",
+    "GENEL YETENEK VE İNGİLİZCE": "GENEL_YETENEK",
+  };
+  return slugMap[rawName] || rawName;
+}
+
 const calculateStaticTotals = () => {
   const categories = coursesData as Category[];
   const categoryStats: Record<
@@ -61,8 +72,9 @@ const calculateStaticTotals = () => {
   let totalAllHours = 0;
 
   categories.forEach((cat) => {
-    const categoryName = cat.category.split(" (")[0].split(". ")[1] ||
+    const rawName = cat.category.split(" (")[0].split(". ")[1] ||
       cat.category;
+    const categoryName = normalizeCategorySlug(rawName);
     let catTotalVideos = 0;
     let catTotalHours = 0;
 

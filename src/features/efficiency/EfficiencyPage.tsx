@@ -8,6 +8,7 @@ import {
   RecentActivitiesContainer,
 } from './EfficiencyCards';
 import { RecentQuizzesCard } from './RecentQuizzesCard';
+import { CognitiveInsightsCard } from './CognitiveInsightsCard';
 
 const EfficiencyPage = () => {
   return (
@@ -36,6 +37,13 @@ const EfficiencyPage = () => {
 
         {/* Central Dashboard Engine */}
         <div className="space-y-6">
+            {/* Row 0: Cognitive Insights (New) */}
+            <div className="grid grid-cols-1">
+                <div className="min-h-[250px]">
+                    <CognitiveInsightsCard />
+                </div>
+            </div>
+
             {/* Row 1: Focus Hub + Learning Load */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <div className="min-h-[320px]">

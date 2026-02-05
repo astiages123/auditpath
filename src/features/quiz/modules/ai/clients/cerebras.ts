@@ -51,7 +51,11 @@ export async function callCerebras(
     throw new Error("No active session for AI request");
   }
 
-  const response = await fetch(`${env.supabase.url}/functions/v1/ai-proxy`, {
+  const proxyUrl = `${env.supabase.url}/functions/v1/ai-proxy`;
+  console.log("[Cerebras Debug] URL:", proxyUrl);
+  console.log("[Cerebras Debug] Token exists:", !!token);
+
+  const response = await fetch(proxyUrl, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
