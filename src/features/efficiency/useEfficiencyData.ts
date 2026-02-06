@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import type { ConceptMapItem } from "@/features/quiz/modules/ai/mapping";
+import { calculateFocusPower } from "@/shared/lib/domain/pomodoro-utils";
 import {
     BloomStats,
     CognitiveInsight,
@@ -21,7 +22,7 @@ import {
     RecentSession,
 } from "@/shared/lib/core/client-db";
 import { supabase } from "@/shared/lib/core/supabase";
-import { BloomStat, LearningLoad, Session } from "./types";
+import { BloomStat, FocusPowerPoint, LearningLoad, Session } from "./types";
 import { getVirtualDateKey } from "@/shared/lib/utils/date-utils";
 
 export function useEfficiencyData() {
@@ -36,6 +37,13 @@ export function useEfficiencyData() {
     const [loadDay, setLoadDay] = useState<LearningLoad[]>([]);
     const [loadMonth, setLoadMonth] = useState<LearningLoad[]>([]);
     const [loadAll, setLoadAll] = useState<LearningLoad[]>([]);
+
+    // Focus Power Trends
+    const [focusPowerWeek, setFocusPowerWeek] = useState<FocusPowerPoint[]>([]);
+    const [focusPowerMonth, setFocusPowerMonth] = useState<FocusPowerPoint[]>(
+        [],
+    );
+    const [focusPowerAll, setFocusPowerAll] = useState<FocusPowerPoint[]>([]);
 
     const [courseMastery, setCourseMastery] = useState<
         CourseMastery[]
@@ -109,18 +117,42 @@ export function useEfficiencyData() {
                 // 1. Fetch Pomodoro Sessions (This is now the SOLE source for Odaklanma Trendi)
                 const { data: recentSessionsData } = await supabase
                     .from("pomodoro_sessions")
-                    .select("started_at, total_work_time")
+                    .select(
+                        "started_at, total_work_time, total_break_time, total_pause_time",
+                    )
                     .eq("user_id", user.id)
                     .gte("started_at", queryStartDateStr);
 
                 const focusDailyMap: Record<string, number> = {};
+                // Helper for Focus Power Aggregation
+                const focusPowerAggMap: Record<
+                    string,
+                    { work: number; breakTime: number; pause: number }
+                > = {};
+
                 recentSessionsData?.forEach((s) => {
                     // Standardize date key using getVirtualDateKey (handles 04:00 offset appropriately)
                     const dateKey = getVirtualDateKey(new Date(s.started_at));
 
-                    const mins = Math.round((s.total_work_time || 0) / 60);
+                    const workSec = s.total_work_time || 0;
+                    const breakSec = s.total_break_time || 0;
+                    const pauseSec = s.total_pause_time || 0;
+
+                    const mins = Math.round(workSec / 60);
                     focusDailyMap[dateKey] = (focusDailyMap[dateKey] || 0) +
                         mins;
+
+                    // Aggregate for Focus Power
+                    if (!focusPowerAggMap[dateKey]) {
+                        focusPowerAggMap[dateKey] = {
+                            work: 0,
+                            breakTime: 0,
+                            pause: 0,
+                        };
+                    }
+                    focusPowerAggMap[dateKey].work += workSec;
+                    focusPowerAggMap[dateKey].breakTime += breakSec;
+                    focusPowerAggMap[dateKey].pause += pauseSec;
                 });
 
                 // Helper to assemble chart data for a range of dates
@@ -173,10 +205,114 @@ export function useEfficiencyData() {
 
                 setLoadDay(assembleData(1));
 
-                // Fetch extra days (12) to account for potential hidden weekends,
-                // ensuring we can show exactly 7 visible days on the chart.
+                // Fetch extra days (12) for Week View
                 const weekRaw = assembleData(12);
                 setLoadWeek(weekRaw.slice(-7));
+
+                // --- Calculate Focus Power Data ---
+                const assembleFocusPower = (
+                    targetCount: number,
+                    buffer: number = 5,
+                ) => {
+                    const rawData: (FocusPowerPoint & { rawDate: Date })[] = [];
+                    // Fetch extra days to account for filtering
+                    const totalFetch = targetCount + buffer;
+
+                    for (let i = totalFetch - 1; i >= 0; i--) {
+                        const d = new Date();
+                        // 1. Projemdeki sanal güne dikkat et:
+                        // Use 12:00 to avoid any midnight/DST shifts when iterating
+                        d.setHours(12, 0, 0, 0);
+                        d.setDate(d.getDate() - i);
+
+                        const dateKey = getVirtualDateKey(d);
+
+                        const agg = focusPowerAggMap[dateKey] ||
+                            { work: 0, breakTime: 0, pause: 0 };
+                        const score = calculateFocusPower(
+                            agg.work,
+                            agg.breakTime,
+                            agg.pause,
+                        );
+
+                        const dayName = d.toLocaleDateString("tr-TR", {
+                            day: "numeric",
+                            month: "short",
+                        });
+
+                        rawData.push({
+                            date: dayName,
+                            originalDate: d.toISOString(),
+                            score: score,
+                            workMinutes: Math.round(agg.work / 60),
+                            breakMinutes: Math.round(agg.breakTime / 60),
+                            pauseMinutes: Math.round(agg.pause / 60),
+                            rawDate: d,
+                        });
+                    }
+
+                    // 2. Haftada bir gün, Cumartesi ya da Pazar tatil günüm...
+                    // Filter Logic: Hide ANY empty weekend day.
+                    const filtered = rawData.filter((item) => {
+                        const d = item.rawDate;
+                        const dayOfWeek = d.getDay(); // 0: Sunday, 6: Saturday
+                        const hasActivity = item.workMinutes > 0 ||
+                            item.breakMinutes > 0 || item.pauseMinutes > 0;
+
+                        if (
+                            !hasActivity && (dayOfWeek === 6 || dayOfWeek === 0)
+                        ) {
+                            return false; // Hide empty weekends
+                        }
+                        return true;
+                    });
+
+                    // Return only the requested number of days from the end
+                    return filtered.slice(-targetCount).map((
+                        { rawDate, ...rest },
+                    ) => rest);
+                };
+
+                setFocusPowerWeek(assembleFocusPower(7, 5));
+                setFocusPowerMonth(assembleFocusPower(30, 12)); // Increased buffer for month view
+
+                // Focus Power "All Time" (Monthly)
+                const allTimeFocus: FocusPowerPoint[] = [];
+                for (let i = 5; i >= 0; i--) {
+                    const d = new Date();
+                    d.setMonth(d.getMonth() - i);
+                    d.setDate(1); // Start of month
+
+                    let mWork = 0, mBreak = 0, mPause = 0;
+
+                    // Aggregate all days matching this month
+                    Object.keys(focusPowerAggMap).forEach((key) => {
+                        const keyDate = new Date(key);
+                        if (
+                            keyDate.getMonth() === d.getMonth() &&
+                            keyDate.getFullYear() === d.getFullYear()
+                        ) {
+                            mWork += focusPowerAggMap[key].work;
+                            mBreak += focusPowerAggMap[key].breakTime;
+                            mPause += focusPowerAggMap[key].pause;
+                        }
+                    });
+
+                    const score = calculateFocusPower(mWork, mBreak, mPause);
+                    const monthName = d.toLocaleDateString("tr-TR", {
+                        month: "long",
+                    });
+
+                    allTimeFocus.push({
+                        date: monthName,
+                        originalDate: d.toISOString(),
+                        score: score,
+                        workMinutes: Math.round(mWork / 60),
+                        breakMinutes: Math.round(mBreak / 60),
+                        pauseMinutes: Math.round(mPause / 60),
+                    });
+                }
+                setFocusPowerAll(allTimeFocus);
 
                 setLoadMonth(assembleData(30));
 
@@ -539,6 +675,10 @@ export function useEfficiencyData() {
         recentQuizzes,
         trendPercentage,
         cognitiveAnalysis,
-        masteryChainStats, // New Data
+        masteryChainStats,
+        // Focus Power Data
+        focusPowerWeek,
+        focusPowerMonth,
+        focusPowerAll,
     };
 }

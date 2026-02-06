@@ -1,10 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/shared/lib/core/supabase";
 import {
+    getDailyVideoMilestones,
+    getStreakMilestones,
     getTotalActiveDays,
     getUnlockedAchievements,
 } from "@/shared/lib/core/client-db";
-import { getVirtualDayStart } from "@/shared/lib/utils/date-utils";
 import {
     ACHIEVEMENTS,
     calculateAchievements,
@@ -32,31 +33,16 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
     // A. Gather Data
     const totalActiveDays = await getTotalActiveDays(userId);
 
-    // 2. Daily Videos Count
-    const todayStart = getVirtualDayStart();
+    // 2. Daily Video Milestones (5+ ve 10+ için ilk tarihler)
+    const dailyMilestones = await getDailyVideoMilestones(userId);
 
-    const { count: dailyVideosCount, error: dailyError } = await supabase
-        .from("video_progress")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", userId)
-        .eq("completed", true)
-        .gte("updated_at", todayStart.toISOString());
-
-    if (dailyError) {
-        // Check for AbortError implicitly handled by react-query if logic was inside queryFn,
-        // but here we are in a mutation. Mutations don't auto-retry on network errors by default
-        // but we can just log safely.
-        const isAbort = dailyError.message?.includes("AbortError") ||
-            dailyError.code === "ABORT_ERROR";
-        if (!isAbort) {
-            console.error("Failed to fetch daily video count:", dailyError);
-        }
-    }
+    // 3. Streak Milestones (7 gün seri için ilk tarih)
+    const streakMilestones = await getStreakMilestones(userId);
 
     const activityLog = {
         currentStreak: stats.streak,
         totalActiveDays,
-        dailyVideosCompleted: dailyVideosCount || 0,
+        dailyVideosCompleted: dailyMilestones.maxCount,
     };
 
     // C. Fetch Current DB State
@@ -114,12 +100,32 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
 
     // E. Execute Updates (UNLOCKS)
     if (toUnlock.length > 0) {
-        const updates = toUnlock.map((id) => ({
-            user_id: userId,
-            achievement_id: id,
-            unlocked_at: new Date().toISOString(),
-            is_celebrated: false,
-        }));
+        const updates = toUnlock.map((id) => {
+            // daily_progress başarımları için gerçek başarılma tarihini kullan
+            let unlockDate = new Date().toISOString();
+
+            // Gece Nöbetçisi (5+ video) - ilk kez 5+ video izlenen gün
+            if (id === "special-01" && dailyMilestones.first5Date) {
+                unlockDate = new Date(dailyMilestones.first5Date).toISOString();
+            }
+            // Zihinsel Maraton (10+ video) - ilk kez 10+ video izlenen gün
+            if (id === "special-02" && dailyMilestones.first10Date) {
+                unlockDate = new Date(dailyMilestones.first10Date)
+                    .toISOString();
+            }
+            // Sönmeyen Meşale (7 gün seri) - ilk kez 7 günlük streak tamamlandığı gün
+            if (id === "special-03" && streakMilestones.first7StreakDate) {
+                unlockDate = new Date(streakMilestones.first7StreakDate)
+                    .toISOString();
+            }
+
+            return {
+                user_id: userId,
+                achievement_id: id,
+                unlocked_at: unlockDate,
+                is_celebrated: false,
+            };
+        });
 
         await supabase.from("user_achievements").upsert(updates, {
             onConflict: "user_id,achievement_id",

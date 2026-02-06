@@ -115,14 +115,14 @@ export const FocusHubCard = () => {
     <EfficiencyModal
       title="Öğrenme Akışı Analizi"
       trigger={
-        <div className="h-full w-full">
+        <div className="h-full w-full cursor-pointer">
           <GlassCard className="h-full flex flex-col p-6">
             <CardHeader 
               icon={Target}
               iconColor="text-emerald-400"
               iconBg="bg-emerald-500/10"
               title="Öğrenme Akışı"
-              subtitle="Video hızı ve çalışma süresi oranı (Multiplier). İdeal: 1.0x"
+              subtitle="Video hızı ve çalışma süresi oranı. İdeal: 1.0x"
               action={<Maximize2 className="w-5 h-5 text-muted-foreground/30 hover:text-white transition-colors" />}
             />
             
@@ -220,7 +220,7 @@ export const LearningLoadCard = () => {
     <EfficiencyModal
       title="Odaklanma Trendi"
       trigger={
-        <div className="h-full w-full">
+        <div className="h-full w-full cursor-pointer">
           <GlassCard className="h-full flex flex-col p-6">
             <CardHeader 
               icon={BookOpen}
@@ -257,7 +257,7 @@ export const PracticeCenterCard = () => {
     <EfficiencyModal
       title="Pratik Merkezi İstatistikleri"
       trigger={
-        <div className="h-full w-full">
+        <div className="h-full w-full cursor-pointer">
           <GlassCard className="h-full flex flex-col p-6">
             <CardHeader 
               icon={Zap}
@@ -294,7 +294,7 @@ export const MasteryNavigatorCard = () => {
     <EfficiencyModal
       title="Ders Ustalığı ve İlerleme"
       trigger={
-        <div className="h-full w-full">
+        <div className="h-full w-full cursor-pointer">
           <GlassCard className="h-full flex flex-col p-6 overflow-hidden">
             <CardHeader 
               icon={LayoutGrid}
@@ -376,13 +376,18 @@ export const ConsistencyHeatmapCard = () => {
 
 // 6. Recent Activities Container
 export const RecentActivitiesContainer = () => {
-  const { loading, recentSessions } = useEfficiencyData();
+  const { loading, recentSessions, focusPowerWeek, focusPowerMonth, focusPowerAll } = useEfficiencyData();
 
   if (loading) return <GlassCard className="h-full"><LoadingState /></GlassCard>;
 
   return (
     <div className="h-full w-full">
-      <RecentActivitiesCard sessions={recentSessions} />
+      <RecentActivitiesCard 
+            sessions={recentSessions} 
+            focusPowerWeek={focusPowerWeek}
+            focusPowerMonth={focusPowerMonth}
+            focusPowerAll={focusPowerAll}
+      />
     </div>
   );
 };

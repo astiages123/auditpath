@@ -21,6 +21,17 @@ import { cn } from "@/shared/lib/core/utils";
 
 import { type Course } from "@/shared/lib/core/client-db";
 
+// Normalize category names to database slugs for consistent matching
+function normalizeCategorySlug(rawName: string): string {
+  const slugMap: Record<string, string> = {
+    "EKONOMİ": "EKONOMI",
+    "HUKUK": "HUKUK",
+    "MUHASEBE VE MALİYE": "MUHASEBE_MALIYE",
+    "GENEL YETENEK VE İNGİLİZCE": "GENEL_YETENEK",
+  };
+  return slugMap[rawName] || rawName;
+}
+
 interface CategoryCardProps {
   id: string;
   name: string;
@@ -90,7 +101,8 @@ export function CategoryCard({
   const { triggerCategoryCelebration, revokeCategoryCelebration } = useCelebration();
 
   const categoryName = name.split(" (")[0];
-  const catStats = stats.categoryProgress[categoryName] || stats.categoryProgress[name];
+  const normalizedSlug = normalizeCategorySlug(categoryName);
+  const catStats = stats.categoryProgress[normalizedSlug] || stats.categoryProgress[categoryName] || stats.categoryProgress[name];
 
   const displayCompletedVideos = catStats?.completedVideos ?? initialCompletedVideos;
   const displayTotalVideos = courses.reduce((acc, course) => acc + (course.total_videos || 0), 0);

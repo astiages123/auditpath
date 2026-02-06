@@ -8,6 +8,7 @@ export type GuildType =
     | "GENEL_YETENEK"
     | "HYBRID"
     | "SPECIAL"
+    | "TITLES"
     | "MASTERY";
 
 export interface GuildInfo {
@@ -60,6 +61,13 @@ export const GUILDS: Record<GuildType, GuildInfo> = {
         name: "Kadim İmtihanlar ve Hakikat Meclisi",
         description: "Quiz Ustalık Nişanları",
         color: "oklch(0.6 0.25 320)", // Parlak Büyücü Moru
+    },
+    TITLES: {
+        id: "TITLES",
+        name: "Unvanlar",
+        description:
+            "Yüce Disiplin ve Adanmışlık Zihinsel dayanıklılık ve süreklilik mühürleri",
+        color: "oklch(0.75 0.18 120)", // Yeşil tonu (Örnek) - User didn't specify color, picking a distinct one or reusing similar style
     },
 };
 
@@ -446,7 +454,7 @@ export const ACHIEVEMENTS: Achievement[] = [
     },
     {
         id: "special-07",
-        title: "Yüce Üstad (Archmage)",
+        title: "Yüce Üstad",
         motto:
             "Tüm mühürler toplandı, tüm isimler öğrenildi. Sen artık yaşayan bir efsanesin.",
         imagePath: "/badges/special-07.webp",
@@ -462,7 +470,7 @@ export const ACHIEVEMENTS: Achievement[] = [
         motto:
             "Bilginin krallığından uzakta, sislerin içinde yolunu arıyorsun.",
         imagePath: "/ranks/rank1.webp",
-        guild: "SPECIAL",
+        guild: "TITLES",
         requirement: { type: "all_progress", percentage: 0 },
         order: 29,
     },
@@ -472,7 +480,7 @@ export const ACHIEVEMENTS: Achievement[] = [
         motto:
             "Kadim metinleri kopyalayarak bilgeliğin izlerini sürmeye başladın.",
         imagePath: "/ranks/rank2.webp",
-        guild: "SPECIAL",
+        guild: "TITLES",
         requirement: { type: "all_progress", percentage: 25 },
         order: 30,
     },
@@ -482,7 +490,7 @@ export const ACHIEVEMENTS: Achievement[] = [
         motto:
             "Bilgi krallığının sınırlarını koruyor, cehaletin gölgeleriyle savaşıyorsun.",
         imagePath: "/ranks/rank3.webp",
-        guild: "SPECIAL",
+        guild: "TITLES",
         requirement: { type: "all_progress", percentage: 50 },
         order: 31,
     },
@@ -492,7 +500,7 @@ export const ACHIEVEMENTS: Achievement[] = [
         motto:
             "Görünmeyeni görüyor, bilinmeyeni biliyorsun. Hikmetin ışığı sensin.",
         imagePath: "/ranks/rank4.webp",
-        guild: "SPECIAL",
+        guild: "TITLES",
         requirement: { type: "all_progress", percentage: 75 },
         order: 32,
     },
@@ -515,11 +523,15 @@ export function getAchievementsByGuild(): Map<GuildType, Achievement[]> {
 interface CategoryProgress {
     completedVideos: number;
     totalVideos: number;
+    completedHours: number;
+    totalHours: number;
 }
 
 interface ProgressStats {
     completedVideos: number;
     totalVideos: number;
+    completedHours: number;
+    totalHours: number;
     categoryProgress: Record<string, CategoryProgress>;
 }
 
@@ -570,22 +582,25 @@ function isAchievementUnlocked(
     switch (req.type) {
         case "category_progress": {
             const cat = stats.categoryProgress[req.category];
-            return cat && cat.totalVideos > 0
-                ? (cat.completedVideos / cat.totalVideos) * 100 >=
+            // Saat bazlı hesaplama kullan (UI ile tutarlı)
+            return cat && cat.totalHours > 0
+                ? (cat.completedHours / cat.totalHours) * 100 >=
                     req.percentage
                 : false;
         }
         case "multi_category_progress": {
             return req.categories.every((c) => {
                 const p = stats.categoryProgress[c.category];
-                return p && p.totalVideos > 0
-                    ? (p.completedVideos / p.totalVideos) * 100 >= c.percentage
+                // Saat bazlı hesaplama kullan (UI ile tutarlı)
+                return p && p.totalHours > 0
+                    ? (p.completedHours / p.totalHours) * 100 >= c.percentage
                     : false;
             });
         }
         case "all_progress": {
-            return stats.totalVideos > 0
-                ? (stats.completedVideos / stats.totalVideos) * 100 >=
+            // Saat bazlı hesaplama kullan (UI ile tutarlı)
+            return stats.totalHours > 0
+                ? (stats.completedHours / stats.totalHours) * 100 >=
                     req.percentage
                 : false;
         }
@@ -601,15 +616,28 @@ function isAchievementUnlocked(
     }
 }
 
+// Kategori slug'larını kullanıcı dostu isimlere dönüştür
+function getCategoryDisplayName(slug: string): string {
+    const displayNames: Record<string, string> = {
+        "HUKUK": "Hukuk",
+        "EKONOMI": "Ekonomi",
+        "MUHASEBE_MALIYE": "Muhasebe ve Maliye",
+        "GENEL_YETENEK": "Genel Yetenek",
+    };
+    return displayNames[slug] || slug;
+}
+
 export function getRequirementDescription(
     requirement: RequirementType,
 ): string {
     switch (requirement.type) {
         case "category_progress":
-            return `${requirement.category} öğretilerinde %${requirement.percentage} aydınlanma`;
+            return `${
+                getCategoryDisplayName(requirement.category)
+            } öğretilerinde %${requirement.percentage} aydınlanma`;
         case "multi_category_progress":
             return requirement.categories.map((c) =>
-                `${c.category} %${c.percentage}`
+                `${getCategoryDisplayName(c.category)} %${c.percentage}`
             ).join(" + ");
         case "all_progress":
             return `Tüm ilimlerde %${requirement.percentage} ilerleme`;

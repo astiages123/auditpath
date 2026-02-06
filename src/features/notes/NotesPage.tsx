@@ -8,6 +8,7 @@ import rehypeRaw from "rehype-raw";
 import "katex/dist/katex.min.css";
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
+import mermaid from 'mermaid';
 import { ArrowLeft, Loader2, BookOpen, AlertCircle, Copy, Check, ChevronUp } from "lucide-react";
 import {
     getCourseTopics,
@@ -37,7 +38,7 @@ const stripManualNumbers = (text: string): string => {
 };
 
 const slugify = (text: string) => {
-    return stripManualNumbers(text)
+    return text
         .toString()
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '')
@@ -87,6 +88,86 @@ const removeFirstBulb = (node: React.ReactNode): React.ReactNode => {
 
 // --- Custom Components ---
 
+// Mermaid initialization
+mermaid.initialize({
+    startOnLoad: false,
+    theme: 'dark',
+    themeVariables: {
+        primaryColor: '#f59e0b',
+        primaryTextColor: '#fff',
+        primaryBorderColor: '#555',
+        lineColor: '#888',
+        secondaryColor: '#1a1a1a',
+        tertiaryColor: '#1a1a1a',
+        background: '#ffffff',
+        mainBkg: '#1a1a1a',
+        fontFamily: 'Poppins, system-ui, sans-serif',
+    },
+    flowchart: {
+        htmlLabels: true,
+        curve: 'basis',
+    },
+});
+
+// Mermaid Diagram Component
+const MermaidDiagram = memo(({ code }: { code: string }) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [svg, setSvg] = useState<string>('');
+    const [error, setError] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const renderDiagram = async () => {
+            if (!code.trim()) return;
+            
+            try {
+                setIsLoading(true);
+                setError(null);
+                const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
+                const { svg: renderedSvg } = await mermaid.render(id, code);
+                setSvg(renderedSvg);
+            } catch (err) {
+                console.error('Mermaid render error:', err);
+                setError('Diyagram render edilemedi');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        renderDiagram();
+    }, [code]);
+
+    if (isLoading) {
+        return (
+            <div className="my-8 rounded-xl border border-border/50 bg-[#0d1117] p-8 flex items-center justify-center">
+                <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                <span className="ml-3 text-white/90">Diyagram yükleniyor...</span>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="my-8 rounded-xl border border-destructive/50 bg-destructive/10 p-6">
+                <div className="flex items-center gap-2 text-destructive mb-2">
+                    <AlertCircle className="w-5 h-5" />
+                    <span className="font-medium">{error}</span>
+                </div>
+                <pre className="text-xs text-white/90 overflow-x-auto">{code}</pre>
+            </div>
+        );
+    }
+
+    return (
+        <div 
+            ref={containerRef}
+            className="my-8 p-6 rounded-xl overflow-x-auto flex justify-center [&_svg]:max-w-full"
+            dangerouslySetInnerHTML={{ __html: svg }}
+        />
+    );
+});
+MermaidDiagram.displayName = 'MermaidDiagram';
+
 const CodeBlock = ({ inline, className, children, ...props }: { inline?: boolean } & React.HTMLAttributes<HTMLElement>) => {
     const match = /language-(\w+)/.exec(className || '');
     const [copied, setCopied] = useState(false);
@@ -98,6 +179,7 @@ const CodeBlock = ({ inline, className, children, ...props }: { inline?: boolean
         setTimeout(() => setCopied(false), 2000);
     };
 
+    // Handle inline code
     if (inline || !match) {
         return (
             <code 
@@ -109,6 +191,11 @@ const CodeBlock = ({ inline, className, children, ...props }: { inline?: boolean
         );
     }
 
+    // Handle Mermaid diagrams
+    if (match[1] === 'mermaid') {
+        return <MermaidDiagram code={code} />;
+    }
+
     return (
         <div className="relative my-8 rounded-xl overflow-hidden border border-border/50 shadow-lg bg-[#0d1117] group">
             <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-white/5">
@@ -118,13 +205,13 @@ const CodeBlock = ({ inline, className, children, ...props }: { inline?: boolean
                         <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
                         <span className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
                     </span>
-                    <span className="ml-2 text-xs text-muted-foreground font-mono opacity-70">
+                    <span className="ml-2 text-xs text-white/90 font-mono opacity-70">
                         {match[1]}
                     </span>
                 </div>
                 <button
                     onClick={handleCopy}
-                    className="p-1.5 rounded-md hover:bg-white/10 text-muted-foreground hover:text-white transition-colors"
+                    className="p-1.5 rounded-md hover:bg-white/10 text-white/90 hover:text-white transition-colors"
                 >
                     {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
@@ -142,30 +229,18 @@ const CodeBlock = ({ inline, className, children, ...props }: { inline?: boolean
 const markdownComponents = {
     h1: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => {
         const text = getText(children);
-        const subId = slugify(stripManualNumbers(text));
-        return (
-            <h3 id={subId} {...props} className="scroll-mt-32 mt-12 mb-6 text-2xl font-heading font-bold tracking-tight text-amber-400 text-left">
-                {children}
-            </h3>
-        );
+        const subId = slugify(text);
+        return <h3 id={subId} {...props}>{children}</h3>;
     },
     h2: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => {
         const text = getText(children);
-        const subId = slugify(stripManualNumbers(text));
-        return (
-            <h4 id={subId} {...props} className="scroll-mt-32 mt-10 mb-4 text-xl font-heading font-semibold text-amber-400 text-left">
-                {children}
-            </h4>
-        );
+        const subId = slugify(text);
+        return <h4 id={subId} {...props}>{children}</h4>;
     },
     h3: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => {
         const text = getText(children);
-        const subId = slugify(stripManualNumbers(text));
-        return (
-             <h5 id={subId} {...props} className="scroll-mt-32 mt-6 mb-3 text-lg font-heading font-semibold text-amber-400">
-                {children}
-            </h5>
-        );
+        const subId = slugify(text);
+        return <h5 id={subId} {...props}>{children}</h5>;
     },
     p: ({ node, ...props }: { node?: { children?: { type: string; tagName?: string }[] } } & React.HTMLAttributes<HTMLParagraphElement>) => {
         const hasImage = node?.children?.some(
@@ -175,25 +250,22 @@ const markdownComponents = {
         return (
             <Component 
                 {...props} 
-                className={cn(
-                    "leading-8 mb-6 text-muted-foreground text-base font-sans font-normal",
-                    hasImage && "flex flex-col items-center my-1"
-                )}
+                className={cn(hasImage && "flex flex-col items-center my-1")}
             />
         );
     },
     img: ({ ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => (
-        <span className="block my-1 w-full text-center">
+        <span className="block my-1 mb-6 w-full text-center">
             <Zoom classDialog="custom-zoom-modal">
                 <img 
                     {...props} 
-                    className="rounded-xl border border-border/50 shadow-lg w-full max-h-[600px] object-contain bg-background/50 hover:scale-[1.01] transition-transform duration-500 cursor-zoom-in"
+                    className="rounded-xl border border-border/50 py-5 shadow-lg w-full max-h-[600px] object-contain bg-accent/10 hover:scale-[1.01] transition-transform duration-500 cursor-zoom-in"
                     loading="lazy"
                     alt={props.alt || "Görsel"}
                 />
             </Zoom>
              {props.alt && props.alt !== "Görsel" && (
-                <span className="block text-center text-sm text-muted-foreground mt-3 italic">
+                <span className="image-caption">
                     {props.alt}
                 </span>
             )}
@@ -207,15 +279,15 @@ const markdownComponents = {
             const cleanChildren = removeFirstBulb(children);
             
             return (
-                <div className="my-8 rounded-xl shadow-sm bg-primary/5 border border-primary/20 flex items-start gap-4 p-5">
+                <div className="callout-box">
                     <div className="shrink-0 bg-primary/10 rounded-lg p-2 flex items-center justify-center">
                         <span className="text-xl leading-none">💡</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                        <div className="font-heading text-[11px] font-bold uppercase tracking-widest text-primary/80 mb-2">
+                        <div className="callout-label">
                             İNCELEME / ÖRNEK
                         </div>
-                        <div className="font-sans text-foreground/90 leading-relaxed text-base [&>p:last-child]:mb-0">
+                        <div className="callout-content">
                             {cleanChildren}
                         </div>
                     </div>
@@ -224,51 +296,46 @@ const markdownComponents = {
         }
 
         return (
-            <blockquote 
-                {...props} 
-                className="my-8 pl-6 border-l-4 border-amber-500 text-lg text-foreground/80 bg-muted/30 py-4 pr-4 rounded-r-lg"
-            >
+            <blockquote {...props}>
                 {children}
             </blockquote>
         );
     },
-    ul: ({ ...props }: React.HTMLAttributes<HTMLUListElement>) => <ul {...props} className="list-outside ml-6 mb-8 space-y-2 marker:text-primary/70" />,
-    ol: ({ ...props }: React.OlHTMLAttributes<HTMLOListElement>) => <ol {...props} className="list-decimal list-outside ml-6 mb-8 space-y-2 marker:text-primary/70 font-medium" />,
+    ul: ({ ...props }: React.HTMLAttributes<HTMLUListElement>) => <ul {...props} />,
+    ol: ({ ...props }: React.OlHTMLAttributes<HTMLOListElement>) => <ol {...props} />,
     li: ({ children, ...props }: React.LiHTMLAttributes<HTMLLIElement>) => (
-        <li {...props} className="pl-1 leading-relaxed text-muted-foreground text-base">
+        <li {...props}>
             {children}
         </li>
     ),
+    strong: ({ children, ...props }: React.HTMLAttributes<HTMLElement>) => (
+        <strong {...props}>
+            {children}
+        </strong>
+    ),
     code: CodeBlock,
     table: ({ ...props }: React.TableHTMLAttributes<HTMLTableElement>) => (
-        <div className="overflow-x-auto my-8 border border-border/50 rounded-xl shadow-md">
-            <table {...props} className="w-full text-sm text-left" />
+        <div className="overflow-x-auto my-10 border border-primary/10 rounded-2xl shadow-xl shadow-primary/5 overflow-hidden bg-card/30 backdrop-blur-sm">
+            <table {...props} />
         </div>
     ),
-    thead: ({ ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => (
-        <thead {...props} className="bg-muted/50 border-b border-border/50" />
-    ),
-    th: ({ ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) => (
-        <th {...props} className="px-6 py-4 font-heading font-semibold text-foreground" />
-    ),
-    tr: ({ ...props }: React.HTMLAttributes<HTMLTableRowElement>) => (
-        <tr {...props} className="border-b border-border/40 hover:bg-muted/30 transition-colors last:border-0" />
-    ),
-    td: ({ ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) => (
-        <td {...props} className="px-6 py-4 align-top text-muted-foreground" />
-    ),
+    thead: ({ ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => <thead {...props} />,
+    th: ({ ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) => <th {...props} />,
+    tr: ({ ...props }: React.HTMLAttributes<HTMLTableRowElement>) => <tr {...props} />,
+    td: ({ ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) => <td {...props} />,
 };
 
 // Memoized section component to prevent expensive Markdown re-renders
 const MarkdownSection = memo(({ chunk, components }: { chunk: CourseTopic, components: typeof markdownComponents }) => {
     const sectionId = slugify(chunk.section_title);
     return (
-        <div id={sectionId} className="chunk-container scroll-mt-24 mb-20 last:mb-0">
+        <div id={sectionId} className="chunk-container scroll-mt-24 mb-16 last:mb-0">
              {(chunk.sequence_order === 0 || chunk.sequence_order === undefined) && chunk.section_title && (
-                <div className="mb-12 pb-6 border-b border-border/40 text-center">
-                    <h2 className="text-3xl font-heading font-bold tracking-tight text-amber-500">
+                <div className="section-header mb-5 text-center">
+                    <h2>
                         {chunk.section_title}
                     </h2>
+                    <div className="mt-4 w-20 h-1.5 bg-primary/40 rounded-full mx-auto" />
                </div>
             )}
             <article className="prose prose-lg prose-slate dark:prose-invert max-w-none">
@@ -313,13 +380,18 @@ export default function NotesPage() {
             
             const sections = mainContent.querySelectorAll('[id]');
             let current = "";
-            const offset = 200; // Offset for detection
+            const offset = 250; // Increased offset for better early detection
+
+            // Create a set of IDs that are actually in our ToC for faster lookup
+            const tocIds = new Set(toc.map(item => item.id));
 
             sections.forEach((section) => {
+                const id = section.getAttribute("id");
+                if (!id || !tocIds.has(id)) return;
+
                 const rect = section.getBoundingClientRect();
                 if (rect.top <= offset) {
-                    const id = section.getAttribute("id");
-                    if (id) current = id;
+                    current = id;
                 }
             });
             
@@ -331,7 +403,35 @@ export default function NotesPage() {
         window.addEventListener("scroll", handleScroll, { passive: true });
         handleScroll();
         return () => window.removeEventListener("scroll", handleScroll);
-    }, [activeSection]);
+    }, [activeSection, toc]);
+
+    // Save scroll position
+    useEffect(() => {
+        const saveScroll = () => {
+            if (!courseSlug) return;
+            localStorage.setItem(`scroll_pos_${courseSlug}`, window.scrollY.toString());
+        };
+
+        window.addEventListener("scroll", saveScroll, { passive: true });
+        return () => window.removeEventListener("scroll", saveScroll);
+    }, [courseSlug]);
+
+    // Restore scroll position
+    useEffect(() => {
+        if (!loading && chunks.length > 0 && courseSlug) {
+            const savedScroll = localStorage.getItem(`scroll_pos_${courseSlug}`);
+            if (savedScroll) {
+                // Use a small timeout to ensure DOM is fully rendered/painted
+                const timer = setTimeout(() => {
+                    window.scrollTo({
+                        top: parseInt(savedScroll),
+                        behavior: 'instant' as ScrollBehavior // Use instant to avoid jumping on load
+                    });
+                }, 100);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [loading, chunks.length, courseSlug]);
 
     const handleToCClick = (id: string) => {
         // Lock scroll detection
@@ -382,10 +482,6 @@ export default function NotesPage() {
                     // Clean special Unicode space characters that cause KaTeX/Markdown issues
                     content = content.replace(/[\u2000-\u200b]/g, ' ');
 
-                    // Clean manual numbers from headings in the content before rendering
-                    // # 1. Introduction -> # Introduction
-                    content = content.replace(/^(#+)\s+[\d.]+\s+/gm, '$1 '); 
-                    
                     // Replace [GÖRSEL: X] markers with actual markdown images
                     const usedIndices = new Set<number>();
                     imageUrls.forEach((url, idx) => {
@@ -405,7 +501,7 @@ export default function NotesPage() {
 
                     return {
                         ...chunk,
-                        section_title: stripManualNumbers(chunk.section_title),
+                        section_title: chunk.section_title,
                         content: content
                     };
                 });
@@ -479,7 +575,7 @@ export default function NotesPage() {
         return (
             <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                <p className="text-muted-foreground font-medium animate-pulse">Ders içeriği hazırlanıyor...</p>
+                <p className="text-white font-medium animate-pulse">Ders içeriği hazırlanıyor...</p>
             </div>
         );
     }
@@ -491,7 +587,7 @@ export default function NotesPage() {
                     <AlertCircle className="w-10 h-10 text-destructive" />
                 </div>
                 <h1 className="text-2xl font-bold mb-2">Eyvah!</h1>
-                <p className="text-muted-foreground max-w-md mb-8">{error}</p>
+                <p className="text-white max-w-md mb-8">{error}</p>
                 <Button asChild>
                     <Link to="/courses">Derslere Dön</Link>
                 </Button>
@@ -500,7 +596,7 @@ export default function NotesPage() {
     }
 
     return (
-        <div className="min-h-screen bg-background text-foreground font-sans selection:bg-primary/20">
+        <div className="min-h-screen bg-background text-white font-sans selection:bg-primary/20">
             {/* Reading Progress */}
             <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-50">
                  <div 
@@ -515,7 +611,7 @@ export default function NotesPage() {
                      <div className="flex items-center gap-3 overflow-hidden">
                         <Link 
                             to="/courses" 
-                            className="p-2 -ml-2 rounded-full hover:bg-muted/60 transition-colors text-muted-foreground hover:text-foreground"
+                            className="p-2 -ml-2 rounded-full hover:bg-muted/60 transition-colors text-white hover:text-foreground"
                         >
                             <ArrowLeft className="w-5 h-5" />
                         </Link>
@@ -523,7 +619,7 @@ export default function NotesPage() {
                             <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80">
                                 Ders Notu
                             </span>
-                            <h1 className="text-sm font-semibold truncate text-foreground/90">
+                            <h1 className="text-sm font-semibold truncate text-white">
                                 {courseName}
                             </h1>
                         </div>
@@ -546,30 +642,6 @@ export default function NotesPage() {
                             components={markdownComponents} 
                         />
                     ))}
-
-                    {/* Completion Footer */}
-                    <div className="mt-24 pt-12 border-t border-border/50">
-                        <div className="bg-muted/20 rounded-2xl p-8 border border-border/50 flex flex-col sm:flex-row items-center justify-between gap-8 text-center sm:text-left">
-                             <div className="flex flex-col sm:flex-row items-center gap-6">
-                                <div className="p-4 rounded-full bg-primary/10 text-primary">
-                                    <BookOpen className="w-8 h-8" />
-                                </div>
-                                <div className="space-y-1">
-                                    <h3 className="font-heading font-bold text-xl text-foreground">Tebrikler!</h3>
-                                    <p className="text-muted-foreground">Bu bölümü tamamladınız.</p>
-                                </div>
-                            </div>
-                            <Button 
-                                size="lg"
-                                className="rounded-xl px-8 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30" 
-                                asChild
-                            >
-                                <Link to={`/quiz/${courseSlug}`}>
-                                    Sınava Git
-                                </Link>
-                            </Button>
-                        </div>
-                    </div>
                 </main>
             </div>
 

@@ -15,6 +15,17 @@ import {
 } from "@/shared/lib/utils/date-utils";
 import coursesData from "@/features/courses/data/courses.json";
 
+// Normalize category names to database slugs for consistent matching
+function normalizeCategorySlug(rawName: string): string {
+  const slugMap: Record<string, string> = {
+    "EKONOMİ": "EKONOMI",
+    "HUKUK": "HUKUK",
+    "MUHASEBE VE MALİYE": "MUHASEBE_MALIYE",
+    "GENEL YETENEK VE İNGİLİZCE": "GENEL_YETENEK",
+  };
+  return slugMap[rawName] || rawName;
+}
+
 export type Category = Database["public"]["Tables"]["categories"]["Row"] & {
   courses: Course[];
 };
@@ -224,10 +235,11 @@ export async function getUserStats(userId: string) {
 
           const catName = courseToCategoryMap[video.course_id];
           if (catName) {
-            if (!categoryProgress[catName]) {
+            const normalizedCatName = normalizeCategorySlug(catName);
+            if (!categoryProgress[normalizedCatName]) {
               // Initialize with totals from categories array
               const cat = categories.find((c) => c.name === catName);
-              categoryProgress[catName] = {
+              categoryProgress[normalizedCatName] = {
                 completedVideos: 0,
                 completedHours: 0,
                 totalVideos: cat?.courses.reduce((sum, c) =>
@@ -235,8 +247,8 @@ export async function getUserStats(userId: string) {
                 totalHours: cat?.total_hours || 0,
               };
             }
-            categoryProgress[catName].completedVideos += 1;
-            categoryProgress[catName].completedHours += durationHours;
+            categoryProgress[normalizedCatName].completedVideos += 1;
+            categoryProgress[normalizedCatName].completedHours += durationHours;
           }
         }
       }
@@ -515,13 +527,22 @@ export async function getUnlockedAchievements(
     }));
 }
 
-export async function unlockAchievement(userId: string, achievementId: string) {
+export async function unlockAchievement(
+  userId: string,
+  achievementId: string,
+  achievedAt?: string, // Opsiyonel: Gerçek başarılma tarihi (ISO string veya YYYY-MM-DD)
+) {
+  // achievedAt verilmişse onu kullan, yoksa şu anki zamanı kullan
+  const unlockDate = achievedAt
+    ? new Date(achievedAt).toISOString()
+    : new Date().toISOString();
+
   const { error } = await supabase
     .from("user_achievements")
     .upsert({
       user_id: userId,
       achievement_id: achievementId,
-      unlocked_at: new Date().toISOString(),
+      unlocked_at: unlockDate,
       is_celebrated: false,
     });
 
@@ -545,6 +566,161 @@ export async function getTotalActiveDays(userId: string) {
     }-${String(date.getDate()).padStart(2, "0")}`;
   }));
   return days.size;
+}
+
+/**
+ * Kullanıcının günlük video tamamlama verilerini analiz eder.
+ * Her eşik değeri (5, 10) için ilk ulaşılan tarihi döndürür.
+ */
+export interface DailyVideoMilestones {
+  maxCount: number; // Tüm zamanlardaki maksimum günlük video sayısı
+  first5Date: string | null; // İlk kez 5+ video izlenen gün
+  first10Date: string | null; // İlk kez 10+ video izlenen gün
+}
+
+export async function getDailyVideoMilestones(
+  userId: string,
+): Promise<DailyVideoMilestones> {
+  const { data, error } = await supabase
+    .from("video_progress")
+    .select("completed_at")
+    .eq("user_id", userId)
+    .eq("completed", true)
+    .not("completed_at", "is", null);
+
+  if (error || !data || data.length === 0) {
+    return { maxCount: 0, first5Date: null, first10Date: null };
+  }
+
+  // Günlere göre grupla
+  const dailyCounts: Record<string, number> = {};
+  for (const row of data) {
+    if (!row.completed_at) continue;
+    const date = new Date(row.completed_at);
+    const dayKey = `${date.getFullYear()}-${
+      String(date.getMonth() + 1).padStart(2, "0")
+    }-${String(date.getDate()).padStart(2, "0")}`;
+    dailyCounts[dayKey] = (dailyCounts[dayKey] || 0) + 1;
+  }
+
+  // Tarihleri sırala (en eskiden en yeniye)
+  const sortedDates = Object.keys(dailyCounts).sort();
+
+  let maxCount = 0;
+  let first5Date: string | null = null;
+  let first10Date: string | null = null;
+
+  for (const dateKey of sortedDates) {
+    const count = dailyCounts[dateKey];
+    if (count > maxCount) maxCount = count;
+
+    // İlk kez 5+ video
+    if (first5Date === null && count >= 5) {
+      first5Date = dateKey;
+    }
+    // İlk kez 10+ video
+    if (first10Date === null && count >= 10) {
+      first10Date = dateKey;
+    }
+  }
+
+  return { maxCount, first5Date, first10Date };
+}
+
+/**
+ * Kullanıcının streak verilerini analiz eder.
+ * Hafta sonu (Cumartesi veya Pazar) izni kuralını uygular.
+ * İlk 7 günlük streak'e ulaşılan tarihi döndürür.
+ */
+export interface StreakMilestones {
+  maxStreak: number;
+  first7StreakDate: string | null; // İlk kez 7+ günlük streak tamamlandığı gün
+}
+
+export async function getStreakMilestones(
+  userId: string,
+): Promise<StreakMilestones> {
+  // Video progress'den aktif günleri al
+  const { data, error } = await supabase
+    .from("video_progress")
+    .select("completed_at")
+    .eq("user_id", userId)
+    .eq("completed", true)
+    .not("completed_at", "is", null);
+
+  if (error || !data || data.length === 0) {
+    return { maxStreak: 0, first7StreakDate: null };
+  }
+
+  // Benzersiz aktif günleri topla
+  const activeDaysSet = new Set<string>();
+  for (const row of data) {
+    if (!row.completed_at) continue;
+    const date = new Date(row.completed_at);
+    const dayKey = `${date.getFullYear()}-${
+      String(date.getMonth() + 1).padStart(2, "0")
+    }-${String(date.getDate()).padStart(2, "0")}`;
+    activeDaysSet.add(dayKey);
+  }
+
+  const activeDays = [...activeDaysSet].sort();
+
+  if (activeDays.length === 0) {
+    return { maxStreak: 0, first7StreakDate: null };
+  }
+
+  // Streak hesapla - hafta sonu izni kuralıyla
+  // Cumartesi (6) veya Pazar (0) günlerinde 1 gün boşluk streak'i bozmaz
+  let maxStreak = 0;
+  let currentStreak = 0;
+  let first7StreakDate: string | null = null;
+  let lastActiveDate: Date | null = null;
+
+  for (const dayKey of activeDays) {
+    const currentDate = new Date(dayKey + "T12:00:00Z"); // UTC ortası için
+
+    if (lastActiveDate === null) {
+      currentStreak = 1;
+    } else {
+      const diffMs = currentDate.getTime() - lastActiveDate.getTime();
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        // Ardışık gün
+        currentStreak++;
+      } else if (diffDays === 2) {
+        // 1 gün boşluk var - hafta sonu izni mi kontrol et
+        const skippedDate = new Date(
+          lastActiveDate.getTime() + 24 * 60 * 60 * 1000,
+        );
+        const skippedDay = skippedDate.getDay(); // 0=Pazar, 6=Cumartesi
+
+        if (skippedDay === 0 || skippedDay === 6) {
+          // Hafta sonu izni - streak devam
+          currentStreak++;
+        } else {
+          // Hafta içi boşluk - streak kırıldı
+          currentStreak = 1;
+        }
+      } else {
+        // 2+ gün boşluk - streak kırıldı
+        currentStreak = 1;
+      }
+    }
+
+    if (currentStreak > maxStreak) {
+      maxStreak = currentStreak;
+    }
+
+    // İlk 7 günlük streak
+    if (first7StreakDate === null && currentStreak >= 7) {
+      first7StreakDate = dayKey;
+    }
+
+    lastActiveDate = currentDate;
+  }
+
+  return { maxStreak, first7StreakDate };
 }
 
 export async function getDailySessionCount(userId: string) {

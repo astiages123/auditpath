@@ -443,7 +443,6 @@ async function processPage(
                             display_content: displayText, // New column
                             chunk_order: chunkOrder, // Page order
                             sequence_order: i, // Chunk index within page
-                            is_ready: true,
                             status: "SYNCED",
                             word_count:
                                 chunkText.split(/\s+/).filter(Boolean).length,

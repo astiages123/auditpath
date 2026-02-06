@@ -211,9 +211,10 @@ export function useOptimisticProgress() {
 
         if (!categoryData) return old;
 
-        const categoryName =
+        const rawCategoryName =
           categoryData.category.split(" (")[0].split(". ")[1] ||
           categoryData.category;
+        const categoryName = normalizeCategorySlug(rawCategoryName);
 
         const existingCatStats = old.categoryProgress[categoryName] || {
           completedVideos: 0,

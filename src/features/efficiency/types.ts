@@ -25,3 +25,12 @@ export type LearningLoad = {
     videoMinutes: number;
     extraStudyMinutes: number; // Test solving, reading etc.
 };
+
+export type FocusPowerPoint = {
+    date: string; // Day or Month label
+    originalDate: string; // ISO Date for sorting
+    score: number;
+    workMinutes: number;
+    breakMinutes: number;
+    pauseMinutes: number;
+};

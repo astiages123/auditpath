@@ -412,11 +412,61 @@ td > .katex {
   padding: 2px 4px;
   margin: -2px -4px;
 }
-/* Notes Page Counters & Typography Overrides */
+/* Notes Page & Markdown Styling */
+.prose {
+  max-width: none !important;
+  color: var(--foreground);
+}
 
-/* List Hierarchy & Typography */
+.prose h1, .prose h2, .prose h3, .prose h4 {
+  font-family: var(--font-heading);
+  scroll-margin-top: 8rem;
+  text-align: left;
+}
+
+/* Section Main Title (H2 in code, but used as section header) */
+.section-header h2 {
+  @apply text-4xl font-heading font-black tracking-tight text-white selection:bg-primary/30;
+  filter: drop-shadow(0 2px 8px oklch(0 0 0 / 0.15));
+}
+
+/* Base Headings Style for Prose */
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5,
+.prose h1 strong, .prose h2 strong, .prose h3 strong, .prose h4 strong, .prose h5 strong {
+  color: oklch(0.85 0.14 158);
+}
+
+/* Markdown H1 (Article h3) - Major Section */
+.prose h3 {
+  @apply scroll-mt-28 mt-16 mb-8 text-3xl font-bold tracking-tight;
+}
+
+/* Markdown H2 (Article h4) - Sub Section */
+.prose h4 {
+  @apply scroll-mt-28 mt-12 mb-6 text-2xl font-bold;
+}
+
+/* Markdown H3 (Article h5) - Minor Section */
+.prose h5 {
+  @apply scroll-mt-28 mt-10 mb-5 text-xl font-semibold;
+}
+
+.prose p {
+  @apply leading-relaxed mb-6 text-white text-[16px] font-sans font-normal;
+}
+
 .prose ul {
-  list-style-type: disc;
+  @apply list-disc list-outside ml-6 mb-5 space-y-3;
+}
+
+.prose ul::marker,
+.prose ul li::marker {
+  color: oklch(0.7 0.12 158); /* Softer forest-mint */
+  font-size: 1.1em;
+}
+
+.prose ul ul, .prose ul ol, .prose ol ul, .prose ol ol {
+  @apply space-y-1 mt-2 mb-2;
 }
 
 .prose ul ul {
@@ -427,84 +477,64 @@ td > .katex {
   list-style-type: square;
 }
 
+.prose ol {
+  @apply list-decimal list-outside ml-6 mb-4 font-medium space-y-3;
+}
+
+.prose ol::marker {
+  color: oklch(0.7 0.12 158);
+  @apply font-bold;
+}
+
 .prose li {
-  @apply mb-1 leading-relaxed;
+  @apply pl-1 leading-relaxed text-white text-[16px];
 }
 
-.prose li strong {
-  @apply font-semibold text-foreground/90;
+.prose blockquote {
+  @apply my-8 pl-6 border-l-4 border-primary/40 text-lg text-white bg-muted/30 py-4 pr-4 rounded-r-lg italic;
 }
 
-/* Modern Table Styles */
+.prose blockquote p {
+  @apply mb-0 text-white;
+}
+
+/* Custom Callout Box Styling */
+.callout-box {
+  @apply my-8 rounded-xl shadow-sm bg-primary/5 border border-primary/20 flex items-start gap-4 p-5;
+}
+
+.callout-label {
+  @apply font-heading text-[11px] font-bold uppercase tracking-widest text-primary/80 mb-2;
+}
+
+.callout-content {
+  @apply font-sans text-white leading-relaxed text-base [&>p:last-child]:mb-0;
+}
+
+/* Table Styling within Prose */
 .prose table {
-  @apply w-full border-collapse my-8 rounded-xl overflow-hidden shadow-sm;
+  @apply w-full text-sm text-left border-collapse m-0;
 }
 
 .prose thead {
-  @apply bg-muted/60 border-b border-border/40;
+  @apply bg-accent/10 border-b border-primary/20;
 }
 
 .prose th {
-  @apply px-6 py-4 font-heading font-semibold text-foreground text-left align-middle;
+  @apply px-6 py-4 font-heading text-[12px] font-bold uppercase tracking-wider text-white align-middle;
+}
+
+.prose tr {
+  @apply border-b border-primary/5 even:bg-accent/3 hover:bg-primary/5 transition-colors duration-200 last:border-0;
 }
 
 .prose td {
-  @apply px-6 py-4 border-b border-border/30 text-muted-foreground align-top;
+  @apply px-6 py-4 align-top text-white leading-relaxed;
 }
 
-.prose tr:nth-child(even) {
-  @apply bg-muted/20;
-}
-
-.prose tr:hover {
-  @apply bg-muted/40 transition-colors;
-}
-
-
-/* Improved Counters */
-.chunk-container {
-    counter-reset: h3-counter;
-}
-
-.chunk-container h3 {
-    counter-increment: h3-counter;
-    counter-reset: h4-counter;
-}
-
-.chunk-container h3::before {
-    content: counter(h3-counter) ".";
-    @apply tabular-nums mr-1.5;
-    font-family: inherit;
-    color: inherit;
-    font-size: inherit;
-    font-weight: inherit;
-}
-
-.chunk-container h4 {
-    counter-increment: h4-counter;
-    counter-reset: h5-counter;
-}
-
-.chunk-container h4::before {
-    content: counter(h3-counter) "." counter(h4-counter) ".";
-    @apply tabular-nums mr-1.5;
-    font-family: inherit;
-    color: inherit;
-    font-size: inherit;
-    font-weight: inherit;
-}
-
-.chunk-container h5 {
-    counter-increment: h5-counter;
-}
-
-.chunk-container h5::before {
-    content: counter(h3-counter) "." counter(h4-counter) "." counter(h5-counter) ".";
-    @apply tabular-nums mr-1.5;
-    font-family: inherit;
-    color: inherit;
-    font-size: inherit;
-    font-weight: inherit;
+/* Image Captions */
+.image-caption {
+  @apply block text-center text-sm text-white mt-3 italic;
 }
 
 /* Custom Zoom Modal Overlay */

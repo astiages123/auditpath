@@ -11,6 +11,7 @@ import {
   Landmark,
   Globe,
   Crown,
+  Award,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -48,6 +49,7 @@ const GUILD_ICONS: Record<GuildType, React.ReactNode> = {
   HYBRID: <Scroll className="w-5 h-5" />, // Parşömen (Kadim İlimler)
   SPECIAL: <Sparkles className="w-5 h-5" />, // Işıltı (Büyü/Ustalık)
   MASTERY: <Crown className="w-5 h-5" />, // Taç (Ustalık/Liderlik)
+  TITLES: <Award className="w-5 h-5" />, // Ödül/Madalya (Unvanlar)
 };
 
 export function AchievementsRoom() {
@@ -90,8 +92,11 @@ export function AchievementsRoom() {
     setIsModalOpen(true);
   }, []);
 
-  const totalAchievements = ACHIEVEMENTS.length;
-  const unlockedCount = unlockedAchievements.size;
+  const totalAchievements = ACHIEVEMENTS.filter(a => a.guild !== "TITLES").length;
+  const unlockedCount = Array.from(unlockedAchievements.keys()).filter(id => {
+    const achievement = ACHIEVEMENTS.find(a => a.id === id);
+    return achievement && achievement.guild !== "TITLES";
+  }).length;
   const completionRate = Math.round((unlockedCount / totalAchievements) * 100);
 
   return (
