@@ -9,7 +9,7 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/shared/components/ui/dialog";
-import { Achievement, GUILDS, getRequirementDescription } from "@/shared/lib/domain/achievements";
+import { Achievement, GUILDS, getRequirementDescription } from "@/features/achievements/lib/achievements";
 
 interface SealDetailModalProps {
     achievement: Achievement | null;

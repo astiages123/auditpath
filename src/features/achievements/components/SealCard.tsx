@@ -2,7 +2,7 @@
 
 // import Image from "next/image";
 import { Lock } from "lucide-react";
-import { Achievement, getRequirementDescription, GUILDS } from "@/shared/lib/domain/achievements";
+import { Achievement, getRequirementDescription, GUILDS } from "@/features/achievements/lib/achievements";
 
 interface SealCardProps {
     achievement: Achievement;

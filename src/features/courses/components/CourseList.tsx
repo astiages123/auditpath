@@ -18,7 +18,7 @@ import { formatDuration } from "@/shared/lib/core/utils";
 import { useProgress } from "@/shared/hooks/useProgress";
 import { CourseStatsModal } from "./CourseStatsModal";
 import { QuizModal } from "@/features/quiz";
-import { getCourseIcon } from "@/shared/lib/domain/course-icons";
+import { getCourseIcon } from "@/features/courses/lib/course-icons";
 import { useCelebration } from "@/shared/hooks/useCelebration";
 import { type Course } from "@/shared/lib/core/client-db";
 

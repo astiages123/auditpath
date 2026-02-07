@@ -1,4 +1,4 @@
-import { ConceptMapItem } from "@/features/quiz/modules/ai/mapping";
+import { type ConceptMapItem } from "@/features/quiz/tasks/generate-questions";
 
 export interface MasteryNode {
     id: string; // concept title
@@ -45,10 +45,12 @@ export function calculateMasteryChains(
         // Chain = This node >= 80% AND All Prereqs >= 85%
         let isChainComplete = false;
         if (score >= 80) {
-            const prereqsMet = concept.prerequisites.every((pTitle) => {
-                const pScore = masteryMap[pTitle] || 0;
-                return pScore >= 85;
-            });
+            const prereqsMet = (concept.prerequisites || []).every(
+                (pTitle: string) => {
+                    const pScore = masteryMap[pTitle] || 0;
+                    return pScore >= 85;
+                },
+            );
             // If no prereqs, it's a "Root" chain start? Or trivial chain?
             // "Varsa, tüm prerequisites..." -> If none, maybe it counts as chain start if mastered?
             // Let's assume for now: if no prereqs, it's just a mastered node, not a "chain" per se unless it connects to something.
@@ -66,7 +68,7 @@ export function calculateMasteryChains(
             label: concept.baslik,
             mastery: score,
             status,
-            prerequisites: concept.prerequisites,
+            prerequisites: concept.prerequisites || [],
             isChainComplete,
             depth, // This might need a separate pass to calculate topological depth
             data: {

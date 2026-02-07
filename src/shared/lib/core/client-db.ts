@@ -6,7 +6,7 @@ import {
   calculatePauseCount,
   calculateSessionTotals,
   getCycleCount,
-} from "@/shared/lib/domain/pomodoro-utils";
+} from "@/features/pomodoro/lib/pomodoro-utils";
 import { calculateQuota } from "@/shared/lib/core/quota";
 import {
   formatDateKey,

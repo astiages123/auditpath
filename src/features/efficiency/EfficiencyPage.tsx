@@ -6,9 +6,9 @@ import {
   PracticeCenterCard,
   ConsistencyHeatmapCard,
   RecentActivitiesContainer,
-} from './EfficiencyCards';
-import { RecentQuizzesCard } from './RecentQuizzesCard';
-import { CognitiveInsightsCard } from './CognitiveInsightsCard';
+} from './components/EfficiencyCards';
+import { RecentQuizzesCard } from './components/RecentQuizzesCard';
+import { CognitiveInsightsCard } from './components/CognitiveInsightsCard';
 
 const EfficiencyPage = () => {
   return (

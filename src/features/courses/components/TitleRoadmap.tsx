@@ -5,7 +5,7 @@ import { Sparkles, Trophy, Lock, CheckCircle2, ChevronRight } from "lucide-react
 import { cn } from "@/shared/lib/core/utils";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card";
-import { RANKS } from "@/shared/lib/domain/rank-icons";
+import { RANKS } from "@/features/achievements/lib/rank-icons";
 
 interface TitleRoadmapProps {
     watchedVideos: number;

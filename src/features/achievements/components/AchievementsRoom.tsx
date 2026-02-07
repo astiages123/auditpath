@@ -24,7 +24,7 @@ import {
   GuildType,
   getAchievementsByGuild,
   ACHIEVEMENTS,
-} from "@/shared/lib/domain/achievements";
+} from "@/features/achievements/lib/achievements";
 import { useProgress } from "@/shared/hooks/useProgress";
 import { SealCard } from "./SealCard";
 import { SealDetailModal } from "./SealDetailModal";

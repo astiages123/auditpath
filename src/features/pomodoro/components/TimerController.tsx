@@ -8,7 +8,7 @@ import {
     getLatestActiveSession, 
     updatePomodoroHeartbeat
 } from '@/shared/lib/core/client-db';
-import { calculateSessionTotals } from '@/shared/lib/domain/pomodoro-utils';
+import { calculateSessionTotals } from '@/features/pomodoro/lib/pomodoro-utils';
 import { toast } from 'sonner';
 import { env } from '@/config/env';
 

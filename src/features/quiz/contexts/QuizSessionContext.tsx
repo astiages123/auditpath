@@ -1,7 +1,5 @@
 import { createContext, useContext } from 'react';
-import { SessionInfo, QuotaInfo, ReviewItem } from '@/features/quiz/modules/srs';
-import { CourseStats } from '@/features/quiz/services/srs-stats';
-import { QuizResponseType } from '@/features/quiz/modules/srs/srs-algorithm';
+import { SessionInfo, QuotaInfo, ReviewItem, CourseStats, QuizResponseType } from '@/features/quiz/tasks/manage-mastery';
 
 export interface QuizSessionState {
   isInitialized: boolean;

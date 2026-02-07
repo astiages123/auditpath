@@ -1,0 +1,149 @@
+export type CourseCategory = "SKILL_BASED" | "SCENARIO_BASED" | "THEORY_BASED";
+
+export interface BloomStrategy {
+    bloomLevel: "knowledge" | "application" | "analysis";
+    baseInstruction: string;
+}
+
+const CATEGORY_MAPPINGS: Record<string, CourseCategory> = {
+    // SKILL_BASED
+    "İngilizce": "SKILL_BASED",
+    "Sözel Mantık": "SKILL_BASED",
+    "Matematik": "SKILL_BASED",
+    "Sayısal Mantık": "SKILL_BASED",
+    "İstatistik": "SKILL_BASED",
+
+    // SCENARIO_BASED
+    "Medeni Hukuk": "SCENARIO_BASED",
+    "Borçlar Hukuku": "SCENARIO_BASED",
+    "Ticaret Hukuku": "SCENARIO_BASED",
+    "Bankacılık Hukuku": "SCENARIO_BASED",
+    "İcra ve İflas Hukuku": "SCENARIO_BASED",
+    "Türk Ceza Kanunu": "SCENARIO_BASED",
+    "İş Hukuku": "SCENARIO_BASED",
+    "Medeni Usul Hukuku": "SCENARIO_BASED",
+    "Genel Muhasebe": "SCENARIO_BASED",
+    "Banka Muhasebesi": "SCENARIO_BASED",
+    "Finans Matematiği": "SCENARIO_BASED",
+    "Finansal Yönetim": "SCENARIO_BASED",
+
+    // THEORY_BASED
+    "Mikro İktisat": "THEORY_BASED",
+    "Makro İktisat": "THEORY_BASED",
+    "Para, Banka ve Kredi": "THEORY_BASED",
+    "Uluslararası Ticaret": "THEORY_BASED",
+    "Türkiye Ekonomisi": "THEORY_BASED",
+    "Maliye Teorisi": "THEORY_BASED",
+    "İşletme Yönetimi": "THEORY_BASED",
+    "Pazarlama Yönetimi": "THEORY_BASED",
+};
+
+// Fallback for unknown courses
+const DEFAULT_CATEGORY: CourseCategory = "THEORY_BASED";
+
+export function getCourseCategory(courseName: string): CourseCategory {
+    return CATEGORY_MAPPINGS[courseName] || DEFAULT_CATEGORY;
+}
+
+// Bloom level distributions (Modulo 10)
+export const CATEGORY_DISTRIBUTIONS: Record<
+    CourseCategory,
+    ("knowledge" | "application" | "analysis")[]
+> = {
+    SKILL_BASED: [
+        "knowledge",
+        "application",
+        "application",
+        "application",
+        "application",
+        "application",
+        "application",
+        "analysis",
+        "analysis",
+        "analysis",
+    ],
+    SCENARIO_BASED: [
+        "knowledge",
+        "knowledge",
+        "application",
+        "application",
+        "application",
+        "application",
+        "application",
+        "application",
+        "analysis",
+        "analysis",
+    ],
+    THEORY_BASED: [
+        "knowledge",
+        "knowledge",
+        "application",
+        "application",
+        "application",
+        "application",
+        "application",
+        "application",
+        "analysis",
+        "analysis",
+    ],
+};
+
+// Instruction templates based on Bloom Level
+export const BLOOM_INSTRUCTIONS = {
+    knowledge:
+        "Temel bilgi ve kavrama düzeyinde, akademik bir dille hazırlanmış öğretici bir soru üret. Tanım, ilke veya kavramsal özelliklere odaklan.",
+    application:
+        "Kuru tanım sorma. Kullanıcının günlük hayatta karşılaşabileceği, isimler ve olaylar içeren spesifik bir 'vaka/senaryo' (vignette) kurgula.",
+    analysis:
+        "Metindeki iki farklı kavramı karşılaştıran veya bir kuralın istisnasını sorgulayan 'muhakeme' odaklı bir soru üret. Soru, 'X olursa Y nasıl etkilenir?' gibi neden-sonuç zinciri kurdurmalıdır.",
+};
+
+import { type ConceptMapItem } from "../analysis";
+
+/**
+ * Determine bloom level strategy based on concept and index
+ */
+export function determineNodeStrategy(
+    index: number,
+    wordCount: number,
+    concept?: ConceptMapItem,
+    courseName: string = "",
+): {
+    bloomLevel: "knowledge" | "application" | "analysis";
+    instruction: string;
+} {
+    // 1. Taksonomi Önceliği: Eğer concept içinde seviye varsa, ona güven.
+    if (concept?.seviye) {
+        if (concept.seviye === "Analiz") {
+            return {
+                bloomLevel: "analysis",
+                instruction: BLOOM_INSTRUCTIONS.analysis,
+            };
+        }
+        if (concept.seviye === "Uygulama") {
+            return {
+                bloomLevel: "application",
+                instruction: BLOOM_INSTRUCTIONS.application,
+            };
+        }
+        if (concept.seviye === "Bilgi") {
+            return {
+                bloomLevel: "knowledge",
+                instruction: BLOOM_INSTRUCTIONS.knowledge,
+            };
+        }
+    }
+
+    // 2. Kategori Bazlı Strateji (Modulo 10)
+    const category = getCourseCategory(courseName);
+    const distribution = CATEGORY_DISTRIBUTIONS[category];
+
+    // Döngüsel indeks (0-9)
+    const cycleIndex = index % 10;
+    const targetBloomLevel = distribution[cycleIndex];
+
+    return {
+        bloomLevel: targetBloomLevel,
+        instruction: BLOOM_INSTRUCTIONS[targetBloomLevel],
+    };
+}

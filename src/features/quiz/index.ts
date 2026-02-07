@@ -1,15 +1,24 @@
-export * from './components/QuizCard';
-export * from './components/QuizEngine';
-export * from './components/QuizTimer';
-export { QuizModal } from './components/QuizModal';
-export { useQuiz } from './hooks/useQuiz';
-export { QuizSessionContext } from './contexts/QuizSessionContext';
-export { QuizSessionProvider } from './contexts/QuizSessionProvider';
-export * from './services/quiz-api';
-export { 
-  generateQuestionsForChunk, 
-  generateFollowUpSingle,
-  type GenerationLog,
-  type LogStep
-} from './services/quiz-generator';
-export { checkAndTriggerBackgroundGeneration } from './services/background-generator';
+/**
+ * Quiz Feature Root
+ *
+ * This is the main entry point for the quiz feature.
+ * It exports functionalities from various tasks:
+ * - solve-quiz: UI and interaction for answering questions
+ * - generate-questions: AI-driven question generation
+ * - manage-mastery: SRS logic and mastery statistics
+ */
+
+// Tasks
+export * from "./tasks/solve-quiz";
+export * from "./tasks/generate-questions";
+export * from "./tasks/manage-mastery";
+
+// Shared
+export * from "./shared/types";
+
+// Contexts
+export { QuizSessionContext } from "./contexts/QuizSessionContext";
+export { QuizSessionProvider } from "./contexts/QuizSessionProvider";
+
+// Background tasks
+export { checkAndTriggerBackgroundGeneration } from "./tasks/generate-questions/background-orchestrator";

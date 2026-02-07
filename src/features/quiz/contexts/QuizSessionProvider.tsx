@@ -26,13 +26,11 @@ import {
   getQuotaInfo,
   getReviewQueue,
   getContentVersion,
+  getCourseStats,
   type ReviewItem,
-} from '@/features/quiz/modules/srs/session-manager';
-import { toast } from 'sonner';
-import {
   type QuizResponseType,
-} from '@/features/quiz/modules/srs/srs-algorithm';
-import { getCourseStats } from '@/features/quiz/services/srs-stats';
+} from '@/features/quiz/tasks/manage-mastery';
+import { toast } from 'sonner';
 
 const STORAGE_PREFIX = 'auditpath_quiz_session_';
 
