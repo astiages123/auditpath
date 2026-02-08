@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from 'react';
-import { useTimerStore } from '@/shared/store/useTimerStore';
+import { useTimerStore } from '@/shared/store/use-timer-store';
 import { useAuth } from '@/features/auth';
 import { 
     getDailySessionCount, 

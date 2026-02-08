@@ -1,55 +1,54 @@
 /**
  * Quota Calculation Logic
  *
- * Merkezi kota hesaplama mantığı.
- * Client (Browser) ve Server (Edge Function) tarafından ortak kullanılır.
+ * Scientific Master Set (Bilimsel Master Set)
+ * Dynamic quota calculation based on meaningful word count and density score.
  */
-
-export const MIN_QUOTA = 8;
-export const MAX_QUOTA = 30;
 
 /**
- * Calculate quota based on word count and concept density
+ * Calculate dynamic quota based on meaningful word count and density score.
+ *
+ * Logic:
+ * 1. Base = meaningfulWordCount / 45
+ * 2. Multiplier:
+ *    - densityScore > 0.55 => 1.2x
+ *    - densityScore < 0.25 => 0.8x
+ *    - else => 1.0x
+ * 3. Clamp result: Min 3, No Upper Limit.
  */
-export function calculateQuota(
-    wordCount: number,
-    conceptCount: number,
-    sectionCount: number = 0,
+export function calculateDynamicQuota(
+    meaningfulWordCount: number,
+    densityScore: number,
 ): {
     total: number;
     antrenman: number;
     arsiv: number;
     deneme: number;
+    // Telemetry / Debug info
     baseCount: number;
     multiplier: number;
-    conceptDensity: number;
-    // Legacy aliases
-    antrenmanCount: number;
-    arsivCount: number;
-    denemeCount: number;
 } {
-    // 1. Base Count Calculation (Square Root Formula)
-    // Formula: Target = floor(sqrt(Word Count / 3))
-    // Min 5, Max 30
-    const calculatedBase = Math.floor(Math.sqrt(Math.max(0, wordCount) / 3));
-    const baseCount = Math.min(MAX_QUOTA, Math.max(MIN_QUOTA, calculatedBase));
+    // 1. Base Calculation
+    const safeWordCount = Math.max(0, meaningfulWordCount);
+    // Base = meaningfulWordCount / 45
+    const rawBase = safeWordCount / 45;
 
-    // 2. Concept Density Multiplier
-    const safeWordCount = wordCount > 0 ? wordCount : 1;
-    const conceptDensity = conceptCount / safeWordCount;
-
+    // 2. Multiplier Calculation based on Density Score
     let multiplier = 1.0;
-    if (conceptDensity < 0.02) multiplier = 0.8; // Sparse
-    else if (conceptDensity > 0.05) multiplier = 1.2; // Dense (Slightly reduced from 1.3)
+    if (densityScore > 0.55) {
+        multiplier = 1.2;
+    } else if (densityScore < 0.25) {
+        multiplier = 0.8;
+    }
 
-    // 3. Section Multiplier
-    const rawSectionMultiplier = 1 + (sectionCount * 0.05);
-    const sectionMultiplier = Math.min(1.5, rawSectionMultiplier);
+    // 3. Final Calculation & Clamping
+    const adjustedCount = rawBase * multiplier;
+    // Lower bound 3, No Upper Bound
+    const finalCount = Math.max(3, Math.round(adjustedCount));
 
-    // Antrenman Quota: Base * Multipliers
-    const antrenman = Math.ceil(baseCount * multiplier * sectionMultiplier);
-
-    // Archive & Simulation Quotas: 25% of Antrenman each
+    // Distribute quota
+    // Antrenman is the main target.
+    const antrenman = finalCount;
     const arsiv = Math.ceil(antrenman * 0.25);
     const deneme = Math.ceil(antrenman * 0.25);
 
@@ -58,12 +57,7 @@ export function calculateQuota(
         antrenman,
         arsiv,
         deneme,
-        // Aliases for compatibility with legacy code
-        antrenmanCount: antrenman,
-        arsivCount: arsiv,
-        denemeCount: deneme,
-        baseCount: Math.round(baseCount * 100) / 100,
+        baseCount: rawBase,
         multiplier,
-        conceptDensity: Math.round(conceptDensity * 10000) / 10000,
     };
 }

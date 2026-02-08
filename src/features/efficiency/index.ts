@@ -1,10 +1,4 @@
 export { default as EfficiencyPage } from "./EfficiencyPage";
-export * from "./components/EfficiencyCards";
-export * from "./components/RecentQuizzesCard";
-export * from "./components/CognitiveInsightsCard";
-export * from "./components/EfficiencyCharts";
-export * from "./components/EfficiencyModals";
-export * from "./components/EfficiencyHeatmap";
-export * from "./components/RecentActivitiesCard";
+export * from "./components";
 export * from "./hooks/useEfficiencyData";
 export * from "./hooks/useEfficiencyLogic";

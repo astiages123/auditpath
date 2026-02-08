@@ -7,7 +7,7 @@ import {
   calculateSessionTotals,
   getCycleCount,
 } from "@/features/pomodoro/lib/pomodoro-utils";
-import { calculateQuota } from "@/shared/lib/core/quota";
+
 import {
   formatDateKey,
   getVirtualDate,
@@ -1552,7 +1552,7 @@ export async function getCourseTopics(
   const { data: chunks, error: chunksError } = await supabase
     .from("note_chunks")
     .select(
-      "id, created_at, course_id, course_name, section_title, chunk_order, sequence_order, content, display_content, word_count, status, last_synced_at, metadata",
+      "id, created_at, course_id, course_name, section_title, chunk_order, sequence_order, content, display_content, word_count, status, last_synced_at, metadata, density_score, meaningful_word_count, target_count",
     )
     .eq("course_id", courseId)
     .order("chunk_order", { ascending: true })
@@ -1569,8 +1569,11 @@ export async function getCourseTopics(
 
   return chunks.map((c) => ({
     ...c,
+    density_score: c.density_score ??
+      (c.metadata as { density_score?: number })?.density_score ??
+      null,
     questionCount: 0,
-  }));
+  })) as CourseTopic[];
 }
 
 export async function getCourseIdBySlug(slug: string): Promise<string | null> {
@@ -1635,23 +1638,29 @@ export async function getTopicCompletionStatus(
   courseId: string,
   topic: string,
 ): Promise<TopicCompletionStats> {
-  // 1. Get Chunk Info for Quota Calculation
+  // 1. Get Chunk Info
   const { data: chunk } = await supabase
     .from("note_chunks")
-    .select("id, word_count, metadata")
+    .select("id, word_count, metadata, target_count")
     .eq("course_id", courseId)
     .eq("section_title", topic)
     .limit(1)
     .maybeSingle();
 
-  let quota = { total: 0, antrenmanCount: 0, arsivCount: 0, denemeCount: 0 };
+  let quota = { total: 0, antrenman: 0, arsiv: 0, deneme: 0 };
 
   if (chunk) {
-    const wordCount = chunk.word_count || 0;
-    const metadata = chunk.metadata as Record<string, unknown> || {};
-    const conceptMap = (metadata.concept_map as unknown[]) || [];
-    const conceptCount = conceptMap.length;
-    quota = calculateQuota(wordCount, conceptCount);
+    // Use target_count from database directly
+    const antrenman = chunk.target_count ?? 0;
+    const arsiv = Math.ceil(antrenman * 0.25);
+    const deneme = Math.ceil(antrenman * 0.25);
+
+    quota = {
+      total: antrenman + arsiv + deneme,
+      antrenman,
+      arsiv,
+      deneme,
+    };
   }
 
   // 2. Get all questions for this topic
@@ -1667,20 +1676,20 @@ export async function getTopicCompletionStatus(
       completed: false,
       antrenman: {
         solved: 0,
-        total: quota.antrenmanCount,
-        quota: quota.antrenmanCount,
+        total: quota.antrenman,
+        quota: quota.antrenman,
         existing: 0,
       },
       deneme: {
         solved: 0,
-        total: quota.denemeCount,
-        quota: quota.denemeCount,
+        total: quota.deneme,
+        quota: quota.deneme,
         existing: 0,
       },
       arsiv: {
         solved: 0,
-        total: quota.arsivCount,
-        quota: quota.arsivCount,
+        total: quota.arsiv,
+        quota: quota.arsiv,
         existing: 0,
       },
       mistakes: { solved: 0, total: 0, existing: 0 },
@@ -1732,20 +1741,20 @@ export async function getTopicCompletionStatus(
       completed: false,
       antrenman: {
         solved: 0,
-        total: quota.antrenmanCount,
-        quota: quota.antrenmanCount,
+        total: quota.antrenman,
+        quota: quota.antrenman,
         existing: existingCounts.antrenman,
       },
       deneme: {
         solved: 0,
-        total: quota.denemeCount,
-        quota: quota.denemeCount,
+        total: quota.deneme,
+        quota: quota.deneme,
         existing: existingCounts.deneme,
       },
       arsiv: {
         solved: 0,
-        total: quota.arsivCount,
-        quota: quota.arsivCount,
+        total: quota.arsiv,
+        quota: quota.arsiv,
         existing: existingCounts.arsiv,
       },
       mistakes: {
@@ -1776,11 +1785,11 @@ export async function getTopicCompletionStatus(
 
   // Final Totals - taking the max of Quota vs Existing to ensure we don't show "10/5"
   const antrenmanTotal = Math.max(
-    quota.antrenmanCount,
+    quota.antrenman,
     existingCounts.antrenman,
   );
-  const denemeTotal = Math.max(quota.denemeCount, existingCounts.deneme);
-  const arsivTotal = Math.max(quota.arsivCount, existingCounts.arsiv);
+  const denemeTotal = Math.max(quota.deneme, existingCounts.deneme);
+  const arsivTotal = Math.max(quota.arsiv, existingCounts.arsiv);
   const mistakesTotal = existingCounts.mistakes;
 
   // Completed logic: Consistent with the UI display
@@ -1792,19 +1801,19 @@ export async function getTopicCompletionStatus(
     antrenman: {
       solved: solvedCounts.antrenman,
       total: antrenmanTotal,
-      quota: quota.antrenmanCount,
+      quota: quota.antrenman,
       existing: existingCounts.antrenman,
     },
     deneme: {
       solved: solvedCounts.deneme,
       total: denemeTotal,
-      quota: quota.denemeCount,
+      quota: quota.deneme,
       existing: existingCounts.deneme,
     },
     arsiv: {
       solved: solvedCounts.arsiv,
       total: arsivTotal,
-      quota: quota.arsivCount,
+      quota: quota.arsiv,
       existing: existingCounts.arsiv,
     },
     mistakes: {

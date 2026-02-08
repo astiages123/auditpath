@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_generation_logs: {
+        Row: {
+          cached_tokens: number | null
+          completion_tokens: number | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          latency_ms: number | null
+          model: string
+          prompt_tokens: number | null
+          provider: string
+          status: number | null
+          total_tokens: number | null
+          usage_type: string | null
+          user_id: string
+        }
+        Insert: {
+          cached_tokens?: number | null
+          completion_tokens?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          model: string
+          prompt_tokens?: number | null
+          provider: string
+          status?: number | null
+          total_tokens?: number | null
+          usage_type?: string | null
+          user_id: string
+        }
+        Update: {
+          cached_tokens?: number | null
+          completion_tokens?: number | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          latency_ms?: number | null
+          model?: string
+          prompt_tokens?: number | null
+          provider?: string
+          status?: number | null
+          total_tokens?: number | null
+          usage_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -196,54 +244,57 @@ export type Database = {
       }
       note_chunks: {
         Row: {
-          attempts: number | null
           chunk_order: number
           content: string
           course_id: string
           course_name: string
           created_at: string | null
+          density_score: number | null
           display_content: string | null
-          error_message: string | null
           id: string
           last_synced_at: string | null
+          meaningful_word_count: number | null
           metadata: Json | null
           section_title: string
           sequence_order: number
           status: Database["public"]["Enums"]["chunk_generation_status"] | null
+          target_count: number | null
           word_count: number | null
         }
         Insert: {
-          attempts?: number | null
           chunk_order: number
           content: string
           course_id: string
           course_name: string
           created_at?: string | null
+          density_score?: number | null
           display_content?: string | null
-          error_message?: string | null
           id?: string
           last_synced_at?: string | null
+          meaningful_word_count?: number | null
           metadata?: Json | null
           section_title: string
           sequence_order?: number
           status?: Database["public"]["Enums"]["chunk_generation_status"] | null
+          target_count?: number | null
           word_count?: number | null
         }
         Update: {
-          attempts?: number | null
           chunk_order?: number
           content?: string
           course_id?: string
           course_name?: string
           created_at?: string | null
+          density_score?: number | null
           display_content?: string | null
-          error_message?: string | null
           id?: string
           last_synced_at?: string | null
+          meaningful_word_count?: number | null
           metadata?: Json | null
           section_title?: string
           sequence_order?: number
           status?: Database["public"]["Enums"]["chunk_generation_status"] | null
+          target_count?: number | null
           word_count?: number | null
         }
         Relationships: [
@@ -418,42 +469,6 @@ export type Database = {
         }
         Relationships: []
       }
-      sync_logs: {
-        Row: {
-          deleted_count: number | null
-          details: Json | null
-          error_count: number | null
-          finished_at: string | null
-          id: string
-          processed_count: number | null
-          skipped_count: number | null
-          started_at: string | null
-          status: string | null
-        }
-        Insert: {
-          deleted_count?: number | null
-          details?: Json | null
-          error_count?: number | null
-          finished_at?: string | null
-          id?: string
-          processed_count?: number | null
-          skipped_count?: number | null
-          started_at?: string | null
-          status?: string | null
-        }
-        Update: {
-          deleted_count?: number | null
-          details?: Json | null
-          error_count?: number | null
-          finished_at?: string | null
-          id?: string
-          processed_count?: number | null
-          skipped_count?: number | null
-          started_at?: string | null
-          status?: string | null
-        }
-        Relationships: []
-      }
       user_achievements: {
         Row: {
           achievement_id: string
@@ -606,7 +621,6 @@ export type Database = {
           id: string
           updated_at: string | null
           username: string | null
-          xp: number | null
         }
         Insert: {
           created_at?: string
@@ -614,7 +628,6 @@ export type Database = {
           id: string
           updated_at?: string | null
           username?: string | null
-          xp?: number | null
         }
         Update: {
           created_at?: string
@@ -622,7 +635,6 @@ export type Database = {
           id?: string
           updated_at?: string | null
           username?: string | null
-          xp?: number | null
         }
         Relationships: []
       }

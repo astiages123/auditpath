@@ -6,7 +6,7 @@
  */
 
 import { supabase } from "@/shared/lib/core/supabase";
-import { calculateQuota } from "@/shared/lib/core/quota";
+import { calculateDynamicQuota } from "@/shared/lib/core/quota";
 
 import {
   QuestionUsageType,
@@ -91,7 +91,7 @@ export async function getChunkQuotaStatus(
 ): Promise<QuotaStatus | null> {
   const { data: chunk } = await supabase
     .from("note_chunks")
-    .select("id, word_count, metadata, status")
+    .select("id, word_count, metadata, status, meaningful_word_count")
     .eq("id", chunkId)
     .single();
 
@@ -102,10 +102,16 @@ export async function getChunkQuotaStatus(
   const conceptMap = (metadata.concept_map as unknown[]) || [];
   const conceptCount = conceptMap.length;
 
-  // Section Information - metadata üzerinden alınabilirse al, yoksa 1 varsay
-  const sectionCount = (metadata.sections as unknown[])?.length || 1;
+  // Section Information - not used for quota anymore but kept for potential usage
+  // const sectionCount = (metadata.sections as unknown[])?.length || 1;
 
-  const quota = calculateQuota(wordCount, conceptCount, sectionCount);
+  // Get Density Score
+  const densityScore = (metadata.density_score as number) || 1.0;
+  // Get Meaningful Word Count
+  const meaningfulWordCount = (chunk.meaningful_word_count as number) ||
+    wordCount;
+
+  const quota = calculateDynamicQuota(meaningfulWordCount, densityScore);
 
   // Get existing question count
   const { count: usedCount } = await supabase
@@ -118,7 +124,7 @@ export async function getChunkQuotaStatus(
   return {
     used,
     quota: { total: quota.total },
-    wordCount,
+    wordCount: meaningfulWordCount, // Use meaningful count for UI
     conceptCount,
     isFull: used >= quota.total,
     status: chunk.status || "SYNCED",

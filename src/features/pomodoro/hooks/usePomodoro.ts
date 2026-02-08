@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { useTimerStore } from "@/shared/store/useTimerStore";
+import { useTimerStore } from "@/shared/store/use-timer-store";
 import {
   deletePomodoroSession,
   getDailySessionCount,

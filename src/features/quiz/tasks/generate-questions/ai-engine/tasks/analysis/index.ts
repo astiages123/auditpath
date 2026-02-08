@@ -34,28 +34,55 @@ export type ConceptMapResult = z.infer<typeof ConceptMapResponseSchema>;
 export interface AnalysisTaskInput {
     content: string;
     wordCount: number;
+    meaningfulWordCount?: number;
+    densityScore?: number;
+    courseName: string;
+    sectionTitle: string;
 }
 
 // --- Task Implementation ---
 export class AnalysisTask
     extends BaseTask<AnalysisTaskInput, ConceptMapResult> {
-    private calculateTargetCount(wordCount: number): number {
-        const calculated = Math.floor(Math.sqrt(wordCount / 3));
-        return Math.min(12, Math.max(5, calculated));
-    }
-
     async run(
         input: AnalysisTaskInput,
         context?: any,
     ): Promise<TaskResult<ConceptMapResult>> {
-        const targetCount = this.calculateTargetCount(input.wordCount);
+        // Scientific Master Set Logic
+        const meaningfulCount = input.meaningfulWordCount || input.wordCount;
+        const density = input.densityScore || 0.5; // Default average if missing
 
-        this.log(context, "Kavram haritası oluşturuluyor", {
-            wordCount: input.wordCount,
+        // Base = meaningfulWordCount / 45
+        const base = meaningfulCount / 45;
+
+        let multiplier = 1.0;
+        if (density > 0.55) {
+            multiplier = 1.2;
+        } else if (density < 0.25) {
+            multiplier = 0.8;
+        }
+
+        const calculated = base * multiplier;
+        // Lower bound 3 (Aligned with quota.ts), No Max.
+        // The user asked to remove "12 restriction", implying no upper bound.
+        const targetCount = Math.max(3, Math.round(calculated));
+
+        this.log(
+            context,
+            "Kavram haritası hedefleri belirlendi (Scientific Master Set)",
+            {
+                wordCount: input.wordCount,
+                meaningfulCount,
+                density,
+                multiplier,
+                targetCount,
+            },
+        );
+
+        const systemPrompt = ANALYSIS_SYSTEM_PROMPT(
             targetCount,
-        });
-
-        const systemPrompt = ANALYSIS_SYSTEM_PROMPT(targetCount);
+            input.sectionTitle,
+            input.courseName,
+        );
 
         const contextPrompt = PromptArchitect.buildContext(
             PromptArchitect.cleanReferenceImages(input.content),

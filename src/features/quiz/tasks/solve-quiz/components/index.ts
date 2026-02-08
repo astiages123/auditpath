@@ -1,7 +1,7 @@
-export { QuizCard } from "./QuizCard";
-export { QuizEngine } from "./QuizEngine";
-export { QuizTimer } from "./QuizTimer";
-export { QuizModal } from "./QuizModal";
-export { EvidenceCard } from "./EvidenceCard";
-export { GenerateQuestionButton } from "./GenerateQuestionButton";
-export { PostTestDashboard } from "./PostTestDashboard";
+export { QuizCard } from "./ui/QuizCard";
+export { QuizEngine } from "./engine/QuizEngine";
+export { QuizTimer } from "./ui/QuizTimer";
+export { QuizModal } from "./modals/QuizModal";
+export { EvidenceCard } from "./ui/EvidenceCard";
+export { GenerateQuestionButton } from "./ui/GenerateQuestionButton";
+export { PostTestDashboard } from "./engine/PostTestDashboard";

@@ -6,9 +6,9 @@ import {
   PracticeCenterCard,
   ConsistencyHeatmapCard,
   RecentActivitiesContainer,
-} from './components/EfficiencyCards';
-import { RecentQuizzesCard } from './components/RecentQuizzesCard';
-import { CognitiveInsightsCard } from './components/CognitiveInsightsCard';
+  RecentQuizzesCard,
+  CognitiveInsightsCard,
+} from './components';
 
 const EfficiencyPage = () => {
   return (

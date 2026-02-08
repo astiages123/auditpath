@@ -1,6 +1,6 @@
 import { supabase } from "@/shared/lib/core/supabase";
 import { type ConceptMapItem } from "@/features/quiz/tasks/generate-questions";
-import { DebugLogger } from "@/shared/lib/ui/debug-logger";
+import { DebugLogger } from "@/features/quiz/lib/debug-logger";
 import { type Database } from "@/shared/types/supabase";
 
 export interface FailedConceptInfo {

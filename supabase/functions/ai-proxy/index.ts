@@ -29,6 +29,7 @@ interface LogPayload {
   total_tokens?: number;
   cached_tokens?: number;
   usage_type?: string;
+  error_message?: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -169,6 +170,9 @@ Deno.serve(async (req: Request) => {
             status,
             latency_ms: Date.now() - startTime,
             usage_type: usage_type || "unknown_error",
+            error_message: `API Error ${response.status}: ${
+              responseText.substring(0, 500)
+            }`,
           });
         } catch (logError) {
           console.error("[Proxy Log Error - Error Response]", logError);
@@ -214,6 +218,11 @@ Deno.serve(async (req: Request) => {
             status: 200, // Provider returned 200, but content was invalid
             latency_ms: Date.now() - startTime,
             usage_type: usage_type || "json_parse_error",
+            error_message: `JSON Parse Error: ${
+              parseError instanceof Error
+                ? parseError.message
+                : String(parseError)
+            }. Response: ${responseText.substring(0, 200)}`,
           });
         } catch (logError) {
           console.error("[Proxy Log Error - JSON Parse]", logError);
@@ -282,6 +291,7 @@ Deno.serve(async (req: Request) => {
           status: 500,
           latency_ms: Date.now() - startTime,
           usage_type: "proxy_error",
+          error_message: errorMessage,
         });
       } catch (logError) {
         console.error("[Proxy Log Error - Exception]", logError);

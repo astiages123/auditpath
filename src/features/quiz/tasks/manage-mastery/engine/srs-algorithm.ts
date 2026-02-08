@@ -11,7 +11,7 @@
  */
 
 import type { Database } from "@/shared/types/supabase";
-import { DebugLogger } from "@/shared/lib/ui/debug-logger";
+import { DebugLogger } from "@/features/quiz/lib/debug-logger";
 
 // --- Types ---
 export type QuizResponseType =

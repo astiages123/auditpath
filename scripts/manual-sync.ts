@@ -4,6 +4,8 @@ import { NotionToMarkdown } from "notion-to-md";
 import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import pLimit from "p-limit";
+import { spawnSync } from "node:child_process";
+import path from "node:path";
 import type { Database } from "@/shared/types/supabase";
 import type {
     PageObjectResponse,
@@ -146,6 +148,65 @@ n2m.setCustomTransformer("callout", async (block) => {
 });
 
 // --- Helpers ---
+
+/**
+ * Executes the Python density analyzer script for a given text.
+ * Returns density_score, meaningful_word_count and total_word_count.
+ */
+function getDensityFromPython(text: string): {
+    density_score: number;
+    word_count: number;
+    meaningful_word_count: number;
+} {
+    try {
+        const scriptPath = path.join(
+            process.cwd(),
+            "scripts",
+            "core",
+            "density_analyzer.py",
+        );
+
+        const result = spawnSync("python3", [scriptPath], {
+            input: text,
+            encoding: "utf-8",
+        });
+
+        if (result.error) {
+            console.error(
+                "Python script execution error:",
+                result.error.message,
+            );
+            return {
+                density_score: 0,
+                word_count: 0,
+                meaningful_word_count: 0,
+            };
+        }
+
+        if (result.stderr) {
+            console.error("Python stderr:", result.stderr);
+        }
+
+        if (!result.stdout) {
+            return {
+                density_score: 0,
+                word_count: 0,
+                meaningful_word_count: 0,
+            };
+        }
+
+        const output = JSON.parse(result.stdout);
+        // Fallback to 0 if something is missing
+        return {
+            density_score: output.density_score || 0,
+            word_count: output.total_word_count || 0,
+            meaningful_word_count: output.meaningful_word_count || 0,
+        };
+    } catch (err) {
+        console.error("Error in getDensityFromPython:", err);
+        return { density_score: 0, word_count: 0, meaningful_word_count: 0 };
+    }
+}
 
 /**
  * Supabase Storage'a WebP olarak görsel yükler
@@ -418,56 +479,86 @@ async function processPage(
             notion_last_edited_time: lastEditedTimeStr, // Store ISO string
         };
 
-        if (DRY_RUN) {
-            console.log(
-                `[DRY RUN] Would upsert ${chunks.length} chunks for: [${courseId}] ${sectionTitle}`,
-            );
-            return { status: "SYNCED" };
-        } else {
-            // let successCount = 0;
+        for (let i = 0; i < chunks.length; i++) {
+            const chunkObj = chunks[i];
+            const chunkText = chunkObj.content;
+            const displayText = chunkObj.displayContent;
 
-            for (let i = 0; i < chunks.length; i++) {
-                const chunkObj = chunks[i];
-                const chunkText = chunkObj.content;
-                const displayText = chunkObj.displayContent;
+            // --- DENSITY ANALYSIS ---
+            const densityData = getDensityFromPython(chunkText);
+            // ------------------------
 
-                const { error: upsertError } = await supabase.from(
-                    "note_chunks",
-                )
-                    .upsert(
-                        {
-                            course_id: courseId,
-                            course_name: courseName,
-                            section_title: sectionTitle,
-                            content: chunkText,
-                            display_content: displayText, // New column
-                            chunk_order: chunkOrder, // Page order
-                            sequence_order: i, // Chunk index within page
-                            status: "SYNCED",
-                            word_count:
-                                chunkText.split(/\s+/).filter(Boolean).length,
-                            metadata: baseMetadata,
-                        },
-                        {
-                            onConflict:
-                                "course_id,section_title,sequence_order",
-                        },
-                    );
+            // --- TARGET COUNT CALCULATION (Scientific Master Set) ---
+            // Base = meaningfulWordCount / 45
+            // Multipliers: >0.55 density -> 1.2x, <0.25 density -> 0.8x
+            const meaningfulCount = densityData.meaningful_word_count;
+            const density = densityData.density_score;
+            const base = meaningfulCount / 45;
 
-                if (upsertError) {
-                    console.error(
-                        `Upsert error for '${sectionTitle}' (seq: ${i}):`,
-                        upsertError.message,
-                    );
-                    return {
-                        status: "ERROR",
-                        details: upsertError.message,
-                    };
-                }
-                // successCount++;
+            let multiplier = 1.0;
+            if (density > 0.55) {
+                multiplier = 1.2;
+            } else if (density < 0.25) {
+                multiplier = 0.8;
             }
 
-            // Cleanup stale chunks (if any) since we might have fewer chunks now
+            const calculated = base * multiplier;
+            // Min 3, no max limit as requested (Aligned with calculateDynamicQuota)
+            const targetCount = Math.max(3, Math.round(calculated));
+
+            console.log(
+                `  - Chunk ${i}: WordCount=${densityData.word_count}, Meaningful=${meaningfulCount}, Density=${
+                    density.toFixed(2)
+                }, Target=${targetCount}`,
+            );
+            // -----------------------------------------------------
+
+            if (DRY_RUN) {
+                console.log(
+                    `[DRY RUN] Would upsert chunk with target_count=${targetCount}`,
+                );
+                continue;
+            }
+
+            const { error: upsertError } = await supabase.from(
+                "note_chunks",
+            )
+                .upsert(
+                    {
+                        course_id: courseId,
+                        course_name: courseName,
+                        section_title: sectionTitle,
+                        content: chunkText,
+                        display_content: displayText, // New column
+                        chunk_order: chunkOrder, // Page order
+                        sequence_order: i, // Chunk index within page
+                        status: "SYNCED",
+                        density_score: densityData.density_score, // New column from Python
+                        word_count: densityData.word_count, // Updated word count from Python
+                        meaningful_word_count:
+                            densityData.meaningful_word_count, // New column
+                        target_count: targetCount, // New column
+                        metadata: baseMetadata,
+                    } as any,
+                    {
+                        onConflict: "course_id,section_title,sequence_order",
+                    },
+                );
+
+            if (upsertError) {
+                console.error(
+                    `Upsert error for '${sectionTitle}' (seq: ${i}):`,
+                    upsertError.message,
+                );
+                return {
+                    status: "ERROR",
+                    details: upsertError.message,
+                };
+            }
+        }
+
+        // Cleanup stale chunks (if any) since we might have fewer chunks now
+        if (!DRY_RUN) {
             const { error: cleanupError } = await supabase
                 .from("note_chunks")
                 .delete()
@@ -478,9 +569,13 @@ async function processPage(
             if (cleanupError) {
                 console.warn("Error cleaning up stale chunks:", cleanupError);
             }
-
-            return { status: "SYNCED" };
+        } else {
+            console.log(
+                `[DRY RUN] Would cleanup stale chunks for [${courseId}] ${sectionTitle}`,
+            );
         }
+
+        return { status: "SYNCED" };
     } catch (err) {
         console.error(`Error processing page ${page.id}:`, err);
         return { status: "ERROR", details: String(err) };

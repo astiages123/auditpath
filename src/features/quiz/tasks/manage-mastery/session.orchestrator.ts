@@ -15,7 +15,7 @@ import {
   calculateShelfStatus,
   type QuizResponseType,
 } from "./engine/srs-algorithm";
-import { DebugLogger } from "@/shared/lib/ui/debug-logger";
+import { DebugLogger } from "@/features/quiz/lib/debug-logger";
 import {
   type FailedConceptInfo,
   getPrerequisiteQuestions,

@@ -40,11 +40,14 @@ export class GenerationPipeline {
         usageType: "antrenman" | "deneme" | "arsiv" = "antrenman",
         guidelines: any = null,
         chunkId?: string, // Used for future "previous diagnoses" if we add DB calls here
+        densityScore: number = 1.0,
     ): Promise<GeneratedQuestion[]> {
         // 1. Analyze Content
         const analysisResult = await this.analysisTask.run({
             content,
             wordCount,
+            courseName,
+            sectionTitle,
         }, { logger: this.options.onLog });
         if (!analysisResult.success || !analysisResult.data) {
             this.log("Analysis failed, aborting.");
@@ -53,6 +56,7 @@ export class GenerationPipeline {
 
         const concepts = analysisResult.data.concepts;
         this.log(`Analysis complete. Identified ${concepts.length} concepts.`);
+        this.log(`Density Score: ${densityScore}`);
 
         // Pre-build shared context
         const cleanContent = PromptArchitect.cleanReferenceImages(content);
@@ -180,6 +184,7 @@ export class GenerationPipeline {
         startIndex: number,
         usageType: "antrenman" | "deneme" | "arsiv" = "antrenman",
         guidelines: any = null,
+        densityScore: number = 1.0,
     ): Promise<GeneratedQuestion[]> {
         // Pre-build shared context
         const cleanContent = PromptArchitect.cleanReferenceImages(content);

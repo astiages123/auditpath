@@ -18,7 +18,7 @@ import { AnalysisTask, type ConceptMapItem } from "./ai-engine/tasks/analysis";
 import { GenerationPipeline } from "./ai-engine/pipelines/generation-pipeline";
 import { FollowUpTask } from "./ai-engine/tasks/followup";
 import { subjectKnowledgeService } from "@/shared/services/knowledge/subject-knowledge.service";
-import { calculateQuota } from "@/shared/lib/core/quota";
+import { calculateDynamicQuota } from "@/shared/lib/core/quota";
 import { PromptArchitect } from "./ai-engine/core/prompt/prompt-architect";
 
 // Types
@@ -61,7 +61,11 @@ interface ChunkData {
   course_id: string;
   course_name: string;
   section_title: string;
-  metadata: { concept_map?: ConceptMapItem[] } | null;
+  metadata: {
+    concept_map?: ConceptMapItem[];
+    density_score?: number;
+    meaningful_word_count?: number;
+  } | null;
 }
 
 /**
@@ -132,7 +136,11 @@ export async function generateQuestionsForChunk(
       course_name: targetChunk.course_name,
       section_title: targetChunk.section_title,
       metadata: targetChunk.metadata as
-        | { concept_map?: ConceptMapItem[] }
+        | {
+          concept_map?: ConceptMapItem[];
+          density_score?: number;
+          meaningful_word_count?: number;
+        }
         | null,
     };
 
@@ -174,6 +182,10 @@ export async function generateQuestionsForChunk(
         {
           content: chunkData.content,
           wordCount: chunkData.word_count || 500,
+          meaningfulWordCount: chunkData.metadata?.meaningful_word_count,
+          densityScore: chunkData.metadata?.density_score, // If re-running analysis?
+          courseName: chunkData.course_name,
+          sectionTitle: chunkData.section_title,
         },
         {
           logger: (msg: string, details?: Record<string, unknown>) =>
@@ -213,6 +225,12 @@ export async function generateQuestionsForChunk(
         metadata: newMetadata,
       }).eq("id", chunkId);
 
+      // Update local chunkData metadata for next steps
+      chunkData.metadata = newMetadata as unknown as {
+        concept_map?: ConceptMapItem[];
+        density_score?: number;
+      };
+
       log("MAPPING", `Kavram haritası oluşturuldu`, {
         conceptCount: concepts.length,
         densityScore,
@@ -220,22 +238,44 @@ export async function generateQuestionsForChunk(
       });
     }
 
-    // === STEP 3: QUOTA ===
-    // Section Count Calculation
-    const sectionCount = (chunkData.content.match(/^##\s/gm) || []).length || 1;
+    // === STEP 3: QUOTA (MASTER SET SEALING) ===
+    // Update target_count immediately to match concept count
+    await supabase.from("note_chunks").update({
+      target_count: concepts.length,
+    }).eq("id", chunkId);
 
-    const quota = calculateQuota(
-      chunkData.word_count || 500,
-      concepts.length,
-      sectionCount,
-    );
+    // Section Count Calculation (Legacy? We use density score now)
+    // const sectionCount = (chunkData.content.match(/^##\s/gm) || []).length || 1;
+
+    // Get Density Score from metadata or default
+    const densityScore = chunkData.metadata?.density_score || 1;
+
+    // Use meaningful_word_count if available, otherwise fallback to word_count
+    const baseWordCount = chunkData.metadata?.meaningful_word_count ||
+      chunkData.word_count || 500;
+
+    // --- MASTER SET SEALING LOGIC ---
+    // Antrenman (Master Set) Quota = Concepts.length (Strict 1:1)
+    const antrenmanQuota = concepts.length;
+
+    // Archive & Trial Quotas are percentage-based derived from Master Set
+    const arsivQuota = Math.ceil(antrenmanQuota * 0.25);
+    const denemeQuota = Math.ceil(antrenmanQuota * 0.25);
+
+    const quota = {
+      baseCount: baseWordCount, // for logging purposes
+      multiplier: 1.0, // for logging purposes
+      total: antrenmanQuota + arsivQuota + denemeQuota,
+      antrenman: antrenmanQuota,
+      arsiv: arsivQuota,
+      deneme: denemeQuota,
+    };
     const remaining = quota.antrenman - (existingCount || 0);
 
     log("QUOTA", "Kota hesaplandı", {
       wordCount: chunkData.word_count,
-      sectionCount,
+      densityScore,
       conceptCount: concepts.length,
-      conceptDensity: quota.conceptDensity,
       baseCount: quota.baseCount,
       multiplier: quota.multiplier,
       antrenmanQuota: quota.antrenman,
@@ -440,6 +480,7 @@ export async function generateQuestionsForChunk(
           conceptCursor,
           phase.type,
           guidelines,
+          densityScore,
         );
 
         if (generated.length === 0) {

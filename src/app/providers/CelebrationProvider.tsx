@@ -4,9 +4,9 @@ import React, { useCallback } from "react";
 // useLocation import removed
 import { useAuth } from "@/features/auth";
 import { useCelebration } from "@/shared/hooks/useCelebration";
-import { useCelebrationStore } from "@/shared/store/celebration-store";
+import { useCelebrationStore } from "@/shared/store/use-celebration-store";
 
-import { CelebrationModal } from "@/shared/components/ui/CelebrationModal";
+import { CelebrationModal } from "@/shared/components/modals/CelebrationModal";
 
 export function CelebrationProvider({
   children,
