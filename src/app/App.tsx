@@ -10,6 +10,7 @@ const Achievements = lazy(() => import('@/app/routes/Achievements'))
 const Statistics = lazy(() => import('@/app/routes/Statistics'))
 const EfficiencyPage = lazy(() => import('@/features/efficiency/EfficiencyPage'))
 const NotesPage = lazy(() => import('@/app/routes/Notes'))
+const AnalyticsPage = lazy(() => import('@/pages/analytics'))
 
 
 // Loading fallback component
@@ -32,6 +33,7 @@ function App() {
                     <Route path="/efficiency" element={<AuthGuard><EfficiencyPage /></AuthGuard>} />
 
                     <Route path="/notes/:courseSlug" element={<AuthGuard><NotesPage /></AuthGuard>} />
+                    <Route path="/analytics" element={<AuthGuard><AnalyticsPage /></AuthGuard>} />
                     
                     {/* Redirect unknown routes to home */}
                     <Route path="*" element={<Navigate to="/" replace />} />

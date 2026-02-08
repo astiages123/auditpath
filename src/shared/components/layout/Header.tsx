@@ -206,6 +206,12 @@ export function Header() {
                         </span>
                       </div>
                     </DropdownMenuLabel>
+                    <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5 gap-3 cursor-pointer focus:bg-accent/50">
+                      <Link to="/analytics">
+                        <ChartScatter className="h-4 w-4 text-blue-500" />
+                        <span className="font-medium">Harcama Analizi</span>
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator className="my-1 opacity-50" />
                     <DropdownMenuItem onClick={() => signOut()} className="rounded-xl px-3 py-2.5 gap-3 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
                       <LogOut className="h-4 w-4" />
