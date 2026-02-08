@@ -5,7 +5,8 @@ on:
     branches:
       - main
     paths:
-      - 'supabase/migrations/**' # Sadece migration değişirse çalışır, boşuna build harcamaz.
+      - 'supabase/migrations/**' # Sadece migration değişirse otomatik çalışır.
+  workflow_dispatch: # GitHub arayüzünden manuel tetikleme butonu ekler.
 
 jobs:
   deploy:
@@ -19,6 +20,7 @@ jobs:
 
       - name: Link and Push Schema
         run: |
+          # Projeyi bağla ve veritabanı değişikliklerini gönder
           supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_ID }} -p ${{ secrets.SUPABASE_DB_PASSWORD }}
           supabase db push
         env:
