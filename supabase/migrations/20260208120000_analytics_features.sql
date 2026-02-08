@@ -45,4 +45,4 @@ SELECT
 FROM
     "public"."ai_generation_logs";
 
-ALTER VIEW "public"."ai_generation_costs" OWNER TO "postgres";
+ALTER VIEW "public"."ai_generation_costs" OWNER TO "postgres"; 
