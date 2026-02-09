@@ -539,7 +539,7 @@ async function processPage(
                             densityData.meaningful_word_count, // New column
                         target_count: targetCount, // New column
                         metadata: baseMetadata,
-                    } as any,
+                    } as Database['public']['Tables']['note_chunks']['Insert'],
                     {
                         onConflict: "course_id,section_title,sequence_order",
                     },
@@ -768,36 +768,15 @@ async function syncNotionToSupabase() {
     console.log(`Errors: ${errorCount}`);
     console.log("-----------------------------------");
 
-    if (!DRY_RUN) {
-        const { error: logError } = await supabase.from("sync_logs").insert(
-            {
-                started_at: startTime.toISOString(),
-                finished_at: endTime.toISOString(),
-                status: finalStatus,
-                processed_count: totalProcessed,
-                skipped_count: skippedCount,
-                deleted_count: deletedCount,
-                error_count: errorCount,
-                details: {
-                    touched_courses: Array.from(touchedCourses),
-                    skipped_details: results.filter((r) =>
-                        r.status === "SKIPPED"
-                    ).length,
-                },
-            },
-        );
-
-        if (logError) {
-            console.error("Failed to save sync log:", logError);
-        } else {
-            console.log("Sync log saved to DB.");
-        }
+    if (DRY_RUN) {
+        console.log("[DRY RUN] Sync finished without DB logging.");
     } else {
-        console.log("[DRY RUN] Would save sync logs to DB.");
+        console.log(
+            "Sync finished. (Database logging skipped as 'sync_logs' table is removed)",
+        );
     }
 }
 
-// --- Main Execution ---
 async function main() {
     try {
         await syncNotionToSupabase();

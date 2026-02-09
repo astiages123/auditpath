@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { type ConceptMapItem } from "@/features/quiz/tasks/generate-questions";
+import { type ConceptMapItem } from "@/features/quiz/core/types";
 import { calculateFocusPower } from "@/features/pomodoro/lib/pomodoro-utils";
 import {
     BloomStats,
@@ -268,9 +268,11 @@ export function useEfficiencyData() {
                     });
 
                     // Return only the requested number of days from the end
-                    return filtered.slice(-targetCount).map((
-                        { rawDate, ...rest },
-                    ) => rest);
+                    return filtered.slice(-targetCount).map((item) => {
+                        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                        const { rawDate, ...rest } = item;
+                        return rest;
+                    });
                 };
 
                 setFocusPowerWeek(assembleFocusPower(7, 5));

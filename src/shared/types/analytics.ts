@@ -1,5 +1,3 @@
-import { Database } from "./supabase";
-
 export interface ExchangeRate {
     currency_pair: string;
     rate: number;

@@ -3,5 +3,6 @@ export const ROUTES = {
   ACHIEVEMENTS: "/achievements",
   STATISTICS: "/statistics",
   EFFICIENCY: "/efficiency",
+  ANALYTICS: "/analytics",
   SETTINGS: "/settings",
 } as const;

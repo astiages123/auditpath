@@ -1,7 +1,5 @@
 // Deno types
-declare const EdgeRuntime: {
-  waitUntil: (promise: Promise<unknown>) => void;
-};
+// EdgeRuntime removed as unused
 
 import { corsHeaders } from "../_shared/cors.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";

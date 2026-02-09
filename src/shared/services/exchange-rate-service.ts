@@ -12,12 +12,13 @@ export const ExchangeRateService = {
                 .from("exchange_rates")
                 .select("*")
                 .eq("currency_pair", PAIR_USD_TRY)
-                .single();
+                .maybeSingle(); // Prevents 406 if no row exists
 
-            const fastRate = data as unknown as ExchangeRate; // Casting since types are not yet generated
+            const fastRate = data as unknown as ExchangeRate;
 
             if (fastRate && !error) {
                 const lastUpdated = new Date(fastRate.updated_at).getTime();
+
                 const now = new Date().getTime();
                 const oneDayMs = 24 * 60 * 60 * 1000;
 

@@ -14,6 +14,7 @@ import {
   getVirtualDateKey,
 } from "@/shared/lib/utils/date-utils";
 import coursesData from "@/features/courses/data/courses.json";
+import { getSubjectStrategy } from "@/features/quiz/algoritma/strategy";
 
 // Normalize category names to database slugs for consistent matching
 function normalizeCategorySlug(rawName: string): string {
@@ -1540,6 +1541,8 @@ export type CourseTopic =
   >
   & {
     questionCount?: number;
+    density_score?: number | null;
+    word_count?: number | null;
   };
 
 export async function getCourseTopics(
@@ -1629,8 +1632,16 @@ export interface TopicCompletionStats {
   completed: boolean;
   antrenman: { solved: number; total: number; quota: number; existing: number };
   deneme: { solved: number; total: number; quota: number; existing: number };
-  arsiv: { solved: number; total: number; quota: number; existing: number };
+  arsiv: {
+    solved: number;
+    total: number;
+    quota: number;
+    existing: number;
+    srsDueCount: number;
+  };
   mistakes: { solved: number; total: number; existing: number };
+  examTarget?: number;
+  importance?: "high" | "medium" | "low";
 }
 
 export async function getTopicCompletionStatus(
@@ -1641,15 +1652,25 @@ export async function getTopicCompletionStatus(
   // 1. Get Chunk Info
   const { data: chunk } = await supabase
     .from("note_chunks")
-    .select("id, word_count, metadata, target_count")
+    .select("id, course_name, word_count, metadata, target_count")
     .eq("course_id", courseId)
     .eq("section_title", topic)
     .limit(1)
     .maybeSingle();
 
   let quota = { total: 0, antrenman: 0, arsiv: 0, deneme: 0 };
+  let examTarget = 4;
+  let importance: "high" | "medium" | "low" = "medium";
+  let srsDueCount = 0;
 
   if (chunk) {
+    // Strategy logic
+    const strategy = getSubjectStrategy(chunk.course_name);
+    if (strategy) {
+      examTarget = strategy.examTotal;
+      importance = strategy.importance;
+    }
+
     // Use target_count from database directly
     const antrenman = chunk.target_count ?? 0;
     const arsiv = Math.ceil(antrenman * 0.25);
@@ -1662,6 +1683,16 @@ export async function getTopicCompletionStatus(
       deneme,
     };
   }
+
+  // SRS Status calculation
+  const { data: sessionCounter } = await supabase
+    .from("course_session_counters")
+    .select("current_session")
+    .eq("course_id", courseId)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  const currentSession = sessionCounter?.current_session || 1;
 
   // 2. Get all questions for this topic
   const { data: questions, error: questionsError } = await supabase
@@ -1691,9 +1722,25 @@ export async function getTopicCompletionStatus(
         total: quota.arsiv,
         quota: quota.arsiv,
         existing: 0,
+        srsDueCount: 0,
       },
       mistakes: { solved: 0, total: 0, existing: 0 },
+      examTarget,
+      importance,
     };
+  }
+
+  // 2.5 Calculate SRS Due Count if topic exists
+  if (chunk) {
+    const { data: dueStatus } = await supabase
+      .from("user_question_status")
+      .select("question_id")
+      .eq("user_id", userId)
+      .eq("status", "archived")
+      .in("question_id", questions.map((q) => q.id))
+      .lte("next_review_session", currentSession || 1);
+
+    srsDueCount = dueStatus?.length || 0;
   }
 
   // 3. Calculate Totals (Existing in DB vs Theoretical Quota)
@@ -1756,12 +1803,15 @@ export async function getTopicCompletionStatus(
         total: quota.arsiv,
         quota: quota.arsiv,
         existing: existingCounts.arsiv,
+        srsDueCount,
       },
       mistakes: {
         solved: 0,
         total: existingCounts.mistakes,
         existing: existingCounts.mistakes,
       },
+      examTarget,
+      importance,
     };
   }
 
@@ -1815,12 +1865,15 @@ export async function getTopicCompletionStatus(
       total: arsivTotal,
       quota: quota.arsiv,
       existing: existingCounts.arsiv,
+      srsDueCount,
     },
     mistakes: {
       solved: solvedCounts.mistakes,
       total: mistakesTotal,
       existing: existingCounts.mistakes,
     },
+    examTarget,
+    importance,
   };
 }
 
@@ -2299,48 +2352,6 @@ export interface SessionResultStats {
   timeSpentMs: number;
   courseId: string;
   userId: string;
-}
-
-export async function finishQuizSession(stats: SessionResultStats) {
-  // 1. Increment Course Session Counter (Manual Logic since RPC is missing)
-  const { data: existing, error: fetchError } = await supabase
-    .from("course_session_counters")
-    .select("id, current_session")
-    .eq("course_id", stats.courseId)
-    .eq("user_id", stats.userId)
-    .maybeSingle();
-
-  if (fetchError) {
-    console.error("Error fetching session counter:", fetchError);
-    // We can continue, but stats might be off.
-  }
-
-  const nextSession = (existing?.current_session || 0) + 1;
-
-  const { error: upsertError } = await supabase
-    .from("course_session_counters")
-    .upsert({
-      id: existing?.id, // Includes ID if it exists to perform UPDATE instead of INSERT
-      course_id: stats.courseId,
-      user_id: stats.userId,
-      current_session: nextSession,
-      last_session_date: new Date().toISOString(),
-    }, {
-      onConflict: "user_id,course_id", // Explicitly handle conflict
-    });
-
-  if (upsertError) {
-    console.error("Error incrementing session counter:", upsertError);
-  }
-
-  // 2. Update User XP or General Stats (Optional - mostly handled by triggers if any)
-  // For now, we rely on `user_quiz_progress` logs which are already inserted during the quiz.
-
-  // 3. Return aggregated data for the Dashboard (if needed, but usually passed from FE)
-  return {
-    success: true,
-    sessionComplete: true,
-  };
 }
 
 // --- Daily Efficiency Summary for Master Card ---

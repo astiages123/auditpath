@@ -207,6 +207,7 @@ export type Database = {
           sort_order: number | null;
           total_hours: number | null;
           total_videos: number | null;
+          exam_category: string | null;
         };
         Insert: {
           category_id?: string | null;
@@ -219,6 +220,7 @@ export type Database = {
           sort_order?: number | null;
           total_hours?: number | null;
           total_videos?: number | null;
+          exam_category?: string | null;
         };
         Update: {
           category_id?: string | null;
@@ -231,6 +233,7 @@ export type Database = {
           sort_order?: number | null;
           total_hours?: number | null;
           total_videos?: number | null;
+          exam_category?: string | null;
         };
         Relationships: [
           {
@@ -241,6 +244,24 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      exchange_rates: {
+        Row: {
+          currency_pair: string;
+          rate: number;
+          updated_at: string | null;
+        };
+        Insert: {
+          currency_pair: string;
+          rate: number;
+          updated_at?: string | null;
+        };
+        Update: {
+          currency_pair?: string;
+          rate?: number;
+          updated_at?: string | null;
+        };
+        Relationships: [];
       };
       note_chunks: {
         Row: {
@@ -719,24 +740,6 @@ export type Database = {
           },
         ];
       };
-      exchange_rates: {
-        Row: {
-          currency_pair: string;
-          rate: number;
-          updated_at: string;
-        };
-        Insert: {
-          currency_pair: string;
-          rate: number;
-          updated_at?: string;
-        };
-        Update: {
-          currency_pair?: string;
-          rate?: number;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
     };
     Views: {
       ai_generation_costs: {
@@ -752,6 +755,32 @@ export type Database = {
           total_tokens: number | null;
           usage_type: string | null;
           user_id: string | null;
+        };
+        Insert: {
+          cached_tokens?: number | null;
+          completion_tokens?: number | null;
+          cost_usd?: never;
+          created_at?: string | null;
+          id?: string | null;
+          model?: string | null;
+          prompt_tokens?: number | null;
+          provider?: string | null;
+          total_tokens?: number | null;
+          usage_type?: string | null;
+          user_id?: string | null;
+        };
+        Update: {
+          cached_tokens?: number | null;
+          completion_tokens?: number | null;
+          cost_usd?: never;
+          created_at?: string | null;
+          id?: string | null;
+          model?: string | null;
+          prompt_tokens?: number | null;
+          provider?: string | null;
+          total_tokens?: number | null;
+          usage_type?: string | null;
+          user_id?: string | null;
         };
         Relationships: [];
       };

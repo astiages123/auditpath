@@ -1,4 +1,4 @@
-import { type ConceptMapItem } from "@/features/quiz/tasks/generate-questions";
+import { type ConceptMapItem } from "@/features/quiz/core/types";
 
 export interface MasteryNode {
     id: string; // concept title
