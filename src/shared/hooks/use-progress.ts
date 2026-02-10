@@ -42,18 +42,8 @@ interface Course {
 }
 interface Category {
   category: string;
+  slug?: string;
   courses: Course[];
-}
-
-// Normalize category names to database slugs for consistent matching with achievements
-function normalizeCategorySlug(rawName: string): string {
-  const slugMap: Record<string, string> = {
-    "EKONOMİ": "EKONOMI",
-    "HUKUK": "HUKUK",
-    "MUHASEBE VE MALİYE": "MUHASEBE_MALIYE",
-    "GENEL YETENEK VE İNGİLİZCE": "GENEL_YETENEK",
-  };
-  return slugMap[rawName] || rawName;
 }
 
 const calculateStaticTotals = () => {
@@ -72,9 +62,10 @@ const calculateStaticTotals = () => {
   let totalAllHours = 0;
 
   categories.forEach((cat) => {
-    const rawName = cat.category.split(" (")[0].split(". ")[1] ||
-      cat.category;
-    const categoryName = normalizeCategorySlug(rawName);
+    // Falls back to parsing if slug is missing to prevent crash, though slug should be there now.
+    const categoryName = cat.slug ||
+      (cat.category.split(" (")[0].split(". ")[1] || cat.category);
+
     let catTotalVideos = 0;
     let catTotalHours = 0;
 
@@ -211,10 +202,9 @@ export function useOptimisticProgress() {
 
         if (!categoryData) return old;
 
-        const rawCategoryName =
-          categoryData.category.split(" (")[0].split(". ")[1] ||
-          categoryData.category;
-        const categoryName = normalizeCategorySlug(rawCategoryName);
+        const categoryName = categoryData.slug ||
+          (categoryData.category.split(" (")[0].split(". ")[1] ||
+            categoryData.category);
 
         const existingCatStats = old.categoryProgress[categoryName] || {
           completedVideos: 0,

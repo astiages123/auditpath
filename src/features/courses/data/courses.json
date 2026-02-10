@@ -1,6 +1,7 @@
 [
   {
     "category": "1. EKONOMİ (Toplam: 144 Saat)",
+    "slug": "EKONOMI",
     "courses": [
       {
         "id": "mikro-iktisat",
@@ -1838,6 +1839,7 @@
   },
   {
     "category": "2. HUKUK (Toplam: 161 Saat)",
+    "slug": "HUKUK",
     "courses": [
       {
         "id": "medeni-hukuk",
@@ -3754,6 +3756,7 @@
   },
   {
     "category": "3. MUHASEBE VE MALİYE (Toplam: 79 Saat)",
+    "slug": "MUHASEBE_MALIYE",
     "courses": [
       {
         "id": "muhasebe",
@@ -5169,6 +5172,7 @@
   },
   {
     "category": "4. GENEL YETENEK VE İNGİLİZCE (Toplam: 80 Saat)",
+    "slug": "GENEL_YETENEK",
     "courses": [
       {
         "id": "finans-matematigi",

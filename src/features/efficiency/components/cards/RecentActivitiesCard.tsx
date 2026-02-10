@@ -7,7 +7,7 @@ import { Zap, Coffee, Pause as PauseIcon, LayoutGrid } from "lucide-react";
 import { calculateFocusPower } from "@/features/pomodoro/lib/pomodoro-utils";
 import { GlassCard } from "../../../../shared/components/GlassCard";
 import { Clock, BookOpen, ChevronRight, Maximize2 } from "lucide-react";
-import { RecentSession } from "@/shared/lib/core/client-db";
+import { RecentSession } from "@/shared/types/efficiency";
 import { SessionGanttChart } from "../visuals/EfficiencyCharts";
 import { cn } from "@/shared/lib/core/utils";
 

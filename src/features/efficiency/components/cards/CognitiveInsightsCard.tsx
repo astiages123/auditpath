@@ -1,4 +1,4 @@
-import { useEfficiencyData } from '../../hooks/useEfficiencyData';
+import { useEfficiencyData } from '../../hooks/use-efficiency-data';
 import { GlassCard } from "../../../../shared/components/GlassCard";
 import { Brain, AlertTriangle, Lightbulb, Zap } from 'lucide-react';
 import { CardHeader } from './EfficiencyCards';

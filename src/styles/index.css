@@ -353,7 +353,7 @@
 }
 
 .formula-block {
-  @apply my-8 p-6 bg-emerald-900/40 rounded-lg relative overflow-hidden;
+  @apply my-8 p-6 bg-accent/3 rounded-lg relative overflow-hidden;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -415,7 +415,7 @@ td > .katex {
 /* Notes Page & Markdown Styling */
 .prose {
   max-width: none !important;
-  color: var(--foreground);
+  color: oklch(0.9219 0 0 / 0.9);
 }
 
 .prose h1, .prose h2, .prose h3, .prose h4 {
@@ -426,7 +426,7 @@ td > .katex {
 
 /* Section Main Title (H2 in code, but used as section header) */
 .section-header h2 {
-  @apply text-4xl font-heading font-black tracking-tight text-white selection:bg-primary/30;
+  @apply text-4xl font-heading font-black tracking-tight text-foreground/90 selection:bg-primary/30;
   filter: drop-shadow(0 2px 8px oklch(0 0 0 / 0.15));
 }
 
@@ -438,25 +438,25 @@ td > .katex {
 
 /* Markdown H1 (Article h3) - Major Section */
 .prose h3 {
-  @apply scroll-mt-28 mt-16 mb-8 text-3xl font-bold tracking-tight;
+  @apply scroll-mt-32 mt-12 mb-4 text-3xl font-semibold tracking-tight;
 }
 
 /* Markdown H2 (Article h4) - Sub Section */
 .prose h4 {
-  @apply scroll-mt-28 mt-12 mb-6 text-2xl font-bold;
+  @apply scroll-mt-32 mt-10 mb-3 text-2xl font-semibold;
 }
 
 /* Markdown H3 (Article h5) - Minor Section */
 .prose h5 {
-  @apply scroll-mt-28 mt-10 mb-5 text-xl font-semibold;
+  @apply scroll-mt-32 mt-8 mb-2 text-xl font-semibold;
 }
 
 .prose p {
-  @apply leading-relaxed mb-6 text-white text-[16px] font-sans font-normal;
+  @apply leading-relaxed mb-4 text-foreground/90 text-[16px] font-sans font-normal;
 }
 
 .prose ul {
-  @apply list-disc list-outside ml-6 mb-5 space-y-3;
+  @apply list-disc list-outside ml-8 mb-4 space-y-2;
 }
 
 .prose ul::marker,
@@ -478,7 +478,7 @@ td > .katex {
 }
 
 .prose ol {
-  @apply list-decimal list-outside ml-6 mb-4 font-medium space-y-3;
+  @apply list-decimal list-outside ml-8 mb-4 font-medium space-y-2;
 }
 
 .prose ol::marker {
@@ -487,15 +487,15 @@ td > .katex {
 }
 
 .prose li {
-  @apply pl-1 leading-relaxed text-white text-[16px];
+  @apply pl-1 leading-relaxed text-foreground/90 text-[16px];
 }
 
 .prose blockquote {
-  @apply my-8 pl-6 border-l-4 border-primary/40 text-lg text-white bg-muted/30 py-4 pr-4 rounded-r-lg italic;
+  @apply my-8 pl-6 border-l-4 border-primary/40 text-lg text-foreground/90 bg-muted/30 py-4 pr-4 rounded-r-lg italic;
 }
 
 .prose blockquote p {
-  @apply mb-0 text-white;
+  @apply mb-0 text-foreground/90;
 }
 
 /* Custom Callout Box Styling */
@@ -508,7 +508,7 @@ td > .katex {
 }
 
 .callout-content {
-  @apply font-sans text-white leading-relaxed text-base [&>p:last-child]:mb-0;
+  @apply font-sans text-foreground/90 leading-relaxed text-base [&>p:last-child]:mb-0;
 }
 
 /* Table Styling within Prose */
@@ -517,11 +517,11 @@ td > .katex {
 }
 
 .prose thead {
-  @apply bg-accent/10 border-b border-primary/20;
+  @apply bg-accent/3 border-b border-primary/20;
 }
 
 .prose th {
-  @apply px-6 py-4 font-heading text-[12px] font-bold uppercase tracking-wider text-white align-middle;
+  @apply px-6 py-4 font-heading text-[12px] font-bold uppercase tracking-wider text-foreground/90 align-middle;
 }
 
 .prose tr {
@@ -529,12 +529,12 @@ td > .katex {
 }
 
 .prose td {
-  @apply px-6 py-4 align-top text-white leading-relaxed;
+  @apply px-6 py-4 align-top text-foreground/90 leading-relaxed;
 }
 
 /* Image Captions */
 .image-caption {
-  @apply block text-center text-sm text-white mt-3 italic;
+  @apply block text-center text-sm text-foreground/90 mt-3 italic;
 }
 
 /* Custom Zoom Modal Overlay */

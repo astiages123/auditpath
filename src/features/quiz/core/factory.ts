@@ -269,9 +269,13 @@ export class QuizFactory {
                         });
                     }
                 } else {
-                    log("ERROR", "Soru onaylanmadı", {
-                        concept: concept.baslik,
-                    });
+                    log(
+                        "ERROR",
+                        `Kalite standartları karşılanamadığı için [${concept.baslik}] atlandı`,
+                        {
+                            concept: concept.baslik,
+                        },
+                    );
                 }
             }
 

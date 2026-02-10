@@ -2,7 +2,8 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth";
 import { ProgressHeader, CategoryGrid } from "@/features/courses";
-import { getCategories, getUserStats, getAllCourses, type Category } from "@/shared/lib/core/client-db";
+import { getCategories, getUserStats, getAllCourses } from "@/shared/lib/core/client-db";
+import { type Category } from "@/shared/types/courses";
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();

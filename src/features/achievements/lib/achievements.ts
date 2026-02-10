@@ -80,7 +80,8 @@ export type RequirementType =
     | { type: "all_progress"; percentage: number }
     | { type: "streak"; days: number }
     | { type: "daily_progress"; count: number }
-    | { type: "total_active_days"; days: number };
+    | { type: "total_active_days"; days: number }
+    | { type: "minimum_videos"; count: number };
 
 export interface Achievement {
     id: string;
@@ -90,6 +91,7 @@ export interface Achievement {
     guild: GuildType;
     requirement: RequirementType;
     order: number;
+    isPermanent?: boolean;
 }
 
 export const ACHIEVEMENTS: Achievement[] = [
@@ -403,6 +405,7 @@ export const ACHIEVEMENTS: Achievement[] = [
         guild: "SPECIAL",
         requirement: { type: "daily_progress", count: 5 },
         order: 22,
+        isPermanent: true,
     },
     {
         id: "special-02",
@@ -412,6 +415,7 @@ export const ACHIEVEMENTS: Achievement[] = [
         guild: "SPECIAL",
         requirement: { type: "daily_progress", count: 10 },
         order: 23,
+        isPermanent: true,
     },
     {
         id: "special-03",
@@ -422,6 +426,7 @@ export const ACHIEVEMENTS: Achievement[] = [
         guild: "SPECIAL",
         requirement: { type: "streak", days: 7 },
         order: 24,
+        isPermanent: true,
     },
     {
         id: "special-04",
@@ -431,6 +436,7 @@ export const ACHIEVEMENTS: Achievement[] = [
         guild: "SPECIAL",
         requirement: { type: "streak", days: 30 },
         order: 25,
+        isPermanent: true,
     },
     {
         id: "special-05",
@@ -441,6 +447,7 @@ export const ACHIEVEMENTS: Achievement[] = [
         guild: "SPECIAL",
         requirement: { type: "total_active_days", days: 60 },
         order: 26,
+        isPermanent: true,
     },
     {
         id: "special-06",
@@ -471,8 +478,10 @@ export const ACHIEVEMENTS: Achievement[] = [
             "Bilginin krallığından uzakta, sislerin içinde yolunu arıyorsun.",
         imagePath: "/ranks/rank1.webp",
         guild: "TITLES",
-        requirement: { type: "all_progress", percentage: 0 },
+        // Check for at least 1 video
+        requirement: { type: "minimum_videos", count: 1 },
         order: 29,
+        isPermanent: true,
     },
     {
         id: "RANK_UP:2",
@@ -483,6 +492,7 @@ export const ACHIEVEMENTS: Achievement[] = [
         guild: "TITLES",
         requirement: { type: "all_progress", percentage: 25 },
         order: 30,
+        isPermanent: true,
     },
     {
         id: "RANK_UP:3",
@@ -493,6 +503,7 @@ export const ACHIEVEMENTS: Achievement[] = [
         guild: "TITLES",
         requirement: { type: "all_progress", percentage: 50 },
         order: 31,
+        isPermanent: true,
     },
     {
         id: "RANK_UP:4",
@@ -503,6 +514,7 @@ export const ACHIEVEMENTS: Achievement[] = [
         guild: "TITLES",
         requirement: { type: "all_progress", percentage: 75 },
         order: 32,
+        isPermanent: true,
     },
 ];
 
@@ -608,9 +620,13 @@ function isAchievementUnlocked(
             return log.currentStreak >= req.days;
         case "daily_progress":
             // Tek seferlik başarımlar için sadece ilk günde kazanılabilir
+            // NOTE: Bu kontrol için tarih karşılaştırması use-achievements içinde yapılır.
+            // Burada sadece sayısal eşiği kontrol ediyoruz.
             return log.dailyVideosCompleted >= req.count;
         case "total_active_days":
             return log.totalActiveDays >= req.days;
+        case "minimum_videos":
+            return stats.completedVideos >= req.count;
         default:
             return false;
     }
@@ -647,6 +663,8 @@ export function getRequirementDescription(
             return `Toplam ${requirement.count}+ video tamamla`;
         case "total_active_days":
             return `Toplam ${requirement.days} gün aktif bilgelik`;
+        case "minimum_videos":
+            return `Toplam ${requirement.count} video tamamla`;
         default:
             return "Gizli gereksinim";
     }

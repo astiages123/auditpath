@@ -1,13 +1,13 @@
 import { renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, Mock, vi } from "vitest";
-import { useEfficiencyData } from "@/features/efficiency/hooks/useEfficiencyData";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useEfficiencyData } from "@/features/efficiency/hooks/use-efficiency-data";
+import { useAuth } from "@/features/auth/hooks/use-auth";
 import * as clientDb from "@/shared/lib/core/client-db";
 import { supabase } from "@/shared/lib/core/supabase";
 import { calculateFocusPower } from "@/features/pomodoro/lib/pomodoro-utils";
 
 // Mock dependencies
-vi.mock("@/features/auth/hooks/useAuth");
+vi.mock("@/features/auth/hooks/use-auth");
 vi.mock("@/shared/lib/core/client-db");
 vi.mock("@/shared/lib/core/supabase", () => ({
     supabase: {

@@ -11,7 +11,7 @@ import { ReactNode } from 'react';
 
 import { LearningLoadChart, EfficiencyTrendChart } from '../visuals/EfficiencyCharts';
 import { LearningLoad, Session } from '../../types';
-import { EfficiencyTrend } from '@/shared/lib/core/client-db';
+import { EfficiencyTrend } from '@/shared/types/efficiency';
 import { 
   AlertCircle, 
   Clock, 

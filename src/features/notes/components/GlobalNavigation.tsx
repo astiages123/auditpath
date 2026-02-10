@@ -1,7 +1,7 @@
 'use client';
 
-import { cn } from '@/shared/lib/core/utils';
-import { type CourseTopic } from '@/shared/lib/core/client-db';
+import { cn, slugify } from '@/shared/lib/core/utils';
+import { type CourseTopic } from '@/shared/types/efficiency';
 import { memo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ToCTitleRenderer } from './ToCTitleRenderer';
@@ -62,32 +62,15 @@ export const GlobalNavigation = memo(function GlobalNavigation({
         className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1"
       >
         {navItems.map((chunk, index) => {
+          // DEBUG: Verify raw chunk data
+          console.log(`GlobalNav Chunk ${index}:`, { title: chunk.section_title, sequence: chunk.sequence_order });
+          
           // Use chunk.id if available, fallback to slugified title or index
           // In `NotesPage`, we use `slugify(chunk.section_title)` for IDs.
-          const slugify = (text: string) => {
-            const trMap: { [key: string]: string } = {
-                'ı': 'i', 'İ': 'i', 'ğ': 'g', 'Ğ': 'g',
-                'ü': 'u', 'Ü': 'u', 'ş': 's', 'Ş': 's',
-                'ö': 'o', 'Ö': 'o', 'ç': 'c', 'Ç': 'c'
-            };
-
-            return text
-                .split('')
-                .map(char => trMap[char] || char)
-                .join('')
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase()
-                .trim()
-                .replace(/\s+/g, '-')
-                .replace(/[^\w-]+/g, '')
-                .replace(/--+/g, '-');
-          };
             
           const chunkId = slugify(chunk.section_title);
           const isActive = activeChunkId === chunkId;
           const url = `/notes/${courseSlug}/${chunkId}`;
-          const cleanTitle = chunk.section_title.replace(/^\s*[\d.]+\s*/, '');
 
           return (
             <Link
@@ -107,8 +90,8 @@ export const GlobalNavigation = memo(function GlobalNavigation({
                 isActive ? "scale-125 opacity-100" : "opacity-0 group-hover:opacity-50"
               )} />
               <ToCTitleRenderer 
-                title={`${index + 1}\\. ${cleanTitle}`} 
-                className="truncate" 
+                title={chunk.section_title.match(/^\d/) ? chunk.section_title : `${index + 1}. ${chunk.section_title}`} 
+                className="whitespace-normal wrap-break-word leading-tight py-1" 
               />
             </Link>
           );

@@ -57,7 +57,7 @@ function findCourse(courseId: string): CourseData | null {
   return null;
 }
 
-import { useProgress } from "@/shared/hooks/useProgress";
+import { useProgress } from "@/shared/hooks/use-progress";
 
 export function VideoList({ courseId, dbCourseId }: VideoListProps) {
   const [videos, setVideos] = useState<Video[]>([]);

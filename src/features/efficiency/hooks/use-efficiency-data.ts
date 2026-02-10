@@ -1,14 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { type ConceptMapItem } from "@/features/quiz/core/types";
+import { useAuth } from "@/features/auth/hooks/use-auth";
+import { type ConceptMapItem } from "@/shared/types/quiz";
 import { calculateFocusPower } from "@/features/pomodoro/lib/pomodoro-utils";
 import {
-    BloomStats,
-    CognitiveInsight,
-    CourseMastery,
-    DailyEfficiencySummary,
-    DayActivity,
-    EfficiencyTrend,
     getBloomStats,
     getCourseMastery,
     getDailyEfficiencySummary,
@@ -18,9 +12,17 @@ import {
     getRecentActivitySessions,
     getRecentCognitiveInsights,
     getRecentQuizSessions,
+} from "@/shared/lib/core/client-db";
+import {
+    BloomStats,
+    CognitiveInsight,
+    CourseMastery,
+    DailyEfficiencySummary,
+    DayActivity,
+    EfficiencyTrend,
     RecentQuizSession,
     RecentSession,
-} from "@/shared/lib/core/client-db";
+} from "@/shared/types/efficiency";
 import { supabase } from "@/shared/lib/core/supabase";
 import { BloomStat, FocusPowerPoint, LearningLoad, Session } from "../types";
 import { getVirtualDateKey } from "@/shared/lib/utils/date-utils";

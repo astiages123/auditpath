@@ -62,7 +62,8 @@ export function calculateShelfStatus(
     newSuccessCount: number;
 } {
     if (!isCorrect) {
-        return { newStatus: "pending_followup", newSuccessCount: 0 };
+        const newSuccessCount = Math.max(0, consecutiveSuccess - 1.0);
+        return { newStatus: "pending_followup", newSuccessCount };
     }
 
     const increment = isFast ? 1.0 : SLOW_SUCCESS_INCREMENT;
@@ -84,6 +85,10 @@ export function calculateNextReviewSession(
     currentSession: number,
     successCount: number,
 ): number {
+    if (successCount >= 3) {
+        return currentSession + 12;
+    }
+
     let gapIndex = 0;
 
     if (successCount < 1) {
@@ -170,8 +175,8 @@ export function calculateTMax(
 ): number {
     const difficultyMultiplier = DIFFICULTY_MULTIPLIERS[bloomLevel] || 1.0;
 
-    // Base reading time in seconds
-    const readingTimeSeconds = (wordCount / (180 * densityCoeff)) * 60;
+    // Base reading time in seconds (130 words per minute)
+    const readingTimeSeconds = (wordCount / (130 * densityCoeff)) * 60;
 
     // Additional time for question complexity
     const complexitySeconds = 15 * difficultyMultiplier;

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { memo } from 'react';
+import { cn } from '@/shared/lib/core/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -15,30 +16,28 @@ export const ToCTitleRenderer = memo(function ToCTitleRenderer({
   title,
   className,
 }: ToCTitleRendererProps) {
-  // If no math/markdown suspicious chars, return string directly for performance?
-  // But strictly speaking we want consistency.
-  
+  // Escape dots after numbers to prevent Markdown from interpreting them as ordered lists
+  // e.g. "1. Introduction" -> "1\. Introduction"
+  const escapedTitle = title.replace(/(\d+)\./g, '$1\\.');
+
   return (
-    <div className={className}>
+    <div className={cn("whitespace-normal wrap-break-word", className)}>
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex]}
         components={{
           // Override paragraph to span to avoid block-level disruption inside anchors
-          p: ({ node, ...props }) => <span {...props} />,
+          p: ({ ...props }) => <span style={{ display: 'inline' }} className="whitespace-normal wrap-break-word" {...props} />,
           // Ensure math is rendered inline
-          div: ({ node, className, ...props }) => {
-             // If it's display math, we might want to keep it inline for ToC or allow block?
-             // Usually ToC items are single line.
-             // Let's force inline style if it tries to be block
-             return <span className={className} {...props} />;
+          div: ({ className: innerClass, ...props }) => {
+             return <span className={cn("whitespace-normal wrap-break-word", innerClass)} {...props} />;
           }
         }}
         allowedElements={['p', 'span', 'strong', 'em', 'code', 'br']} 
         // We limit elements to avoid inserting huge blocks like H1 or Images in a ToC link
         unwrapDisallowed={true}
       >
-        {title}
+        {escapedTitle}
       </ReactMarkdown>
     </div>
   );

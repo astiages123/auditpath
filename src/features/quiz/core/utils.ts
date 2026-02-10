@@ -318,6 +318,20 @@ export class StructuredGenerator {
                     error: String(error),
                     raw_content: lastResponse?.content,
                 });
+            } finally {
+                if (lastResponse?.usage) {
+                    const usage = lastResponse.usage as any; // Cast safely if types are missing
+                    if (
+                        usage.prompt_cache_hit_tokens ||
+                        usage.prompt_cache_miss_tokens
+                    ) {
+                        onLog?.("Cache Stats", {
+                            hits: usage.prompt_cache_hit_tokens || 0,
+                            misses: usage.prompt_cache_miss_tokens || 0,
+                            total: usage.total_tokens || 0,
+                        });
+                    }
+                }
             }
         }
 
@@ -331,14 +345,18 @@ export class PromptArchitect {
         contextPrompt: string,
         taskPrompt: string,
     ): Message[] {
+        // AI Model Context Caching Optimizasyonu
+        // 1. System Prompt (Her zaman sabit)
+        // 2. User Message = Context (Sabit Prefix) + Task (Değişken Suffix)
+        // Bu yapı, Context kısmının cache'lenmesini sağlar.
+        const fixedContext = this.normalizeText(contextPrompt);
+        const dynamicTask = this.normalizeText(taskPrompt);
+
         return [
             { role: "system", content: this.normalizeText(systemPrompt) },
-            { role: "user", content: this.normalizeText(contextPrompt) },
             {
                 role: "user",
-                content: `--- GÖREV ---\n${
-                    this.normalizeText(taskPrompt).trimStart()
-                }`,
+                content: `${fixedContext}\n\n--- GÖREV ---\n${dynamicTask}`,
             },
         ];
     }

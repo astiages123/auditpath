@@ -10,22 +10,17 @@ export interface LocalToCItem {
   level: number;
 }
 
-interface LocalToCProps {
+export interface LocalToCProps {
   items: LocalToCItem[];
   activeId: string;
   onItemClick: (id: string, e: React.MouseEvent) => void;
-  parentIndex?: number;
 }
 
 export const LocalToC = memo(function LocalToC({
   items,
   activeId,
   onItemClick,
-  parentIndex,
 }: LocalToCProps) {
-  
-  // No items? Do not render anything (or render generic message?)
-  // Prompt says "On This Page" always visible.
   
   return (
     <div className="flex flex-col">
@@ -42,61 +37,37 @@ export const LocalToC = memo(function LocalToC({
                Alt başlık bulunmuyor.
              </p>
           ) : (
-            <div className="ml-1.5 space-y-1">
-              {(() => {
-                const counters = [0, 0, 0, 0, 0]; // Supports up to level 5
+            <div className="flex flex-col space-y-1">
+              {items.map((item) => {
+                const isActive = activeId === item.id;
                 
-                return items.map((item) => {
-                  const isActive = activeId === item.id;
-                  
-                  // Update counters based on level
-                  // We assume base level for LocalToC items starts at level 2 (mapped to index 0)
-                  const counterIndex = Math.max(0, item.level - 2);
-                  counters[counterIndex]++;
-                  // Reset lower levels
-                  for (let i = counterIndex + 1; i < counters.length; i++) {
-                    counters[i] = 0;
-                  }
-                  
-                  // Build number string (e.g., "1.2.1")
-                  const hierarchy = counters.slice(0, counterIndex + 1);
-                  if (parentIndex !== undefined) {
-                    hierarchy.unshift(parentIndex);
-                  }
-                  
-                  // Escape dots to prevent Markdown list parsing
-                  const itemNumber = hierarchy.join('\\.');
-                  
-                  // Clean existing leading numbers from title to avoid duplicates
-                  const cleanTitle = item.title.replace(/^\s*[\d.]+\s*/, '');
-                  
-                  return (
-                    <a
-                      key={item.id}
-                      href={`#${item.id}`}
-                      onClick={(e) => onItemClick(item.id, e)}
-                      className={cn(
-                        "group flex items-start py-1.5 pr-2 transition-all duration-200 text-sm border-l-2 -ml-px",
-                         // Indentation
-                        item.level > 1 && "ml-3", // Simple indentation
-                        item.level > 2 && "ml-6",
-                        
-                        isActive 
-                          ? "border-primary text-primary font-medium bg-primary/5" 
-                          : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-                      )}
-                      style={{
-                          paddingLeft: `${Math.max(0, (item.level - 1) * 12 + 12)}px`
-                      }}
-                    >
-                      <ToCTitleRenderer 
-                        title={`${itemNumber}\\. ${cleanTitle}`} 
-                        className="leading-tight block w-full whitespace-normal" 
-                      />
-                    </a>
-                  );
-                });
-              })()}
+                return (
+                  <a
+                    key={item.id}
+                    href={`#${item.id}`}
+                    onClick={(e) => onItemClick(item.id, e)}
+                    className={cn(
+                      "group flex items-start py-1.5 pr-2 transition-all duration-200 relative border-l",
+                      
+                      // Hiyerarşik Girinti (Margin ile elemanı, dolayısıyla border'ı içeri itiyoruz)
+                      item.level === 2 && "ml-0 pl-4 text-sm font-medium",
+                      item.level === 3 && "ml-4 pl-4 text-[0.85rem] font-normal",
+                      item.level === 4 && "ml-8 pl-4 text-[0.8rem] font-light",
+                      
+                      // Pasif Durum (İnce rehber çizgisi)
+                      !isActive && "border-border/15 text-muted-foreground/60 hover:text-foreground hover:border-muted-foreground/30",
+                      
+                      // Aktif Durum (Kalın ve renkli çizgi)
+                      isActive && "border-l-2 border-primary text-primary bg-primary/5 z-10"
+                    )}
+                  >
+                    <ToCTitleRenderer 
+                      title={item.title} 
+                      className="leading-tight block w-full whitespace-normal" 
+                    />
+                  </a>
+                );
+              })}
             </div>
           )}
         </div>

@@ -16,8 +16,8 @@ import {
 import { motion } from "framer-motion";
 import {
   getUnlockedAchievements as getDbUnlocked,
-  UnlockedAchievement,
 } from "@/shared/lib/core/client-db";
+import { type UnlockedAchievement } from "@/shared/types/efficiency";
 import {
   Achievement,
   GUILDS,
@@ -25,7 +25,7 @@ import {
   getAchievementsByGuild,
   ACHIEVEMENTS,
 } from "@/features/achievements/lib/achievements";
-import { useProgress } from "@/shared/hooks/useProgress";
+import { useProgress } from "@/shared/hooks/use-progress";
 import { SealCard } from "../ui/SealCard";
 import { SealDetailModal } from "../modals/SealDetailModal";
 import { useAuth } from "@/features/auth";

@@ -3,7 +3,7 @@
 import React, { useCallback } from "react";
 // useLocation import removed
 import { useAuth } from "@/features/auth";
-import { useCelebration } from "@/shared/hooks/useCelebration";
+import { useCelebration } from "@/shared/hooks/use-celebration";
 import { useCelebrationStore } from "@/shared/store/use-celebration-store";
 
 import { CelebrationModal } from "@/shared/components/modals/CelebrationModal";
@@ -21,12 +21,12 @@ export function CelebrationProvider({
 
   const { current, isOpen, close } = useCelebrationStore();
 
-  const handleComplete = useCallback(() => {
-    close(); // Closes current
-    // Small delay before next to allow exit animation?
-    // The store's "close" calls "next" immediately or we can handle it here.
-    // Our store logic for close() calls next().
-  }, [close]);
+  const handleComplete = useCallback(async () => {
+    if (current && current.onClose) {
+        await current.onClose();
+    }
+    close(); // Closes current and triggers next
+  }, [close, current]);
 
   // If user is on achievements page, maybe we suppress "stamp" types? 
   // Requirement says: "A celebration ... should be shown". 

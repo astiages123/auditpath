@@ -11,15 +11,15 @@ import {
   type LucideIcon,
   BookOpen,
 } from "lucide-react";
-import { CourseList } from "@/features/courses";
+import { CourseList } from "../sections/CourseList";
 import { formatDuration } from "@/shared/lib/core/utils";
 import { useEffect } from "react";
-import { useCelebration } from "@/shared/hooks/useCelebration";
-import { useProgress } from "@/shared/hooks/useProgress";
+import { useCelebration } from "@/shared/hooks/use-celebration";
+import { useProgress } from "@/shared/hooks/use-progress";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/shared/lib/core/utils";
 
-import { type Course } from "@/shared/lib/core/client-db";
+import { type Course } from "@/shared/types/courses";
 
 // Normalize category names to database slugs for consistent matching
 function normalizeCategorySlug(rawName: string): string {

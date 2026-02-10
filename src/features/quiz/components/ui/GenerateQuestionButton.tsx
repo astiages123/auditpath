@@ -22,7 +22,8 @@ import {
   Shield,
   Database,
 } from 'lucide-react';
-import { getChunkQuotaStatus, type QuotaStatus } from '@/features/quiz';
+import { getChunkQuotaStatus } from '../../api/repository';
+import { type QuotaStatus } from '../../core/types';
 import {
   QuizFactory,
   type GenerationLog,

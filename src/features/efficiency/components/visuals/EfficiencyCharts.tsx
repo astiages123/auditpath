@@ -18,7 +18,7 @@ import {
 import { cn } from '@/shared/lib/core/utils';
 import { Play, Coffee, Pause } from 'lucide-react';
 import { BloomStat, LearningLoad, Session, FocusPowerPoint } from '../../types';
-import { EfficiencyTrend } from '@/shared/lib/core/client-db';
+import { EfficiencyTrend } from '@/shared/types/efficiency';
 
 // --- Efficiency Trend Chart ---
 interface EfficiencyTrendProps {

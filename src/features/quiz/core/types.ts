@@ -1,19 +1,17 @@
-// --- Shared Quiz Types ---
+import { AIResponseMetadata, LogCallback, Message } from "@/shared/types/core";
+import {
+    ConceptMapItem,
+    ConceptMapResult,
+    QuizQuestion,
+    QuizResponseType,
+} from "@/shared/types/quiz";
 
-export interface QuizQuestion {
-    q: string; // Question text
-    o: string[]; // 5 options
-    a: number; // Correct index
-    exp: string; // Explanation
-    img?: number | null; // Index of the image in imageUrls array
-    imageUrls?: string[]; // Array of image URLs for the chunk
-    imgPath?: string | null; // Legacy/Optional path override
-    id?: string;
-    diagnosis?: string;
-    insight?: string;
-    evidence?: string;
-    chunk_id?: string;
-}
+export {
+    type ConceptMapItem,
+    type ConceptMapResult,
+    type QuizQuestion,
+    type QuizResponseType,
+};
 
 export interface ChunkMasteryRow {
     chunk_id: string;
@@ -23,8 +21,6 @@ export interface ChunkMasteryRow {
 }
 
 export type QuestionUsageType = "antrenman" | "arsiv" | "deneme";
-
-export type QuizResponseType = "correct" | "incorrect" | "blank";
 
 export interface QuizGenerationResult {
     success: boolean;
@@ -46,25 +42,11 @@ export interface QuotaStatus {
 
 // --- LLM Types ---
 
-export interface Message {
-    role: "system" | "user" | "assistant";
+export type { LogCallback, Message };
+
+export interface AIResponse extends AIResponseMetadata {
     content: string;
 }
-
-export interface AIResponse {
-    content: string;
-    usage?: {
-        prompt_tokens: number;
-        completion_tokens: number;
-        total_tokens: number;
-        cached_tokens: number;
-    };
-}
-
-export type LogCallback = (
-    message: string,
-    details?: Record<string, unknown>,
-) => void;
 
 export type LLMProvider = "cerebras" | "mimo" | "google";
 
@@ -137,7 +119,7 @@ export interface SolveQuizCallbacks {
     /** Callback to record response to DB/Context */
     recordResponse?: (
         questionId: string,
-        responseType: "correct" | "incorrect" | "blank",
+        responseType: QuizResponseType,
         selectedAnswer: number | null,
         timeSpentMs: number,
         diagnosis?: string,
@@ -172,23 +154,6 @@ export interface ReviewItem {
 export interface CourseStats {
     totalQuestionsSolved: number;
     averageMastery: number;
-}
-
-// --- Strategy & Concept Types ---
-
-export interface ConceptMapItem {
-    baslik: string;
-    odak: string;
-    seviye: "Bilgi" | "Uygulama" | "Analiz";
-    gorsel: string | null;
-    altText?: string | null;
-    isException?: boolean;
-    prerequisites?: string[];
-}
-
-export interface ConceptMapResult {
-    difficulty_index: number;
-    concepts: ConceptMapItem[];
 }
 
 // --- Generator Types ---

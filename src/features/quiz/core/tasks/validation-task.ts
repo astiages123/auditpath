@@ -49,6 +49,15 @@ export class ValidationTask
         });
 
         if (result) {
+            // Sanity Check: Score and Decision consistency
+            if (result.total_score >= 70 && result.decision === "REJECTED") {
+                result.decision = "APPROVED";
+            } else if (
+                result.total_score < 70 && result.decision === "APPROVED"
+            ) {
+                result.decision = "REJECTED";
+            }
+
             if (result.decision === "APPROVED") {
                 result.critical_faults = [];
                 result.improvement_suggestion = "";

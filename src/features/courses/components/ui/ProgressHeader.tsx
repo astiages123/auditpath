@@ -9,7 +9,7 @@ import {
   Target,
   ChevronRight,
 } from "lucide-react";
-import { useProgress } from "@/shared/hooks/useProgress";
+import { useProgress } from "@/shared/hooks/use-progress";
 import { useState, useMemo, useSyncExternalStore } from "react";
 import { RANKS, type Rank } from "@/shared/lib/core/client-db";
 import { JourneyModal } from "../modals/JourneyModal";

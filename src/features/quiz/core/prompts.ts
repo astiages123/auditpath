@@ -6,17 +6,17 @@ export const GENERAL_QUALITY_RULES = `## GENEL KALİTE KURALLARI:
 3. **Çeldiriciler:** Çeldiricilerin en az ikisi, metindeki diğer kavramlarla doğrudan ilişkili ama sorulan odak noktasıyla çelişen ifadeler olmalıdır. "Hepsi", "Hiçbiri" YASAKTIR.
 4. **Şık Yapısı:** Her zaman tam 5 adet (A,B,C,D,E) seçenek olmalıdır.
 5. **Şık Dengesi:** Seçeneklerin tümü benzer uzunlukta ve yapıda olmalıdır.
-6. **JSON GÜVENLİĞİ:** Tüm LaTeX komutlarında ters eğik çizgi () karakterini JSON içinde KESİNLİKLE çiftle (örn: \\alpha, \\frac{1}{2}). Tekil ters eğik çizgi JSON parse hatalarına yol açar ve kabul edilemez.
+6. **JSON GÜVENLİĞİ VE LaTeX:** Tüm LaTeX komutlarında ters eğik çizgi (\) karakterini JSON içinde KESİNLİKLE çiftle (örn: \\alpha, \\frac{1}{2}). Bu bir tercih değil, ZORUNLULUKTUR. Tekil ters eğik çizgi JSON parse hatalarına yol açar, sistemi çökertir ve bu en büyük HATA olarak kabul edilir.
 7. **Görsel Referansı:** Eğer bir görseli referans alarak soru soruyorsan, soru metni içinde MUTLAKA "[GÖRSEL: X]" etiketini geçir. Bu etiket, kullanıcıya hangi görsele bakması gerektiğini gösterir.`;
 
 export const COMMON_OUTPUT_FORMATS = `## ÇIKTI FORMATI:
 Sadece ve sadece aşağıdaki JSON şemasına uygun çıktı ver. Markdown veya yorum ekleme.
-LaTeX ifadeleri için çift ters eğik çizgi kullanmayı unutma (\\).
+LaTeX ifadeleri için JSON içinde çift ters eğik çizgi kullanmak (\\) EN KRİTİK kuraldır. Aksi takdirde sistem çöker.
 {
-  "q": "Soru metni... (Gerekirse [GÖRSEL: X] içerir, LaTeX içerirse \\ komutlarını çiftle)",
+  "q": "Soru metni... (Gerekirse [GÖRSEL: X] içerir, LaTeX içerirse \\\\ komutlarını MUTLAKA çiftle)",
   "o": ["A", "B", "C", "D", "E"],
   "a": 0, // 0-4 arası index
-  "exp": "Açıklama... (LaTeX içerirse \\ komutlarını çiftle)",
+  "exp": "Açıklama... (LaTeX içerirse \\\\ komutlarını MUTLAKA çiftle)",
   "evidence": "Cevabı doğrulayan metin alıntısı...",
   "img": 0 // Görsel referansı varsa indexi (0, 1, 2...), yoksa null
 }
@@ -128,16 +128,20 @@ export const VALIDATION_SYSTEM_PROMPT = `## ROL
 Sen AuditPath için "Güvenlik ve Doğruluk Kontrolü Uzmanısın".
 Görevin: Üretilen KPSS sorularının teknik ve bilimsel doğruluğunu kontrol etmektir. "HATA YOKLUĞU"na odaklanmalısın.
 
-## DEĞERLENDİRME KRİTERLERİ (TOPLAM SKOR)
-Soruyu aşağıdaki açılardan tek bir bütün olarak değerlendir ve 0-100 arası bir puan ver:
+## DEĞERLENDİRME KRİTERLERİ VE PUAN KIRMA TABLOSU
+Soruyu 100 tam puan üzerinden değerlendir. Aşağıdaki her bir hata için belirtilen puanı KESİNTİSİZ düş:
 
-1. **Groundedness & Accuracy:** Soru metne sadık mı ve bilgi doğru mu? (En Kritik)
-2. **Distractor Quality:** Çeldiriciler teknik olarak yanlış mı? (Cevap anahtarı net olmalı)
-3. **Internal Logic:** Soru kökü, şıklar ve açıklama tutarlı mı?
+| Hata Türü | Kesilecek Puan | Açıklama |
+| :--- | :--- | :--- |
+| **Bilimsel/Teknik Hata** | **-100 Puan** | Bilgi hatası, yanlış çözüm veya metne aykırılık (Anında REJECTED). |
+| **Çeldirici Zayıflığı** | **-40 Puan** | Mantıksız, bariz yanlış veya soruyla ilgisiz şıklar. |
+| **LaTeX Yazım Hatası** | **-30 Puan** | Ters eğik çizgi hataları ($ veya \\\\ eksikliği) ve JSON kaçış hataları. |
+| **Açıklama/Kanıt Uyumsuzluğu** | **-30 Puan** | exp veya evidence alanının soruyla veya metinle çelişmesi. |
+| **Akademik Dil Uyumsuzluğu** | **-20 Puan** | KPSS formatına uymayan laubali veya basit anlatım. |
 
 ## KARAR MEKANİZMASI
 - **Total Score >= 70 ise:** "APPROVED"
-- **Total Score < 70 ise:** "REJECTED"
+- **Total Score < 70 ise:** "REJECTED" (Yukarıdaki tablodan en az bir ciddi hata yapılmış demektir)
 
 **ÖNEMLİ:**
 - Eğer karar "APPROVED" ise: \`critical_faults\` dizisini BOŞ bırak ([]), \`improvement_suggestion\` alanını BOŞ string ("") bırak.

@@ -1,6 +1,6 @@
 "use client";
 
-import { DayActivity } from "@/shared/lib/core/client-db";
+import { DayActivity } from "@/shared/types/efficiency";
 import { cn } from "@/shared/lib/core/utils";
 import { 
     Tooltip, 

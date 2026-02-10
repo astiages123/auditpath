@@ -17,6 +17,7 @@
     "update-types": "npx supabase gen types typescript --project-id ccnvhimlbkkydpcqtraw > src/shared/types/supabase.ts"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
     "@notionhq/client": "^2.2.15",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.11",
@@ -49,6 +50,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-force-graph-2d": "^1.29.1",
+    "react-hook-form": "^7.71.1",
     "react-markdown": "^10.1.0",
     "react-medium-image-zoom": "^5.4.0",
     "react-router-dom": "^7.12.0",

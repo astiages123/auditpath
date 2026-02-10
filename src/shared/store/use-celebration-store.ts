@@ -12,6 +12,7 @@ export interface CelebrationEvent {
   imageUrl?: string;
   variant: CelebrationVariant;
   metadata?: Record<string, unknown>; // Extra data if needed
+  onClose?: () => Promise<void> | void; // Callback when this celebration is dismissed/covered
 }
 
 interface CelebrationStore {
@@ -33,7 +34,7 @@ export const useCelebrationStore = create<CelebrationStore>((set, get) => ({
 
   enqueue: (event) => {
     const { current, queue } = get();
-    
+
     // Prevent duplicates in queue or current
     if (current?.id === event.id || queue.some((e) => e.id === event.id)) {
       return;
@@ -56,14 +57,14 @@ export const useCelebrationStore = create<CelebrationStore>((set, get) => ({
 
       if (nextEvent) {
         return {
-            current: nextEvent,
-            queue: remainingQueue,
-            isOpen: true
+          current: nextEvent,
+          queue: remainingQueue,
+          isOpen: true,
         };
       } else {
         return {
-            current: null,
-            isOpen: false
+          current: null,
+          isOpen: false,
         };
       }
     });
@@ -72,7 +73,7 @@ export const useCelebrationStore = create<CelebrationStore>((set, get) => ({
   close: () => {
     // When closing, we trigger next() after a short delay or immediately
     // Typically close() just shuts the modal. The Modal onUnmount or animation usage
-    // should trigger next(). 
+    // should trigger next().
     // BUT for simplicity, let's say 'close' means "I'm done with this one, show me the next".
     get().next();
   },

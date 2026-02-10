@@ -2,8 +2,8 @@
 
 import React, { useCallback, useMemo } from "react";
 import { useAuth } from "@/features/auth";
-import { ProgressContext, ProgressStats } from "@/shared/hooks/useProgress";
-import { useProgressQuery, useOptimisticProgress, defaultStats } from "@/shared/hooks/useProgress";
+import { ProgressContext, ProgressStats } from "@/shared/hooks/use-progress";
+import { useProgressQuery, useOptimisticProgress, defaultStats } from "@/shared/hooks/use-progress";
 
 interface ProgressProviderProps {
   children: React.ReactNode;

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
@@ -9,30 +10,46 @@ import { Loader2 } from "lucide-react";
 import { getSupabase } from "@/shared/lib/core/supabase";
 import { toast } from "sonner";
 
+// Zod şeması tanımı
+const authSchema = z.object({
+  identifier: z.string().min(1, "Bu alan zorunludur.").refine((val) => {
+    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+    if (isEmail) return true;
+    return val.length >= 3;
+  }, {
+    message: "Geçerli bir e-posta girin veya kullanıcı adınız en az 3 karakter olmalıdır."
+  }),
+  password: z.string().min(6, "Şifre en az 6 karakter olmalıdır."),
+});
 
+type AuthFormData = z.infer<typeof authSchema>;
 
 export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
-  const [loading, setLoading] = useState(false);
   const supabase = getSupabase();
 
-  // Form inputs
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<AuthFormData>({
+    resolver: zodResolver(authSchema),
+    defaultValues: {
+      identifier: "",
+      password: "",
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
+  const onSubmit = async (data: AuthFormData) => {
     try {
-      let loginEmail = email;
+      let loginEmail = data.identifier;
 
-      // Basit email regex kontrolü
-      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      // Basit email regex kontrolü (zod içindekine benzer)
+      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.identifier);
 
       if (!isEmail) {
         // Kullanıcı adı ile email bulmaya çalış
         const { data: emailData, error: emailError } = await supabase
-          .rpc('get_email_by_username', { username_input: email });
+          .rpc('get_email_by_username', { username_input: data.identifier });
 
         if (emailError || !emailData) {
           throw new Error("Kullanıcı bulunamadı.");
@@ -42,7 +59,7 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
 
       const { error } = await supabase.auth.signInWithPassword({
         email: loginEmail,
-        password,
+        password: data.password,
       });
 
       if (error) throw error;
@@ -53,28 +70,27 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
       const message =
         error instanceof Error ? error.message : "Bir hata oluştu.";
       toast.error(message);
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
     <div className="grid gap-6">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="email">Kullanıcı Adı veya Email</Label>
+            <Label htmlFor="identifier">Kullanıcı Adı veya Email</Label>
             <Input
-              id="email"
+              id="identifier"
               placeholder="Kullanıcı Adı veya Email"
               type="text"
               autoCapitalize="none"
               autoCorrect="off"
-              disabled={loading}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
+              disabled={isSubmitting}
+              {...register("identifier")}
             />
+            {errors.identifier && (
+              <p className="text-sm text-destructive">{errors.identifier.message}</p>
+            )}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="password">Şifre</Label>
@@ -83,15 +99,15 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
               placeholder="******"
               type="password"
               autoComplete="current-password"
-              disabled={loading}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
+              disabled={isSubmitting}
+              {...register("password")}
             />
+            {errors.password && (
+              <p className="text-sm text-destructive">{errors.password.message}</p>
+            )}
           </div>
-          <Button disabled={loading}>
-            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          <Button disabled={isSubmitting} type="submit">
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Giriş Yap
           </Button>
         </div>
@@ -99,3 +115,4 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
     </div>
   );
 }
+

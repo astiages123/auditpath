@@ -1,6 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { useQuiz } from "@/features/quiz/hooks/useQuiz";
+import { useQuiz } from "@/features/quiz/hooks/use-quiz";
 import * as Repository from "@/features/quiz/api/repository";
 import { QuizQuestion } from "@/features/quiz/core/types";
 

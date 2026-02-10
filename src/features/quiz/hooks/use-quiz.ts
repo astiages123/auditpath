@@ -8,9 +8,25 @@ import { useCallback, useRef, useState } from "react";
 import * as Engine from "../core/engine";
 import * as Repository from "../api/repository";
 import { createTimer } from "../core/utils";
-import { QuizResults, QuizState } from "@/features/quiz";
+import { type QuizResults, type QuizState } from "../core/types";
 import { QuizQuestion } from "../core/types";
-import { calculateInitialResults, updateResults } from "../algoritma/scoring";
+import {
+  calculateInitialResults,
+  calculateTestResults,
+  updateResults,
+} from "../algoritma/scoring";
+import { QuizFactory } from "../core/factory";
+
+/**
+ * Helper to map database row to QuizQuestion type safely.
+ */
+function mapRowToQuestion(row: any): QuizQuestion {
+  return {
+    ...(row.question_data as any),
+    id: row.id,
+    chunk_id: row.chunk_id,
+  };
+}
 
 export interface UseQuizReturn {
   state: QuizState;
@@ -104,39 +120,45 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
         );
 
         if (questions.length > 0) {
-          const [first, ...rest] = questions;
+          const mapped = questions.map(mapRowToQuestion);
+          const [first, ...rest] = mapped;
           updateState({
-            currentQuestion: first as unknown as QuizQuestion,
-            queue: rest as unknown as QuizQuestion[],
+            currentQuestion: first,
+            queue: rest,
             totalToGenerate: questions.length,
             generatedCount: questions.length,
             isLoading: false,
           });
         } else {
           // Trigger Generation
-          const { QuizFactory } = await import("../core/factory");
           const factory = new QuizFactory();
 
-          await factory.generateForChunk(params.chunkId, {
-            onLog: () => {},
-            onQuestionSaved: (total) => updateState({ generatedCount: total }),
-            onComplete: async () => {
-              const updated = await Repository.fetchQuestionsByChunk(
-                params.chunkId,
-                count,
-                new Set(),
-              );
-              const [first, ...rest] = updated;
-              updateState({
-                currentQuestion: first as unknown as QuizQuestion,
-                queue: rest as unknown as QuizQuestion[],
-                totalToGenerate: updated.length,
-                generatedCount: updated.length,
-                isLoading: false,
-              });
+          await factory.generateForChunk(
+            params.chunkId,
+            {
+              onLog: () => {},
+              onQuestionSaved: (total) =>
+                updateState({ generatedCount: total }),
+              onComplete: async () => {
+                const updated = await Repository.fetchQuestionsByChunk(
+                  params.chunkId,
+                  count,
+                  new Set(),
+                );
+                const mapped = updated.map(mapRowToQuestion);
+                const [first, ...rest] = mapped;
+                updateState({
+                  currentQuestion: first,
+                  queue: rest,
+                  totalToGenerate: updated.length,
+                  generatedCount: updated.length,
+                  isLoading: false,
+                });
+              },
+              onError: (err) => updateState({ error: err, isLoading: false }),
             },
-            onError: (err) => updateState({ error: err, isLoading: false }),
-          }, { targetCount: count });
+            { targetCount: count },
+          );
         }
       } catch (e: unknown) {
         const errorMessage = e instanceof Error ? e.message : "Bilinmeyen hata";
@@ -247,32 +269,25 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
       // Finish Logic
       updateState({ isLoading: true });
 
-      // Calculate final results using the pure function from scoring.ts
-      // We need to pass the CURRENT results state.
-      // However, results state assumes the last answer update has been processed.
-      // Since selectAnswer updates results immediately, keying off `results` here *might* be stale due to closure?
-      // `nextQuestion` is recreated on `[state.queue]`.
-      // `results` is not in dependency array.
-      // We should use functional update or rely on recent render?
-      // Better: we can recalculate from `results` state if we include it in deps,
-      // OR we just trust `results` is up to date because `nextQuestion` is called by user AFTER answering.
-
-      // Actually, define `calculateTestResults` import at top.
-      const summary = (await import("../algoritma/scoring"))
-        .calculateTestResults(
-          results.correct,
-          results.incorrect,
-          results.blank,
-          results.totalTimeMs,
+      // Use a functional update to get the latest results without closure issues
+      setResults((prevResults) => {
+        const summary = calculateTestResults(
+          prevResults.correct,
+          prevResults.incorrect,
+          prevResults.blank,
+          prevResults.totalTimeMs,
         );
 
-      updateState({
-        isLoading: false,
-        summary, // Store summary in state
-        currentQuestion: null, // Clear current question to indicate finish
+        updateState({
+          isLoading: false,
+          summary, // Store summary in state
+          currentQuestion: null, // Clear current question to indicate finish
+        });
+
+        return prevResults;
       });
     }
-  }, [state.queue, results]); // Added 'results' to dependency
+  }, [state.queue]); // Removed 'results' from dependency as we use functional update
 
   const toggleExplanation = useCallback(() => {
     updateState({ showExplanation: !state.showExplanation });

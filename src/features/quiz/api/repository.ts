@@ -208,11 +208,16 @@ export async function fetchQuestionsByChunk(
     chunkId: string,
     limit: number,
     excludeIds: Set<string>,
-): Promise<QuestionRow[]> {
+): Promise<
+    Pick<
+        QuestionRow,
+        "id" | "chunk_id" | "question_data" | "bloom_level" | "concept_title"
+    >[]
+> {
     const query = supabase
         .from("questions")
         .select(
-            "*, chunk:note_chunks(metadata)",
+            "id, chunk_id, question_data, bloom_level, concept_title",
         )
         .eq("chunk_id", chunkId)
         .limit(limit + excludeIds.size);
@@ -220,7 +225,10 @@ export async function fetchQuestionsByChunk(
     const { data } = await query;
     if (!data) return [];
 
-    return data.filter((q) => !excludeIds.has(q.id)).slice(0, limit);
+    return (data as Pick<
+        QuestionRow,
+        "id" | "chunk_id" | "question_data" | "bloom_level" | "concept_title"
+    >[]).filter((q) => !excludeIds.has(q.id)).slice(0, limit);
 }
 
 // Interface for joined query result
@@ -237,7 +245,7 @@ interface QuestionWithStatus {
 export async function fetchQuestionsByStatus(
     userId: string,
     courseId: string,
-    status: "pending_followup" | "active",
+    status: "pending_followup" | "active" | "archived",
     maxSession: number | null,
     limit: number,
 ): Promise<QuestionWithStatus[]> {
@@ -291,13 +299,21 @@ export async function fetchNewFollowups(
 
 export async function fetchQuestionsByIds(
     ids: string[],
-): Promise<QuestionRow[]> {
+): Promise<
+    Pick<
+        QuestionRow,
+        "id" | "chunk_id" | "question_data" | "bloom_level" | "concept_title"
+    >[]
+> {
     if (ids.length === 0) return [];
     const { data } = await supabase
         .from("questions")
-        .select("*")
+        .select("id, chunk_id, question_data, bloom_level, concept_title")
         .in("id", ids);
-    return data || [];
+    return (data as Pick<
+        QuestionRow,
+        "id" | "chunk_id" | "question_data" | "bloom_level" | "concept_title"
+    >[]) || [];
 }
 
 // --- Progress & State ---
@@ -362,7 +378,9 @@ export async function getChunkMastery(
 ): Promise<ChunkMasteryRow | null> {
     const { data } = await supabase
         .from("chunk_mastery")
-        .select("*")
+        .select(
+            "chunk_id, mastery_score, last_full_review_at, total_questions_seen",
+        )
         .eq("user_id", userId)
         .eq("chunk_id", chunkId)
         .maybeSingle();
@@ -430,13 +448,28 @@ export async function getChunkMetadata(
 
 export async function getQuestionData(
     questionId: string,
-): Promise<QuestionRow | null> {
+): Promise<
+    Pick<
+        QuestionRow,
+        "id" | "chunk_id" | "question_data" | "bloom_level" | "concept_title"
+    > | null
+> {
     const { data } = await supabase
         .from("questions")
-        .select("*")
+        .select("id, chunk_id, question_data, bloom_level, concept_title")
         .eq("id", questionId)
         .single();
-    return data;
+    return data as (
+        | Pick<
+            QuestionRow,
+            | "id"
+            | "chunk_id"
+            | "question_data"
+            | "bloom_level"
+            | "concept_title"
+        >
+        | null
+    );
 }
 
 export async function getCourseStatsAggregate(
@@ -513,13 +546,44 @@ export async function getAntrenmanQuestionCount(
 
 export async function getChunkWithContent(
     chunkId: string,
-): Promise<NoteChunkRow | null> {
+): Promise<
+    Pick<
+        NoteChunkRow,
+        | "id"
+        | "course_id"
+        | "metadata"
+        | "word_count"
+        | "status"
+        | "meaningful_word_count"
+        | "content"
+        | "display_content"
+        | "course_name"
+        | "section_title"
+    > | null
+> {
     const { data } = await supabase
         .from("note_chunks")
-        .select("*")
+        .select(
+            "id, course_id, metadata, word_count, status, meaningful_word_count, content, display_content, course_name, section_title",
+        )
         .eq("id", chunkId)
         .single();
-    return data;
+    return data as (
+        | Pick<
+            NoteChunkRow,
+            | "id"
+            | "course_id"
+            | "metadata"
+            | "word_count"
+            | "status"
+            | "meaningful_word_count"
+            | "content"
+            | "display_content"
+            | "course_name"
+            | "section_title"
+        >
+        | null
+    );
 }
 
 export async function updateChunkStatus(
@@ -546,15 +610,30 @@ export async function fetchCachedQuestion(
     chunkId: string,
     usageType: Database["public"]["Enums"]["question_usage_type"],
     conceptTitle: string,
-): Promise<QuestionRow | null> {
+): Promise<
+    Pick<
+        QuestionRow,
+        "id" | "chunk_id" | "question_data" | "bloom_level" | "concept_title"
+    > | null
+> {
     const { data } = await supabase
         .from("questions")
-        .select("*")
+        .select("id, chunk_id, question_data, bloom_level, concept_title")
         .eq("chunk_id", chunkId)
         .ilike("concept_title", conceptTitle.trim())
         .eq("usage_type", usageType)
         .maybeSingle();
-    return data;
+    return data as (
+        | Pick<
+            QuestionRow,
+            | "id"
+            | "chunk_id"
+            | "question_data"
+            | "bloom_level"
+            | "concept_title"
+        >
+        | null
+    );
 }
 
 export async function createQuestion(

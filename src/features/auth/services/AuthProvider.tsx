@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { getSupabase } from "@/shared/lib/core/supabase";
-import { AuthContext } from "../hooks/useAuth";
+import { AuthContext } from "../hooks/use-auth";
 
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -11,37 +11,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const supabase = getSupabase();
 
   useEffect(() => {
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    let mounted = true;
 
-    // Listen for changes
+    // İlk oturum kontrolü
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (error) throw error;
+
+        if (mounted) {
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+        }
+      } catch (error) {
+        console.error("Auth initialization error:", error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    // Değişiklikleri dinle
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+    } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
+      if (mounted) {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        // initializeAuth beklerken bir auth değişimi olursa loading'i kapat
+        setLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [supabase.auth]);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-  };
+  const signOut = useCallback(async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+    } catch (error) {
+      console.error("Sign out error:", error);
+    }
+  }, [supabase.auth]);
 
-  const value = {
+  const value = useMemo(() => ({
     user,
     session,
     loading,
     signOut,
-  };
+  }), [user, session, loading, signOut]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
+

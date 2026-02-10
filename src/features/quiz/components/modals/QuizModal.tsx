@@ -20,16 +20,16 @@ import {
   getTopicQuestionCount,
   getFirstChunkIdForTopic,
   getCourseTopicsWithCounts,
-  TopicWithCounts,
   getTopicCompletionStatus,
-  TopicCompletionStats,
 } from '@/shared/lib/core/client-db';
-import { QuizEngine } from '../engine/QuizEngine';
 import {
-  QuizSessionProvider,
-  ExamService,
-  type QuizQuestion,
-} from '@/features/quiz';
+  TopicWithCounts,
+  TopicCompletionStats,
+} from '@/shared/types/efficiency';
+import { QuizEngine } from '../engine/QuizEngine';
+import { QuizSessionProvider } from '../contexts/QuizSessionProvider';
+import { ExamService } from '../../core/engine';
+import { type QuizQuestion } from '../../core/types';
 import { GenerateQuestionButton } from '../ui/GenerateQuestionButton';
 import { useAuth } from '@/features/auth';
 import * as Repository from '@/features/quiz/api/repository';

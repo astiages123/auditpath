@@ -15,12 +15,12 @@ import {
 } from "lucide-react";
 import { VideoList } from "./VideoList";
 import { formatDuration } from "@/shared/lib/core/utils";
-import { useProgress } from "@/shared/hooks/useProgress";
+import { useProgress } from "@/shared/hooks/use-progress";
 import { CourseStatsModal } from "../modals/CourseStatsModal";
 import { QuizModal } from "@/features/quiz";
 import { getCourseIcon } from "@/features/courses/lib/course-icons";
-import { useCelebration } from "@/shared/hooks/useCelebration";
-import { type Course } from "@/shared/lib/core/client-db";
+import { useCelebration } from "@/shared/hooks/use-celebration";
+import { type Course } from "@/shared/types/courses";
 
 interface CourseListProps {
   courses: Course[];

@@ -11,14 +11,11 @@ import { useCallback, useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { RotateCcw, ArrowRight, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useQuiz } from '../../hooks/useQuiz';
+import { useQuiz } from '../../hooks/use-quiz';
 import { QuizCard } from '../ui/QuizCard';
-import {
-  useQuizSession,
-  checkAndTriggerBackgroundGeneration,
-  type QuizQuestion,
-} from '@/features/quiz';
-import { QuizFactory } from '@/features/quiz/core/factory';
+import { useQuizSession } from '../contexts/QuizSessionContext';
+import { checkAndTriggerBackgroundGeneration } from '../../core/engine';
+import { type QuizQuestion } from '../../core/types';
 import { processBatchForUI } from '@/features/quiz/core/engine';
 import * as Repository from '@/features/quiz/api/repository';
 import { QuizTimer } from '../ui/QuizTimer';
@@ -58,7 +55,6 @@ export function QuizEngine({
     initializeSession,
     recordResponse,
     state: sessionState,
-    injectScaffolding,
     advanceBatch,
   } = useQuizSession(); // Added advanceBatch
 
@@ -150,7 +146,7 @@ export function QuizEngine({
       const question = q.question_data as unknown as QuizQuestion;
       question.id = q.id;
       return question;
-    }) as QuizQuestion[];
+    });
   };
 
   // Load initial questions or current batch
@@ -245,72 +241,12 @@ export function QuizEngine({
 
       const isCorrect = index === state.currentQuestion.a;
 
-      // 2. Local side effects (scaffolding)
-      if (!isCorrect && user?.id && courseId && chunkId) {
-        incorrectIdsRef.current.push(state.currentQuestion.id!);
-        // Scaffolding logic kept here for UI (toasts)
-        toast.loading('Hatayı analiz ediyorum...', { id: 'scaffold-gen' });
-        try {
-          const context = {
-            chunkId,
-            originalQuestion: {
-              ...state.currentQuestion,
-              concept:
-                (
-                  state.currentQuestion as {
-                    concept_title?: string;
-                    concept?: string;
-                  }
-                ).concept_title ||
-                (
-                  state.currentQuestion as {
-                    concept_title?: string;
-                    concept?: string;
-                  }
-                ).concept,
-            },
-            incorrectOptionIndex: index,
-            correctOptionIndex: state.currentQuestion.a,
-            courseId,
-            userId: user.id,
-          };
-          const factory = new QuizFactory();
-          // generateFollowUp typically needs WrongAnswerContext.
-          // I need to ensure context matches or adapt it.
-          // Factory expects WrongAnswerContext: { chunkId, courseId, userId, originalQuestion, userResponse? }
-          // Let's assume scaffolding context is close enough or I construct it properly.
-          const scaffoldId = await factory.generateFollowUp(
-            context as unknown as {
-              chunkId: string;
-              originalQuestion: {
-                id: string;
-                q: string;
-                o: string[];
-                a: number;
-                exp: string;
-                evidence: string;
-                img?: number | null;
-                bloomLevel?: string;
-                concept: string;
-              };
-              incorrectOptionIndex: number;
-              correctOptionIndex: number;
-              courseId: string;
-              userId: string;
-            }
-          );
-
-          if (scaffoldId) {
-            injectScaffolding(scaffoldId, chunkId);
-            toast.success('Telafi sorusu hazırlandı.', { id: 'scaffold-gen' });
-          }
-        } catch (e) {
-          console.error('Scaffold gen failed', e);
-        }
-        setTimeout(() => toast.dismiss('scaffold-gen'), 2000);
+      // 2. Local side effects
+      if (!isCorrect && state.currentQuestion?.id) {
+        incorrectIdsRef.current.push(state.currentQuestion.id);
       }
     },
-    [selectAnswer, state, user, courseId, chunkId, injectScaffolding]
+    [selectAnswer, state]
   );
 
   const handleBlank = useCallback(async () => {

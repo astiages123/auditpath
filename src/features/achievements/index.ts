@@ -1,2 +1,2 @@
-export * from './components'
-export * from './hooks/use-achievements'
+export { AchievementsRoom } from "./components/sections/AchievementsRoom";
+export * from "./hooks/use-achievements";

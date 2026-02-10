@@ -9,7 +9,7 @@
  * - Response recording to database
  */
 
-import { useState, useCallback, type ReactNode } from 'react';
+import { useState, useCallback, useMemo, type ReactNode } from 'react';
 import {
   QuizSessionContext,
   type QuizSessionState,
@@ -83,24 +83,19 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
       }));
 
       try {
-        // Get session info (increments counter if new day)
-        const sessionInfo = await getSessionInfo(user.id, courseId);
+        // Parallelized fetching of independent session components
+        const [sessionInfo, quotaInfo, courseStats, contentVersion] = await Promise.all([
+          getSessionInfo(user.id, courseId),
+          getQuotaInfo(user.id, courseId, 0), // Session number initially unknown or independent
+          getCourseStats(user.id, courseId),
+          getContentVersion(courseId)
+        ]);
+
         if (!sessionInfo) {
           throw new Error('Seans bilgisi alınamadı');
         }
 
-        // Get quota info
-        const quotaInfo = await getQuotaInfo(
-          user.id,
-          courseId,
-          sessionInfo.currentSession
-        );
-
-        // Initialize stats
-        const courseStats = await getCourseStats(user.id, courseId);
-
         // --- Version Guard ---
-        const contentVersion = await getContentVersion(courseId);
         const versionKey = `${STORAGE_PREFIX}${user.id}_${courseId}_version`;
 
         if (contentVersion) {
@@ -123,6 +118,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
 
         // Check for saved session in localStorage
         const storageKey = `${STORAGE_PREFIX}${user.id}_${courseId}`;
+        const queueKey = `${storageKey}_queue`;
         const savedSessionStr = localStorage.getItem(storageKey);
         let restoredQueue = false;
         let currentReviewIndex = 0;
@@ -133,16 +129,20 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
             const savedSession = JSON.parse(savedSessionStr);
             // Only restore if it matches the current session ID we just got from DB
             if (savedSession.sessionId === sessionInfo.currentSession) {
-              reviewQueue = savedSession.reviewQueue || [];
-              currentReviewIndex = savedSession.currentReviewIndex || 0;
-              restoredQueue = true;
-              // console.log('[QuizSession] Restored session from storage');
+              const savedQueueStr = localStorage.getItem(queueKey);
+              if (savedQueueStr) {
+                reviewQueue = JSON.parse(savedQueueStr);
+                currentReviewIndex = savedSession.currentReviewIndex || 0;
+                restoredQueue = true;
+              }
             } else {
               localStorage.removeItem(storageKey);
+              localStorage.removeItem(queueKey);
             }
           } catch (e) {
             console.error('[QuizSession] Error parsing saved session', e);
             localStorage.removeItem(storageKey);
+            localStorage.removeItem(queueKey);
           }
         }
 
@@ -153,7 +153,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
               userId: user.id,
               courseId: courseId,
               sessionNumber: sessionInfo.currentSession,
-              isNewSession: false, // Not critical for queue generation
+              isNewSession: false,
               courseName: '',
             },
             quotaInfo.reviewQuota
@@ -165,10 +165,10 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
               storageKey,
               JSON.stringify({
                 sessionId: sessionInfo.currentSession,
-                reviewQueue,
                 currentReviewIndex,
               })
             );
+            localStorage.setItem(queueKey, JSON.stringify(reviewQueue));
           }
         }
 
@@ -309,18 +309,20 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
       // Update storage
       if (prev.sessionInfo && user?.id) {
         const storageKey = `${STORAGE_PREFIX}${user.id}_${prev.sessionInfo.courseId}`;
+        const queueKey = `${storageKey}_queue`;
         if (isStillReviewing) {
+          // Optimization: Only update the index/metadata, don't re-save the entire queue
           localStorage.setItem(
             storageKey,
             JSON.stringify({
               sessionId: prev.sessionInfo.currentSession,
-              reviewQueue: prev.reviewQueue,
               currentReviewIndex: nextIndex,
             })
           );
         } else {
           // Clear storage when session is done
           localStorage.removeItem(storageKey);
+          localStorage.removeItem(queueKey);
         }
       }
 
@@ -396,14 +398,15 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
         // Update local storage to persist the injection
         if (state.sessionInfo && user?.id) {
           const storageKey = `${STORAGE_PREFIX}${user.id}_${state.sessionInfo.courseId}`;
+          const queueKey = `${storageKey}_queue`;
           localStorage.setItem(
             storageKey,
             JSON.stringify({
               sessionId: state.sessionInfo.currentSession,
-              reviewQueue: newQueue,
               currentReviewIndex: prev.currentReviewIndex,
             })
           );
+          localStorage.setItem(queueKey, JSON.stringify(newQueue));
         }
 
         return {
@@ -417,7 +420,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
     [state.sessionInfo, user?.id]
   );
 
-  const value: QuizSessionContextValue = {
+  const value: QuizSessionContextValue = useMemo(() => ({
     state,
     initializeSession,
     recordResponse,
@@ -425,7 +428,15 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
     markReviewComplete,
     advanceBatch,
     injectScaffolding,
-  };
+  }), [
+    state,
+    initializeSession,
+    recordResponse,
+    getNextReviewItem,
+    markReviewComplete,
+    advanceBatch,
+    injectScaffolding
+  ]);
 
   return (
     <QuizSessionContext.Provider value={value}>

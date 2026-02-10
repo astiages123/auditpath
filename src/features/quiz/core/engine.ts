@@ -152,6 +152,32 @@ export async function getReviewQueue(
         });
     }
 
+    // 3. Arşivden Tozlananlar (Target: ~10-20% if queue still has room)
+    const archiveRemaining = limit - queue.length;
+    if (archiveRemaining > 0) {
+        const archiveLimit = Math.max(1, Math.floor(limit * 0.15));
+        const archiveQs = await Repository.fetchQuestionsByStatus(
+            ctx.userId,
+            ctx.courseId,
+            "archived",
+            ctx.sessionNumber,
+            Math.min(archiveRemaining, archiveLimit),
+        );
+
+        archiveQs.forEach((q) => {
+            if (!usedIds.has(q.question_id)) {
+                queue.push({
+                    chunkId: q.questions.chunk_id || "",
+                    questionId: q.question_id,
+                    courseId: ctx.courseId,
+                    status: "archived",
+                    priority: 3,
+                });
+                usedIds.add(q.question_id);
+            }
+        });
+    }
+
     // 3. Fallback / Fill with new questions if queue still empty?
     // Handled by client/fetcher usually.
 
@@ -255,12 +281,14 @@ export async function submitAnswer(
         isFast,
     );
 
-    const nextSession = srsResult.newStatus === "pending_followup"
-        ? SRS.calculateNextReviewSession(
-            ctx.sessionNumber,
-            srsResult.newSuccessCount,
-        )
-        : null;
+    const nextSession =
+        (srsResult.newStatus === "pending_followup" ||
+                srsResult.newStatus === "archived")
+            ? SRS.calculateNextReviewSession(
+                ctx.sessionNumber,
+                srsResult.newSuccessCount,
+            )
+            : null;
 
     // 3. Update State
     await Repository.upsertUserQuestionStatus({
@@ -390,9 +418,8 @@ export class ExamService {
             const metrics: ChunkMetric[] = chunks.map((c) => ({
                 id: c.id,
                 word_count: c.word_count || 500,
-                difficulty_index:
-                    (c.metadata as { difficulty_index?: number })
-                        ?.difficulty_index ||
+                difficulty_index: (c.metadata as { difficulty_index?: number })
+                    ?.difficulty_index ||
                     (c.metadata as { density_score?: number })?.density_score ||
                     3,
                 mastery_score: masteryMap.get(c.id) || 0,

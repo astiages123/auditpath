@@ -10,8 +10,8 @@ import {
   GoalProgressRing,
   LearningLoadChart,
 } from '../visuals/EfficiencyCharts';
-import { useEfficiencyLogic } from '../../hooks/useEfficiencyLogic';
-import { useEfficiencyData } from '../../hooks/useEfficiencyData';
+import { useEfficiencyLogic } from '../../hooks/use-efficiency-logic';
+import { useEfficiencyData } from '../../hooks/use-efficiency-data';
 import { EfficiencyHeatmap } from '../visuals/EfficiencyHeatmap';
 import { 
   BookOpen, 

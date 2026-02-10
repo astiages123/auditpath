@@ -2,7 +2,7 @@
 
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/features/auth";
-// import { useProgress } from "@/shared/hooks/useProgress";
+// import { useProgress } from "@/shared/hooks/use-progress";
 import {
   BookCheck,
   ChartScatter,

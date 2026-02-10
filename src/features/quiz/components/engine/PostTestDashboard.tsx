@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { TestResultSummary } from '@/features/quiz';
+import { type TestResultSummary } from '../../core/types';
 import { getSubjectStrategy } from '@/features/quiz/algoritma/strategy';
 import { Brain, Star, AlertTriangle, ShieldCheck, Home, Clock, CheckCircle2, HelpCircle } from 'lucide-react';
 

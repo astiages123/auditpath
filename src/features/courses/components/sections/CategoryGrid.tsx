@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { CategoryCard } from "../ui/CategoryCard";
-import { type Category } from "@/shared/lib/core/client-db";
+import { type Category } from "@/shared/types/courses";
 import { motion } from "framer-motion";
 
 interface CategoryGridProps {

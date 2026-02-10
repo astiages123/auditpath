@@ -2,10 +2,10 @@ import { ClipboardCheck, Maximize2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { GlassCard } from "@/shared/components/GlassCard";
 import { CardHeader } from "./EfficiencyCards";
-import { useEfficiencyData } from "../../hooks/useEfficiencyData";
+import { useEfficiencyData } from "../../hooks/use-efficiency-data";
 import { EfficiencyModal } from "../modals/EfficiencyModals";
 import { cn } from "@/shared/lib/core/utils";
-import { RecentQuizSession } from "@/shared/lib/core/client-db";
+import { RecentQuizSession } from "@/shared/types/efficiency";
 
 const formatDate = (dateStr: string) => {
   return new Date(dateStr).toLocaleDateString('tr-TR', { 

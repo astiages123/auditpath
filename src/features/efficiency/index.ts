@@ -1,4 +1,6 @@
 export { default as EfficiencyPage } from "./EfficiencyPage";
-export * from "./components";
-export * from "./hooks/useEfficiencyData";
-export * from "./hooks/useEfficiencyLogic";
+export { useEfficiencyData } from "./hooks/use-efficiency-data";
+export { useEfficiencyLogic } from "./hooks/use-efficiency-logic";
+
+// Export essential components if needed outside, otherwise keep internal.
+// Currently Statistics.tsx uses EfficiencyPage.

@@ -11,7 +11,7 @@ import {
     calculateAchievements,
 } from "@/features/achievements/lib/achievements";
 import { type Rank, RANKS } from "@/config/constants";
-import { ProgressStats } from "@/shared/hooks/useProgress";
+import { ProgressStats } from "@/shared/hooks/use-progress";
 import coursesData from "@/features/courses/data/courses.json";
 
 export const achievementKeys = {
@@ -65,9 +65,9 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
     if (currentRankOrder >= 0) {
         (RANKS as Rank[]).forEach((r: Rank) => {
             if (r.order <= currentRankOrder) {
-                // Ensure "Sürgün" (Order 1) or any rank 0 logic triggers only if user has activity.
-                // Specifically for "Sürgün", require at least 1 video.
-                if (r.id === "1" && (stats.completedVideos || 0) < 1) return;
+                // Sürgün (Rank 1) is handled by algorithmic check (minimum_videos >= 1)
+                // We skip adding it here to avoid bypassing that check.
+                if (r.id === "1") return;
 
                 eligibleIds.add(`RANK_UP:${r.id}`);
             }
@@ -138,49 +138,49 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
         });
     }
 
-    // F. Revoke Logic (SAFEGUARDED)
+    // F. Revoke Logic (SAFEGUARDED with isPermanent)
     const hasDbAchievements = dbUnlocked.length > 0;
     const isHydrated = !!stats.currentRank;
 
+    // Prevent revoking everything if stats are not fully loaded
     const isIncompleteLoad = hasDbAchievements && !isHydrated;
 
     if (!isIncompleteLoad) {
-        const staticIds = ACHIEVEMENTS.map((a) => a.id);
-        const knownPrefixes = [
-            "RANK_UP:",
-            "COURSE_COMPLETION:",
-            "CATEGORY_COMPLETION:",
-        ];
-
-        // Event-based achievements that should NEVER be revoked once earned
-        // Actually, the requirements specificy: "daily_progress", "streak", "total_active_days" should not be revoked.
-        // But "category_progress", "all_progress" can be.
-        // Let's filter by requirement type from the generated list, but since we only have IDs here, we need to lookup.
-
         const toRevoke = [...dbIds].filter((id) => {
-            const isManaged = knownPrefixes.some((p) => id.startsWith(p)) ||
-                staticIds.includes(id);
-            if (!isManaged) return false;
+            // 1. If currently eligible, keep it.
+            if (eligibleIds.has(id)) return false;
 
-            // Extra safety for Rank-Up - NEVER revoke rank achievements
+            // 2. Check definition for isPermanent flag
+            const achievementDef = ACHIEVEMENTS.find((a) => a.id === id);
+
+            // If it has isPermanent: true, NEVER revoke it.
+            if (achievementDef?.isPermanent) return false;
+
+            // 3. Logic for dynamic/generated IDs (COURSE_COMPLETION, etc.)
+            // Rank achievements are now permanent (via ACHIEVEMENTS check or implicit rule)
+            // But if they are NOT in ACHIEVEMENTS (shouldn't happen for ranks), we might need safety.
+            // ACHIEVEMENTS array contains RANK_UP:1..4 with isPermanent: true.
+
+            // For COURSE/CATEGORY completions: they are NOT in ACHIEVEMENTS array generally?
+            // The file `achievements.ts` only lists badge-linked achievements.
+            // If COURSE_COMPLETION is not in the array, achievementDef is undefined.
+            // We need to decide if they are permanent.
+            // Usually valid-course-completion should be revocable if progress drops?
+            // "Sadece isPermanent: false olan (veya undefined) ve artık gereksinimi karşılamayan başarımları sil."
+
+            // Special handling for legacy/generated IDs that might not be in ACHIEVEMENTS:
+            // If it starts with RANK_UP, assume permanent if not found in list (Safety).
             if (id.startsWith("RANK_UP:")) return false;
 
-            // CHECK: Is this an achievement we want to allow revoking?
-            // We only allow revoking if it is NOT an event-based one.
-            const achievementDef = ACHIEVEMENTS.find((a) => a.id === id);
-            if (achievementDef) {
-                const type = achievementDef.requirement.type;
-                const isEventBased = [
-                    "daily_progress",
-                    "streak",
-                    "total_active_days",
-                ].includes(type);
-                if (isEventBased) return false; // Never revoke event-based ones
-            }
+            // Event based checks (Fallback if not in ACHIEVEMENTS list correctly)
+            const isEventBasedPrefix = [
+                "streak", // Not a prefix usually, but purely safe
+                // Add any other prefixes if needed.
+            ];
+            if (isEventBasedPrefix.some((p) => id.includes(p))) return false;
 
-            // If it's already in DB and not event-based, but somehow lost its "eligible" status
-            // we check if it should be revoked only if it's NOT an event-based one.
-            return !eligibleIds.has(id);
+            // Otherwise, if not eligible and neither permanent nor protected, revoke.
+            return true;
         });
 
         if (toRevoke.length > 0) {

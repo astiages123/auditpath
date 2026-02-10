@@ -12,7 +12,7 @@ import { calculateSessionTotals } from '@/features/pomodoro/lib/pomodoro-utils';
 import { toast } from 'sonner';
 import { env } from '@/config/env';
 
-import { useFaviconManager } from '@/features/pomodoro/hooks/useFaviconManager';
+import { useFaviconManager } from '@/features/pomodoro/hooks/use-favicon-manager';
 
 import { playNotificationSound } from '../lib/audio-utils';
 
@@ -34,7 +34,7 @@ export function TimerController() {
 
     // 1. Core Tick using Web Worker
     useEffect(() => {
-        const worker = new Worker(new URL('../../../workers/timerWorker.ts', import.meta.url), { type: 'module' });
+        const worker = new Worker(new URL('../../../workers/timer-worker.ts', import.meta.url), { type: 'module' });
 
         worker.onmessage = (e) => {
             if (e.data === 'TICK') {
@@ -157,8 +157,12 @@ export function TimerController() {
     useEffect(() => {
         const checkCompletion = () => {
             // We use <= 0 to catch any skips
-            if (timeLeft <= 0 && isActive && sessionId) {
-                const notificationKey = `${sessionId}-${isBreak ? 'break' : 'work'}`;
+            if (timeLeft <= 0 && isActive) {
+                // Use sessionId if available, otherwise fallback to startTime or a random string for this session instance if needed.
+                // Since this component re-mounts or startTime might change, we need a stable key for THIS specific completion event.
+                // Using startTime + mode is a good proxy for a unique session instance if sessionId is missing.
+                const uniqueSessionKey = sessionId || `anonymous-${originalStartTime || startTime || 'unknown'}`;
+                const notificationKey = `${uniqueSessionKey}-${isBreak ? 'break' : 'work'}`;
                 
                 // PREVENT DOUBLE FIRE
                 if (lastNotifiedRef.current === notificationKey) return;
@@ -199,9 +203,8 @@ export function TimerController() {
                         if (permission === "granted") sendNotification();
                     });
                 } else if (Notification.permission === "denied") {
-                    toast.error("Masaüstü bildirimleri tarayıcı tarafından engellenmiş!", {
-                        id: "notification-denied-error"
-                    });
+                    // Optional: We could log this or just ignore since we already toasted
+                    // toast.error("Masaüstü bildirimleri tarayıcı tarafından engellenmiş!");
                 }
 
                 playNotificationSound();

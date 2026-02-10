@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useAuth } from "@/features/auth";
-import { useProgress } from "@/shared/hooks/useProgress";
+import { useProgress } from "@/shared/hooks/use-progress";
 import { useCelebrationStore } from "@/shared/store/use-celebration-store";
 import { getCelebrationAsset } from "@/features/achievements/lib/celebration-assets";
 import {
@@ -14,6 +14,9 @@ export function useCelebration() {
     const { user } = useAuth();
     const enqueue = useCelebrationStore((state) => state.enqueue);
     const lastStatsRef = useRef<string>("");
+
+    // Prevent double-processing of the same achievement ID during the session
+    const processingIds = useRef<Set<string>>(new Set());
 
     // 1. Uncelebrated Query (Polling/Realtime)
     const { data: uncelebrated } = useUncelebratedQuery(user?.id);
@@ -30,21 +33,39 @@ export function useCelebration() {
             for (const item of uncelebrated) {
                 const id = item.achievement_id;
 
+                // SKIP if already processing/processed in this session loop
+                if (processingIds.current.has(id)) continue;
+                processingIds.current.add(id);
+
                 try {
-                    // Mark as celebrated in DB first to avoid loops
-                    await markAsCelebrated(user.id, id);
+                    // We do NOT mark as celebrated immediately anymore.
+                    // Instead, we pass a callback to be called when the user actually closes the modal.
+                    const handleClose = async () => {
+                        try {
+                            await markAsCelebrated(user.id, id);
+                        } catch (e) {
+                            console.error(
+                                `Failed to mark achievement ${id} as celebrated`,
+                                e,
+                            );
+                        } finally {
+                            processingIds.current.delete(id);
+                        }
+                    };
 
                     // Then enqueue UI
                     const asset = getCelebrationAsset(id);
                     enqueue({
                         id,
                         ...asset,
+                        onClose: handleClose,
                     });
                 } catch (err) {
                     console.error(
                         `[Celebration Error] Failed to process ${id}:`,
                         err,
                     );
+                    processingIds.current.delete(id);
                 }
             }
         };

@@ -1,3 +1,3 @@
 export * from './components/PomodoroModal'
 export * from './components/TimerController'
-export { usePomodoro } from './hooks/usePomodoro'
+export { usePomodoro } from './hooks/use-pomodoro'

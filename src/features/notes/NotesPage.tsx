@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, memo, useMemo } from 'react';
-import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
@@ -20,12 +20,12 @@ import {
 } from 'lucide-react';
 import {
   getCourseTopics,
-  type CourseTopic,
   getCourseIdBySlug,
 } from '@/shared/lib/core/client-db';
+import { type CourseTopic } from '@/shared/types/efficiency';
 import { useAuth } from '@/features/auth';
 import { Button } from '@/shared/components/ui/button';
-import { cn } from '@/shared/lib/core/utils';
+import { cn, slugify } from '@/shared/lib/core/utils';
 import { GlobalNavigation } from './components/GlobalNavigation';
 import { LocalToC, type LocalToCItem } from './components/LocalToC';
 
@@ -50,25 +50,6 @@ const getText = (node: React.ReactNode): string => {
   return '';
 };
 
-const slugify = (text: string) => {
-  const trMap: { [key: string]: string } = {
-    'ı': 'i', 'İ': 'i', 'ğ': 'g', 'Ğ': 'g',
-    'ü': 'u', 'Ü': 'u', 'ş': 's', 'Ş': 's',
-    'ö': 'o', 'Ö': 'o', 'ç': 'c', 'Ç': 'c'
-  };
-
-  return text
-    .split('')
-    .map(char => trMap[char] || char)
-    .join('')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w-]+/g, '')
-    .replace(/--+/g, '-');
-};
 
 // Helper to remove only the FIRST occurrence of the bulb emoji in the React tree
 const removeFirstBulb = (node: React.ReactNode): React.ReactNode => {
@@ -298,7 +279,7 @@ const markdownComponents = {
     const text = getText(children);
     const subId = slugify(text);
     return (
-      <h3 id={subId} {...props}>
+      <h3 id={subId} className="scroll-mt-28" {...props}>
         {children}
       </h3>
     );
@@ -307,7 +288,7 @@ const markdownComponents = {
     const text = getText(children);
     const subId = slugify(text);
     return (
-      <h4 id={subId} {...props}>
+      <h4 id={subId} className="scroll-mt-28" {...props}>
         {children}
       </h4>
     );
@@ -316,7 +297,7 @@ const markdownComponents = {
     const text = getText(children);
     const subId = slugify(text);
     return (
-      <h5 id={subId} {...props}>
+      <h5 id={subId} className="scroll-mt-28" {...props}>
         {children}
       </h5>
     );
@@ -469,7 +450,7 @@ interface ExtendedToCItem extends LocalToCItem {
 export default function NotesPage() {
   const { courseSlug, topicSlug } = useParams<{ courseSlug: string; topicSlug?: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
+  // const location = useLocation();
   const { user } = useAuth();
   
   // Data State
@@ -495,59 +476,56 @@ export default function NotesPage() {
   const isProgrammaticScroll = useRef(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Scroll Progress & Active Section
+  // 1. Scroll Progress ONLY
   useEffect(() => {
     const mainContent = mainContentRef.current;
     if (!mainContent) return;
 
     const handleScroll = () => {
-      // 1. Calculate Progress
       const scrollTop = mainContent.scrollTop;
       const scrollHeight = mainContent.scrollHeight;
       const clientHeight = mainContent.clientHeight;
       const progress = (scrollTop / (scrollHeight - clientHeight)) * 100;
       setScrollProgress(progress);
-
-      // 2. Determine Active Section
-      if (isProgrammaticScroll.current) return;
-
-      // Find all heading elements with IDs within main content
-      const sections = mainContent.querySelectorAll('[id]');
-      let currentSectionId = '';
-      
-      // We look for the first section that is near the top of the viewport
-      // The "offset" defines the visual snapping point
-      const offset = 150; 
-      
-      for (let i = 0; i < sections.length; i++) {
-        const section = sections[i];
-        const rect = section.getBoundingClientRect();
-        
-        // Since main panel is scrollable, we check rect relative to viewport
-        // The sticky header is ~64px (h-16), so we want headings to be active when they pass under it or are near
-        if (rect.top < offset) {
-            currentSectionId = section.getAttribute('id') || '';
-        } else {
-            // Once we find a section below the offset, we stop, because the previous one was the current one
-            break;
-        }
-      }
-      
-      // Fallback: If at very top, first section
-      if (!currentSectionId && sections.length > 0 && scrollTop < 100) {
-          currentSectionId = sections[0].getAttribute('id') || '';
-      }
-
-      if (currentSectionId && currentSectionId !== activeSection) {
-        setActiveSection(currentSectionId);
-      }
     };
 
     mainContent.addEventListener('scroll', handleScroll, { passive: true });
-    // Initial check
     handleScroll();
     return () => mainContent.removeEventListener('scroll', handleScroll);
-  }, [activeSection, toc]);
+  }, [chunks, loading]);
+
+  // 2. Active Section via IntersectionObserver
+  useEffect(() => {
+    if (loading || chunks.length === 0) return;
+
+    const options = {
+      root: mainContentRef.current,
+      rootMargin: "-10% 0% -80% 0%",
+      threshold: 0,
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      if (isProgrammaticScroll.current) return;
+
+      const intersecting = entries.filter(entry => entry.isIntersecting);
+      if (intersecting.length > 0) {
+        // Find the topmost intersecting element (smallest boundingClientRect.top)
+        const topMost = intersecting.reduce((prev, curr) => 
+          curr.boundingClientRect.top < prev.boundingClientRect.top ? curr : prev
+        );
+        
+        if (topMost.target.id && topMost.target.id !== activeSection) {
+          setActiveSection(topMost.target.id);
+        }
+      }
+    }, options);
+
+    // Observe all elements with an ID inside the scroll container
+    const sections = mainContentRef.current?.querySelectorAll('[id]');
+    sections?.forEach((section) => observer.observe(section));
+
+    return () => observer.disconnect();
+  }, [chunks, loading, activeChunkId]);
 
   // Derive Active Chunk from Active Section - REMOVED because we use URL now
   // We only track active section for LocalToC highlighting
@@ -709,10 +687,9 @@ export default function NotesPage() {
         chunk.section_title &&
         (chunk.sequence_order === 0 || chunk.sequence_order === undefined)
       ) {
-        const cleanTitle = chunk.section_title.replace(/\*\*/g, '');
         items.push({
           id: chunkId,
-          title: cleanTitle,
+          title: chunk.section_title,
           level: 1,
           chunkId: chunkId
         });
@@ -751,7 +728,7 @@ export default function NotesPage() {
         if (level > 0) {
             items.push({
                 id: slugify(title),
-                title: title.replace(/\*\*/g, ''),
+                title: title,
                 level,
                 chunkId: chunkId
             });
@@ -783,13 +760,6 @@ export default function NotesPage() {
       }
   };
 
-  // Calculate current topic index for Right ToC numbering
-  const parentIndex = useMemo(() => {
-    if (!activeChunkId || chunks.length === 0) return undefined;
-    const navItems = chunks.filter(c => c.sequence_order === 0 || c.sequence_order === undefined);
-    const idx = navItems.findIndex(c => slugify(c.section_title) === activeChunkId);
-    return idx !== -1 ? idx + 1 : undefined;
-  }, [chunks, activeChunkId]);
 
   if (loading) {
     return (
@@ -821,17 +791,24 @@ export default function NotesPage() {
     <div className="flex h-screen overflow-hidden bg-background text-foreground font-sans selection:bg-primary/20">
       
       {/* 1. Left Panel: Global Navigation */}
-      <aside className="w-72 shrink-0 border-r border-border/40 bg-card/10 backdrop-blur-xl hidden lg:block">
-        <div className="h-16 flex items-center px-6 border-b border-border/40">
+      <aside className="w-72 shrink-0 border-r border-border/15 bg-card/10 backdrop-blur-xl hidden lg:block">
+        <div className="h-20 flex flex-col justify-center px-6 border-b border-border/10 bg-card/5 relative overflow-hidden">
             <Link
               to="/courses"
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="group inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all duration-300 mb-1.5"
             >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium">Geri Dön</span>
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 group-hover:opacity-100">Kütüphane</span>
             </Link>
+            
+            <div className="flex items-center gap-2.5 min-w-0">
+               <div className="w-1 h-3.5 rounded-full bg-primary/40 shrink-0" />
+               <h1 className="text-[13px] font-bold text-foreground/90 truncate tracking-tight uppercase">
+                  {courseName}
+               </h1>
+            </div>
         </div>
-        <div className="h-[calc(100vh-4rem)]">
+        <div className="h-[calc(100vh-5rem)]">
             <GlobalNavigation 
                 chunks={chunks} 
                 activeChunkId={activeChunkId} 
@@ -845,7 +822,7 @@ export default function NotesPage() {
         ref={mainContentRef}
         className="flex-1 overflow-y-auto bg-background/50 relative scroll-smooth"
       >
-        <div className="max-w-4xl mx-auto px-8 py-12 min-h-screen">
+        <div className="max-w-6xl mx-auto px-8 py-12 min-h-screen">
             {/* Display only the selected chunk */}
             {chunks
                 .filter(chunk => slugify(chunk.section_title) === activeChunkId)
@@ -870,14 +847,14 @@ export default function NotesPage() {
       </main>
 
       {/* 3. Right Panel: Local ToC & Knowledge Graph */}
-      <aside className="w-80 shrink-0 border-l border-border/40 bg-card/10 backdrop-blur-xl hidden xl:flex flex-col h-full">
+      <aside className="w-64 shrink-0 border-l border-border/15 bg-card/10 backdrop-blur-xl hidden xl:flex flex-col h-full">
 
          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
            <div className="my-auto w-full">
              <LocalToC 
                items={currentChunkToC} 
                activeId={activeSection} 
-               parentIndex={parentIndex}
+
                onItemClick={(id, e) => {
                  e.preventDefault();
                  handleScrollToId(id);
@@ -893,7 +870,7 @@ export default function NotesPage() {
             mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         className={cn(
-          'fixed bottom-5 right-5 lg:right-85 p-3 rounded-full bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 z-50 hover:scale-110 hover:shadow-xl hover:bg-primary',
+          'fixed bottom-5 right-5 lg:right-70 p-3 rounded-full bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 z-50 hover:scale-110 hover:shadow-xl hover:bg-primary',
           scrollProgress > 10
             ? 'opacity-100 translate-y-0'
             : 'opacity-0 translate-y-4 pointer-events-none'
