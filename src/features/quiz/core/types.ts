@@ -97,6 +97,14 @@ export interface QuizState {
     showExplanation: boolean;
     isCorrect: boolean | null;
     hasStarted: boolean;
+    summary: TestResultSummary | null;
+}
+
+export interface TestResultSummary {
+    percentage: number;
+    masteryScore: number;
+    pendingReview: number;
+    totalTimeFormatted: string;
 }
 
 export interface QuizResults {

@@ -33,6 +33,7 @@ function App() {
                     <Route path="/efficiency" element={<AuthGuard><EfficiencyPage /></AuthGuard>} />
 
                     <Route path="/notes/:courseSlug" element={<AuthGuard><NotesPage /></AuthGuard>} />
+                    <Route path="/notes/:courseSlug/:topicSlug" element={<AuthGuard><NotesPage /></AuthGuard>} />
                     <Route path="/analytics" element={<AuthGuard><AnalyticsPage /></AuthGuard>} />
                     
                     {/* Redirect unknown routes to home */}

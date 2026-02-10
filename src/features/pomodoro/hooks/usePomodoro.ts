@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useTimerStore } from "@/shared/store/use-timer-store";
 import {
   deletePomodoroSession,
@@ -6,11 +6,11 @@ import {
   upsertPomodoroSession,
 } from "@/shared/lib/core/client-db";
 import { useAuth } from "@/features/auth";
-import { unlockAudio } from "../lib/audio-utils";
+import { playNotificationSound, unlockAudio } from "../lib/audio-utils";
 
 export type PomodoroMode = "work" | "break";
 
-export function usePomodoro() {
+export function usePomodoro({ onComplete }: { onComplete?: () => void } = {}) {
   const {
     timeLeft,
     isActive,
@@ -35,10 +35,48 @@ export function usePomodoro() {
     setHasRestored,
     originalStartTime,
     pauseStartTime,
+    tick,
+    setSessionId: setStoreSessionId, // redundant but sticking to what was there or destructuring what I need
   } = useTimerStore();
 
   const { user } = useAuth();
   const userId = user?.id;
+
+  const workerRef = useRef<Worker | null>(null);
+
+  useEffect(() => {
+    workerRef.current = new Worker(
+      new URL("../../../workers/timerWorker.ts", import.meta.url),
+    );
+
+    workerRef.current.onmessage = (e: MessageEvent) => {
+      if (e.data === "TICK") {
+        tick();
+      }
+    };
+
+    return () => {
+      workerRef.current?.terminate();
+    };
+  }, [tick]);
+
+  useEffect(() => {
+    if (isActive) {
+      workerRef.current?.postMessage("START");
+    } else {
+      workerRef.current?.postMessage("STOP");
+    }
+  }, [isActive]);
+
+  useEffect(() => {
+    if (isActive && timeLeft <= 0) {
+      unlockAudio(); // Ensure audio context is ready
+      playNotificationSound();
+      if (onComplete) {
+        onComplete();
+      }
+    }
+  }, [isActive, timeLeft, onComplete]);
 
   // Start/Resume Wrapper
   const handleStart = async () => {

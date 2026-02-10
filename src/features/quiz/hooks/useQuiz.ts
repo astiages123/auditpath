@@ -54,6 +54,7 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
     showExplanation: false,
     isCorrect: null,
     hasStarted: false,
+    summary: null,
   });
 
   const [results, setResults] = useState<QuizResults>(
@@ -86,8 +87,6 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
 
       try {
         // 1. Start Session (Engine)
-        // We need courseId. Fetch it from chunk or assume passed?
-        // params only has chunkId. We need to fetch chunk metadata first.
         const chunk = await Repository.getChunkMetadata(params.chunkId);
         if (!chunk) throw new Error("Chunk not found");
 
@@ -98,10 +97,6 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
         sessionContextRef.current = session;
 
         // 2. Build Queue (Engine or Service?)
-        // The original logic fetched questions from Repository or generated them.
-        // We should use Repository directly here as per new architecture (Engine organizes, Repo fetches).
-
-        // Fetch existing questions
         const questions = await Repository.fetchQuestionsByChunk(
           params.chunkId,
           count,
@@ -118,17 +113,12 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
             isLoading: false,
           });
         } else {
-          // Trigger Generation (Factory via legacy service or direct?)
-          // We removed `Factory` calls from here.
-          // We should use a Service that wraps Factory?
-          // Or just import QuizFactory here? Factory is in `core`.
-          // Let's dynamically import or usage is fine if strictly typed.
-          // Check imports: I need QuizFactory.
+          // Trigger Generation
           const { QuizFactory } = await import("../core/factory");
           const factory = new QuizFactory();
 
-          factory.generateForChunk(params.chunkId, {
-            onLog: () => {}, // optimize logs?
+          await factory.generateForChunk(params.chunkId, {
+            onLog: () => {},
             onQuestionSaved: (total) => updateState({ generatedCount: total }),
             onComplete: async () => {
               const updated = await Repository.fetchQuestionsByChunk(
@@ -254,18 +244,35 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
       timerRef.current.reset();
       timerRef.current.start();
     } else {
-      // Finish
+      // Finish Logic
       updateState({ isLoading: true });
-      // Logic to finish session? Engine doesn't have explicit finish logic that DB needs?
-      // Check `finishQuizSession` in client-db, or use Repository?
-      // Using `Repository` directly for now or shared lib.
-      // Ideally Engine should handle this too.
-      // For now, I'll use the client-db import as before or mock it?
-      // Wait, I should not import client-db if I want strict separation.
-      // I'll add `calculateTestResults` usage here or just complete.
-      updateState({ isLoading: false });
+
+      // Calculate final results using the pure function from scoring.ts
+      // We need to pass the CURRENT results state.
+      // However, results state assumes the last answer update has been processed.
+      // Since selectAnswer updates results immediately, keying off `results` here *might* be stale due to closure?
+      // `nextQuestion` is recreated on `[state.queue]`.
+      // `results` is not in dependency array.
+      // We should use functional update or rely on recent render?
+      // Better: we can recalculate from `results` state if we include it in deps,
+      // OR we just trust `results` is up to date because `nextQuestion` is called by user AFTER answering.
+
+      // Actually, define `calculateTestResults` import at top.
+      const summary = (await import("../algoritma/scoring"))
+        .calculateTestResults(
+          results.correct,
+          results.incorrect,
+          results.blank,
+          results.totalTimeMs,
+        );
+
+      updateState({
+        isLoading: false,
+        summary, // Store summary in state
+        currentQuestion: null, // Clear current question to indicate finish
+      });
     }
-  }, [state.queue]);
+  }, [state.queue, results]); // Added 'results' to dependency
 
   const toggleExplanation = useCallback(() => {
     updateState({ showExplanation: !state.showExplanation });
@@ -286,6 +293,7 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
       showExplanation: false,
       isCorrect: null,
       hasStarted: false,
+      summary: null,
     });
   }, []);
 
@@ -305,6 +313,7 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
         totalToGenerate: questions.length,
         generatedCount: questions.length,
         isLoading: false,
+        summary: null,
       });
       timerRef.current.reset();
       timerRef.current.start();

@@ -8,6 +8,8 @@
 import { supabase } from "@/shared/lib/core/supabase";
 import { type Database, type Json } from "@/shared/types/supabase";
 import { type ChunkMasteryRow } from "../core/types";
+import { calculateConceptBasedQuota } from "@/shared/lib/core/quota";
+import { getSubjectStrategy } from "../algoritma/strategy";
 
 // --- Types ---
 
@@ -567,26 +569,51 @@ export async function createQuestion(
 export async function getChunkQuotaStatus(chunkId: string) {
     const { data } = await supabase
         .from("note_chunks")
-        .select("id, word_count, status, metadata, meaningful_word_count")
+        .select(
+            "id, course_id, word_count, status, metadata, meaningful_word_count",
+        )
         .eq("id", chunkId)
         .single();
 
     if (!data) return null;
 
     const metadata = (data.metadata as Record<string, Json>) || {};
-    const used = (metadata.question_count as number) || 0;
-    const totalQuota = 20;
+
+    // 1. Live Count (Database Source of Truth)
+    const used = await getAntrenmanQuestionCount(chunkId);
+
+    // 2. Get Course & Strategy
+    // We need course name to determine importance
+    const courseName = await getCourseName(data.course_id);
+    const strategy = courseName ? getSubjectStrategy(courseName) : undefined;
+    const importance = strategy?.importance || "medium";
+
+    // 3. Concept-based quota calculation
+    const concepts = metadata.concept_map as { isException?: boolean }[] || [];
+
+    let totalQuota = 0;
+
+    if (concepts.length === 0) {
+        // FALLBACK: Cold Start (No Map yet)
+        // Estimate: 1 question per 45 words, min 5.
+        // This is the "Antrenman" target for estimation.
+        totalQuota = Math.max(5, Math.round((data.word_count || 500) / 45));
+    } else {
+        // REAL: Knowledge Density Quota
+        const quotaResult = calculateConceptBasedQuota(concepts, importance);
+        // We target 'antrenman' quota specifically for this UI component
+        totalQuota = quotaResult.antrenman;
+    }
 
     return {
         used,
         quota: { total: totalQuota },
         wordCount: data.word_count || 0,
-        conceptCount: (metadata.concept_map as Json[] || []).length,
+        conceptCount: concepts.length,
         isFull: used >= totalQuota,
         status: data.status || "PENDING",
-        difficultyIndex:
-            (metadata.difficulty_index || metadata.density_score ||
-                3) as number,
+        difficultyIndex: (metadata.difficulty_index || metadata.density_score ||
+            3) as number,
         meaningfulWordCount: data.meaningful_word_count || 0,
     };
 }

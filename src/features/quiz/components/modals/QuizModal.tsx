@@ -346,11 +346,6 @@ export function QuizModal({
                               </div>
                             )}
                           </div>
-                          <p className="text-[13px] text-muted-foreground leading-none">
-                            {completionStatus?.completed
-                              ? 'Konu tamamlandı.'
-                              : 'Hedef: Antrenman soruları.'}
-                          </p>
                         </div>
                       </div>
 

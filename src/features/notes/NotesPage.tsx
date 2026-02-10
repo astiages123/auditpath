@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useRef, memo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import React, { useEffect, useState, useRef, memo, useMemo } from 'react';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
+import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
@@ -23,9 +24,11 @@ import {
   getCourseIdBySlug,
 } from '@/shared/lib/core/client-db';
 import { useAuth } from '@/features/auth';
-import { TableOfContents, type ToCItem } from './components/TableOfContents';
 import { Button } from '@/shared/components/ui/button';
 import { cn } from '@/shared/lib/core/utils';
+import { GlobalNavigation } from './components/GlobalNavigation';
+import { LocalToC, type LocalToCItem } from './components/LocalToC';
+
 
 // --- Helpers ---
 
@@ -48,8 +51,16 @@ const getText = (node: React.ReactNode): string => {
 };
 
 const slugify = (text: string) => {
+  const trMap: { [key: string]: string } = {
+    'ı': 'i', 'İ': 'i', 'ğ': 'g', 'Ğ': 'g',
+    'ü': 'u', 'Ü': 'u', 'ş': 's', 'Ş': 's',
+    'ö': 'o', 'Ö': 'o', 'ç': 'c', 'Ç': 'c'
+  };
+
   return text
-    .toString()
+    .split('')
+    .map(char => trMap[char] || char)
+    .join('')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
@@ -193,6 +204,41 @@ const CodeBlock = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Handle math blocks
+  const isMath = !!(
+    (className?.includes('math')) || 
+    (match && (match[1] === 'math' || match[1] === 'latex')) ||
+    (code.trim().startsWith('$$') && code.trim().endsWith('$$')) ||
+    (code.trim().startsWith('$') && code.trim().endsWith('$'))
+  );
+
+  if (isMath) {
+    const isDisplay = !!(code.trim().startsWith('$$') || (match && (match[1] === 'math' || match[1] === 'latex')));
+    const content = code.trim()
+      .replace(/^(\$\$|\\\[|\\\(|\$)/, '')
+      .replace(/(\$\$|\\\]|\\\)|\$)$/, '');
+
+    try {
+      const html = katex.renderToString(content, {
+        displayMode: isDisplay,
+        throwOnError: false,
+      });
+      
+      if (isDisplay) {
+        return (
+          <div 
+            className="my-8 text-lg overflow-x-auto text-center"
+            dangerouslySetInnerHTML={{ __html: html }} 
+          />
+        );
+      }
+      return <span dangerouslySetInnerHTML={{ __html: html }} />;
+    } catch (err) {
+      console.error('KaTeX fallback render error:', err);
+      // Fall through to regular code display if KaTeX fails
+    }
+  }
+
   // Handle inline code
   if (inline || !match) {
     return (
@@ -211,7 +257,7 @@ const CodeBlock = ({
   }
 
   return (
-    <div className="relative my-8 rounded-xl overflow-hidden border border-border/50 shadow-lg bg-[#0d1117] group">
+    <div className="relative my-8 rounded-xl overflow-hidden border border-border/50 shadow-lg bg-[#0d1117] group not-prose">
       <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-white/5">
         <div className="flex items-center gap-2">
           <span className="flex gap-1.5">
@@ -318,19 +364,21 @@ const markdownComponents = {
       const cleanChildren = removeFirstBulb(children);
 
       return (
-        <div className="callout-box">
-          <div className="shrink-0 bg-primary/10 rounded-lg p-2 flex items-center justify-center">
-            <span className="text-xl leading-none">💡</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="callout-label">İNCELEME / ÖRNEK</div>
-            <div className="callout-content">{cleanChildren}</div>
-          </div>
+        <div className="not-prose my-6">
+            <div className="callout-box">
+            <div className="shrink-0 bg-primary/10 rounded-lg p-2 flex items-center justify-center">
+                <span className="text-xl leading-none">💡</span>
+            </div>
+            <div className="flex-1 min-w-0">
+                <div className="callout-label">İNCELEME / ÖRNEK</div>
+                <div className="callout-content">{cleanChildren}</div>
+            </div>
+            </div>
         </div>
       );
     }
 
-    return <blockquote {...props}>{children}</blockquote>;
+    return <blockquote className="not-prose border-l-4 border-primary/40 pl-4 py-1 italic text-muted-foreground my-6" {...props}>{children}</blockquote>;
   },
   ul: ({ ...props }: React.HTMLAttributes<HTMLUListElement>) => (
     <ul {...props} />
@@ -346,22 +394,29 @@ const markdownComponents = {
   ),
   code: CodeBlock,
   table: ({ ...props }: React.TableHTMLAttributes<HTMLTableElement>) => (
-    <div className="overflow-x-auto my-10 border border-primary/10 rounded-2xl shadow-xl shadow-primary/5 overflow-hidden bg-card/30 backdrop-blur-sm">
-      <table {...props} />
+    <div className="not-prose overflow-x-auto my-10 border border-primary/10 rounded-2xl shadow-xl shadow-primary/5 overflow-hidden bg-card/30 backdrop-blur-sm">
+      <table className="w-full text-sm text-left" {...props} />
     </div>
   ),
   thead: ({ ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => (
-    <thead {...props} />
+    <thead className="bg-primary/5 text-xs uppercase text-muted-foreground" {...props} />
   ),
   th: ({ ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) => (
-    <th {...props} />
+    <th className="px-6 py-3 font-medium tracking-wider" {...props} />
   ),
   tr: ({ ...props }: React.HTMLAttributes<HTMLTableRowElement>) => (
-    <tr {...props} />
+    <tr className="border-b border-white/5 hover:bg-white/5 transition-colors" {...props} />
   ),
   td: ({ ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) => (
-    <td {...props} />
+    <td className="px-6 py-4" {...props} />
   ),
+  // KaTeX Display Fix
+  div: ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
+     if (className?.includes('katex-display')) {
+         return <div className={cn(className, "my-8 text-lg overflow-x-auto")} {...props} />;
+     }
+     return <div className={className} {...props} />;
+  }
 };
 
 // Memoized section component to prevent expensive Markdown re-renders
@@ -374,16 +429,19 @@ const MarkdownSection = memo(
     components: typeof markdownComponents;
   }) => {
     const sectionId = slugify(chunk.section_title);
+    
+    // We could use IntersectionObserver here if we wanted granular per-chunk visibility notification
+    // But scrolling logic in parent is simpler for keeping state in sync
+
     return (
       <div
         id={sectionId}
-        className="chunk-container scroll-mt-24 mb-16 last:mb-0"
+        className="chunk-container scroll-mt-24 mb-24 last:mb-0 relative"
       >
         {(chunk.sequence_order === 0 || chunk.sequence_order === undefined) &&
           chunk.section_title && (
-            <div className="section-header mb-5 text-center">
-              <h2>{chunk.section_title}</h2>
-              <div className="mt-4 w-20 h-1.5 bg-primary/40 rounded-full mx-auto" />
+            <div className="section-header mb-8 pb-4 border-b border-border/40">
+              <h1 className="text-3xl font-bold tracking-tight text-center text-foreground">{chunk.section_title}</h1>
             </div>
           )}
         <article className="prose prose-lg prose-slate dark:prose-invert max-w-none">
@@ -404,103 +462,156 @@ const MarkdownSection = memo(
 );
 MarkdownSection.displayName = 'MarkdownSection';
 
+interface ExtendedToCItem extends LocalToCItem {
+  chunkId: string;
+}
+
 export default function NotesPage() {
-  const { courseSlug } = useParams<{ courseSlug: string }>();
+  const { courseSlug, topicSlug } = useParams<{ courseSlug: string; topicSlug?: string }>();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
+  
+  // Data State
   const [chunks, setChunks] = useState<CourseTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [courseName, setCourseName] = useState('');
-  const [toc, setToc] = useState<ToCItem[]>([]);
+  
+  // Navigation State
+  const [toc, setToc] = useState<ExtendedToCItem[]>([]);
   const [activeSection, setActiveSection] = useState<string>('');
+  // Derived activeChunkId from URL or first chunk
+  const activeChunkId = useMemo(() => {
+     if (topicSlug) return topicSlug;
+     if (chunks.length > 0) return slugify(chunks[0].section_title);
+     return '';
+  }, [topicSlug, chunks]);
+  
   const [scrollProgress, setScrollProgress] = useState(0);
+  
+  // Refs
+  const mainContentRef = useRef<HTMLDivElement>(null);
   const isProgrammaticScroll = useRef(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Scroll Progress & Active Section
   useEffect(() => {
+    const mainContent = mainContentRef.current;
+    if (!mainContent) return;
+
     const handleScroll = () => {
-      const totalHeight =
-        document.documentElement.scrollHeight - window.innerHeight;
-      const progress = (window.scrollY / totalHeight) * 100;
+      // 1. Calculate Progress
+      const scrollTop = mainContent.scrollTop;
+      const scrollHeight = mainContent.scrollHeight;
+      const clientHeight = mainContent.clientHeight;
+      const progress = (scrollTop / (scrollHeight - clientHeight)) * 100;
       setScrollProgress(progress);
 
-      // If we are scrolling via a click, don't let handleScroll override the active ID
+      // 2. Determine Active Section
       if (isProgrammaticScroll.current) return;
 
-      const mainContent = document.querySelector('main');
-      if (!mainContent) return;
-
+      // Find all heading elements with IDs within main content
       const sections = mainContent.querySelectorAll('[id]');
-      let current = '';
-      const offset = 250; // Increased offset for better early detection
-
-      // Create a set of IDs that are actually in our ToC for faster lookup
-      const tocIds = new Set(toc.map((item) => item.id));
-
-      sections.forEach((section) => {
-        const id = section.getAttribute('id');
-        if (!id || !tocIds.has(id)) return;
-
+      let currentSectionId = '';
+      
+      // We look for the first section that is near the top of the viewport
+      // The "offset" defines the visual snapping point
+      const offset = 150; 
+      
+      for (let i = 0; i < sections.length; i++) {
+        const section = sections[i];
         const rect = section.getBoundingClientRect();
-        if (rect.top <= offset) {
-          current = id;
+        
+        // Since main panel is scrollable, we check rect relative to viewport
+        // The sticky header is ~64px (h-16), so we want headings to be active when they pass under it or are near
+        if (rect.top < offset) {
+            currentSectionId = section.getAttribute('id') || '';
+        } else {
+            // Once we find a section below the offset, we stop, because the previous one was the current one
+            break;
         }
-      });
+      }
+      
+      // Fallback: If at very top, first section
+      if (!currentSectionId && sections.length > 0 && scrollTop < 100) {
+          currentSectionId = sections[0].getAttribute('id') || '';
+      }
 
-      if (current && current !== activeSection) {
-        setActiveSection(current);
+      if (currentSectionId && currentSectionId !== activeSection) {
+        setActiveSection(currentSectionId);
       }
     };
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    mainContent.addEventListener('scroll', handleScroll, { passive: true });
+    // Initial check
     handleScroll();
-    return () => window.removeEventListener('scroll', handleScroll);
+    return () => mainContent.removeEventListener('scroll', handleScroll);
   }, [activeSection, toc]);
 
+  // Derive Active Chunk from Active Section - REMOVED because we use URL now
+  // We only track active section for LocalToC highlighting
+  
+  // Update URL if no topicSlug is present but we have chunks (default to first)
+  useEffect(() => {
+      if (!loading && chunks.length > 0 && !topicSlug && courseSlug) {
+          const firstChunkId = slugify(chunks[0].section_title);
+          navigate(`/notes/${courseSlug}/${firstChunkId}`, { replace: true });
+      }
+  }, [loading, chunks, topicSlug, courseSlug, navigate]);
+
+  // Scroll to top when topic changes
+  useEffect(() => {
+      mainContentRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+      setActiveSection('');
+  }, [activeChunkId]);
+  
   // Save scroll position
   useEffect(() => {
+    const mainContent = mainContentRef.current;
+    if (!mainContent || !courseSlug) return;
+    
     const saveScroll = () => {
-      if (!courseSlug) return;
       localStorage.setItem(
         `scroll_pos_${courseSlug}`,
-        window.scrollY.toString()
+        mainContent.scrollTop.toString()
       );
     };
 
-    window.addEventListener('scroll', saveScroll, { passive: true });
-    return () => window.removeEventListener('scroll', saveScroll);
-  }, [courseSlug]);
+    mainContent.addEventListener('scroll', saveScroll, { passive: true });
+    return () => mainContent.removeEventListener('scroll', saveScroll);
+  }, [courseSlug, loading]);
 
   // Restore scroll position
   useEffect(() => {
-    if (!loading && chunks.length > 0 && courseSlug) {
+    if (!loading && chunks.length > 0 && courseSlug && mainContentRef.current) {
       const savedScroll = localStorage.getItem(`scroll_pos_${courseSlug}`);
       if (savedScroll) {
-        // Use a small timeout to ensure DOM is fully rendered/painted
         const timer = setTimeout(() => {
-          window.scrollTo({
+          mainContentRef.current?.scrollTo({
             top: parseInt(savedScroll),
-            behavior: 'instant' as ScrollBehavior, // Use instant to avoid jumping on load
+            behavior: 'instant' as ScrollBehavior,
           });
         }, 100);
         return () => clearTimeout(timer);
       }
     }
   }, [loading, chunks.length, courseSlug]);
-
-  const handleToCClick = (id: string) => {
-    // Lock scroll detection
+  
+  // Navigation Handlers
+  const handleScrollToId = (id: string) => {
     isProgrammaticScroll.current = true;
     setActiveSection(id);
+    
+    const element = document.getElementById(id);
+    if (element && mainContentRef.current) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 
-    // Clear previous timeout if any
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-
-    // Unlock after scroll animation is likely finished
     scrollTimeout.current = setTimeout(() => {
       isProgrammaticScroll.current = false;
-    }, 1000); // Wait 1s for the smooth scroll to finish
+    }, 1000);
   };
 
   // Fetch Data
@@ -535,10 +646,8 @@ export default function NotesPage() {
           const imageUrls = metadata?.images || [];
           let content = chunk.display_content || chunk.content;
 
-          // Clean special Unicode space characters that cause KaTeX/Markdown issues
           content = content.replace(/[\u2000-\u200b]/g, ' ');
 
-          // Replace [GÖRSEL: X] markers with actual markdown images
           const usedIndices = new Set<number>();
           imageUrls.forEach((url, idx) => {
             const marker = new RegExp(`\\[GÖRSEL:\\s*${idx}\\]`, 'gi');
@@ -548,8 +657,6 @@ export default function NotesPage() {
             }
           });
 
-          // Append unused images ONLY if no markdown images are already present
-          // OR if some images from metadata were not used as markers
           const unusedImages = imageUrls.filter(
             (_, idx) => !usedIndices.has(idx)
           );
@@ -592,38 +699,62 @@ export default function NotesPage() {
   // Build Table of Contents
   useEffect(() => {
     if (chunks.length === 0) return;
-    const items: ToCItem[] = [];
+    const items: ExtendedToCItem[] = [];
 
     chunks.forEach((chunk) => {
+      const chunkId = slugify(chunk.section_title);
+      
+      // Always add the chunk title itself as Level 1
       if (
         chunk.section_title &&
         (chunk.sequence_order === 0 || chunk.sequence_order === undefined)
       ) {
         const cleanTitle = chunk.section_title.replace(/\*\*/g, '');
         items.push({
-          id: slugify(chunk.section_title),
+          id: chunkId,
           title: cleanTitle,
           level: 1,
+          chunkId: chunkId
         });
+      } else {
+        // If it's a sub-chunk (sequence_order > 0), it supposedly belongs to previous parent?
+        // Or we treat it as part of the flow.
+        // For now, let's assume it belongs to itself
       }
+      
       const lines = chunk.content.split('\n');
       lines.forEach((line) => {
         const h1Match = line.match(/^#\s+(.+)$/);
         const h2Match = line.match(/^##\s+(.+)$/);
         const h3Match = line.match(/^###\s+(.+)$/);
 
+        // NOTE: In standard markdown, # is H1. But here chunks are H1.
+        // So # inside content should probably be H2?
+        // But let's stick to parsing logic: # -> level 2, ## -> level 3, ### -> level 4 relative to document?
+        // Or if we treat Chunk as Level 0/1...
+        // Let's map headings to levels 2, 3, 4 to nest under Chunk Title (Level 1)
+        
+        let level = 0;
+        let title = '';
+        
         if (h1Match) {
-          const rawTitle = h1Match[1].trim();
-          const cleanTitle = rawTitle.replace(/\*\*/g, '');
-          items.push({ id: slugify(rawTitle), title: cleanTitle, level: 2 });
+            title = h1Match[1].trim();
+            level = 2; 
         } else if (h2Match) {
-          const rawTitle = h2Match[1].trim();
-          const cleanTitle = rawTitle.replace(/\*\*/g, '');
-          items.push({ id: slugify(rawTitle), title: cleanTitle, level: 3 });
+            title = h2Match[1].trim();
+            level = 3;
         } else if (h3Match) {
-          const rawTitle = h3Match[1].trim();
-          const cleanTitle = rawTitle.replace(/\*\*/g, '');
-          items.push({ id: slugify(rawTitle), title: cleanTitle, level: 4 });
+            title = h3Match[1].trim();
+            level = 4;
+        }
+        
+        if (level > 0) {
+            items.push({
+                id: slugify(title),
+                title: title.replace(/\*\*/g, ''),
+                level,
+                chunkId: chunkId
+            });
         }
       });
     });
@@ -633,13 +764,38 @@ export default function NotesPage() {
       (item, index, self) => index === self.findIndex((t) => t.id === item.id)
     );
     setToc(uniqueItems);
-  }, [chunks]);
+  }, [chunks, activeChunkId]);
+
+  // Derived filtered ToC for Right Panel
+  const currentChunkToC = useMemo(() => {
+      if (!activeChunkId) return [];
+      // Filter items belonging to current chunk
+      // We exclude Level 1 (Chunk Title) from the "On This Page" list if desired,
+      // Or include it. Usually "On This Page" shows headings *inside* the page.
+      // So let's show Level > 1.
+      return toc.filter(item => item.chunkId === activeChunkId && item.level > 1);
+  }, [toc, activeChunkId]);
+  
+  // Handlers for Global/Local clicks
+  const handleGlobalClick = (chunkId: string) => {
+      if (courseSlug) {
+          navigate(`/notes/${courseSlug}/${chunkId}`);
+      }
+  };
+
+  // Calculate current topic index for Right ToC numbering
+  const parentIndex = useMemo(() => {
+    if (!activeChunkId || chunks.length === 0) return undefined;
+    const navItems = chunks.filter(c => c.sequence_order === 0 || c.sequence_order === undefined);
+    const idx = navItems.findIndex(c => slugify(c.section_title) === activeChunkId);
+    return idx !== -1 ? idx + 1 : undefined;
+  }, [chunks, activeChunkId]);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background">
+      <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        <p className="text-white font-medium animate-pulse">
+        <p className="ml-3 text-muted-foreground font-medium animate-pulse">
           Ders içeriği hazırlanıyor...
         </p>
       </div>
@@ -648,12 +804,12 @@ export default function NotesPage() {
 
   if (error || chunks.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background text-center">
+      <div className="flex h-screen w-full flex-col items-center justify-center p-6 bg-background text-center">
         <div className="p-4 rounded-full bg-destructive/10 mb-6">
           <AlertCircle className="w-10 h-10 text-destructive" />
         </div>
         <h1 className="text-2xl font-bold mb-2">Eyvah!</h1>
-        <p className="text-white max-w-md mb-8">{error}</p>
+        <p className="text-muted-foreground max-w-md mb-8">{error}</p>
         <Button asChild>
           <Link to="/courses">Derslere Dön</Link>
         </Button>
@@ -662,64 +818,82 @@ export default function NotesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-white font-sans selection:bg-primary/20">
-      {/* Reading Progress */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-muted z-50">
-        <div
-          className="h-full bg-primary transition-all duration-150 ease-out shadow-[0_0_10px_var(--primary)]"
-          style={{ width: `${scrollProgress}%` }}
-        />
-      </div>
-
-      {/* Navbar */}
-      <header className="sticky top-0 z-40 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-backdrop-filter:bg-background/60">
-        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3 overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-background text-foreground font-sans selection:bg-primary/20">
+      
+      {/* 1. Left Panel: Global Navigation */}
+      <aside className="w-72 shrink-0 border-r border-border/40 bg-card/10 backdrop-blur-xl hidden lg:block">
+        <div className="h-16 flex items-center px-6 border-b border-border/40">
             <Link
               to="/courses"
-              className="p-2 -ml-2 rounded-full hover:bg-muted/60 transition-colors text-white hover:text-foreground"
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="w-4 h-4" />
+              <span className="text-sm font-medium">Geri Dön</span>
             </Link>
-            <div className="flex flex-col min-w-0">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-primary/80">
-                Ders Notu
-              </span>
-              <h1 className="text-sm font-semibold truncate text-white">
-                {courseName}
-              </h1>
-            </div>
-          </div>
         </div>
-      </header>
-
-      <div className="max-w-full mx-auto relative flex items-start px-4 lg:px-8">
-        {/* Table of Contents - Desktop Sticky Sidebar */}
-        <aside className="hidden xl:block w-80 sticky top-24 h-[calc(100vh-8rem)] overflow-y-auto custom-scrollbar py-4 mr-16">
-          <TableOfContents
-            items={toc}
-            activeId={activeSection}
-            onItemClick={handleToCClick}
-          />
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 max-w-5xl py-12 md:py-16">
-          {chunks.map((chunk, index) => (
-            <MarkdownSection
-              key={chunk.id || index}
-              chunk={chunk}
-              components={markdownComponents}
+        <div className="h-[calc(100vh-4rem)]">
+            <GlobalNavigation 
+                chunks={chunks} 
+                activeChunkId={activeChunkId} 
+                courseSlug={courseSlug || ''}
             />
-          ))}
-        </main>
-      </div>
+        </div>
+      </aside>
+
+      {/* 2. Middle Panel: Main Content */}
+      <main 
+        ref={mainContentRef}
+        className="flex-1 overflow-y-auto bg-background/50 relative scroll-smooth"
+      >
+        <div className="max-w-4xl mx-auto px-8 py-12 min-h-screen">
+            {/* Display only the selected chunk */}
+            {chunks
+                .filter(chunk => slugify(chunk.section_title) === activeChunkId)
+                .map((chunk) => (
+                <MarkdownSection
+                    key={chunk.id}
+                    chunk={chunk}
+                    components={markdownComponents}
+                />
+            ))}
+            
+            {/* Show message if topic not found (but chunks exist) */}
+            {chunks.length > 0 && !chunks.some(c => slugify(c.section_title) === activeChunkId) && (
+                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                    <p>Konu bulunamadı veya henüz seçilmedi.</p>
+                    <Button variant="link" onClick={() => handleGlobalClick(slugify(chunks[0].section_title))}>
+                        İlk konuya git
+                    </Button>
+                </div>
+            )}
+        </div>
+      </main>
+
+      {/* 3. Right Panel: Local ToC & Knowledge Graph */}
+      <aside className="w-80 shrink-0 border-l border-border/40 bg-card/10 backdrop-blur-xl hidden xl:flex flex-col h-full">
+
+         <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
+           <div className="my-auto w-full">
+             <LocalToC 
+               items={currentChunkToC} 
+               activeId={activeSection} 
+               parentIndex={parentIndex}
+               onItemClick={(id, e) => {
+                 e.preventDefault();
+                 handleScrollToId(id);
+               }} 
+             />
+           </div>
+         </div>
+      </aside>
 
       {/* Scroll to Top Button */}
       <button
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onClick={() => {
+            mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
         className={cn(
-          'fixed bottom-8 right-8 p-3 rounded-full bg-amber-500 text-primary-foreground shadow-lg transition-all duration-300 z-50 hover:scale-110 hover:shadow-xl',
+          'fixed bottom-5 right-5 lg:right-85 p-3 rounded-full bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 z-50 hover:scale-110 hover:shadow-xl hover:bg-primary',
           scrollProgress > 10
             ? 'opacity-100 translate-y-0'
             : 'opacity-0 translate-y-4 pointer-events-none'

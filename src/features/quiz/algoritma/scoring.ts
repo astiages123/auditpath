@@ -5,7 +5,7 @@
 // Define QuizResults here to avoid dependency on global types if they are not pure
 // But likely QuizResults is a shared type. For "Pure Math", we can redefine or import type.
 // Assuming "types" is a shared/safe import.
-import { QuizResults } from "@/features/quiz/core/types";
+import { QuizResults, TestResultSummary } from "@/features/quiz/core/types";
 
 export function calculateInitialResults(): QuizResults {
     return {
@@ -39,13 +39,6 @@ export function isExcellenceAchieved(
 ): boolean {
     const mastery = calculateMastery(results, total);
     return mastery >= 80;
-}
-
-export interface TestResultSummary {
-    percentage: number;
-    masteryScore: number;
-    pendingReview: number;
-    totalTimeFormatted: string;
 }
 
 export function calculateTestResults(

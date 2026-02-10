@@ -1,3 +1,9 @@
+import { z } from "zod";
+import type { AIResponse, LLMProvider, Message } from "./types";
+import { UnifiedLLMClient } from "../api/client";
+import { rateLimiter } from "../api/rate-limit";
+import { COMMON_OUTPUT_FORMATS, GENERAL_QUALITY_RULES } from "./prompts";
+
 export class DebugLogger {
     private static isEnabled = true; // Use true since import.meta.env.DEV might not be available in all envs, or use a safe check.
 
@@ -131,4 +137,273 @@ export function createTimer() {
             return accumulatedTime;
         },
     };
+}
+
+// --- Parser Logic ---
+
+/**
+ * Parse JSON from LLM response (simple extraction)
+ */
+export function parseJsonResponse(
+    text: string | null | undefined,
+    type: "object" | "array",
+    onLog?: (msg: string, details?: Record<string, unknown>) => void,
+): unknown {
+    if (!text || typeof text !== "string") return null;
+
+    try {
+        let cleanText = text.trim();
+
+        // 0. </think>...</think> bloklarını temizle (Qwen modelleri bunu ekliyor)
+        cleanText = cleanText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+
+        // 1. Markdown bloklarını temizle (```json ... ``` veya sadece ``` ... ```)
+        // Sadece ilk eşleşen bloğu al
+        const markdownMatch = cleanText.match(/```(?:json)?\s*([\s\S]*?)```/);
+        if (markdownMatch) {
+            cleanText = markdownMatch[1].trim();
+        }
+
+        // 2. Daha güvenli JSON ayıklama - indexOf ve lastIndexOf kullanarak
+        const firstChar = type === "array" ? "[" : "{";
+        const lastChar = type === "array" ? "]" : "}";
+        const start = cleanText.indexOf(firstChar);
+        const end = cleanText.lastIndexOf(lastChar);
+
+        if (start !== -1 && end !== -1 && end > start) {
+            cleanText = cleanText.substring(start, end + 1);
+        } else {
+            onLog?.("Geçerli JSON yapısı bulunamadı", {
+                text: cleanText.substring(0, 100),
+            });
+            return null;
+        }
+        // 3. LaTeX Backslash Düzeltme (PRE-PROCESS)
+        const regex = /(\\["\\/nrt]|\\u[0-9a-fA-F]{4})|(\\)/g;
+
+        cleanText = cleanText.replace(regex, (match, valid, invalid) => {
+            if (valid) return valid; // Geçerli escape, dokunma
+            if (invalid) return "\\\\"; // Geçersiz backslash, çiftle
+            return match;
+        });
+
+        // 4. Forgiving JSON Parser for Truncated Responses
+        try {
+            return JSON.parse(cleanText);
+        } catch (e) {
+            const closers = ["}", "]", '"}', '"]', "}", "]", "]}", "}}"];
+
+            for (const closer of closers) {
+                try {
+                    return JSON.parse(cleanText + closer);
+                } catch {
+                    continue;
+                }
+            }
+
+            if (type === "array" && cleanText.trim().startsWith("[")) {
+                try {
+                    return JSON.parse(cleanText + "}]");
+                } catch {
+                    // Ignore parse errors
+                }
+                try {
+                    return JSON.parse(cleanText + "]");
+                } catch {
+                    // Ignore parse errors
+                }
+            }
+
+            console.warn("JSON Parse Error (Unrecoverable):", e);
+            return null;
+        }
+    } catch (e) {
+        console.error("JSON Parse Error (Critical):", e);
+        return null;
+    }
+}
+
+// --- Structured Generator Logic ---
+
+export interface StructuredOptions<T> {
+    schema: z.ZodSchema<T>;
+    provider: LLMProvider;
+    temperature?: number;
+    maxRetries?: number;
+    retryPromptTemplate?: string;
+    model?: string;
+    usageType?: string;
+    onLog?: (msg: string, details?: Record<string, unknown>) => void;
+}
+
+const DEFAULT_RETRY_PROMPT = `BİR ÖNCEKİ CEVABIN JSON ŞEMASINA UYMUYORDU.
+Lütfen geçerli bir JSON döndür.
+Sadece JSON verisi gerekli.`;
+
+export class StructuredGenerator {
+    static async generate<T>(
+        messages: Message[],
+        options: StructuredOptions<T>,
+    ): Promise<T | null> {
+        const {
+            schema,
+            provider,
+            maxRetries = 2,
+            retryPromptTemplate = DEFAULT_RETRY_PROMPT,
+            onLog,
+        } = options;
+
+        for (let attempt = 0; attempt <= maxRetries; attempt++) {
+            const isRetry = attempt > 0;
+            const currentMessages = [...messages];
+
+            if (isRetry) {
+                currentMessages.push({
+                    role: "user",
+                    content: retryPromptTemplate,
+                });
+                onLog?.(`Retry denemesi #${attempt}...`);
+            }
+
+            let lastResponse: AIResponse | null = null;
+            try {
+                const response: AIResponse = await rateLimiter.schedule(
+                    () =>
+                        UnifiedLLMClient.generate(
+                            currentMessages,
+                            {
+                                provider,
+                                model: options.model,
+                                temperature: options.temperature ?? 0.1,
+                                usageType: options.usageType,
+                                onLog,
+                            },
+                        ),
+                    provider,
+                );
+                lastResponse = response;
+
+                const parsed = parseJsonResponse(
+                    response.content,
+                    "object",
+                    onLog,
+                );
+
+                if (!parsed) {
+                    onLog?.(`JSON Parse hatası (Deneme ${attempt + 1})`, {
+                        raw_content: response.content,
+                    });
+                    throw new Error("JSON Parsing failed completely");
+                }
+
+                const validation = schema.safeParse(parsed);
+
+                if (validation.success) {
+                    return validation.data;
+                } else {
+                    console.error(
+                        "!!! ZOD ERROR in field:",
+                        JSON.stringify(validation.error.format(), null, 2),
+                    );
+                    const errorMsg = validation.error.issues
+                        .map((i) => `${i.path.join(".")}: ${i.message}`)
+                        .join(", ");
+                    onLog?.(`Validasyon hatası (Deneme ${attempt + 1})`, {
+                        error: errorMsg,
+                        raw_content: response.content,
+                    });
+                }
+            } catch (error) {
+                onLog?.(`Generation hatası (Deneme ${attempt + 1})`, {
+                    error: String(error),
+                    raw_content: lastResponse?.content,
+                });
+            }
+        }
+
+        return null;
+    }
+}
+
+export class PromptArchitect {
+    static assemble(
+        systemPrompt: string,
+        contextPrompt: string,
+        taskPrompt: string,
+    ): Message[] {
+        return [
+            { role: "system", content: this.normalizeText(systemPrompt) },
+            { role: "user", content: this.normalizeText(contextPrompt) },
+            {
+                role: "user",
+                content: `--- GÖREV ---\n${
+                    this.normalizeText(taskPrompt).trimStart()
+                }`,
+            },
+        ];
+    }
+
+    static buildContext(
+        content: string,
+        courseName?: string,
+        sectionTitle?: string,
+        guidelines?: {
+            instruction?: string;
+            few_shot_example?: unknown;
+            bad_few_shot_example?: unknown;
+        } | null,
+    ): string {
+        const parts: string[] = [];
+
+        if (courseName && courseName.trim()) {
+            parts.push(`## DERS: ${courseName.trim()}`);
+        }
+        if (sectionTitle && sectionTitle.trim()) {
+            parts.push(`## KONU: ${sectionTitle.trim()}`);
+        }
+
+        if (guidelines) {
+            parts.push("## DERS REHBERİ VE KURALLAR:");
+            if (guidelines.instruction && guidelines.instruction.trim()) {
+                parts.push(
+                    `### TEKNİK KURALLAR\n${guidelines.instruction.trim()}`,
+                );
+            }
+            if (guidelines.few_shot_example) {
+                const exampleStr = JSON.stringify(
+                    guidelines.few_shot_example,
+                    null,
+                    2,
+                );
+                parts.push(`\n### İYİ ÖRNEK (Bunu model al):\n${exampleStr}`);
+            }
+            if (guidelines.bad_few_shot_example) {
+                const badExampleStr = JSON.stringify(
+                    guidelines.bad_few_shot_example,
+                    null,
+                    2,
+                );
+                parts.push(
+                    `\n### KÖTÜ ÖRNEK (Bundan kaçın):\n${badExampleStr}`,
+                );
+            }
+        }
+
+        parts.push(GENERAL_QUALITY_RULES);
+        parts.push(COMMON_OUTPUT_FORMATS);
+        parts.push("## BAĞLAM METNİ:");
+        parts.push(this.normalizeText(content));
+
+        return parts.map((p) => p.trim()).filter((p) => p.length > 0).join(
+            "\n\n",
+        );
+    }
+
+    static cleanReferenceImages(content: string): string {
+        return content.replace(/!\[[^\]]*\]\([^)]+\)/g, "[GÖRSEL]");
+    }
+
+    private static normalizeText(text: string): string {
+        return text.replace(/\r\n/g, "\n").trim();
+    }
 }

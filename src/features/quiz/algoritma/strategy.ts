@@ -156,7 +156,6 @@ export const BLOOM_INSTRUCTIONS = {
  */
 export function determineNodeStrategy(
     index: number,
-    wordCount: number,
     concept?: ConceptMapItem,
     courseName: string = "",
 ): {

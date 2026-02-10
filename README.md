@@ -1,110 +1,116 @@
-# AuditPath 🚀
+# AuditPath 🛡️
 
-**AuditPath**, profesyoneller için geliştirilmiş, **AI destekli** yeni nesil bir öğrenme ve sınav hazırlık asistanıdır. Kullanıcıların ders notlarını yükleyerek kişiselleştirilmiş quizler oluşturmasını, aralıklı tekrar sistemi (SRS) ile bilgileri kalıcı hale getirmesini ve detaylı analizlerle gelişimlerini takip etmesini sağlar.
+**Intelligent Adaptive Learning System for CIA & CISA Certifications**
 
-## 🌟 Temel Özellikler
+![Status](https://img.shields.io/badge/Status-Active_Development-success?style=for-the-badge)
+![Tech Stack](https://img.shields.io/badge/Stack-Next.js_15_%7C_TypeScript_%7C_Zod-blue?style=for-the-badge&logo=typescript)
+![AI Power](https://img.shields.io/badge/AI-GPT--4o_Integration-purple?style=for-the-badge&logo=openai)
+![Testing](https://img.shields.io/badge/Coverage-High-green?style=for-the-badge)
 
-### 🧠 Akıllı Not İşleme
-*   Ders notlarınızı (Markdown formatında) sisteme yükleyin.
-*   Sistem, içeriği analiz eder ve öğrenmeye uygun küçük parçalara (chunks) ayırır.
-*   Her parça için içerik yoğunluğu ve zorluk derecesi otomatik hesaplanır.
+AuditPath is not just a question bank; it's a **cognitive engine** designed to optimize learning retention through advanced algorithms and AI-driven content generation.
 
-### 🤖 AI Soru Üretimi (Bloom Taxonomy)
-*   **Google GenAI (Gemini) / OpenAI** entegrasyonu.
-*   Ezberden uzak, pedagojik standartlara uygun sorular:
-    *   **Bilgi (Knowledge):** Temel tanım ve kavram soruları.
-    *   **Uygulama (Application):** Örnek olay ve ilişkilendirme soruları.
-    *   **Analiz (Analysis):** Neden-sonuç ve çıkarım soruları.
+---
 
-### 📊 Sınav Simülatörü & Raf Sistemi (Shelf System)
-*   Gerçek sınav deneyimini simüle eden zaman ayarlı testler.
-*   **Dinamik Raf Sistemi:** Sorular, verdiğiniz cevabın doğruluğuna ve hızına göre "Aktif", "Takip Bekliyor" veya "Arşiv" raflarına ayrılır.
-*   Yanlış cevaplanan sorular için **AI destekli takip soruları** üretilir.
+## 🧠 Core Intelligence: SRS & Shelf System
 
-### 🍅 Pomodoro & Odaklanma
-*   Ders çalışma sürelerinizi entegre Pomodoro sayacı ile yönetin.
-*   Mola ve çalışma süreleri otomatik olarak kaydedilir ve raporlanır.
+At the heart of AuditPath lies a sophisticated **Spaced Repetition System (SRS)** that adapts to your learning curve.
 
-### 📈 İlerleme Takibi (Analytics)
-*   Ders bazında ilerleme grafikleri.
-*   "Ustalık Puanı" (Mastery Score) ile yetkinlik seviyenizi görün.
-*   Haftalık çalışma hedefleri ve başarımlar.
+### The "Shelf" Logic
+Our proprietary **Shelf System** manages content lifecycle based on user performance:
 
-## 🛠️ Teknoloji Yığını
+- **🎯 3-Strike Rule**: Content moves from `Active` to `Archived` only after **3 consecutive successful recalls**.
+- **⏳ Fibonacci Spacing**: Review intervals expanding aggressively based on success:
+  `[1, 2, 5, 10, 20] Days`
+- **🔄 Zero-Day Reset**: Any failure (`isCorrect: false`) immediately resets progress, reinforcing weak spots.
 
-### Frontend
-*   **React 19**
-*   **Vite** (Hızlı geliştirme ve build)
-*   **TypeScript** (Tip güvenliği)
-*   **Tailwind CSS v4** (Modern stil yönetimi)
-*   **Radix UI** (Erişilebilir UI bileşenleri)
-*   **Framer Motion** (Animasyonlar)
-*   **Zustand** (Client-side state yönetimi)
-*   **TanStack Query** (Server-side state & caching)
+### Multi-Dimensional Scoring
+We calculate mastery using more than just correct answers:
 
-### Backend & Veritabanı
-*   **Supabase** (BaaS)
-    *   **PostgreSQL:** İlişkisel veri tabanı.
-    *   **Auth:** Kullanıcı kimlik doğrulama.
-    *   **Realtime:** Canlı veri akışı.
+$$
+\text{FinalScore} = \text{BaseScore} \times \text{BloomMultiplier} \times \text{TimeRatio}
+$$
 
-### AI & Servisler
-*   **Google GenAI SDK**
-*   **OpenAI SDK**
-*   **Groq SDK**
+| Component | Logic | Impact |
+| :--- | :--- | :--- |
+| **Bloom Level** | `Knowledge (1.0)` → `Application (1.3)` → `Analysis (1.6)` | Rewards deeper cognitive processing. |
+| **Time Ratio** | `Clamp(Target / Actual, 0.5, 2.0)` | Penalizes guessing, rewards fluency. |
 
-## 🗄️ Veritabanı Yapısı (Özet)
+---
 
-Temel tablolar ve işlevleri:
+## 🔗 Mastery Chain Protocol
 
-*   `courses`: Dersler ve meta verileri.
-*   `note_chunks`: İşlenmiş ders notu parçaları.
-*   `questions`: AI tarafından üretilen sorular ve detayları.
-*   `user_quiz_progress`: Kullanıcıların soru bazlı cevap ve süre kayıtları.
-*   `chunk_mastery`: Her not parçası için kullanıcının ustalık puanı.
-*   `pomodoro_sessions`: Çalışma oturumu kayıtları.
+AuditPath models knowledge as a directed graph where concepts are interconnected.
 
-## 🚀 Kurulum
+### Dependency Rules
+A concept is only considered **Mastered** when:
+1.  **Self-Mastery**: User achieves **>80%** success rate on the concept itself.
+2.  **Prerequisite Check**: All prerequisite concepts are at **>85%** mastery.
 
-Projeyi yerel ortamınızda çalıştırmak için:
+### 🛡️ Resilience Bonus
+Consistency is key.
+- Completing a Mastery Chain grants a **+2 Day Resilience Bonus**.
+- This protects your **Streak** against missed study days, encouraging deep learning over superficial cramming.
 
-1.  **Depoyu klonlayın:**
-    ```bash
-    git clone https://github.com/username/auditpath.git
-    cd auditpath
-    ```
+---
 
-2.  **Bağımlılıkları yükleyin:**
-    ```bash
-    npm install
-    ```
+## ⚡ AI Content Factory
 
-3.  **Çevresel Değişkenleri Ayarlayın:**
-    `.env.example` dosyasını `.env` olarak kopyalayın ve gerekli API anahtarlarını girin:
-    ```env
-    VITE_SUPABASE_URL=your_supabase_url
-    VITE_SUPABASE_ANON_KEY=your_supabase_key
-    VITE_GOOGLE_API_KEY=your_gemini_api_key
-    # ... diğer anahtarlar
-    ```
+Our **Multi-Stage Generation Pipeline** ensures valid, high-quality assessment material.
 
-4.  **Uygulamayı başlatın:**
-    ```bash
-    npm run dev
-    ```
+```mermaid
+graph LR
+    A[Drafting Task] -->|GPT-4o + Zod| B(Validation Task)
+    B -->|Check Logic & Facts| C{Approved?}
+    C -->|Yes| D[Database]
+    C -->|No| E[Revision Task]
+    E --> B
+```
 
-## 📝 Kullanım Akışı
+- **Strict Schema Validation**: All AI outputs are runtime-checked via **Zod**.
+- **Hallucination Control**: A dedicated validator agent cross-references questions with source texts.
+- **Smart Distractors**: Options generated are contextually plausible to test true understanding.
 
-1.  **Ders Seçimi:** Ana sayfadan çalışmak istediğiniz dersi seçin.
-2.  **Soru Üretimi:** İlgili konunun yanındaki "Soru Üret" butonuna basın. AI, içeriği analiz edip soruları hazırlar.
-3.  **Test Çöz:** Hazırlanan sorularla testi başlatın. Süreyi ve şıkları dikkatli kullanın.
-4.  **Analiz:** Test bitiminde sonuç ekranını inceleyin. Hatalı sorular tekrar havuzuna düşecektir.
-5.  **Tekrar:** Belirli aralıklarla sisteme girerek "Takip Bekleyen" soruları eritin.
+---
 
-## 🤝 Katkıda Bulunma
+## 🏗️ Robust Infrastructure
 
-1.  Forklayın.
-2.  Yeni bir branch oluşturun (`git checkout -b feature/yeniozellik`).
-3.  Değişikliklerinizi commit yapın (`git commit -m 'feat: Yeni özellik eklendi'`).
-4.  Branch'inizi pushlayın (`git push origin feature/yeniozellik`).
-5.  Pull Request açın.
+Built for reliability and performance.
+
+### ⏱️ Web Worker Timers (`timerWorker.ts`)
+We bypass the main thread's event loop lag by running exam and Pomodoro timers in dedicated **Web Workers**. This ensures **zero-drift timekeeping**, even under heavy UI load.
+
+### 🌙 Virtual Date System
+Night owls welcome.
+- **Day Start**: 04:00 AM
+- **Logic**: Work done at 03:59 AM counts towards *yesterday*.
+- **Benefit**: Protects streaks for late-night study sessions without artificial calendar boundary penalties.
+
+---
+
+## 🧪 Testing Strategy
+
+Quality Assurance is baked into the DNA of the project.
+
+- **Unit Tests**: Mathematical verification of SRS algorithms and Bloom multipliers.
+- **Integration Tests**: Full simulation of User -> API -> Database flows.
+- **Data Integrity**: Automated schema checks for all AI-generated content.
+
+---
+
+## 🚀 Getting Started
+
+```bash
+# Clone the repository
+git clone https://github.com/your-org/auditpath.git
+
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+---
+© 2024 AuditPath Architecture Team.

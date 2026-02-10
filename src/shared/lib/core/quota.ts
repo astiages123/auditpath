@@ -2,53 +2,55 @@
  * Quota Calculation Logic
  *
  * Scientific Master Set (Bilimsel Master Set)
- * Dynamic quota calculation based on meaningful word count and density score.
+ * Dynamic quota calculation based on Knowledge Density (Concept + Exception count).
  */
 
 /**
- * Calculate dynamic quota based on meaningful word count and density score.
+ * Calculate quota based on Concept Map density.
  *
- * Logic:
- * 1. Base = meaningfulWordCount / 45
- * 2. Multiplier:
- *    - densityScore > 0.55 => 1.2x
- *    - densityScore < 0.25 => 0.8x
- *    - else => 1.0x
- * 3. Clamp result: Min 3, No Upper Limit.
+ * Formula: (Concepts + Exceptions) * Importance Multiplier
+ *
+ * Multipliers:
+ * - High: 1.2
+ * - Medium: 1.0 (default)
+ * - Low: 0.8
+ *
+ * Min Quota: 3
  */
-export function calculateDynamicQuota(
-    meaningfulWordCount: number,
-    densityScore: number,
+export function calculateConceptBasedQuota(
+    concepts: { isException?: boolean }[],
+    courseImportance: "high" | "medium" | "low" = "medium",
 ): {
     total: number;
     antrenman: number;
     arsiv: number;
     deneme: number;
-    // Telemetry / Debug info
+    // Telemetry
     baseCount: number;
     multiplier: number;
 } {
-    // 1. Base Calculation
-    const safeWordCount = Math.max(0, meaningfulWordCount);
-    // Base = meaningfulWordCount / 45
-    const rawBase = safeWordCount / 45;
+    // 1. Base Count (Concepts + Exceptions)
+    const baseCount = concepts.length;
 
-    // 2. Multiplier Calculation based on Density Score
+    // 2. Multiplier
     let multiplier = 1.0;
-    if (densityScore > 0.55) {
+    if (courseImportance === "high") {
         multiplier = 1.2;
-    } else if (densityScore < 0.25) {
+    } else if (courseImportance === "low") {
         multiplier = 0.8;
     }
 
     // 3. Final Calculation & Clamping
-    const adjustedCount = rawBase * multiplier;
+    const adjustedCount = baseCount * multiplier;
     // Lower bound 3, No Upper Bound
     const finalCount = Math.max(3, Math.round(adjustedCount));
 
-    // Distribute quota
+    // Distribute quota (keeping existing distribution logic for now)
     // Antrenman is the main target.
     const antrenman = finalCount;
+    // Archive and Trial are supplementary, usually calculated as a fraction of training or separate
+    // For now, let's keep the 25% ratio from the previous logic as a safe default,
+    // though the prompt implies we just want "Soru Sayısı" which usually maps to Antrenman in this context.
     const arsiv = Math.ceil(antrenman * 0.25);
     const deneme = Math.ceil(antrenman * 0.25);
 
@@ -57,7 +59,7 @@ export function calculateDynamicQuota(
         antrenman,
         arsiv,
         deneme,
-        baseCount: rawBase,
+        baseCount,
         multiplier,
     };
 }
