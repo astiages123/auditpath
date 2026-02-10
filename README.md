@@ -4,7 +4,7 @@
 
 ![Status](https://img.shields.io/badge/Status-Active_Development-success?style=for-the-badge)
 ![Tech Stack](https://img.shields.io/badge/Stack-Next.js_15_%7C_TypeScript_%7C_Zod-blue?style=for-the-badge&logo=typescript)
-![AI Power](https://img.shields.io/badge/AI-GPT--4o_Integration-purple?style=for-the-badge&logo=openai)
+![AI Power](https://img.shields.io/badge/AI-LLM_Orchestration-purple?style=for-the-badge)
 ![Testing](https://img.shields.io/badge/Coverage-High-green?style=for-the-badge)
 
 AuditPath is not just a question bank; it's a **cognitive engine** designed to optimize learning retention through advanced algorithms and AI-driven content generation.

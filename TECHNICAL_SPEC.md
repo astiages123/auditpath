@@ -78,7 +78,7 @@ Soru ve içerik üretimi, `QuizFactory` tarafından yönetilen çok aşamalı (M
 
 1.  **DraftingTask**:
     - **Girdi**: Kavram haritası, konu bağlamı.
-    - **İşlem**: LLM (ör. GPT-4o-mini), Zod şemasına uygun ham bir soru taslağı (`GeneratedQuestionSchema`) üretir.
+    - **İşlem**: LLM, Zod şemasına uygun ham bir soru taslağı (`GeneratedQuestionSchema`) üretir.
     - **Kurallar**: 5 seçenekli (A-E), çeldiricili, kanıt (`evidence`) içeren yapı.
 
 2.  **ValidationTask**:
