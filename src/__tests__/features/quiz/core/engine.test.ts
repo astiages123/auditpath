@@ -34,6 +34,7 @@ describe('QuizEngine Integration (via useQuiz)', () => {
   const mockQuestions: QuizQuestion[] = [
     {
       id: 'q1',
+      type: 'multiple_choice',
       q: 'Question 1',
       o: ['A', 'B', 'C', 'D', 'E'],
       a: 0,
@@ -42,6 +43,7 @@ describe('QuizEngine Integration (via useQuiz)', () => {
     },
     {
       id: 'q2',
+      type: 'multiple_choice',
       q: 'Question 2',
       o: ['A', 'B', 'C', 'D', 'E'],
       a: 1,
@@ -68,7 +70,13 @@ describe('QuizEngine Integration (via useQuiz)', () => {
     });
 
     vi.mocked(Repository.fetchQuestionsByChunk).mockResolvedValue(
-      mockQuestions as any
+      mockQuestions.map((q) => ({
+        id: q.id!,
+        chunk_id: q.chunk_id!,
+        question_data: { q: q.q, o: q.o, a: q.a, exp: q.exp },
+        bloom_level: 'knowledge' as const,
+        concept_title: 'Test Concept',
+      }))
     );
 
     // Engine.submitAnswer needs these
@@ -77,16 +85,16 @@ describe('QuizEngine Integration (via useQuiz)', () => {
       // For SRS tMax
       id: 'q1',
       chunk_id: mockChunkId,
+      question_data: {},
       bloom_level: 'knowledge',
-      word_count: 10,
-    } as any);
+      concept_title: 'Test Concept',
+    });
     vi.mocked(Repository.getChunkMastery).mockResolvedValue({
-      mastery_score: 50,
       chunk_id: mockChunkId,
-      course_id: mockCourseId,
-      last_reviewed_session: 0,
-      updated_at: '',
-    } as any);
+      mastery_score: 50,
+      last_full_review_at: null,
+      total_questions_seen: 5,
+    });
     vi.mocked(Repository.getChunkQuestionCount).mockResolvedValue(10);
     vi.mocked(Repository.getUniqueSolvedCountInChunk).mockResolvedValue(5);
   });
