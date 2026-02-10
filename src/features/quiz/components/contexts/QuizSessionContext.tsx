@@ -1,5 +1,11 @@
 import { createContext, useContext } from 'react';
-import { SessionInfo, QuotaInfo, ReviewItem, CourseStats, QuizResponseType } from '../../core/types';
+import {
+  SessionInfo,
+  QuotaInfo,
+  ReviewItem,
+  CourseStats,
+  QuizResponseType,
+} from '../../core/types';
 
 export interface QuizSessionState {
   isInitialized: boolean;
@@ -28,14 +34,19 @@ export interface QuizSessionContextValue {
     timeSpentMs: number,
     diagnosis?: string,
     insight?: string
-  ) => Promise<{ isTopicRefreshed: boolean; isChainBonusApplied?: boolean } | void>;
+  ) => Promise<{
+    isTopicRefreshed: boolean;
+    isChainBonusApplied?: boolean;
+  } | void>;
   getNextReviewItem: () => ReviewItem | null;
   markReviewComplete: () => void;
   advanceBatch: () => void;
   injectScaffolding: (questionId: string, chunkId: string) => void;
 }
 
-export const QuizSessionContext = createContext<QuizSessionContextValue | null>(null);
+export const QuizSessionContext = createContext<QuizSessionContextValue | null>(
+  null
+);
 
 export function useQuizSession() {
   const context = useContext(QuizSessionContext);

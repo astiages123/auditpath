@@ -21,19 +21,30 @@ export const ToCTitleRenderer = memo(function ToCTitleRenderer({
   const escapedTitle = title.replace(/(\d+)\./g, '$1\\.');
 
   return (
-    <div className={cn("whitespace-normal wrap-break-word", className)}>
+    <div className={cn('whitespace-normal wrap-break-word', className)}>
       <ReactMarkdown
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex]}
         components={{
           // Override paragraph to span to avoid block-level disruption inside anchors
-          p: ({ ...props }) => <span style={{ display: 'inline' }} className="whitespace-normal wrap-break-word" {...props} />,
+          p: ({ ...props }) => (
+            <span
+              style={{ display: 'inline' }}
+              className="whitespace-normal wrap-break-word"
+              {...props}
+            />
+          ),
           // Ensure math is rendered inline
           div: ({ className: innerClass, ...props }) => {
-             return <span className={cn("whitespace-normal wrap-break-word", innerClass)} {...props} />;
-          }
+            return (
+              <span
+                className={cn('whitespace-normal wrap-break-word', innerClass)}
+                {...props}
+              />
+            );
+          },
         }}
-        allowedElements={['p', 'span', 'strong', 'em', 'code', 'br']} 
+        allowedElements={['p', 'span', 'strong', 'em', 'code', 'br']}
         // We limit elements to avoid inserting huge blocks like H1 or Images in a ToC link
         unwrapDisallowed={true}
       >

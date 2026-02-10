@@ -10,19 +10,16 @@ export interface Note {
 export async function getNote(slug: string): Promise<Note | null> {
   try {
     // 1. Try to fetch from local files (Standardized path)
-    const paths = [
-      `/notes/${slug}/${slug}.md`,
-      `/notes/${slug}/note.md`
-    ];
+    const paths = [`/notes/${slug}/${slug}.md`, `/notes/${slug}/note.md`];
 
     for (const path of paths) {
       try {
         const res = await fetch(path);
         if (res.ok) {
           const content = await res.text();
-          if (content && !content.startsWith("<!DOCTYPE html>")) {
+          if (content && !content.startsWith('<!DOCTYPE html>')) {
             return {
-              courseId: slug, 
+              courseId: slug,
               content,
               updatedAt: new Date(),
             };
@@ -35,8 +32,7 @@ export async function getNote(slug: string): Promise<Note | null> {
 
     return null;
   } catch (error) {
-    console.error("getNote error:", error);
+    console.error('getNote error:', error);
     return null;
   }
 }
-

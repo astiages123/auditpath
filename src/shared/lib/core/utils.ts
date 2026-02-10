@@ -1,5 +1,5 @@
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -21,7 +21,7 @@ export function toCamelCase<T>(obj: unknown): T {
     return obj.map((v) => toCamelCase(v)) as unknown as T;
   } else if (
     obj !== null &&
-    typeof obj === "object" &&
+    typeof obj === 'object' &&
     obj.constructor === Object
   ) {
     const o = obj as PlainObject;
@@ -30,7 +30,7 @@ export function toCamelCase<T>(obj: unknown): T {
         ...result,
         [key.replace(/(_\w)/g, (k) => k[1].toUpperCase())]: toCamelCase(o[key]),
       }),
-      {},
+      {}
     ) as T;
   }
   return obj as T;
@@ -44,7 +44,7 @@ export function toSnakeCase(obj: unknown): unknown {
     return obj.map((v) => toSnakeCase(v));
   } else if (
     obj !== null &&
-    typeof obj === "object" &&
+    typeof obj === 'object' &&
     obj.constructor === Object
   ) {
     const o = obj as PlainObject;
@@ -52,10 +52,10 @@ export function toSnakeCase(obj: unknown): unknown {
       (result, key) => ({
         ...result,
         [key.replace(/[A-Z]/g, (k) => `_${k.toLowerCase()}`)]: toSnakeCase(
-          o[key],
+          o[key]
         ),
       }),
-      {},
+      {}
     );
   }
   return obj;
@@ -63,28 +63,28 @@ export function toSnakeCase(obj: unknown): unknown {
 
 export const slugify = (text: string): string => {
   const trMap: { [key: string]: string } = {
-    "ı": "i",
-    "İ": "i",
-    "ğ": "g",
-    "Ğ": "g",
-    "ü": "u",
-    "Ü": "u",
-    "ş": "s",
-    "Ş": "s",
-    "ö": "o",
-    "Ö": "o",
-    "ç": "c",
-    "Ç": "c",
+    ı: 'i',
+    İ: 'i',
+    ğ: 'g',
+    Ğ: 'g',
+    ü: 'u',
+    Ü: 'u',
+    ş: 's',
+    Ş: 's',
+    ö: 'o',
+    Ö: 'o',
+    ç: 'c',
+    Ç: 'c',
   };
   return text
-    .split("")
+    .split('')
     .map((char) => trMap[char] || char)
-    .join("")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+    .join('')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w-]+/g, "")
-    .replace(/--+/g, "-");
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
 };

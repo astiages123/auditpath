@@ -22,6 +22,7 @@ Projenin öğrenme motoru, **Spaced Repetition System (SRS)** ve **Raf (Shelf)**
 Puanlama, sadece "Doğru/Yanlış" değil, **cevap süresi** ve **kavramsal derinlik (Bloom)** baz alınarak hesaplanır.
 
 #### Bloom Çarpanları
+
 Soru zorluk seviyesine göre temel puan aşağıdaki katsayılarla çarpılır:
 | Bloom Level | Multiplier |
 | :--- | :--- |
@@ -30,14 +31,17 @@ Soru zorluk seviyesine göre temel puan aşağıdaki katsayılarla çarpılır:
 | **Analysis** | `1.6` |
 
 #### Time Ratio (Hız Puanı)
+
 Kullanıcının cevaplama hızı, beklenen hedef süreye (`TargetTime`) göre bir oran (`Ratio`) oluşturur. Bu oran `0.5` ile `2.0` arasında sınırlandırılır.
 
 **Formül:**
+
 ```typescript
-TimeRatio = Clamp(TargetTime / ActualTime, 0.5, 2.0)
-FinalScore = BaseScore * BloomMultiplier * TimeRatio
+TimeRatio = Clamp(TargetTime / ActualTime, 0.5, 2.0);
+FinalScore = BaseScore * BloomMultiplier * TimeRatio;
 ```
-*(Burada `Clamp(val, min, max)` fonksiyonu değeri belirtilen aralıkta tutar.)*
+
+_(Burada `Clamp(val, min, max)` fonksiyonu değeri belirtilen aralıkta tutar.)_
 
 ---
 
@@ -48,23 +52,26 @@ Kavramlar arası ilişkiler (Prerequisites) ve kullanıcının bu ağdaki ilerle
 ### 2.1. Mastery Chain (Uzmanlık Zinciri) Kuralı
 
 Bir kavramın zincir oluşturmuş sayılması için **iki koşulun aynı anda sağlanması** gerekir:
+
 1.  **Kavramın Kendisi (Self)**: `%80` veya üzeri başarı (%mastery).
-2.  **Ön Koşulları (Prerequisites)**: Bağlı olduğu *tüm* öncül kavramların `%85` veya üzeri başarıya sahip olması.
+2.  **Ön Koşulları (Prerequisites)**: Bağlı olduğu _tüm_ öncül kavramların `%85` veya üzeri başarıya sahip olması.
 
 **Pseudocode:**
+
 ```typescript
 function isChainComplete(node):
     if node.mastery < 80: return false
-    
+
     for prereq in node.prerequisites:
         if prereq.mastery < 85: return false
-        
+
     return true
 ```
 
 ### 2.2. Resilience Bonus (Korumalı Gün)
 
 Tamamlanan her zincir, kullanıcının "streak" (seri) dayanıklılığına katkı sağlar.
+
 - **Kural**: Her tamamlanan zincir için **+2 gün** ek koruma (Resilience Bonus) kazanılır.
 - Bu bonus, kullanıcının bir gün çalışmayı aksatması durumunda serisinin bozulmasını engeller.
 
@@ -92,6 +99,7 @@ Soru ve içerik üretimi, `QuizFactory` tarafından yönetilen çok aşamalı (M
 ### 3.2. Veri Bütünlüğü (Zod)
 
 Tüm AI çıktıları, **Zod** kütüphanesi ile çalışma zamanında ("Runtime") doğrulanır.
+
 - Zorunlu alanların varlığı (Soru kökü, Seçenekler, Doğru Cevap).
 - Karakter limitleri (Ör. Soru kökü min 10 karakter).
 - Enum kontrolleri (Bloom seviyesi: Knowledge, Application, Analysis).
@@ -105,12 +113,14 @@ Performans ve tutarlılık için bazı işlemler ana JavaScript thread'inden izo
 ### 4.1. Timer Worker (`timerWorker.ts`)
 
 Pomodoro ve sınav sayaçları, **Web Worker** üzerinde çalışır.
+
 - **Neden?**: Ana thread (UI rendering) yoğun işlem altındayken `setInterval` sapmalar yapabilir. Worker, UI "donmalarından" etkilenmeden saniyeyi (`TICK`) şaşmaz bir doğrulukla sayar.
 - **Model**: `Driver-Based`. Worker sadece "TICK" sinyali gönderir, asıl mantık (süre azaltma, durum kontrolü) ana thread'de işlenir.
 
 ### 4.2. Virtual Date Logic (`getVirtualDateKey`)
 
 Sistem, günü gece yarısı (00:00) yerine **sabah 04:00**'te başlatır.
+
 - **Amaç**: Gece geç saatlere (01:00 - 03:59) kadar çalışan "gece kuşu" kullanıcıların çalışmaları, hala "bir önceki gün" sayılır. Böylece gece çalışırken seri (streak) bozulmaz.
 - **Uygulama**: Tarih veritabanına kaydedilirken veya istatistik çekilirken `CurrentTime - 4 Hours` mantığı uygulanır.
 

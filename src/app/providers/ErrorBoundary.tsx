@@ -16,7 +16,7 @@ interface State {
 
 /**
  * ErrorBoundary Component
- * 
+ *
  * Catches JavaScript errors anywhere in the child component tree,
  * logs those errors, and displays a fallback UI.
  */
@@ -32,12 +32,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     this.setState({ errorInfo });
-    
+
     // Log to console in development
     if (env.app.isDev) {
       console.error('ErrorBoundary caught an error:', error, errorInfo);
     }
-    
+
     // Error tracking service can be integrated here (e.g., Sentry)
   }
 
@@ -71,7 +71,8 @@ export class ErrorBoundary extends Component<Props, State> {
                 Bir Şeyler Ters Gitti
               </h2>
               <p className="text-muted-foreground text-sm">
-                Beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin veya daha sonra tekrar deneyin.
+                Beklenmeyen bir hata oluştu. Lütfen sayfayı yenileyin veya daha
+                sonra tekrar deneyin.
               </p>
             </div>
 

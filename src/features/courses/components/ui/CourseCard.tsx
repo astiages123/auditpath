@@ -1,22 +1,23 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Play, Clock, CheckCircle2, BarChart2, FileText } from "lucide-react";
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { Play, Clock, CheckCircle2, BarChart2, FileText } from 'lucide-react';
 import {
   Card,
   CardContent,
   CardHeader,
   CardFooter,
-} from "@/shared/components/ui/card";
-import { Progress } from "@/shared/components/ui/progress";
-import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
-import { CourseStatsModal } from "../modals/CourseStatsModal";
+} from '@/shared/components/ui/card';
+import { Progress } from '@/shared/components/ui/progress';
+import { Badge } from '@/shared/components/ui/badge';
+import { Button } from '@/shared/components/ui/button';
+import { CourseStatsModal } from '../modals/CourseStatsModal';
+import { ROUTES } from '@/config/routes';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/shared/components/ui/tooltip";
+} from '@/shared/components/ui/tooltip';
 
 interface CourseCardProps {
   id: string;
@@ -27,7 +28,7 @@ interface CourseCardProps {
   totalHours: number;
   completedVideos?: number;
   completedMinutes?: number;
-  variant?: "default" | "large" | "featured";
+  variant?: 'default' | 'large' | 'featured';
 }
 
 export function CourseCard({
@@ -38,7 +39,7 @@ export function CourseCard({
   totalHours,
   completedVideos = 0,
   completedMinutes = 0,
-  variant = "default",
+  variant = 'default',
 }: CourseCardProps) {
   const [showStats, setShowStats] = useState(false);
 
@@ -57,9 +58,9 @@ export function CourseCard({
   };
 
   const sizeClasses = {
-    default: "h-full",
-    large: "h-full md:col-span-2",
-    featured: "h-full md:col-span-2 md:row-span-2",
+    default: 'h-full',
+    large: 'h-full md:col-span-2',
+    featured: 'h-full md:col-span-2 md:row-span-2',
   };
 
   const handleStatsClick = (e: React.MouseEvent) => {
@@ -120,7 +121,7 @@ export function CourseCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link
-                    to={`/notes/${courseId}`}
+                    to={`${ROUTES.NOTES}/${courseId}`}
                     className="h-8 w-8 flex items-center justify-center rounded-md hover:bg-blue-500/10 hover:text-blue-500 transition-colors"
                   >
                     <FileText className="h-4 w-4" />
@@ -158,7 +159,6 @@ export function CourseCard({
         totalHours={totalHours}
         spentHours={completedMinutes ? completedMinutes / 60 : 0} // Using completedMinutes as proxy for spent time for now
       />
-
     </>
   );
 }

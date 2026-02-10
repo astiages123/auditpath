@@ -1,25 +1,32 @@
-"use client";
+'use client';
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
-import { Label } from "@/shared/components/ui/label";
-import { Loader2 } from "lucide-react";
-import { getSupabase } from "@/shared/lib/core/supabase";
-import { toast } from "sonner";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
+import { Label } from '@/shared/components/ui/label';
+import { Loader2 } from 'lucide-react';
+import { getSupabase } from '@/shared/lib/core/supabase';
+import { toast } from 'sonner';
 
 // Zod şeması tanımı
 const authSchema = z.object({
-  identifier: z.string().min(1, "Bu alan zorunludur.").refine((val) => {
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
-    if (isEmail) return true;
-    return val.length >= 3;
-  }, {
-    message: "Geçerli bir e-posta girin veya kullanıcı adınız en az 3 karakter olmalıdır."
-  }),
-  password: z.string().min(6, "Şifre en az 6 karakter olmalıdır."),
+  identifier: z
+    .string()
+    .min(1, 'Bu alan zorunludur.')
+    .refine(
+      (val) => {
+        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+        if (isEmail) return true;
+        return val.length >= 3;
+      },
+      {
+        message:
+          'Geçerli bir e-posta girin veya kullanıcı adınız en az 3 karakter olmalıdır.',
+      }
+    ),
+  password: z.string().min(6, 'Şifre en az 6 karakter olmalıdır.'),
 });
 
 type AuthFormData = z.infer<typeof authSchema>;
@@ -34,8 +41,8 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
   } = useForm<AuthFormData>({
     resolver: zodResolver(authSchema),
     defaultValues: {
-      identifier: "",
-      password: "",
+      identifier: '',
+      password: '',
     },
   });
 
@@ -48,11 +55,13 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
 
       if (!isEmail) {
         // Kullanıcı adı ile email bulmaya çalış
-        const { data: emailData, error: emailError } = await supabase
-          .rpc('get_email_by_username', { username_input: data.identifier });
+        const { data: emailData, error: emailError } = await supabase.rpc(
+          'get_email_by_username',
+          { username_input: data.identifier }
+        );
 
         if (emailError || !emailData) {
-          throw new Error("Kullanıcı bulunamadı.");
+          throw new Error('Kullanıcı bulunamadı.');
         }
         loginEmail = emailData as string;
       }
@@ -63,12 +72,12 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
       });
 
       if (error) throw error;
-      toast.success("Giriş başarılı!");
+      toast.success('Giriş başarılı!');
       onSuccess?.();
     } catch (error: unknown) {
       console.error(error);
       const message =
-        error instanceof Error ? error.message : "Bir hata oluştu.";
+        error instanceof Error ? error.message : 'Bir hata oluştu.';
       toast.error(message);
     }
   };
@@ -86,10 +95,12 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
               autoCapitalize="none"
               autoCorrect="off"
               disabled={isSubmitting}
-              {...register("identifier")}
+              {...register('identifier')}
             />
             {errors.identifier && (
-              <p className="text-sm text-destructive">{errors.identifier.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.identifier.message}
+              </p>
             )}
           </div>
           <div className="grid gap-2">
@@ -100,10 +111,12 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
               type="password"
               autoComplete="current-password"
               disabled={isSubmitting}
-              {...register("password")}
+              {...register('password')}
             />
             {errors.password && (
-              <p className="text-sm text-destructive">{errors.password.message}</p>
+              <p className="text-sm text-destructive">
+                {errors.password.message}
+              </p>
             )}
           </div>
           <Button disabled={isSubmitting} type="submit">
@@ -115,4 +128,3 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
     </div>
   );
 }
-

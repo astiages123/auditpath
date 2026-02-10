@@ -480,7 +480,8 @@ export function QuizModal({
                                       completionStatus?.antrenman
                                         ? {
                                             existing:
-                                              completionStatus.antrenman.existing,
+                                              completionStatus.antrenman
+                                                .existing,
                                             quota:
                                               completionStatus.antrenman.quota,
                                           }

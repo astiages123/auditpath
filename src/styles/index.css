@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Poppins:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap');
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "katex/dist/katex.min.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'katex/dist/katex.min.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -22,7 +22,7 @@
   --accent: oklch(0.4732 0.1247 46.2007);
   --accent-foreground: oklch(0.9243 0.1151 95.7459);
   --destructive: oklch(0.6368 0.2078 25.3313);
-  --destructive-foreground: oklch(1.0000 0 0);
+  --destructive-foreground: oklch(1 0 0);
   --border: oklch(0.3715 0 0);
   --input: oklch(0.3715 0 0);
   --ring: oklch(0.7686 0.1647 70.0804);
@@ -34,7 +34,7 @@
   --sidebar: oklch(0.1684 0 0);
   --sidebar-foreground: oklch(0.9219 0 0);
   --sidebar-primary: oklch(0.7686 0.1647 70.0804);
-  --sidebar-primary-foreground: oklch(1.0000 0 0);
+  --sidebar-primary-foreground: oklch(1 0 0);
   --sidebar-accent: oklch(0.4732 0.1247 46.2007);
   --sidebar-accent-foreground: oklch(0.9243 0.1151 95.7459);
   --sidebar-border: oklch(0.3715 0 0);
@@ -52,11 +52,16 @@
   --shadow-color: hsl(0 0% 0%);
   --shadow-2xs: 0px 4px 8px -1px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0px 4px 8px -1px hsl(0 0% 0% / 0.05);
-  --shadow-sm: 0px 4px 8px -1px hsl(0 0% 0% / 0.10), 0px 1px 2px -2px hsl(0 0% 0% / 0.10);
-  --shadow: 0px 4px 8px -1px hsl(0 0% 0% / 0.10), 0px 1px 2px -2px hsl(0 0% 0% / 0.10);
-  --shadow-md: 0px 4px 8px -1px hsl(0 0% 0% / 0.10), 0px 2px 4px -2px hsl(0 0% 0% / 0.10);
-  --shadow-lg: 0px 4px 8px -1px hsl(0 0% 0% / 0.10), 0px 4px 6px -2px hsl(0 0% 0% / 0.10);
-  --shadow-xl: 0px 4px 8px -1px hsl(0 0% 0% / 0.10), 0px 8px 10px -2px hsl(0 0% 0% / 0.10);
+  --shadow-sm:
+    0px 4px 8px -1px hsl(0 0% 0% / 0.1), 0px 1px 2px -2px hsl(0 0% 0% / 0.1);
+  --shadow:
+    0px 4px 8px -1px hsl(0 0% 0% / 0.1), 0px 1px 2px -2px hsl(0 0% 0% / 0.1);
+  --shadow-md:
+    0px 4px 8px -1px hsl(0 0% 0% / 0.1), 0px 2px 4px -2px hsl(0 0% 0% / 0.1);
+  --shadow-lg:
+    0px 4px 8px -1px hsl(0 0% 0% / 0.1), 0px 4px 6px -2px hsl(0 0% 0% / 0.1);
+  --shadow-xl:
+    0px 4px 8px -1px hsl(0 0% 0% / 0.1), 0px 8px 10px -2px hsl(0 0% 0% / 0.1);
   --shadow-2xl: 0px 4px 8px -1px hsl(0 0% 0% / 0.25);
 }
 
@@ -178,9 +183,7 @@
   box-shadow: 0 8px 25px -5px oklch(0 0 0 / 0.3);
 }
 
-
 /* Note Viewer Styles have been moved to notes.css */
-
 
 /* Title Roadmap - Milestone Glow Effect */
 .milestone-glow {
@@ -197,7 +200,6 @@
 }
 
 @keyframes seal-pulse {
-
   0%,
   100% {
     filter: drop-shadow(0 0 12px var(--primary));
@@ -215,7 +217,6 @@
 
 /* Screen Shake for Stamp Celebration Effect */
 @keyframes screen-shake {
-
   0%,
   100% {
     transform: translate(0, 0);
@@ -277,7 +278,13 @@
 
 /* Guild Header Gradient */
 .guild-header {
-  background: linear-gradient(90deg, transparent, var(--guild-color, var(--accent)) 20%, var(--guild-color, var(--accent)) 80%, transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--guild-color, var(--accent)) 20%,
+    var(--guild-color, var(--accent)) 80%,
+    transparent
+  );
   opacity: 0.15;
 }
 
@@ -332,7 +339,6 @@
 
 /* Efficiency Alarm Pulse */
 @keyframes alarm-pulse {
-
   0%,
   100% {
     box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
@@ -382,7 +388,7 @@
 }
 
 .formula-block .katex-display {
-    margin: 0 auto !important;
+  margin: 0 auto !important;
 }
 
 /* Keep inline math as-is (no centering) */
@@ -396,7 +402,8 @@ td > .katex {
 
 /* Evidence Highlight Animation (Quiz -> Notes) */
 @keyframes evidence-pulse {
-  0%, 100% {
+  0%,
+  100% {
     background-color: oklch(0.7 0.15 85 / 0.2);
     box-shadow: 0 0 0 0 oklch(0.7 0.15 85 / 0.4);
   }
@@ -418,7 +425,10 @@ td > .katex {
   color: oklch(0.9219 0 0 / 0.9);
 }
 
-.prose h1, .prose h2, .prose h3, .prose h4 {
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
   font-family: var(--font-heading);
   scroll-margin-top: 8rem;
   text-align: left;
@@ -431,8 +441,16 @@ td > .katex {
 }
 
 /* Base Headings Style for Prose */
-.prose h1, .prose h2, .prose h3, .prose h4, .prose h5,
-.prose h1 strong, .prose h2 strong, .prose h3 strong, .prose h4 strong, .prose h5 strong {
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h1 strong,
+.prose h2 strong,
+.prose h3 strong,
+.prose h4 strong,
+.prose h5 strong {
   color: oklch(0.85 0.14 158);
 }
 
@@ -465,7 +483,10 @@ td > .katex {
   font-size: 1.1em;
 }
 
-.prose ul ul, .prose ul ol, .prose ol ul, .prose ol ol {
+.prose ul ul,
+.prose ul ol,
+.prose ol ul,
+.prose ol ol {
   @apply space-y-1 mt-2 mb-2;
 }
 
@@ -538,7 +559,7 @@ td > .katex {
 }
 
 /* Custom Zoom Modal Overlay */
-[data-rmiz-modal-overlay="visible"] {
+[data-rmiz-modal-overlay='visible'] {
   background-color: var(--background) !important;
   opacity: 0.95 !important;
   backdrop-filter: blur(12px) !important;

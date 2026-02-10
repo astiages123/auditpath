@@ -41,5 +41,5 @@ yarn-error.log*
 /venv
 
 # debug exports
-all_ts_files.txt
+*.txt
 

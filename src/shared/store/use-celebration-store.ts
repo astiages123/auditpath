@@ -1,7 +1,7 @@
-import { create } from "zustand";
-import { LucideIcon } from "lucide-react";
+import { create } from 'zustand';
+import { LucideIcon } from 'lucide-react';
 
-export type CelebrationVariant = "course" | "rank" | "achievement" | "group";
+export type CelebrationVariant = 'course' | 'rank' | 'achievement' | 'group';
 
 export interface CelebrationEvent {
   id: string; // Unique ID (e.g., "COURSE:123", "RANK:5")

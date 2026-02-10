@@ -7,7 +7,10 @@ interface QuizTimerProps {
   className?: string;
 }
 
-export function QuizTimer({ isRunning, className }: Omit<QuizTimerProps, 'startTime'>) {
+export function QuizTimer({
+  isRunning,
+  className,
+}: Omit<QuizTimerProps, 'startTime'>) {
   const [startTime] = useState(() => Date.now());
   const [elapsed, setElapsed] = useState(0);
 
@@ -26,11 +29,14 @@ export function QuizTimer({ isRunning, className }: Omit<QuizTimerProps, 'startT
   const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
   return (
-    <div className={cn("flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-lg text-sm font-medium tabular-nums", className)}>
+    <div
+      className={cn(
+        'flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-lg text-sm font-medium tabular-nums',
+        className
+      )}
+    >
       <Clock className="w-4 h-4 text-muted-foreground" />
-      <span className="text-foreground">
-        {timeString}
-      </span>
+      <span className="text-foreground">{timeString}</span>
     </div>
   );
 }

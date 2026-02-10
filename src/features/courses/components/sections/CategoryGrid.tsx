@@ -1,15 +1,19 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { CategoryCard } from "../ui/CategoryCard";
-import { type Category } from "@/shared/types/courses";
-import { motion } from "framer-motion";
+import { useState } from 'react';
+import { CategoryCard } from '../ui/CategoryCard';
+import { type Category } from '@/shared/types/courses';
+import { motion } from 'framer-motion';
 
 interface CategoryGridProps {
   categories: Category[];
   categoryProgress?: Record<
     string,
-    { completedVideos: number; completedHours: number; completedCourses: number }
+    {
+      completedVideos: number;
+      completedHours: number;
+      completedCourses: number;
+    }
   >;
 }
 
@@ -17,7 +21,9 @@ export function CategoryGrid({
   categories,
   categoryProgress = {},
 }: CategoryGridProps) {
-  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(null);
+  const [expandedCategoryId, setExpandedCategoryId] = useState<string | null>(
+    null
+  );
 
   const handleToggle = (id: string) => {
     setExpandedCategoryId((prev) => (prev === id ? null : id));

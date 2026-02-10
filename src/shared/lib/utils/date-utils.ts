@@ -10,11 +10,11 @@
  * @returns Sanal gün olarak ayarlanmış Date nesnesi (mutate edilmez, yeni Date döner)
  */
 export function getVirtualDate(date?: Date): Date {
-    const d = date ? new Date(date) : new Date();
-    if (d.getHours() < 4) {
-        d.setDate(d.getDate() - 1);
-    }
-    return d;
+  const d = date ? new Date(date) : new Date();
+  if (d.getHours() < 4) {
+    d.setDate(d.getDate() - 1);
+  }
+  return d;
 }
 
 /**
@@ -23,15 +23,15 @@ export function getVirtualDate(date?: Date): Date {
  * @returns Bugünün 04:00'ındaki Date nesnesi
  */
 export function getVirtualDayStart(date?: Date): Date {
-    const now = date ? new Date(date) : new Date();
-    const today = new Date(now);
+  const now = date ? new Date(date) : new Date();
+  const today = new Date(now);
 
-    // 00:00 - 04:00 arası ise bir önceki güne ait
-    if (now.getHours() < 4) {
-        today.setDate(today.getDate() - 1);
-    }
-    today.setHours(4, 0, 0, 0);
-    return today;
+  // 00:00 - 04:00 arası ise bir önceki güne ait
+  if (now.getHours() < 4) {
+    today.setDate(today.getDate() - 1);
+  }
+  today.setHours(4, 0, 0, 0);
+  return today;
 }
 
 /**
@@ -40,10 +40,10 @@ export function getVirtualDayStart(date?: Date): Date {
  * @returns "2026-01-28" gibi string
  */
 export function formatDateKey(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /**
@@ -53,6 +53,6 @@ export function formatDateKey(date: Date): string {
  * @returns "2026-01-28" gibi string, sanal gün mantığıyla
  */
 export function getVirtualDateKey(date?: Date): string {
-    const virtualDate = getVirtualDate(date);
-    return formatDateKey(virtualDate);
+  const virtualDate = getVirtualDate(date);
+  return formatDateKey(virtualDate);
 }

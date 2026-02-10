@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { Check, Circle, Loader2 } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { Check, Circle, Loader2 } from 'lucide-react';
 import {
   getVideoProgress,
   toggleVideoProgress,
   toggleVideoProgressBatch,
-} from "@/shared/lib/core/client-db";
+} from '@/shared/lib/core/client-db';
 
-import { toast } from "sonner";
-import { useAuth } from "@/features/auth";
+import { toast } from 'sonner';
+import { useAuth } from '@/features/auth';
 
 interface Video {
   id: number;
@@ -27,7 +27,7 @@ interface VideoListProps {
 }
 
 // Load videos from courses.json (already bundled)
-import coursesData from "@/features/courses/data/courses.json";
+import coursesData from '@/features/courses/data/courses.json';
 
 interface CourseData {
   id: string;
@@ -57,7 +57,7 @@ function findCourse(courseId: string): CourseData | null {
   return null;
 }
 
-import { useProgress } from "@/shared/hooks/use-progress";
+import { useProgress } from '@/shared/hooks/use-progress';
 
 export function VideoList({ courseId, dbCourseId }: VideoListProps) {
   const [videos, setVideos] = useState<Video[]>([]);
@@ -106,8 +106,8 @@ export function VideoList({ courseId, dbCourseId }: VideoListProps) {
           }))
         );
       } catch (error) {
-        console.error("Failed to load progress:", error);
-        toast.error("İlerleme durumu yüklenemedi.");
+        console.error('Failed to load progress:', error);
+        toast.error('İlerleme durumu yüklenemedi.');
       } finally {
         setLoading(false);
       }
@@ -191,8 +191,8 @@ export function VideoList({ courseId, dbCourseId }: VideoListProps) {
     // SERVER SYNC
     try {
       if (!userId) {
-        toast.error("İlerleme durumu kaydedilmesi için giriş yapmalısınız.");
-        throw new Error("User not logged in");
+        toast.error('İlerleme durumu kaydedilmesi için giriş yapmalısınız.');
+        throw new Error('User not logged in');
       }
 
       if (videoIdListToUpdate.length === 1) {
@@ -216,17 +216,15 @@ export function VideoList({ courseId, dbCourseId }: VideoListProps) {
         );
       }
 
-
-
       // Re-refresh progress to ensure consistency (optional, but good for safety)
       refreshProgress();
     } catch (error) {
-      console.error("Failed to sync progress:", error);
+      console.error('Failed to sync progress:', error);
       // Revert on error
       setVideos(previousVideos);
       // Revert optimistic update
       updateProgressOptimistically(courseId, -deltaVideos, -deltaHours);
-      toast.error("İlerleme kaydedilemedi.");
+      toast.error('İlerleme kaydedilemedi.');
     }
   };
 
@@ -258,8 +256,8 @@ export function VideoList({ courseId, dbCourseId }: VideoListProps) {
             }
             className={`group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-300 text-left ${
               video.completed
-                ? "bg-linear-to-r from-emerald-500/20 to-emerald-500/5 border-emerald-500/20"
-                : "bg-linear-to-r from-zinc-800/50 to-zinc-900/50 border-white/5 hover:from-zinc-800 hover:to-zinc-900 hover:border-white/10"
+                ? 'bg-linear-to-r from-emerald-500/20 to-emerald-500/5 border-emerald-500/20'
+                : 'bg-linear-to-r from-zinc-800/50 to-zinc-900/50 border-white/5 hover:from-zinc-800 hover:to-zinc-900 hover:border-white/10'
             }`}
           >
             {/* Status Checkbox */}
@@ -267,7 +265,7 @@ export function VideoList({ courseId, dbCourseId }: VideoListProps) {
               className={`shrink-0 flex items-center justify-center w-6 h-6 rounded-full border transition-all duration-300 ${
                 video.completed
                   ? `bg-emerald-500 text-white border-emerald-500 shadow-[0_0_10px_-3px_rgba(16,185,129,0.5)]`
-                  : "border-zinc-600 bg-black/20 group-hover:border-zinc-400"
+                  : 'border-zinc-600 bg-black/20 group-hover:border-zinc-400'
               }`}
             >
               {video.completed ? (
@@ -281,8 +279,8 @@ export function VideoList({ courseId, dbCourseId }: VideoListProps) {
             <span
               className={`text-sm font-mono shrink-0 ${
                 video.completed
-                  ? "text-emerald-200/70"
-                  : "text-zinc-300 group-hover:text-zinc-400"
+                  ? 'text-emerald-200/70'
+                  : 'text-zinc-300 group-hover:text-zinc-400'
               }`}
             >
               {video.videoNumber}.
@@ -293,8 +291,8 @@ export function VideoList({ courseId, dbCourseId }: VideoListProps) {
               <span
                 className={`text-sm font-medium transition-colors ${
                   video.completed
-                    ? "text-emerald-50"
-                    : "text-zinc-300 group-hover:text-zinc-100"
+                    ? 'text-emerald-50'
+                    : 'text-zinc-300 group-hover:text-zinc-100'
                 }`}
               >
                 {video.title}
@@ -306,8 +304,8 @@ export function VideoList({ courseId, dbCourseId }: VideoListProps) {
               <span
                 className={`text-xs font-medium px-2.5 py-1 rounded-md border transition-colors ${
                   video.completed
-                    ? "bg-emerald-500/10 border-emerald-500/10 text-emerald-200"
-                    : "bg-zinc-800/50 border-white/5 text-zinc-400 group-hover:bg-zinc-700/50 group-hover:text-zinc-300"
+                    ? 'bg-emerald-500/10 border-emerald-500/10 text-emerald-200'
+                    : 'bg-zinc-800/50 border-white/5 text-zinc-400 group-hover:bg-zinc-700/50 group-hover:text-zinc-300'
                 }`}
               >
                 {video.duration}

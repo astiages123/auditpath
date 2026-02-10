@@ -1,14 +1,14 @@
-import { useCallback } from "react";
-import { useTimerStore } from "@/shared/store/use-timer-store";
+import { useCallback } from 'react';
+import { useTimerStore } from '@/shared/store/use-timer-store';
 import {
   deletePomodoroSession,
   getDailySessionCount,
   upsertPomodoroSession,
-} from "@/shared/lib/core/client-db";
-import { useAuth } from "@/features/auth";
-import { unlockAudio } from "../lib/audio-utils";
+} from '@/shared/lib/core/client-db';
+import { useAuth } from '@/features/auth';
+import { unlockAudio } from '../lib/audio-utils';
 
-export type PomodoroMode = "work" | "break";
+export type PomodoroMode = 'work' | 'break';
 
 export function usePomodoro() {
   const {
@@ -62,18 +62,20 @@ export function usePomodoro() {
     // Prepare initial session payload
     if (userId && currentSessionId && selectedCourse) {
       try {
-        await upsertPomodoroSession({
-          id: currentSessionId,
-          courseId: selectedCourse.id,
-          courseName: selectedCourse.name,
-          timeline: timeline.length > 0
-            ? timeline
-            : [{ type: "work", start: now }], // Initial state if empty
-          startedAt: originalStartTime || now,
-          isCompleted: false,
-        }, userId);
+        await upsertPomodoroSession(
+          {
+            id: currentSessionId,
+            courseId: selectedCourse.id,
+            courseName: selectedCourse.name,
+            timeline:
+              timeline.length > 0 ? timeline : [{ type: 'work', start: now }], // Initial state if empty
+            startedAt: originalStartTime || now,
+            isCompleted: false,
+          },
+          userId
+        );
       } catch (error) {
-        console.error("Failed to initialize session in DB:", error);
+        console.error('Failed to initialize session in DB:', error);
         // Decide: Stop here or continue?
         // For data integrity, we should probably warn or retry, but for now we proceed to allow offline usage
         // (though the prompt emphasized data integrity, offline support is also usually desired).
@@ -82,8 +84,8 @@ export function usePomodoro() {
     }
 
     // Request notification permission on user action
-    if (typeof window !== "undefined" && "Notification" in window) {
-      if (Notification.permission === "default") {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'default') {
         Notification.requestPermission();
       }
     }
@@ -96,13 +98,13 @@ export function usePomodoro() {
 
   const getDisplayTime = () => {
     const isOvertime = timeLeft < 0;
-    const totalSeconds = isOvertime
-      ? (duration + Math.abs(timeLeft))
-      : timeLeft;
+    const totalSeconds = isOvertime ? duration + Math.abs(timeLeft) : timeLeft;
 
     const format = (sec: number) => {
-      const m = Math.floor(sec / 60).toString().padStart(2, "0");
-      const s = (sec % 60).toString().padStart(2, "0");
+      const m = Math.floor(sec / 60)
+        .toString()
+        .padStart(2, '0');
+      const s = (sec % 60).toString().padStart(2, '0');
       return { m, s };
     };
 
@@ -117,14 +119,18 @@ export function usePomodoro() {
     };
   };
 
-  const { minutes: m, seconds: s, overtimeMinutes: om, overtimeSeconds: os } =
-    getDisplayTime();
+  const {
+    minutes: m,
+    seconds: s,
+    overtimeMinutes: om,
+    overtimeSeconds: os,
+  } = getDisplayTime();
 
   const switchMode = useCallback(() => {
-    const newMode = isBreak ? "work" : "break";
+    const newMode = isBreak ? 'work' : 'break';
     setMode(newMode);
 
-    if (newMode === "work" && isBreak) {
+    if (newMode === 'work' && isBreak) {
       incrementSession();
     }
 
@@ -142,8 +148,8 @@ export function usePomodoro() {
   };
 
   return {
-    mode: isBreak ? "break" : "work",
-    status: isActive ? "running" : "paused",
+    mode: isBreak ? 'break' : 'work',
+    status: isActive ? 'running' : 'paused',
     minutes: m,
     seconds: s,
     isActive,

@@ -1,9 +1,13 @@
-"use client";
+'use client';
 
-import React, { useCallback, useMemo } from "react";
-import { useAuth } from "@/features/auth";
-import { ProgressContext, ProgressStats } from "@/shared/hooks/use-progress";
-import { useProgressQuery, useOptimisticProgress, defaultStats } from "@/shared/hooks/use-progress";
+import React, { useCallback, useMemo } from 'react';
+import { useAuth } from '@/features/auth';
+import { ProgressContext, ProgressStats } from '@/shared/hooks/use-progress';
+import {
+  useProgressQuery,
+  useOptimisticProgress,
+  defaultStats,
+} from '@/shared/hooks/use-progress';
 
 interface ProgressProviderProps {
   children: React.ReactNode;
@@ -18,10 +22,10 @@ export function ProgressProvider({
   const userId = user?.id;
 
   // 1. Fetch Data with TanStack Query
-  const { 
-    data: stats, 
-    isLoading, 
-    refetch 
+  const {
+    data: stats,
+    isLoading,
+    refetch,
   } = useProgressQuery(userId, initialStats);
 
   // 2. Optimistic Updates Helper
@@ -34,21 +38,24 @@ export function ProgressProvider({
 
   const updateProgressOptimistically = useCallback(
     (courseId: string, deltaVideos: number, deltaHours: number) => {
-        if (userId) {
-            updateProgress(userId, courseId, deltaVideos, deltaHours);
-        }
+      if (userId) {
+        updateProgress(userId, courseId, deltaVideos, deltaHours);
+      }
     },
     [userId, updateProgress]
   );
-  
+
   // 4. Memoize Context Value
-  const value = useMemo(() => ({
-    stats: stats || (defaultStats as ProgressStats),
-    refreshProgress,
-    isLoading,
-    streak: stats?.streak || 0,
-    updateProgressOptimistically,
-  }), [stats, refreshProgress, isLoading, updateProgressOptimistically]);
+  const value = useMemo(
+    () => ({
+      stats: stats || (defaultStats as ProgressStats),
+      refreshProgress,
+      isLoading,
+      streak: stats?.streak || 0,
+      updateProgressOptimistically,
+    }),
+    [stats, refreshProgress, isLoading, updateProgressOptimistically]
+  );
 
   return (
     <ProgressContext.Provider value={value}>

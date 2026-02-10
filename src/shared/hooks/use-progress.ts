@@ -1,8 +1,8 @@
-import { createContext, useContext } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getUserStats } from "@/shared/lib/core/client-db";
-import type { Rank } from "@/config/constants";
-import coursesData from "@/features/courses/data/courses.json";
+import { createContext, useContext } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getUserStats } from '@/shared/lib/core/client-db';
+import type { Rank } from '@/config/constants';
+import coursesData from '@/features/courses/data/courses.json';
 
 export interface ProgressStats {
   completedVideos: number;
@@ -30,7 +30,7 @@ export interface ProgressStats {
 }
 
 export const progressKeys = {
-  all: ["progress"] as const,
+  all: ['progress'] as const,
   user: (userId: string) => [...progressKeys.all, userId] as const,
 };
 
@@ -63,8 +63,8 @@ const calculateStaticTotals = () => {
 
   categories.forEach((cat) => {
     // Falls back to parsing if slug is missing to prevent crash, though slug should be there now.
-    const categoryName = cat.slug ||
-      (cat.category.split(" (")[0].split(". ")[1] || cat.category);
+    const categoryName =
+      cat.slug || cat.category.split(' (')[0].split('. ')[1] || cat.category;
 
     let catTotalVideos = 0;
     let catTotalHours = 0;
@@ -108,28 +108,28 @@ export interface ProgressContextType {
   updateProgressOptimistically: (
     courseId: string,
     deltaVideos: number,
-    deltaHours: number,
+    deltaHours: number
   ) => void;
 }
 
 export const ProgressContext = createContext<ProgressContextType | undefined>(
-  undefined,
+  undefined
 );
 
 export function useProgress() {
   const context = useContext(ProgressContext);
   if (context === undefined) {
-    throw new Error("useProgress must be used within a ProgressProvider");
+    throw new Error('useProgress must be used within a ProgressProvider');
   }
   return context;
 }
 
 export function useProgressQuery(
   userId?: string,
-  initialStats?: Partial<ProgressStats>,
+  initialStats?: Partial<ProgressStats>
 ) {
   return useQuery({
-    queryKey: progressKeys.user(userId || "guest"),
+    queryKey: progressKeys.user(userId || 'guest'),
     queryFn: async () => {
       if (!userId) return defaultStats;
 
@@ -152,7 +152,7 @@ export function useProgressQuery(
                 completedHours: stats.completedHours || 0,
               };
             }
-          },
+          }
         );
       }
 
@@ -188,7 +188,7 @@ export function useOptimisticProgress() {
     userId: string,
     courseId: string,
     deltaVideos: number,
-    deltaHours: number,
+    deltaHours: number
   ) => {
     queryClient.setQueryData(
       progressKeys.user(userId),
@@ -202,9 +202,10 @@ export function useOptimisticProgress() {
 
         if (!categoryData) return old;
 
-        const categoryName = categoryData.slug ||
-          (categoryData.category.split(" (")[0].split(". ")[1] ||
-            categoryData.category);
+        const categoryName =
+          categoryData.slug ||
+          categoryData.category.split(' (')[0].split('. ')[1] ||
+          categoryData.category;
 
         const existingCatStats = old.categoryProgress[categoryName] || {
           completedVideos: 0,
@@ -246,7 +247,7 @@ export function useOptimisticProgress() {
           },
           categoryProgress: newCategoryProgress,
         };
-      },
+      }
     );
   };
 

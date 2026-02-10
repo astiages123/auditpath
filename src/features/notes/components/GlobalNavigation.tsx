@@ -4,6 +4,7 @@ import { cn, slugify } from '@/shared/lib/core/utils';
 import { type CourseTopic } from '@/shared/types/efficiency';
 import { memo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { ROUTES } from '@/config/routes';
 import { ToCTitleRenderer } from './ToCTitleRenderer';
 
 interface GlobalNavigationProps {
@@ -24,13 +25,13 @@ export const GlobalNavigation = memo(function GlobalNavigation({
   // Auto-scroll the active item into view within the sidebar
   useEffect(() => {
     if (activeChunkId && scrollContainerRef.current) {
-        const activeItem = document.getElementById(`nav-item-${activeChunkId}`);
-        if (activeItem) {
-          activeItem.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-          });
-        }
+      const activeItem = document.getElementById(`nav-item-${activeChunkId}`);
+      if (activeItem) {
+        activeItem.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
+      }
     }
   }, [activeChunkId]);
 
@@ -48,7 +49,9 @@ export const GlobalNavigation = memo(function GlobalNavigation({
   // Wait, if I filter only sequence_order === 0, then middle panel should probably show ALL content?
   // Yes, NotesPage usually renders all chunks. Global Nav navigates between them.
 
-  const navItems = chunks.filter(c => c.sequence_order === 0 || c.sequence_order === undefined);
+  const navItems = chunks.filter(
+    (c) => c.sequence_order === 0 || c.sequence_order === undefined
+  );
 
   return (
     <nav className="h-full flex flex-col">
@@ -57,20 +60,23 @@ export const GlobalNavigation = memo(function GlobalNavigation({
           Konular
         </h2>
       </div>
-      <div 
+      <div
         ref={scrollContainerRef}
         className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1"
       >
         {navItems.map((chunk, index) => {
           // DEBUG: Verify raw chunk data
-          console.log(`GlobalNav Chunk ${index}:`, { title: chunk.section_title, sequence: chunk.sequence_order });
-          
+          console.log(`GlobalNav Chunk ${index}:`, {
+            title: chunk.section_title,
+            sequence: chunk.sequence_order,
+          });
+
           // Use chunk.id if available, fallback to slugified title or index
           // In `NotesPage`, we use `slugify(chunk.section_title)` for IDs.
-            
+
           const chunkId = slugify(chunk.section_title);
           const isActive = activeChunkId === chunkId;
-          const url = `/notes/${courseSlug}/${chunkId}`;
+          const url = `${ROUTES.NOTES}/${courseSlug}/${chunkId}`;
 
           return (
             <Link
@@ -78,20 +84,28 @@ export const GlobalNavigation = memo(function GlobalNavigation({
               id={`nav-item-${chunkId}`}
               to={url}
               className={cn(
-                "w-full text-left px-3 py-2 rounded-md text-sm transition-all duration-200",
-                "hover:bg-accent/50 group flex items-center gap-3",
-                isActive 
-                  ? "bg-primary/10 text-primary font-medium" 
-                  : "text-muted-foreground hover:text-foreground"
+                'w-full text-left px-3 py-2 rounded-md text-sm transition-all duration-200',
+                'hover:bg-accent/50 group flex items-center gap-3',
+                isActive
+                  ? 'bg-primary/10 text-primary font-medium'
+                  : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <div className={cn(
-                "w-1 h-1 rounded-full bg-current transition-all",
-                isActive ? "scale-125 opacity-100" : "opacity-0 group-hover:opacity-50"
-              )} />
-              <ToCTitleRenderer 
-                title={chunk.section_title.match(/^\d/) ? chunk.section_title : `${index + 1}. ${chunk.section_title}`} 
-                className="whitespace-normal wrap-break-word leading-tight py-1" 
+              <div
+                className={cn(
+                  'w-1 h-1 rounded-full bg-current transition-all',
+                  isActive
+                    ? 'scale-125 opacity-100'
+                    : 'opacity-0 group-hover:opacity-50'
+                )}
+              />
+              <ToCTitleRenderer
+                title={
+                  chunk.section_title.match(/^\d/)
+                    ? chunk.section_title
+                    : `${index + 1}. ${chunk.section_title}`
+                }
+                className="whitespace-normal wrap-break-word leading-tight py-1"
               />
             </Link>
           );

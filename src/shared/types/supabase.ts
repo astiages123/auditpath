@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1";
+    PostgrestVersion: '14.1';
   };
   public: {
     Tables: {
@@ -128,25 +128,25 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "chunk_mastery_chunk_id_fkey";
-            columns: ["chunk_id"];
+            foreignKeyName: 'chunk_mastery_chunk_id_fkey';
+            columns: ['chunk_id'];
             isOneToOne: false;
-            referencedRelation: "note_chunks";
-            referencedColumns: ["id"];
+            referencedRelation: 'note_chunks';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "chunk_mastery_course_id_fkey";
-            columns: ["course_id"];
+            foreignKeyName: 'chunk_mastery_course_id_fkey';
+            columns: ['course_id'];
             isOneToOne: false;
-            referencedRelation: "courses";
-            referencedColumns: ["id"];
+            referencedRelation: 'courses';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "chunk_mastery_user_id_fkey";
-            columns: ["user_id"];
+            foreignKeyName: 'chunk_mastery_user_id_fkey';
+            columns: ['user_id'];
             isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -180,18 +180,18 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "course_session_counters_course_id_fkey";
-            columns: ["course_id"];
+            foreignKeyName: 'course_session_counters_course_id_fkey';
+            columns: ['course_id'];
             isOneToOne: false;
-            referencedRelation: "courses";
-            referencedColumns: ["id"];
+            referencedRelation: 'courses';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "course_session_counters_user_id_fkey";
-            columns: ["user_id"];
+            foreignKeyName: 'course_session_counters_user_id_fkey';
+            columns: ['user_id'];
             isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -237,11 +237,11 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "Course_categoryId_fkey";
-            columns: ["category_id"];
+            foreignKeyName: 'Course_categoryId_fkey';
+            columns: ['category_id'];
             isOneToOne: false;
-            referencedRelation: "categories";
-            referencedColumns: ["id"];
+            referencedRelation: 'categories';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -278,7 +278,7 @@ export type Database = {
           metadata: Json | null;
           section_title: string;
           sequence_order: number;
-          status: Database["public"]["Enums"]["chunk_generation_status"] | null;
+          status: Database['public']['Enums']['chunk_generation_status'] | null;
           target_count: number | null;
           word_count: number | null;
         };
@@ -297,7 +297,7 @@ export type Database = {
           section_title: string;
           sequence_order?: number;
           status?:
-            | Database["public"]["Enums"]["chunk_generation_status"]
+            | Database['public']['Enums']['chunk_generation_status']
             | null;
           target_count?: number | null;
           word_count?: number | null;
@@ -317,18 +317,18 @@ export type Database = {
           section_title?: string;
           sequence_order?: number;
           status?:
-            | Database["public"]["Enums"]["chunk_generation_status"]
+            | Database['public']['Enums']['chunk_generation_status']
             | null;
           target_count?: number | null;
           word_count?: number | null;
         };
         Relationships: [
           {
-            foreignKeyName: "note_chunks_course_id_fkey";
-            columns: ["course_id"];
+            foreignKeyName: 'note_chunks_course_id_fkey';
+            columns: ['course_id'];
             isOneToOne: false;
-            referencedRelation: "courses";
-            referencedColumns: ["id"];
+            referencedRelation: 'courses';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -386,17 +386,17 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "PomodoroSession_courseId_fkey";
-            columns: ["course_id"];
+            foreignKeyName: 'PomodoroSession_courseId_fkey';
+            columns: ['course_id'];
             isOneToOne: false;
-            referencedRelation: "courses";
-            referencedColumns: ["id"];
+            referencedRelation: 'courses';
+            referencedColumns: ['id'];
           },
         ];
       };
       questions: {
         Row: {
-          bloom_level: Database["public"]["Enums"]["bloom_level"] | null;
+          bloom_level: Database['public']['Enums']['bloom_level'] | null;
           chunk_id: string | null;
           concept_title: string | null;
           course_id: string;
@@ -407,10 +407,10 @@ export type Database = {
           parent_question_id: string | null;
           question_data: Json;
           section_title: string;
-          usage_type: Database["public"]["Enums"]["question_usage_type"] | null;
+          usage_type: Database['public']['Enums']['question_usage_type'] | null;
         };
         Insert: {
-          bloom_level?: Database["public"]["Enums"]["bloom_level"] | null;
+          bloom_level?: Database['public']['Enums']['bloom_level'] | null;
           chunk_id?: string | null;
           concept_title?: string | null;
           course_id: string;
@@ -422,11 +422,11 @@ export type Database = {
           question_data: Json;
           section_title: string;
           usage_type?:
-            | Database["public"]["Enums"]["question_usage_type"]
+            | Database['public']['Enums']['question_usage_type']
             | null;
         };
         Update: {
-          bloom_level?: Database["public"]["Enums"]["bloom_level"] | null;
+          bloom_level?: Database['public']['Enums']['bloom_level'] | null;
           chunk_id?: string | null;
           concept_title?: string | null;
           course_id?: string;
@@ -438,30 +438,30 @@ export type Database = {
           question_data?: Json;
           section_title?: string;
           usage_type?:
-            | Database["public"]["Enums"]["question_usage_type"]
+            | Database['public']['Enums']['question_usage_type']
             | null;
         };
         Relationships: [
           {
-            foreignKeyName: "questions_chunk_id_fkey";
-            columns: ["chunk_id"];
+            foreignKeyName: 'questions_chunk_id_fkey';
+            columns: ['chunk_id'];
             isOneToOne: false;
-            referencedRelation: "note_chunks";
-            referencedColumns: ["id"];
+            referencedRelation: 'note_chunks';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "questions_course_id_fkey";
-            columns: ["course_id"];
+            foreignKeyName: 'questions_course_id_fkey';
+            columns: ['course_id'];
             isOneToOne: false;
-            referencedRelation: "courses";
-            referencedColumns: ["id"];
+            referencedRelation: 'courses';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "questions_parent_question_id_fkey";
-            columns: ["parent_question_id"];
+            foreignKeyName: 'questions_parent_question_id_fkey';
+            columns: ['parent_question_id'];
             isOneToOne: false;
-            referencedRelation: "questions";
-            referencedColumns: ["id"];
+            referencedRelation: 'questions';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -530,7 +530,7 @@ export type Database = {
           next_review_at: string | null;
           next_review_session: number | null;
           question_id: string;
-          status: Database["public"]["Enums"]["question_status"];
+          status: Database['public']['Enums']['question_status'];
           updated_at: string | null;
           user_id: string;
         };
@@ -541,7 +541,7 @@ export type Database = {
           next_review_at?: string | null;
           next_review_session?: number | null;
           question_id: string;
-          status?: Database["public"]["Enums"]["question_status"];
+          status?: Database['public']['Enums']['question_status'];
           updated_at?: string | null;
           user_id: string;
         };
@@ -552,17 +552,17 @@ export type Database = {
           next_review_at?: string | null;
           next_review_session?: number | null;
           question_id?: string;
-          status?: Database["public"]["Enums"]["question_status"];
+          status?: Database['public']['Enums']['question_status'];
           updated_at?: string | null;
           user_id?: string;
         };
         Relationships: [
           {
-            foreignKeyName: "user_question_status_question_id_fkey";
-            columns: ["question_id"];
+            foreignKeyName: 'user_question_status_question_id_fkey';
+            columns: ['question_id'];
             isOneToOne: false;
-            referencedRelation: "questions";
-            referencedColumns: ["id"];
+            referencedRelation: 'questions';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -576,7 +576,7 @@ export type Database = {
           id: string;
           is_review_question: boolean | null;
           question_id: string;
-          response_type: Database["public"]["Enums"]["quiz_response_type"];
+          response_type: Database['public']['Enums']['quiz_response_type'];
           selected_answer: number | null;
           session_number: number;
           time_spent_ms: number | null;
@@ -591,7 +591,7 @@ export type Database = {
           id?: string;
           is_review_question?: boolean | null;
           question_id: string;
-          response_type: Database["public"]["Enums"]["quiz_response_type"];
+          response_type: Database['public']['Enums']['quiz_response_type'];
           selected_answer?: number | null;
           session_number: number;
           time_spent_ms?: number | null;
@@ -606,7 +606,7 @@ export type Database = {
           id?: string;
           is_review_question?: boolean | null;
           question_id?: string;
-          response_type?: Database["public"]["Enums"]["quiz_response_type"];
+          response_type?: Database['public']['Enums']['quiz_response_type'];
           selected_answer?: number | null;
           session_number?: number;
           time_spent_ms?: number | null;
@@ -614,32 +614,32 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "user_quiz_progress_chunk_id_fkey";
-            columns: ["chunk_id"];
+            foreignKeyName: 'user_quiz_progress_chunk_id_fkey';
+            columns: ['chunk_id'];
             isOneToOne: false;
-            referencedRelation: "note_chunks";
-            referencedColumns: ["id"];
+            referencedRelation: 'note_chunks';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "user_quiz_progress_course_id_fkey";
-            columns: ["course_id"];
+            foreignKeyName: 'user_quiz_progress_course_id_fkey';
+            columns: ['course_id'];
             isOneToOne: false;
-            referencedRelation: "courses";
-            referencedColumns: ["id"];
+            referencedRelation: 'courses';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "user_quiz_progress_question_id_fkey";
-            columns: ["question_id"];
+            foreignKeyName: 'user_quiz_progress_question_id_fkey';
+            columns: ['question_id'];
             isOneToOne: false;
-            referencedRelation: "questions";
-            referencedColumns: ["id"];
+            referencedRelation: 'questions';
+            referencedColumns: ['id'];
           },
           {
-            foreignKeyName: "user_quiz_progress_user_id_fkey";
-            columns: ["user_id"];
+            foreignKeyName: 'user_quiz_progress_user_id_fkey';
+            columns: ['user_id'];
             isOneToOne: false;
-            referencedRelation: "users";
-            referencedColumns: ["id"];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -694,11 +694,11 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "VideoProgress_videoId_fkey";
-            columns: ["video_id"];
+            foreignKeyName: 'VideoProgress_videoId_fkey';
+            columns: ['video_id'];
             isOneToOne: false;
-            referencedRelation: "videos";
-            referencedColumns: ["id"];
+            referencedRelation: 'videos';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -732,11 +732,11 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "Video_courseId_fkey";
-            columns: ["course_id"];
+            foreignKeyName: 'Video_courseId_fkey';
+            columns: ['course_id'];
             isOneToOne: false;
-            referencedRelation: "courses";
-            referencedColumns: ["id"];
+            referencedRelation: 'courses';
+            referencedColumns: ['id'];
           },
         ];
       };
@@ -803,18 +803,18 @@ export type Database = {
       };
     };
     Enums: {
-      bloom_level: "knowledge" | "application" | "analysis";
+      bloom_level: 'knowledge' | 'application' | 'analysis';
       chunk_generation_status:
-        | "DRAFT"
-        | "PENDING"
-        | "PROCESSING"
-        | "COMPLETED"
-        | "FAILED"
-        | "SYNCED";
-      question_status: "active" | "archived" | "pending_followup";
-      question_usage_type: "antrenman" | "arsiv" | "deneme";
-      quiz_response_type: "correct" | "incorrect" | "blank";
-      validation_status: "PENDING" | "APPROVED" | "REJECTED";
+        | 'DRAFT'
+        | 'PENDING'
+        | 'PROCESSING'
+        | 'COMPLETED'
+        | 'FAILED'
+        | 'SYNCED';
+      question_status: 'active' | 'archived' | 'pending_followup';
+      question_usage_type: 'antrenman' | 'arsiv' | 'deneme';
+      quiz_response_type: 'correct' | 'incorrect' | 'blank';
+      validation_status: 'PENDING' | 'APPROVED' | 'REJECTED';
     };
     CompositeTypes: {
       [_ in never]: never;
@@ -822,156 +822,142 @@ export type Database = {
   };
 };
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>;
 
-type DefaultSchema =
-  DatabaseWithoutInternals[Extract<keyof Database, "public">];
+type DefaultSchema = DatabaseWithoutInternals[Extract<
+  keyof Database,
+  'public'
+>];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
-  } ? keyof (
-      & DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]][
-        "Tables"
-      ]
-      & DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]][
-        "Views"
-      ]
-    )
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
-} ? (
-    & DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]][
-      "Tables"
-    ]
-    & DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]][
-      "Views"
-    ]
-  )[TableName] extends {
-    Row: infer R;
-  } ? R
-  : never
-  : DefaultSchemaTableNameOrOptions extends keyof (
-    & DefaultSchema["Tables"]
-    & DefaultSchema["Views"]
-  ) ? (
-      & DefaultSchema["Tables"]
-      & DefaultSchema["Views"]
-    )[DefaultSchemaTableNameOrOptions] extends {
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R;
-    } ? R
+    }
+    ? R
     : never
-  : never;
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
+      }
+      ? R
+      : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
-  } ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]][
-      "Tables"
-    ]
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
-} ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]][
-    "Tables"
-  ][TableName] extends {
-    Insert: infer I;
-  } ? I
-  : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I;
-    } ? I
+    }
+    ? I
     : never
-  : never;
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I;
+      }
+      ? I
+      : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
-  } ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]][
-      "Tables"
-    ]
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
-} ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]][
-    "Tables"
-  ][TableName] extends {
-    Update: infer U;
-  } ? U
-  : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U;
-    } ? U
+    }
+    ? U
     : never
-  : never;
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U;
+      }
+      ? U
+      : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
+    | keyof DefaultSchema['Enums']
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
-  } ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]][
-      "Enums"
-    ]
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
-} ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][
-    EnumName
-  ]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
+    | keyof DefaultSchema['CompositeTypes']
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
-  } ? keyof DatabaseWithoutInternals[
-      PublicCompositeTypeNameOrOptions["schema"]
-    ]["CompositeTypes"]
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals;
-} ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]][
-    "CompositeTypes"
-  ][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends
-    keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never;
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+    : never;
 
 export const Constants = {
   public: {
     Enums: {
-      bloom_level: ["knowledge", "application", "analysis"],
+      bloom_level: ['knowledge', 'application', 'analysis'],
       chunk_generation_status: [
-        "DRAFT",
-        "PENDING",
-        "PROCESSING",
-        "COMPLETED",
-        "FAILED",
-        "SYNCED",
+        'DRAFT',
+        'PENDING',
+        'PROCESSING',
+        'COMPLETED',
+        'FAILED',
+        'SYNCED',
       ],
-      question_status: ["active", "archived", "pending_followup"],
-      question_usage_type: ["antrenman", "arsiv", "deneme"],
-      quiz_response_type: ["correct", "incorrect", "blank"],
-      validation_status: ["PENDING", "APPROVED", "REJECTED"],
+      question_status: ['active', 'archived', 'pending_followup'],
+      question_usage_type: ['antrenman', 'arsiv', 'deneme'],
+      quiz_response_type: ['correct', 'incorrect', 'blank'],
+      validation_status: ['PENDING', 'APPROVED', 'REJECTED'],
     },
   },
 } as const;

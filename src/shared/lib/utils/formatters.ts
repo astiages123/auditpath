@@ -10,11 +10,11 @@
  * @example formatTimeFromSeconds(120) → "2dk"
  */
 export function formatTimeFromSeconds(seconds: number): string {
-    const totalMinutes = Math.round(seconds / 60);
-    const h = Math.floor(totalMinutes / 60);
-    const m = totalMinutes % 60;
-    if (h > 0) return `${h}sa ${m}dk`;
-    return `${m}dk`;
+  const totalMinutes = Math.round(seconds / 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h > 0) return `${h}sa ${m}dk`;
+  return `${m}dk`;
 }
 
 /**
@@ -23,9 +23,9 @@ export function formatTimeFromSeconds(seconds: number): string {
  * @example formatDurationFromHours(0.5) → "0 sa 30 dk"
  */
 export function formatDurationFromHours(decimalHours: number): string {
-    const hours = Math.floor(decimalHours);
-    const minutes = Math.round((decimalHours - hours) * 60);
-    return `${hours} sa ${minutes} dk`;
+  const hours = Math.floor(decimalHours);
+  const minutes = Math.round((decimalHours - hours) * 60);
+  return `${hours} sa ${minutes} dk`;
 }
 
 /**
@@ -33,8 +33,8 @@ export function formatDurationFromHours(decimalHours: number): string {
  * @example formatDurationShort(1.5) → "1s 30d"
  */
 export function formatDurationShort(decimalHours: number): string {
-    const totalMinutes = Math.round(decimalHours * 60);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    return `${hours}s ${minutes}d`;
+  const totalMinutes = Math.round(decimalHours * 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}s ${minutes}d`;
 }

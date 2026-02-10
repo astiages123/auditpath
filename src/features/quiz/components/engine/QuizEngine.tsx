@@ -8,8 +8,14 @@
  */
 
 import { useCallback, useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { RotateCcw, ArrowRight, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  RotateCcw,
+  ArrowRight,
+  Loader2,
+  TrendingUp,
+  PartyPopper,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuiz } from '../../hooks/use-quiz';
 import { QuizCard } from '../ui/QuizCard';
@@ -91,6 +97,32 @@ export function QuizEngine({
 
   // Track incorrect questions for follow-up generation
   const incorrectIdsRef = useRef<string[]>([]);
+  const previousMasteryRef = useRef<number | null>(null);
+
+  // Update previousMastery baseline when question changes or global stats update
+  useEffect(() => {
+    if (!state.isAnswered && sessionState.courseStats) {
+      previousMasteryRef.current = sessionState.courseStats.averageMastery;
+    }
+  }, [state.isAnswered, sessionState.courseStats?.averageMastery]);
+
+  // Initial mastery baseline fallback
+  useEffect(() => {
+    if (
+      chunkId &&
+      user?.id &&
+      previousMasteryRef.current === null &&
+      !sessionState.courseStats
+    ) {
+      Repository.getChunkMastery(user.id, chunkId).then((data) => {
+        if (data) {
+          previousMasteryRef.current = data.mastery_score;
+        } else {
+          previousMasteryRef.current = 0;
+        }
+      });
+    }
+  }, [chunkId, user?.id, sessionState.courseStats]);
 
   // Connect recordResponse to the hook/service via useEffect
   // For now, let's keep it manual in handleSelectAnswer and handleBlank if service doesn't have it.
@@ -475,36 +507,119 @@ export function QuizEngine({
           </div>
         )}
 
-      {/* Action Buttons - shown after answering */}
+      {/* Action Buttons & Feedback - shown after answering */}
       {state.isAnswered && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-2xl mx-auto flex flex-col sm:flex-row gap-3"
-        >
-          <button
-            onClick={handleNext}
-            disabled={isSubmitting}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-primary-foreground rounded-xl font-medium transition-colors ${
-              isSubmitting
-                ? 'bg-primary/70 cursor-not-allowed'
-                : 'bg-primary hover:bg-primary/90'
-            }`}
-          >
-            {isSubmitting ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <ArrowRight className="w-5 h-5" />
+        <div className="w-full max-w-2xl mx-auto space-y-4">
+          <AnimatePresence>
+            {state.lastSubmissionResult && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                className="bg-card/50 backdrop-blur-sm border border-primary/20 rounded-2xl p-5 shadow-xl relative overflow-hidden group"
+              >
+                {/* Background Accent */}
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 blur-3xl transition-all group-hover:bg-primary/10" />
+
+                <div className="flex flex-col sm:flex-row items-center gap-4 relative z-10">
+                  <div className="p-3 bg-primary/10 rounded-xl ring-1 ring-primary/30">
+                    <TrendingUp className="w-6 h-6 text-primary" />
+                  </div>
+
+                  <div className="flex-1 text-center sm:text-left">
+                    <div className="flex flex-wrap justify-center sm:justify-start items-center gap-x-3 gap-y-1">
+                      <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                        İlerleme Güncellendi
+                      </h4>
+                      {state.lastSubmissionResult.scoreDelta > 0 && (
+                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 text-xs font-bold rounded-full border border-emerald-500/20">
+                          +{state.lastSubmissionResult.scoreDelta} Puan
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="mt-1 flex items-baseline gap-2 justify-center sm:justify-start">
+                      <p className="text-xl font-bold text-white">
+                        Uzmanlık Artışı:
+                      </p>
+                      <span className="text-2xl font-black text-primary">
+                        +%
+                        {state.lastSubmissionResult.newMastery -
+                          (previousMasteryRef.current ??
+                            state.lastSubmissionResult.newMastery)}
+                      </span>
+                    </div>
+
+                    {state.lastSubmissionResult.isTopicRefreshed && (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 }}
+                        className="mt-2 flex items-center gap-2 text-emerald-400 font-medium"
+                      >
+                        <PartyPopper className="w-4 h-4" />
+                        <span className="text-sm">
+                          Tebrikler! Bu konuyu pekiştirdin.
+                        </span>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col items-center sm:items-end">
+                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-tighter mb-1">
+                      Yeni Seviye
+                    </span>
+                    <div className="text-3xl font-black text-white bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+                      %{state.lastSubmissionResult.newMastery}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Micro Progress Bar */}
+                <div className="absolute bottom-0 left-0 h-1 bg-primary/30 w-full">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{
+                      width: `${state.lastSubmissionResult.newMastery}%`,
+                    }}
+                    transition={{ duration: 1, ease: 'easeOut' }}
+                    className="h-full bg-primary"
+                  />
+                </div>
+              </motion.div>
             )}
-            {isSubmitting
-              ? 'İşleniyor...'
-              : state.queue.length > 0
-                ? `Sıradaki Soru (${state.queue.length})`
-                : sessionState.currentBatchIndex < sessionState.totalBatches - 1
-                  ? 'Sonraki Set' // Specific text for batch transition
-                  : 'Testi Bitir'}
-          </button>
-        </motion.div>
+          </AnimatePresence>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col sm:flex-row gap-3"
+          >
+            <button
+              onClick={handleNext}
+              disabled={isSubmitting}
+              className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-primary-foreground rounded-xl font-semibold text-lg transition-all shadow-lg hover:shadow-primary/25 ${
+                isSubmitting
+                  ? 'bg-primary/70 cursor-not-allowed'
+                  : 'bg-primary hover:bg-primary/90 active:scale-[0.98]'
+              }`}
+            >
+              {isSubmitting ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <ArrowRight className="w-5 h-5" />
+              )}
+              {isSubmitting
+                ? 'İşleniyor...'
+                : state.queue.length > 0
+                  ? `Sıradaki Soru (${state.queue.length})`
+                  : sessionState.currentBatchIndex <
+                      sessionState.totalBatches - 1
+                    ? 'Sonraki Set'
+                    : 'Testi Bitir'}
+            </button>
+          </motion.div>
+        </div>
       )}
     </div>
   );

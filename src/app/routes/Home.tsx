@@ -1,9 +1,12 @@
-
-import { useEffect, useState } from "react";
-import { useAuth } from "@/features/auth";
-import { ProgressHeader, CategoryGrid } from "@/features/courses";
-import { getCategories, getUserStats, getAllCourses } from "@/shared/lib/core/client-db";
-import { type Category } from "@/shared/types/courses";
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/features/auth';
+import { ProgressHeader, CategoryGrid } from '@/features/courses';
+import {
+  getCategories,
+  getUserStats,
+  getAllCourses,
+} from '@/shared/lib/core/client-db';
+import { type Category } from '@/shared/types/courses';
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
@@ -16,12 +19,12 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = "AuditPath";
+    document.title = 'AuditPath';
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute(
-        "content",
-        "Müfettişlik yolculuğuna başla. AuditPath ile ilerlemeni takip et."
+        'content',
+        'Müfettişlik yolculuğuna başla. AuditPath ile ilerlemeni takip et.'
       );
     }
 
@@ -31,28 +34,35 @@ export default function HomePage() {
         // Load categories and all courses
         const [cats, allCourses] = await Promise.all([
           getCategories(),
-          getAllCourses()
+          getAllCourses(),
         ]);
 
         // Check for uncategorized courses
         const categorizedCourseIds = new Set<string>();
-        cats.forEach(c => c.courses.forEach(course => categorizedCourseIds.add(course.id)));
+        cats.forEach((c) =>
+          c.courses.forEach((course) => categorizedCourseIds.add(course.id))
+        );
 
-        const uncategorized = allCourses.filter(c => !categorizedCourseIds.has(c.id));
+        const uncategorized = allCourses.filter(
+          (c) => !categorizedCourseIds.has(c.id)
+        );
 
         if (uncategorized.length > 0) {
-            const otherCategory: Category = {
-                id: "uncategorized",
-                name: "Diğer Dersler",
-                slug: "diger-dersler",
-                courses: uncategorized,
-                total_hours: uncategorized.reduce((acc, c) => acc + (c.total_hours || 0), 0),
-                sort_order: 999,
-                created_at: new Date().toISOString()
-            };
-            setCategories([...cats, otherCategory]);
+          const otherCategory: Category = {
+            id: 'uncategorized',
+            name: 'Diğer Dersler',
+            slug: 'diger-dersler',
+            courses: uncategorized,
+            total_hours: uncategorized.reduce(
+              (acc, c) => acc + (c.total_hours || 0),
+              0
+            ),
+            sort_order: 999,
+            created_at: new Date().toISOString(),
+          };
+          setCategories([...cats, otherCategory]);
         } else {
-            setCategories(cats);  
+          setCategories(cats);
         }
 
         // Load stats if user is logged in
@@ -63,8 +73,8 @@ export default function HomePage() {
           }
         }
       } catch (e) {
-        console.error("Failed to load data", e);
-        setError("Veritabanı bağlantısı kurulamadı.");
+        console.error('Failed to load data', e);
+        setError('Veritabanı bağlantısı kurulamadı.');
       } finally {
         setLoading(false);
       }
@@ -78,26 +88,31 @@ export default function HomePage() {
   // Default stats for non-logged-in users or loading state
   const defaultStats = {
     currentRank: {
-      id: "1",
-      name: "Sürgün",
-      color: "text-slate-400",
+      id: '1',
+      name: 'Sürgün',
+      color: 'text-slate-400',
       minPercentage: 0,
     },
     nextRank: {
-      id: "2",
-      name: "Yazıcı",
-      color: "text-amber-700",
+      id: '2',
+      name: 'Yazıcı',
+      color: 'text-amber-700',
       minPercentage: 25,
     },
     rankProgress: 0,
     completedVideos: 0,
     totalVideos: categories.reduce(
-      (sum: number, cat: Category) => sum + cat.courses.reduce((s: number, c) => s + (c.total_videos || 0), 0),
+      (sum: number, cat: Category) =>
+        sum +
+        cat.courses.reduce((s: number, c) => s + (c.total_videos || 0), 0),
       0
     ),
     completedHours: 0,
     totalHours: Math.round(
-      categories.reduce((sum: number, cat: Category) => sum + (cat.total_hours || 0), 0)
+      categories.reduce(
+        (sum: number, cat: Category) => sum + (cat.total_hours || 0),
+        0
+      )
     ),
     progressPercentage: 0,
     estimatedDays: 0,
@@ -107,7 +122,7 @@ export default function HomePage() {
   const currentStats = stats || defaultStats;
 
   if (loading && categories.length === 0) {
-    // Show Loading but also allow access to Quiz for testing if needed? 
+    // Show Loading but also allow access to Quiz for testing if needed?
     // Usually loading blocks everything.
     // Let's assume loading completes fast because our mocks are instant.
     return (

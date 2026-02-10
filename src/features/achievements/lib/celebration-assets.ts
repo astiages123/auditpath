@@ -1,15 +1,14 @@
-import { GraduationCap, LucideIcon, Medal, Star, Trophy } from "lucide-react";
+import { GraduationCap, LucideIcon, Medal, Star, Trophy } from 'lucide-react';
 import {
   ACHIEVEMENTS,
   getRequirementDescription,
-} from "@/features/achievements/lib/achievements";
+} from '@/features/achievements/lib/achievements';
 import {
   getRankIcon,
   type Rank,
   RANKS,
-} from "@/features/achievements/lib/rank-icons";
-import { getCourseIcon } from "@/features/courses/lib/course-icons";
-import coursesData from "@/features/courses/data/courses.json";
+} from '@/features/achievements/lib/rank-icons';
+import { coursesData, getCourseIcon } from '@/features/courses';
 
 export interface CelebrationAsset {
   title: string;
@@ -17,7 +16,7 @@ export interface CelebrationAsset {
   subtitle?: string;
   icon: LucideIcon;
   imageUrl?: string;
-  variant: "course" | "rank" | "achievement";
+  variant: 'course' | 'rank' | 'achievement';
   metadata?: Record<string, unknown>;
 }
 
@@ -28,39 +27,39 @@ interface CategoryData {
 
 export function getCelebrationAsset(id: string): CelebrationAsset {
   // 1. Rank Achievements
-  if (id.startsWith("RANK_UP:")) {
-    const rankId = id.split(":")[1];
+  if (id.startsWith('RANK_UP:')) {
+    const rankId = id.split(':')[1];
     const rank = RANKS.find((r: Rank) => r.id === rankId || r.name === rankId);
     if (!rank) {
       return {
-        variant: "rank",
-        title: "YENİ UNVAN",
+        variant: 'rank',
+        title: 'YENİ UNVAN',
         description: rankId,
-        subtitle: "Seviye atladın!",
+        subtitle: 'Seviye atladın!',
         icon: getRankIcon(rankId),
       };
     }
 
     return {
-      variant: "rank",
-      title: "YENİ UNVAN",
+      variant: 'rank',
+      title: 'YENİ UNVAN',
       description: rank?.name || rankId,
-      subtitle: rank?.motto || "Seviye atladın!",
+      subtitle: rank?.motto || 'Seviye atladın!',
       icon: getRankIcon(rank?.name),
       imageUrl: rank?.imagePath,
     };
   }
 
   // 2. Course Completions
-  if (id.startsWith("COURSE_COMPLETION:")) {
-    const courseId = id.split(":")[1];
+  if (id.startsWith('COURSE_COMPLETION:')) {
+    const courseId = id.split(':')[1];
     let courseName = courseId;
     let CourseIcon = GraduationCap;
 
     // Find course name from JSON
     for (const cat of coursesData as CategoryData[]) {
-      const c = cat.courses.find((c: { id: string; name: string }) =>
-        c.id === courseId
+      const c = cat.courses.find(
+        (c: { id: string; name: string }) => c.id === courseId
       );
       if (c) {
         courseName = c.name || courseName;
@@ -70,23 +69,23 @@ export function getCelebrationAsset(id: string): CelebrationAsset {
     }
 
     return {
-      variant: "course",
-      title: "DERS TAMAMLANDI",
+      variant: 'course',
+      title: 'DERS TAMAMLANDI',
       description: courseName,
-      subtitle: "Bu alandaki kadim bilgileri özümsedin.",
+      subtitle: 'Bu alandaki kadim bilgileri özümsedin.',
       icon: CourseIcon,
       metadata: { courseId },
     };
   }
 
   // 3. Category/Group Completions
-  if (id.startsWith("CATEGORY_COMPLETION:")) {
-    const catId = id.split(":")[1];
+  if (id.startsWith('CATEGORY_COMPLETION:')) {
+    const catId = id.split(':')[1];
     return {
-      variant: "achievement", // Distinct background using achievement styling which is purple/gold
-      title: "GRUP TAMAMLANDI",
+      variant: 'achievement', // Distinct background using achievement styling which is purple/gold
+      title: 'GRUP TAMAMLANDI',
       description: `${catId} TAMAMLANDI`,
-      subtitle: "Bu daldaki tüm dersleri başarıyla bitirdin.",
+      subtitle: 'Bu daldaki tüm dersleri başarıyla bitirdin.',
       icon: Trophy,
     };
   }
@@ -95,7 +94,7 @@ export function getCelebrationAsset(id: string): CelebrationAsset {
   const achievement = ACHIEVEMENTS.find((a) => a.id === id);
   if (achievement) {
     return {
-      variant: "achievement",
+      variant: 'achievement',
       title: achievement.title,
       description: getRequirementDescription(achievement.requirement),
       subtitle: achievement.motto,
@@ -107,10 +106,10 @@ export function getCelebrationAsset(id: string): CelebrationAsset {
 
   // Fallback for unknown IDs
   return {
-    variant: "achievement",
-    title: "BAŞARIM AÇILDI",
-    description: "Bilinmeyen Başarım",
-    subtitle: "Yeni bir başarıma imza attın.",
+    variant: 'achievement',
+    title: 'BAŞARIM AÇILDI',
+    description: 'Bilinmeyen Başarım',
+    subtitle: 'Yeni bir başarıma imza attın.',
     icon: Star,
   };
 }

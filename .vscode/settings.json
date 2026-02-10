@@ -1,15 +1,13 @@
 {
-    "css.lint.unknownAtRules": "ignore",
-    "scss.lint.unknownAtRules": "ignore",
-    "deno.enable": true,
-    "deno.enablePaths": [
-        "supabase/functions"
-    ],
-    "deno.lint": true,
-    "deno.suggest.imports.hosts": {
-        "https://deno.land": true
-    },
-    "[typescript]": {
-        "editor.defaultFormatter": "denoland.vscode-deno"
-    }
+  "css.lint.unknownAtRules": "ignore",
+  "scss.lint.unknownAtRules": "ignore",
+  "deno.enable": true,
+  "deno.enablePaths": ["supabase/functions"],
+  "deno.lint": true,
+  "deno.suggest.imports.hosts": {
+    "https://deno.land": true
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  }
 }

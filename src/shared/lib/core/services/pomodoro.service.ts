@@ -1,12 +1,12 @@
-import { supabase } from "@/shared/lib/core/supabase";
-import type { Database, Json } from "@/shared/types/supabase";
+import { supabase } from '@/shared/lib/core/supabase';
+import type { Database, Json } from '@/shared/types/supabase';
 import {
-    calculateFocusPower,
-    calculatePauseCount,
-    calculateSessionTotals,
-    getCycleCount,
-} from "@/features/pomodoro/lib/pomodoro-utils";
-import type { RecentSession, TimelineBlock } from "@/shared/types/efficiency";
+  calculateFocusPower,
+  calculatePauseCount,
+  calculateSessionTotals,
+  getCycleCount,
+} from '@/shared/lib/core/utils/efficiency-math';
+import type { RecentSession, TimelineBlock } from '@/shared/types/efficiency';
 
 /**
  * Create or update a pomodoro session.
@@ -16,72 +16,72 @@ import type { RecentSession, TimelineBlock } from "@/shared/types/efficiency";
  * @returns Created/updated session data and error if any
  */
 export async function upsertPomodoroSession(
-    session: {
-        id: string;
-        courseId: string;
-        courseName?: string | null;
-        timeline: Json[];
-        startedAt: string | number | Date;
-        isCompleted?: boolean;
-    },
-    userId: string,
+  session: {
+    id: string;
+    courseId: string;
+    courseName?: string | null;
+    timeline: Json[];
+    startedAt: string | number | Date;
+    isCompleted?: boolean;
+  },
+  userId: string
 ) {
-    const totals = calculateSessionTotals(session.timeline);
-    const pauseCount = calculatePauseCount(session.timeline);
+  const totals = calculateSessionTotals(session.timeline);
+  const pauseCount = calculatePauseCount(session.timeline);
 
-    // Calculate Focus Power (Odak Gücü)
-    // Formula: (Work / [Break + Pause]) * 20
-    const efficiencyScore = calculateFocusPower(
-        totals.totalWork,
-        totals.totalBreak,
-        totals.totalPause,
-    );
+  // Calculate Focus Power (Odak Gücü)
+  // Formula: (Work / [Break + Pause]) * 20
+  const efficiencyScore = calculateFocusPower(
+    totals.totalWork,
+    totals.totalBreak,
+    totals.totalPause
+  );
 
-    // Validate if courseId is a UUID
-    const uuidRegex =
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    let finalCourseId: string | null = session.courseId;
-    let finalCourseName = session.courseName;
+  // Validate if courseId is a UUID
+  const uuidRegex =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  let finalCourseId: string | null = session.courseId;
+  let finalCourseName = session.courseName;
 
-    if (!uuidRegex.test(session.courseId)) {
-        // If not a UUID, it's likely a slug. Try to resolve it.
-        const { data: course } = await supabase
-            .from("courses")
-            .select("id, name")
-            .eq("course_slug", session.courseId)
-            .maybeSingle();
+  if (!uuidRegex.test(session.courseId)) {
+    // If not a UUID, it's likely a slug. Try to resolve it.
+    const { data: course } = await supabase
+      .from('courses')
+      .select('id, name')
+      .eq('course_slug', session.courseId)
+      .maybeSingle();
 
-        if (course) {
-            finalCourseId = course.id;
-            if (!finalCourseName) finalCourseName = course.name;
-        } else {
-            // If we can't find it, set to null to avoid Postgres 400 error
-            finalCourseId = null;
-        }
+    if (course) {
+      finalCourseId = course.id;
+      if (!finalCourseName) finalCourseName = course.name;
+    } else {
+      // If we can't find it, set to null to avoid Postgres 400 error
+      finalCourseId = null;
     }
+  }
 
-    const { data, error } = await supabase
-        .from("pomodoro_sessions")
-        .upsert({
-            id: session.id,
-            user_id: userId,
-            course_id: finalCourseId,
-            course_name: finalCourseName,
-            timeline: session.timeline,
-            started_at: new Date(session.startedAt).toISOString(),
-            ended_at: new Date().toISOString(),
-            total_work_time: totals.totalWork,
-            total_break_time: totals.totalBreak,
-            total_pause_time: totals.totalPause,
-            pause_count: pauseCount,
-            efficiency_score: efficiencyScore,
-            last_active_at: new Date().toISOString(),
-            is_completed: session.isCompleted || false,
-        })
-        .select()
-        .single();
+  const { data, error } = await supabase
+    .from('pomodoro_sessions')
+    .upsert({
+      id: session.id,
+      user_id: userId,
+      course_id: finalCourseId,
+      course_name: finalCourseName,
+      timeline: session.timeline,
+      started_at: new Date(session.startedAt).toISOString(),
+      ended_at: new Date().toISOString(),
+      total_work_time: totals.totalWork,
+      total_break_time: totals.totalBreak,
+      total_pause_time: totals.totalPause,
+      pause_count: pauseCount,
+      efficiency_score: efficiencyScore,
+      last_active_at: new Date().toISOString(),
+      is_completed: session.isCompleted || false,
+    })
+    .select()
+    .single();
 
-    return { data, error: error?.message };
+  return { data, error: error?.message };
 }
 
 /**
@@ -91,16 +91,16 @@ export async function upsertPomodoroSession(
  * @returns Latest active session or null
  */
 export async function getLatestActiveSession(userId: string) {
-    const { data } = await supabase
-        .from("pomodoro_sessions")
-        .select("*, course:courses(*, category:categories(*))")
-        .eq("user_id", userId)
-        .order("started_at", { ascending: false })
-        .neq("is_completed", true)
-        .limit(1)
-        .maybeSingle();
+  const { data } = await supabase
+    .from('pomodoro_sessions')
+    .select('*, course:courses(*, category:categories(*))')
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+    .neq('is_completed', true)
+    .limit(1)
+    .maybeSingle();
 
-    return data;
+  return data;
 }
 
 /**
@@ -109,12 +109,12 @@ export async function getLatestActiveSession(userId: string) {
  * @param sessionId Session ID to delete
  */
 export async function deletePomodoroSession(sessionId: string) {
-    const { error } = await supabase
-        .from("pomodoro_sessions")
-        .delete()
-        .eq("id", sessionId);
+  const { error } = await supabase
+    .from('pomodoro_sessions')
+    .delete()
+    .eq('id', sessionId);
 
-    if (error) console.error("Error deleting session:", error);
+  if (error) console.error('Error deleting session:', error);
 }
 
 /**
@@ -125,28 +125,28 @@ export async function deletePomodoroSession(sessionId: string) {
  * @param stats Optional efficiency and pause time stats
  */
 export async function updatePomodoroHeartbeat(
-    sessionId: string,
-    stats?: {
-        efficiency_score?: number;
-        total_paused_time?: number;
-    },
+  sessionId: string,
+  stats?: {
+    efficiency_score?: number;
+    total_paused_time?: number;
+  }
 ): Promise<void> {
-    const { error } = await supabase
-        .from("pomodoro_sessions")
-        .update({
-            last_active_at: new Date().toISOString(),
-            ...(stats?.efficiency_score !== undefined
-                ? { efficiency_score: stats.efficiency_score }
-                : {}),
-            ...(stats?.total_paused_time !== undefined
-                ? { total_pause_time: stats.total_paused_time }
-                : {}),
-        })
-        .eq("id", sessionId);
+  const { error } = await supabase
+    .from('pomodoro_sessions')
+    .update({
+      last_active_at: new Date().toISOString(),
+      ...(stats?.efficiency_score !== undefined
+        ? { efficiency_score: stats.efficiency_score }
+        : {}),
+      ...(stats?.total_paused_time !== undefined
+        ? { total_pause_time: stats.total_paused_time }
+        : {}),
+    })
+    .eq('id', sessionId);
 
-    if (error) {
-        // Heartbeat failed
-    }
+  if (error) {
+    // Heartbeat failed
+  }
 }
 
 /**
@@ -157,31 +157,31 @@ export async function updatePomodoroHeartbeat(
  * @returns Number of cycles completed today
  */
 export async function getDailySessionCount(userId: string) {
-    const now = new Date();
-    const today = new Date(now);
+  const now = new Date();
+  const today = new Date(now);
 
-    // Virtual Day Logic: Day starts at 04:00 AM
-    if (now.getHours() < 4) {
-        today.setDate(today.getDate() - 1);
-    }
-    today.setHours(4, 0, 0, 0);
+  // Virtual Day Logic: Day starts at 04:00 AM
+  if (now.getHours() < 4) {
+    today.setDate(today.getDate() - 1);
+  }
+  today.setHours(4, 0, 0, 0);
 
-    const { data, error } = await supabase
-        .from("pomodoro_sessions")
-        .select("timeline")
-        .eq("user_id", userId)
-        .gte("started_at", today.toISOString());
+  const { data, error } = await supabase
+    .from('pomodoro_sessions')
+    .select('timeline')
+    .eq('user_id', userId)
+    .gte('started_at', today.toISOString());
 
-    if (error) {
-        return 0;
-    }
+  if (error) {
+    return 0;
+  }
 
-    // Count work cycles in all sessions today
-    const totalCycles = (data || []).reduce(
-        (acc, s) => acc + getCycleCount(s.timeline),
-        0,
-    );
-    return totalCycles;
+  // Count work cycles in all sessions today
+  const totalCycles = (data || []).reduce(
+    (acc, s) => acc + getCycleCount(s.timeline),
+    0
+  );
+  return totalCycles;
 }
 
 /**
@@ -192,105 +192,100 @@ export async function getDailySessionCount(userId: string) {
  * @returns Array of timeline blocks
  */
 export async function getRecentSessions(
-    userId: string,
-    limit: number = 20,
+  userId: string,
+  limit: number = 20
 ): Promise<TimelineBlock[]> {
-    const { data, error } = await supabase
-        .from("pomodoro_sessions")
-        .select(
-            "id, course_name, started_at, ended_at, total_work_time, total_break_time, total_pause_time, timeline",
-        )
-        .eq("user_id", userId)
-        .or("total_work_time.gte.60,total_break_time.gte.60") // Molaları da getir
-        .order("started_at", { ascending: false })
-        .limit(limit);
+  const { data, error } = await supabase
+    .from('pomodoro_sessions')
+    .select(
+      'id, course_name, started_at, ended_at, total_work_time, total_break_time, total_pause_time, timeline'
+    )
+    .eq('user_id', userId)
+    .or('total_work_time.gte.60,total_break_time.gte.60') // Molaları da getir
+    .order('started_at', { ascending: false })
+    .limit(limit);
 
-    if (error || !data) {
-        console.error("Error fetching recent sessions:", error);
-        return [];
+  if (error || !data) {
+    console.error('Error fetching recent sessions:', error);
+    return [];
+  }
+
+  return (
+    data as Database['public']['Tables']['pomodoro_sessions']['Row'][]
+  ).map((s) => {
+    // Trust DB columns as the primary source of truth for finished sessions to match getDailyStats
+    const workTime = s.total_work_time || 0;
+    const breakTime = s.total_break_time || 0;
+    const pauseTime = s.total_pause_time || 0;
+
+    // Define a local interface or usage based type for timeline events
+    // to avoid 'any' usage.
+    interface TimelineEvent {
+      start?: number;
+      end?: number;
+      [key: string]: Json | undefined;
     }
 
-    return (data as Database["public"]["Tables"]["pomodoro_sessions"]["Row"][])
-        .map((s) => {
-            // Trust DB columns as the primary source of truth for finished sessions to match getDailyStats
-            const workTime = s.total_work_time || 0;
-            const breakTime = s.total_break_time || 0;
-            const pauseTime = s.total_pause_time || 0;
+    let timeline: TimelineEvent[] = [];
+    if (Array.isArray(s.timeline)) {
+      timeline = s.timeline as unknown as TimelineEvent[];
+    } else if (typeof s.timeline === 'string') {
+      try {
+        timeline = JSON.parse(s.timeline);
+      } catch (e) {
+        console.error('Failed to parse timeline string:', e);
+      }
+    }
 
-            // Define a local interface or usage based type for timeline events
-            // to avoid 'any' usage.
-            interface TimelineEvent {
-                start?: number;
-                end?: number;
-                [key: string]: Json | undefined;
-            }
+    // Calculate true start/end from timeline if possible to avoid scaling issues in Gantt Chart
+    // especially when session was paused and resumed (which updates started_at)
+    let startTime = s.started_at;
+    let endTime = s.ended_at;
 
-            let timeline: TimelineEvent[] = [];
-            if (Array.isArray(s.timeline)) {
-                timeline = s.timeline as unknown as TimelineEvent[];
-            } else if (typeof s.timeline === "string") {
-                try {
-                    timeline = JSON.parse(s.timeline);
-                } catch (e) {
-                    console.error("Failed to parse timeline string:", e);
-                }
-            }
+    if (timeline.length > 0) {
+      const tStart = Math.min(
+        ...timeline
+          .filter(
+            (e): e is TimelineEvent & { start: number } =>
+              typeof e?.start === 'number'
+          )
+          .map((e) => e.start)
+      );
+      const tEnd = Math.max(
+        ...timeline
+          .filter(
+            (e): e is TimelineEvent & ({ start: number } | { end: number }) =>
+              e !== null &&
+              (typeof e.end === 'number' || typeof e.start === 'number')
+          )
+          .map((e) => (e.end ?? e.start) as number)
+      );
 
-            // Calculate true start/end from timeline if possible to avoid scaling issues in Gantt Chart
-            // especially when session was paused and resumed (which updates started_at)
-            let startTime = s.started_at;
-            let endTime = s.ended_at;
+      if (tStart < Infinity) {
+        startTime = new Date(
+          Math.min(new Date(s.started_at).getTime(), tStart)
+        ).toISOString();
+      }
+      if (tEnd > -Infinity) {
+        endTime = new Date(
+          Math.max(new Date(s.ended_at).getTime(), tEnd)
+        ).toISOString();
+      }
+    }
 
-            if (timeline.length > 0) {
-                const tStart = Math.min(
-                    ...timeline
-                        .filter(
-                            (e): e is TimelineEvent & { start: number } =>
-                                typeof e?.start === "number",
-                        )
-                        .map((e) => e.start),
-                );
-                const tEnd = Math.max(
-                    ...timeline
-                        .filter(
-                            (
-                                e,
-                            ): e is
-                                & TimelineEvent
-                                & ({ start: number } | { end: number }) =>
-                                e !== null &&
-                                (typeof e.end === "number" ||
-                                    typeof e.start === "number"),
-                        )
-                        .map((e) => (e.end ?? e.start) as number),
-                );
-
-                if (tStart < Infinity) {
-                    startTime = new Date(
-                        Math.min(new Date(s.started_at).getTime(), tStart),
-                    ).toISOString();
-                }
-                if (tEnd > -Infinity) {
-                    endTime = new Date(
-                        Math.max(new Date(s.ended_at).getTime(), tEnd),
-                    )
-                        .toISOString();
-                }
-            }
-
-            return {
-                id: s.id,
-                courseName: s.course_name || "Bilinmeyen Ders",
-                startTime,
-                endTime,
-                durationSeconds: workTime,
-                totalDurationSeconds: workTime + breakTime + pauseTime,
-                pauseSeconds: pauseTime,
-                breakSeconds: breakTime,
-                type: (breakTime > workTime) ? "break" : "work",
-                timeline: timeline,
-            };
-        });
+    return {
+      id: s.id,
+      courseName: s.course_name || 'Bilinmeyen Ders',
+      startTime,
+      endTime,
+      durationSeconds: workTime,
+      totalDurationSeconds: workTime + breakTime + pauseTime,
+      pauseSeconds: pauseTime,
+      breakSeconds: breakTime,
+      type: breakTime > workTime ? 'break' : 'work',
+      timeline: timeline,
+    };
+  });
 }
 
 /**
@@ -301,33 +296,33 @@ export async function getRecentSessions(
  * @returns Array of recent sessions
  */
 export async function getRecentActivitySessions(
-    userId: string,
-    limit: number = 5,
+  userId: string,
+  limit: number = 5
 ): Promise<RecentSession[]> {
-    const { data, error } = await supabase
-        .from("pomodoro_sessions")
-        .select(
-            "id, course_name, started_at, total_work_time, total_break_time, total_pause_time, pause_count, efficiency_score, timeline",
-        )
-        .eq("user_id", userId)
-        .order("started_at", { ascending: false })
-        .limit(limit);
+  const { data, error } = await supabase
+    .from('pomodoro_sessions')
+    .select(
+      'id, course_name, started_at, total_work_time, total_break_time, total_pause_time, pause_count, efficiency_score, timeline'
+    )
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+    .limit(limit);
 
-    if (error) {
-        console.error("Error fetching recent sessions:", error);
-        return [];
-    }
+  if (error) {
+    console.error('Error fetching recent sessions:', error);
+    return [];
+  }
 
-    return (data || []).map((s) => ({
-        id: s.id,
-        courseName: s.course_name || "Bilinmeyen Ders",
-        date: s.started_at,
-        durationMinutes: Math.round((s.total_work_time || 0) / 60),
-        efficiencyScore: s.efficiency_score || 0,
-        timeline: Array.isArray(s.timeline) ? (s.timeline as Json[]) : [],
-        totalWorkTime: s.total_work_time || 0,
-        totalBreakTime: s.total_break_time || 0,
-        totalPauseTime: s.total_pause_time || 0,
-        pauseCount: s.pause_count || 0,
-    }));
+  return (data || []).map((s) => ({
+    id: s.id,
+    courseName: s.course_name || 'Bilinmeyen Ders',
+    date: s.started_at,
+    durationMinutes: Math.round((s.total_work_time || 0) / 60),
+    efficiencyScore: s.efficiency_score || 0,
+    timeline: Array.isArray(s.timeline) ? (s.timeline as Json[]) : [],
+    totalWorkTime: s.total_work_time || 0,
+    totalBreakTime: s.total_break_time || 0,
+    totalPauseTime: s.total_pause_time || 0,
+    pauseCount: s.pause_count || 0,
+  }));
 }

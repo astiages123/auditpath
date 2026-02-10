@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Clock,
@@ -8,14 +8,14 @@ import {
   CalendarDays,
   Target,
   ChevronRight,
-} from "lucide-react";
-import { useProgress } from "@/shared/hooks/use-progress";
-import { useState, useMemo, useSyncExternalStore } from "react";
-import { RANKS, type Rank } from "@/shared/lib/core/client-db";
-import { JourneyModal } from "../modals/JourneyModal";
-import { motion } from "framer-motion";
-import { cn } from "@/shared/lib/core/utils";
-import { formatDurationShort } from "@/shared/lib/utils/formatters";
+} from 'lucide-react';
+import { useProgress } from '@/shared/hooks/use-progress';
+import { useState, useMemo, useSyncExternalStore } from 'react';
+import { RANKS, type Rank } from '@/shared/lib/core/client-db';
+import { JourneyModal } from '../modals/JourneyModal';
+import { motion } from 'framer-motion';
+import { cn } from '@/shared/lib/core/utils';
+import { formatDurationShort } from '@/shared/lib/utils/formatters';
 
 // Local helper for legacy props, but prefer importing shared type
 interface RankInfo extends Rank {
@@ -45,9 +45,8 @@ export function ProgressHeader({
   progressPercentage: initialProgressPercentage,
   estimatedDays: initialEstimatedDays,
 }: ProgressHeaderProps) {
-  const { stats: ctxStats, streak: contextStreak } = useProgress();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const stats = ctxStats as any;
+  const { stats, streak: contextStreak } = useProgress();
+
   const isHydrated = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -67,13 +66,13 @@ export function ProgressHeader({
 
   // Schedule mapping
   const schedule = [
-    "Muhasebe ve Maliye", // 0 Sunday
-    "Ekonomi", // 1 Monday
-    "Hukuk", // 2 Tuesday
-    "Ekonomi", // 3 Wednesday
-    "Hukuk", // 4 Thursday
-    "Genel Yetenek ve İngilizce", // 5 Friday
-    "Muhasebe ve Maliye", // 6 Saturday
+    'Muhasebe ve Maliye', // 0 Sunday
+    'Ekonomi', // 1 Monday
+    'Hukuk', // 2 Tuesday
+    'Ekonomi', // 3 Wednesday
+    'Hukuk', // 4 Thursday
+    'Genel Yetenek ve İngilizce', // 5 Friday
+    'Muhasebe ve Maliye', // 6 Saturday
   ];
 
   const today = new Date();
@@ -92,8 +91,8 @@ export function ProgressHeader({
   let nextRank = initialNextRank;
 
   if (isHydrated && stats && stats.currentRank) {
-    currentRank = stats.currentRank;
-    nextRank = stats.nextRank;
+    currentRank = stats.currentRank as RankInfo;
+    nextRank = (stats.nextRank || null) as RankInfo | null;
 
     if (currentRank && nextRank) {
       const currentThreshold = currentRank.minPercentage;
@@ -120,16 +119,22 @@ export function ProgressHeader({
     const targetThreshold = nextRank.minPercentage ?? 0;
     const targetHours = (displayTotalHours * targetThreshold) / 100;
     const hoursRemaining = Math.max(0, targetHours - displayCompletedHours);
-    
-    const dailyRate = (stats.dailyAverage && stats.dailyAverage > 0) 
-      ? stats.dailyAverage 
-      : 2;
+
+    const dailyRate =
+      stats.dailyAverage && stats.dailyAverage > 0 ? stats.dailyAverage : 2;
 
     return Math.ceil(hoursRemaining / dailyRate);
-  }, [isHydrated, stats, nextRank, displayTotalHours, displayCompletedHours, initialEstimatedDays]);
+  }, [
+    isHydrated,
+    stats,
+    nextRank,
+    displayTotalHours,
+    displayCompletedHours,
+    initialEstimatedDays,
+  ]);
 
   const currentRankImage = useMemo(() => {
-    if (!currentRank) return "/ranks/rank1.webp";
+    if (!currentRank) return '/ranks/rank1.webp';
     const index = RANKS.findIndex((r) => r.name === currentRank.name);
     return `/ranks/rank${(index >= 0 ? index : 0) + 1}.webp`;
   }, [currentRank]);
@@ -166,7 +171,7 @@ export function ProgressHeader({
         <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
           <Target className="w-32 h-32" />
         </div>
-        
+
         <div className="relative h-full flex flex-col justify-between space-y-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
@@ -182,12 +187,17 @@ export function ProgressHeader({
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-widest mb-1">
                   Mevcut Seviye
                 </p>
-                <h3 className={cn("text-2xl font-black tracking-tight", currentRank?.color || "text-white")}>
-                  {currentRank?.name || "Hiçlikten Yeni Doğan"}
+                <h3
+                  className={cn(
+                    'text-2xl font-black tracking-tight',
+                    currentRank?.color || 'text-white'
+                  )}
+                >
+                  {currentRank?.name || 'Hiçlikten Yeni Doğan'}
                 </h3>
               </div>
             </div>
-            
+
             <button
               onClick={() => setJourneyOpen(true)}
               className="px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold backdrop-blur-md transition-all flex items-center gap-2"
@@ -199,9 +209,13 @@ export function ProgressHeader({
           <div className="space-y-3">
             <div className="flex justify-between items-end">
               <div className="space-y-1">
-                <span className="text-sm font-medium text-white/90">Unvan İlerlemesi</span>
+                <span className="text-sm font-medium text-white/90">
+                  Unvan İlerlemesi
+                </span>
                 <p className="text-xs text-muted-foreground">
-                  {nextRank ? `${nextRank.name} seviyesine ulaşmak için %${100 - displayRankProgress} kaldı` : "En üst seviyedesiniz!"}
+                  {nextRank
+                    ? `${nextRank.name} seviyesine ulaşmak için %${100 - displayRankProgress} kaldı`
+                    : 'En üst seviyedesiniz!'}
                 </p>
               </div>
               <span className="text-xl font-bold text-white tracking-tighter">
@@ -212,7 +226,7 @@ export function ProgressHeader({
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${displayRankProgress}%` }}
-                transition={{ duration: 1, ease: "easeOut" }}
+                transition={{ duration: 1, ease: 'easeOut' }}
                 className="absolute h-full bg-linear-to-r from-primary via-primary/80 to-primary rounded-full"
               />
             </div>
@@ -222,11 +236,18 @@ export function ProgressHeader({
             <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Calendar className="w-3.5 h-3.5" />
-                <span>Tahmini Varış: <span className="text-white font-medium">{displayEstimatedDays} gün</span></span>
+                <span>
+                  Tahmini Varış:{' '}
+                  <span className="text-white font-medium">
+                    {displayEstimatedDays} gün
+                  </span>
+                </span>
               </div>
               <div className="flex items-center gap-1">
                 <span>Sonraki:</span>
-                <span className="text-primary font-bold uppercase tracking-wider">{nextRank.name}</span>
+                <span className="text-primary font-bold uppercase tracking-wider">
+                  {nextRank.name}
+                </span>
               </div>
             </div>
           )}
@@ -246,13 +267,21 @@ export function ProgressHeader({
             <div className="p-2 rounded-xl bg-orange-500/10 border border-orange-500/20">
               <Flame className="w-4 h-4 text-orange-500 fill-orange-500" />
             </div>
-            <span className="text-xs font-semibold text-orange-500/90 uppercase tracking-wider">Günlük Seri</span>
+            <span className="text-xs font-semibold text-orange-500/90 uppercase tracking-wider">
+              Günlük Seri
+            </span>
           </div>
           <div className="mt-2">
-            <span className="text-4xl font-black text-white">{isHydrated ? contextStreak : 0}</span>
-            <span className="ml-2 text-sm font-medium text-muted-foreground">Gün</span>
+            <span className="text-4xl font-black text-white">
+              {isHydrated ? contextStreak : 0}
+            </span>
+            <span className="ml-2 text-sm font-medium text-muted-foreground">
+              Gün
+            </span>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-1">İstikrarını koruyorsun! 🔥</p>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            İstikrarını koruyorsun! 🔥
+          </p>
         </div>
       </motion.div>
 
@@ -269,12 +298,18 @@ export function ProgressHeader({
             <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
               <TrendingUp className="w-4 h-4 text-emerald-500" />
             </div>
-            <span className="text-xs font-semibold text-emerald-500/90 uppercase tracking-wider">Genel İlerleme</span>
+            <span className="text-xs font-semibold text-emerald-500/90 uppercase tracking-wider">
+              Genel İlerleme
+            </span>
           </div>
           <div className="mt-2">
-            <span className="text-4xl font-black text-white">%{displayPercentage}</span>
+            <span className="text-4xl font-black text-white">
+              %{displayPercentage}
+            </span>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-1">Müfredat tamamlanma oranı</p>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Müfredat tamamlanma oranı
+          </p>
         </div>
       </motion.div>
 
@@ -288,11 +323,17 @@ export function ProgressHeader({
             <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/20">
               <CalendarDays className="w-4 h-4 text-blue-400" />
             </div>
-            <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">Günün Odağı</span>
+            <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
+              Günün Odağı
+            </span>
           </div>
           <div>
-            <h4 className="text-lg font-bold text-white leading-tight line-clamp-2">{todaysSubject}</h4>
-            <p className="text-[10px] text-muted-foreground mt-1">Sınav takvimine göre bugün</p>
+            <h4 className="text-lg font-bold text-white leading-tight line-clamp-2">
+              {todaysSubject}
+            </h4>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Sınav takvimine göre bugün
+            </p>
           </div>
         </div>
       </motion.div>
@@ -307,22 +348,32 @@ export function ProgressHeader({
             <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/20">
               <Clock className="w-4 h-4 text-purple-400" />
             </div>
-            <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider">Zaman ve Video</span>
+            <span className="text-xs font-semibold text-purple-400 uppercase tracking-wider">
+              Zaman ve Video
+            </span>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-0.5">
               <p className="text-[10px] text-muted-foreground">Süre</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-white">{formatDurationShort(displayCompletedHours)}</span>
-                <span className="text-[8px] text-muted-foreground">/{formatDurationShort(displayTotalHours)}</span>
+                <span className="text-sm font-bold text-white">
+                  {formatDurationShort(displayCompletedHours)}
+                </span>
+                <span className="text-[8px] text-muted-foreground">
+                  /{formatDurationShort(displayTotalHours)}
+                </span>
               </div>
             </div>
             <div className="space-y-0.5 border-l border-white/5 pl-2">
               <p className="text-[10px] text-muted-foreground">Video</p>
               <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-white">{displayCompletedVideos}</span>
-                <span className="text-[8px] text-muted-foreground">/{displayTotalVideos}</span>
+                <span className="text-sm font-bold text-white">
+                  {displayCompletedVideos}
+                </span>
+                <span className="text-[8px] text-muted-foreground">
+                  /{displayTotalVideos}
+                </span>
               </div>
             </div>
           </div>

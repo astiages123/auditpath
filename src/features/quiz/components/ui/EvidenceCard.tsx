@@ -1,6 +1,6 @@
 /**
  * EvidenceCard Component
- * 
+ *
  * Displayed when user answers incorrectly.
  * Shows the source evidence quote and provides navigation to the note.
  */
@@ -8,6 +8,7 @@
 import { motion } from 'framer-motion';
 import { BookOpen, ExternalLink, Quote } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/config/routes';
 
 interface EvidenceCardProps {
   /** Evidence quote from source text */
@@ -20,18 +21,18 @@ interface EvidenceCardProps {
   onDismiss?: () => void;
 }
 
-export function EvidenceCard({ 
-  evidence, 
-  courseId, 
+export function EvidenceCard({
+  evidence,
+  courseId,
   sectionTitle,
-  onDismiss 
+  onDismiss,
 }: EvidenceCardProps) {
   const navigate = useNavigate();
 
   const handleViewInNote = () => {
     // Navigate to note page with highlight query param
     const encodedEvidence = encodeURIComponent(evidence.slice(0, 100));
-    navigate(`/notes/${courseId}?highlight=${encodedEvidence}`);
+    navigate(`${ROUTES.NOTES}/${courseId}?highlight=${encodedEvidence}`);
     onDismiss?.();
   };
 
@@ -50,7 +51,9 @@ export function EvidenceCard({
           <Quote className="w-5 h-5 text-amber-500" />
         </div>
         <div>
-          <h3 className="font-semibold text-amber-400">Kaynak Metinden Kanıt</h3>
+          <h3 className="font-semibold text-amber-400">
+            Kaynak Metinden Kanıt
+          </h3>
           {sectionTitle && (
             <p className="text-xs text-muted-foreground">{sectionTitle}</p>
           )}
@@ -75,7 +78,7 @@ export function EvidenceCard({
           <span>Metinde Gör</span>
           <ExternalLink className="w-3 h-3" />
         </button>
-        
+
         {onDismiss && (
           <button
             onClick={onDismiss}

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import {
   Dialog,
@@ -6,9 +6,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/shared/components/ui/dialog";
-import TitleRoadmap from "../ui/TitleRoadmap";
-import { useProgress } from "@/shared/hooks/use-progress";
+} from '@/shared/components/ui/dialog';
+import TitleRoadmap from '../ui/TitleRoadmap';
+import { useProgress } from '@/shared/hooks/use-progress';
 // React imports removed as they were unused
 // getRanks unused import removed
 
@@ -22,9 +22,8 @@ export function JourneyModal({ open, onOpenChange }: JourneyModalProps) {
 
   const completedVideos = stats?.completedVideos ?? 0;
   const totalVideos = stats?.totalVideos ?? 0;
-  const percentage = totalVideos > 0 
-    ? Math.round((completedVideos / totalVideos) * 100) 
-    : 0;
+  const percentage =
+    totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -37,13 +36,13 @@ export function JourneyModal({ open, onOpenChange }: JourneyModalProps) {
               </DialogTitle>
               <DialogDescription className="text-sm">
                 {isLoading ? (
-                  "Yükleniyor..."
+                  'Yükleniyor...'
                 ) : (
                   <>
-                    İzlenen:{" "}
+                    İzlenen:{' '}
                     <span className="text-primary font-medium">
                       {completedVideos} / {totalVideos}
-                    </span>{" "}
+                    </span>{' '}
                     video
                     {totalVideos > 0 && ` (%${percentage})`}
                   </>

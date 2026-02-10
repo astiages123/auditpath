@@ -1,26 +1,26 @@
 /**
  * useCourses Hook
- * 
+ *
  * Merkezi kurs verisi yönetimi.
  * TanStack Query ile cache'lenmiş kurs listesi sağlar.
  */
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/shared/lib/core/supabase";
-import type { Database } from "@/shared/types/supabase";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/shared/lib/core/supabase';
+import type { Database } from '@/shared/types/supabase';
 
-type Course = Database["public"]["Tables"]["courses"]["Row"];
+type Course = Database['public']['Tables']['courses']['Row'];
 
 export const courseKeys = {
-    all: ["courses"] as const,
-    list: () => [...courseKeys.all, "list"] as const,
-    byId: (id: string) => [...courseKeys.all, "byId", id] as const,
-    names: () => [...courseKeys.all, "names"] as const,
+  all: ['courses'] as const,
+  list: () => [...courseKeys.all, 'list'] as const,
+  byId: (id: string) => [...courseKeys.all, 'byId', id] as const,
+  names: () => [...courseKeys.all, 'names'] as const,
 };
 
 interface CourseWithName {
-    id: string;
-    name: string;
+  id: string;
+  name: string;
 }
 
 /**
@@ -28,47 +28,47 @@ interface CourseWithName {
  * Cache süresi: 5 dakika (kurs verileri nadiren değişir)
  */
 export function useCourseNames() {
-    return useQuery({
-        queryKey: courseKeys.names(),
-        queryFn: async (): Promise<CourseWithName[]> => {
-            const { data, error } = await supabase
-                .from("courses")
-                .select("id, name")
-                .order("name");
+  return useQuery({
+    queryKey: courseKeys.names(),
+    queryFn: async (): Promise<CourseWithName[]> => {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('id, name')
+        .order('name');
 
-            if (error) throw error;
-            return data || [];
-        },
-        staleTime: 5 * 60 * 1000, // 5 dakika
-        gcTime: 10 * 60 * 1000,   // 10 dakika
-    });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 dakika
+    gcTime: 10 * 60 * 1000, // 10 dakika
+  });
 }
 
 /**
  * Tüm kurs detaylarını döndürür.
  */
 export function useCourses() {
-    return useQuery({
-        queryKey: courseKeys.list(),
-        queryFn: async (): Promise<Course[]> => {
-            const { data, error } = await supabase
-                .from("courses")
-                .select("*")
-                .order("sort_order");
+  return useQuery({
+    queryKey: courseKeys.list(),
+    queryFn: async (): Promise<Course[]> => {
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*')
+        .order('sort_order');
 
-            if (error) throw error;
-            return data || [];
-        },
-        staleTime: 5 * 60 * 1000,
-        gcTime: 10 * 60 * 1000,
-    });
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
 }
 
 /**
  * Kurs id'sinden name'e lookup için Map döndürür.
  */
 export function useCourseNameMap() {
-    const { data: courses } = useCourseNames();
-    
-    return new Map(courses?.map(c => [c.id, c.name]) || []);
+  const { data: courses } = useCourseNames();
+
+  return new Map(courses?.map((c) => [c.id, c.name]) || []);
 }

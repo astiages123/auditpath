@@ -1,8 +1,7 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { getSupabase } from "@/shared/lib/core/supabase";
-import { AuthContext } from "../hooks/use-auth";
-
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { getSupabase } from '@/shared/lib/core/supabase';
+import { AuthContext } from '../hooks/use-auth';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -16,8 +15,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // İlk oturum kontrolü
     const initializeAuth = async () => {
       try {
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-        
+        const {
+          data: { session: initialSession },
+          error,
+        } = await supabase.auth.getSession();
+
         if (error) throw error;
 
         if (mounted) {
@@ -25,7 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(initialSession?.user ?? null);
         }
       } catch (error) {
-        console.error("Auth initialization error:", error);
+        console.error('Auth initialization error:', error);
       } finally {
         if (mounted) {
           setLoading(false);
@@ -59,17 +61,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setSession(null);
     } catch (error) {
-      console.error("Sign out error:", error);
+      console.error('Sign out error:', error);
     }
   }, [supabase.auth]);
 
-  const value = useMemo(() => ({
-    user,
-    session,
-    loading,
-    signOut,
-  }), [user, session, loading, signOut]);
+  const value = useMemo(
+    () => ({
+      user,
+      session,
+      loading,
+      signOut,
+    }),
+    [user, session, loading, signOut]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-

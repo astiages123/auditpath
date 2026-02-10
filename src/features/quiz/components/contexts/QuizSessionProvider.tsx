@@ -84,12 +84,13 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
 
       try {
         // Parallelized fetching of independent session components
-        const [sessionInfo, quotaInfo, courseStats, contentVersion] = await Promise.all([
-          getSessionInfo(user.id, courseId),
-          getQuotaInfo(user.id, courseId, 0), // Session number initially unknown or independent
-          getCourseStats(user.id, courseId),
-          getContentVersion(courseId)
-        ]);
+        const [sessionInfo, quotaInfo, courseStats, contentVersion] =
+          await Promise.all([
+            getSessionInfo(user.id, courseId),
+            getQuotaInfo(user.id, courseId, 0), // Session number initially unknown or independent
+            getCourseStats(user.id, courseId),
+            getContentVersion(courseId),
+          ]);
 
         if (!sessionInfo) {
           throw new Error('Seans bilgisi alınamadı');
@@ -420,23 +421,26 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
     [state.sessionInfo, user?.id]
   );
 
-  const value: QuizSessionContextValue = useMemo(() => ({
-    state,
-    initializeSession,
-    recordResponse,
-    getNextReviewItem,
-    markReviewComplete,
-    advanceBatch,
-    injectScaffolding,
-  }), [
-    state,
-    initializeSession,
-    recordResponse,
-    getNextReviewItem,
-    markReviewComplete,
-    advanceBatch,
-    injectScaffolding
-  ]);
+  const value: QuizSessionContextValue = useMemo(
+    () => ({
+      state,
+      initializeSession,
+      recordResponse,
+      getNextReviewItem,
+      markReviewComplete,
+      advanceBatch,
+      injectScaffolding,
+    }),
+    [
+      state,
+      initializeSession,
+      recordResponse,
+      getNextReviewItem,
+      markReviewComplete,
+      advanceBatch,
+      injectScaffolding,
+    ]
+  );
 
   return (
     <QuizSessionContext.Provider value={value}>

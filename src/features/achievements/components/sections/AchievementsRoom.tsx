@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from 'react';
 // Yeni ikonlar eklendi: Scale (Hukuk), Coins (Ekonomi), Landmark (Muhasebe), Globe (Genel)
 import {
   Library,
@@ -12,32 +12,30 @@ import {
   Globe,
   Crown,
   Award,
-} from "lucide-react";
-import { motion } from "framer-motion";
-import {
-  getUnlockedAchievements as getDbUnlocked,
-} from "@/shared/lib/core/client-db";
-import { type UnlockedAchievement } from "@/shared/types/efficiency";
+} from 'lucide-react';
+import { motion } from 'framer-motion';
+import { getUnlockedAchievements as getDbUnlocked } from '@/shared/lib/core/client-db';
+import { type UnlockedAchievement } from '@/shared/types/efficiency';
 import {
   Achievement,
   GUILDS,
   GuildType,
   getAchievementsByGuild,
   ACHIEVEMENTS,
-} from "@/features/achievements/lib/achievements";
-import { useProgress } from "@/shared/hooks/use-progress";
-import { SealCard } from "../ui/SealCard";
-import { SealDetailModal } from "../modals/SealDetailModal";
-import { useAuth } from "@/features/auth";
+} from '@/features/achievements/lib/achievements';
+import { useProgress } from '@/shared/hooks/use-progress';
+import { SealCard } from '../ui/SealCard';
+import { SealDetailModal } from '../modals/SealDetailModal';
+import { useAuth } from '@/features/auth';
 
 const GUILD_ORDER: GuildType[] = [
-  "HUKUK",
-  "EKONOMI",
-  "MUHASEBE_MALIYE",
-  "GENEL_YETENEK",
-  "MASTERY",
-  "HYBRID",
-  "SPECIAL",
+  'HUKUK',
+  'EKONOMI',
+  'MUHASEBE_MALIYE',
+  'GENEL_YETENEK',
+  'MASTERY',
+  'HYBRID',
+  'SPECIAL',
 ];
 
 // Her lonca için tematik ikon haritası
@@ -55,7 +53,9 @@ const GUILD_ICONS: Record<GuildType, React.ReactNode> = {
 export function AchievementsRoom() {
   const { stats, isLoading } = useProgress();
   const { user } = useAuth();
-  const [unlockedAchievements, setUnlockedAchievements] = useState<Map<string, string>>(new Map());
+  const [unlockedAchievements, setUnlockedAchievements] = useState<
+    Map<string, string>
+  >(new Map());
   const [selectedAchievement, setSelectedAchievement] =
     useState<Achievement | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -68,7 +68,7 @@ export function AchievementsRoom() {
     const fetchUnlockedAchievements = async () => {
       try {
         const dbUnlocked = await getDbUnlocked(user.id);
-        
+
         // Update state with achievements from database
         // Using achievement_id as the key in the map
         setUnlockedAchievements(
@@ -80,7 +80,7 @@ export function AchievementsRoom() {
           )
         );
       } catch (error) {
-        console.error("Bilgelik Arşivi veri çekme hatası:", error);
+        console.error('Bilgelik Arşivi veri çekme hatası:', error);
       }
     };
 
@@ -92,10 +92,12 @@ export function AchievementsRoom() {
     setIsModalOpen(true);
   }, []);
 
-  const totalAchievements = ACHIEVEMENTS.filter(a => a.guild !== "TITLES").length;
-  const unlockedCount = Array.from(unlockedAchievements.keys()).filter(id => {
-    const achievement = ACHIEVEMENTS.find(a => a.id === id);
-    return achievement && achievement.guild !== "TITLES";
+  const totalAchievements = ACHIEVEMENTS.filter(
+    (a) => a.guild !== 'TITLES'
+  ).length;
+  const unlockedCount = Array.from(unlockedAchievements.keys()).filter((id) => {
+    const achievement = ACHIEVEMENTS.find((a) => a.id === id);
+    return achievement && achievement.guild !== 'TITLES';
   }).length;
   const completionRate = Math.round((unlockedCount / totalAchievements) * 100);
 
@@ -115,7 +117,7 @@ export function AchievementsRoom() {
             <div>
               <h1
                 className="text-2xl md:text-3xl font-bold text-foreground"
-                style={{ fontFamily: "var(--font-heading)" }}
+                style={{ fontFamily: 'var(--font-heading)' }}
               >
                 Bilgelik Arşivi
               </h1>
@@ -174,14 +176,14 @@ export function AchievementsRoom() {
                   style={{
                     backgroundColor: guild.color,
                     boxShadow:
-                      guildId === "HYBRID" ? `0 0 15px ${guild.color}` : "none",
+                      guildId === 'HYBRID' ? `0 0 15px ${guild.color}` : 'none',
                   }}
                 />
                 <div>
                   <h2 className={`text-xl font-bold flex items-center gap-3`}>
                     {/* İsim */}
                     <span
-                      className={guildId === "HYBRID" ? "text-primary" : ""}
+                      className={guildId === 'HYBRID' ? 'text-primary' : ''}
                     >
                       {guild.name}
                     </span>
@@ -189,9 +191,9 @@ export function AchievementsRoom() {
                     {/* Dinamik İkon (Lonca Rengiyle) */}
                     <span
                       style={{
-                        color: guildId === "HYBRID" ? undefined : guild.color,
+                        color: guildId === 'HYBRID' ? undefined : guild.color,
                       }}
-                      className={guildId === "HYBRID" ? "text-primary" : ""}
+                      className={guildId === 'HYBRID' ? 'text-primary' : ''}
                     >
                       {GUILD_ICONS[guildId]}
                     </span>
@@ -205,9 +207,9 @@ export function AchievementsRoom() {
               {/* Mühür Izgarası */}
               <div
                 className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 ${
-                  guildId === "HYBRID"
-                    ? "p-6 rounded-3xl bg-primary/3 border border-primary/10 shadow-inner"
-                    : ""
+                  guildId === 'HYBRID'
+                    ? 'p-6 rounded-3xl bg-primary/3 border border-primary/10 shadow-inner'
+                    : ''
                 }`}
               >
                 {achievements.map((achievement) => (
@@ -232,10 +234,14 @@ export function AchievementsRoom() {
           setSelectedAchievement(null);
         }}
         isUnlocked={
-          selectedAchievement ? unlockedAchievements.has(selectedAchievement.id) : false
+          selectedAchievement
+            ? unlockedAchievements.has(selectedAchievement.id)
+            : false
         }
         unlockedAt={
-            selectedAchievement ? unlockedAchievements.get(selectedAchievement.id) : null
+          selectedAchievement
+            ? unlockedAchievements.get(selectedAchievement.id)
+            : null
         }
       />
     </div>

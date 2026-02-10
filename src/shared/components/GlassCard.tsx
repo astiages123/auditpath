@@ -1,6 +1,6 @@
-import { Card } from "@/shared/components/ui/card";
-import { cn } from "@/shared/lib/core/utils";
-import React from "react";
+import { Card } from '@/shared/components/ui/card';
+import { cn } from '@/shared/lib/core/utils';
+import React from 'react';
 
 interface GlassCardProps {
   className?: string;
@@ -11,9 +11,9 @@ interface GlassCardProps {
 export const GlassCard = ({ className, children, onClick }: GlassCardProps) => (
   <Card
     className={cn(
-      "relative overflow-hidden transition-all duration-300 cursor-pointer group",
-      "bg-white/2 backdrop-blur-sm border-white/5",
-      "hover:bg-white/4 hover:border-white/10 hover:shadow-lg hover:shadow-black/10",
+      'relative overflow-hidden transition-all duration-300 cursor-pointer group',
+      'bg-white/2 backdrop-blur-sm border-white/5',
+      'hover:bg-white/4 hover:border-white/10 hover:shadow-lg hover:shadow-black/10',
       className
     )}
     onClick={onClick}
@@ -21,4 +21,3 @@ export const GlassCard = ({ className, children, onClick }: GlassCardProps) => (
     {children}
   </Card>
 );
-

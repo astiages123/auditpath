@@ -11,7 +11,17 @@
 
 import { memo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, GraduationCap, RefreshCw, Loader2, ChevronDown, SkipForward, Brain, Lightbulb } from 'lucide-react';
+import {
+  Check,
+  X,
+  GraduationCap,
+  RefreshCw,
+  Loader2,
+  ChevronDown,
+  SkipForward,
+  Brain,
+  Lightbulb,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { EvidenceCard } from './EvidenceCard';
 import ReactMarkdown from 'react-markdown';
@@ -41,11 +51,21 @@ const optionLabels = ['A', 'B', 'C', 'D', 'E'];
 
 // Key mappings for keyboard navigation
 const KEY_TO_INDEX: Record<string, number> = {
-  '1': 0, 'a': 0, 'A': 0,
-  '2': 1, 'b': 1, 'B': 1,
-  '3': 2, 'c': 2, 'C': 2,
-  '4': 3, 'd': 3, 'D': 3,
-  '5': 4, 'e': 4, 'E': 4,
+  '1': 0,
+  a: 0,
+  A: 0,
+  '2': 1,
+  b: 1,
+  B: 1,
+  '3': 2,
+  c: 2,
+  C: 2,
+  '4': 3,
+  d: 3,
+  D: 3,
+  '5': 4,
+  e: 4,
+  E: 4,
 };
 
 // Move plugin arrays outside to prevent unnecessary re-renders
@@ -53,19 +73,21 @@ const remarkPlugins = [remarkMath];
 const rehypePlugins = [rehypeKatex];
 
 const markdownComponents = {
-  p: ({ children }: { children?: React.ReactNode }) => <span className="inline">{children}</span>,
+  p: ({ children }: { children?: React.ReactNode }) => (
+    <span className="inline">{children}</span>
+  ),
 };
 
 // Markdown renderer with KaTeX support
 const MathText = memo(function MathText({ content }: { content: string }) {
   if (!content) return null;
-  
+
   // Clean content: remove (image.ext) references, [GÖRSEL: X] markers and excessive newlines
   const cleanContent = content
-      .replace(/\([\w-]+\.(webp|png|jpg|jpeg|gif)\)/gi, '')
-      .replace(/\[GÖRSEL:\s*\d+\]/gi, '')
-      .replace(/\n\s*\n/g, '\n\n')
-      .trim();
+    .replace(/\([\w-]+\.(webp|png|jpg|jpeg|gif)\)/gi, '')
+    .replace(/\[GÖRSEL:\s*\d+\]/gi, '')
+    .replace(/\n\s*\n/g, '\n\n')
+    .trim();
 
   return (
     <ReactMarkdown
@@ -79,79 +101,80 @@ const MathText = memo(function MathText({ content }: { content: string }) {
 });
 
 interface OptionButtonProps {
-    option: string;
-    index: number;
-    label: string;
-    variant: 'default' | 'correct' | 'incorrect' | 'dimmed';
-    onClick: () => void;
-    disabled: boolean;
+  option: string;
+  index: number;
+  label: string;
+  variant: 'default' | 'correct' | 'incorrect' | 'dimmed';
+  onClick: () => void;
+  disabled: boolean;
 }
 
-const OptionButton = memo(function OptionButton({ 
-    option, 
-    label, 
-    variant, 
-    onClick, 
-    disabled 
+const OptionButton = memo(function OptionButton({
+  option,
+  label,
+  variant,
+  onClick,
+  disabled,
 }: Omit<OptionButtonProps, 'index'>) {
-    let containerStyle = 'border-border hover:border-primary/50 hover:bg-muted/30';
-    let iconComponent = null;
-    let labelStyle = 'bg-muted text-muted-foreground';
+  let containerStyle =
+    'border-border hover:border-primary/50 hover:bg-muted/30';
+  let iconComponent = null;
+  let labelStyle = 'bg-muted text-muted-foreground';
 
-    switch (variant) {
-        case 'correct':
-            containerStyle = 'border-emerald-500 bg-emerald-500/10';
-            labelStyle = 'bg-emerald-500 text-white';
-            iconComponent = (
-                <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
-                    <Check className="w-4 h-4 text-white" />
-                </div>
-            );
-            break;
-        case 'incorrect':
-            containerStyle = 'border-red-500 bg-red-500/10';
-            labelStyle = 'bg-red-500 text-white';
-            iconComponent = (
-                <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shrink-0">
-                    <X className="w-4 h-4 text-white" />
-                </div>
-            );
-            break;
-        case 'dimmed':
-            containerStyle = 'border-border opacity-50';
-            break;
-        case 'default':
-        default:
-            // kept initials
-            break;
-    }
+  switch (variant) {
+    case 'correct':
+      containerStyle = 'border-emerald-500 bg-emerald-500/10';
+      labelStyle = 'bg-emerald-500 text-white';
+      iconComponent = (
+        <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+          <Check className="w-4 h-4 text-white" />
+        </div>
+      );
+      break;
+    case 'incorrect':
+      containerStyle = 'border-red-500 bg-red-500/10';
+      labelStyle = 'bg-red-500 text-white';
+      iconComponent = (
+        <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shrink-0">
+          <X className="w-4 h-4 text-white" />
+        </div>
+      );
+      break;
+    case 'dimmed':
+      containerStyle = 'border-border opacity-50';
+      break;
+    case 'default':
+    default:
+      // kept initials
+      break;
+  }
 
-    return (
-        <motion.button
-            onClick={onClick}
-            disabled={disabled}
-            whileHover={!disabled ? { scale: 1.01 } : {}}
-            whileTap={!disabled ? { scale: 0.99 } : {}}
-            className={cn(
-                'w-full flex items-start gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left',
-                containerStyle,
-                !disabled && 'cursor-pointer'
-            )}
-        >
-            <span
-                className={cn(
-                    'w-8 h-8 min-w-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0',
-                    labelStyle
-                )}
-            >
-                {label}
-            </span>
-            <div className="flex-1 pt-1 prose prose-sm dark:prose-invert max-w-none">
-                <MathText content={option} />
-            </div>
-            {iconComponent}
-        </motion.button>
-    );
+  return (
+    <motion.button
+      onClick={onClick}
+      disabled={disabled}
+      whileHover={!disabled ? { scale: 1.01 } : {}}
+      whileTap={!disabled ? { scale: 0.99 } : {}}
+      className={cn(
+        'w-full flex items-start gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left',
+        containerStyle,
+        !disabled && 'cursor-pointer'
+      )}
+    >
+      <span
+        className={cn(
+          'w-8 h-8 min-w-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0',
+          labelStyle
+        )}
+      >
+        {label}
+      </span>
+      <div className="flex-1 pt-1 prose prose-sm dark:prose-invert max-w-none">
+        <MathText content={option} />
+      </div>
+      {iconComponent}
+    </motion.button>
+  );
 });
 
 function QuizCardComponent({
@@ -168,38 +191,43 @@ function QuizCardComponent({
   onBlank,
   courseId,
 }: QuizCardProps) {
-
   // Keyboard navigation handler
-  const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Don't handle if user is typing in an input
-    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
-      return;
-    }
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      // Don't handle if user is typing in an input
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
 
-    // If already answered, ignore option keys
-    if (isAnswered) return;
+      // If already answered, ignore option keys
+      if (isAnswered) return;
 
-    // Check for option keys (1-5 or A-E)
-    const index = KEY_TO_INDEX[e.key];
-    if (index !== undefined && question && index < question.o.length) {
-      e.preventDefault();
-      onSelectAnswer(index);
-      return;
-    }
+      // Check for option keys (1-5 or A-E)
+      const index = KEY_TO_INDEX[e.key];
+      if (index !== undefined && question && index < question.o.length) {
+        e.preventDefault();
+        onSelectAnswer(index);
+        return;
+      }
 
-    // "B" or "Space" for blank (only if not a letter key was used)
-    if ((e.key === 'b' || e.key === 'B') && onBlank && !KEY_TO_INDEX[e.key]) {
-      // Note: 'b'/'B' is already mapped to option B, so we skip this
-      return;
-    }
+      // "B" or "Space" for blank (only if not a letter key was used)
+      if ((e.key === 'b' || e.key === 'B') && onBlank && !KEY_TO_INDEX[e.key]) {
+        // Note: 'b'/'B' is already mapped to option B, so we skip this
+        return;
+      }
 
-    // Escape key for blank
-    if (e.key === 'Escape' && onBlank) {
-      e.preventDefault();
-      toast.info('Soru boş bırakıldı');
-      onBlank();
-    }
-  }, [isAnswered, question, onSelectAnswer, onBlank]);
+      // Escape key for blank
+      if (e.key === 'Escape' && onBlank) {
+        e.preventDefault();
+        toast.info('Soru boş bırakıldı');
+        onBlank();
+      }
+    },
+    [isAnswered, question, onSelectAnswer, onBlank]
+  );
 
   // Attach keyboard listener
   useEffect(() => {
@@ -213,7 +241,9 @@ function QuizCardComponent({
         <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <Loader2 className="w-12 h-12 text-primary animate-spin" />
-            <p className="text-muted-foreground text-lg">Soru hazırlanıyor...</p>
+            <p className="text-muted-foreground text-lg">
+              Soru hazırlanıyor...
+            </p>
             <p className="text-muted-foreground/60 text-sm">
               MiMo V2 Flash AI ile soru üretiliyor
             </p>
@@ -296,14 +326,17 @@ function QuizCardComponent({
 
           {question.img !== undefined && question.img !== null && (
             <div className="mb-6 rounded-xl overflow-hidden border border-border bg-muted/20">
-              <img 
+              <img
                 src={
-                    // New logic: resolve from imageUrls array using index
-                    (typeof question.img === 'number' && question.imageUrls?.[question.img])
-                        ? question.imageUrls[question.img]
-                        : (typeof question.img === 'string' ? `${question.imgPath || ''}${question.img}` : '')
+                  // New logic: resolve from imageUrls array using index
+                  typeof question.img === 'number' &&
+                  question.imageUrls?.[question.img]
+                    ? question.imageUrls[question.img]
+                    : typeof question.img === 'string'
+                      ? `${question.imgPath || ''}${question.img}`
+                      : ''
                 }
-                alt="Soru Görseli" 
+                alt="Soru Görseli"
                 className="w-full max-h-[300px] object-contain mx-auto"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
@@ -321,22 +354,23 @@ function QuizCardComponent({
             const isSelected = selectedAnswer === index;
             const isCorrectOption = question.a === index;
 
-            let variant: 'default' | 'correct' | 'incorrect' | 'dimmed' = 'default';
+            let variant: 'default' | 'correct' | 'incorrect' | 'dimmed' =
+              'default';
 
             if (isAnswered) {
-                const showCorrectness = selectedAnswer !== null;
-                if (showCorrectness) {
-                    if (isCorrectOption) {
-                        variant = 'correct';
-                    } else if (isSelected && !isCorrectOption) {
-                        variant = 'incorrect';
-                    } else {
-                        variant = 'dimmed';
-                    }
+              const showCorrectness = selectedAnswer !== null;
+              if (showCorrectness) {
+                if (isCorrectOption) {
+                  variant = 'correct';
+                } else if (isSelected && !isCorrectOption) {
+                  variant = 'incorrect';
                 } else {
-                    // Blank answer -> dim all
-                    variant = 'dimmed';
+                  variant = 'dimmed';
                 }
+              } else {
+                // Blank answer -> dim all
+                variant = 'dimmed';
+              }
             }
 
             return (
@@ -383,13 +417,15 @@ function QuizCardComponent({
                   tabIndex={0}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
-                        onToggleExplanation();
+                      onToggleExplanation();
                     }
                   }}
                 >
                   <div className="flex items-center gap-2">
                     <GraduationCap className="w-5 h-5 text-primary" />
-                    <span className="font-medium text-foreground">Hoca Notu</span>
+                    <span className="font-medium text-foreground">
+                      Hoca Notu
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <motion.span
@@ -430,7 +466,8 @@ function QuizCardComponent({
                               )}
                               {!isCorrect && (
                                 <p className="font-bold text-red-400 mb-2">
-                                  Yanlış cevap. Doğru cevap: {optionLabels[question.a]}
+                                  Yanlış cevap. Doğru cevap:{' '}
+                                  {optionLabels[question.a]}
                                 </p>
                               )}
 
@@ -449,9 +486,9 @@ function QuizCardComponent({
                               {/* Evidence Card */}
                               {question.evidence && courseId && (
                                 <div className="mb-4">
-                                  <EvidenceCard 
-                                    evidence={question.evidence} 
-                                    courseId={courseId} 
+                                  <EvidenceCard
+                                    evidence={question.evidence}
+                                    courseId={courseId}
                                   />
                                 </div>
                               )}
