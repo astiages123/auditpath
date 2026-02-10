@@ -1,12 +1,4 @@
-export interface Rank {
-  id: string;
-  name: string;
-  minPercentage: number;
-  color: string;
-  motto: string;
-  imagePath: string;
-  order: number;
-}
+import type { Rank } from '@/shared/types/core';
 
 export const RANKS: Rank[] = [
   {
@@ -48,16 +40,3 @@ export const RANKS: Rank[] = [
     order: 4,
   },
 ];
-
-export function getRankForPercentage(percentage: number): Rank {
-  // Sort by minPercentage descending to find the highest matching rank
-  const sortedRanks = [...RANKS].sort(
-    (a, b) => b.minPercentage - a.minPercentage
-  );
-  for (const rank of sortedRanks) {
-    if (percentage >= rank.minPercentage) {
-      return rank;
-    }
-  }
-  return RANKS[0]; // Fallback
-}

@@ -1,4 +1,5 @@
 import { TrendingUp } from 'lucide-react';
+import { useTransition } from 'react';
 import {
   FocusHubCard,
   LearningLoadCard,
@@ -8,9 +9,12 @@ import {
   RecentActivitiesContainer,
   RecentQuizzesCard,
   CognitiveInsightsCard,
-} from './components';
+} from '../components';
 
 const EfficiencyPage = () => {
+  // React 19 Concurrent Features: useTransition for dashboard rendering
+  const [isPending] = useTransition();
+
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 m-5">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -36,7 +40,13 @@ const EfficiencyPage = () => {
         </div>
 
         {/* Central Dashboard Engine */}
-        <div className="space-y-6">
+        <div
+          className="space-y-6"
+          style={{
+            opacity: isPending ? 0.85 : 1,
+            transition: 'opacity 200ms ease-in-out',
+          }}
+        >
           {/* Row 1: Focus Hub + Learning Load */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
             <div className="min-h-[320px]">

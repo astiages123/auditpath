@@ -51,3 +51,16 @@ export type LogCallback = (
   message: string,
   details?: Record<string, unknown>
 ) => void;
+
+/**
+ * Rank system types
+ */
+export interface Rank {
+  id: string;
+  name: string;
+  minPercentage: number;
+  color: string;
+  motto: string;
+  imagePath: string;
+  order: number;
+}

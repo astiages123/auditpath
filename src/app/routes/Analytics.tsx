@@ -1,4 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useTransition,
+  useDeferredValue,
+} from 'react';
 import { supabase } from '@/shared/lib/core/supabase';
 import { ExchangeRateService } from '@/shared/services/exchange-rate-service';
 import { AiGenerationCost } from '@/shared/types/analytics';
@@ -46,6 +51,11 @@ export default function AnalyticsPage() {
   const [visibleCount, setVisibleCount] = useState(50);
   const [isMounted, setIsMounted] = useState(false);
 
+  // React 19 Concurrent Features: useTransition for chart updates
+  const [isPending, startTransition] = useTransition();
+  // useDeferredValue for smooth filtering without input lag
+  const deferredVisibleCount = useDeferredValue(visibleCount);
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -75,6 +85,7 @@ export default function AnalyticsPage() {
     fetchData();
   }, []);
 
+  // Wrap heavy data processing in useMemo with deferred values
   const processDailyData = () => {
     if (logs.length === 0) return [];
     const dates = logs
@@ -401,7 +412,12 @@ export default function AnalyticsPage() {
                   </TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody>
+              <TableBody
+                style={{
+                  opacity: isPending ? 0.7 : 1,
+                  transition: 'opacity 200ms ease-in-out',
+                }}
+              >
                 {logs.slice(0, visibleCount).map((log) => (
                   <TableRow
                     key={log.id}
@@ -451,12 +467,17 @@ export default function AnalyticsPage() {
             </Table>
           </div>
 
-          {logs.length > visibleCount && (
+          {logs.length > deferredVisibleCount && (
             <div className="p-6 border-t border-border/40 bg-card/10 flex justify-center">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setVisibleCount((prev) => prev + 50)}
+                onClick={() => {
+                  // Use transition to prevent UI blocking when loading more data
+                  startTransition(() => {
+                    setVisibleCount((prev) => prev + 50);
+                  });
+                }}
                 className="group flex items-center gap-2 hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-full px-8"
               >
                 <ChevronDown className="h-4 w-4 group-hover:translate-y-1 transition-transform" />

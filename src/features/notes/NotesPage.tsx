@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useTransition } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertCircle, ChevronUp } from 'lucide-react';
 import {
@@ -36,6 +36,9 @@ export default function NotesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [courseName, setCourseName] = useState('');
+
+  // React 19 Concurrent Features: useTransition for heavy markdown rendering
+  const [isPending, startTransition] = useTransition();
 
   const activeChunkId = useMemo(() => {
     if (topicSlug) return topicSlug;
@@ -125,9 +128,12 @@ export default function NotesPage() {
           };
         });
 
+        // Wrap heavy state updates in startTransition to prevent UI blocking
         if (processedData.length > 0) {
-          setChunks(processedData);
-          setCourseName(processedData[0].course_name);
+          startTransition(() => {
+            setChunks(processedData);
+            setCourseName(processedData[0].course_name);
+          });
           localStorage.setItem(
             cacheKey,
             JSON.stringify({
@@ -225,6 +231,10 @@ export default function NotesPage() {
       <main
         ref={mainContentRef}
         className="flex-1 overflow-y-auto bg-background/50 relative scroll-smooth"
+        style={{
+          opacity: isPending ? 0.7 : 1,
+          transition: 'opacity 200ms ease-in-out',
+        }}
       >
         <div className="max-w-6xl mx-auto px-8 py-12 min-h-screen">
           {chunks
@@ -255,7 +265,13 @@ export default function NotesPage() {
       </main>
 
       {/* 3. Right Panel: Local ToC */}
-      <aside className="w-64 shrink-0 border-l border-border/15 bg-card/10 backdrop-blur-xl hidden xl:flex flex-col h-full">
+      <aside
+        className="w-64 shrink-0 border-l border-border/15 bg-card/10 backdrop-blur-xl hidden xl:flex flex-col h-full"
+        style={{
+          opacity: isPending ? 0.7 : 1,
+          transition: 'opacity 200ms ease-in-out',
+        }}
+      >
         <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
           <div className="my-auto w-full">
             <LocalToC

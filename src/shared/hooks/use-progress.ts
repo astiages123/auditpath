@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getUserStats } from '@/shared/lib/core/client-db';
-import type { Rank } from '@/config/constants';
+import type { Rank } from '@/shared/types/core';
 import coursesData from '@/features/courses/data/courses.json';
 
 export interface ProgressStats {

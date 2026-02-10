@@ -10,7 +10,7 @@ import {
   ACHIEVEMENTS,
   calculateAchievements,
 } from '@/features/achievements/lib/achievements';
-import { type Rank, RANKS } from '@/config/constants';
+import { type Rank, RANKS } from '@/shared/lib/core/utils/rank-utils';
 import { ProgressStats } from '@/shared/hooks/use-progress';
 import coursesData from '@/features/courses/data/courses.json';
 

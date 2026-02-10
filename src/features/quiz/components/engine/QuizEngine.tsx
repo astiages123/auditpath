@@ -7,7 +7,7 @@
  * - Provides navigation and control buttons
  */
 
-import { useCallback, useState, useEffect, useRef } from 'react';
+import { useCallback, useState, useEffect, useRef, useTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   RotateCcw,
@@ -94,6 +94,9 @@ export function QuizEngine({
   const hasStartedAutoRef = useRef(false);
   const [isFinished, setIsFinished] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // React 19 Concurrent Features: useTransition for smooth question transitions
+  const [isPending, startTransition] = useTransition();
 
   // Track incorrect questions for follow-up generation
   const incorrectIdsRef = useRef<string[]>([]);
@@ -289,7 +292,10 @@ export function QuizEngine({
     if (isSubmitting || !user?.id || !courseId) return;
     setIsSubmitting(true);
     try {
-      await nextQuestion(user.id, courseId);
+      // Wrap navigation in transition for smooth UI updates
+      await startTransition(async () => {
+        await nextQuestion(user.id, courseId);
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -316,8 +322,11 @@ export function QuizEngine({
   }, [startQuiz]);
 
   const handleIntermissionContinue = () => {
-    setIsFinished(false);
-    advanceBatch();
+    // Use transition for smooth batch advancement
+    startTransition(() => {
+      setIsFinished(false);
+      advanceBatch();
+    });
   };
 
   // If finished
@@ -449,7 +458,13 @@ export function QuizEngine({
         sessionState.isInitialized &&
         !sessionState.error &&
         state.hasStarted && (
-          <div className="space-y-6">
+          <div
+            className="space-y-6"
+            style={{
+              opacity: isPending ? 0.85 : 1,
+              transition: 'opacity 150ms ease-in-out',
+            }}
+          >
             {/* Stats Header */}
             {sessionState.courseStats && (
               <div className="flex items-center justify-between px-4 py-3 bg-muted/30 rounded-xl border border-border/50">

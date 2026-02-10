@@ -210,10 +210,24 @@ export const useTimerStore = create<TimerState>()(
     }),
     {
       name: 'pomodoro-storage',
-      partialize: (state) => {
-        const { ...rest } = state;
-        return rest;
-      },
+      partialize: (state) => ({
+        // Serializable state values only - exclude functions and computed values
+        timeLeft: state.timeLeft,
+        isActive: state.isActive,
+        isBreak: state.isBreak,
+        duration: state.duration,
+        startTime: state.startTime,
+        originalStartTime: state.originalStartTime,
+        endTime: state.endTime,
+        sessionCount: state.sessionCount,
+        selectedCourse: state.selectedCourse,
+        isWidgetOpen: state.isWidgetOpen,
+        sessionId: state.sessionId,
+        timeline: state.timeline,
+        courseName: state.courseName,
+        pauseStartTime: state.pauseStartTime,
+        hasRestored: state.hasRestored,
+      }),
     }
   )
 );

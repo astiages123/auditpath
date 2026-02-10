@@ -11,7 +11,7 @@ import { ROUTES } from '@/config/routes';
 const Achievements = lazy(() => import('@/app/routes/Achievements'));
 const Statistics = lazy(() => import('@/app/routes/Statistics'));
 const EfficiencyPage = lazy(
-  () => import('@/features/efficiency/EfficiencyPage')
+  () => import('@/features/efficiency/pages/EfficiencyPage')
 );
 const NotesPage = lazy(() => import('@/app/routes/Notes'));
 const AnalyticsPage = lazy(() => import('@/app/routes/Analytics'));
