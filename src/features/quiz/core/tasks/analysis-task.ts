@@ -8,6 +8,7 @@ export interface AnalysisTaskInput {
   content: string;
   courseName: string;
   sectionTitle: string;
+  importance: 'high' | 'medium' | 'low';
 }
 
 export class AnalysisTask extends BaseTask<
@@ -18,14 +19,16 @@ export class AnalysisTask extends BaseTask<
     input: AnalysisTaskInput,
     context?: TaskContext
   ): Promise<TaskResult<ConceptMapResult>> {
-    this.log(context, 'Kavram haritası çıkarılıyor (Yoğunluk Odaklı)', {
+    this.log(context, 'Bilişsel Analiz Yapılıyor (Öğrenme Doygunluğu)', {
       course: input.courseName,
       section: input.sectionTitle,
+      importance: input.importance,
     });
 
     const systemPrompt = ANALYSIS_SYSTEM_PROMPT(
       input.sectionTitle,
-      input.courseName
+      input.courseName,
+      input.importance
     );
 
     const contextPrompt = PromptArchitect.buildContext(
@@ -35,7 +38,7 @@ export class AnalysisTask extends BaseTask<
     const messages = PromptArchitect.assemble(
       systemPrompt,
       contextPrompt,
-      `Lütfen kavram haritasını ve yoğunluk skorunu oluştur. JSON formatında çıktı ver.`
+      `Ders Önem Derecesi: ${input.importance}\nLütfen kavram haritasını, bilişsel zorluk endeksini ve ideal öğrenme kotalarını oluştur. JSON formatında çıktı ver.`
     );
 
     const result = await StructuredGenerator.generate(messages, {
@@ -43,8 +46,12 @@ export class AnalysisTask extends BaseTask<
       provider: 'google',
       model: 'gemini-2.5-flash',
       usageType: 'analysis',
-      onLog: (msg: string, details?: Record<string, unknown>) =>
-        this.log(context, msg, details),
+      onLog: (msg: string, details?: Record<string, unknown>) => {
+        this.log(context, msg, details);
+        if (msg.includes('Bilişsel analiz ve kotalar başarıyla kaydedildi')) {
+          // This allows potential listeners to know mapping is done
+        }
+      },
     });
 
     if (result) return { success: true, data: result };

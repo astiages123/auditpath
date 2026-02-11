@@ -6,7 +6,7 @@ export const GENERAL_QUALITY_RULES = `## GENEL KALİTE KURALLARI:
 3. **Çeldiriciler:** Çeldiricilerin en az ikisi, metindeki diğer kavramlarla doğrudan ilişkili ama sorulan odak noktasıyla çelişen ifadeler olmalıdır. "Hepsi", "Hiçbiri" YASAKTIR.
 4. **Şık Yapısı:** Her zaman tam 5 adet (A,B,C,D,E) seçenek olmalıdır.
 5. **Şık Dengesi:** Seçeneklerin tümü benzer uzunlukta ve yapıda olmalıdır.
-6. **JSON GÜVENLİĞİ VE LaTeX:** Tüm LaTeX komutlarında ters eğik çizgi (\) karakterini JSON içinde KESİNLİKLE çiftle (örn: \\alpha, \\frac{1}{2}). Bu bir tercih değil, ZORUNLULUKTUR. Tekil ters eğik çizgi JSON parse hatalarına yol açar, sistemi çökertir ve bu en büyük HATA olarak kabul edilir.
+6. **JSON GÜVENLİĞİ VE LaTeX:** Tüm LaTeX komutlarında ters eğik çizgi (\\\\) karakterini JSON içinde KESİNLİKLE çiftle (örn: \\\\alpha, \\\\frac{1}{2}). Bu bir tercih değil, ZORUNLULUKTUR. Tekil ters eğik çizgi JSON parse hatalarına yol açar, sistemi çökertir ve bu en büyük HATA olarak kabul edilir.
 7. **Görsel Referansı:** Eğer bir görseli referans alarak soru soruyorsan, soru metni içinde MUTLAKA "[GÖRSEL: X]" etiketini geçir. Bu etiket, kullanıcıya hangi görsele bakması gerektiğini gösterir.`;
 
 export const COMMON_OUTPUT_FORMATS = `## ÇIKTI FORMATI:
@@ -25,26 +25,32 @@ Eğer soruyu kurgularken metindeki bir görseli [GÖRSEL: X] referans alıyorsan
 
 export const ANALYSIS_SYSTEM_PROMPT = (
   sectionTitle: string,
-  courseName: string
-) => `Sen Uzman bir Eğitim İçerik Analistisin (KPSS A Grubu). 
+  courseName: string,
+  importance: string = 'medium'
+) =>
+  `Sen Uzman bir Eğitim İçerik Analistisin (KPSS A Grubu). 
 Görev: ${courseName} altındaki **"${sectionTitle}"** başlıklı metni tarayarak kapsamlı bir soru bankası haritası oluştur.
+BU DERSİN ÖNEM DERECESİ: ${importance.toUpperCase()}
 Belirli bir sayıya odaklanma. Metindeki 10 üzerinden 7 ve üzeri önem puanına sahip **TÜM** kavramları ve **TÜM** istisnaları (Exception Hunter) çıkar. Metin yoğunsa çok, sığ ise az kavram döndür.
 Asla uydurma veya değersiz veri üretme.
 
-Ayrıca metnin "Bilişsel Zorluk Endeksini" (1-5) hesapmalısın.
+Sistem artık kelime sayısı ile değil, senin belirlediğin "Bilişsel Doygunluk Noktası" (Cognitive Saturation) üzerinden kota belirleyecek.
+Görev: Metnin derinliğini ve dersin önem derecesini analiz ederek, bir öğrencinin bu konuyu "emekli etmesi" (tam öğrenmesi) için gereken ideal soru sayılarını (kotaları) belirle.
 
 Kurallar:
-1. **EXCEPTION HUNTER:** Metinde "Ancak", "İstisnaen", "Şu kadar ki", "Saklı kalmak kaydıyla" gibi ifadelerle başlayan cümleleri TARA. Bu istisnaları ayrı birer kavram durağı olarak MUTLAKA listeye ekle ve 'isException': true olarak işaretle. (Priority 1)
-2. Metnin baş, orta ve son kısımlarından dengeli bir konu dağılımı yap.
-3. Belirlenen kavramlar anlamsal olarak birbirini kapsamamalı (overlap olmamalı), metnin farklı ve bağımsız bölümlerini temsil eden 'ana duraklar' niteliğinde olmalıdır.
-4. 'seviye' alanını şu tanımlara göre belirle:
+1. **Bilişsel Doygunluk:** Gereksiz tekrardan kaçın. Konu ne eksik ne fazla, tam öğrenilsin.
+2. **Terzi Dikimi Kotalar:** Dersin önem derecesine (Importance) ve metnin karmaşıklığına göre kotaları belirle. 
+3. **EXCEPTION HUNTER:** Metinde "Ancak", "İstisnaen", "Şu kadar ki", "Saklı kalmak kaydıyla" gibi ifadelerle başlayan cümleleri TARA. Bu istisnaları ayrı birer kavram durağı olarak MUTLAKA listeye ekle ve 'isException': true olarak işaretle. (Priority 1)
+4. Metnin baş, orta ve son kısımlarından dengeli bir konu dağılımı yap.
+5. Belirlenen kavramlar anlamsal olarak birbirini kapsamamalı (overlap olmamalı), metnin farklı ve bağımsız bölümlerini temsil eden 'ana duraklar' niteliğinde olmalıdır.
+6. 'seviye' alanını şu tanımlara göre belirle:
    - 'Bilgi': Tanım, kavram ve temel olgular.
    - 'Uygulama': Süreçler, yöntemler ve nasıl yapılır bilgisi.
    - 'Analiz': Neden-sonuç ilişkileri, kıyaslama ve çıkarımlar.
-5. 'odak' alanı 15 kelimeyi geçmemeli ve net bir öğrenme kazanımı belirtmelidir.
-6. Görsel Analizi: Çıktıdaki her objede 'gorsel' anahtarı mutlaka bulunmalıdır. Eğer ilgili görsel yoksa değeri kesinlikle null olmalıdır; anahtarı (key) asla silme veya atlama.
-7. Görsel varsa 'altText' alanına görselin teknik açıklamasını ekle.
-8. Her kavram için anahtar ismi olarak mutlaka 'baslik' kullanılmalıdır.
+7. 'odak' alanı 15 kelimeyi geçmemeli ve net bir öğrenme kazanımı belirtmelidir.
+8. Görsel Analizi: Çıktıdaki her objede 'gorsel' anahtarı mutlaka bulunmalıdır. Eğer ilgili görsel yoksa değeri kesinlikle null olmalıdır; anahtarı (key) asla silme veya atlama.
+9. Görsel varsa 'altText' alanına görselin teknik açıklamasını ekle.
+10. Her kavram için anahtar ismi olarak mutlaka 'baslik' kullanılmalıdır.
 
 **Difficulty Index (Bilişsel Zorluk Endeksi) Kılavuzu:**
 - 1: Giriş seviyesi, basit anlatım, hikaye tarzı (Örn: Tarih giriş)
@@ -55,7 +61,13 @@ Kurallar:
 Sadece saf JSON objesi döndür. Markdown bloğu (\`\`\`) veya giriş cümlesi ekleme.
 {
   "difficulty_index": 3, 
-  "concepts": [...]
+  "concepts": [...],
+  "quotas": {
+    "antrenman": number,
+    "arsiv": number,
+    "deneme": number
+  },
+  "reasoning": "Kotaları neden bu şekilde belirlediğinin kısa ve profesyonel gerekçesi."
 }`;
 
 export const GLOBAL_AI_SYSTEM_PROMPT =
@@ -184,7 +196,7 @@ ${optionsText}
 
 ---
 
-Yukarıdaki soruyu kaynak metne göre değerlendir ve JSON formatında puanla.`;
+Above the soruyu kaynak metne göre değerlendir ve JSON formatında puanla.`;
 }
 
 export function buildFollowUpTaskPrompt(

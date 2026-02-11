@@ -15,6 +15,7 @@ import {
   Loader2,
   TrendingUp,
   PartyPopper,
+  AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useQuiz } from '../../hooks/use-quiz';
@@ -107,7 +108,7 @@ export function QuizEngine({
     if (!state.isAnswered && sessionState.courseStats) {
       previousMasteryRef.current = sessionState.courseStats.averageMastery;
     }
-  }, [state.isAnswered, sessionState.courseStats?.averageMastery]);
+  }, [state.isAnswered, sessionState.courseStats]);
 
   // Initial mastery baseline fallback
   useEffect(() => {
@@ -279,6 +280,15 @@ export function QuizEngine({
       // 2. Local side effects
       if (!isCorrect && state.currentQuestion?.id) {
         incorrectIdsRef.current.push(state.currentQuestion.id);
+
+        // Waterfall Error Management
+        toast.info(
+          'Bu hata analiz edildi ve waterfall mantığıyla sonraki tekrar seanslarına (SRS) enjekte edildi. Lütfen konunun bu kısmını tekrar gözden geçir.',
+          {
+            duration: 5000,
+            icon: <AlertCircle className="w-5 h-5 text-amber-500" />,
+          }
+        );
       }
     },
     [selectAnswer, state]

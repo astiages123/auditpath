@@ -8,8 +8,6 @@
 import { supabase } from '@/shared/lib/core/supabase';
 import { type Database, type Json } from '@/shared/types/supabase';
 import { type ChunkMasteryRow } from '../core/types';
-import { calculateConceptBasedQuota } from '@/shared/lib/core/quota';
-import { getSubjectStrategy } from '../algoritma/strategy';
 
 // --- Types ---
 
@@ -552,11 +550,11 @@ export async function getChunkMetadata(
   chunkId: string
 ): Promise<Pick<
   NoteChunkRow,
-  'course_id' | 'metadata' | 'word_count' | 'status' | 'meaningful_word_count'
+  'course_id' | 'metadata' | 'word_count' | 'status'
 > | null> {
   const { data } = await supabase
     .from('note_chunks')
-    .select('course_id, metadata, word_count, status, meaningful_word_count')
+    .select('course_id, metadata, word_count, status')
     .eq('id', chunkId)
     .single();
   return data;
@@ -649,45 +647,51 @@ export async function getAntrenmanQuestionCount(
   return count || 0;
 }
 
-// --- Factory Support ---
-
-export async function getChunkWithContent(
-  chunkId: string
-): Promise<Pick<
-  NoteChunkRow,
-  | 'id'
-  | 'course_id'
-  | 'metadata'
-  | 'word_count'
-  | 'status'
-  | 'meaningful_word_count'
-  | 'content'
-  | 'display_content'
-  | 'course_name'
-  | 'section_title'
-> | null> {
+export async function getChunkWithContent(chunkId: string): Promise<
+  | (Pick<
+      NoteChunkRow,
+      | 'id'
+      | 'course_id'
+      | 'metadata'
+      | 'word_count'
+      | 'status'
+      | 'content'
+      | 'display_content'
+      | 'course_name'
+      | 'section_title'
+      | 'target_count'
+    > & {
+      ai_logic?: Record<string, unknown>;
+    })
+  | null
+> {
   const { data } = await supabase
     .from('note_chunks')
     .select(
-      'id, course_id, metadata, word_count, status, meaningful_word_count, content, display_content, course_name, section_title'
+      'id, course_id, metadata, word_count, status, content, display_content, course_name, section_title, ai_logic, target_count'
     )
     .eq('id', chunkId)
     .single();
-  return data as Pick<
-    NoteChunkRow,
-    | 'id'
-    | 'course_id'
-    | 'metadata'
-    | 'word_count'
-    | 'status'
-    | 'meaningful_word_count'
-    | 'content'
-    | 'display_content'
-    | 'course_name'
-    | 'section_title'
-  > | null;
-}
 
+  // Type assertion to handle new ai_logic column (will be resolved after migration)
+  return data as unknown as
+    | (Pick<
+        NoteChunkRow,
+        | 'id'
+        | 'course_id'
+        | 'metadata'
+        | 'word_count'
+        | 'status'
+        | 'content'
+        | 'display_content'
+        | 'course_name'
+        | 'section_title'
+        | 'target_count'
+      > & {
+        ai_logic?: Record<string, unknown>;
+      })
+    | null;
+}
 export async function updateChunkStatus(
   chunkId: string,
   status: Database['public']['Enums']['chunk_generation_status']
@@ -702,6 +706,26 @@ export async function updateChunkMetadata(chunkId: string, metadata: Json) {
   return await supabase
     .from('note_chunks')
     .update({ metadata })
+    .eq('id', chunkId);
+}
+
+export async function updateChunkAILogic(
+  chunkId: string,
+  aiLogic: {
+    reasoning: string;
+    suggested_quotas: { antrenman: number; arsiv: number; deneme: number };
+  },
+  targetCount?: number
+) {
+  const updateData: Record<string, unknown> = {
+    ai_logic: aiLogic,
+  };
+  if (targetCount !== undefined) {
+    updateData.target_count = targetCount;
+  }
+  return await supabase
+    .from('note_chunks')
+    .update(updateData)
     .eq('id', chunkId);
 }
 
@@ -732,13 +756,19 @@ export async function createQuestion(
   return await supabase.from('questions').insert(payload).select('id').single();
 }
 
+export async function createQuestions(
+  payloads: Database['public']['Tables']['questions']['Insert'][]
+) {
+  return await supabase.from('questions').insert(payloads).select('id');
+}
+
 // --- Quota & Status ---
 
 export async function getChunkQuotaStatus(chunkId: string) {
   const { data } = await supabase
     .from('note_chunks')
     .select(
-      'id, course_id, word_count, status, metadata, meaningful_word_count'
+      'id, course_id, word_count, status, metadata, ai_logic, target_count'
     )
     .eq('id', chunkId)
     .single();
@@ -746,32 +776,29 @@ export async function getChunkQuotaStatus(chunkId: string) {
   if (!data) return null;
 
   const metadata = (data.metadata as Record<string, Json>) || {};
+  const aiLogic = (data.ai_logic as Record<string, Json>) || {};
 
   // 1. Live Count (Database Source of Truth)
   const used = await getAntrenmanQuestionCount(chunkId);
 
-  // 2. Get Course & Strategy
-  // We need course name to determine importance
-  const courseName = await getCourseName(data.course_id);
-  const strategy = courseName ? getSubjectStrategy(courseName) : undefined;
-  const importance = strategy?.importance || 'medium';
+  // 2. Get AI quotas from ai_logic column (primary source)
+  const aiQuotas =
+    (aiLogic.suggested_quotas as {
+      antrenman?: number;
+      arsiv?: number;
+      deneme?: number;
+    }) || {};
 
-  // 3. Concept-based quota calculation
+  // 3. Fallback to target_count with %25 rule for legacy data
+  const legacyTargetCount = data.target_count;
+  const fallbackAntrenman = legacyTargetCount
+    ? Math.max(5, Math.ceil(legacyTargetCount * 0.25))
+    : 5;
+
+  // Use AI quotas if available, otherwise use fallback
+  const totalQuota = aiQuotas.antrenman ?? fallbackAntrenman;
+
   const concepts = (metadata.concept_map as { isException?: boolean }[]) || [];
-
-  let totalQuota = 0;
-
-  if (concepts.length === 0) {
-    // FALLBACK: Cold Start (No Map yet)
-    // Estimate: 1 question per 45 words, min 5.
-    // This is the "Antrenman" target for estimation.
-    totalQuota = Math.max(5, Math.round((data.word_count || 500) / 45));
-  } else {
-    // REAL: Knowledge Density Quota
-    const quotaResult = calculateConceptBasedQuota(concepts, importance);
-    // We target 'antrenman' quota specifically for this UI component
-    totalQuota = quotaResult.antrenman;
-  }
 
   return {
     used,
@@ -780,10 +807,7 @@ export async function getChunkQuotaStatus(chunkId: string) {
     conceptCount: concepts.length,
     isFull: used >= totalQuota,
     status: data.status || 'PENDING',
-    difficultyIndex: (metadata.difficulty_index ||
-      metadata.density_score ||
-      3) as number,
-    meaningfulWordCount: data.meaningful_word_count || 0,
+    difficultyIndex: (metadata.difficulty_index || 3) as number,
   };
 }
 

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const ConceptMapSchema = z.preprocess(
   (val: unknown) => {
-    const item = val as Record<string, any>;
+    const item = val as Record<string, unknown>;
     if (item && typeof item === 'object' && !item.baslik) {
       item.baslik = item.title || item.kavram || item.başlık || item.topic;
     }
@@ -40,6 +40,14 @@ export const ConceptMapResponseSchema = z.object({
     return Math.max(1, Math.min(5, isNaN(num) ? 3 : num));
   }, z.number().min(1).max(5).describe('Metnin bilişsel zorluk endeksi (1: Basit, 5: Çok Ağır Doktrin)')),
   concepts: z.array(ConceptMapSchema).nonempty(),
+  quotas: z.object({
+    antrenman: z.number().int().min(1).default(5),
+    arsiv: z.number().int().min(1).default(2),
+    deneme: z.number().int().min(1).default(2),
+  }),
+  reasoning: z
+    .string()
+    .describe('Kotaların belirlenme mantığı ve bilişsel doygunluk analizi'),
 });
 
 export const GeneratedQuestionSchema = z.object({
@@ -63,7 +71,7 @@ export const GeneratedQuestionSchema = z.object({
 
 export const ValidationResultSchema = z.preprocess(
   (data: unknown) => {
-    const item = data as Record<string, any>;
+    const item = data as Record<string, unknown>;
     if (item && typeof item === 'object') {
       // total_score alanı yoksa alternatif isimlere bak
       if (item.total_score === undefined) {

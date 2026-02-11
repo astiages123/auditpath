@@ -49,9 +49,7 @@ export const GlobalNavigation = memo(function GlobalNavigation({
   // Wait, if I filter only sequence_order === 0, then middle panel should probably show ALL content?
   // Yes, NotesPage usually renders all chunks. Global Nav navigates between them.
 
-  const navItems = chunks.filter(
-    (c) => c.sequence_order === 0 || c.sequence_order === undefined
-  );
+  const navItems = chunks;
 
   return (
     <nav className="h-full flex flex-col">
@@ -68,7 +66,6 @@ export const GlobalNavigation = memo(function GlobalNavigation({
           // DEBUG: Verify raw chunk data
           console.log(`GlobalNav Chunk ${index}:`, {
             title: chunk.section_title,
-            sequence: chunk.sequence_order,
           });
 
           // Use chunk.id if available, fallback to slugified title or index

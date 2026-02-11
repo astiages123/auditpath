@@ -207,7 +207,6 @@ export type Database = {
           sort_order: number | null;
           total_hours: number | null;
           total_videos: number | null;
-          exam_category: string | null;
         };
         Insert: {
           category_id?: string | null;
@@ -220,7 +219,6 @@ export type Database = {
           sort_order?: number | null;
           total_hours?: number | null;
           total_videos?: number | null;
-          exam_category?: string | null;
         };
         Update: {
           category_id?: string | null;
@@ -233,7 +231,6 @@ export type Database = {
           sort_order?: number | null;
           total_hours?: number | null;
           total_videos?: number | null;
-          exam_category?: string | null;
         };
         Relationships: [
           {
@@ -265,37 +262,33 @@ export type Database = {
       };
       note_chunks: {
         Row: {
+          ai_logic: Json | null;
           chunk_order: number;
           content: string;
           course_id: string;
           course_name: string;
           created_at: string | null;
-          density_score: number | null;
           display_content: string | null;
           id: string;
           last_synced_at: string | null;
-          meaningful_word_count: number | null;
           metadata: Json | null;
           section_title: string;
-          sequence_order: number;
           status: Database['public']['Enums']['chunk_generation_status'] | null;
           target_count: number | null;
           word_count: number | null;
         };
         Insert: {
+          ai_logic?: Json | null;
           chunk_order: number;
           content: string;
           course_id: string;
           course_name: string;
           created_at?: string | null;
-          density_score?: number | null;
           display_content?: string | null;
           id?: string;
           last_synced_at?: string | null;
-          meaningful_word_count?: number | null;
           metadata?: Json | null;
           section_title: string;
-          sequence_order?: number;
           status?:
             | Database['public']['Enums']['chunk_generation_status']
             | null;
@@ -303,19 +296,17 @@ export type Database = {
           word_count?: number | null;
         };
         Update: {
+          ai_logic?: Json | null;
           chunk_order?: number;
           content?: string;
           course_id?: string;
           course_name?: string;
           created_at?: string | null;
-          density_score?: number | null;
           display_content?: string | null;
           id?: string;
           last_synced_at?: string | null;
-          meaningful_word_count?: number | null;
           metadata?: Json | null;
           section_title?: string;
-          sequence_order?: number;
           status?:
             | Database['public']['Enums']['chunk_generation_status']
             | null;

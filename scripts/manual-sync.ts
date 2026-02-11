@@ -345,6 +345,7 @@ export function chunkContent(
  */
 async function processPage(
   page: PageObjectResponse,
+  index: number,
   courseLookupMap: Map<string, string>,
   existingChunksMap: Map<string, number>, // Key: `${courseId}:::${sectionTitle}`, Value: notion_last_edited_time timestamp from metadata
   touchedCourses: Set<string>,
@@ -402,9 +403,13 @@ async function processPage(
       : 'Untitled Section';
 
   // Order
-  let chunkOrder = 0;
-  if ('Sıra' in props && props.Sıra.type === 'number') {
-    chunkOrder = props.Sıra.number || 0;
+  let chunkOrder = index; // Default to query index if 'Sıra' is missing
+  if (
+    'Sıra' in props &&
+    props.Sıra.type === 'number' &&
+    props.Sıra.number !== null
+  ) {
+    chunkOrder = props.Sıra.number;
   }
 
   // --- TRACKING FOR CLEANUP ---
@@ -520,17 +525,14 @@ async function processPage(
           section_title: sectionTitle,
           content: chunkText,
           display_content: displayText, // New column
-          chunk_order: chunkOrder, // Page order
-          sequence_order: i, // Chunk index within page
+          chunk_order: chunkOrder, // Page order (rank from Notion or index)
           status: 'SYNCED',
-          density_score: densityData.density_score, // New column from Python
           word_count: densityData.word_count, // Updated word count from Python
-          meaningful_word_count: densityData.meaningful_word_count, // New column
           target_count: targetCount, // New column
           metadata: baseMetadata,
         } as Database['public']['Tables']['note_chunks']['Insert'],
         {
-          onConflict: 'course_id,section_title,sequence_order',
+          onConflict: 'course_id,section_title,chunk_order',
         }
       );
 
@@ -553,7 +555,7 @@ async function processPage(
         .delete()
         .eq('course_id', courseId)
         .eq('section_title', sectionTitle)
-        .gt('sequence_order', chunks.length - 1);
+        .neq('chunk_order', chunkOrder);
 
       if (cleanupError) {
         console.warn('Error cleaning up stale chunks:', cleanupError);
@@ -657,10 +659,11 @@ async function syncNotionToSupabase() {
   console.log('Starting parallel processing...');
   const limit = pLimit(5); // Aynı anda en fazla 5 sayfa işlensin
 
-  const promises = pages.map((page) =>
+  const promises = pages.map((page, index) =>
     limit(() =>
       processPage(
         page,
+        index,
         courseLookupMap,
         existingChunksMap,
         touchedCourses,

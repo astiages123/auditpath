@@ -18,7 +18,13 @@ vi.mock('@/features/quiz/api/repository', () => ({
   getUniqueSolvedCountInChunk: vi.fn(),
   upsertChunkMastery: vi.fn(),
   getQuestionData: vi.fn(),
-  getAttemptCount: vi.fn(), // If needed
+  getAttemptCount: vi.fn(),
+  fetchQuestionsByIds: vi.fn(),
+  getChunkWithContent: vi.fn(),
+  fetchQuestionsByStatus: vi.fn(),
+  fetchNewFollowups: vi.fn(),
+  fetchWaterfallTrainingQuestions: vi.fn(),
+  getFrontierChunkId: vi.fn(),
 }));
 
 // Mock Engine? No, we want to test Engine integration, so we keep Engine real.
@@ -30,6 +36,7 @@ describe('QuizEngine Integration (via useQuiz)', () => {
   const mockUserId = 'user-123';
   const mockCourseId = 'course-abc';
   const mockChunkId = 'chunk-xyz';
+  const mockCourseName = 'Test Course';
 
   const mockQuestions: QuizQuestion[] = [
     {
@@ -56,39 +63,76 @@ describe('QuizEngine Integration (via useQuiz)', () => {
     vi.clearAllMocks();
 
     // Setup default Repository mocks
+    vi.mocked(Repository.incrementCourseSession).mockResolvedValue({
+      data: { current_session: 1, is_new_session: true },
+      error: null,
+    } as unknown as {
+      data: { current_session: number; is_new_session: boolean };
+      error: null;
+    });
+    vi.mocked(Repository.getCourseName).mockResolvedValue(mockCourseName);
     vi.mocked(Repository.getChunkMetadata).mockResolvedValue({
       course_id: mockCourseId,
       metadata: {},
       word_count: 500,
       status: 'COMPLETED',
-      meaningful_word_count: 500,
     });
 
-    vi.mocked(Repository.incrementCourseSession).mockResolvedValue({
-      data: { current_session: 1, is_new_session: true },
-      error: null,
-    });
+    vi.mocked(Repository.getFrontierChunkId).mockResolvedValue(mockChunkId);
+    vi.mocked(Repository.fetchWaterfallTrainingQuestions).mockResolvedValue([
+      {
+        question_id: 'q1',
+        status: 'active',
+        questions: { id: 'q1', chunk_id: mockChunkId, question_data: {} },
+      },
+      {
+        question_id: 'q2',
+        status: 'active',
+        questions: { id: 'q2', chunk_id: mockChunkId, question_data: {} },
+      },
+    ] as unknown as Awaited<
+      ReturnType<typeof Repository.fetchWaterfallTrainingQuestions>
+    >);
 
-    vi.mocked(Repository.fetchQuestionsByChunk).mockResolvedValue(
-      mockQuestions.map((q) => ({
-        id: q.id!,
-        chunk_id: q.chunk_id!,
-        question_data: { q: q.q, o: q.o, a: q.a, exp: q.exp },
-        bloom_level: 'knowledge' as const,
+    vi.mocked(Repository.fetchQuestionsByIds).mockResolvedValue([
+      {
+        id: 'q1',
+        chunk_id: mockChunkId,
+        question_data: {
+          q: 'Question 1',
+          o: ['A', 'B', 'C', 'D', 'E'],
+          a: 0,
+          exp: 'Explanation 1',
+        },
+        bloom_level: 'knowledge',
         concept_title: 'Test Concept',
-      }))
-    );
+      },
+      {
+        id: 'q2',
+        chunk_id: mockChunkId,
+        question_data: {
+          q: 'Question 2',
+          o: ['A', 'B', 'C', 'D', 'E'],
+          a: 1,
+          exp: 'Explanation 2',
+        },
+        bloom_level: 'knowledge',
+        concept_title: 'Test Concept',
+      },
+    ] as unknown as Awaited<ReturnType<typeof Repository.fetchQuestionsByIds>>);
 
     // Engine.submitAnswer needs these
     vi.mocked(Repository.getUserQuestionStatus).mockResolvedValue(null);
     vi.mocked(Repository.getQuestionData).mockResolvedValue({
-      // For SRS tMax
       id: 'q1',
       chunk_id: mockChunkId,
-      question_data: {},
-      bloom_level: 'knowledge',
-      concept_title: 'Test Concept',
-    });
+      question_data: {
+        q: 'Question 1',
+        o: ['A', 'B', 'C', 'D', 'E'],
+        a: 0,
+        exp: 'Explanation 1',
+      },
+    } as unknown as Awaited<ReturnType<typeof Repository.getQuestionData>>);
     vi.mocked(Repository.getChunkMastery).mockResolvedValue({
       chunk_id: mockChunkId,
       mastery_score: 50,
@@ -97,6 +141,8 @@ describe('QuizEngine Integration (via useQuiz)', () => {
     });
     vi.mocked(Repository.getChunkQuestionCount).mockResolvedValue(10);
     vi.mocked(Repository.getUniqueSolvedCountInChunk).mockResolvedValue(5);
+    vi.mocked(Repository.fetchQuestionsByStatus).mockResolvedValue([]);
+    vi.mocked(Repository.fetchNewFollowups).mockResolvedValue([]);
   });
 
   describe('Session Initialization', () => {
@@ -117,11 +163,7 @@ describe('QuizEngine Integration (via useQuiz)', () => {
         mockUserId,
         mockCourseId
       );
-      expect(Repository.fetchQuestionsByChunk).toHaveBeenCalledWith(
-        mockChunkId,
-        5,
-        expect.any(Set)
-      );
+      expect(Repository.fetchQuestionsByIds).toHaveBeenCalled();
 
       expect(result.current.state.currentQuestion).toEqual(mockQuestions[0]);
       expect(result.current.state.queue).toHaveLength(1); // q2 remains

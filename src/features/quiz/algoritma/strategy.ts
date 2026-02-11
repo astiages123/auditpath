@@ -1,35 +1,35 @@
 import { type ConceptMapItem } from '../core/types';
 
 export interface ExamSubjectWeight {
-  examTotal: number;
   importance: 'high' | 'medium' | 'low';
+  examTotal?: number;
 }
 
 export const EXAM_STRATEGY: Record<string, ExamSubjectWeight> = {
-  'mikro-iktisat': { examTotal: 12, importance: 'high' },
-  'makro-iktisat': { examTotal: 10, importance: 'high' },
-  'para-banka-ve-kredi': { examTotal: 8, importance: 'high' },
-  'uluslararasi-ticaret': { examTotal: 4, importance: 'low' },
-  'turkiye-ekonomisi': { examTotal: 4, importance: 'low' },
-  'medeni-hukuk': { examTotal: 6, importance: 'medium' },
-  'borclar-hukuku': { examTotal: 6, importance: 'high' },
-  'ticaret-hukuku': { examTotal: 6, importance: 'high' },
-  'icra-ve-iflas-hukuku': { examTotal: 6, importance: 'medium' },
-  'turk-ceza-kanunu': { examTotal: 3, importance: 'low' },
-  'medeni-usul-hukuku': { examTotal: 3, importance: 'low' },
-  'is-hukuku': { examTotal: 2, importance: 'low' },
-  'bankacilik-hukuku': { examTotal: 8, importance: 'high' },
-  'genel-muhasebe': { examTotal: 25, importance: 'high' },
-  'maliye-teorisi': { examTotal: 8, importance: 'medium' },
-  'banka-muhasebesi': { examTotal: 5, importance: 'high' },
-  'isletme-yonetimi': { examTotal: 5, importance: 'low' },
-  'pazarlama-yonetimi': { examTotal: 4, importance: 'low' },
-  'finansal-yonetim': { examTotal: 10, importance: 'high' },
-  matematik: { examTotal: 30, importance: 'high' },
-  'finans-matematigi': { examTotal: 10, importance: 'high' },
-  istatistik: { examTotal: 6, importance: 'medium' },
-  ingilizce: { examTotal: 40, importance: 'high' },
-  'sozel-mantik': { examTotal: 4, importance: 'low' },
+  'mikro-iktisat': { importance: 'high' },
+  'makro-iktisat': { importance: 'high' },
+  'para-banka-ve-kredi': { importance: 'high' },
+  'uluslararasi-ticaret': { importance: 'low' },
+  'turkiye-ekonomisi': { importance: 'low' },
+  'medeni-hukuk': { importance: 'medium' },
+  'borclar-hukuku': { importance: 'high' },
+  'ticaret-hukuku': { importance: 'high' },
+  'icra-ve-iflas-hukuku': { importance: 'medium' },
+  'turk-ceza-kanunu': { importance: 'low' },
+  'medeni-usul-hukuku': { importance: 'low' },
+  'is-hukuku': { importance: 'low' },
+  'bankacilik-hukuku': { importance: 'high' },
+  'genel-muhasebe': { importance: 'high' },
+  'maliye-teorisi': { importance: 'medium' },
+  'banka-muhasebesi': { importance: 'high' },
+  'isletme-yonetimi': { importance: 'low' },
+  'pazarlama-yonetimi': { importance: 'low' },
+  'finansal-yonetim': { importance: 'high' },
+  matematik: { importance: 'high' },
+  'finans-matematigi': { importance: 'high' },
+  istatistik: { importance: 'medium' },
+  ingilizce: { importance: 'high' },
+  'sozel-mantik': { importance: 'low' },
 };
 
 export function getSubjectStrategy(

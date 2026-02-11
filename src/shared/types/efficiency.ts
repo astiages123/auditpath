@@ -1,5 +1,6 @@
 import { Json } from './supabase';
 import { Database } from './supabase';
+import { ConceptMapItem } from './quiz';
 
 export interface DailyStats {
   totalWorkMinutes: number;
@@ -76,13 +77,8 @@ export interface HistoryStats {
   video: number;
 }
 
-export type CourseTopic = Omit<
-  Database['public']['Tables']['note_chunks']['Row'],
-  'attempts' | 'error_message'
-> & {
+export type CourseTopic = Database['public']['Tables']['note_chunks']['Row'] & {
   questionCount?: number;
-  density_score?: number | null;
-  word_count?: number | null;
 };
 
 export interface TopicCompletionStats {
@@ -102,8 +98,17 @@ export interface TopicCompletionStats {
     srsDueCount: number;
   };
   mistakes: { solved: number; total: number; existing: number };
-  examTarget?: number;
   importance?: 'high' | 'medium' | 'low';
+  aiLogic?: {
+    reasoning: string;
+    suggested_quotas: {
+      antrenman: number;
+      arsiv: number;
+      deneme: number;
+    };
+  } | null;
+  concepts?: ConceptMapItem[] | null;
+  difficultyIndex?: number | null;
 }
 
 export interface TopicWithCounts {

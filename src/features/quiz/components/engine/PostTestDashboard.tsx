@@ -193,12 +193,14 @@ export function PostTestDashboard({
                     Önem: {strategy.importance.toUpperCase()}
                   </span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 text-zinc-500" />
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase">
-                    Soru Payı: %{Math.round((strategy.examTotal / 120) * 100)}
-                  </span>
-                </div>
+                {strategy.examTotal && (
+                  <div className="flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 text-zinc-500" />
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase">
+                      Soru Payı: %{Math.round((strategy.examTotal / 120) * 100)}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -1,16 +1,21 @@
 import { AIResponseMetadata, LogCallback, Message } from '@/shared/types/core';
 import {
   ConceptMapItem,
-  ConceptMapResult,
   QuizQuestion,
   QuizResponseType,
 } from '@/shared/types/quiz';
 
-export {
-  type ConceptMapItem,
-  type ConceptMapResult,
-  type QuizQuestion,
-  type QuizResponseType,
+export { type ConceptMapItem, type QuizQuestion, type QuizResponseType };
+
+export type ConceptMapResult = {
+  difficulty_index: number;
+  concepts: ConceptMapItem[];
+  quotas: {
+    antrenman: number;
+    arsiv: number;
+    deneme: number;
+  };
+  reasoning: string;
 };
 
 export interface ChunkMetadata {
@@ -43,7 +48,6 @@ export interface QuotaStatus {
   isFull: boolean;
   status: string; // "SYNCED" | "PROCESSING" | "COMPLETED" | "FAILED"
   difficultyIndex?: number;
-  meaningfulWordCount?: number;
 }
 
 // --- LLM Types ---

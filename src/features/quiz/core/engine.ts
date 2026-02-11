@@ -8,7 +8,7 @@
  */
 
 import * as Repository from '../api/repository';
-import * as SRS from '../algoritma/srs';
+
 import { DebugLogger } from './utils';
 import {
   type QuizResponseType,
@@ -378,7 +378,7 @@ export class ExamService {
           callbacks.onLog({
             id: crypto.randomUUID(),
             step: 'GENERATING',
-            message: `Eksik sorular üretiliyor: ${chunkId}`,
+            message: `Eksik sorular havuzdan tamamlanıyor: ${chunkId}`,
             details: {
               target: count,
               existing: existingDeneme.length,
@@ -401,7 +401,7 @@ export class ExamService {
             },
             {
               usageType: 'deneme',
-              targetCount: count,
+              targetCount: count - existingDeneme.length,
             }
           );
         }
@@ -427,6 +427,62 @@ export class ExamService {
       return { success: false, questionIds: [] };
     }
   }
+
+  static async fetchSmartExamFromPool(
+    courseId: string,
+    userId: string
+  ): Promise<{ success: boolean; questionIds: string[] } | null> {
+    const EXAM_TOTAL = 20;
+
+    try {
+      const chunks = await Repository.fetchCourseChunks(courseId);
+      const masteryRows = await Repository.fetchCourseMastery(courseId, userId);
+      const masteryMap = new Map(
+        masteryRows.map((m) => [m.chunk_id, m.mastery_score])
+      );
+
+      const metrics: ChunkMetric[] = chunks.map((c) => ({
+        id: c.id,
+        word_count: c.word_count || 500,
+        difficulty_index:
+          (c.metadata as unknown as ChunkMetadata)?.difficulty_index ||
+          (c.metadata as unknown as ChunkMetadata)?.density_score ||
+          3,
+        mastery_score: masteryMap.get(c.id) || 0,
+      }));
+
+      const weights = calculateQuestionWeights({
+        examTotal: EXAM_TOTAL,
+        importance: 'medium',
+        chunks: metrics,
+      });
+
+      const questionIds: string[] = [];
+      for (const [chunkId, count] of weights.entries()) {
+        if (count <= 0) continue;
+
+        const existingDeneme = await Repository.fetchGeneratedQuestions(
+          chunkId,
+          'deneme',
+          count
+        );
+
+        if (existingDeneme.length < count) {
+          // Pool insufficient for SAK balance
+          return null;
+        }
+        existingDeneme.forEach((q) => questionIds.push(q.id));
+      }
+
+      return {
+        success: true,
+        questionIds: questionIds.slice(0, EXAM_TOTAL),
+      };
+    } catch (error) {
+      console.error('Pool fetch error:', error);
+      return null;
+    }
+  }
 }
 
 // --- UI Helpers ---
@@ -445,6 +501,20 @@ export async function processBatchForUI(
   const promises = items.map(async (item) => {
     if (item.status === 'archived' && chunkId) {
       try {
+        // 1. Try to fetch from Pool
+        const pooledQs = await Repository.fetchGeneratedQuestions(
+          chunkId,
+          'arsiv',
+          5
+        );
+
+        if (pooledQs.length > 0) {
+          // Select a random one from pool
+          const randomQ = pooledQs[Math.floor(Math.random() * pooledQs.length)];
+          return randomQ.id;
+        }
+
+        // 2. Fallback to JIT generation
         const factory = new QuizFactory();
         const newId = await factory.generateArchiveRefresh(
           chunkId,

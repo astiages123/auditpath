@@ -28,7 +28,6 @@ export const useTableOfContents = ({
   mainContentRef,
   isProgrammaticScroll,
 }: UseTableOfContentsProps) => {
-  const [toc, setToc] = useState<ExtendedToCItem[]>([]);
   const [activeSection, setActiveSection] = useState<string>('');
 
   // 1. Active Section via IntersectionObserver
@@ -73,19 +72,17 @@ export const useTableOfContents = ({
     isProgrammaticScroll,
   ]);
 
-  // 2. Build Table of Contents
-  useEffect(() => {
-    if (chunks.length === 0) return;
+  // 2. Build Table of Contents (Computed via useMemo instead of useEffect+useState)
+  const toc = useMemo(() => {
+    if (chunks.length === 0) return [];
+
     const items: ExtendedToCItem[] = [];
 
     chunks.forEach((chunk) => {
       const chunkId = slugify(chunk.section_title);
 
       // Always add the chunk title itself as Level 1
-      if (
-        chunk.section_title &&
-        (chunk.sequence_order === 0 || chunk.sequence_order === undefined)
-      ) {
+      if (chunk.section_title) {
         items.push({
           id: chunkId,
           title: chunk.section_title,
@@ -126,10 +123,9 @@ export const useTableOfContents = ({
     });
 
     // Dedupe
-    const uniqueItems = items.filter(
+    return items.filter(
       (item, index, self) => index === self.findIndex((t) => t.id === item.id)
     );
-    setToc(uniqueItems);
   }, [chunks]);
 
   // 3. Derived filtered ToC for Right Panel

@@ -34,6 +34,7 @@ export {
 export {
   getBloomStats,
   getCourseIdBySlug,
+  getCoursePoolCount,
   getCourseTopics,
   getCourseTopicsWithCounts,
   getFirstChunkIdForTopic,

@@ -39,6 +39,7 @@ interface GenerateQuestionButtonProps {
     existing: number;
     quota: number;
   };
+  label?: string;
 }
 
 const stepIcons: Record<LogStep, React.ReactNode> = {
@@ -77,6 +78,7 @@ export function GenerateQuestionButton({
   onComplete,
   onOpenChange,
   externalStats,
+  label,
 }: GenerateQuestionButtonProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -224,9 +226,9 @@ export function GenerateQuestionButton({
       <DialogTrigger asChild>
         <Button
           variant="outline"
-          size="sm"
+          size="lg"
           disabled={isProcessing}
-          className="gap-2 text-xs border-dashed border-zinc-700 hover:border-zinc-500"
+          className="gap-2 text-sm border-dashed border-zinc-700 hover:border-zinc-500"
         >
           {isProcessing ? (
             <>
@@ -236,7 +238,7 @@ export function GenerateQuestionButton({
           ) : (
             <>
               <Sparkles className="w-3 h-3 text-yellow-500" />
-              Soru Üret
+              {label || 'Soru Üret'}
             </>
           )}
         </Button>

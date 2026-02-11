@@ -11,6 +11,7 @@ import type {
   TopicCompletionStats,
   TopicWithCounts,
 } from '@/shared/types/efficiency';
+import type { ConceptMapItem } from '@/shared/types/quiz';
 
 /**
  * Get a note chunk by ID.
@@ -60,11 +61,10 @@ export async function getCourseTopics(
   const { data: chunks, error: chunksError } = await supabase
     .from('note_chunks')
     .select(
-      'id, created_at, course_id, course_name, section_title, chunk_order, sequence_order, content, display_content, word_count, status, last_synced_at, metadata, density_score, meaningful_word_count, target_count'
+      'id, created_at, course_id, course_name, section_title, chunk_order, content, display_content, word_count, status, last_synced_at, metadata, target_count'
     )
     .eq('course_id', courseId)
-    .order('chunk_order', { ascending: true })
-    .order('sequence_order', { ascending: true });
+    .order('chunk_order', { ascending: true });
 
   if (chunksError) {
     console.error('Error fetching course topics:', chunksError);
@@ -75,10 +75,6 @@ export async function getCourseTopics(
 
   return chunks.map((c) => ({
     ...c,
-    density_score:
-      c.density_score ??
-      (c.metadata as { density_score?: number })?.density_score ??
-      null,
     questionCount: 0,
   })) as CourseTopic[];
 }
@@ -150,6 +146,30 @@ export async function getTopicQuestionCount(courseId: string, topic: string) {
 }
 
 /**
+ * Get the total number of questions in the pool for a course by usage type.
+ *
+ * @param courseId Course ID
+ * @param usageType Question usage type
+ * @returns Total count of questions in the pool
+ */
+export async function getCoursePoolCount(
+  courseId: string,
+  usageType: 'antrenman' | 'deneme' | 'arsiv'
+) {
+  const { count, error } = await supabase
+    .from('questions')
+    .select('*', { count: 'exact', head: true })
+    .eq('course_id', courseId)
+    .eq('usage_type', usageType);
+
+  if (error) {
+    console.error('Error fetching course pool count:', error);
+    return 0;
+  }
+  return count || 0;
+}
+
+/**
  * Get completion status for a specific topic.
  *
  * @param userId User ID
@@ -165,29 +185,51 @@ export async function getTopicCompletionStatus(
   // 1. Get Chunk Info
   const { data: chunk } = await supabase
     .from('note_chunks')
-    .select('id, course_name, word_count, metadata, target_count')
+    .select('id, course_name, word_count, metadata, target_count, ai_logic')
     .eq('course_id', courseId)
     .eq('section_title', topic)
     .limit(1)
     .maybeSingle();
 
   let quota = { total: 0, antrenman: 0, arsiv: 0, deneme: 0 };
-  let examTarget = 4;
   let importance: 'high' | 'medium' | 'low' = 'medium';
   let srsDueCount = 0;
+  let aiLogic: {
+    reasoning: string;
+    suggested_quotas: { antrenman: number; arsiv: number; deneme: number };
+  } | null = null;
+  let concepts: ConceptMapItem[] = [];
+  let difficultyIndex: number | null = null;
 
   if (chunk) {
-    // Strategy logic
+    // Strategy logic for AI briefing (importance only)
     const strategy = getSubjectStrategy(chunk.course_name);
     if (strategy) {
-      examTarget = strategy.examTotal;
       importance = strategy.importance;
     }
 
-    // Use target_count from database directly
-    const antrenman = chunk.target_count ?? 0;
-    const arsiv = Math.ceil(antrenman * 0.25);
-    const deneme = Math.ceil(antrenman * 0.25);
+    // AI logic from ai_logic column (primary source)
+    aiLogic =
+      (chunk.ai_logic as unknown as NonNullable<
+        TopicCompletionStats['aiLogic']
+      >) || null;
+    const aiQuotas = aiLogic?.suggested_quotas;
+
+    // Concepts and Difficulty from metadata
+    const metadata = (chunk.metadata as Record<string, unknown>) || {};
+    concepts = (metadata.concept_map as ConceptMapItem[]) || [];
+    difficultyIndex = (metadata.difficulty_index as number) || null;
+
+    // Fallback to target_count with %25 rule for legacy data
+    const legacyTargetCount = chunk.target_count;
+    const fallbackAntrenman = legacyTargetCount
+      ? Math.max(5, Math.ceil(legacyTargetCount * 0.25))
+      : 5;
+
+    // Use AI quotas if available, otherwise use fallback
+    const antrenman = aiQuotas?.antrenman ?? fallbackAntrenman;
+    const arsiv = aiQuotas?.arsiv ?? Math.max(1, Math.ceil(antrenman * 0.25));
+    const deneme = aiQuotas?.deneme ?? Math.max(1, Math.ceil(antrenman * 0.25));
 
     quota = {
       total: antrenman + arsiv + deneme,
@@ -238,7 +280,6 @@ export async function getTopicCompletionStatus(
         srsDueCount: 0,
       },
       mistakes: { solved: 0, total: 0, existing: 0 },
-      examTarget,
       importance,
     };
   }
@@ -326,7 +367,6 @@ export async function getTopicCompletionStatus(
         total: existingCounts.mistakes,
         existing: existingCounts.mistakes,
       },
-      examTarget,
       importance,
     };
   }
@@ -385,8 +425,10 @@ export async function getTopicCompletionStatus(
       total: mistakesTotal,
       existing: existingCounts.mistakes,
     },
-    examTarget,
     importance,
+    aiLogic,
+    concepts,
+    difficultyIndex,
   };
 }
 
@@ -407,8 +449,7 @@ export async function getCourseTopicsWithCounts(
     .from('note_chunks')
     .select('section_title, chunk_order')
     .eq('course_id', courseId)
-    .order('chunk_order', { ascending: true })
-    .order('sequence_order', { ascending: true });
+    .order('chunk_order', { ascending: true });
 
   if (chunksError) {
     console.error('Error fetching course topics:', chunksError);
