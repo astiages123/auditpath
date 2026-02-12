@@ -1,39 +1,46 @@
-export type SRStage = 0 | 1 | 2 | 3 | 4;
+import type { Json } from './supabase';
 
-export interface TopicProgress {
-  id: string;
-  user_id: string;
-  topic_id: string; // Refers to the pillar or sub-topic name/ID
-  course_id: string; // Foreign key to courses
-  mastery_level: number; // 0-100 probably, or linked to SRStage
-  sr_stage: SRStage; // 0=New, 1=1d, 2=3d, 3=10d, 4=30d, 5=50d(Graduate)
-  next_review_date: string; // ISO Date string
-  last_reviewed_date: string; // ISO Date string
-  is_cursed: boolean;
-  streak_count: number; // Consecutive correct answers
-  total_questions_answered: number;
-  created_at?: string;
-  updated_at?: string;
+export interface PomodoroInsert {
+  course_id: string;
+  course_name?: string | null;
+  started_at: string;
+  ended_at: string;
+  total_work_time?: number | null;
+  total_break_time?: number | null;
+  total_pause_time?: number | null;
+  timeline?: Json; // Matches Json type in DB
+  notes?: string;
 }
 
-export interface QuizStats {
-  id: string;
-  user_id: string;
-  quiz_id?: string; // Optional if we just track single question interactions not grouped by a 'Quiz' entity
+export interface VideoUpsert {
+  video_id: string;
+  course_id?: string;
+  completed?: boolean;
+  completed_at?: string | null;
+  progress_seconds?: number;
+  last_watched_at?: string;
+}
+
+export interface QuizInsert {
   question_id: string;
-  is_correct: boolean;
-  confidence_level: 'LOW' | 'MEDIUM' | 'HIGH'; // 🔴, 🟡, 🟢
-  response_time_ms: number;
-  created_at: string;
+  course_id: string;
+  chunk_id?: string | null;
+  is_correct?: boolean;
+  confidence_level?: 'LOW' | 'MEDIUM' | 'HIGH';
+  answered_at?: string | null;
+  response_time_ms?: number | null;
+  response_type: 'correct' | 'incorrect' | 'blank';
+  session_number: number;
+  ai_diagnosis?: string | null;
+  ai_insight?: string | null;
 }
 
-export type QuizResponse = 'FAIL' | 'DOUBT' | 'SUCCESS'; // 🔴, 🟡, 🟢
+export type ActivityData = PomodoroInsert | VideoUpsert | QuizInsert;
 
-export interface LearningEngineParams {
-  userId: string;
-  courseId: string;
-  topicId: string; // The specific concept/pillar
-  questionId: string;
-  result: QuizResponse;
-  isVaka?: boolean; // Is this a case study question? (For Fast Travel)
+export interface RecentActivity {
+  id: string;
+  type: 'pomodoro' | 'video' | 'quiz';
+  title: string;
+  date: string;
+  durationMinutes?: number;
 }

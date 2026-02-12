@@ -46,6 +46,7 @@ export class AnalysisTask extends BaseTask<
       provider: 'google',
       model: 'gemini-2.5-flash',
       usageType: 'analysis',
+      maxTokens: 8192,
       onLog: (msg: string, details?: Record<string, unknown>) => {
         this.log(context, msg, details);
         if (msg.includes('Bilişsel analiz ve kotalar başarıyla kaydedildi')) {

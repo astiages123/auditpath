@@ -100,7 +100,6 @@ export interface TopicCompletionStats {
   mistakes: { solved: number; total: number; existing: number };
   importance?: 'high' | 'medium' | 'low';
   aiLogic?: {
-    reasoning: string;
     suggested_quotas: {
       antrenman: number;
       arsiv: number;

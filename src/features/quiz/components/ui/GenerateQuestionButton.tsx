@@ -14,7 +14,6 @@ import {
   Loader2,
   Sparkles,
   Box,
-  ScrollText,
   CheckCircle,
   AlertCircle,
   Brain,
@@ -298,16 +297,7 @@ export function GenerateQuestionButton({
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-xl bg-muted/50 p-6 flex flex-col items-center justify-center gap-2 border border-border/50">
-                <ScrollText className="w-6 h-6 text-blue-500 mb-1" />
-                <span className="text-muted-foreground text-sm font-medium">
-                  Anlamlı Kelime
-                </span>
-                <span className="font-mono text-foreground text-3xl font-bold tracking-tight">
-                  {status.wordCount}
-                </span>
-              </div>
+            <div className="grid grid-cols-1 gap-4">
               <div className="rounded-xl bg-muted/50 p-6 flex flex-col items-center justify-center gap-2 border border-border/50">
                 <Brain className="w-6 h-6 text-purple-500 mb-1" />
                 <span className="text-muted-foreground text-sm font-medium">

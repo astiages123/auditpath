@@ -22,7 +22,7 @@ export function calculateQuizResult(
     chunk_id: string | null;
   } | null,
   chunkMetadata: {
-    word_count: number | null;
+    content: string | null;
     metadata: ChunkMetadata | null;
   } | null,
   masteryData: {
@@ -40,17 +40,13 @@ export function calculateQuizResult(
   // 1. Determine if "Fast" (DTS)
   let isFast = timeSpentMs < 30000; // Fallback
   if (questionData && chunkMetadata) {
-    const wordCount = chunkMetadata.word_count || 300;
+    const contentLength = chunkMetadata.content?.length || 0;
     const metadata = chunkMetadata.metadata || {};
-    const difficultyIndex =
-      metadata.difficulty_index ?? metadata.density_score ?? 3;
-
-    // densityCoeff mapping: 1->1.2, 3->1.0, 5->0.8
-    const densityCoeff = 1.3 - difficultyIndex * 0.1;
+    const conceptCount = metadata.concept_map?.length || 5;
 
     const bloomLevel =
       (questionData.bloom_level as SRS.BloomLevel) || 'knowledge';
-    const tMaxMs = SRS.calculateTMax(wordCount, densityCoeff, bloomLevel);
+    const tMaxMs = SRS.calculateTMax(contentLength, conceptCount, bloomLevel);
 
     isFast = timeSpentMs <= tMaxMs;
   }

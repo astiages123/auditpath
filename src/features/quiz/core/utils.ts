@@ -3,9 +3,10 @@ import type { AIResponse, LLMProvider, Message } from './types';
 import { UnifiedLLMClient } from '../api/client';
 import { rateLimiter } from '../api/rate-limit';
 import { COMMON_OUTPUT_FORMATS, GENERAL_QUALITY_RULES } from './prompts';
+import { env } from '@/config/env';
 
 export class DebugLogger {
-  private static isEnabled = true; // Use true since import.meta.env.DEV might not be available in all envs, or use a safe check.
+  private static isEnabled = env.app.isDev;
 
   private static styles = {
     group: 'color: #3b82f6; font-weight: bold;', // blue-500
@@ -227,6 +228,7 @@ export function parseJsonResponse(
 
 export interface StructuredOptions<T> {
   schema: z.ZodSchema<T>;
+  maxTokens?: number;
   provider: LLMProvider;
   temperature?: number;
   maxRetries?: number;
@@ -274,6 +276,7 @@ export class StructuredGenerator {
               model: options.model,
               temperature: options.temperature ?? 0.1,
               usageType: options.usageType,
+              maxTokens: options.maxTokens,
               onLog,
             }),
           provider

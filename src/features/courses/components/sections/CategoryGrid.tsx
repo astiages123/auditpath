@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import { CategoryCard } from '../ui/CategoryCard';
 import { type Category } from '@/shared/types/courses';

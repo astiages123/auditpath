@@ -1,5 +1,3 @@
-'use client';
-
 import { cn } from '@/shared/lib/core/utils';
 import { memo } from 'react';
 import { ToCTitleRenderer } from './ToCTitleRenderer';

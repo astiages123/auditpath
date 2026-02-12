@@ -26,6 +26,14 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       '@typescript-eslint/no-explicit-any': 'error',
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'TSAsExpression[typeAnnotation.type="TSUnknownKeyword"]',
+          message:
+            'Avoid "as unknown as" assertions. Use runtime validation (Zod) instead.',
+        },
+      ],
     },
   },
   eslintConfigPrettier

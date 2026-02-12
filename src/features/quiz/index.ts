@@ -3,7 +3,7 @@
  */
 
 // Essential Public Components
-export { QuizModal } from './components/modals/QuizModal';
+export { QuizModal } from './components/modal/QuizModal';
 export { QuizSessionProvider } from './components/contexts/QuizSessionProvider';
 
 // Essential Hooks

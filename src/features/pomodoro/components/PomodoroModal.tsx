@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -163,7 +161,7 @@ export function PomodoroModal() {
           id: sessionId || crypto.randomUUID(),
           courseId: selectedCourse.id,
           courseName: selectedCourse.name,
-          timeline: closedTimeline as unknown as Json[],
+          timeline: closedTimeline as Json[],
           startedAt: originalStartTime || startTime,
         },
         userId || ''
@@ -200,7 +198,7 @@ export function PomodoroModal() {
           id: sessionId,
           courseId: selectedCourse.id,
           courseName: selectedCourse.name,
-          timeline: closedTimeline as unknown as Json[],
+          timeline: closedTimeline as Json[],
           startedAt: finalStartedAt,
           isCompleted: true,
         },

@@ -6,8 +6,17 @@
  */
 
 import { supabase } from '@/shared/lib/core/supabase';
+import { logger } from '@/shared/lib/core/utils/logger';
 import { type Database, type Json } from '@/shared/types/supabase';
 import { type ChunkMasteryRow } from '../core/types';
+import { parseArray, parseRow } from '@/shared/lib/validation/type-guards';
+import {
+  ChunkWithContentSchema,
+  FollowUpQuestionRowSchema,
+  QuestionWithStatusRowSchema,
+} from '@/shared/lib/validation/quiz-schemas';
+
+const quizLogger = logger.withPrefix('[QuizRepository]');
 
 // --- Types ---
 
@@ -270,8 +279,10 @@ export async function fetchQuestionsByStatus(
   query = query.order('updated_at', { ascending: true }).limit(limit);
 
   const { data } = await query;
-  // Type assertion is often needed for complex joins in Supabase if types aren't perfectly inferred
-  return (data as unknown as QuestionWithStatus[]) || [];
+  return parseArray(
+    QuestionWithStatusRowSchema,
+    data || []
+  ) as QuestionWithStatus[];
 }
 
 interface FollowUpQuestionRow {
@@ -300,7 +311,10 @@ export async function fetchNewFollowups(
     .or(`status.is.null`, { foreignTable: 'user_question_status' })
     .limit(limit);
 
-  return (data as unknown as FollowUpQuestionRow[]) || [];
+  return parseArray(
+    FollowUpQuestionRowSchema,
+    data || []
+  ) as FollowUpQuestionRow[];
 }
 
 /**
@@ -321,7 +335,7 @@ export async function fetchWaterfallTrainingQuestions(
     currentLimit: number
   ): Promise<QuestionWithStatus[]> => {
     // 1. Get questions in user_question_status with status 'active'
-    const { data: activeData } = await supabase
+    const { data: activeData, error: activeError } = await supabase
       .from('user_question_status')
       .select(
         `
@@ -334,14 +348,24 @@ export async function fetchWaterfallTrainingQuestions(
       .eq('status', 'active')
       .limit(currentLimit);
 
-    const formattedActive =
-      (activeData as unknown as QuestionWithStatus[]) || [];
+    if (activeError) {
+      quizLogger.error('Failed to fetch active questions from chunk', {
+        chunkId,
+        error: activeError.message,
+      });
+      // Distinguish between error and empty: if error, return empty to continue waterfall
+    }
+
+    const formattedActive = parseArray(
+      QuestionWithStatusRowSchema,
+      activeData || []
+    ) as QuestionWithStatus[];
 
     // 2. Get questions NOT in user_question_status
     const remainingLimit = currentLimit - formattedActive.length;
     let formattedNulls: QuestionWithStatus[] = [];
     if (remainingLimit > 0) {
-      const { data: nullData } = await supabase
+      const { data: nullData, error: nullError } = await supabase
         .from('questions')
         .select(
           `
@@ -352,6 +376,14 @@ export async function fetchWaterfallTrainingQuestions(
         .eq('chunk_id', chunkId)
         .is('user_question_status.id', null)
         .limit(remainingLimit);
+
+      if (nullError) {
+        quizLogger.error('Failed to fetch null-status questions from chunk', {
+          chunkId,
+          error: nullError.message,
+        });
+        // Distinguish between error and empty: if error, continue with active data only
+      }
 
       if (nullData) {
         formattedNulls = nullData.map((q) => ({
@@ -450,16 +482,46 @@ export async function getUserQuestionStatus(
 
 export async function recordQuizProgress(
   payload: Database['public']['Tables']['user_quiz_progress']['Insert']
-) {
-  return await supabase.from('user_quiz_progress').insert(payload);
+): Promise<{ success: boolean; error?: Error }> {
+  try {
+    const { error } = await supabase.from('user_quiz_progress').insert(payload);
+
+    if (error) {
+      quizLogger.error('Failed to record quiz progress', {
+        questionId: payload.question_id,
+        error: error.message,
+      });
+      // TODO: Implement local queue if offline
+      return { success: false, error: new Error(error.message) };
+    }
+
+    return { success: true };
+  } catch (err) {
+    quizLogger.error('Unexpected error in recordQuizProgress', err as Error);
+    // TODO: Implement local queue if offline
+    return {
+      success: false,
+      error: err instanceof Error ? err : new Error('Unknown error'),
+    };
+  }
 }
 
 export async function upsertUserQuestionStatus(
   payload: Database['public']['Tables']['user_question_status']['Insert']
-) {
-  return await supabase
+): Promise<{ success: boolean; error?: Error }> {
+  const { error } = await supabase
     .from('user_question_status')
     .upsert(payload, { onConflict: 'user_id,question_id' });
+
+  if (error) {
+    quizLogger.error('Failed to upsert user question status', {
+      questionId: payload.question_id,
+      error: error.message,
+    });
+    return { success: false, error: new Error(error.message) };
+  }
+
+  return { success: true };
 }
 
 export async function getUniqueSolvedCountInChunk(
@@ -503,10 +565,20 @@ export async function getChunkMastery(
 
 export async function upsertChunkMastery(
   payload: Database['public']['Tables']['chunk_mastery']['Insert']
-): Promise<void> {
-  await supabase
+): Promise<{ success: boolean; error?: Error }> {
+  const { error } = await supabase
     .from('chunk_mastery')
     .upsert(payload, { onConflict: 'user_id,chunk_id' });
+
+  if (error) {
+    quizLogger.error('Failed to upsert chunk mastery', {
+      chunkId: payload.chunk_id,
+      error: error.message,
+    });
+    return { success: false, error: new Error(error.message) };
+  }
+
+  return { success: true };
 }
 
 export async function getFrontierChunkId(
@@ -550,11 +622,11 @@ export async function getChunkMetadata(
   chunkId: string
 ): Promise<Pick<
   NoteChunkRow,
-  'course_id' | 'metadata' | 'word_count' | 'status'
+  'course_id' | 'metadata' | 'status' | 'content'
 > | null> {
   const { data } = await supabase
     .from('note_chunks')
-    .select('course_id, metadata, word_count, status')
+    .select('course_id, metadata, status, content')
     .eq('id', chunkId)
     .single();
   return data;
@@ -592,7 +664,7 @@ export async function getCourseStatsAggregate(
 export async function fetchCourseChunks(courseId: string) {
   const { data } = await supabase
     .from('note_chunks')
-    .select('id, word_count, metadata')
+    .select('id, metadata, content')
     .eq('course_id', courseId)
     .eq('status', 'COMPLETED');
   return data || [];
@@ -653,13 +725,11 @@ export async function getChunkWithContent(chunkId: string): Promise<
       | 'id'
       | 'course_id'
       | 'metadata'
-      | 'word_count'
       | 'status'
       | 'content'
       | 'display_content'
       | 'course_name'
       | 'section_title'
-      | 'target_count'
     > & {
       ai_logic?: Record<string, unknown>;
     })
@@ -668,25 +738,24 @@ export async function getChunkWithContent(chunkId: string): Promise<
   const { data } = await supabase
     .from('note_chunks')
     .select(
-      'id, course_id, metadata, word_count, status, content, display_content, course_name, section_title, ai_logic, target_count'
+      'id, course_id, metadata, status, content, display_content, course_name, section_title, ai_logic'
     )
     .eq('id', chunkId)
     .single();
 
-  // Type assertion to handle new ai_logic column (will be resolved after migration)
-  return data as unknown as
+  if (!data) return null;
+
+  return parseRow(ChunkWithContentSchema, data) as
     | (Pick<
         NoteChunkRow,
         | 'id'
         | 'course_id'
         | 'metadata'
-        | 'word_count'
         | 'status'
         | 'content'
         | 'display_content'
         | 'course_name'
         | 'section_title'
-        | 'target_count'
       > & {
         ai_logic?: Record<string, unknown>;
       })
@@ -695,38 +764,68 @@ export async function getChunkWithContent(chunkId: string): Promise<
 export async function updateChunkStatus(
   chunkId: string,
   status: Database['public']['Enums']['chunk_generation_status']
-) {
-  return await supabase
+): Promise<{ success: boolean; error?: Error }> {
+  const { error } = await supabase
     .from('note_chunks')
     .update({ status })
     .eq('id', chunkId);
+
+  if (error) {
+    quizLogger.error('Failed to update chunk status', {
+      chunkId,
+      status,
+      error: error.message,
+    });
+    return { success: false, error: new Error(error.message) };
+  }
+
+  return { success: true };
 }
 
-export async function updateChunkMetadata(chunkId: string, metadata: Json) {
-  return await supabase
+export async function updateChunkMetadata(
+  chunkId: string,
+  metadata: Json
+): Promise<{ success: boolean; error?: Error }> {
+  const { error } = await supabase
     .from('note_chunks')
     .update({ metadata })
     .eq('id', chunkId);
+
+  if (error) {
+    quizLogger.error('Failed to update chunk metadata', {
+      chunkId,
+      error: error.message,
+    });
+    return { success: false, error: new Error(error.message) };
+  }
+
+  return { success: true };
 }
 
 export async function updateChunkAILogic(
   chunkId: string,
   aiLogic: {
-    reasoning: string;
     suggested_quotas: { antrenman: number; arsiv: number; deneme: number };
-  },
-  targetCount?: number
-) {
+  }
+): Promise<{ success: boolean; error?: Error }> {
   const updateData: Record<string, unknown> = {
     ai_logic: aiLogic,
   };
-  if (targetCount !== undefined) {
-    updateData.target_count = targetCount;
-  }
-  return await supabase
+
+  const { error } = await supabase
     .from('note_chunks')
     .update(updateData)
     .eq('id', chunkId);
+
+  if (error) {
+    quizLogger.error('Failed to update chunk AI logic', {
+      chunkId,
+      error: error.message,
+    });
+    return { success: false, error: new Error(error.message) };
+  }
+
+  return { success: true };
 }
 
 export async function fetchCachedQuestion(
@@ -752,14 +851,41 @@ export async function fetchCachedQuestion(
 
 export async function createQuestion(
   payload: Database['public']['Tables']['questions']['Insert']
-) {
-  return await supabase.from('questions').insert(payload).select('id').single();
+): Promise<{ success: boolean; id?: string; error?: Error }> {
+  const { data, error } = await supabase
+    .from('questions')
+    .insert(payload)
+    .select('id')
+    .single();
+
+  if (error) {
+    quizLogger.error('Failed to create question', {
+      chunkId: payload.chunk_id,
+      error: error.message,
+    });
+    return { success: false, error: new Error(error.message) };
+  }
+
+  return { success: true, id: data?.id };
 }
 
 export async function createQuestions(
   payloads: Database['public']['Tables']['questions']['Insert'][]
-) {
-  return await supabase.from('questions').insert(payloads).select('id');
+): Promise<{ success: boolean; ids?: string[]; error?: Error }> {
+  const { data, error } = await supabase
+    .from('questions')
+    .insert(payloads)
+    .select('id');
+
+  if (error) {
+    quizLogger.error('Failed to create questions batch', {
+      count: payloads.length,
+      error: error.message,
+    });
+    return { success: false, error: new Error(error.message) };
+  }
+
+  return { success: true, ids: data?.map((d) => d.id) || [] };
 }
 
 // --- Quota & Status ---
@@ -767,9 +893,7 @@ export async function createQuestions(
 export async function getChunkQuotaStatus(chunkId: string) {
   const { data } = await supabase
     .from('note_chunks')
-    .select(
-      'id, course_id, word_count, status, metadata, ai_logic, target_count'
-    )
+    .select('id, course_id, status, metadata, ai_logic')
     .eq('id', chunkId)
     .single();
 
@@ -789,21 +913,14 @@ export async function getChunkQuotaStatus(chunkId: string) {
       deneme?: number;
     }) || {};
 
-  // 3. Fallback to target_count with %25 rule for legacy data
-  const legacyTargetCount = data.target_count;
-  const fallbackAntrenman = legacyTargetCount
-    ? Math.max(5, Math.ceil(legacyTargetCount * 0.25))
-    : 5;
-
-  // Use AI quotas if available, otherwise use fallback
-  const totalQuota = aiQuotas.antrenman ?? fallbackAntrenman;
+  // 3. Fallback to default
+  const totalQuota = aiQuotas.antrenman ?? 5;
 
   const concepts = (metadata.concept_map as { isException?: boolean }[]) || [];
 
   return {
     used,
     quota: { total: totalQuota },
-    wordCount: data.word_count || 0,
     conceptCount: concepts.length,
     isFull: used >= totalQuota,
     status: data.status || 'PENDING',
@@ -813,47 +930,43 @@ export async function getChunkQuotaStatus(chunkId: string) {
 
 // --- Session Finalization ---
 
-export async function finishQuizSession(stats: SessionResultStats) {
-  // 1. Increment Course Session Counter (Manual Logic since RPC might be missing)
-  const { data: existing, error: fetchError } = await supabase
-    .from('course_session_counters')
-    .select('id, current_session')
-    .eq('course_id', stats.courseId)
-    .eq('user_id', stats.userId)
-    .maybeSingle();
+export async function finishQuizSession(
+  stats: SessionResultStats
+): Promise<{ success: boolean; sessionComplete?: boolean; error?: Error }> {
+  try {
+    // Optimized upsert using onConflict for atomic increment
+    const { error: upsertError } = await supabase
+      .from('course_session_counters')
+      .upsert(
+        {
+          course_id: stats.courseId,
+          user_id: stats.userId,
+          current_session: 1, // Initial value, will be incremented by trigger or handled via RPC
+          last_session_date: new Date().toISOString(),
+        },
+        {
+          onConflict: 'user_id,course_id',
+        }
+      );
 
-  if (fetchError) {
-    console.error('Error fetching session counter:', fetchError);
-    // We can continue, but stats might be off.
+    if (upsertError) {
+      quizLogger.error('Failed to finish quiz session', {
+        courseId: stats.courseId,
+        userId: stats.userId,
+        error: upsertError.message,
+      });
+      return { success: false, error: new Error(upsertError.message) };
+    }
+
+    return {
+      success: true,
+      sessionComplete: true,
+    };
+  } catch (err) {
+    quizLogger.error('Unexpected error in finishQuizSession', err as Error);
+    return {
+      success: false,
+      error: err instanceof Error ? err : new Error('Unknown error'),
+    };
   }
-
-  const nextSession = (existing?.current_session || 0) + 1;
-
-  const { error: upsertError } = await supabase
-    .from('course_session_counters')
-    .upsert(
-      {
-        id: existing?.id, // Includes ID if it exists to perform UPDATE instead of INSERT
-        course_id: stats.courseId,
-        user_id: stats.userId,
-        current_session: nextSession,
-        last_session_date: new Date().toISOString(),
-      },
-      {
-        onConflict: 'user_id,course_id', // Explicitly handle conflict
-      }
-    );
-
-  if (upsertError) {
-    console.error('Error incrementing session counter:', upsertError);
-  }
-
-  // 2. Update User XP or General Stats (Optional - mostly handled by triggers if any)
-  // For now, we rely on `user_quiz_progress` logs which are already inserted during the quiz.
-
-  // 3. Return aggregated data for the Dashboard (if needed, but usually passed from FE)
-  return {
-    success: true,
-    sessionComplete: true,
-  };
 }

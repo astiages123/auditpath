@@ -1,6 +1,7 @@
 import { env } from '@/config/env';
 import * as Repository from './repository';
 import { rateLimiter } from './rate-limit';
+import { logger } from '@/shared/lib/core/utils/logger';
 import {
   type AIResponse,
   type LLMProvider,
@@ -28,7 +29,7 @@ export class UnifiedLLMClient {
       provider,
       model,
       temperature = 0.3,
-      maxTokens = 4096,
+      maxTokens = 8192,
       usageType,
       onLog,
     } = options;
@@ -47,7 +48,7 @@ export class UnifiedLLMClient {
       .find((m) => m.role === 'user');
     const contextLength = lastUserMessage?.content.length || 0;
 
-    console.log(`[${provider}] 🚀 İstek başlatılıyor (Proxy)...`);
+    logger.info(`[${provider}] İstek başlatılıyor (Proxy)...`);
     onLog?.(`${provider} API çağrısı başlatılıyor...`, {
       promptLength: contextLength,
       model: effectiveModel,
@@ -84,10 +85,13 @@ export class UnifiedLLMClient {
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`[${provider} Proxy] ❌ API Hatası: ${response.status}`);
+        logger.error(`[${provider} Proxy] API Hatası: ${response.status}`, {
+          status: response.status,
+          // Don't log full errorText to prevent sensitive data leakage
+        });
         onLog?.(`${provider} API hatası`, {
           status: response.status,
-          body: errorText,
+          body: '[REDACTED FOR SECURITY]',
         });
         throw new Error(
           `${provider} API Hatası (${response.status}): ${errorText}`
@@ -109,10 +113,7 @@ export class UnifiedLLMClient {
       const cachedTokens = usageRaw?.prompt_tokens_details?.cached_tokens || 0;
 
       if (cachedTokens > 0) {
-        console.log(
-          `%c[AI Cache] Hit: ${cachedTokens} tokens`,
-          'color: #00ff00; font-weight: bold'
-        );
+        logger.debug(`[AI Cache] Hit: ${cachedTokens} tokens`);
       }
 
       onLog?.(`${provider} API yanıtı alındı`, {
@@ -134,7 +135,7 @@ export class UnifiedLLMClient {
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.error(`[${provider}] ❌ İstek hatası: ${errorMsg}`);
+      logger.error(`[${provider}] İstek hatası`, new Error(errorMsg));
       throw error;
     }
   }

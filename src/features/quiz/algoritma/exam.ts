@@ -12,7 +12,7 @@ export interface ExamSubjectWeight {
 
 export interface ChunkMetric {
   id: string;
-  word_count: number;
+  concept_count: number;
   difficulty_index: number;
   mastery_score: number;
 }
@@ -38,7 +38,7 @@ export function calculateQuestionWeights(
   const importanceScore =
     importance === 'high' ? 1.0 : importance === 'medium' ? 0.7 : 0.4;
 
-  const maxWordCount = Math.max(...chunks.map((c) => c.word_count), 1);
+  const maxConceptCount = Math.max(...chunks.map((c) => c.concept_count), 1);
 
   const chunkWeights = chunks.map((chunk) => {
     const normalizedMastery = Math.min(
@@ -46,7 +46,7 @@ export function calculateQuestionWeights(
       1
     );
     const masteryFactor = 1.0 - normalizedMastery;
-    const lengthFactor = chunk.word_count / maxWordCount;
+    const lengthFactor = chunk.concept_count / maxConceptCount;
     const difficulty = chunk.difficulty_index || 3;
     // Normalize 1-5 scale to 0-1 for weights
     const densityFactor = (difficulty - 1) / 4;

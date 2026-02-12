@@ -1,5 +1,5 @@
 import { supabase } from '@/shared/lib/core/supabase';
-import type { Database, Json } from '@/shared/types/supabase';
+import type { Json } from '@/shared/types/supabase';
 import {
   calculateFocusPower,
   calculatePauseCount,
@@ -7,6 +7,11 @@ import {
   getCycleCount,
 } from '@/shared/lib/core/utils/efficiency-math';
 import type { RecentSession, TimelineBlock } from '@/shared/types/efficiency';
+import {
+  TimelineEventSchema,
+  type ValidatedTimelineEvent,
+} from '@/shared/lib/validation/quiz-schemas';
+import { isValid, parseOrThrow } from '@/shared/lib/validation/type-guards';
 
 /**
  * Create or update a pomodoro session.
@@ -211,24 +216,25 @@ export async function getRecentSessions(
   }
 
   return (
-    data as Database['public']['Tables']['pomodoro_sessions']['Row'][]
+    data as {
+      id: string;
+      course_name: string | null;
+      started_at: string;
+      ended_at: string;
+      total_work_time: number | null;
+      total_break_time: number | null;
+      total_pause_time: number | null;
+      timeline: Json;
+    }[]
   ).map((s) => {
     // Trust DB columns as the primary source of truth for finished sessions to match getDailyStats
     const workTime = s.total_work_time || 0;
     const breakTime = s.total_break_time || 0;
     const pauseTime = s.total_pause_time || 0;
 
-    // Define a local interface or usage based type for timeline events
-    // to avoid 'any' usage.
-    interface TimelineEvent {
-      start?: number;
-      end?: number;
-      [key: string]: Json | undefined;
-    }
-
-    let timeline: TimelineEvent[] = [];
+    let timeline: Json[] = [];
     if (Array.isArray(s.timeline)) {
-      timeline = s.timeline as unknown as TimelineEvent[];
+      timeline = s.timeline;
     } else if (typeof s.timeline === 'string') {
       try {
         timeline = JSON.parse(s.timeline);
@@ -237,29 +243,22 @@ export async function getRecentSessions(
       }
     }
 
+    const validatedTimeline = timeline
+      .map((e) =>
+        isValid(TimelineEventSchema, e)
+          ? parseOrThrow(TimelineEventSchema, e)
+          : null
+      )
+      .filter((e): e is ValidatedTimelineEvent => e !== null);
+
     // Calculate true start/end from timeline if possible to avoid scaling issues in Gantt Chart
     // especially when session was paused and resumed (which updates started_at)
     let startTime = s.started_at;
     let endTime = s.ended_at;
 
-    if (timeline.length > 0) {
-      const tStart = Math.min(
-        ...timeline
-          .filter(
-            (e): e is TimelineEvent & { start: number } =>
-              typeof e?.start === 'number'
-          )
-          .map((e) => e.start)
-      );
-      const tEnd = Math.max(
-        ...timeline
-          .filter(
-            (e): e is TimelineEvent & ({ start: number } | { end: number }) =>
-              e !== null &&
-              (typeof e.end === 'number' || typeof e.start === 'number')
-          )
-          .map((e) => (e.end ?? e.start) as number)
-      );
+    if (validatedTimeline.length > 0) {
+      const tStart = Math.min(...validatedTimeline.map((e) => e.start));
+      const tEnd = Math.max(...validatedTimeline.map((e) => e.end ?? e.start));
 
       if (tStart < Infinity) {
         startTime = new Date(
@@ -283,7 +282,7 @@ export async function getRecentSessions(
       pauseSeconds: pauseTime,
       breakSeconds: breakTime,
       type: breakTime > workTime ? 'break' : 'work',
-      timeline: timeline,
+      timeline: validatedTimeline,
     };
   });
 }

@@ -1,3 +1,5 @@
+import { logger } from '@/shared/lib/core/utils/logger';
+
 export interface TaskContext {
   jobId?: string;
   traceId?: string;
@@ -25,7 +27,7 @@ export abstract class BaseTask<TInput, TOutput> {
     if (context?.logger) {
       context.logger(msg, details as Record<string, unknown>);
     } else {
-      console.log(`[Task] ${msg}`, details || '');
+      logger.debug(`[Task] ${msg}`, details ? { details } : undefined);
     }
   }
 }

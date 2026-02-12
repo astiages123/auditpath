@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useRef } from 'react';
 import { useTimerStore } from '@/shared/store/use-timer-store';
 import { useAuth } from '@/features/auth';
@@ -89,15 +87,9 @@ export function TimerController() {
       }
 
       // Restore active session if idle
-      if (
-        !hasRestored &&
-        !(window as unknown as { _isPomodoroRestoring?: boolean })
-          ._isPomodoroRestoring
-      ) {
+      if (!hasRestored && !window._isPomodoroRestoring) {
         setHasRestored(true);
-        (
-          window as unknown as { _isPomodoroRestoring?: boolean }
-        )._isPomodoroRestoring = true;
+        window._isPomodoroRestoring = true;
 
         if (!isActive && !sessionId) {
           try {
@@ -144,14 +136,10 @@ export function TimerController() {
           } catch (e) {
             console.error('Restoration failed', e);
           } finally {
-            (
-              window as unknown as { _isPomodoroRestoring?: boolean }
-            )._isPomodoroRestoring = false;
+            window._isPomodoroRestoring = false;
           }
         } else {
-          (
-            window as unknown as { _isPomodoroRestoring?: boolean }
-          )._isPomodoroRestoring = false;
+          window._isPomodoroRestoring = false;
         }
       }
     };

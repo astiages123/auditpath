@@ -15,12 +15,10 @@ export type ConceptMapResult = {
     arsiv: number;
     deneme: number;
   };
-  reasoning: string;
 };
 
 export interface ChunkMetadata {
   difficulty_index?: number;
-  density_score?: number;
   concept_map?: ConceptMapItem[];
 }
 
@@ -43,7 +41,6 @@ export interface QuizGenerationResult {
 export interface QuotaStatus {
   used: number;
   quota: { total: number };
-  wordCount: number;
   conceptCount: number;
   isFull: boolean;
   status: string; // "SYNCED" | "PROCESSING" | "COMPLETED" | "FAILED"

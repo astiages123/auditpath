@@ -1,5 +1,3 @@
-'use client';
-
 import { type ReactNode, type ComponentType } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/features/auth';

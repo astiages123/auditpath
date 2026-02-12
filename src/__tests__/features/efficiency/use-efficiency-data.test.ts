@@ -69,7 +69,8 @@ describe('useEfficiencyData Hook Tests', () => {
         eq: mockEq,
         gte: mockGte,
         not: mockNot,
-        then: (resolve: any) => resolve(data),
+        then: (resolve: (value: { data: unknown[] }) => unknown) =>
+          resolve(data),
       };
       mockSelect.mockReturnValue(chain);
       mockEq.mockReturnValue(chain);
@@ -119,7 +120,8 @@ describe('useEfficiencyData Hook Tests', () => {
         eq: vi.fn(),
         gte: vi.fn(),
         not: vi.fn(),
-        then: (resolve: any) => resolve({ data: mockSessions }),
+        then: (resolve: (value: { data: typeof mockSessions }) => unknown) =>
+          resolve({ data: mockSessions }),
       };
       mockChain.select.mockReturnValue(mockChain);
       mockChain.eq.mockReturnValue(mockChain);
@@ -135,7 +137,8 @@ describe('useEfficiencyData Hook Tests', () => {
           eq: vi.fn(),
           gte: vi.fn(),
           not: vi.fn(),
-          then: (resolve: any) => resolve({ data: [] }),
+          then: (resolve: (value: { data: unknown[] }) => unknown) =>
+            resolve({ data: [] }),
         };
         dummyChain.select.mockReturnValue(dummyChain);
         dummyChain.eq.mockReturnValue(dummyChain);
@@ -158,11 +161,6 @@ describe('useEfficiencyData Hook Tests', () => {
       // Fri Dec 29 - 0 mins
       // Thu Dec 28 - 0 mins
       // Wed Dec 27 - 0 mins
-
-      const days = result.current.loadWeek.map((d) => d.day);
-      // "Bugün" is Wed.
-      // Mon (1 Jan) should be present.
-      // Sun (31 Dec) should be absent?
 
       // Let's debug what we expect. Logic says:
       // if totalMins === 0 && (dayOfWeek === Sunday || Saturday) -> filter out.
@@ -208,7 +206,8 @@ describe('useEfficiencyData Hook Tests', () => {
         eq: vi.fn(),
         gte: vi.fn(),
         not: vi.fn(),
-        then: (resolve: any) => resolve({ data: mockSessions }),
+        then: (resolve: (value: { data: typeof mockSessions }) => unknown) =>
+          resolve({ data: mockSessions }),
       };
       mockChain.select.mockReturnValue(mockChain);
       mockChain.eq.mockReturnValue(mockChain);
@@ -223,7 +222,8 @@ describe('useEfficiencyData Hook Tests', () => {
           eq: vi.fn(),
           gte: vi.fn(),
           not: vi.fn(),
-          then: (resolve: any) => resolve({ data: [] }),
+          then: (resolve: (value: { data: unknown[] }) => unknown) =>
+            resolve({ data: [] }),
         };
         dummyChain.select.mockReturnValue(dummyChain);
         dummyChain.eq.mockReturnValue(dummyChain);
@@ -368,7 +368,8 @@ describe('useEfficiencyData Hook Tests', () => {
         eq: vi.fn(),
         gte: vi.fn(),
         not: vi.fn(),
-        then: (resolve: any) => resolve({ data: mockSessions }),
+        then: (resolve: (value: { data: typeof mockSessions }) => unknown) =>
+          resolve({ data: mockSessions }),
       };
       mockChain.select.mockReturnValue(mockChain);
       mockChain.eq.mockReturnValue(mockChain);
@@ -383,7 +384,8 @@ describe('useEfficiencyData Hook Tests', () => {
           eq: vi.fn(),
           gte: vi.fn(),
           not: vi.fn(),
-          then: (resolve: any) => resolve({ data: [] }),
+          then: (resolve: (value: { data: unknown[] }) => unknown) =>
+            resolve({ data: [] }),
         };
         dummyChain.select.mockReturnValue(dummyChain);
         dummyChain.eq.mockReturnValue(dummyChain);

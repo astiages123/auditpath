@@ -1,5 +1,3 @@
-'use client';
-
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth';
 // import { useProgress } from "@/shared/hooks/use-progress";

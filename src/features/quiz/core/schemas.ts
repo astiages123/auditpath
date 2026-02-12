@@ -45,9 +45,6 @@ export const ConceptMapResponseSchema = z.object({
     arsiv: z.number().int().min(1).default(2),
     deneme: z.number().int().min(1).default(2),
   }),
-  reasoning: z
-    .string()
-    .describe('Kotaların belirlenme mantığı ve bilişsel doygunluk analizi'),
 });
 
 export const GeneratedQuestionSchema = z.object({

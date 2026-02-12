@@ -1,5 +1,17 @@
 import { supabase } from '@/shared/lib/core/supabase';
-import { ExchangeRate } from '@/shared/types/analytics';
+
+import { z } from 'zod';
+import { isValid, parseOrThrow } from '@/shared/lib/validation/type-guards';
+
+const ExchangeRateApiResponseSchema = z.object({
+  rates: z.record(z.string(), z.number()),
+});
+
+const ExchangeRateSchema = z.object({
+  currency_pair: z.string(),
+  rate: z.number(),
+  updated_at: z.string(),
+});
 
 const EXCHANGE_RATE_API = 'https://api.exchangerate-api.com/v4/latest/USD';
 const PAIR_USD_TRY = 'USD-TRY';
@@ -14,7 +26,12 @@ export const ExchangeRateService = {
         .eq('currency_pair', PAIR_USD_TRY)
         .maybeSingle(); // Prevents 406 if no row exists
 
-      const fastRate = data as unknown as ExchangeRate;
+      const fastRate = isValid(ExchangeRateSchema, data)
+        ? (parseOrThrow(ExchangeRateSchema, data) as {
+            rate: number;
+            updated_at: string;
+          })
+        : null;
 
       if (fastRate && !error) {
         const lastUpdated = new Date(fastRate.updated_at).getTime();
@@ -29,8 +46,9 @@ export const ExchangeRateService = {
 
       // 2. Fetch from API if missing or stale
       const response = await fetch(EXCHANGE_RATE_API);
-      const apiData = await response.json();
-      const newRate = apiData.rates.TRY;
+      const rawApiData = await response.json();
+      const apiData = ExchangeRateApiResponseSchema.parse(rawApiData);
+      const newRate = apiData.rates['TRY'];
 
       if (!newRate) throw new Error('Failed to fetch TRY rate');
 

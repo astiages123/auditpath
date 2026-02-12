@@ -6,7 +6,14 @@ import React, {
 } from 'react';
 import { supabase } from '@/shared/lib/core/supabase';
 import { ExchangeRateService } from '@/shared/services/exchange-rate-service';
-import { AiGenerationCost } from '@/shared/types/analytics';
+import type { Database } from '@/shared/types/supabase';
+
+// Extended type to include latency_ms and status which are in the table but not in the view
+type AiGenerationCost =
+  Database['public']['Views']['ai_generation_costs']['Row'] & {
+    latency_ms?: number | null;
+    status?: number | null;
+  };
 import {
   Card,
   CardContent,
@@ -75,7 +82,7 @@ export default function AnalyticsPage() {
           .limit(10000);
 
         if (error) throw error;
-        setLogs(data as unknown as AiGenerationCost[]);
+        setLogs(data as AiGenerationCost[]);
       } catch (error) {
         console.error('Failed to load analytics data:', error);
       } finally {

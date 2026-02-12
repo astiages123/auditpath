@@ -12,6 +12,12 @@ import type {
   TopicWithCounts,
 } from '@/shared/types/efficiency';
 import type { ConceptMapItem } from '@/shared/types/quiz';
+import { isValid, parseOrThrow } from '@/shared/lib/validation/type-guards';
+import {
+  ChunkMetadataSchema,
+  QuizQuestionSchema,
+} from '@/shared/lib/validation/quiz-schemas';
+import type { Json } from '@/shared/types/supabase';
 
 /**
  * Get a note chunk by ID.
@@ -41,7 +47,7 @@ export async function getNoteChunkById(chunkId: string) {
     }
     return null;
   }
-  return data as unknown;
+  return data;
 }
 
 /**
@@ -61,7 +67,7 @@ export async function getCourseTopics(
   const { data: chunks, error: chunksError } = await supabase
     .from('note_chunks')
     .select(
-      'id, created_at, course_id, course_name, section_title, chunk_order, content, display_content, word_count, status, last_synced_at, metadata, target_count'
+      'id, created_at, course_id, course_name, section_title, chunk_order, content, display_content, status, last_synced_at, metadata, ai_logic'
     )
     .eq('course_id', courseId)
     .order('chunk_order', { ascending: true });
@@ -76,7 +82,7 @@ export async function getCourseTopics(
   return chunks.map((c) => ({
     ...c,
     questionCount: 0,
-  })) as CourseTopic[];
+  }));
 }
 
 /**
@@ -185,7 +191,7 @@ export async function getTopicCompletionStatus(
   // 1. Get Chunk Info
   const { data: chunk } = await supabase
     .from('note_chunks')
-    .select('id, course_name, word_count, metadata, target_count, ai_logic')
+    .select('id, course_name, metadata, ai_logic')
     .eq('course_id', courseId)
     .eq('section_title', topic)
     .limit(1)
@@ -195,7 +201,6 @@ export async function getTopicCompletionStatus(
   let importance: 'high' | 'medium' | 'low' = 'medium';
   let srsDueCount = 0;
   let aiLogic: {
-    reasoning: string;
     suggested_quotas: { antrenman: number; arsiv: number; deneme: number };
   } | null = null;
   let concepts: ConceptMapItem[] = [];
@@ -210,26 +215,24 @@ export async function getTopicCompletionStatus(
 
     // AI logic from ai_logic column (primary source)
     aiLogic =
-      (chunk.ai_logic as unknown as NonNullable<
-        TopicCompletionStats['aiLogic']
-      >) || null;
+      (chunk.ai_logic as {
+        suggested_quotas: { antrenman: number; arsiv: number; deneme: number };
+      }) || null;
     const aiQuotas = aiLogic?.suggested_quotas;
 
     // Concepts and Difficulty from metadata
-    const metadata = (chunk.metadata as Record<string, unknown>) || {};
-    concepts = (metadata.concept_map as ConceptMapItem[]) || [];
-    difficultyIndex = (metadata.difficulty_index as number) || null;
+    const metadata = isValid(ChunkMetadataSchema, chunk.metadata)
+      ? parseOrThrow(ChunkMetadataSchema, chunk.metadata)
+      : null;
+    concepts = metadata?.concept_map || [];
+    difficultyIndex = metadata?.difficulty_index || null;
 
-    // Fallback to target_count with %25 rule for legacy data
-    const legacyTargetCount = chunk.target_count;
-    const fallbackAntrenman = legacyTargetCount
-      ? Math.max(5, Math.ceil(legacyTargetCount * 0.25))
-      : 5;
+    const defaultQuotas = { antrenman: 5, arsiv: 1, deneme: 1 };
 
     // Use AI quotas if available, otherwise use fallback
-    const antrenman = aiQuotas?.antrenman ?? fallbackAntrenman;
-    const arsiv = aiQuotas?.arsiv ?? Math.max(1, Math.ceil(antrenman * 0.25));
-    const deneme = aiQuotas?.deneme ?? Math.max(1, Math.ceil(antrenman * 0.25));
+    const antrenman = aiQuotas?.antrenman ?? defaultQuotas.antrenman;
+    const arsiv = aiQuotas?.arsiv ?? defaultQuotas.arsiv;
+    const deneme = aiQuotas?.deneme ?? defaultQuotas.deneme;
 
     quota = {
       total: antrenman + arsiv + deneme,
@@ -578,9 +581,11 @@ export async function getTopicQuestions(courseId: string, topic: string) {
 
   // Map to QuizQuestion type
   return (data || []).map((q: unknown) => {
-    const qData = (q as { question_data: Record<string, unknown> })
-      .question_data; // Cast from Json
-    const courseSlug = (q as { course?: { course_slug?: string } }).course
+    const qData = parseOrThrow(
+      QuizQuestionSchema,
+      (q as { question_data: Json }).question_data
+    );
+    const courseSlug = (q as { course?: { course_slug: string } | null }).course
       ?.course_slug;
 
     return {
@@ -723,19 +728,20 @@ export async function getBloomStats(userId: string): Promise<BloomStats[]> {
     analysis: { correct: 0, total: 0 },
   };
 
-  data.forEach((row: unknown) => {
-    const typedRow = row as {
-      question: { bloom_level: string };
+  data.forEach(
+    (row: {
       response_type: string;
-    };
-
-    if (typedRow.question && levels[typedRow.question.bloom_level]) {
-      levels[typedRow.question.bloom_level].total += 1;
-      if (typedRow.response_type === 'correct') {
-        levels[typedRow.question.bloom_level].correct += 1;
+      question: { bloom_level: string | null } | null;
+    }) => {
+      const bloomLevel = row.question?.bloom_level;
+      if (bloomLevel && levels[bloomLevel]) {
+        levels[bloomLevel].total += 1;
+        if (row.response_type === 'correct') {
+          levels[bloomLevel].correct += 1;
+        }
       }
     }
-  });
+  );
 
   return Object.entries(levels).map(([key, val]) => ({
     level: key,

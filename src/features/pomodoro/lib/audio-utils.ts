@@ -1,5 +1,3 @@
-'use client';
-
 const notificationAudio =
   typeof window !== 'undefined' ? new Audio('/audio/alarm_ring.mp3') : null;
 

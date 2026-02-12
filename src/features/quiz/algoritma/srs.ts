@@ -51,7 +51,27 @@ const DIFFICULTY_MULTIPLIERS: Record<BloomLevel, number> = {
 
 /**
  * Calculates the new shelf status and success chain.
- * Implements the 3-Strike Rule.
+ * Implements the "3-Strike Rule" with 0.5 increment granularity.
+ *
+ * The 3-Strike Rule Logic:
+ * - A question needs a total of 3.0 "success points" to be archived
+ * - Fast correct answers (isFast=true) award 1.0 point
+ * - Slow correct answers (isFast=false) award 0.5 points (SLOW_SUCCESS_INCREMENT)
+ * - This means 3 fast corrects OR 6 slow corrects will archive a question
+ *
+ * Status Transition Rules:
+ * - newSuccessCount >= 3.0: Status becomes "archived" (question mastered)
+ * - newSuccessCount >= 0.5: Status becomes "pending_followup" (in review queue)
+ * - newSuccessCount < 0.5: Status remains "active" (still being learned)
+ * - Any incorrect answer: Reset to 0, status becomes "pending_followup"
+ *
+ * Example progression with slow answers only:
+ *   Attempt 1: 0 + 0.5 = 0.5 → pending_followup
+ *   Attempt 2: 0.5 + 0.5 = 1.0 → pending_followup
+ *   Attempt 3: 1.0 + 0.5 = 1.5 → pending_followup
+ *   Attempt 4: 1.5 + 0.5 = 2.0 → pending_followup
+ *   Attempt 5: 2.0 + 0.5 = 2.5 → pending_followup
+ *   Attempt 6: 2.5 + 0.5 = 3.0 → archived ✓
  */
 export function calculateShelfStatus(
   consecutiveSuccess: number,
@@ -62,7 +82,7 @@ export function calculateShelfStatus(
   newSuccessCount: number;
 } {
   if (!isCorrect) {
-    const newSuccessCount = Math.max(0, consecutiveSuccess - 1.0);
+    const newSuccessCount = 0;
     return { newStatus: 'pending_followup', newSuccessCount };
   }
 
@@ -80,23 +100,16 @@ export function calculateShelfStatus(
 
 /**
  * Calculates the next review session number.
+ * Guarantees a minimum gap of 1 session to prevent infinite loops
+ * for new questions or slow success scenarios.
  */
 export function calculateNextReviewSession(
   currentSession: number,
   successCount: number
 ): number {
-  if (successCount >= 3) {
-    return currentSession + 12;
-  }
-
-  let gapIndex = 0;
-
-  if (successCount < 1) {
-    gapIndex = 0;
-  } else {
-    gapIndex = Math.floor(successCount) - 1;
-  }
-
+  // Ensure minimum gap of 1 session (prevents infinite loops for successCount < 1)
+  const adjustedSuccessCount = Math.max(1, successCount);
+  const gapIndex = Math.floor(adjustedSuccessCount) - 1;
   const safeIndex = Math.max(0, Math.min(gapIndex, SESSION_GAPS.length - 1));
 
   const gap = SESSION_GAPS[safeIndex];
@@ -161,22 +174,21 @@ export function calculateAdvancedScore(
 
 /**
  * Calculates dynamic Tmax threshold for "Fast" answer determination.
- * Tmax = ((wordCount / (180 * densityCoeff)) * 60) + (15 * difficultyMultiplier) + buffer
  * @returns Tmax in milliseconds
  */
 export function calculateTMax(
-  wordCount: number,
-  densityCoeff: number,
+  charCount: number,
+  conceptCount: number,
   bloomLevel: BloomLevel,
   bufferSeconds: number = 10
 ): number {
   const difficultyMultiplier = DIFFICULTY_MULTIPLIERS[bloomLevel] || 1.0;
 
-  // Base reading time in seconds (130 words per minute)
-  const readingTimeSeconds = (wordCount / (130 * densityCoeff)) * 60;
+  // Base reading time in seconds (Assuming 780 characters per minute ≈ 130 words per minute)
+  const readingTimeSeconds = (charCount / 780) * 60;
 
-  // Additional time for question complexity
-  const complexitySeconds = 15 * difficultyMultiplier;
+  // Additional time for question complexity based on concepts
+  const complexitySeconds = (15 + conceptCount * 2) * difficultyMultiplier;
 
   const tMaxSeconds = readingTimeSeconds + complexitySeconds + bufferSeconds;
 

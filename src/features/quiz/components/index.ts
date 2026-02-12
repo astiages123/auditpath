@@ -1,4 +1,4 @@
-export * from './modals/QuizModal';
+export * from './modal/QuizModal';
 export * from './ui/GenerateQuestionButton';
 export * from './ui/QuizCard';
 export * from './ui/QuizTimer';

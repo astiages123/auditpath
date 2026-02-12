@@ -1,12 +1,20 @@
+// Extend NodeJS namespace to support process.env in TypeScript
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace NodeJS {
+    interface ProcessEnv {
+      [key: string]: string | undefined;
+    }
+  }
+}
+
 // Helper to safely get env vars in both Vite (client) and Node (scripts)
 const getEnv = (key: string): string | undefined => {
   if (typeof import.meta !== 'undefined' && import.meta.env) {
     return import.meta.env[key];
   }
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  if (typeof process !== 'undefined' && (process as any).env) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (process as any).env[key];
+  if (typeof process !== 'undefined' && process !== null) {
+    return process['env']?.[key];
   }
   return undefined;
 };

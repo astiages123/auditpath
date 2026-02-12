@@ -18,7 +18,9 @@ import {
 import { calculateQuestionWeights, type ChunkMetric } from '../algoritma/exam';
 import { type GenerationLog, QuizFactory } from './factory';
 import { calculateQuizResult } from '../logic/submission-calculator';
-import { type ChunkMetadata } from './types';
+
+import { parseOrThrow } from '@/shared/lib/validation/type-guards';
+import { ChunkMetadataSchema } from '@/shared/lib/validation/quiz-schemas';
 
 // --- Types ---
 
@@ -253,8 +255,8 @@ export async function submitAnswer(
     questionData,
     chunkMetadata
       ? {
-          ...chunkMetadata,
-          metadata: chunkMetadata.metadata as unknown as ChunkMetadata,
+          content: chunkMetadata.content || null,
+          metadata: parseOrThrow(ChunkMetadataSchema, chunkMetadata.metadata),
         }
       : null,
     masteryData,
@@ -346,11 +348,11 @@ export class ExamService {
 
       const metrics: ChunkMetric[] = chunks.map((c) => ({
         id: c.id,
-        word_count: c.word_count || 500,
+        concept_count:
+          parseOrThrow(ChunkMetadataSchema, c.metadata).concept_map?.length ||
+          5,
         difficulty_index:
-          (c.metadata as unknown as ChunkMetadata)?.difficulty_index ||
-          (c.metadata as unknown as ChunkMetadata)?.density_score ||
-          3,
+          parseOrThrow(ChunkMetadataSchema, c.metadata).difficulty_index || 3,
         mastery_score: masteryMap.get(c.id) || 0,
       }));
 
@@ -443,11 +445,11 @@ export class ExamService {
 
       const metrics: ChunkMetric[] = chunks.map((c) => ({
         id: c.id,
-        word_count: c.word_count || 500,
+        concept_count:
+          parseOrThrow(ChunkMetadataSchema, c.metadata).concept_map?.length ||
+          5,
         difficulty_index:
-          (c.metadata as unknown as ChunkMetadata)?.difficulty_index ||
-          (c.metadata as unknown as ChunkMetadata)?.density_score ||
-          3,
+          parseOrThrow(ChunkMetadataSchema, c.metadata).difficulty_index || 3,
         mastery_score: masteryMap.get(c.id) || 0,
       }));
 

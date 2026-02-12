@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useCallback, useMemo } from 'react';
 import { useAuth } from '@/features/auth';
 import { ProgressContext, ProgressStats } from '@/shared/hooks/use-progress';

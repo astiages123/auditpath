@@ -5,11 +5,7 @@ import {
   ValidationResult,
   ValidationResultSchema,
 } from '@/features/quiz/core/schemas';
-import {
-  buildDraftingTaskPrompt,
-  buildFollowUpTaskPrompt,
-  buildValidationTaskPrompt,
-} from '@/features/quiz/core/prompts';
+import { buildDraftingTaskPrompt } from '@/features/quiz/core/prompts';
 import { ValidationTask } from '@/features/quiz/core/tasks/validation-task';
 import { StructuredGenerator } from '@/features/quiz/core/utils';
 import type { ConceptMapItem } from '@/features/quiz/core/types';

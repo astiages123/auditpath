@@ -1,16 +1,20 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 import { Client } from '@notionhq/client';
 import { NotionToMarkdown } from 'notion-to-md';
 import { createClient } from '@supabase/supabase-js';
 import sharp from 'sharp';
 import pLimit from 'p-limit';
-import { spawnSync } from 'node:child_process';
-import path from 'node:path';
+
 import type { Database } from '@/shared/types/supabase';
+
 import type {
   PageObjectResponse,
   RichTextItemResponse,
 } from '@notionhq/client/build/src/api-endpoints';
+
+// Load environment variables explicitly
+dotenv.config({ path: '.env' });
+dotenv.config({ path: '.env.local' });
 
 // --- Environment Variables ---
 const NOTION_TOKEN = process.env.NOTION_TOKEN!;
@@ -29,9 +33,18 @@ if (
   !SUPABASE_URL ||
   !SUPABASE_SERVICE_KEY
 ) {
-  console.error(
-    'Missing required environment variables. Please check your .env file.'
-  );
+  console.error('❌ Missing required environment variables:');
+  if (!NOTION_TOKEN) console.error('  - NOTION_TOKEN (Missing in .env.local)');
+  if (!NOTION_DATABASE_ID) {
+    console.error('  - NOTION_DATABASE_ID (Missing in .env.local)');
+  }
+  if (!SUPABASE_URL) {
+    console.error('  - SUPABASE_URL or VITE_SUPABASE_URL (Missing in .env)');
+  }
+  if (!SUPABASE_SERVICE_KEY) {
+    console.error('  - SUPABASE_SERVICE_ROLE_KEY (Missing in .env.local)');
+  }
+  console.error('\nPlease update your .env and .env.local files.');
   process.exit(1);
 }
 
@@ -145,62 +158,6 @@ n2m.setCustomTransformer('callout', async (block) => {
 });
 
 // --- Helpers ---
-
-/**
- * Executes the Python density analyzer script for a given text.
- * Returns density_score, meaningful_word_count and total_word_count.
- */
-function getDensityFromPython(text: string): {
-  density_score: number;
-  word_count: number;
-  meaningful_word_count: number;
-} {
-  try {
-    const scriptPath = path.join(
-      process.cwd(),
-      'scripts',
-      'core',
-      'density_analyzer.py'
-    );
-
-    const result = spawnSync('python3', [scriptPath], {
-      input: text,
-      encoding: 'utf-8',
-    });
-
-    if (result.error) {
-      console.error('Python script execution error:', result.error.message);
-      return {
-        density_score: 0,
-        word_count: 0,
-        meaningful_word_count: 0,
-      };
-    }
-
-    if (result.stderr) {
-      console.error('Python stderr:', result.stderr);
-    }
-
-    if (!result.stdout) {
-      return {
-        density_score: 0,
-        word_count: 0,
-        meaningful_word_count: 0,
-      };
-    }
-
-    const output = JSON.parse(result.stdout);
-    // Fallback to 0 if something is missing
-    return {
-      density_score: output.density_score || 0,
-      word_count: output.total_word_count || 0,
-      meaningful_word_count: output.meaningful_word_count || 0,
-    };
-  } catch (err) {
-    console.error('Error in getDensityFromPython:', err);
-    return { density_score: 0, word_count: 0, meaningful_word_count: 0 };
-  }
-}
 
 /**
  * Supabase Storage'a WebP olarak görsel yükler
@@ -482,39 +439,8 @@ async function processPage(
       const chunkText = chunkObj.content;
       const displayText = chunkObj.displayContent;
 
-      // --- DENSITY ANALYSIS ---
-      const densityData = getDensityFromPython(chunkText);
-      // ------------------------
-
-      // --- TARGET COUNT CALCULATION (Scientific Master Set) ---
-      // Base = meaningfulWordCount / 45
-      // Multipliers: >0.55 density -> 1.2x, <0.25 density -> 0.8x
-      const meaningfulCount = densityData.meaningful_word_count;
-      const density = densityData.density_score;
-      const base = meaningfulCount / 45;
-
-      let multiplier = 1.0;
-      if (density > 0.55) {
-        multiplier = 1.2;
-      } else if (density < 0.25) {
-        multiplier = 0.8;
-      }
-
-      const calculated = base * multiplier;
-      // Min 3, no max limit as requested (Aligned with calculateDynamicQuota)
-      const targetCount = Math.max(3, Math.round(calculated));
-
-      console.log(
-        `  - Chunk ${i}: WordCount=${densityData.word_count}, Meaningful=${meaningfulCount}, Density=${density.toFixed(
-          2
-        )}, Target=${targetCount}`
-      );
-      // -----------------------------------------------------
-
       if (DRY_RUN) {
-        console.log(
-          `[DRY RUN] Would upsert chunk with target_count=${targetCount}`
-        );
+        console.log(`[DRY RUN] Would upsert chunk: ${sectionTitle}`);
         continue;
       }
 
@@ -524,11 +450,9 @@ async function processPage(
           course_name: courseName,
           section_title: sectionTitle,
           content: chunkText,
-          display_content: displayText, // New column
-          chunk_order: chunkOrder, // Page order (rank from Notion or index)
+          display_content: displayText,
+          chunk_order: chunkOrder,
           status: 'SYNCED',
-          word_count: densityData.word_count, // Updated word count from Python
-          target_count: targetCount, // New column
           metadata: baseMetadata,
         } as Database['public']['Tables']['note_chunks']['Insert'],
         {

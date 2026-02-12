@@ -10,6 +10,8 @@ import * as Repository from '../api/repository';
 import { createTimer } from '../core/utils';
 import { type QuizResults, type QuizState } from '../core/types';
 import { QuizQuestion } from '../core/types';
+import { parseOrThrow } from '@/shared/lib/validation/type-guards';
+import { QuizQuestionSchema } from '@/shared/lib/validation/quiz-schemas';
 import {
   calculateInitialResults,
   calculateTestResults,
@@ -24,7 +26,7 @@ import { type Database } from '@/shared/types/supabase';
 function mapRowToQuestion(
   row: Database['public']['Tables']['questions']['Row']
 ): QuizQuestion {
-  const data = row.question_data as unknown as QuizQuestion;
+  const data = parseOrThrow(QuizQuestionSchema, row.question_data);
   return {
     ...data,
     type: data.type || 'multiple_choice',

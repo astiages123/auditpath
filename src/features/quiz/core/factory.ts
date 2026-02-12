@@ -6,9 +6,12 @@
  */
 
 import * as Repository from '../api/repository';
+import { type Json } from '@/shared/types/supabase';
 import { subjectKnowledgeService } from '@/shared/services/knowledge/subject-knowledge.service';
 import { getSubjectStrategy } from '../algoritma/strategy';
-import { type ChunkMetadata, type ConceptMapItem } from './types';
+import { type ConceptMapItem } from './types';
+import { isValid, parseOrThrow } from '@/shared/lib/validation/type-guards';
+import { ChunkMetadataSchema } from '@/shared/lib/validation/quiz-schemas';
 
 import {
   type GenerationLog,
@@ -63,6 +66,7 @@ export class QuizFactory {
       targetCount?: number;
       usageType?: 'antrenman' | 'arsiv' | 'deneme'; // Still allowed for single-type override if needed
       force?: boolean;
+      mappingOnly?: boolean;
     } = {}
   ) {
     const log = (
@@ -84,8 +88,11 @@ export class QuizFactory {
 
       // 2. MAPPING
       log('MAPPING', 'Kavram haritası çıkarılıyor...');
-      const metadata = (chunk.metadata as unknown as ChunkMetadata) || {};
-      let concepts: ConceptMapItem[] = metadata.concept_map || [];
+      const metadata = isValid(ChunkMetadataSchema, chunk.metadata)
+        ? parseOrThrow(ChunkMetadataSchema, chunk.metadata)
+        : {};
+      let concepts: ConceptMapItem[] =
+        (metadata.concept_map as ConceptMapItem[]) || [];
       let difficultyIndex = metadata.difficulty_index || 3;
 
       // Strategy for importance
@@ -113,22 +120,19 @@ export class QuizFactory {
         concepts = analysisResult.data.concepts;
         difficultyIndex = analysisResult.data.difficulty_index;
         const aiQuotas = analysisResult.data.quotas;
-        const aiReasoning = analysisResult.data.reasoning;
 
         const { error: updateErr } = await Repository.updateChunkAILogic(
           chunkId,
           {
-            reasoning: aiReasoning,
             suggested_quotas: aiQuotas,
-          },
-          aiQuotas.antrenman // Sync target_count with AI's antrenman quota
+          }
         );
 
         // Also update metadata for backward compatibility
         if (!updateErr) {
           await Repository.updateChunkMetadata(chunkId, {
             ...((chunk.metadata || {}) as Record<string, unknown>),
-            concept_map: concepts,
+            concept_map: concepts as Json,
             difficulty_index: difficultyIndex,
           });
         }
@@ -145,10 +149,19 @@ export class QuizFactory {
         });
 
         // Update local chunk data for the rest of the loop
-        (chunk as unknown as { ai_logic: Record<string, unknown> }).ai_logic = {
-          reasoning: aiReasoning,
+        chunk.ai_logic = {
           suggested_quotas: aiQuotas,
         };
+      }
+
+      // If only mapping is requested, we stop here
+      if (options.mappingOnly) {
+        await Repository.updateChunkStatus(chunkId, 'COMPLETED');
+        callbacks.onComplete({ success: true, generated: 0 });
+        log('COMPLETED', 'Analiz tamamlandı, soru üretimi için bekleniyor.', {
+          concepts: concepts.length,
+        });
+        return;
       }
 
       // 3. GENERATION LOOP (Multi-type Pooling)
@@ -167,11 +180,7 @@ export class QuizFactory {
 
       // AI Quotas - read from ai_logic column directly
       const aiLogic =
-        (
-          chunk as unknown as {
-            ai_logic: { suggested_quotas: Record<string, number> };
-          }
-        ).ai_logic || {};
+        (chunk.ai_logic as { suggested_quotas?: Record<string, number> }) || {};
       const quotas = aiLogic.suggested_quotas || {
         antrenman: concepts.length,
         arsiv: Math.ceil(concepts.length * 0.25),

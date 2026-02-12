@@ -19,15 +19,12 @@ describe('AI Quota Logic & Protection', () => {
         arsiv: 3,
         deneme: 2,
       },
-      reasoning:
-        'Metin yoğun ve teknik terimler içerdiği için kotalar artırıldı.',
     };
 
     const result = ConceptMapResponseSchema.safeParse(validData);
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.quotas.antrenman).toBe(8);
-      expect(result.data.reasoning).toContain('Metin yoğun');
     }
   });
 

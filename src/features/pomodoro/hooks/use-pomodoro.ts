@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react'; // useRef ve useEffect eklendi
 import { useTimerStore } from '@/shared/store/use-timer-store';
 import {
   deletePomodoroSession,
@@ -35,20 +35,43 @@ export function usePomodoro() {
     setHasRestored,
     originalStartTime,
     pauseStartTime,
+    tick, // tick fonksiyonu eklendi
   } = useTimerStore();
 
   const { user } = useAuth();
   const userId = user?.id;
 
-  // Start/Resume Wrapper
+  // --- 1. WORKER KURULUMU VE YÖNETİMİ ---
+  const workerRef = useRef<Worker | null>(null);
+
+  useEffect(() => {
+    // Worker'ı başlatıyoruz (Vite URL yapısı)
+    workerRef.current = new Worker(
+      new URL('../../../workers/timer-worker.ts', import.meta.url),
+      { type: 'module' }
+    );
+
+    // Worker'dan gelen 'TICK' mesajlarını dinle
+    workerRef.current.onmessage = (e) => {
+      if (e.data === 'TICK') {
+        tick(); // Store'daki zaman azaltma lojiğini tetikle
+      }
+    };
+
+    // Component kapandığında worker'ı sonlandır (Memory leak önleme)
+    return () => {
+      workerRef.current?.terminate();
+    };
+  }, [tick]);
+
+  // --- 2. GÜNCELLENMİŞ HANDLE START ---
   const handleStart = async () => {
     if (!selectedCourse) return;
 
-    // First Insert Strategy
-    // Initialize session ID and Start Time
     const now = Date.now();
     let currentSessionId = sessionId;
 
+    // Session ID oluşturma ve Başlangıç Sayacı
     if (!currentSessionId) {
       if (userId) {
         getDailySessionCount(userId).then((count) =>
@@ -59,7 +82,7 @@ export function usePomodoro() {
       setSessionId(currentSessionId);
     }
 
-    // Prepare initial session payload
+    // Veritabanı Kaydı (First Insert Strategy)
     if (userId && currentSessionId && selectedCourse) {
       try {
         await upsertPomodoroSession(
@@ -68,7 +91,7 @@ export function usePomodoro() {
             courseId: selectedCourse.id,
             courseName: selectedCourse.name,
             timeline:
-              timeline.length > 0 ? timeline : [{ type: 'work', start: now }], // Initial state if empty
+              timeline.length > 0 ? timeline : [{ type: 'work', start: now }],
             startedAt: originalStartTime || now,
             isCompleted: false,
           },
@@ -76,26 +99,25 @@ export function usePomodoro() {
         );
       } catch (error) {
         console.error('Failed to initialize session in DB:', error);
-        // Decide: Stop here or continue?
-        // For data integrity, we should probably warn or retry, but for now we proceed to allow offline usage
-        // (though the prompt emphasized data integrity, offline support is also usually desired).
-        // Given "First Insert Strategy", we proceed but log error.
       }
     }
 
-    // Request notification permission on user action
+    // Bildirim İzni
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (Notification.permission === 'default') {
         Notification.requestPermission();
       }
     }
 
-    // Unlock audio context for later background play
+    // Audio ve Worker Başlatma
     unlockAudio();
 
+    // KRİTİK: Testin beklediği Worker mesajı ve Store tetikleyicisi
+    workerRef.current?.postMessage('START');
     startTimer();
   };
 
+  // --- 3. DİĞER YARDIMCI FONKSİYONLAR ---
   const getDisplayTime = () => {
     const isOvertime = timeLeft < 0;
     const totalSeconds = isOvertime ? duration + Math.abs(timeLeft) : timeLeft;
@@ -134,6 +156,8 @@ export function usePomodoro() {
       incrementSession();
     }
 
+    // Worker'ı yeni mod için resetle/başlat (Opsiyonel: START gönderilebilir)
+    workerRef.current?.postMessage('START');
     startTimer();
   }, [isBreak, setMode, incrementSession, startTimer]);
 
@@ -141,7 +165,7 @@ export function usePomodoro() {
     if (userId && sessionId) {
       await deletePomodoroSession(sessionId);
     }
-
+    workerRef.current?.postMessage('RESET');
     const { resetAll } = useTimerStore.getState();
     resetAll();
     setHasRestored(true);
@@ -158,8 +182,14 @@ export function usePomodoro() {
     selectedCourse,
     sessionCount,
     start: handleStart,
-    pause: pauseTimer,
-    reset: () => resetTimer(),
+    pause: () => {
+      workerRef.current?.postMessage('PAUSE');
+      pauseTimer();
+    },
+    reset: () => {
+      workerRef.current?.postMessage('RESET');
+      resetTimer();
+    },
     resetAndClose,
     switchMode,
     setCourse,
@@ -171,8 +201,7 @@ export function usePomodoro() {
     timeline,
     sessionId,
     finishDay: async () => {
-      // The actual saving/sealing is handled by the finishDay action
-      // but since we want to clear the store:
+      workerRef.current?.postMessage('RESET');
       const { resetAll } = useTimerStore.getState();
       resetAll();
     },
@@ -182,5 +211,6 @@ export function usePomodoro() {
     setOpen: setWidgetOpen,
     originalStartTime,
     pauseStartTime,
+    workerRef, // Test ortamı için ekledik
   };
 }

@@ -1,5 +1,3 @@
-'use client';
-
 // LocalStorage key prefix
 const STORAGE_KEY_PREFIX = 'video-progress-';
 

@@ -6,7 +6,7 @@ export interface ConceptMapItem {
   altText?: string | null;
   isException?: boolean;
   prerequisites?: string[];
-  [key: string]: any; // To satisfy Supabase Json type requirements while staying flexible
+  [key: string]: unknown; // To satisfy Supabase Json type requirements while staying flexible
 }
 
 export interface ConceptMapResult {

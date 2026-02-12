@@ -18,6 +18,7 @@ type PlainObject = Record<string, unknown>;
  */
 export function toCamelCase<T>(obj: unknown): T {
   if (Array.isArray(obj)) {
+    // eslint-disable-next-line no-restricted-syntax
     return obj.map((v) => toCamelCase(v)) as unknown as T;
   } else if (
     obj !== null &&
@@ -25,13 +26,14 @@ export function toCamelCase<T>(obj: unknown): T {
     obj.constructor === Object
   ) {
     const o = obj as PlainObject;
+    // eslint-disable-next-line no-restricted-syntax
     return Object.keys(o).reduce(
       (result, key) => ({
         ...result,
         [key.replace(/(_\w)/g, (k) => k[1].toUpperCase())]: toCamelCase(o[key]),
       }),
       {}
-    ) as T;
+    ) as unknown as T;
   }
   return obj as T;
 }

@@ -30,6 +30,8 @@ import { useAuth } from '@/features/auth';
 import { PostTestDashboard } from './PostTestDashboard';
 import { IntermissionScreen } from './IntermissionScreen';
 import { calculateTestResults } from '@/features/quiz/algoritma/scoring';
+import { parseOrThrow } from '@/shared/lib/validation/type-guards';
+import { QuizQuestionSchema } from '@/shared/lib/validation/quiz-schemas';
 
 interface QuizEngineProps {
   /** Note chunk ID for generating questions */
@@ -179,7 +181,7 @@ export function QuizEngine({
     const data = await Repository.fetchQuestionsByIds(ids);
 
     return data.map((q) => {
-      const question = q.question_data as unknown as QuizQuestion;
+      const question = parseOrThrow(QuizQuestionSchema, q.question_data);
       question.id = q.id;
       return question;
     });

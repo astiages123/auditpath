@@ -1,5 +1,3 @@
-'use client';
-
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth';
 import {
@@ -16,6 +14,8 @@ import { ExamService } from '../../../core/engine';
 import { type QuizQuestion } from '../../../core/types';
 import * as Repository from '@/features/quiz/api/repository';
 import { type GenerationLog, QuizFactory } from '@/features/quiz/core/factory';
+import { parseOrThrow } from '@/shared/lib/validation/type-guards';
+import { QuizQuestionSchema } from '@/shared/lib/validation/quiz-schemas';
 
 export enum QuizState {
   NOT_ANALYZED = 'NOT_ANALYZED',
@@ -63,18 +63,23 @@ export function useQuizManager({
   const [examProgress, setExamProgress] = useState({ current: 0, total: 0 });
 
   // Determine State
+  // src/features/quiz/components/modal/hooks/useQuizManager.ts içindeki ilgili kısım:
+
   useEffect(() => {
     if (isQuizActive) {
       setQuizState(QuizState.ACTIVE);
     } else if (isGeneratingExam) {
       setQuizState(QuizState.MAPPING);
-    } else if (completionStatus) {
-      if (completionStatus.aiLogic) {
-        setQuizState(QuizState.BRIEFING);
-      } else {
-        setQuizState(QuizState.NOT_ANALYZED);
-      }
+    } else if (
+      completionStatus &&
+      completionStatus.aiLogic &&
+      completionStatus.concepts &&
+      completionStatus.concepts.length > 0
+    ) {
+      // Sadece hem aiLogic hem de kavramlar varsa BRIEFING'e geç
+      setQuizState(QuizState.BRIEFING);
     } else {
+      // Diğer tüm durumlarda (veri yoksa veya eksikse) ANALİZ EDİLMEDİ göster
       setQuizState(QuizState.NOT_ANALYZED);
     }
   }, [completionStatus, isQuizActive, isGeneratingExam]);
@@ -108,11 +113,6 @@ export function useQuizManager({
         ]);
 
         setCompletionStatus(status);
-        console.log('DEBUG - Quiz Topic Status:', {
-          topic: selectedTopic.name,
-          antrenman_quota: status.antrenman.quota,
-          status_object: status,
-        });
       } else {
         setTargetChunkId(null);
         setCompletionStatus(null);
@@ -121,12 +121,7 @@ export function useQuizManager({
     loadData();
   }, [selectedTopic, courseId, user]);
 
-  const handleStartQuiz = () => {
-    setExistingQuestions([]);
-    setIsQuizActive(true);
-  };
-
-  const handleGenerate = async () => {
+  const handleGenerate = async (mappingOnly: boolean = true) => {
     if (!targetChunkId || !user) return;
 
     setIsGeneratingExam(true);
@@ -135,33 +130,49 @@ export function useQuizManager({
 
     try {
       const factory = new QuizFactory();
-      await factory.generateForChunk(targetChunkId, {
-        onLog: (log: GenerationLog) => {
-          setExamLogs((prev) => [log, ...prev].slice(0, 50));
+      await factory.generateForChunk(
+        targetChunkId,
+        {
+          onLog: (log: GenerationLog) => {
+            setExamLogs((prev) => [log, ...prev].slice(0, 50));
+          },
+          onQuestionSaved: (count: number) => {
+            setExamProgress((prev) => ({ ...prev, current: count }));
+          },
+          onComplete: async () => {
+            if (selectedTopic && courseId) {
+              const newStatus = await getTopicCompletionStatus(
+                user.id,
+                courseId,
+                selectedTopic.name
+              );
+              setCompletionStatus(newStatus);
+            }
+            setIsGeneratingExam(false);
+          },
+          onError: (err: string) => {
+            console.error('Generation error:', err);
+            setIsGeneratingExam(false);
+          },
         },
-        onQuestionSaved: (count: number) => {
-          setExamProgress((prev) => ({ ...prev, current: count }));
-        },
-        onComplete: async () => {
-          if (selectedTopic && courseId) {
-            const newStatus = await getTopicCompletionStatus(
-              user.id,
-              courseId,
-              selectedTopic.name
-            );
-            setCompletionStatus(newStatus);
-          }
-          setIsGeneratingExam(false);
-        },
-        onError: (err: string) => {
-          console.error('Generation error:', err);
-          setIsGeneratingExam(false);
-        },
-      });
+        { mappingOnly }
+      );
     } catch (error) {
       console.error('Failed to generate:', error);
       setIsGeneratingExam(false);
     }
+  };
+
+  const handleStartQuiz = () => {
+    if (
+      completionStatus &&
+      completionStatus.antrenman.existing < completionStatus.antrenman.quota
+    ) {
+      handleGenerate(false); // Start actual question production
+      return;
+    }
+    setExistingQuestions([]);
+    setIsQuizActive(true);
   };
 
   const handleBackToTopics = () => {
@@ -192,16 +203,23 @@ export function useQuizManager({
       );
       if (questionsData) {
         const formattedQuestions = questionsData.map((q) => ({
-          ...(q.question_data as unknown as QuizQuestion),
+          ...parseOrThrow(QuizQuestionSchema, q.question_data),
           id: q.id,
-        })) as QuizQuestion[];
+        }));
 
         setExistingQuestions(formattedQuestions);
+        // eslint-disable-next-line no-restricted-syntax
         setSelectedTopic({
           name: 'Karma Deneme Sınavı',
           questionCount: formattedQuestions.length,
           isCompleted: false,
-        } as unknown as TopicWithCounts);
+          counts: {
+            antrenman: 0,
+            arsiv: 0,
+            deneme: formattedQuestions.length,
+            total: formattedQuestions.length,
+          },
+        } as unknown as TopicWithCounts); // Still need as unknown as because TopicWithCounts interface might not match exactly what setSelectedTopic expects if it was derived from CourseTopic
         setIsQuizActive(true);
         return;
       }
@@ -238,19 +256,23 @@ export function useQuizManager({
         );
 
         if (questionsData) {
-          const formattedQuestions = questionsData.map((q) => {
-            const data = q.question_data as unknown as QuizQuestion;
-            return {
-              ...data,
-              id: q.id,
-            };
-          }) as QuizQuestion[];
+          const formattedQuestions = questionsData.map((q) => ({
+            ...parseOrThrow(QuizQuestionSchema, q.question_data),
+            id: q.id,
+          }));
 
           setExistingQuestions(formattedQuestions);
+          // eslint-disable-next-line no-restricted-syntax
           setSelectedTopic({
             name: 'Karma Deneme Sınavı',
             questionCount: formattedQuestions.length,
             isCompleted: false,
+            counts: {
+              antrenman: 0,
+              arsiv: 0,
+              deneme: formattedQuestions.length,
+              total: formattedQuestions.length,
+            },
           } as unknown as TopicWithCounts);
           setIsQuizActive(true);
         }

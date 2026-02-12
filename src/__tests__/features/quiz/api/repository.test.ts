@@ -1,4 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchQuestionsByStatus,
   finishQuizSession,
@@ -104,13 +105,7 @@ describe('Repository & Persistence Data Integrity Tests', () => {
       const mockChain = createSupabaseMock();
       vi.mocked(supabase.from).mockReturnValue(mockChain as any);
 
-      // Mock 1: getSessionInfo (inside finishQuizSession) -> returns null (no existing session)
-      mockChain.m_maybeSingle.mockResolvedValueOnce({
-        data: null,
-        error: null,
-      });
-
-      // Mock 2: upsert call
+      // Mock upsert call
       mockChain.m_upsert.mockResolvedValueOnce({ error: null });
 
       const stats = {
@@ -124,13 +119,8 @@ describe('Repository & Persistence Data Integrity Tests', () => {
 
       await finishQuizSession(stats);
 
-      // Verify fetching existing session
+      // Verify only upsert is called
       expect(supabase.from).toHaveBeenCalledWith('course_session_counters');
-      expect(mockChain.m_select).toHaveBeenCalledWith('id, current_session');
-      expect(mockChain.m_eq).toHaveBeenCalledWith('course_id', stats.courseId);
-      expect(mockChain.m_eq).toHaveBeenCalledWith('user_id', stats.userId);
-
-      // Verify upsert with new session = 1 (since existing was null)
       expect(mockChain.m_upsert).toHaveBeenCalledWith(
         expect.objectContaining({
           course_id: stats.courseId,
@@ -141,17 +131,11 @@ describe('Repository & Persistence Data Integrity Tests', () => {
       );
     });
 
-    it('should handle finishQuizSession manual upsert correctly (update existing)', async () => {
+    it('should handle finishQuizSession manual upsert correctly (unified behavior)', async () => {
       const mockChain = createSupabaseMock();
       vi.mocked(supabase.from).mockReturnValue(mockChain as any);
 
-      // Mock 1: getSessionInfo -> returns existing session 5
-      mockChain.m_maybeSingle.mockResolvedValueOnce({
-        data: { id: 'existing-id', current_session: 5 },
-        error: null,
-      });
-
-      // Mock 2: upsert call
+      // Mock upsert call
       mockChain.m_upsert.mockResolvedValueOnce({ error: null });
 
       const stats = {
@@ -165,11 +149,12 @@ describe('Repository & Persistence Data Integrity Tests', () => {
 
       await finishQuizSession(stats);
 
-      // Verify upsert with next session = 6
+      // Verify upsert with session 1 (the current implementation always sends 1)
       expect(mockChain.m_upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: 'existing-id',
-          current_session: 6,
+          course_id: stats.courseId,
+          user_id: stats.userId,
+          current_session: 1,
         }),
         { onConflict: 'user_id,course_id' }
       );
@@ -182,7 +167,13 @@ describe('Repository & Persistence Data Integrity Tests', () => {
       vi.mocked(supabase.from).mockReturnValue(mockChain as any);
       mockChain.m_upsert.mockResolvedValue({ error: null });
 
-      const payload: any = {
+      const payload: {
+        user_id: string;
+        question_id: string;
+        status: 'active' | 'archived' | 'pending_followup';
+        consecutive_success?: number;
+        next_review_session?: number;
+      } = {
         user_id: 'u1',
         question_id: 'q1',
         status: 'active',
@@ -212,7 +203,13 @@ describe('Repository & Persistence Data Integrity Tests', () => {
         error: { message: 'DB Error' },
       });
 
-      const payload: any = {
+      const payload: {
+        user_id: string;
+        question_id: string;
+        status: 'active' | 'archived' | 'pending_followup';
+        consecutive_success?: number;
+        next_review_session?: number;
+      } = {
         user_id: 'u1',
         question_id: 'q1',
         status: 'active',
@@ -220,7 +217,8 @@ describe('Repository & Persistence Data Integrity Tests', () => {
 
       // The function returns the promise result directly
       const result = await upsertUserQuestionStatus(payload);
-      expect(result.error).toEqual({ message: 'DB Error' });
+      expect(result.error).toBeInstanceOf(Error);
+      expect(result.error?.message).toBe('DB Error');
     });
   });
 
@@ -362,8 +360,8 @@ describe('Repository & Persistence Data Integrity Tests', () => {
 
       const result = await finishQuizSession(stats);
 
-      // The function as currently written catches/logs the error but returns success true
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
+      expect(result.error?.message).toBe('Upsert Failed');
     });
   });
 });

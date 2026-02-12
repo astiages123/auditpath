@@ -13,7 +13,7 @@
     "test:ui": "vitest --ui",
     "db:seed": "tsx scripts/db/seed-db.ts",
     "ai:sync-guidelines": "tsx scripts/ai/sync-subject-guidelines.ts",
-    "sync": "tsx scripts/manual-sync.ts",
+    "sync": "tsx --env-file=.env.local scripts/manual-sync.ts",
     "update-types": "npx supabase gen types typescript --project-id ccnvhimlbkkydpcqtraw > src/shared/types/supabase.ts",
     "format": "prettier --write .",
     "prepare": "husky"
@@ -80,6 +80,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.2",
+    "@vitest/coverage-v8": "^4.0.18",
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-prettier": "^10.1.8",

@@ -1,5 +1,3 @@
-'use client';
-
 import {
   Dialog,
   DialogContent,
@@ -10,12 +8,12 @@ import {
 import { Brain, ChevronRight, FileText } from 'lucide-react';
 import { QuizEngine } from '../engine/QuizEngine';
 import { QuizSessionProvider } from '../contexts/QuizSessionProvider';
-import { useQuizManager, QuizState } from '../modal/hooks/useQuizManager';
-import { TopicSidebar } from '../modal/parts/TopicSidebar';
-import { InitialStateView } from '../modal/parts/InitialStateView';
-import { MappingProgressView } from '../modal/parts/MappingProgressView';
-import { BriefingView } from '../modal/parts/BriefingView';
-import { SmartExamView } from '../modal/parts/SmartExamView';
+import { useQuizManager, QuizState } from './hooks/useQuizManager';
+import { TopicSidebar } from './parts/TopicSidebar';
+import { InitialStateView } from './parts/InitialStateView';
+import { MappingProgressView } from './parts/MappingProgressView';
+import { BriefingView } from './parts/BriefingView';
+import { SmartExamView } from './parts/SmartExamView';
 
 interface QuizModalProps {
   isOpen: boolean;
@@ -60,7 +58,7 @@ export function QuizModal({
         onOpenChange(open);
       }}
     >
-      <DialogContent className="max-w-6xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden bg-background">
+      <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-background">
         {/* Header */}
         <div className="flex flex-col h-full overflow-hidden">
           <DialogHeader className="p-6 border-b border-border/40 bg-muted/20">
@@ -111,7 +109,7 @@ export function QuizModal({
                 </QuizSessionProvider>
               </div>
             ) : (
-              <div className="grid md:grid-cols-[400px_1fr] h-full">
+              <div className="grid md:grid-cols-[300px_1fr] h-full">
                 {/* Left: Topic List */}
                 <TopicSidebar
                   loading={loading}
@@ -119,21 +117,20 @@ export function QuizModal({
                   selectedTopic={selectedTopic}
                   onSelectTopic={setSelectedTopic}
                 />
-
                 {/* Right: Detail Panel */}
-                <div className="bg-muted/5 p-4 flex flex-col items-center justify-center h-full text-center">
+                <div className="bg-muted/5 flex flex-col h-full overflow-hidden">
                   {selectedTopic ? (
-                    <div className="max-w-4xl w-full h-full flex flex-col animate-in fade-in zoom-in-95 duration-200">
-                      {/* Header: Icon + Title */}
-                      <div className="flex items-center gap-3 px-4 text-left border-b border-border/10 pb-4 mb-4">
-                        <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 text-primary">
-                          <FileText className="w-6 h-6" />
+                    <div className="flex-1 flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200">
+                      {/* Header: Icon + Title (Sabit kalsın) */}
+                      <div className="flex items-center gap-3 px-6 py-4 text-left border-b border-border/10 shrink-0">
+                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 text-primary">
+                          <FileText className="w-5 h-5" />
                         </div>
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold leading-tight text-foreground">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-lg font-bold leading-tight text-foreground truncate">
                             {selectedTopic.name}
                           </h3>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-xs text-muted-foreground">
                             {quizState === QuizState.NOT_ANALYZED &&
                               'Henüz analiz edilmedi'}
                             {quizState === QuizState.MAPPING &&
@@ -144,36 +141,43 @@ export function QuizModal({
                         </div>
                       </div>
 
-                      <div className="flex-1 flex flex-col items-center justify-center space-y-8 p-6">
-                        {quizState === QuizState.NOT_ANALYZED && (
-                          <InitialStateView onGenerate={handleGenerate} />
-                        )}
+                      {/* Scrollable Content Area */}
+                      <div className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col items-center justify-start bg-muted/5">
+                        {/* max-w-none kullanarak içeriği tüm alana yayıyoruz */}
+                        <div className="w-full max-w-none flex flex-col items-center justify-start transition-all duration-300 min-h-full">
+                          {quizState === QuizState.NOT_ANALYZED && (
+                            <InitialStateView onGenerate={handleGenerate} />
+                          )}
 
-                        {quizState === QuizState.MAPPING && (
-                          <MappingProgressView
-                            examProgress={examProgress}
-                            examLogs={examLogs}
-                          />
-                        )}
-
-                        {quizState === QuizState.BRIEFING &&
-                          completionStatus && (
-                            <BriefingView
-                              completionStatus={completionStatus}
-                              onStartQuiz={handleStartQuiz}
+                          {quizState === QuizState.MAPPING && (
+                            <MappingProgressView
+                              examProgress={examProgress}
+                              examLogs={examLogs}
                             />
                           )}
+
+                          {quizState === QuizState.BRIEFING &&
+                            completionStatus && (
+                              <BriefingView
+                                completionStatus={completionStatus}
+                                onStartQuiz={handleStartQuiz}
+                              />
+                            )}
+                        </div>
                       </div>
                     </div>
                   ) : (
-                    <SmartExamView
-                      isGeneratingExam={isGeneratingExam}
-                      examProgress={examProgress}
-                      examLogs={examLogs}
-                      onStartSmartExam={handleStartSmartExam}
-                    />
+                    /* Zeki Deneme Görünümü */
+                    <div className="flex-1 overflow-y-auto">
+                      <SmartExamView
+                        isGeneratingExam={isGeneratingExam}
+                        examProgress={examProgress}
+                        examLogs={examLogs}
+                        onStartSmartExam={handleStartSmartExam}
+                      />
+                    </div>
                   )}
-                </div>
+                </div>{' '}
               </div>
             )}
           </div>

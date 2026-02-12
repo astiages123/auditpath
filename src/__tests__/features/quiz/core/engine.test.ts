@@ -63,6 +63,7 @@ describe('QuizEngine Integration (via useQuiz)', () => {
     vi.clearAllMocks();
 
     // Setup default Repository mocks
+    // eslint-disable-next-line no-restricted-syntax
     vi.mocked(Repository.incrementCourseSession).mockResolvedValue({
       data: { current_session: 1, is_new_session: true },
       error: null,
@@ -73,12 +74,17 @@ describe('QuizEngine Integration (via useQuiz)', () => {
     vi.mocked(Repository.getCourseName).mockResolvedValue(mockCourseName);
     vi.mocked(Repository.getChunkMetadata).mockResolvedValue({
       course_id: mockCourseId,
-      metadata: {},
-      word_count: 500,
+      metadata: {
+        concept_map: [
+          { baslik: 'C1', odak: 'F1', seviye: 'Bilgi', gorsel: null },
+        ],
+      },
+      content: 'Test content with long enough text for calculation.',
       status: 'COMPLETED',
     });
 
     vi.mocked(Repository.getFrontierChunkId).mockResolvedValue(mockChunkId);
+    // eslint-disable-next-line no-restricted-syntax
     vi.mocked(Repository.fetchWaterfallTrainingQuestions).mockResolvedValue([
       {
         question_id: 'q1',
@@ -94,6 +100,7 @@ describe('QuizEngine Integration (via useQuiz)', () => {
       ReturnType<typeof Repository.fetchWaterfallTrainingQuestions>
     >);
 
+    // eslint-disable-next-line no-restricted-syntax
     vi.mocked(Repository.fetchQuestionsByIds).mockResolvedValue([
       {
         id: 'q1',
@@ -123,6 +130,7 @@ describe('QuizEngine Integration (via useQuiz)', () => {
 
     // Engine.submitAnswer needs these
     vi.mocked(Repository.getUserQuestionStatus).mockResolvedValue(null);
+    // eslint-disable-next-line no-restricted-syntax
     vi.mocked(Repository.getQuestionData).mockResolvedValue({
       id: 'q1',
       chunk_id: mockChunkId,

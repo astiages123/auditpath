@@ -45,6 +45,24 @@ export async function unlockAchievement(
   achievementId: string,
   achievedAt?: string
 ) {
+  // Check if achievement is already unlocked
+  const { data: existing, error: checkError } = await supabase
+    .from('user_achievements')
+    .select('achievement_id')
+    .eq('user_id', userId)
+    .eq('achievement_id', achievementId)
+    .maybeSingle();
+
+  if (checkError) {
+    console.error('Error checking achievement existence:', checkError);
+    return;
+  }
+
+  if (existing) {
+    // Already unlocked, do nothing
+    return;
+  }
+
   // achievedAt verilmişse onu kullan, yoksa şu anki zamanı kullan
   const unlockDate = achievedAt
     ? new Date(achievedAt).toISOString()

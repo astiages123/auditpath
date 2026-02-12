@@ -1,13 +1,23 @@
 import { supabase } from '@/shared/lib/core/supabase';
-import type { Database } from '@/shared/types/supabase';
 import { getCycleCount } from '@/shared/lib/core/utils/efficiency-math';
-import { getVirtualDateKey } from '@/shared/lib/utils/date-utils';
 import type {
   CumulativeStats,
   DailyStats,
   DayActivity,
   HistoryStats,
 } from '@/shared/types/efficiency';
+import type {
+  PomodoroInsert,
+  QuizInsert,
+  RecentActivity,
+  VideoUpsert,
+} from '@/shared/types/tracking';
+import type { Database } from '@/shared/types/supabase';
+
+/**
+ * Activity data union type for different activity types
+ */
+type ActivityData = PomodoroInsert | VideoUpsert | QuizInsert;
 
 /**
  * Get daily statistics with virtual day logic (day starts at 04:00).
@@ -173,26 +183,23 @@ export async function getLast30DaysActivity(
     .gte('started_at', thirtyDaysAgo.toISOString())
     .or('total_work_time.gte.60,total_break_time.gte.60');
 
-  if (error) {
-    console.error('Error fetching activity heatmap:', error);
+  if (error || !data) {
+    if (error) console.error('Error fetching activity heatmap:', error);
     return [];
   }
 
   const dailyCounts: Record<string, { count: number; minutes: number }> = {};
-  (data as Database['public']['Tables']['pomodoro_sessions']['Row'][])?.forEach(
-    (s) => {
-      const d = new Date(s.started_at);
-      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-        2,
-        '0'
-      )}-${String(d.getDate()).padStart(2, '0')}`;
-      dailyCounts[dateStr] = {
-        count: (dailyCounts[dateStr]?.count || 0) + 1,
-        minutes:
-          (dailyCounts[dateStr]?.minutes || 0) + (s.total_work_time || 0),
-      };
-    }
-  );
+  data.forEach((s) => {
+    const d = new Date(s.started_at);
+    const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+      2,
+      '0'
+    )}-${String(d.getDate()).padStart(2, '0')}`;
+    dailyCounts[dateStr] = {
+      count: (dailyCounts[dateStr]?.count || 0) + 1,
+      minutes: (dailyCounts[dateStr]?.minutes || 0) + (s.total_work_time || 0),
+    };
+  });
 
   const heatmap: DayActivity[] = [];
   const today = new Date();
@@ -336,9 +343,7 @@ export async function getHistoryStats(
     statsMap[dateKey] = { pomodoro: 0, video: 0 };
   }
 
-  (
-    sessions as Database['public']['Tables']['pomodoro_sessions']['Row'][]
-  )?.forEach((s) => {
+  (sessions || []).forEach((s) => {
     const d = new Date(s.started_at);
     if (d.getHours() < 4) d.setDate(d.getDate() - 1);
 
@@ -375,4 +380,152 @@ export async function getHistoryStats(
       video: Math.round(values.video),
     }))
     .sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/**
+ * Log a new activity (pomodoro, video, or quiz).
+ *
+ * @param userId User ID
+ * @param type Activity type
+ * @param data Activity data
+ * @returns true if successful, false otherwise
+ */
+export async function logActivity(
+  userId: string,
+  type: 'pomodoro' | 'video' | 'quiz',
+  data: ActivityData
+): Promise<boolean> {
+  try {
+    let result;
+    if (type === 'pomodoro') {
+      const pomodoroData = data as PomodoroInsert;
+      const insertData: Database['public']['Tables']['pomodoro_sessions']['Insert'] =
+        {
+          user_id: userId,
+          course_id: pomodoroData.course_id,
+          course_name: pomodoroData.course_name,
+          started_at: pomodoroData.started_at,
+          ended_at: pomodoroData.ended_at || new Date().toISOString(),
+          timeline: pomodoroData.timeline,
+          total_work_time: pomodoroData.total_work_time,
+          total_break_time: pomodoroData.total_break_time,
+          total_pause_time: pomodoroData.total_pause_time,
+        };
+      result = await supabase.from('pomodoro_sessions').insert(insertData);
+    } else if (type === 'video') {
+      const videoData = data as VideoUpsert;
+      const insertData: Database['public']['Tables']['video_progress']['Insert'] =
+        {
+          user_id: userId,
+          video_id: videoData.video_id,
+          completed: videoData.completed,
+          completed_at: videoData.completed_at,
+        };
+      result = await supabase.from('video_progress').upsert(insertData);
+    } else {
+      const quizData = data as QuizInsert;
+      const insertData: Database['public']['Tables']['user_quiz_progress']['Insert'] =
+        {
+          user_id: userId,
+          course_id: quizData.course_id,
+          question_id: quizData.question_id,
+          chunk_id: quizData.chunk_id || null,
+          response_type: quizData.response_type,
+          session_number: quizData.session_number,
+          ai_diagnosis: quizData.ai_diagnosis || null,
+          ai_insight: quizData.ai_insight || null,
+        };
+      result = await supabase.from('user_quiz_progress').insert(insertData);
+    }
+
+    if (result.error) throw result.error;
+    return true;
+  } catch (err) {
+    console.error(`Error logging ${type} activity:`, err);
+    return false;
+  }
+}
+
+interface PomodoroSessionRow {
+  id: string;
+  started_at: string;
+  course_name: string | null;
+  total_work_time: number | null;
+}
+
+interface VideoProgressRow {
+  id: string;
+  completed_at: string | null;
+  video: { title: string } | null;
+}
+
+interface QuizProgressRow {
+  id: string;
+  answered_at: string | null;
+  course: { name: string } | null;
+}
+
+/**
+ * Get recent activities across all types.
+ *
+ * @param userId User ID
+ * @param limit Maximum number of activities to return (default: 10)
+ * @returns Array of unified activity objects
+ */
+export async function getRecentActivities(
+  userId: string,
+  limit: number = 10
+): Promise<RecentActivity[]> {
+  try {
+    const [pomodoro, video, quiz] = await Promise.all([
+      supabase
+        .from('pomodoro_sessions')
+        .select('id, course_name, started_at, total_work_time')
+        .eq('user_id', userId)
+        .order('started_at', { ascending: false })
+        .limit(limit),
+      supabase
+        .from('video_progress')
+        .select('id, completed_at, video:videos(title)')
+        .eq('user_id', userId)
+        .eq('completed', true)
+        .order('completed_at', { ascending: false })
+        .limit(limit),
+      supabase
+        .from('user_quiz_progress')
+        .select('id, answered_at, course:courses(name)')
+        .eq('user_id', userId)
+        .order('answered_at', { ascending: false })
+        .limit(limit),
+    ]);
+
+    const activities: RecentActivity[] = [
+      ...(pomodoro.data || []).map((s: PomodoroSessionRow) => ({
+        id: s.id,
+        type: 'pomodoro' as const,
+        date: s.started_at,
+        title: s.course_name || 'Odaklanma Seansı',
+        durationMinutes: Math.round((s.total_work_time || 0) / 60),
+      })),
+      ...(video.data || []).map((v: VideoProgressRow) => ({
+        id: v.id,
+        type: 'video' as const,
+        date: v.completed_at || new Date().toISOString(),
+        title: v.video?.title || 'Video İzleme',
+      })),
+      ...(quiz.data || []).map((q: QuizProgressRow) => ({
+        id: q.id,
+        type: 'quiz' as const,
+        date: q.answered_at || new Date().toISOString(),
+        title: q.course?.name || 'Konu Testi',
+      })),
+    ];
+
+    return activities
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+      .slice(0, limit);
+  } catch (err) {
+    console.error('Error fetching recent activities:', err);
+    return [];
+  }
 }

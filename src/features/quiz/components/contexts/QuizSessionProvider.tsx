@@ -26,6 +26,7 @@ import {
 import { getReviewQueue } from '../../core/engine';
 import { type ReviewItem, type QuizResponseType } from '../../core/types';
 import { toast } from 'sonner';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 const STORAGE_PREFIX = 'auditpath_quiz_session_';
 
@@ -141,7 +142,10 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
               localStorage.removeItem(queueKey);
             }
           } catch (e) {
-            console.error('[QuizSession] Error parsing saved session', e);
+            logger.error(
+              '[QuizSession] Error parsing saved session',
+              e as Error
+            );
             localStorage.removeItem(storageKey);
             localStorage.removeItem(queueKey);
           }
@@ -207,16 +211,8 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
           isReviewPhase: reviewQueue.length > 0,
           courseStats,
         });
-
-        /*
-        console.log(
-          `[QuizSession] Initialized: Session #${sessionInfo.currentSession}, ` +
-            `${quotaInfo.pendingReviewCount} pending reviews, ` +
-            `Mode: ${quotaInfo.isMaintenanceMode ? 'Maintenance (70/30)' : 'Normal (80/20)'}`
-        );
-        */
       } catch (err) {
-        console.error('[QuizSession] Initialization error:', err);
+        logger.error('[QuizSession] Initialization error:', err as Error);
         setState((prev: QuizSessionState) => ({
           ...prev,
           isLoading: false,
@@ -240,7 +236,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
       insight?: string
     ) => {
       if (!user?.id || !state.sessionInfo) {
-        console.warn('[QuizSession] Cannot record - no session');
+        logger.warn('[QuizSession] Cannot record - no session');
         return;
       }
 
@@ -286,7 +282,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
 
         return;
       } catch (err) {
-        console.error('[QuizSession] Error recording response:', err);
+        logger.error('[QuizSession] Error recording response:', err as Error);
       }
     },
     [user?.id, state]

@@ -1,5 +1,3 @@
-'use client';
-
 import { cn, slugify } from '@/shared/lib/core/utils';
 import { type CourseTopic } from '@/shared/types/efficiency';
 import { memo, useEffect, useRef } from 'react';
@@ -64,9 +62,6 @@ export const GlobalNavigation = memo(function GlobalNavigation({
       >
         {navItems.map((chunk, index) => {
           // DEBUG: Verify raw chunk data
-          console.log(`GlobalNav Chunk ${index}:`, {
-            title: chunk.section_title,
-          });
 
           // Use chunk.id if available, fallback to slugified title or index
           // In `NotesPage`, we use `slugify(chunk.section_title)` for IDs.

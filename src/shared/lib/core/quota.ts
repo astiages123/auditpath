@@ -21,7 +21,7 @@ export function validateAndProtectQuotas(
   aiQuotas: Partial<QuotaSet>
 ): QuotaSet {
   return {
-    antrenman: Math.max(5, aiQuotas.antrenman ?? 5),
+    antrenman: Math.max(3, aiQuotas.antrenman ?? 5),
     arsiv: Math.max(1, aiQuotas.arsiv ?? 2),
     deneme: Math.max(1, aiQuotas.deneme ?? 2),
   };

@@ -1,5 +1,3 @@
-'use client';
-
 import React, { memo } from 'react';
 import { cn } from '@/shared/lib/core/utils';
 import ReactMarkdown from 'react-markdown';

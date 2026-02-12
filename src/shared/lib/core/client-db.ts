@@ -91,17 +91,19 @@ export async function getCategories(): Promise<Category[]> {
     .select('*, courses(*)')
     .order('sort_order');
 
-  if (catError) {
-    const isAbort =
-      catError.message?.includes('AbortError') ||
-      catError.code === 'ABORT_ERROR';
-    if (!isAbort) {
-      // Log to external service if needed
+  if (catError || !categories) {
+    if (catError) {
+      const isAbort =
+        catError.message?.includes('AbortError') ||
+        catError.code === 'ABORT_ERROR';
+      if (!isAbort) {
+        // Log to external service if needed
+      }
     }
     return [];
   }
 
-  return categories as Category[];
+  return categories;
 }
 
 export async function getAllCourses(): Promise<Course[]> {

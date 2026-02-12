@@ -1,5 +1,3 @@
-'use client';
-
 // Guild Types
 export type GuildType =
   | 'HUKUK'

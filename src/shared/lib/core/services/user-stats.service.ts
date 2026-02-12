@@ -1,6 +1,5 @@
 import { supabase } from '@/shared/lib/core/supabase';
-import type { Database } from '@/shared/types/supabase';
-import type { Category, Course } from '@/shared/types/courses';
+
 import { getVirtualDateKey } from '@/shared/lib/utils/date-utils';
 import {
   calculateStreak,
@@ -36,7 +35,7 @@ export async function getUserStats(userId: string) {
       throw catError;
     }
 
-    const cats = (categories || []) as Category[];
+    const cats = categories || [];
 
     const courseToCategoryMap: Record<string, string> = {};
     const courseIdToSlugMap: Record<string, string> = {};
@@ -50,19 +49,19 @@ export async function getUserStats(userId: string) {
 
     // Use static data for totals to ensure consistency even if categories table is transiently empty or partial
     const totalHoursFromJSON = coursesData.reduce(
-      (sum: number, cat) =>
+      (sum: number, cat: { courses?: { totalHours?: number }[] }) =>
         sum +
-        ((cat as { courses?: { totalHours?: number }[] }).courses?.reduce(
-          (s: number, c) => s + (c.totalHours || 0),
+        (cat.courses?.reduce(
+          (s: number, c: { totalHours?: number }) => s + (c.totalHours || 0),
           0
         ) || 0),
       0
     );
     const totalVideosFromJSON = coursesData.reduce(
-      (sum: number, cat) =>
+      (sum: number, cat: { courses?: { totalVideos?: number }[] }) =>
         sum +
-        ((cat as { courses?: { totalVideos?: number }[] }).courses?.reduce(
-          (s: number, c) => s + (c.totalVideos || 0),
+        (cat.courses?.reduce(
+          (s: number, c: { totalVideos?: number }) => s + (c.totalVideos || 0),
           0
         ) || 0),
       0
@@ -127,10 +126,10 @@ export async function getUserStats(userId: string) {
           }
         }
 
-        const video = p.video as unknown as {
+        const video = p.video as {
           duration_minutes: number;
           course_id: string;
-        };
+        } | null;
         if (video) {
           const durationHours = video.duration_minutes / 60;
           completedHours += durationHours;
@@ -265,8 +264,8 @@ export async function getUserStats(userId: string) {
       })(),
     };
   } catch (error: unknown) {
-    const e = error as { name?: string; message?: string };
-    if (e?.name === 'AbortError' || e?.message?.includes('AbortError')) {
+    const err = error as Error | undefined;
+    if (err?.name === 'AbortError' || err?.message?.includes('AbortError')) {
       return null;
     }
     return null;

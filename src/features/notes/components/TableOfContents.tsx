@@ -1,5 +1,3 @@
-'use client';
-
 import { cn } from '@/shared/lib/core/utils';
 import { memo, useEffect, useRef } from 'react';
 

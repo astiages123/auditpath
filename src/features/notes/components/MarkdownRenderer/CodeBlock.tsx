@@ -44,26 +44,28 @@ export const CodeBlock = ({
       .replace(/^(\$\$|\\\[|\\\(|\$)/, '')
       .replace(/(\$\$|\\\]|\\\)|\$)$/, '');
 
+    let sanitizedHtml: string;
     try {
       const html = katex.renderToString(content, {
         displayMode: isDisplay,
         throwOnError: false,
       });
-      const sanitizedHtml = sanitizeHtml(html);
-
-      if (isDisplay) {
-        return (
-          <div
-            className="my-8 text-lg overflow-x-auto text-center"
-            dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
-          />
-        );
-      }
-      return <span dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />;
+      sanitizedHtml = sanitizeHtml(html);
     } catch (err) {
       console.error('KaTeX fallback render error:', err);
       // Fall through to regular code display if KaTeX fails
+      return null; // Let the component handle fallback
     }
+
+    if (isDisplay) {
+      return (
+        <div
+          className="my-8 text-lg overflow-x-auto text-center"
+          dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+        />
+      );
+    }
+    return <span dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />;
   }
 
   // Handle inline code

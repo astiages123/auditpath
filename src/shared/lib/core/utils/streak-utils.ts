@@ -1,8 +1,4 @@
-import {
-  formatDateKey,
-  getVirtualDate,
-  getVirtualDateKey,
-} from '@/shared/lib/utils/date-utils';
+import { formatDateKey, getVirtualDate } from '@/shared/lib/utils/date-utils';
 
 /**
  * Calculate current streak with weekend allowance logic.
@@ -103,22 +99,29 @@ export function calculateStreakMilestones(activeDays: string[]): {
       if (diffDays === 1) {
         // Ardışık gün
         currentStreak++;
-      } else if (diffDays === 2) {
-        // 1 gün boşluk var - hafta sonu izni mi kontrol et
-        const skippedDate = new Date(
-          lastActiveDate.getTime() + 24 * 60 * 60 * 1000
-        );
-        const skippedDay = skippedDate.getDay(); // 0=Pazar, 6=Cumartesi
+      } else if (diffDays <= 3) {
+        // Hafta sonu izni kontrolü (1 veya 2 gün boşluk)
+        let hasOnlyWeekendGaps = true;
+        for (let j = 1; j < diffDays; j++) {
+          const skippedDate = new Date(
+            lastActiveDate.getTime() + j * 24 * 60 * 60 * 1000
+          );
+          const skippedDay = skippedDate.getDay(); // 0=Pazar, 6=Cumartesi
+          if (skippedDay !== 0 && skippedDay !== 6) {
+            hasOnlyWeekendGaps = false;
+            break;
+          }
+        }
 
-        if (skippedDay === 0 || skippedDay === 6) {
-          // Hafta sonu izni - streak devam
+        if (hasOnlyWeekendGaps) {
+          // Sadece hafta sonu boşlukları var - streak devam
           currentStreak++;
         } else {
           // Hafta içi boşluk - streak kırıldı
           currentStreak = 1;
         }
       } else {
-        // 2+ gün boşluk - streak kırıldı
+        // 3+ gün boşluk - streak kırıldı
         currentStreak = 1;
       }
     }

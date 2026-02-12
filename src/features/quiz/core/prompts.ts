@@ -66,8 +66,7 @@ Sadece saf JSON objesi döndür. Markdown bloğu (\`\`\`) veya giriş cümlesi e
     "antrenman": number,
     "arsiv": number,
     "deneme": number
-  },
-  "reasoning": "Kotaları neden bu şekilde belirlediğinin kısa ve profesyonel gerekçesi."
+  }
 }`;
 
 export const GLOBAL_AI_SYSTEM_PROMPT =

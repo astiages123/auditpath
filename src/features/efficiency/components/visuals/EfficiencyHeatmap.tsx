@@ -1,5 +1,3 @@
-'use client';
-
 import { DayActivity } from '@/shared/types/efficiency';
 import { cn } from '@/shared/lib/core/utils';
 import {

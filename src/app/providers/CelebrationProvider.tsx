@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useCallback } from 'react';
 // useLocation import removed
 import { useAuth } from '@/features/auth';

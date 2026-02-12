@@ -274,8 +274,6 @@ export type Database = {
           metadata: Json | null;
           section_title: string;
           status: Database['public']['Enums']['chunk_generation_status'] | null;
-          target_count: number | null;
-          word_count: number | null;
         };
         Insert: {
           ai_logic?: Json | null;
@@ -292,8 +290,6 @@ export type Database = {
           status?:
             | Database['public']['Enums']['chunk_generation_status']
             | null;
-          target_count?: number | null;
-          word_count?: number | null;
         };
         Update: {
           ai_logic?: Json | null;
@@ -310,8 +306,6 @@ export type Database = {
           status?:
             | Database['public']['Enums']['chunk_generation_status']
             | null;
-          target_count?: number | null;
-          word_count?: number | null;
         };
         Relationships: [
           {
