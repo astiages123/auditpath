@@ -15,6 +15,8 @@ import {
   FollowUpQuestionRowSchema,
   QuestionWithStatusRowSchema,
 } from '@/shared/lib/validation/quiz-schemas';
+import { DAILY_QUOTA, MASTERY_THRESHOLD } from '@/config/constants';
+import { addToOfflineQueue } from '@/shared/lib/core/services/offline-queue.service';
 
 const quizLogger = logger.withPrefix('[QuizRepository]');
 
@@ -60,7 +62,7 @@ export async function incrementCourseSession(
   );
 
   if (rpcError) {
-    console.error('RPC Error:', rpcError);
+    logger.error('RPC Error:', rpcError);
     return { data: null, error: new Error(rpcError.message) };
   }
 
@@ -105,16 +107,13 @@ export async function getContentVersion(
 }
 
 export async function getQuotaInfo(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _userId: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _courseId: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _sessionNumber: number
 ) {
   // Placeholder logic for quota info, presumably handled by backend or simpler check
   return {
-    dailyQuota: 50,
+    dailyQuota: DAILY_QUOTA,
     used: 0,
     pendingReviewCount: 0,
     isMaintenanceMode: false,
@@ -411,14 +410,14 @@ export async function fetchWaterfallTrainingQuestions(
 
   if (results.length >= limit) return results.slice(0, limit);
 
-  // Phase 2: Waterfall from other weak chunks (< 80% mastery, ordered by updated_at)
+  // Phase 2: Waterfall from other weak chunks (< MASTERY_THRESHOLD% mastery, ordered by updated_at)
   const { data: weakChunks } = await supabase
     .from('chunk_mastery')
     .select('chunk_id')
     .eq('user_id', userId)
     .eq('course_id', courseId)
     .neq('chunk_id', targetChunkId)
-    .lt('mastery_score', 80)
+    .lt('mastery_score', MASTERY_THRESHOLD)
     .order('updated_at', { ascending: false });
 
   if (weakChunks) {
@@ -491,14 +490,16 @@ export async function recordQuizProgress(
         questionId: payload.question_id,
         error: error.message,
       });
-      // TODO: Implement local queue if offline
+      // Add to offline queue for later sync
+      addToOfflineQueue(payload as Record<string, unknown>);
       return { success: false, error: new Error(error.message) };
     }
 
     return { success: true };
   } catch (err) {
     quizLogger.error('Unexpected error in recordQuizProgress', err as Error);
-    // TODO: Implement local queue if offline
+    // Add to offline queue for later sync
+    addToOfflineQueue(payload as Record<string, unknown>);
     return {
       success: false,
       error: err instanceof Error ? err : new Error('Unknown error'),

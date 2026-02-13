@@ -37,10 +37,12 @@ export function getSubjectStrategy(
 ): ExamSubjectWeight | undefined {
   // Basic normalization for matching keys
   const normalizedName = courseName
+    .trim()
     .toLowerCase()
     .replace(/,/g, '') // Virgülleri kaldır
     .replace(/ /g, '-')
     .replace(/ı/g, 'i')
+    .replace(/i̇/g, 'i') // Handle combined dot character
     .replace(/ğ/g, 'g')
     .replace(/ü/g, 'u')
     .replace(/ş/g, 's')

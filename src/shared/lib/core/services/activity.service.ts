@@ -13,6 +13,7 @@ import type {
   VideoUpsert,
 } from '@/shared/types/tracking';
 import type { Database } from '@/shared/types/supabase';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 /**
  * Activity data union type for different activity types
@@ -51,7 +52,7 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     .or('total_work_time.gte.60,total_break_time.gte.60');
 
   if (todayError) {
-    console.error('Error fetching daily stats:', todayError);
+    logger.error('Error fetching daily stats:', todayError);
   }
 
   // 2. Fetch Yesterday's Pomodoro Stats (for Trend)
@@ -184,7 +185,7 @@ export async function getLast30DaysActivity(
     .or('total_work_time.gte.60,total_break_time.gte.60');
 
   if (error || !data) {
-    if (error) console.error('Error fetching activity heatmap:', error);
+    if (error) logger.error('Error fetching activity heatmap:', error);
     return [];
   }
 
@@ -255,10 +256,10 @@ export async function getCumulativeStats(
     .eq('completed', true);
 
   if (sessionError || videoError) {
-    console.error(
-      'Error fetching cumulative stats:',
-      sessionError || videoError
-    );
+    logger.error('Error fetching cumulative stats:', {
+      sessionError: sessionError?.message,
+      videoError: videoError?.message,
+    });
   }
 
   const totalWorkSeconds =
@@ -325,7 +326,10 @@ export async function getHistoryStats(
     .gte('completed_at', startDate.toISOString());
 
   if (sessionError || videoError) {
-    console.error('Error fetching history stats:', sessionError || videoError);
+    logger.error('Error fetching history stats:', {
+      sessionError: sessionError?.message,
+      videoError: videoError?.message,
+    });
     return [];
   }
 
@@ -441,7 +445,7 @@ export async function logActivity(
     if (result.error) throw result.error;
     return true;
   } catch (err) {
-    console.error(`Error logging ${type} activity:`, err);
+    logger.error(`Error logging ${type} activity:`, err as Error);
     return false;
   }
 }
@@ -525,7 +529,7 @@ export async function getRecentActivities(
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, limit);
   } catch (err) {
-    console.error('Error fetching recent activities:', err);
+    logger.error('Error fetching recent activities:', err as Error);
     return [];
   }
 }

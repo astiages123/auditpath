@@ -27,6 +27,7 @@ import { getReviewQueue } from '../../core/engine';
 import { type ReviewItem, type QuizResponseType } from '../../core/types';
 import { toast } from 'sonner';
 import { logger } from '@/shared/lib/core/utils/logger';
+import { storage } from '@/shared/lib/core/services/storage.service';
 
 const STORAGE_PREFIX = 'auditpath_quiz_session_';
 
@@ -101,7 +102,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
         const versionKey = `${STORAGE_PREFIX}${user.id}_${courseId}_version`;
 
         if (contentVersion) {
-          const storedVersion = localStorage.getItem(versionKey);
+          const storedVersion = storage.get<string>(versionKey);
           if (storedVersion && storedVersion !== contentVersion) {
             toast.warning(
               'İçerik güncellendi, taze veriler için oturumu yenilemeniz önerilir',
@@ -115,39 +116,44 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
             );
           }
           // Always update to latest
-          localStorage.setItem(versionKey, contentVersion);
+          storage.set(versionKey, contentVersion, {
+            ttl: 7 * 24 * 60 * 60 * 1000,
+          }); // 7 days
         }
 
         // Check for saved session in localStorage
         const storageKey = `${STORAGE_PREFIX}${user.id}_${courseId}`;
         const queueKey = `${storageKey}_queue`;
-        const savedSessionStr = localStorage.getItem(storageKey);
+        interface SavedSession {
+          sessionId: number;
+          currentReviewIndex?: number;
+        }
+        const savedSession = storage.get<SavedSession>(storageKey);
         let restoredQueue = false;
         let currentReviewIndex = 0;
         let reviewQueue: ReviewItem[] = [];
 
-        if (savedSessionStr) {
+        if (savedSession) {
           try {
-            const savedSession = JSON.parse(savedSessionStr);
             // Only restore if it matches the current session ID we just got from DB
             if (savedSession.sessionId === sessionInfo.currentSession) {
-              const savedQueueStr = localStorage.getItem(queueKey);
-              if (savedQueueStr) {
-                reviewQueue = JSON.parse(savedQueueStr);
+              const savedQueue = storage.get<ReviewItem[]>(queueKey);
+              if (savedQueue) {
+                reviewQueue = savedQueue;
                 currentReviewIndex = savedSession.currentReviewIndex || 0;
                 restoredQueue = true;
               }
             } else {
-              localStorage.removeItem(storageKey);
-              localStorage.removeItem(queueKey);
+              storage.remove(storageKey);
+              storage.remove(queueKey);
             }
           } catch (e) {
             logger.error(
               '[QuizSession] Error parsing saved session',
               e as Error
             );
-            localStorage.removeItem(storageKey);
-            localStorage.removeItem(queueKey);
+            storage.remove(storageKey);
+            storage.remove(queueKey);
           }
         }
 
@@ -166,14 +172,15 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
 
           // Save initial state to storage if we have a queue
           if (reviewQueue.length > 0) {
-            localStorage.setItem(
+            storage.set(
               storageKey,
-              JSON.stringify({
+              {
                 sessionId: sessionInfo.currentSession,
                 currentReviewIndex,
-              })
-            );
-            localStorage.setItem(queueKey, JSON.stringify(reviewQueue));
+              },
+              { ttl: 24 * 60 * 60 * 1000 }
+            ); // 24 hours
+            storage.set(queueKey, reviewQueue, { ttl: 24 * 60 * 60 * 1000 }); // 24 hours
           }
         }
 
@@ -309,17 +316,18 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
         const queueKey = `${storageKey}_queue`;
         if (isStillReviewing) {
           // Optimization: Only update the index/metadata, don't re-save the entire queue
-          localStorage.setItem(
+          storage.set(
             storageKey,
-            JSON.stringify({
+            {
               sessionId: prev.sessionInfo.currentSession,
               currentReviewIndex: nextIndex,
-            })
-          );
+            },
+            { ttl: 24 * 60 * 60 * 1000 }
+          ); // 24 hours
         } else {
           // Clear storage when session is done
-          localStorage.removeItem(storageKey);
-          localStorage.removeItem(queueKey);
+          storage.remove(storageKey);
+          storage.remove(queueKey);
         }
       }
 
@@ -396,14 +404,15 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
         if (state.sessionInfo && user?.id) {
           const storageKey = `${STORAGE_PREFIX}${user.id}_${state.sessionInfo.courseId}`;
           const queueKey = `${storageKey}_queue`;
-          localStorage.setItem(
+          storage.set(
             storageKey,
-            JSON.stringify({
+            {
               sessionId: state.sessionInfo.currentSession,
               currentReviewIndex: prev.currentReviewIndex,
-            })
-          );
-          localStorage.setItem(queueKey, JSON.stringify(newQueue));
+            },
+            { ttl: 24 * 60 * 60 * 1000 }
+          ); // 24 hours
+          storage.set(queueKey, newQueue, { ttl: 24 * 60 * 60 * 1000 }); // 24 hours
         }
 
         return {

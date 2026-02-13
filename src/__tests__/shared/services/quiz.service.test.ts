@@ -1,8 +1,15 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, Mock, vi } from 'vitest';
 import * as quizService from '@/shared/lib/core/services/quiz.service';
 import { supabase } from '@/shared/lib/core/supabase';
 import { getSubjectStrategy } from '@/features/quiz/algoritma/strategy';
+import type { Database } from '@/shared/types/supabase';
+
+type NoteChunkRow = Database['public']['Tables']['note_chunks']['Row'];
+
+type MockChunkData = Pick<
+  NoteChunkRow,
+  'id' | 'course_name' | 'content' | 'metadata' | 'ai_logic'
+>;
 
 // Mock Supabase
 vi.mock('@/shared/lib/core/supabase', () => ({
@@ -100,7 +107,8 @@ describe('Quiz Service Tests', () => {
 
       expect(result).toBeNull();
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Invalid UUID passed to getNoteChunkById: invalid-uuid'
+        '[AuditPath] ⚠️ Invalid UUID passed to getNoteChunkById: invalid-uuid',
+        ''
       );
       consoleSpy.mockRestore();
     });
@@ -129,7 +137,7 @@ describe('Quiz Service Tests', () => {
 
       expect(result).toBeNull();
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Error fetching note chunk:',
+        '[AuditPath] ❌ Error fetching note chunk:',
         mockError
       );
       consoleSpy.mockRestore();
@@ -342,12 +350,19 @@ describe('Quiz Service Tests', () => {
 
   describe('getTopicCompletionStatus', () => {
     it('should return completion status with AI quotas', async () => {
-      const mockChunk: any = {
+      const mockChunk: MockChunkData = {
         id: 'chunk-1',
         course_name: 'Test Course',
         content: 'Test content for word count',
         metadata: {
-          concept_map: [{ id: 'c1', name: 'Concept 1' }],
+          concept_map: [
+            {
+              baslik: 'Concept 1',
+              odak: 'Focus 1',
+              seviye: 'Bilgi',
+              gorsel: null,
+            },
+          ],
           difficulty_index: 3,
         },
         ai_logic: {
@@ -426,7 +441,7 @@ describe('Quiz Service Tests', () => {
       const consoleSpy = vi
         .spyOn(console, 'error')
         .mockImplementation(() => {});
-      const mockChunk: any = {
+      const mockChunk: MockChunkData = {
         id: 'chunk-1',
         course_name: 'Test Course',
         content: 'Test content for word count',
@@ -463,7 +478,7 @@ describe('Quiz Service Tests', () => {
       const consoleSpy = vi
         .spyOn(console, 'error')
         .mockImplementation(() => {});
-      const mockChunk: any = {
+      const mockChunk: MockChunkData = {
         id: 'chunk-1',
         course_name: 'Test Course',
         content: 'Test content for word count',
@@ -508,7 +523,7 @@ describe('Quiz Service Tests', () => {
     });
 
     it('should mark as completed when all antrenman solved', async () => {
-      const mockChunk: any = {
+      const mockChunk: MockChunkData = {
         id: 'chunk-1',
         course_name: 'Test Course',
         content: 'Test content for word count',
@@ -565,7 +580,7 @@ describe('Quiz Service Tests', () => {
     });
 
     it('should handle questions with parent_question_id (mistakes)', async () => {
-      const mockChunk: any = {
+      const mockChunk: MockChunkData = {
         id: 'chunk-1',
         course_name: 'Test Course',
         content: 'Test content for word count',
@@ -711,7 +726,7 @@ describe('Quiz Service Tests', () => {
 
       expect(result).toEqual([]);
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Error fetching course topics:',
+        '[AuditPath] ❌ Error fetching course topics:',
         expect.any(Object)
       );
       consoleSpy.mockRestore();
@@ -829,16 +844,18 @@ describe('Quiz Service Tests', () => {
       const mockData = [
         {
           question_data: {
+            type: 'multiple_choice',
             q: 'Question 1?',
             o: ['A', 'B', 'C', 'D'],
             a: 0,
             exp: 'Explanation',
-            img: 'image.png',
+            img: 1,
           },
           course: { course_slug: 'test-course' },
         },
         {
           question_data: {
+            type: 'multiple_choice',
             q: 'Question 2?',
             o: ['A', 'B', 'C', 'D'],
             a: 1,

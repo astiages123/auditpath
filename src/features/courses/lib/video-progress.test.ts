@@ -13,45 +13,41 @@ import {
 const TEST_COURSE_ID = 'test-course-123';
 const STORAGE_KEY_PREFIX = 'video-progress-';
 
-// localStorage mock storage
-let mockStorage: Record<string, string> = {};
+let mockStorageData: Record<string, string> = {};
+
+vi.mock('@/shared/lib/core/services/storage.service', () => ({
+  storage: {
+    get: vi.fn((key: string) => {
+      const raw = mockStorageData[key];
+      if (!raw) return null;
+      if (typeof raw === 'string') {
+        try {
+          return JSON.parse(raw);
+        } catch {
+          return null;
+        }
+      }
+      return raw;
+    }),
+    set: vi.fn(
+      (
+        key: string,
+        value: { completedVideos: number[]; updatedAt: number }
+      ) => {
+        mockStorageData[key] = JSON.stringify(value);
+      }
+    ),
+    remove: vi.fn((key: string) => {
+      delete mockStorageData[key];
+    }),
+    getKeys: vi.fn(() => Object.keys(mockStorageData)),
+    keys: vi.fn(() => Object.keys(mockStorageData)),
+  },
+}));
 
 describe('video-progress', () => {
   beforeEach(() => {
-    // Reset mock storage before each test
-    mockStorage = {};
-
-    // Setup localStorage mock
-    vi.spyOn(window.localStorage, 'getItem').mockImplementation(
-      (key: string) => {
-        return mockStorage[key] || null;
-      }
-    );
-
-    vi.spyOn(window.localStorage, 'setItem').mockImplementation(
-      (key: string, value: string) => {
-        mockStorage[key] = value;
-      }
-    );
-
-    vi.spyOn(window.localStorage, 'removeItem').mockImplementation(
-      (key: string) => {
-        delete mockStorage[key];
-      }
-    );
-
-    vi.spyOn(window.localStorage, 'clear').mockImplementation(() => {
-      mockStorage = {};
-    });
-
-    vi.spyOn(window.localStorage, 'key').mockImplementation((index: number) => {
-      return Object.keys(mockStorage)[index] || null;
-    });
-
-    Object.defineProperty(window.localStorage, 'length', {
-      get: () => Object.keys(mockStorage).length,
-      configurable: true,
-    });
+    mockStorageData = {};
   });
 
   describe('getVideoProgress', () => {
@@ -72,7 +68,7 @@ describe('video-progress', () => {
         completedVideos: [1, 2, 3],
         updatedAt: Date.now(),
       };
-      mockStorage[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`] =
+      mockStorageData[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`] =
         JSON.stringify(storedData);
 
       const progress = getVideoProgress(TEST_COURSE_ID);
@@ -83,7 +79,7 @@ describe('video-progress', () => {
     });
 
     it('should handle corrupted localStorage data gracefully', () => {
-      mockStorage[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`] =
+      mockStorageData[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`] =
         'invalid-json-data';
 
       const progress = getVideoProgress(TEST_COURSE_ID);
@@ -93,7 +89,7 @@ describe('video-progress', () => {
 
     it('should handle missing completedVideos array', () => {
       const storedData = { updatedAt: Date.now() };
-      mockStorage[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`] =
+      mockStorageData[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`] =
         JSON.stringify(storedData);
 
       const progress = getVideoProgress(TEST_COURSE_ID);
@@ -112,7 +108,7 @@ describe('video-progress', () => {
         completedVideos: [1, 2, 3],
         updatedAt: Date.now(),
       };
-      mockStorage[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`] =
+      mockStorageData[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`] =
         JSON.stringify(storedData);
 
       expect(isVideoCompleted(TEST_COURSE_ID, 1)).toBe(true);
@@ -125,7 +121,7 @@ describe('video-progress', () => {
         completedVideos: [1, 2],
         updatedAt: Date.now(),
       };
-      mockStorage[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`] =
+      mockStorageData[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`] =
         JSON.stringify(storedData);
 
       expect(isVideoCompleted(TEST_COURSE_ID, 99)).toBe(false);
@@ -179,7 +175,7 @@ describe('video-progress', () => {
       toggleVideoProgress(TEST_COURSE_ID, 1, true);
       const afterTime = Date.now();
 
-      const stored = mockStorage[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`];
+      const stored = mockStorageData[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`];
       expect(stored).not.toBeUndefined();
 
       const data = JSON.parse(stored);
@@ -203,7 +199,7 @@ describe('video-progress', () => {
     it('should update localStorage timestamp on each change', async () => {
       toggleVideoProgress(TEST_COURSE_ID, 1, true);
       const firstData = JSON.parse(
-        mockStorage[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`]
+        mockStorageData[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`]
       );
       const firstTimestamp = firstData.updatedAt;
 
@@ -211,7 +207,7 @@ describe('video-progress', () => {
       await new Promise((resolve) => setTimeout(resolve, 10));
       toggleVideoProgress(TEST_COURSE_ID, 2, true);
       const secondData = JSON.parse(
-        mockStorage[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`]
+        mockStorageData[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`]
       );
       expect(secondData.updatedAt).toBeGreaterThanOrEqual(firstTimestamp);
     });
@@ -264,7 +260,7 @@ describe('video-progress', () => {
     it('should save batch operation to localStorage', () => {
       toggleVideoProgressBatch(TEST_COURSE_ID, [1, 2, 3], true);
 
-      const stored = mockStorage[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`];
+      const stored = mockStorageData[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`];
       expect(stored).not.toBeUndefined();
 
       const data = JSON.parse(stored);
@@ -376,12 +372,12 @@ describe('video-progress', () => {
     it('should remove progress from localStorage', () => {
       toggleVideoProgress(TEST_COURSE_ID, 1, true);
       expect(
-        mockStorage[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`]
+        mockStorageData[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`]
       ).not.toBeUndefined();
 
       clearCourseProgress(TEST_COURSE_ID);
       expect(
-        mockStorage[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`]
+        mockStorageData[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`]
       ).toBeUndefined();
     });
 
@@ -419,8 +415,8 @@ describe('video-progress', () => {
     });
 
     it('should ignore non-progress localStorage keys', () => {
-      mockStorage['some-other-key'] = 'value';
-      mockStorage['user-preferences'] = '{}';
+      mockStorageData['some-other-key'] = 'value';
+      mockStorageData['user-preferences'] = '{}';
       toggleVideoProgress(TEST_COURSE_ID, 1, true);
 
       const courses = getAllProgressCourses();
@@ -466,11 +462,12 @@ describe('video-progress', () => {
     it('should persist data across multiple sessions (simulated)', () => {
       // İlk oturum
       toggleVideoProgress(TEST_COURSE_ID, 1, true);
-      const storedData = mockStorage[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`];
+      const storedData =
+        mockStorageData[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`];
 
       // localStorage'ı temizle (yeni oturum simülasyonu)
-      mockStorage = {};
-      mockStorage[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`] = storedData;
+      mockStorageData = {};
+      mockStorageData[`${STORAGE_KEY_PREFIX}${TEST_COURSE_ID}`] = storedData;
 
       // Yeni oturumda veriyi oku
       const progress = getVideoProgress(TEST_COURSE_ID);

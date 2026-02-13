@@ -1,4 +1,6 @@
-// LocalStorage key prefix
+import { storage } from '@/shared/lib/core/services/storage.service';
+
+// Storage key prefix for video progress
 const STORAGE_KEY_PREFIX = 'video-progress-';
 
 // Get storage key for course
@@ -6,34 +8,38 @@ function getStorageKey(courseId: string): string {
   return `${STORAGE_KEY_PREFIX}${courseId}`;
 }
 
-// Load progress from localStorage
+// Interface for video progress data
+interface VideoProgressData {
+  completedVideos: number[];
+  updatedAt: number;
+}
+
+// Load progress from storage
 function loadProgress(courseId: string): Set<number> {
   if (typeof window === 'undefined') return new Set();
 
   try {
-    const stored = localStorage.getItem(getStorageKey(courseId));
-    if (!stored) return new Set();
+    const data = storage.get<VideoProgressData>(getStorageKey(courseId));
+    if (!data) return new Set();
 
-    const data = JSON.parse(stored) as {
-      completedVideos: number[];
-      updatedAt: number;
-    };
     return new Set(data.completedVideos);
   } catch {
     return new Set();
   }
 }
 
-// Save progress to localStorage
+// Save progress to storage
 function saveProgress(courseId: string, completedVideos: Set<number>): void {
   if (typeof window === 'undefined') return;
 
-  const data = {
+  const data: VideoProgressData = {
     completedVideos: Array.from(completedVideos),
     updatedAt: Date.now(),
   };
 
-  localStorage.setItem(getStorageKey(courseId), JSON.stringify(data));
+  storage.set(getStorageKey(courseId), data, {
+    ttl: 365 * 24 * 60 * 60 * 1000, // 1 year retention
+  });
 }
 
 // Export functions for use in components
@@ -113,19 +119,16 @@ export function getCourseStats(courseId: string, totalVideos: number) {
 // Clear all progress for a course (for testing/reset)
 export function clearCourseProgress(courseId: string): void {
   if (typeof window === 'undefined') return;
-  localStorage.removeItem(getStorageKey(courseId));
+  storage.remove(getStorageKey(courseId));
 }
 
 // Get all courses with progress
 export function getAllProgressCourses(): string[] {
   if (typeof window === 'undefined') return [];
 
-  const courses: string[] = [];
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (key?.startsWith(STORAGE_KEY_PREFIX)) {
-      courses.push(key.replace(STORAGE_KEY_PREFIX, ''));
-    }
-  }
-  return courses;
+  // Use storage service to get all keys with the prefix
+  const allKeys = storage.keys();
+  return allKeys
+    .filter((key) => key.startsWith(STORAGE_KEY_PREFIX))
+    .map((key) => key.replace(STORAGE_KEY_PREFIX, ''));
 }

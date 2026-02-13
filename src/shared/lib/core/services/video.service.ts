@@ -1,5 +1,6 @@
 import { supabase } from '@/shared/lib/core/supabase';
 import type { DailyVideoMilestones } from '@/shared/types/efficiency';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 /**
  * Get video progress for multiple videos in a course.
@@ -40,7 +41,7 @@ export async function getVideoProgress(
     .in('video_id', videoIds);
 
   if (progressError) {
-    console.error('Error fetching video progress:', progressError);
+    logger.error('Error fetching video progress:', progressError);
     return {};
   }
 
@@ -78,7 +79,7 @@ export async function toggleVideoProgress(
     .single();
 
   if (videoError || !video) {
-    console.error('Error finding video for toggle:', videoError);
+    logger.error('Error finding video for toggle:', videoError);
     return;
   }
 
@@ -97,7 +98,7 @@ export async function toggleVideoProgress(
   );
 
   if (error) {
-    console.error('Error toggling video progress:', error);
+    logger.error('Error toggling video progress:', error);
   }
 }
 
@@ -123,7 +124,7 @@ export async function toggleVideoProgressBatch(
     .in('video_number', videoNumbers);
 
   if (videoError || !videos) {
-    console.error('Error finding videos for batch toggle:', videoError);
+    logger.error('Error finding videos for batch toggle:', videoError);
     return;
   }
 
@@ -141,7 +142,7 @@ export async function toggleVideoProgressBatch(
   });
 
   if (error) {
-    console.error('Error batch toggling video progress:', error);
+    logger.error('Error batch toggling video progress:', error);
   }
 }
 

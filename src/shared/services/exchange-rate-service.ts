@@ -2,6 +2,7 @@ import { supabase } from '@/shared/lib/core/supabase';
 
 import { z } from 'zod';
 import { isValid, parseOrThrow } from '@/shared/lib/validation/type-guards';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 const ExchangeRateApiResponseSchema = z.object({
   rates: z.record(z.string(), z.number()),
@@ -65,12 +66,12 @@ export const ExchangeRateService = {
         );
 
       if (upsertError) {
-        console.error('Failed to cache exchange rate:', upsertError);
+        logger.error('Failed to cache exchange rate:', upsertError);
       }
 
       return newRate;
     } catch (error) {
-      console.error('Error in ExchangeRateService:', error);
+      logger.error('Error in ExchangeRateService:', error as Error);
       // Fallback rate if everything fails (approximate)
       return 35.0;
     }

@@ -443,14 +443,13 @@ describe('achievements', () => {
     });
 
     it('should handle unknown requirement type gracefully', () => {
-      // eslint-disable-next-line no-restricted-syntax
-      const requirement = {
-        type: 'unknown_type',
-      } as unknown as {
+      const requirement: {
         type: 'category_progress';
         category: string;
         percentage: number;
-      };
+      } = {
+        type: 'unknown_type',
+      } as never;
 
       const description = getRequirementDescription(requirement);
       expect(description).toBe('Gizli gereksinim');

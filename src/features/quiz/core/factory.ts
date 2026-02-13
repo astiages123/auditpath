@@ -8,6 +8,7 @@
 import * as Repository from '../api/repository';
 import { type Json } from '@/shared/types/supabase';
 import { subjectKnowledgeService } from '@/shared/services/knowledge/subject-knowledge.service';
+import { logger } from '@/shared/lib/core/utils/logger';
 import { getSubjectStrategy } from '../algoritma/strategy';
 import { type ConceptMapItem } from './types';
 import { isValid, parseOrThrow } from '@/shared/lib/validation/type-guards';
@@ -138,7 +139,7 @@ export class QuizFactory {
         }
 
         if (updateErr) {
-          console.error('[Factory] Mapping save failed:', updateErr);
+          logger.error('[Factory] Mapping save failed:', updateErr);
           throw new Error(
             `Kavram haritası kaydedilemedi: ${updateErr.message}`
           );
@@ -430,7 +431,7 @@ export class QuizFactory {
       );
       return saved?.[0]?.id || null;
     } catch (e) {
-      console.error('FollowUp Gen Error:', e);
+      logger.error('FollowUp Gen Error:', e as Error);
       return null;
     }
   }
@@ -508,7 +509,7 @@ export class QuizFactory {
       );
       return saved?.[0]?.id || null;
     } catch (e) {
-      console.error('Archive Refresh Error:', e);
+      logger.error('Archive Refresh Error:', e as Error);
       return null;
     }
   }

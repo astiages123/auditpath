@@ -10,6 +10,7 @@ import {
   getVirtualDayStart,
 } from '@/shared/lib/utils/date-utils';
 import type { Json } from '@/shared/types/supabase';
+import { logger } from '@/shared/lib/core/utils/logger';
 import type {
   DailyEfficiencySummary,
   DetailedSession,
@@ -58,10 +59,10 @@ export async function getEfficiencyRatio(
     .lt('answered_at', tomorrow.toISOString());
 
   if (sessionError || videoError) {
-    console.error(
-      'Error fetching efficiency metrics:',
-      sessionError || videoError
-    );
+    logger.error('Error fetching efficiency metrics:', {
+      sessionError: sessionError?.message,
+      videoError: videoError?.message,
+    });
   }
 
   const sessions =
@@ -276,7 +277,7 @@ export async function getDailyEfficiencySummary(
     .order('started_at', { ascending: true });
 
   if (error) {
-    console.error('Error fetching daily efficiency summary:', error);
+    logger.error('Error fetching daily efficiency summary:', error);
   }
 
   const sessionsData = todaySessions || [];

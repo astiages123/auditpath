@@ -205,7 +205,7 @@ describe('Achievement Service Tests', () => {
       await unlockAchievement(mockUserId, mockAchievementId);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Error checking achievement existence:',
+        '[AuditPath] ❌ Error checking achievement existence:',
         expect.any(Object)
       );
       expect(mockUpsert).not.toHaveBeenCalled();
@@ -241,7 +241,7 @@ describe('Achievement Service Tests', () => {
       await unlockAchievement(mockUserId, mockAchievementId);
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Error unlocking achievement:',
+        '[AuditPath] ❌ Error unlocking achievement:',
         expect.any(Object)
       );
       consoleSpy.mockRestore();

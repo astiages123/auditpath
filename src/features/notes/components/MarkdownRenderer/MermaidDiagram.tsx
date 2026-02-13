@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, memo } from 'react';
 import mermaid from 'mermaid';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { sanitizeHtml } from '@/shared/utils/sanitizeHtml';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 // Mermaid initialization
 mermaid.initialize({
@@ -46,7 +47,7 @@ export const MermaidDiagram = memo(({ code }: MermaidDiagramProps) => {
         const sanitizedSvg = sanitizeHtml(renderedSvg);
         setSvg(sanitizedSvg);
       } catch (err) {
-        console.error('Mermaid render error:', err);
+        logger.error('Mermaid render error:', err as Error);
         setError('Diyagram render edilemedi');
       } finally {
         setIsLoading(false);

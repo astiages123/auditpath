@@ -1,6 +1,7 @@
 import { supabase } from '@/shared/lib/core/supabase';
 import type { Database } from '@/shared/types/supabase';
 import type { UnlockedAchievement } from '@/shared/types/efficiency';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 /**
  * Get all unlocked achievements for a user.
@@ -54,7 +55,7 @@ export async function unlockAchievement(
     .maybeSingle();
 
   if (checkError) {
-    console.error('Error checking achievement existence:', checkError);
+    logger.error('Error checking achievement existence:', checkError);
     return;
   }
 
@@ -75,5 +76,5 @@ export async function unlockAchievement(
     is_celebrated: false,
   });
 
-  if (error) console.error('Error unlocking achievement:', error);
+  if (error) logger.error('Error unlocking achievement:', error);
 }

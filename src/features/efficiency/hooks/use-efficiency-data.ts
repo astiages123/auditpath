@@ -26,6 +26,7 @@ import {
 import { supabase } from '@/shared/lib/core/supabase';
 import { BloomStat, FocusPowerPoint, LearningLoad, Session } from '../types';
 import { getVirtualDateKey } from '@/shared/lib/utils/date-utils';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 export function useEfficiencyData() {
   const { user } = useAuth();
@@ -395,7 +396,7 @@ export function useEfficiencyData() {
         // Take exactly the last 30 days from the filtered list to fill 6x5 grid
         setConsistencyData(filteredHeatmap.slice(-30));
       } catch (error) {
-        console.error('Failed to fetch efficiency data', error);
+        logger.error('Failed to fetch efficiency data', error as Error);
       } finally {
         setLoading(false);
       }

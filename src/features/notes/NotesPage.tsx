@@ -10,6 +10,9 @@ import { useAuth } from '@/features/auth';
 import { Button } from '@/shared/components/ui/button';
 import { cn, slugify } from '@/shared/lib/core/utils';
 import { ROUTES } from '@/config/routes';
+import { logger } from '@/shared/lib/core/utils/logger';
+import { ErrorBoundary } from '@/app/providers/ErrorBoundary';
+import { storage } from '@/shared/lib/core/services/storage.service';
 
 // New Components
 import {
@@ -71,6 +74,9 @@ export default function NotesPage() {
 
   // Fetch Data
   useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     async function fetchNotes() {
       if (!user?.id || !courseSlug) {
         setLoading(false);
@@ -78,24 +84,26 @@ export default function NotesPage() {
       }
       try {
         setLoading(true);
-        const targetId = await getCourseIdBySlug(courseSlug);
+        const targetId = await getCourseIdBySlug(courseSlug, signal);
+        if (signal.aborted) return;
         if (!targetId) {
           setError('Ders bulunamadı.');
           return;
         }
 
         const cacheKey = `cached_notes_v6_${targetId}`;
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed.data) {
-            setChunks(parsed.data);
-            setCourseName(parsed.data[0]?.course_name || '');
-            setLoading(false);
-          }
+        const cached = storage.get<{ data: CourseTopic[]; timestamp: number }>(
+          cacheKey
+        );
+        if (cached?.data) {
+          setChunks(cached.data);
+          setCourseName(cached.data[0]?.course_name || '');
+          setLoading(false);
         }
 
-        const data = await getCourseTopics(user.id, targetId);
+        const data = await getCourseTopics(user.id, targetId, signal);
+        if (signal.aborted) return;
+
         const processedData = data.map((chunk) => {
           const metadata = chunk.metadata as { images?: string[] } | null;
           const imageUrls = metadata?.images || [];
@@ -134,24 +142,32 @@ export default function NotesPage() {
             setChunks(processedData);
             setCourseName(processedData[0].course_name);
           });
-          localStorage.setItem(
+          storage.set(
             cacheKey,
-            JSON.stringify({
+            {
               timestamp: Date.now(),
               data: processedData,
-            })
-          );
+            },
+            { ttl: 7 * 24 * 60 * 60 * 1000 }
+          ); // 7 days cache
         } else if (!cached) {
           setError('Bu ders için henüz içerik bulunmuyor.');
         }
       } catch (err) {
-        console.error(err);
+        if (signal.aborted) return;
+        logger.error('Notes loading error', err as Error);
         setError('Notlar yüklenirken bir hata oluştu.');
       } finally {
-        setLoading(false);
+        if (!signal.aborted) {
+          setLoading(false);
+        }
       }
     }
     fetchNotes();
+
+    return () => {
+      controller.abort();
+    };
   }, [courseSlug, user?.id]);
 
   // Update URL if no topicSlug is present but we have chunks
@@ -197,107 +213,111 @@ export default function NotesPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground font-sans selection:bg-primary/20">
-      {/* 1. Left Panel: Global Navigation */}
-      <aside className="w-72 shrink-0 border-r border-border/15 bg-card/10 backdrop-blur-xl hidden lg:block">
-        <div className="h-20 flex flex-col justify-center px-6 border-b border-border/10 bg-card/5 relative overflow-hidden">
-          <Link
-            to={ROUTES.COURSES}
-            className="group inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all duration-300 mb-1.5"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 group-hover:opacity-100">
-              Kütüphane
-            </span>
-          </Link>
+    <ErrorBoundary>
+      <div className="flex h-screen overflow-hidden bg-background text-foreground font-sans selection:bg-primary/20">
+        {/* 1. Left Panel: Global Navigation */}
+        <aside className="w-72 shrink-0 border-r border-border/15 bg-card/10 backdrop-blur-xl hidden lg:block">
+          <div className="h-20 flex flex-col justify-center px-6 border-b border-border/10 bg-card/5 relative overflow-hidden">
+            <Link
+              to={ROUTES.COURSES}
+              className="group inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all duration-300 mb-1.5"
+            >
+              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 group-hover:opacity-100">
+                Kütüphane
+              </span>
+            </Link>
 
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-1 h-3.5 rounded-full bg-primary/40 shrink-0" />
-            <h1 className="text-[13px] font-bold text-foreground/90 truncate tracking-tight uppercase">
-              {courseName}
-            </h1>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-1 h-3.5 rounded-full bg-primary/40 shrink-0" />
+              <h1 className="text-[13px] font-bold text-foreground/90 truncate tracking-tight uppercase">
+                {courseName}
+              </h1>
+            </div>
           </div>
-        </div>
-        <div className="h-[calc(100vh-5rem)]">
-          <GlobalNavigation
-            chunks={chunks}
-            activeChunkId={activeChunkId}
-            courseSlug={courseSlug || ''}
-          />
-        </div>
-      </aside>
-
-      {/* 2. Middle Panel: Main Content */}
-      <main
-        ref={mainContentRef}
-        className="flex-1 overflow-y-auto bg-background/50 relative scroll-smooth"
-        style={{
-          opacity: isPending ? 0.7 : 1,
-          transition: 'opacity 200ms ease-in-out',
-        }}
-      >
-        <div className="max-w-6xl mx-auto px-8 py-12 min-h-screen">
-          {chunks
-            .filter((chunk) => slugify(chunk.section_title) === activeChunkId)
-            .map((chunk) => (
-              <MarkdownSection
-                key={chunk.id}
-                chunk={chunk}
-                components={markdownComponents}
-              />
-            ))}
-
-          {chunks.length > 0 &&
-            !chunks.some((c) => slugify(c.section_title) === activeChunkId) && (
-              <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-                <p>Konu bulunamadı veya henüz seçilmedi.</p>
-                <Button
-                  variant="link"
-                  onClick={() =>
-                    handleGlobalClick(slugify(chunks[0].section_title))
-                  }
-                >
-                  İlk konuya git
-                </Button>
-              </div>
-            )}
-        </div>
-      </main>
-
-      {/* 3. Right Panel: Local ToC */}
-      <aside
-        className="w-64 shrink-0 border-l border-border/15 bg-card/10 backdrop-blur-xl hidden xl:flex flex-col h-full"
-        style={{
-          opacity: isPending ? 0.7 : 1,
-          transition: 'opacity 200ms ease-in-out',
-        }}
-      >
-        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
-          <div className="my-auto w-full">
-            <LocalToC
-              items={currentChunkToC}
-              activeId={activeSection}
-              onItemClick={(id, e) => {
-                e.preventDefault();
-                handleScrollToId(id, setActiveSection);
-              }}
+          <div className="h-[calc(100vh-5rem)]">
+            <GlobalNavigation
+              chunks={chunks}
+              activeChunkId={activeChunkId}
+              courseSlug={courseSlug || ''}
             />
           </div>
-        </div>
-      </aside>
+        </aside>
 
-      {/* Scroll to Top Button */}
-      <button
-        onClick={scrollToTop}
-        className={cn(
-          'fixed bottom-5 right-5 lg:right-70 p-3 rounded-full bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 z-50 hover:scale-110 hover:shadow-xl hover:bg-primary',
-          scrollProgress > 10
-            ? 'opacity-100 translate-y-0'
-            : 'opacity-0 translate-y-4 pointer-events-none'
-        )}
-      >
-        <ChevronUp className="w-6 h-6" />
-      </button>
-    </div>
+        {/* 2. Middle Panel: Main Content */}
+        <main
+          ref={mainContentRef}
+          className="flex-1 overflow-y-auto bg-background/50 relative scroll-smooth"
+          style={{
+            opacity: isPending ? 0.7 : 1,
+            transition: 'opacity 200ms ease-in-out',
+          }}
+        >
+          <div className="max-w-6xl mx-auto px-8 py-12 min-h-screen">
+            {chunks
+              .filter((chunk) => slugify(chunk.section_title) === activeChunkId)
+              .map((chunk) => (
+                <MarkdownSection
+                  key={chunk.id}
+                  chunk={chunk}
+                  components={markdownComponents}
+                />
+              ))}
+
+            {chunks.length > 0 &&
+              !chunks.some(
+                (c) => slugify(c.section_title) === activeChunkId
+              ) && (
+                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+                  <p>Konu bulunamadı veya henüz seçilmedi.</p>
+                  <Button
+                    variant="link"
+                    onClick={() =>
+                      handleGlobalClick(slugify(chunks[0].section_title))
+                    }
+                  >
+                    İlk konuya git
+                  </Button>
+                </div>
+              )}
+          </div>
+        </main>
+
+        {/* 3. Right Panel: Local ToC */}
+        <aside
+          className="w-64 shrink-0 border-l border-border/15 bg-card/10 backdrop-blur-xl hidden xl:flex flex-col h-full"
+          style={{
+            opacity: isPending ? 0.7 : 1,
+            transition: 'opacity 200ms ease-in-out',
+          }}
+        >
+          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
+            <div className="my-auto w-full">
+              <LocalToC
+                items={currentChunkToC}
+                activeId={activeSection}
+                onItemClick={(id, e) => {
+                  e.preventDefault();
+                  handleScrollToId(id, setActiveSection);
+                }}
+              />
+            </div>
+          </div>
+        </aside>
+
+        {/* Scroll to Top Button */}
+        <button
+          onClick={scrollToTop}
+          className={cn(
+            'fixed bottom-5 right-5 lg:right-70 p-3 rounded-full bg-primary/90 text-primary-foreground shadow-lg transition-all duration-300 z-50 hover:scale-110 hover:shadow-xl hover:bg-primary',
+            scrollProgress > 10
+              ? 'opacity-100 translate-y-0'
+              : 'opacity-0 translate-y-4 pointer-events-none'
+          )}
+        >
+          <ChevronUp className="w-6 h-6" />
+        </button>
+      </div>
+    </ErrorBoundary>
   );
 }

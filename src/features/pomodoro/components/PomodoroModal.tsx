@@ -18,6 +18,7 @@ import { usePomodoro } from '@/features/pomodoro';
 import { useAuth } from '@/features/auth';
 import { upsertPomodoroSession } from '@/shared/lib/core/client-db';
 import { coursesData } from '@/features/courses';
+import { logger } from '@/shared/lib/core/utils/logger';
 import { Json } from '@/shared/types/supabase';
 
 // Dialog/Alert Components
@@ -167,7 +168,7 @@ export function PomodoroModal() {
         userId || ''
       );
     } catch (error) {
-      console.error(error);
+      logger.error('Pomodoro save error:', error as Error);
     }
   };
 

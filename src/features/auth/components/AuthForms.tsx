@@ -7,6 +7,7 @@ import { Label } from '@/shared/components/ui/label';
 import { Loader2 } from 'lucide-react';
 import { getSupabase } from '@/shared/lib/core/supabase';
 import { toast } from 'sonner';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 // Zod şeması tanımı
 const authSchema = z.object({
@@ -52,11 +53,10 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
       const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.identifier);
 
       if (!isEmail) {
-        // Kullanıcı adı ile email bulmaya çalış
-        const { data: emailData, error: emailError } = await supabase.rpc(
-          'get_email_by_username',
-          { username_input: data.identifier }
-        );
+        const rpcResult = await supabase.rpc('get_email_by_username', {
+          username_input: data.identifier,
+        });
+        const { data: emailData, error: emailError } = rpcResult || {};
 
         if (emailError || !emailData) {
           throw new Error('Kullanıcı bulunamadı.');
@@ -64,16 +64,17 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
         loginEmail = emailData as string;
       }
 
-      const { error } = await supabase.auth.signInWithPassword({
+      const signInResult = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: data.password,
       });
+      const { error } = signInResult || {};
 
       if (error) throw error;
       toast.success('Giriş başarılı!');
       onSuccess?.();
     } catch (error: unknown) {
-      console.error(error);
+      logger.error('Auth form submission error', error as Error);
       const message =
         error instanceof Error ? error.message : 'Bir hata oluştu.';
       toast.error(message);

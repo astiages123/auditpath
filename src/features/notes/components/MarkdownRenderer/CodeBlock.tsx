@@ -5,6 +5,7 @@ import { Copy, Check } from 'lucide-react';
 import { cn } from '@/shared/lib/core/utils';
 import { MermaidDiagram } from './MermaidDiagram';
 import { sanitizeHtml } from '@/shared/utils/sanitizeHtml';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 interface CodeBlockProps extends React.HTMLAttributes<HTMLElement> {
   inline?: boolean;
@@ -52,7 +53,7 @@ export const CodeBlock = ({
       });
       sanitizedHtml = sanitizeHtml(html);
     } catch (err) {
-      console.error('KaTeX fallback render error:', err);
+      logger.error('KaTeX fallback render error:', err as Error);
       // Fall through to regular code display if KaTeX fails
       return null; // Let the component handle fallback
     }

@@ -16,6 +16,8 @@ import * as Repository from '@/features/quiz/api/repository';
 import { type GenerationLog, QuizFactory } from '@/features/quiz/core/factory';
 import { parseOrThrow } from '@/shared/lib/validation/type-guards';
 import { QuizQuestionSchema } from '@/shared/lib/validation/quiz-schemas';
+import { logger } from '@/shared/lib/core/utils/logger';
+import { MAX_LOG_ENTRIES } from '@/config/constants';
 
 export enum QuizState {
   NOT_ANALYZED = 'NOT_ANALYZED',
@@ -134,7 +136,7 @@ export function useQuizManager({
         targetChunkId,
         {
           onLog: (log: GenerationLog) => {
-            setExamLogs((prev) => [log, ...prev].slice(0, 50));
+            setExamLogs((prev) => [log, ...prev].slice(0, MAX_LOG_ENTRIES));
           },
           onQuestionSaved: (count: number) => {
             setExamProgress((prev) => ({ ...prev, current: count }));
@@ -151,14 +153,14 @@ export function useQuizManager({
             setIsGeneratingExam(false);
           },
           onError: (err: string) => {
-            console.error('Generation error:', err);
+            logger.error('Generation error:', { message: err });
             setIsGeneratingExam(false);
           },
         },
         { mappingOnly }
       );
     } catch (error) {
-      console.error('Failed to generate:', error);
+      logger.error('Failed to generate:', error as Error);
       setIsGeneratingExam(false);
     }
   };
@@ -208,10 +210,8 @@ export function useQuizManager({
         }));
 
         setExistingQuestions(formattedQuestions);
-        // eslint-disable-next-line no-restricted-syntax
         setSelectedTopic({
           name: 'Karma Deneme Sınavı',
-          questionCount: formattedQuestions.length,
           isCompleted: false,
           counts: {
             antrenman: 0,
@@ -219,7 +219,7 @@ export function useQuizManager({
             deneme: formattedQuestions.length,
             total: formattedQuestions.length,
           },
-        } as unknown as TopicWithCounts); // Still need as unknown as because TopicWithCounts interface might not match exactly what setSelectedTopic expects if it was derived from CourseTopic
+        });
         setIsQuizActive(true);
         return;
       }
@@ -237,7 +237,7 @@ export function useQuizManager({
         user.id,
         {
           onLog: (log: GenerationLog) =>
-            setExamLogs((prev) => [log, ...prev].slice(0, 50)),
+            setExamLogs((prev) => [log, ...prev].slice(0, MAX_LOG_ENTRIES)),
           onQuestionSaved: (count: number) =>
             setExamProgress((prev) => ({
               ...prev,
@@ -245,7 +245,7 @@ export function useQuizManager({
             })),
           onComplete: () => {},
           onError: (err: Error) => {
-            console.error('Exam generation error:', err);
+            logger.error('Exam generation error:', err);
           },
         }
       );
@@ -262,10 +262,8 @@ export function useQuizManager({
           }));
 
           setExistingQuestions(formattedQuestions);
-          // eslint-disable-next-line no-restricted-syntax
           setSelectedTopic({
             name: 'Karma Deneme Sınavı',
-            questionCount: formattedQuestions.length,
             isCompleted: false,
             counts: {
               antrenman: 0,
@@ -273,12 +271,12 @@ export function useQuizManager({
               deneme: formattedQuestions.length,
               total: formattedQuestions.length,
             },
-          } as unknown as TopicWithCounts);
+          });
           setIsQuizActive(true);
         }
       }
     } catch (error) {
-      console.error('Failed to start smart exam:', error);
+      logger.error('Failed to start smart exam:', error as Error);
     } finally {
       setIsGeneratingExam(false);
     }

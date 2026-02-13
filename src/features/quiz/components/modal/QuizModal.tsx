@@ -8,6 +8,7 @@ import {
 import { Brain, ChevronRight, FileText } from 'lucide-react';
 import { QuizEngine } from '../engine/QuizEngine';
 import { QuizSessionProvider } from '../contexts/QuizSessionProvider';
+import { ErrorBoundary } from '@/app/providers/ErrorBoundary';
 import { useQuizManager, QuizState } from './hooks/useQuizManager';
 import { TopicSidebar } from './parts/TopicSidebar';
 import { InitialStateView } from './parts/InitialStateView';
@@ -96,17 +97,19 @@ export function QuizModal({
           <div className="flex-1 overflow-hidden relative">
             {isQuizActive && selectedTopic ? (
               <div className="h-full overflow-y-auto p-6">
-                <QuizSessionProvider>
-                  <QuizEngine
-                    chunkId={targetChunkId || undefined}
-                    courseId={courseId}
-                    courseName={courseName}
-                    sectionTitle={selectedTopic.name}
-                    content={targetChunkId ? undefined : ' '} // Fallback if no chunk found
-                    initialQuestions={existingQuestions}
-                    onClose={handleBackToTopics} // Use handleBackTo refresh stats
-                  />
-                </QuizSessionProvider>
+                <ErrorBoundary>
+                  <QuizSessionProvider>
+                    <QuizEngine
+                      chunkId={targetChunkId || undefined}
+                      courseId={courseId}
+                      courseName={courseName}
+                      sectionTitle={selectedTopic.name}
+                      content={targetChunkId ? undefined : ' '} // Fallback if no chunk found
+                      initialQuestions={existingQuestions}
+                      onClose={handleBackToTopics} // Use handleBackTo refresh stats
+                    />
+                  </QuizSessionProvider>
+                </ErrorBoundary>
               </div>
             ) : (
               <div className="grid md:grid-cols-[300px_1fr] h-full">

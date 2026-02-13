@@ -1,5 +1,6 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { env } from '@/config/env';
+import { logger } from '@/shared/lib/core/utils/logger';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button';
 
@@ -35,7 +36,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
     // Log to console in development
     if (env.app.isDev) {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
+      logger.error('ErrorBoundary caught an error:', error);
     }
 
     // Error tracking service can be integrated here (e.g., Sentry)

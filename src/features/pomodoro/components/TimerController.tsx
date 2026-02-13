@@ -9,10 +9,12 @@ import {
 import { calculateSessionTotals } from '@/shared/lib/core/utils/efficiency-math';
 import { toast } from 'sonner';
 import { env } from '@/config/env';
+import { SESSION_VALIDITY_DURATION_MS } from '@/config/constants';
 
 import { useFaviconManager } from '@/features/pomodoro/hooks/use-favicon-manager';
 
 import { playNotificationSound } from '../lib/audio-utils';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 export function TimerController() {
   const {
@@ -97,7 +99,7 @@ export function TimerController() {
             if (activeSession) {
               const sessionAge =
                 Date.now() - new Date(activeSession.started_at).getTime();
-              const isRecent = sessionAge < 12 * 60 * 60 * 1000;
+              const isRecent = sessionAge < SESSION_VALIDITY_DURATION_MS;
 
               if (isRecent) {
                 // Double check if we already have a session in local state avoiding race connection
@@ -134,7 +136,7 @@ export function TimerController() {
               }
             }
           } catch (e) {
-            console.error('Restoration failed', e);
+            logger.error('Restoration failed', e as Error);
           } finally {
             window._isPomodoroRestoring = false;
           }
@@ -244,7 +246,7 @@ export function TimerController() {
                 notification.close();
               };
             } catch (e) {
-              console.error('Desktop Notification failed', e);
+              logger.error('Desktop Notification failed', e as Error);
             }
           }
         };
@@ -330,7 +332,7 @@ export function TimerController() {
           },
           body: JSON.stringify(payload),
           keepalive: true,
-        }).catch((err) => console.error('Beacon Error:', err));
+        }).catch((err) => logger.error('Beacon Error:', err));
       }
     };
 

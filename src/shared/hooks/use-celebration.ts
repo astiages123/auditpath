@@ -8,6 +8,7 @@ import {
   useSyncAchievementsMutation,
   useUncelebratedQuery,
 } from '@/features/achievements';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 export function useCelebration() {
   const { stats, isLoading } = useProgress();
@@ -44,9 +45,9 @@ export function useCelebration() {
             try {
               await markAsCelebrated(user.id, id);
             } catch (e) {
-              console.error(
+              logger.error(
                 `Failed to mark achievement ${id} as celebrated`,
-                e
+                e as Error
               );
             } finally {
               processingIds.current.delete(id);
@@ -61,7 +62,10 @@ export function useCelebration() {
             onClose: handleClose,
           });
         } catch (err) {
-          console.error(`[Celebration Error] Failed to process ${id}:`, err);
+          logger.error(
+            `[Celebration Error] Failed to process ${id}:`,
+            err as Error
+          );
           processingIds.current.delete(id);
         }
       }

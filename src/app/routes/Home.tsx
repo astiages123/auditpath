@@ -7,14 +7,15 @@ import {
   getAllCourses,
 } from '@/shared/lib/core/client-db';
 import { type Category } from '@/shared/types/courses';
+import { logger } from '@/shared/lib/core/utils/logger';
+import type { ProgressStats } from '@/shared/hooks/use-progress';
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
   const userId = user?.id;
   const isLoaded = !authLoading;
   const [categories, setCategories] = useState<Category[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<ProgressStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -73,7 +74,7 @@ export default function HomePage() {
           }
         }
       } catch (e) {
-        console.error('Failed to load data', e);
+        logger.error('Failed to load data', e as Error);
         setError('Veritabanı bağlantısı kurulamadı.');
       } finally {
         setLoading(false);
@@ -86,18 +87,25 @@ export default function HomePage() {
   }, [userId, isLoaded]);
 
   // Default stats for non-logged-in users or loading state
-  const defaultStats = {
+  const defaultStats: ProgressStats = {
     currentRank: {
       id: '1',
       name: 'Sürgün',
-      color: 'text-slate-400',
+      color: 'text-slate-500',
       minPercentage: 0,
+      motto: 'Bilginin krallığından uzakta, sislerin içinde yolunu arıyorsun.',
+      imagePath: '/ranks/rank1.webp',
+      order: 1,
     },
     nextRank: {
       id: '2',
       name: 'Yazıcı',
       color: 'text-amber-700',
       minPercentage: 25,
+      motto:
+        'Kadim metinleri kopyalayarak bilgeliğin izlerini sürmeye başladın.',
+      imagePath: '/ranks/rank2.webp',
+      order: 2,
     },
     rankProgress: 0,
     completedVideos: 0,
@@ -117,6 +125,8 @@ export default function HomePage() {
     progressPercentage: 0,
     estimatedDays: 0,
     categoryProgress: {},
+    courseProgress: {},
+    streak: 0,
   };
 
   const currentStats = stats || defaultStats;
@@ -145,15 +155,15 @@ export default function HomePage() {
 
       {!error && (
         <ProgressHeader
-          currentRank={currentStats.currentRank}
-          nextRank={currentStats.nextRank}
-          rankProgress={currentStats.rankProgress}
+          currentRank={currentStats.currentRank ?? null}
+          nextRank={currentStats.nextRank ?? null}
+          rankProgress={currentStats.rankProgress ?? 0}
           completedVideos={currentStats.completedVideos}
           totalVideos={currentStats.totalVideos}
           completedHours={currentStats.completedHours}
           totalHours={currentStats.totalHours}
-          progressPercentage={currentStats.progressPercentage}
-          estimatedDays={currentStats.estimatedDays}
+          progressPercentage={currentStats.progressPercentage ?? 0}
+          estimatedDays={currentStats.estimatedDays ?? 0}
         />
       )}
 

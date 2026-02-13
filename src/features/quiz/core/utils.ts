@@ -1,3 +1,4 @@
+import { logger } from '@/shared/lib/core/utils/logger';
 import { z } from 'zod';
 import type { AIResponse, LLMProvider, Message } from './types';
 import { UnifiedLLMClient } from '../api/client';
@@ -23,12 +24,17 @@ export class DebugLogger {
   static group(name: string, data?: Record<string, unknown>) {
     if (!this.isEnabled) return;
 
-    if (typeof console.groupCollapsed === 'function') {
+    const hasGroupCollapsed =
+      typeof console !== 'undefined' && 'groupCollapsed' in console;
+    if (hasGroupCollapsed) {
+      // eslint-disable-next-line no-console
       console.groupCollapsed(`%c🔧 ${name}`, this.styles.group);
       if (data) {
+        // eslint-disable-next-line no-console
         console.log('Details:', data);
       }
     } else {
+      // eslint-disable-next-line no-console
       console.log(`--- ${name} ---`, data || '');
     }
   }
@@ -38,7 +44,9 @@ export class DebugLogger {
    */
   static groupEnd() {
     if (!this.isEnabled) return;
-    if (typeof console.groupEnd === 'function') {
+    const hasGroupEnd = typeof console !== 'undefined' && 'groupEnd' in console;
+    if (hasGroupEnd) {
+      // eslint-disable-next-line no-console
       console.groupEnd();
     }
   }
@@ -80,7 +88,10 @@ export class DebugLogger {
    * Log an error
    */
   static error(message: string, error?: unknown) {
-    console.error(`%c❌ ERROR: ${message}`, this.styles.error, error);
+    logger.error(`❌ ERROR: ${message}`, {
+      error,
+      style: this.styles.error,
+    });
   }
 
   /**
@@ -88,6 +99,7 @@ export class DebugLogger {
    */
   static table(data: unknown) {
     if (!this.isEnabled) return;
+    // eslint-disable-next-line no-console
     console.table(data);
   }
 
@@ -98,8 +110,10 @@ export class DebugLogger {
     data?: unknown
   ) {
     if (data !== undefined) {
+      // eslint-disable-next-line no-console
       console.log(`%c${prefix}: ${message}`, style, data);
     } else {
+      // eslint-disable-next-line no-console
       console.log(`%c${prefix}: ${message}`, style);
     }
   }
@@ -159,7 +173,6 @@ export function parseJsonResponse(
     cleanText = cleanText.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
 
     // 1. Markdown bloklarını temizle (```json ... ``` veya sadece ``` ... ```)
-    // Sadece ilk eşleşen bloğu al
     const markdownMatch = cleanText.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (markdownMatch) {
       cleanText = markdownMatch[1].trim();
@@ -183,8 +196,8 @@ export function parseJsonResponse(
     const regex = /(\\["\\/nrt]|\\u[0-9a-fA-F]{4})|(\\)/g;
 
     cleanText = cleanText.replace(regex, (match, valid, invalid) => {
-      if (valid) return valid; // Geçerli escape, dokunma
-      if (invalid) return '\\\\'; // Geçersiz backslash, çiftle
+      if (valid) return valid;
+      if (invalid) return '\\\\';
       return match;
     });
 
@@ -206,20 +219,26 @@ export function parseJsonResponse(
         try {
           return JSON.parse(cleanText + '}]');
         } catch {
-          // Ignore parse errors
+          /* ignore */
         }
         try {
           return JSON.parse(cleanText + ']');
         } catch {
-          // Ignore parse errors
+          /* ignore */
         }
       }
 
-      console.warn('JSON Parse Error (Unrecoverable):', e);
+      logger.warn('JSON Parse Error (Unrecoverable):', {
+        error: e,
+        context: 'Quiz Utils',
+      });
       return null;
     }
   } catch (e) {
-    console.error('JSON Parse Error (Critical):', e);
+    logger.error('JSON Parse Error (Critical):', {
+      error: e,
+      context: 'Quiz Utils',
+    });
     return null;
   }
 }
@@ -297,10 +316,10 @@ export class StructuredGenerator {
         if (validation.success) {
           return validation.data;
         } else {
-          console.error(
-            '!!! ZOD ERROR in field:',
-            JSON.stringify(validation.error.format(), null, 2)
-          );
+          logger.error('!!! ZOD ERROR in field:', {
+            error: validation.error.format(),
+            context: 'Zod Validation',
+          });
           const errorMsg = validation.error.issues
             .map((i) => `${i.path.join('.')}: ${i.message}`)
             .join(', ');
@@ -315,8 +334,11 @@ export class StructuredGenerator {
           raw_content: lastResponse?.content,
         });
       } finally {
-        if (lastResponse?.usage) {
-          const { usage } = lastResponse;
+        const { data: safeResponse } = z
+          .object({ usage: z.any().optional() })
+          .safeParse(lastResponse);
+        if (safeResponse?.usage) {
+          const { usage } = safeResponse;
           if (usage.prompt_cache_hit_tokens || usage.prompt_cache_miss_tokens) {
             onLog?.('Cache Stats', {
               hits: usage.prompt_cache_hit_tokens || 0,
@@ -338,10 +360,6 @@ export class PromptArchitect {
     contextPrompt: string,
     taskPrompt: string
   ): Message[] {
-    // AI Model Context Caching Optimizasyonu
-    // 1. System Prompt (Her zaman sabit)
-    // 2. User Message = Context (Sabit Prefix) + Task (Değişken Suffix)
-    // Bu yapı, Context kısmının cache'lenmesini sağlar.
     const fixedContext = this.normalizeText(contextPrompt);
     const dynamicTask = this.normalizeText(taskPrompt);
 

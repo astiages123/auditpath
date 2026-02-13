@@ -10,7 +10,7 @@ interface CategoryGridProps {
     {
       completedVideos: number;
       completedHours: number;
-      completedCourses: number;
+      completedCourses?: number;
     }
   >;
 }

@@ -1,5 +1,6 @@
 import { supabase } from '@/shared/lib/core/supabase';
 import type { Database } from '@/shared/types/supabase';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 type SubjectGuideline =
   Database['public']['Tables']['subject_guidelines']['Row'];
@@ -51,7 +52,7 @@ class SubjectKnowledgeService {
       }
       this.preloaded = true;
     } catch (error) {
-      console.error('[SubjectKnowledgeService] Preload failed:', error);
+      logger.error('[SubjectKnowledgeService] Preload failed:', error as Error);
     }
   }
 
@@ -92,7 +93,7 @@ class SubjectKnowledgeService {
     }
 
     if (error) {
-      console.error('[SubjectKnowledgeService] Fetch error:', error);
+      logger.error('[SubjectKnowledgeService] Fetch error:', error);
       return null;
     }
 

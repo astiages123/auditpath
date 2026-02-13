@@ -85,7 +85,10 @@ export function CourseCard({
                   </h3>
                 </div>
                 {isCompleted && (
-                  <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
+                  <CheckCircle2
+                    data-testid="completion-icon"
+                    className="h-5 w-5 text-primary shrink-0"
+                  />
                 )}
               </div>
             </CardHeader>

@@ -1,5 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import {
+  POMODORO_WORK_DURATION_SECONDS,
+  POMODORO_BREAK_DURATION_SECONDS,
+} from '@/config/constants';
 
 interface TimerState {
   timeLeft: number;
@@ -44,10 +48,10 @@ interface TimerState {
 export const useTimerStore = create<TimerState>()(
   persist(
     (set, get) => ({
-      timeLeft: 3000,
+      timeLeft: POMODORO_WORK_DURATION_SECONDS,
       isActive: false,
       isBreak: false,
-      duration: 3000,
+      duration: POMODORO_WORK_DURATION_SECONDS,
       startTime: null,
       originalStartTime: null,
       endTime: null,
@@ -144,10 +148,10 @@ export const useTimerStore = create<TimerState>()(
 
       resetAll: () =>
         set(() => ({
-          timeLeft: 3000,
+          timeLeft: POMODORO_WORK_DURATION_SECONDS,
           isActive: false,
           isBreak: false,
-          duration: 3000,
+          duration: POMODORO_WORK_DURATION_SECONDS,
           startTime: null,
           originalStartTime: null,
           endTime: null,
@@ -169,7 +173,10 @@ export const useTimerStore = create<TimerState>()(
         }),
 
       setMode: (mode) => {
-        const newDuration = mode === 'work' ? 3000 : 600;
+        const newDuration =
+          mode === 'work'
+            ? POMODORO_WORK_DURATION_SECONDS
+            : POMODORO_BREAK_DURATION_SECONDS;
         set({
           isBreak: mode === 'break',
           duration: newDuration,
@@ -192,7 +199,9 @@ export const useTimerStore = create<TimerState>()(
                 sessionId: null,
                 timeline: [],
                 sessionCount: 1,
-                timeLeft: state.isBreak ? 600 : 3000, // Reset to standard durations if course changes
+                timeLeft: state.isBreak
+                  ? POMODORO_BREAK_DURATION_SECONDS
+                  : POMODORO_WORK_DURATION_SECONDS,
                 isActive: false,
                 startTime: null,
                 originalStartTime: null,

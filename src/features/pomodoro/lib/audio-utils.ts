@@ -1,3 +1,5 @@
+import { logger } from '@/shared/lib/core/utils/logger';
+
 const notificationAudio =
   typeof window !== 'undefined' ? new Audio('/audio/alarm_ring.mp3') : null;
 
@@ -6,10 +8,10 @@ export const playNotificationSound = () => {
   try {
     notificationAudio.currentTime = 0;
     notificationAudio.play().catch((e) => {
-      console.warn('Audio play failed (waiting for user interaction):', e);
+      logger.warn('Audio play failed (waiting for user interaction):', e);
     });
   } catch (e) {
-    console.error('Audio initialization failed', e);
+    logger.error('Audio initialization failed', e as Error);
   }
 };
 

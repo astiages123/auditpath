@@ -1,5 +1,6 @@
 import { supabase } from '@/shared/lib/core/supabase';
 import type { Category, Course } from '@/shared/types/courses';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 // ============================================================================
 // RE-EXPORTS FROM SERVICE FILES
@@ -113,7 +114,7 @@ export async function getAllCourses(): Promise<Course[]> {
     .order('sort_order');
 
   if (error) {
-    console.error('Error fetching all courses:', error);
+    logger.error('Error fetching all courses:', error);
     return [];
   }
   return data || [];

@@ -18,6 +18,7 @@ import {
   QuizQuestionSchema,
 } from '@/shared/lib/validation/quiz-schemas';
 import type { Json } from '@/shared/types/supabase';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 /**
  * Get a note chunk by ID.
@@ -30,7 +31,7 @@ export async function getNoteChunkById(chunkId: string) {
   const uuidRegex =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(chunkId)) {
-    console.warn(`Invalid UUID passed to getNoteChunkById: ${chunkId}`);
+    logger.warn(`Invalid UUID passed to getNoteChunkById: ${chunkId}`);
     return null;
   }
 
@@ -43,7 +44,7 @@ export async function getNoteChunkById(chunkId: string) {
   if (error) {
     if (error.code !== 'PGRST116') {
       // Ignore single row not found errors
-      console.error('Error fetching note chunk:', error);
+      logger.error('Error fetching note chunk:', error);
     }
     return null;
   }
@@ -59,12 +60,13 @@ export async function getNoteChunkById(chunkId: string) {
  */
 export async function getCourseTopics(
   userId: string,
-  courseId: string | null
+  courseId: string | null,
+  signal?: AbortSignal
 ): Promise<CourseTopic[]> {
   if (!courseId) return [];
 
   // 1. Get all chunks for this course (sorted by chunk_order)
-  const { data: chunks, error: chunksError } = await supabase
+  let query = supabase
     .from('note_chunks')
     .select(
       'id, created_at, course_id, course_name, section_title, chunk_order, content, display_content, status, last_synced_at, metadata, ai_logic'
@@ -72,8 +74,14 @@ export async function getCourseTopics(
     .eq('course_id', courseId)
     .order('chunk_order', { ascending: true });
 
+  if (signal) {
+    query = query.abortSignal(signal);
+  }
+
+  const { data: chunks, error: chunksError } = await query;
+
   if (chunksError) {
-    console.error('Error fetching course topics:', chunksError);
+    logger.error('Error fetching course topics:', chunksError);
     return [];
   }
 
@@ -91,16 +99,23 @@ export async function getCourseTopics(
  * @param slug Course slug
  * @returns Course ID or null if not found
  */
-export async function getCourseIdBySlug(slug: string): Promise<string | null> {
-  const { data, error } = await supabase
+export async function getCourseIdBySlug(
+  slug: string,
+  _signal?: AbortSignal
+): Promise<string | null> {
+  const query = supabase
     .from('courses')
     .select('id')
     .eq('course_slug', slug)
     .limit(1)
     .maybeSingle();
 
+  const { data, error } = await query;
+
   if (error || !data) {
-    console.warn(`Course not found for slug: ${slug}`, error);
+    logger.warn(`Course not found for slug: ${slug}`, {
+      error: error?.message,
+    });
     return null;
   }
   return data.id;
@@ -120,7 +135,7 @@ export async function getUniqueCourseTopics(courseId: string) {
     .order('section_title');
 
   if (error) {
-    console.error('Error fetching course topics:', error);
+    logger.error('Error fetching course topics:', error);
     return [];
   }
 
@@ -145,7 +160,7 @@ export async function getTopicQuestionCount(courseId: string, topic: string) {
     .eq('usage_type', 'antrenman');
 
   if (error) {
-    console.error('Error fetching question count:', error);
+    logger.error('Error fetching question count:', error);
     return 0;
   }
   return count || 0;
@@ -169,7 +184,7 @@ export async function getCoursePoolCount(
     .eq('usage_type', usageType);
 
   if (error) {
-    console.error('Error fetching course pool count:', error);
+    logger.error('Error fetching course pool count:', error);
     return 0;
   }
   return count || 0;
@@ -260,7 +275,7 @@ export async function getTopicCompletionStatus(
     .eq('section_title', topic);
 
   if (questionsError || !questions) {
-    console.error('Error fetching questions for status:', questionsError);
+    logger.error('Error fetching questions for status:', questionsError);
     return {
       completed: false,
       antrenman: {
@@ -343,7 +358,7 @@ export async function getTopicCompletionStatus(
     .in('question_id', Array.from(questionIds));
 
   if (solvedError) {
-    console.error('Error fetching solved stats:', solvedError);
+    logger.error('Error fetching solved stats:', solvedError);
     return {
       completed: false,
       antrenman: {
@@ -455,7 +470,7 @@ export async function getCourseTopicsWithCounts(
     .order('chunk_order', { ascending: true });
 
   if (chunksError) {
-    console.error('Error fetching course topics:', chunksError);
+    logger.error('Error fetching course topics:', chunksError);
     return [];
   }
 
@@ -478,7 +493,7 @@ export async function getCourseTopicsWithCounts(
     .eq('course_id', courseId);
 
   if (questionsError) {
-    console.error('Error fetching questions for counts:', questionsError);
+    logger.error('Error fetching questions for counts:', questionsError);
     return orderedTopics.map((t) => ({
       name: t,
       isCompleted: false,
@@ -575,7 +590,7 @@ export async function getTopicQuestions(courseId: string, topic: string) {
     .order('created_at', { ascending: true });
 
   if (error) {
-    console.error('Error fetching topic questions:', error);
+    logger.error('Error fetching topic questions:', error);
     return [];
   }
 
@@ -617,7 +632,7 @@ export async function getFirstChunkIdForTopic(courseId: string, topic: string) {
     .maybeSingle();
 
   if (error) {
-    console.error('Error fetching chunk for topic:', error);
+    logger.error('Error fetching chunk for topic:', error);
     return null;
   }
   return data?.id || null;
@@ -636,7 +651,7 @@ export async function getQuizStats(userId: string): Promise<QuizStats> {
     .eq('user_id', userId);
 
   if (error) {
-    console.error('Error fetching quiz stats:', error);
+    logger.error('Error fetching quiz stats:', error);
     return {
       totalAnswered: 0,
       correct: 0,
@@ -807,7 +822,7 @@ export async function getRecentQuizSessions(
     .limit(500);
 
   if (error || !rawData) {
-    console.error('Error fetching quiz sessions:', error);
+    logger.error('Error fetching quiz sessions:', error);
     return [];
   }
 
@@ -887,7 +902,7 @@ export async function getRecentCognitiveInsights(
     .limit(limit);
 
   if (error || !progressData) {
-    console.error('Error fetching cognitive insights:', error);
+    logger.error('Error fetching cognitive insights:', error);
     return [];
   }
 

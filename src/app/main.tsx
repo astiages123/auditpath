@@ -7,9 +7,12 @@ import App from './App';
 import '@/styles/index.css';
 
 import { subjectKnowledgeService } from '@/shared/services/knowledge/subject-knowledge.service';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 // Start preloading subject guidelines
-subjectKnowledgeService.preload().catch(console.error);
+subjectKnowledgeService
+  .preload()
+  .catch((err) => logger.error('Failed to preload subject knowledge', err));
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

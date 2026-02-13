@@ -8,6 +8,7 @@ import {
 
 import { toast } from 'sonner';
 import { useAuth } from '@/features/auth';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 interface Video {
   id: number;
@@ -104,7 +105,7 @@ export function VideoList({ courseId, dbCourseId }: VideoListProps) {
           }))
         );
       } catch (error) {
-        console.error('Failed to load progress:', error);
+        logger.error('Failed to load progress:', error as Error);
         toast.error('İlerleme durumu yüklenemedi.');
       } finally {
         setLoading(false);
@@ -195,17 +196,23 @@ export function VideoList({ courseId, dbCourseId }: VideoListProps) {
 
       if (videoIdListToUpdate.length === 1) {
         // Single toggle: (userId, courseId, videoNumber, completed)
-        await toggleVideoProgress(
-          userId,
-          dbCourseId,
-          parseInt(videoIdListToUpdate[0]),
-          newCompleted
-        );
+        const videoNum = parseInt(videoIdListToUpdate[0]);
+        if (Number.isNaN(videoNum)) {
+          logger.warn('Invalid video number', {
+            value: videoIdListToUpdate[0],
+          });
+          return;
+        }
+        await toggleVideoProgress(userId, dbCourseId, videoNum, newCompleted);
       } else if (videoIdListToUpdate.length > 1) {
         // Batch toggle: (userId, courseId, videoNumbers[], completed)
-        const videoNumbers = videoIdListToUpdate.map((id: string) =>
-          parseInt(id)
-        );
+        const videoNumbers = videoIdListToUpdate
+          .map((id: string) => parseInt(id))
+          .filter((n) => !Number.isNaN(n));
+        if (videoNumbers.length === 0) {
+          logger.warn('Invalid video numbers', { values: videoIdListToUpdate });
+          return;
+        }
         await toggleVideoProgressBatch(
           userId,
           dbCourseId,
@@ -217,7 +224,7 @@ export function VideoList({ courseId, dbCourseId }: VideoListProps) {
       // Re-refresh progress to ensure consistency (optional, but good for safety)
       refreshProgress();
     } catch (error) {
-      console.error('Failed to sync progress:', error);
+      logger.error('Failed to sync progress:', error as Error);
       // Revert on error
       setVideos(previousVideos);
       // Revert optimistic update

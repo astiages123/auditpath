@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { getSupabase } from '@/shared/lib/core/supabase';
 import { AuthContext } from '../hooks/use-auth';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -27,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(initialSession?.user ?? null);
         }
       } catch (error) {
-        console.error('Auth initialization error:', error);
+        logger.error('Auth initialization error', error as Error);
       } finally {
         if (mounted) {
           setLoading(false);
@@ -61,7 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       setSession(null);
     } catch (error) {
-      console.error('Sign out error:', error);
+      logger.error('Sign out error', error as Error);
     }
   }, [supabase.auth]);
 

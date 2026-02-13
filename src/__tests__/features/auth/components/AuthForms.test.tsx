@@ -27,6 +27,8 @@ vi.mock('sonner', () => ({
 describe('AuthForms', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockSignInWithPassword.mockResolvedValue({ data: null, error: null });
+    mockRpc.mockResolvedValue({ data: null, error: null });
   });
 
   describe('Form Rendering', () => {
@@ -169,7 +171,7 @@ describe('AuthForms', () => {
 
   describe('Form Submission', () => {
     it('should call signInWithPassword with email', async () => {
-      mockSignInWithPassword.mockResolvedValue({ error: null });
+      mockSignInWithPassword.mockResolvedValue({ data: null, error: null });
 
       render(<AuthForms />);
 
@@ -249,7 +251,7 @@ describe('AuthForms', () => {
 
     it('should call onSuccess after successful login', async () => {
       const { toast } = await import('sonner');
-      mockSignInWithPassword.mockResolvedValue({ error: null });
+      mockSignInWithPassword.mockResolvedValue({ data: null, error: null });
       const onSuccess = vi.fn();
 
       render(<AuthForms onSuccess={onSuccess} />);
@@ -275,6 +277,7 @@ describe('AuthForms', () => {
     it('should show error toast on auth failure', async () => {
       const { toast } = await import('sonner');
       mockSignInWithPassword.mockResolvedValue({
+        data: null,
         error: { message: 'Invalid credentials' },
       });
 
@@ -299,7 +302,9 @@ describe('AuthForms', () => {
     });
 
     it('should disable submit button while submitting', async () => {
-      mockSignInWithPassword.mockImplementation(() => new Promise(() => {})); // Never resolves
+      mockSignInWithPassword.mockImplementation(
+        () => new Promise(() => {}) // Never resolves
+      );
 
       render(<AuthForms />);
 

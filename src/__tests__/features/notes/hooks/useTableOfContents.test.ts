@@ -42,11 +42,8 @@ describe('useTableOfContents', () => {
   };
 
   const mockMainContentRef = {
-    current: {
-      querySelectorAll: vi.fn(() => []),
-    },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } as any;
+    current: null as HTMLDivElement | null,
+  };
 
   const mockIsProgrammaticScroll = { current: false };
 

@@ -6,7 +6,7 @@ import tseslint from 'typescript-eslint';
 import eslintConfigPrettier from 'eslint-config-prettier';
 
 export default tseslint.config(
-  { ignores: ['dist'] },
+  { ignores: ['dist', 'coverage'] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
@@ -26,6 +26,11 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       '@typescript-eslint/no-explicit-any': 'error',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_' },
+      ],
+      'no-console': 'warn',
       'no-restricted-syntax': [
         'error',
         {
@@ -34,6 +39,20 @@ export default tseslint.config(
             'Avoid "as unknown as" assertions. Use runtime validation (Zod) instead.',
         },
       ],
+    },
+  },
+  // Scripts (CLI tools) - console is the primary output mechanism
+  {
+    files: ['scripts/**/*.{ts,tsx}'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  // Supabase Edge Functions - server-side, console is appropriate
+  {
+    files: ['supabase/**/*.{ts,tsx}'],
+    rules: {
+      'no-console': 'off',
     },
   },
   eslintConfigPrettier

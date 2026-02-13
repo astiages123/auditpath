@@ -1,4 +1,5 @@
 // supabase import removed
+import { logger } from '@/shared/lib/core/utils/logger';
 
 export interface Note {
   courseId: string;
@@ -7,14 +8,17 @@ export interface Note {
 }
 
 // getNote expects the 'slug' (course.id) to be passed
-export async function getNote(slug: string): Promise<Note | null> {
+export async function getNote(
+  slug: string,
+  signal?: AbortSignal
+): Promise<Note | null> {
   try {
     // 1. Try to fetch from local files (Standardized path)
     const paths = [`/notes/${slug}/${slug}.md`, `/notes/${slug}/note.md`];
 
     for (const path of paths) {
       try {
-        const res = await fetch(path);
+        const res = await fetch(path, { signal });
         if (res.ok) {
           const content = await res.text();
           if (content && !content.startsWith('<!DOCTYPE html>')) {
@@ -32,7 +36,7 @@ export async function getNote(slug: string): Promise<Note | null> {
 
     return null;
   } catch (error) {
-    console.error('getNote error:', error);
+    logger.error('getNote error:', error as Error);
     return null;
   }
 }

@@ -1,5 +1,17 @@
 import type { Rank } from '@/shared/types/core';
 
+// Timer durations in seconds
+export const POMODORO_WORK_DURATION_SECONDS = 3000; // 50 minutes
+export const POMODORO_BREAK_DURATION_SECONDS = 600; // 10 minutes
+
+// Session validity duration in milliseconds (12 hours)
+export const SESSION_VALIDITY_DURATION_MS = 12 * 60 * 60 * 1000;
+
+// Quiz limits
+export const DAILY_QUOTA = 50;
+export const MASTERY_THRESHOLD = 80;
+export const MAX_LOG_ENTRIES = 50;
+
 export const RANKS: Rank[] = [
   {
     id: '1',

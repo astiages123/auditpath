@@ -7,6 +7,7 @@ import {
 } from '@/shared/lib/core/client-db';
 import { useAuth } from '@/features/auth';
 import { unlockAudio } from '../lib/audio-utils';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 export type PomodoroMode = 'work' | 'break';
 
@@ -98,7 +99,7 @@ export function usePomodoro() {
           userId
         );
       } catch (error) {
-        console.error('Failed to initialize session in DB:', error);
+        logger.error('Failed to initialize session in DB:', error as Error);
       }
     }
 

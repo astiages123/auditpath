@@ -4,6 +4,7 @@ import RootLayout from '@/shared/components/layout/RootLayout';
 import Home from '@/app/routes/Home';
 import { AuthGuard } from '@/features/auth';
 import { Loader2 } from 'lucide-react';
+import { ErrorBoundary } from '@/app/providers/ErrorBoundary';
 
 import { ROUTES } from '@/config/routes';
 
@@ -58,7 +59,9 @@ function App() {
             path={ROUTES.EFFICIENCY}
             element={
               <AuthGuard>
-                <EfficiencyPage />
+                <ErrorBoundary>
+                  <EfficiencyPage />
+                </ErrorBoundary>
               </AuthGuard>
             }
           />
@@ -67,7 +70,9 @@ function App() {
             path={`${ROUTES.NOTES}/:courseSlug`}
             element={
               <AuthGuard>
-                <NotesPage />
+                <ErrorBoundary>
+                  <NotesPage />
+                </ErrorBoundary>
               </AuthGuard>
             }
           />
@@ -75,7 +80,9 @@ function App() {
             path={`${ROUTES.NOTES}/:courseSlug/:topicSlug`}
             element={
               <AuthGuard>
-                <NotesPage />
+                <ErrorBoundary>
+                  <NotesPage />
+                </ErrorBoundary>
               </AuthGuard>
             }
           />

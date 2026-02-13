@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { logger } from '@/shared/lib/core/utils/logger';
 import { Button } from '@/shared/components/ui/button';
 import {
   Dialog,
@@ -103,7 +104,7 @@ export function GenerateQuestionButton({
         setStatus(newStatus);
       }
     } catch (e) {
-      console.error(e);
+      logger.error('Quota info fetch error', e as Error);
       toast.error('Kota bilgisi alınamadı.');
     }
   }, [chunkId]);
@@ -184,7 +185,7 @@ export function GenerateQuestionButton({
         },
       });
     } catch (err: unknown) {
-      console.error('[QuizGen] Kritik hata:', err);
+      logger.error('[QuizGen] Kritik hata:', err as Error);
       setLoading(false);
       toast.error(
         err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.'

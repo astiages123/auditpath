@@ -12,6 +12,7 @@ import {
   type ValidatedTimelineEvent,
 } from '@/shared/lib/validation/quiz-schemas';
 import { isValid, parseOrThrow } from '@/shared/lib/validation/type-guards';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 /**
  * Create or update a pomodoro session.
@@ -119,7 +120,7 @@ export async function deletePomodoroSession(sessionId: string) {
     .delete()
     .eq('id', sessionId);
 
-  if (error) console.error('Error deleting session:', error);
+  if (error) logger.error('Error deleting session:', error);
 }
 
 /**
@@ -211,7 +212,7 @@ export async function getRecentSessions(
     .limit(limit);
 
   if (error || !data) {
-    console.error('Error fetching recent sessions:', error);
+    logger.error('Error fetching recent sessions:', error);
     return [];
   }
 
@@ -239,7 +240,7 @@ export async function getRecentSessions(
       try {
         timeline = JSON.parse(s.timeline);
       } catch (e) {
-        console.error('Failed to parse timeline string:', e);
+        logger.error('Failed to parse timeline string:', e as Error);
       }
     }
 
@@ -308,7 +309,7 @@ export async function getRecentActivitySessions(
     .limit(limit);
 
   if (error) {
-    console.error('Error fetching recent sessions:', error);
+    logger.error('Error fetching recent activity sessions:', error);
     return [];
   }
 

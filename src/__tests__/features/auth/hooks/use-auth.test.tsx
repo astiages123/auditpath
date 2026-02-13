@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { ReactNode } from 'react';
+import { User, Session } from '@supabase/supabase-js';
 import {
   useAuth,
   AuthContext,
@@ -42,7 +43,7 @@ describe('useAuth', () => {
     });
 
     it('should return user data when context has user', () => {
-      const mockUser = {
+      const mockUser: User = {
         id: 'test-user-id',
         email: 'test@example.com',
         app_metadata: {},
@@ -51,7 +52,7 @@ describe('useAuth', () => {
         created_at: '2024-01-01T00:00:00Z',
       };
 
-      const mockSession = {
+      const mockSession: Session = {
         access_token: 'test-token',
         refresh_token: 'test-refresh',
         expires_in: 3600,
@@ -60,10 +61,8 @@ describe('useAuth', () => {
       };
 
       const mockValue: AuthContextType = {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        user: mockUser as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        session: mockSession as any,
+        user: mockUser,
+        session: mockSession,
         loading: false,
         signOut: vi.fn(),
       };

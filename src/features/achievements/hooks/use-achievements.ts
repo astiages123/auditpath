@@ -13,6 +13,7 @@ import {
 import { type Rank, RANKS } from '@/shared/lib/core/utils/rank-utils';
 import { ProgressStats } from '@/shared/hooks/use-progress';
 import coursesData from '@/features/courses/data/courses.json';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 export const achievementKeys = {
   all: ['achievements'] as const,
@@ -213,7 +214,7 @@ export function useSyncAchievementsMutation() {
         err instanceof Error &&
         (err.name === 'AbortError' || err.message?.includes('AbortError'));
       if (!isAbort) {
-        console.error('Achievement Sync Mutation Error:', err);
+        logger.error('Achievement Sync Mutation Error:', err as Error);
       }
     },
   });

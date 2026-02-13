@@ -169,7 +169,7 @@ describe('Activity Service Tests', () => {
 
       await activityService.getDailyStats(mockUserId);
       expect(consoleSpy).toHaveBeenCalledWith(
-        'Error fetching daily stats:',
+        '[AuditPath] ❌ Error fetching daily stats:',
         mockError
       );
       consoleSpy.mockRestore();

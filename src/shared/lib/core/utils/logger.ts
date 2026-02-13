@@ -25,6 +25,7 @@ export const logger = {
    */
   info(message: string, details?: Record<string, unknown>): void {
     if (!env.app.isDev) return;
+    // eslint-disable-next-line no-console
     console.log(`[AuditPath] ${message}`, details || '');
   },
 
@@ -33,6 +34,7 @@ export const logger = {
    */
   warn(message: string, details?: Record<string, unknown>): void {
     if (!env.app.isDev) return;
+    // eslint-disable-next-line no-console
     console.warn(`[AuditPath] ⚠️ ${message}`, details || '');
   },
 
@@ -44,11 +46,13 @@ export const logger = {
     if (!env.app.isDev) return;
 
     if (details instanceof Error) {
+      // eslint-disable-next-line no-console
       console.error(`[AuditPath] ❌ ${message}`, {
         message: details.message,
         stack: details.stack,
       });
     } else {
+      // eslint-disable-next-line no-console
       console.error(`[AuditPath] ❌ ${message}`, details || '');
     }
   },
@@ -59,6 +63,7 @@ export const logger = {
    */
   debug(message: string, details?: Record<string, unknown>): void {
     if (!env.app.isDev) return;
+    // eslint-disable-next-line no-console
     console.debug(`[AuditPath] 🔍 ${message}`, details || '');
   },
 

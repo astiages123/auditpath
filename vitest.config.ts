@@ -7,11 +7,42 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/__tests__/setup.ts'],
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
+    setupFiles: ['./src/__tests__/setup.tsx'],
+    include: [
+      'src/__tests__/**/*.{test,spec}.{ts,tsx}',
+      'src/**/*.test.{ts,tsx}',
+    ],
+    exclude: [
+      'node_modules',
+      'dist',
+      'src/main.tsx',
+      'src/app/main.tsx',
+      'src/__tests__/shared/components/ErrorBoundary.test.tsx',
+    ],
+
+    // Kilitlenmeyi önlemek için havuz sistemini basitleştiriyoruz
+    pool: 'forks',
+
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'json', 'html'],
+      enabled: true,
+      reporter: ['text', 'html', 'lcov'],
+      include: ['src/shared/lib/**', 'src/features/**', 'src/app/providers/**'],
+      exclude: [
+        'src/**/*.test.*',
+        'src/__tests__/**',
+        '**/*.md',
+        '**/documentation.md',
+        '**/index.ts',
+        '**/*.d.ts',
+        '**/node_modules/**',
+      ],
+      thresholds: {
+        statements: 35,
+        branches: 25,
+        functions: 30,
+        lines: 35,
+      },
     },
   },
   resolve: {

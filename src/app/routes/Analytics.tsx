@@ -50,6 +50,7 @@ import {
 } from '@/shared/components/ui/table';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 export default function AnalyticsPage() {
   const [logs, setLogs] = useState<AiGenerationCost[]>([]);
@@ -84,7 +85,7 @@ export default function AnalyticsPage() {
         if (error) throw error;
         setLogs(data as AiGenerationCost[]);
       } catch (error) {
-        console.error('Failed to load analytics data:', error);
+        logger.error('Failed to load analytics data:', error as Error);
       } finally {
         setLoading(false);
       }
@@ -119,7 +120,11 @@ export default function AnalyticsPage() {
       );
       return {
         date: format(day, 'dd MMM', { locale: tr }),
-        cost: parseFloat((totalCostUsd * rate).toFixed(4)),
+        cost: (() => {
+          const cost = totalCostUsd * rate;
+          const parsed = Number.isNaN(cost) ? 0 : parseFloat(cost.toFixed(4));
+          return parsed;
+        })(),
         fullDate: format(day, 'dd MMMM yyyy', { locale: tr }),
       };
     });

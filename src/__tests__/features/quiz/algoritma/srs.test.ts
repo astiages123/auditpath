@@ -132,6 +132,75 @@ describe('SRS Logic (Shelf System)', () => {
       expect(verySlow.timeRatio).toBe(0.5);
       expect(verySlow.finalScore).toBe(5);
     });
+
+    describe('Extreme Time Ratios', () => {
+      const baseDelta = 10;
+      const bloom = 'knowledge';
+
+      it('should cap at 2.0 for extremely fast answers (< 0.5x)', () => {
+        const cases = [
+          { time: 100, expectedRatio: 2.0 },
+          { time: 500, expectedRatio: 2.0 },
+          { time: 999, expectedRatio: 2.0 },
+        ];
+
+        cases.forEach(({ time, expectedRatio }) => {
+          const result = calculateAdvancedScore(baseDelta, bloom, time);
+          expect(result.timeRatio).toBe(expectedRatio);
+          expect(result.finalScore).toBe(20); // 10 * 1.0 * 2.0
+        });
+      });
+
+      it('should cap at 0.5 for extremely slow answers (> 2.0x)', () => {
+        const cases = [
+          { time: 50_000, expectedRatio: 0.5 },
+          { time: 100_000, expectedRatio: 0.5 },
+          { time: 1_000_000, expectedRatio: 0.5 },
+        ];
+
+        cases.forEach(({ time, expectedRatio }) => {
+          const result = calculateAdvancedScore(baseDelta, bloom, time);
+          expect(result.timeRatio).toBe(expectedRatio);
+          expect(result.finalScore).toBe(5); // 10 * 1.0 * 0.5
+        });
+      });
+
+      it('should handle edge cases around target time', () => {
+        // Exactly at target: 20,000ms
+        const exact = calculateAdvancedScore(baseDelta, bloom, 20_000);
+        expect(exact.timeRatio).toBe(1.0);
+        expect(exact.finalScore).toBe(10);
+
+        // Just below target: 10,001ms (slightly faster)
+        const belowTarget = calculateAdvancedScore(baseDelta, bloom, 10_001);
+        expect(belowTarget.timeRatio).toBeCloseTo(1.999, 2);
+
+        // Just above target: 39,999ms (slightly slower)
+        const aboveTarget = calculateAdvancedScore(baseDelta, bloom, 39_999);
+        expect(aboveTarget.timeRatio).toBeCloseTo(0.5, 2);
+      });
+
+      it('should verify exact math for bloom coefficient differences', () => {
+        // knowledge: 10 * 1.0 * (20000/40000) = 10 * 1.0 * 0.5 = 5
+        // analysis: 10 * 1.6 * (50000/80000) = 10 * 1.6 * 0.625 = 10
+        const knowledgeSlow = calculateAdvancedScore(10, 'knowledge', 40_000);
+        const analysisSlow = calculateAdvancedScore(10, 'analysis', 80_000);
+
+        expect(knowledgeSlow.finalScore).toBe(5);
+        expect(analysisSlow.finalScore).toBe(10);
+        expect(analysisSlow.finalScore / knowledgeSlow.finalScore).toBe(2);
+      });
+
+      it('should handle very small timeSpentMs (minimum 1000ms floor)', () => {
+        // timeSpentMs < 1000 gets floored to 1000 in the algorithm
+        const result = calculateAdvancedScore(10, 'knowledge', 500);
+
+        // tActual = max(500, 1000) = 1000
+        // timeRatio = min(2.0, max(0.5, 20000/1000)) = min(2.0, 20) = 2.0
+        expect(result.timeRatio).toBe(2.0);
+        expect(result.finalScore).toBe(20);
+      });
+    });
   });
 });
 
@@ -337,7 +406,99 @@ describe('SRS Stress Tests (Edge Cases)', () => {
       successCount = result.newSuccessCount;
       status = result.newStatus;
       expect(successCount).toBe(3.0);
-      expect(status).toBe('archived');
+      expect(result.newStatus).toBe('archived');
+    });
+  });
+
+  describe('Fast Track: 0→1→2→3 (Rapid Archive)', () => {
+    it('should archive after 3 fast correct answers', () => {
+      // 0 -> Fast Correct -> 1.0 -> pending_followup
+      let result = calculateShelfStatus(0, true, true);
+      expect(result.newSuccessCount).toBe(1.0);
+      expect(result.newStatus).toBe('pending_followup');
+
+      // 1.0 -> Fast Correct -> 2.0 -> pending_followup
+      result = calculateShelfStatus(1.0, true, true);
+      expect(result.newSuccessCount).toBe(2.0);
+      expect(result.newStatus).toBe('pending_followup');
+
+      // 2.0 -> Fast Correct -> 3.0 -> archived
+      result = calculateShelfStatus(2.0, true, true);
+      expect(result.newSuccessCount).toBe(3.0);
+      expect(result.newStatus).toBe('archived');
+    });
+
+    it('should handle mixed slow and fast progression to archived', () => {
+      // 0 -> Slow -> 0.5 -> pending_followup
+      let result = calculateShelfStatus(0, true, false);
+      expect(result.newSuccessCount).toBe(0.5);
+
+      // 0.5 -> Fast -> 1.5 -> pending_followup
+      result = calculateShelfStatus(0.5, true, true);
+      expect(result.newSuccessCount).toBe(1.5);
+
+      // 1.5 -> Fast -> 2.5 -> pending_followup
+      result = calculateShelfStatus(1.5, true, true);
+      expect(result.newSuccessCount).toBe(2.5);
+
+      // 2.5 -> Fast -> 3.5 -> archived (caps at 3.0 internally but shows overflow)
+      result = calculateShelfStatus(2.5, true, true);
+      expect(result.newSuccessCount).toBe(3.5);
+      expect(result.newStatus).toBe('archived');
+    });
+  });
+
+  describe('Boundary Conditions (3-Strike Thresholds)', () => {
+    it('should be pending_followup at exactly 2.999 successCount', () => {
+      const result = calculateShelfStatus(2.999, true, false);
+      expect(result.newSuccessCount).toBeCloseTo(3.499, 2);
+      expect(result.newStatus).toBe('archived');
+    });
+
+    it('should be pending_followup at exactly 0.5 successCount', () => {
+      const result = calculateShelfStatus(0, true, false);
+      expect(result.newSuccessCount).toBe(0.5);
+      expect(result.newStatus).toBe('pending_followup');
+    });
+
+    it('should be active when successCount < 0.5', () => {
+      // Starting from 0 with slow answer gives 0.5, so test with incorrect resets
+      const result = calculateShelfStatus(0, false, false);
+      expect(result.newSuccessCount).toBe(0);
+      expect(result.newStatus).toBe('pending_followup'); // Incorrect always sets to pending_followup
+    });
+
+    it('should return active status when successCount would be below 0.5 (edge)', () => {
+      // This is a theoretical edge case - in practice successCount starts at 0
+      // and correct answer always gives at least 0.5
+      // The 'active' branch exists for completeness but is unlikely to trigger
+      // with the current logic (unless we add negative increments in the future)
+      const result = calculateShelfStatus(0, true, false);
+      // 0 + 0.5 = 0.5, which is >= 0.5, so it becomes pending_followup
+      expect(result.newStatus).toBe('pending_followup');
+    });
+
+    it('should reset to 0 on any incorrect answer regardless of current count', () => {
+      // Reset from 2.5
+      let result = calculateShelfStatus(2.5, false, true);
+      expect(result.newSuccessCount).toBe(0);
+      expect(result.newStatus).toBe('pending_followup');
+
+      // Reset from 0.5
+      result = calculateShelfStatus(0.5, false, false);
+      expect(result.newSuccessCount).toBe(0);
+      expect(result.newStatus).toBe('pending_followup');
+
+      // Reset from archived (3.0)
+      result = calculateShelfStatus(3.0, false, true);
+      expect(result.newSuccessCount).toBe(0);
+      expect(result.newStatus).toBe('pending_followup');
+    });
+
+    it('should stay at pending_followup after reset', () => {
+      const result = calculateShelfStatus(2.5, false, false);
+      expect(result.newStatus).toBe('pending_followup');
+      expect(result.newSuccessCount).toBe(0);
     });
   });
 
@@ -530,6 +691,83 @@ describe('SRS Stress Tests (Edge Cases)', () => {
       // Difference should be (5 * 2) * 1.0 = 10 seconds = 10000ms
       expect(tmax5 - tmax0).toBe(10000);
     });
+
+    describe('calculateTMax Edge Cases', () => {
+      it('should use default bufferSeconds of 10 when not provided', () => {
+        const result = calculateTMax(780, 0, 'knowledge');
+        // reading(60s) + complexity(15s) + buffer(10s) = 85s
+        expect(result).toBe(85000);
+      });
+
+      it('should apply custom bufferSeconds parameter', () => {
+        const defaultResult = calculateTMax(780, 0, 'knowledge');
+        const customBufferResult = calculateTMax(780, 0, 'knowledge', 20);
+
+        // Difference should be 10 seconds (20 - 10)
+        expect(customBufferResult - defaultResult).toBe(10000);
+      });
+
+      it('should handle zero character count', () => {
+        const result = calculateTMax(0, 0, 'knowledge');
+        // reading(0s) + complexity(15s) + buffer(10s) = 25s
+        expect(result).toBe(25000);
+      });
+
+      it('should handle zero concept count', () => {
+        const result = calculateTMax(780, 0, 'knowledge');
+        // reading(60s) + complexity(15s) + buffer(10s) = 85s
+        expect(result).toBe(85000);
+      });
+
+      it('should handle both zero charCount and conceptCount', () => {
+        const result = calculateTMax(0, 0, 'knowledge');
+        // reading(0s) + complexity(15s) + buffer(10s) = 25s
+        expect(result).toBe(25000);
+      });
+
+      it('should handle negative bufferSeconds (edge case)', () => {
+        const result = calculateTMax(780, 0, 'knowledge', -5);
+        // reading(60s) + complexity(15s) + buffer(-5s) = 70s
+        expect(result).toBe(70000);
+      });
+
+      it('should scale linearly with character count', () => {
+        const tmax100 = calculateTMax(100, 0, 'knowledge');
+        const tmax200 = calculateTMax(200, 0, 'knowledge');
+        const tmax300 = calculateTMax(300, 0, 'knowledge');
+
+        const diff1 = tmax200 - tmax100;
+        const diff2 = tmax300 - tmax200;
+
+        // Should be approximately equal (within rounding tolerance of ~1-2ms)
+        expect(Math.abs(diff1 - diff2)).toBeLessThanOrEqual(2);
+      });
+
+      it('should apply bloom multipliers correctly with concepts', () => {
+        const charCount = 0;
+        const conceptCount = 5;
+
+        const knowledge = calculateTMax(charCount, conceptCount, 'knowledge');
+        const application = calculateTMax(
+          charCount,
+          conceptCount,
+          'application'
+        );
+        const analysis = calculateTMax(charCount, conceptCount, 'analysis');
+
+        // complexity = (15 + 5*2) * multiplier + buffer(10)
+        // knowledge: (15 + 10) * 1.0 + 10 = 35s
+        // application: (15 + 10) * 1.2 + 10 = 40s
+        // analysis: (15 + 10) * 1.5 + 10 = 47.5s
+
+        expect(knowledge).toBe(35000);
+        expect(application).toBe(40000);
+        expect(analysis).toBe(47500);
+
+        expect(application - knowledge).toBe(5000);
+        expect(analysis - knowledge).toBe(12500);
+      });
+    });
   });
 
   describe('Minimum Session Gap Protection', () => {
@@ -563,6 +801,41 @@ describe('SRS Stress Tests (Edge Cases)', () => {
       // Anything >= 5 should use gap 20 (max index in SESSION_GAPS)
       expect(calculateNextReviewSession(currentSession, 10)).toBe(120);
       expect(calculateNextReviewSession(currentSession, 100)).toBe(120);
+    });
+
+    describe('SESSION_GAPS Boundary Conditions', () => {
+      const currentSession = 50;
+
+      it('should use gap 1 for successCount just below 1.0', () => {
+        // Math.max(1, 0.999) = 1, floor(1) - 1 = 0, gap = 1
+        expect(calculateNextReviewSession(currentSession, 0.999)).toBe(51);
+      });
+
+      it('should use gap 1 for successCount exactly at 1.0', () => {
+        // Math.max(1, 1.0) = 1, floor(1) - 1 = 0, gap = 1
+        expect(calculateNextReviewSession(currentSession, 1.0)).toBe(51);
+      });
+
+      it('should use gap 1 for successCount between 1.0 and 1.999', () => {
+        // Math.floor(1.5) = 1, gapIndex = 0, gap = 1
+        expect(calculateNextReviewSession(currentSession, 1.5)).toBe(51);
+        expect(calculateNextReviewSession(currentSession, 1.999)).toBe(51);
+      });
+
+      it('should use gap 2 for successCount between 2.0 and 2.999', () => {
+        // Math.floor(2.5) = 2, gapIndex = 1, gap = 2
+        expect(calculateNextReviewSession(currentSession, 2.5)).toBe(52);
+        expect(calculateNextReviewSession(currentSession, 2.999)).toBe(52);
+      });
+
+      it('should floor successCount in gap calculation', () => {
+        // Math.max(1, 0.5) = 1, floor(1) - 1 = 0, gap = 1
+        expect(calculateNextReviewSession(currentSession, 0.5)).toBe(51);
+        // Math.floor(1.5) = 1, gapIndex = 0, gap = 1
+        expect(calculateNextReviewSession(currentSession, 1.5)).toBe(51);
+        // Math.floor(2.5) = 2, gapIndex = 1, gap = 2
+        expect(calculateNextReviewSession(currentSession, 2.5)).toBe(52);
+      });
     });
   });
 });

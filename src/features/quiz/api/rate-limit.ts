@@ -7,6 +7,7 @@
 
 import pLimit from 'p-limit';
 import { type LLMProvider } from '../core/types';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 interface Budget {
   remaining: number;
@@ -38,18 +39,28 @@ export class RateLimitService {
 
     if (remaining) {
       const resetVal = reset ? parseFloat(reset) : 60;
+      if (Number.isNaN(resetVal)) {
+        logger.warn(`[RateLimit] Invalid reset value for ${provider}`);
+        return;
+      }
       // reset header is often in seconds (for Cerebras) or timestamp
       // We assume seconds if < 1000000, otherwise timestamp
       const resetTime =
         resetVal < 1000000 ? Date.now() + resetVal * 1000 : resetVal;
 
+      const parsedRemaining = parseInt(remaining, 10);
+      if (Number.isNaN(parsedRemaining)) {
+        logger.warn(`[RateLimit] Invalid remaining value for ${provider}`);
+        return;
+      }
+
       this.budgets.set(provider, {
-        remaining: parseInt(remaining, 10),
+        remaining: parsedRemaining,
         reset: resetTime,
       });
 
-      if (parseInt(remaining, 10) < 500) {
-        console.warn(
+      if (parsedRemaining < 500) {
+        logger.warn(
           `[RateLimit] Critical: ${provider} budget low (${remaining} tokens). Reset in ${Math.ceil(
             (resetTime - Date.now()) / 1000
           )}s`
@@ -69,7 +80,7 @@ export class RateLimitService {
       if (budget && budget.remaining <= 0) {
         const waitTime = budget.reset - Date.now();
         if (waitTime > 0) {
-          console.info(
+          logger.info(
             `[RateLimit] Waiting ${Math.ceil(
               waitTime / 1000
             )}s for ${provider} budget reset...`

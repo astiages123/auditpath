@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { type CourseTopic } from '@/shared/types/efficiency';
+import { storage } from '@/shared/lib/core/services/storage.service';
 
 interface UseNotesNavigationProps {
   courseSlug?: string;
@@ -18,6 +19,15 @@ export const useNotesNavigation = ({
   const mainContentRef = useRef<HTMLDivElement | null>(null);
   const isProgrammaticScroll = useRef<boolean>(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup scroll timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
+    };
+  }, []);
 
   // 1. Scroll Progress
   useEffect(() => {
@@ -48,9 +58,12 @@ export const useNotesNavigation = ({
     if (!mainContent || !courseSlug) return;
 
     const saveScroll = () => {
-      localStorage.setItem(
+      storage.set(
         `scroll_pos_${courseSlug}`,
-        mainContent.scrollTop.toString()
+        mainContent.scrollTop.toString(),
+        {
+          ttl: 24 * 60 * 60 * 1000, // 24 hours
+        }
       );
     };
 
@@ -61,15 +74,19 @@ export const useNotesNavigation = ({
   // 4. Restore scroll position
   useEffect(() => {
     if (!loading && chunks.length > 0 && courseSlug && mainContentRef.current) {
-      const savedScroll = localStorage.getItem(`scroll_pos_${courseSlug}`);
+      const savedScroll = storage.get<string>(`scroll_pos_${courseSlug}`);
       if (savedScroll) {
-        const timer = setTimeout(() => {
-          mainContentRef.current?.scrollTo({
-            top: parseInt(savedScroll),
-            behavior: 'instant' as ScrollBehavior,
-          });
-        }, 100);
-        return () => clearTimeout(timer);
+        const scrollValue = parseInt(savedScroll, 10);
+        // NaN kontrolü eklendi
+        if (!isNaN(scrollValue)) {
+          const timer = setTimeout(() => {
+            mainContentRef.current?.scrollTo({
+              top: scrollValue,
+              behavior: 'instant' as ScrollBehavior,
+            });
+          }, 100);
+          return () => clearTimeout(timer);
+        }
       }
     }
   }, [loading, chunks.length, courseSlug]);

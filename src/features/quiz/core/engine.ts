@@ -21,6 +21,7 @@ import { calculateQuizResult } from '../logic/submission-calculator';
 
 import { parseOrThrow } from '@/shared/lib/validation/type-guards';
 import { ChunkMetadataSchema } from '@/shared/lib/validation/quiz-schemas';
+import { logger } from '@/shared/lib/core/utils/logger';
 
 // --- Types ---
 
@@ -481,7 +482,7 @@ export class ExamService {
         questionIds: questionIds.slice(0, EXAM_TOTAL),
       };
     } catch (error) {
-      console.error('Pool fetch error:', error);
+      logger.error('Pool fetch error:', error as Error);
       return null;
     }
   }
@@ -526,7 +527,7 @@ export async function processBatchForUI(
           return newId;
         }
       } catch (e) {
-        console.error('Archive refresh failed', e);
+        logger.error('Archive refresh failed', e as Error);
       }
     }
     return item.questionId;
@@ -543,7 +544,6 @@ export async function processBatchForUI(
 
 export async function checkAndTriggerBackgroundGeneration(
   chunkId: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _incorrectIds: string[]
 ): Promise<void> {
   const factory = new QuizFactory();
@@ -554,7 +554,7 @@ export async function checkAndTriggerBackgroundGeneration(
         onLog: () => {},
         onQuestionSaved: () => {},
         onComplete: () => {},
-        onError: (err) => console.error('Background gen error', err),
+        onError: (err) => logger.error('Background gen error', { error: err }),
       },
       {
         usageType: 'antrenman',
@@ -562,6 +562,6 @@ export async function checkAndTriggerBackgroundGeneration(
       }
     );
   } catch (e) {
-    console.error('Failed to trigger background generation', e);
+    logger.error('Failed to trigger background generation', e as Error);
   }
 }
