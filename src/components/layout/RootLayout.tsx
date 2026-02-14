@@ -4,7 +4,7 @@ import { PomodoroModal } from '@/features/pomodoro/components';
 import { TimerController } from '@/features/pomodoro/components';
 import { Toaster } from '@/components/ui/sonner';
 import { useCelebration } from '@/hooks/useCelebration';
-import { useUIStore } from '@/store/ui.store';
+import { useUIStore } from '@/store/uiStore';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const CelebrationModal = lazy(() =>

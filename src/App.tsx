@@ -6,7 +6,7 @@ import { AuthGuard } from '@/features/auth/components/AuthGuard';
 import { Loader2 } from 'lucide-react';
 import { ErrorBoundary } from '@/ErrorBoundary';
 
-import { ROUTES } from '@/config';
+import { ROUTES } from '@/utils/routes';
 import { Outlet } from 'react-router-dom';
 
 // Moving lazy imports together

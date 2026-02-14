@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useProgress } from '@/hooks/useProgress';
-import { useUIStore } from '@/store/ui.store';
+import { useUIStore } from '@/store/uiStore';
 import { getCelebrationAsset } from '@/features/achievements/utils/celebrationAssets';
 import { markAsCelebrated } from '@/features/achievements/hooks/useAchievements';
 import { useSyncAchievementsMutation } from '@/features/achievements/hooks/useAchievements';

@@ -2,7 +2,7 @@ import { cn, slugify } from '@/utils/core';
 import { type CourseTopic } from '@/types';
 import { memo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { ROUTES } from '@/config';
+import { ROUTES } from '@/utils/routes';
 import { ToCTitleRenderer } from './ToCTitleRenderer';
 
 interface GlobalNavigationProps {

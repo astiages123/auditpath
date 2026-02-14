@@ -1,4 +1,4 @@
-import { env } from '@/config';
+import { env } from '@/utils/env';
 
 /**
  * Professional Logger Utility

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useTimerStore } from '@/store/use-timer-store';
+import { useTimerStore } from '@/store/useTimerStore';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 import {
@@ -9,12 +9,13 @@ import {
 } from '@/lib/clientDb';
 import { calculateSessionTotals } from '@/utils/math';
 import { toast } from 'sonner';
-import { env } from '@/config';
-import { SESSION_VALIDITY_DURATION_MS } from '@/config';
+import { env } from '@/utils/env';
+import { SESSION_VALIDITY_DURATION_MS } from '@/utils/constants';
 
 import { useFaviconManager } from '@/features/pomodoro/hooks';
 import { playNotificationSound } from '../utils/audioUtils';
 import { logger } from '@/utils/logger';
+import faviconSvg from '@/assets/favicon.svg';
 
 export function TimerController() {
   const {
@@ -53,7 +54,7 @@ export function TimerController() {
   // 1. Core Tick using Web Worker
   useEffect(() => {
     const worker = new Worker(
-      new URL('../../../workers/timer-worker.ts', import.meta.url),
+      new URL('../../../workers/timerWorker.ts', import.meta.url),
       { type: 'module' }
     );
 
@@ -236,7 +237,7 @@ export function TimerController() {
             try {
               const notification = new Notification('Pomodoro: Süre Doldu!', {
                 body: message,
-                icon: '/favicon.svg',
+                icon: faviconSvg,
                 tag: notificationKey, // Same tag prevents duplicate notifications
                 requireInteraction: true, // Keep notification until user interacts
               });

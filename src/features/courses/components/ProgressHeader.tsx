@@ -13,12 +13,13 @@ import {
   calculateEstimatedDaysToNextRank,
 } from '../logic/coursesLogic';
 import { useState, useMemo, useSyncExternalStore } from 'react';
-import { RANKS, type Rank } from '@/lib/clientDb';
+import { RANKS } from '@/utils/constants';
+import type { Rank } from '@/types';
 import { JourneyModal } from './JourneyModal';
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/core';
 import { formatDurationShort } from '@/utils/helpers';
-import { WEEKLY_SCHEDULE } from '../services/coursesConfig';
+import { WEEKLY_SCHEDULE } from '@/features/courses/services/coursesConfig';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Local helper for legacy props, but prefer importing shared type
@@ -128,7 +129,7 @@ export function ProgressHeader({
 
   const currentRankImage = useMemo(() => {
     if (!currentRank) return '/ranks/rank1.webp';
-    const index = RANKS.findIndex((r) => r.name === currentRank.name);
+    const index = RANKS.findIndex((r: Rank) => r.name === currentRank.name);
     return `/ranks/rank${(index >= 0 ? index : 0) + 1}.webp`;
   }, [currentRank]);
 

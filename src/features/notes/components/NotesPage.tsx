@@ -6,7 +6,7 @@ import { type CourseTopic } from '@/types';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { cn, slugify } from '@/utils/core';
-import { ROUTES } from '@/config';
+import { ROUTES } from '@/utils/routes';
 import { logger } from '@/utils/logger';
 import { ErrorBoundary } from '@/ErrorBoundary';
 import { storage } from '@/lib/storageService';

@@ -1,4 +1,4 @@
-import { env } from "@/config";
+import { env } from '@/utils/env';
 import * as Repository from "./quizRepository";
 import { rateLimiter } from "@/features/quiz/logic/quizRateLimit"; // Or relative ../logic/quizRateLimit
 import { logger } from "@/utils/logger";

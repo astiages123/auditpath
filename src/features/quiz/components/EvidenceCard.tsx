@@ -8,7 +8,7 @@
 import { motion } from 'framer-motion';
 import { BookOpen, ExternalLink, Quote } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/config';
+import { ROUTES } from '@/utils/routes';
 
 interface EvidenceCardProps {
   /** Evidence quote from source text */

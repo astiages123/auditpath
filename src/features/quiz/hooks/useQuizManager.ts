@@ -17,7 +17,7 @@ import {
 import { parseOrThrow } from '@/utils/helpers';
 import { QuizQuestionSchema } from '@/features/quiz/types';
 import { logger } from '@/utils/logger';
-import { MAX_LOG_ENTRIES } from '@/config';
+import { MAX_LOG_ENTRIES } from '@/utils/constants';
 
 export enum QuizState {
   NOT_ANALYZED = 'NOT_ANALYZED',

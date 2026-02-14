@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useRef } from 'react'; // useRef ve useEffect eklendi
-import { useTimerStore } from '@/store/use-timer-store';
+import { useCallback, useEffect, useRef } from "react"; // useRef ve useEffect eklendi
+import { useTimerStore } from "@/store/useTimerStore";
 import {
   deletePomodoroSession,
   getDailySessionCount,
   upsertPomodoroSession,
-} from '@/lib/clientDb';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { unlockAudio } from '../utils/audioUtils';
-import { logger } from '@/utils/logger';
+} from "@/lib/clientDb";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { unlockAudio } from "../utils/audioUtils";
+import { logger } from "@/utils/logger";
 
-export type PomodoroMode = 'work' | 'break';
+export type PomodoroMode = "work" | "break";
 
 export function usePomodoro() {
   const {
@@ -48,14 +48,14 @@ export function usePomodoro() {
   useEffect(() => {
     // Worker'ı başlatıyoruz (Vite URL yapısı)
     const worker = new Worker(
-      new URL('../../../workers/timer-worker.ts', import.meta.url),
-      { type: 'module' }
+      new URL("../../../workers/timerWorker.ts", import.meta.url),
+      { type: "module" },
     );
 
     // Worker'dan gelen 'TICK' mesajlarını dinle
     workerRef.current = worker; // Assign the worker to the ref
     workerRef.current.onmessage = (e) => {
-      if (e.data === 'TICK') {
+      if (e.data === "TICK") {
         tick(); // Store'daki zaman azaltma lojiğini tetikle
       }
     };
@@ -92,21 +92,22 @@ export function usePomodoro() {
             id: currentSessionId,
             courseId: selectedCourse.id,
             courseName: selectedCourse.name,
-            timeline:
-              timeline.length > 0 ? timeline : [{ type: 'work', start: now }],
+            timeline: timeline.length > 0
+              ? timeline
+              : [{ type: "work", start: now }],
             startedAt: originalStartTime || now,
             isCompleted: false,
           },
-          userId
+          userId,
         );
       } catch (error) {
-        logger.error('Failed to initialize session in DB:', error as Error);
+        logger.error("Failed to initialize session in DB:", error as Error);
       }
     }
 
     // Bildirim İzni
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      if (Notification.permission === 'default') {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
         Notification.requestPermission();
       }
     }
@@ -115,7 +116,7 @@ export function usePomodoro() {
     unlockAudio();
 
     // KRİTİK: Testin beklediği Worker mesajı ve Store tetikleyicisi
-    workerRef.current?.postMessage('START');
+    workerRef.current?.postMessage("START");
     startTimer();
   };
 
@@ -127,8 +128,8 @@ export function usePomodoro() {
     const format = (sec: number) => {
       const m = Math.floor(sec / 60)
         .toString()
-        .padStart(2, '0');
-      const s = (sec % 60).toString().padStart(2, '0');
+        .padStart(2, "0");
+      const s = (sec % 60).toString().padStart(2, "0");
       return { m, s };
     };
 
@@ -151,15 +152,15 @@ export function usePomodoro() {
   } = getDisplayTime();
 
   const switchMode = useCallback(() => {
-    const newMode = isBreak ? 'work' : 'break';
+    const newMode = isBreak ? "work" : "break";
     setMode(newMode);
 
-    if (newMode === 'work' && isBreak) {
+    if (newMode === "work" && isBreak) {
       incrementSession();
     }
 
     // Worker'ı yeni mod için resetle/başlat (Opsiyonel: START gönderilebilir)
-    workerRef.current?.postMessage('START');
+    workerRef.current?.postMessage("START");
     startTimer();
   }, [isBreak, setMode, incrementSession, startTimer]);
 
@@ -167,15 +168,15 @@ export function usePomodoro() {
     if (userId && sessionId) {
       await deletePomodoroSession(sessionId);
     }
-    workerRef.current?.postMessage('RESET');
+    workerRef.current?.postMessage("RESET");
     const { resetAll } = useTimerStore.getState();
     resetAll();
     setHasRestored(true);
   };
 
   return {
-    mode: isBreak ? 'break' : 'work',
-    status: isActive ? 'running' : 'paused',
+    mode: isBreak ? "break" : "work",
+    status: isActive ? "running" : "paused",
     minutes: m,
     seconds: s,
     isActive,
@@ -185,11 +186,11 @@ export function usePomodoro() {
     sessionCount,
     start: handleStart,
     pause: () => {
-      workerRef.current?.postMessage('PAUSE');
+      workerRef.current?.postMessage("PAUSE");
       pauseTimer();
     },
     reset: () => {
-      workerRef.current?.postMessage('RESET');
+      workerRef.current?.postMessage("RESET");
       resetTimer();
     },
     resetAndClose,
@@ -203,7 +204,7 @@ export function usePomodoro() {
     timeline,
     sessionId,
     finishDay: async () => {
-      workerRef.current?.postMessage('RESET');
+      workerRef.current?.postMessage("RESET");
       const { resetAll } = useTimerStore.getState();
       resetAll();
     },

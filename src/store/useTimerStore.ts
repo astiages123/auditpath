@@ -3,7 +3,7 @@ import { persist } from 'zustand/middleware';
 import {
   POMODORO_WORK_DURATION_SECONDS,
   POMODORO_BREAK_DURATION_SECONDS,
-} from '@/config';
+} from '@/utils/constants';
 
 interface TimerState {
   timeLeft: number;

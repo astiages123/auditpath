@@ -4,7 +4,7 @@ import type { AIResponse, LLMProvider, Message } from "@/features/quiz/types";
 import { UnifiedLLMClient } from "@/features/quiz/services/quizClient";
 import { rateLimiter } from "./quizRateLimit";
 import { COMMON_OUTPUT_FORMATS, GENERAL_QUALITY_RULES } from "./quizPrompts";
-import { env } from "@/config";
+import { env } from '@/utils/env';
 
 export class DebugLogger {
   private static isEnabled = env.app.isDev;

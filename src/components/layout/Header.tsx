@@ -30,8 +30,9 @@ import { ProgramModal } from '@/features/courses/components/ProgramModal';
 import { JourneyModal } from '@/features/courses/components/JourneyModal';
 import { AuthModal } from '@/features/auth/components/AuthModal';
 import { cn } from '@/utils/core';
-import { ROUTES } from '@/config';
+import { ROUTES } from '@/utils/routes';
 import { usePomodoro } from '@/features/pomodoro/hooks';
+import logo from '@/assets/logo.svg';
 
 export function Header() {
   const { user, signOut } = useAuth();
@@ -112,7 +113,7 @@ export function Header() {
         >
           <div className="relative flex h-14 w-14 items-center justify-center transition-all">
             <img
-              src="/logo.svg"
+              src={logo}
               alt="AuditPath Logo"
               width={56}
               height={56}

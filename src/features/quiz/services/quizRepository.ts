@@ -16,7 +16,7 @@ import {
   FollowUpQuestionRowSchema,
   QuestionWithStatusRowSchema,
 } from '@/features/quiz/types';
-import { DAILY_QUOTA, MASTERY_THRESHOLD } from '@/config';
+import { DAILY_QUOTA, MASTERY_THRESHOLD } from '@/utils/constants';
 import { addToOfflineQueue } from '@/lib/offlineQueueService';
 
 const quizLogger = logger.withPrefix('[QuizRepository]');

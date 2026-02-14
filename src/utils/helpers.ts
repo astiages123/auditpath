@@ -1,4 +1,4 @@
-import { RANKS } from "@/config";
+import { RANKS } from "@/utils/constants";
 import type { Rank } from "@/types";
 import { z, type ZodError, type ZodSchema } from "zod";
 import type { Json } from "@/types/database.types";
@@ -135,7 +135,7 @@ export function getRankForPercentage(percentage: number): Rank {
  * @returns Next rank or null if already at max rank
  */
 export function getNextRank(currentRankId: string): Rank | null {
-    const currentIndex = RANKS.findIndex((r) => r.id === currentRankId);
+    const currentIndex = RANKS.findIndex((r: Rank) => r.id === currentRankId);
     if (currentIndex === -1 || currentIndex === RANKS.length - 1) return null;
     return RANKS[currentIndex + 1];
 }
