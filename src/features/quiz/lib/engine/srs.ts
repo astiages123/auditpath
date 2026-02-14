@@ -6,7 +6,7 @@
  */
 
 import type { Database } from '@/shared/types/supabase';
-import { type QuizResponseType } from '../ai/types';
+import { type QuizResponseType } from '../../core/types';
 
 // --- Types ---
 export type BloomLevel = Database['public']['Enums']['bloom_level'];

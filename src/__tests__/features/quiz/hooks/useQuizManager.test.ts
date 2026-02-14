@@ -194,9 +194,9 @@ describe('useQuizManager', () => {
 
       const { QuizFactory } = await import('@/features/quiz/lib/ai/factory');
       await act(async () => {
-        (
-          (QuizFactory as Record<string, unknown>).triggerComplete as () => void
-        )();
+        // eslint-disable-next-line no-restricted-syntax
+        const MockFactory = QuizFactory as unknown as Record<string, unknown>;
+        (MockFactory.triggerComplete as () => void)();
         if (promise) await promise;
       });
 

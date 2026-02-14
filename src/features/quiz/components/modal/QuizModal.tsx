@@ -10,11 +10,11 @@ import { QuizEngine } from '../engine/QuizEngine';
 import { QuizSessionProvider } from '../contexts/QuizSessionProvider';
 import { ErrorBoundary } from '@/app/providers/ErrorBoundary';
 import { useQuizManager, QuizState } from '../../hooks/useQuizManager';
-import { TopicSidebar } from 'TopicSidebar';
-import { InitialStateView } from 'InitialStateView';
-import { MappingProgressView } from 'MappingProgressView';
-import { BriefingView } from 'BriefingView';
-import { SmartExamView } from 'SmartExamView';
+import { TopicSidebar } from './TopicSidebar';
+import { InitialStateView } from './InitialStateView';
+import { MappingProgressView } from './MappingProgressView';
+import { BriefingView } from './BriefingView';
+import { SmartExamView } from './SmartExamView';
 
 interface QuizModalProps {
   isOpen: boolean;

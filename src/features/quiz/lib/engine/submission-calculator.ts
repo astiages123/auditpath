@@ -3,7 +3,7 @@ import {
   type ChunkMetadata,
   type QuizResponseType,
   type SubmissionResult,
-} from '../ai/types';
+} from '../../core/types';
 
 /**
  * Pure logic for calculating quiz submission results.

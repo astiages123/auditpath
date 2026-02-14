@@ -1,4 +1,4 @@
-import { type ConceptMapItem } from '../ai/types';
+import { type ConceptMapItem } from '../../core/types';
 
 export interface ExamSubjectWeight {
   importance: 'high' | 'medium' | 'low';
