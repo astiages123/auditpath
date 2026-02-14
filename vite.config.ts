@@ -29,7 +29,23 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        // Let Vite handle chunking automatically for better compatibility with React 19
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': [
+            'framer-motion',
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-slot',
+            'lucide-react',
+            'sonner',
+          ],
+          'vendor-data': [
+            '@supabase/supabase-js',
+            '@tanstack/react-query',
+            'zustand',
+          ],
+          'vendor-charts': ['recharts'],
+          'vendor-utils': ['date-fns', 'clsx', 'tailwind-merge'],
+        },
       },
     },
   },

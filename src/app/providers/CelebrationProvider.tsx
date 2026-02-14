@@ -4,7 +4,11 @@ import { useAuth } from '@/features/auth';
 import { useCelebration } from '@/shared/hooks/use-celebration';
 import { useCelebrationStore } from '@/shared/store/use-celebration-store';
 
-import { CelebrationModal } from '@/shared/components/modals/CelebrationModal';
+const CelebrationModal = React.lazy(() =>
+  import('@/shared/components/modals/CelebrationModal').then((module) => ({
+    default: module.CelebrationModal,
+  }))
+);
 
 export function CelebrationProvider({
   children,
@@ -36,16 +40,18 @@ export function CelebrationProvider({
     <>
       {children}
       {user && current && isOpen && (
-        <CelebrationModal
-          isOpen={isOpen}
-          onClose={handleComplete}
-          title={current.title}
-          description={current.description}
-          subtitle={current.subtitle}
-          icon={current.icon}
-          imageUrl={current.imageUrl}
-          variant={current.variant === 'group' ? 'course' : current.variant}
-        />
+        <React.Suspense fallback={null}>
+          <CelebrationModal
+            isOpen={isOpen}
+            onClose={handleComplete}
+            title={current.title}
+            description={current.description}
+            subtitle={current.subtitle}
+            icon={current.icon}
+            imageUrl={current.imageUrl}
+            variant={current.variant === 'group' ? 'course' : current.variant}
+          />
+        </React.Suspense>
       )}
     </>
   );

@@ -322,6 +322,7 @@ export function Header() {
             size="icon"
             className="rounded-full bg-secondary/40 hover:bg-secondary/60"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label={mobileMenuOpen ? 'Menüyü Kapat' : 'Menüyü Aç'}
           >
             {mobileMenuOpen ? (
               <X className="h-5 w-5" />

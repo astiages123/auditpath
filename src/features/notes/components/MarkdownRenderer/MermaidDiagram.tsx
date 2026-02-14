@@ -1,29 +1,7 @@
-import React, { useEffect, useState, useRef, memo } from 'react';
-import mermaid from 'mermaid';
+import { useEffect, useState, useRef, memo } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { sanitizeHtml } from '@/shared/utils/sanitizeHtml';
 import { logger } from '@/shared/lib/core/utils/logger';
-
-// Mermaid initialization
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'dark',
-  themeVariables: {
-    primaryColor: '#f59e0b',
-    primaryTextColor: '#fff',
-    primaryBorderColor: '#555',
-    lineColor: '#888',
-    secondaryColor: '#1a1a1a',
-    tertiaryColor: '#1a1a1a',
-    background: '#ffffff',
-    mainBkg: '#1a1a1a',
-    fontFamily: 'Poppins, system-ui, sans-serif',
-  },
-  flowchart: {
-    htmlLabels: true,
-    curve: 'basis',
-  },
-});
 
 interface MermaidDiagramProps {
   code: string;
@@ -42,6 +20,33 @@ export const MermaidDiagram = memo(({ code }: MermaidDiagramProps) => {
       try {
         setIsLoading(true);
         setError(null);
+
+        // Dynamically import mermaid
+        const mermaid = (await import('mermaid')).default;
+
+        // Initialize if not already done (mermaid maintains global state, so re-init is safe or check needed?)
+        // Mermaid docs say initialize can be called multiple times but usually once is enough.
+        // We can just call it here.
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: 'dark',
+          themeVariables: {
+            primaryColor: '#f59e0b',
+            primaryTextColor: '#fff',
+            primaryBorderColor: '#555',
+            lineColor: '#888',
+            secondaryColor: '#1a1a1a',
+            tertiaryColor: '#1a1a1a',
+            background: '#ffffff',
+            mainBkg: '#1a1a1a',
+            fontFamily: 'Poppins, system-ui, sans-serif',
+          },
+          flowchart: {
+            htmlLabels: true,
+            curve: 'basis',
+          },
+        });
+
         const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
         const { svg: renderedSvg } = await mermaid.render(id, code);
         const sanitizedSvg = sanitizeHtml(renderedSvg);

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import {
   ChevronDown,
   ChevronUp,
@@ -14,11 +14,19 @@ import {
 import { VideoList } from './VideoList';
 import { formatDuration } from '@/shared/lib/core/utils';
 import { useProgress } from '@/shared/hooks/use-progress';
-import { CourseStatsModal } from '../modals/CourseStatsModal';
-import { QuizModal } from '@/features/quiz';
 import { getCourseIcon } from '@/features/courses/lib/course-icons';
 import { useCelebration } from '@/shared/hooks/use-celebration';
 import { type Course } from '@/shared/types/courses';
+
+// Lazy load modals to reduce initial bundle size and split CSS (Katex)
+const QuizModal = lazy(() =>
+  import('@/features/quiz').then((module) => ({ default: module.QuizModal }))
+);
+const CourseStatsModal = lazy(() =>
+  import('../modals/CourseStatsModal').then((module) => ({
+    default: module.CourseStatsModal,
+  }))
+);
 
 interface CourseListProps {
   courses: Course[];
@@ -238,29 +246,35 @@ export function CourseList({
       })}
 
       {/* Stats Modal */}
-      {selectedStatsCourse && (
-        <CourseStatsModal
-          open={!!selectedStatsCourse}
-          onOpenChange={(open: boolean) =>
-            !open && setSelectedStatsCourse(null)
-          }
-          courseName={selectedStatsCourse.name}
-          totalVideos={selectedStatsCourse.total_videos || 0}
-          completedVideos={0}
-          totalHours={selectedStatsCourse.total_hours || 0}
-          spentHours={0}
-        />
-      )}
+      <Suspense
+        fallback={<div className="fixed inset-0 bg-transparent z-9999" />}
+      >
+        {selectedStatsCourse && (
+          <CourseStatsModal
+            open={!!selectedStatsCourse}
+            onOpenChange={(open: boolean) =>
+              !open && setSelectedStatsCourse(null)
+            }
+            courseName={selectedStatsCourse.name}
+            totalVideos={selectedStatsCourse.total_videos || 0}
+            completedVideos={0}
+            totalHours={selectedStatsCourse.total_hours || 0}
+            spentHours={0}
+          />
+        )}
 
-      {/* Quiz Modal */}
-      {selectedQuizCourse && (
-        <QuizModal
-          isOpen={!!selectedQuizCourse}
-          onOpenChange={(open: boolean) => !open && setSelectedQuizCourse(null)}
-          courseId={selectedQuizCourse.id}
-          courseName={selectedQuizCourse.name}
-        />
-      )}
+        {/* Quiz Modal */}
+        {selectedQuizCourse && (
+          <QuizModal
+            isOpen={!!selectedQuizCourse}
+            onOpenChange={(open: boolean) =>
+              !open && setSelectedQuizCourse(null)
+            }
+            courseId={selectedQuizCourse.id}
+            courseName={selectedQuizCourse.name}
+          />
+        )}
+      </Suspense>
     </div>
   );
 }

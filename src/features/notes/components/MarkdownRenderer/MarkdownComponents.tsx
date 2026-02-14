@@ -1,6 +1,7 @@
 import React from 'react';
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
+import 'katex/dist/katex.min.css';
 import { cn, slugify } from '@/shared/lib/core/utils';
 import { CodeBlock } from './CodeBlock';
 

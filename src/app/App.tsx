@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import RootLayout from '@/shared/components/layout/RootLayout';
-import Home from '@/app/routes/Home';
 import { AuthGuard } from '@/features/auth';
 import { Loader2 } from 'lucide-react';
 import { ErrorBoundary } from '@/app/providers/ErrorBoundary';
@@ -9,6 +8,7 @@ import { ErrorBoundary } from '@/app/providers/ErrorBoundary';
 import { ROUTES } from '@/config/routes';
 
 // Moving lazy imports together
+const Home = lazy(() => import('@/app/routes/Home'));
 const Achievements = lazy(() => import('@/app/routes/Achievements'));
 const Statistics = lazy(() => import('@/app/routes/Statistics'));
 const EfficiencyPage = lazy(
