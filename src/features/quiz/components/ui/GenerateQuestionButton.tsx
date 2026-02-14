@@ -28,7 +28,7 @@ import {
   QuizFactory,
   type GenerationLog,
   type GenerationStep as LogStep,
-} from '@/features/quiz/core/factory';
+} from '@/features/quiz/lib/ai/factory';
 import { toast } from 'sonner';
 
 interface GenerateQuestionButtonProps {

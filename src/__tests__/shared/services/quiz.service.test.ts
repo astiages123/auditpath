@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, Mock, vi } from 'vitest';
 import * as quizService from '@/shared/lib/core/services/quiz.service';
 import { supabase } from '@/shared/lib/core/supabase';
-import { getSubjectStrategy } from '@/features/quiz/algoritma/strategy';
+import { getSubjectStrategy } from '@/features/quiz/lib/engine/strategy';
 import type { Database } from '@/shared/types/supabase';
 
 type NoteChunkRow = Database['public']['Tables']['note_chunks']['Row'];
@@ -22,7 +22,7 @@ vi.mock('@/shared/lib/core/supabase', () => ({
 }));
 
 // Mock Strategy
-vi.mock('@/features/quiz/algoritma/strategy', () => ({
+vi.mock('@/features/quiz/lib/engine/strategy', () => ({
   getSubjectStrategy: vi.fn(),
 }));
 

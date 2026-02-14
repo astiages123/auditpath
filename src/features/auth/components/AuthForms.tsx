@@ -9,6 +9,8 @@ import { getSupabase } from '@/shared/lib/core/supabase';
 import { toast } from 'sonner';
 import { logger } from '@/shared/lib/core/utils/logger';
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // Zod şeması tanımı
 const authSchema = z.object({
   identifier: z
@@ -16,7 +18,7 @@ const authSchema = z.object({
     .min(1, 'Bu alan zorunludur.')
     .refine(
       (val) => {
-        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+        const isEmail = EMAIL_REGEX.test(val);
         if (isEmail) return true;
         return val.length >= 3;
       },
@@ -50,7 +52,7 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
       let loginEmail = data.identifier;
 
       // Basit email regex kontrolü (zod içindekine benzer)
-      const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.identifier);
+      const isEmail = EMAIL_REGEX.test(data.identifier);
 
       if (!isEmail) {
         const rpcResult = await supabase.rpc('get_email_by_username', {
@@ -76,7 +78,7 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
     } catch (error: unknown) {
       logger.error('Auth form submission error', error as Error);
       const message =
-        error instanceof Error ? error.message : 'Bir hata oluştu.';
+        (error as { message?: string }).message || 'Bir hata oluştu.';
       toast.error(message);
     }
   };

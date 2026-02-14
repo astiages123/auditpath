@@ -9,12 +9,12 @@ import { Brain, ChevronRight, FileText } from 'lucide-react';
 import { QuizEngine } from '../engine/QuizEngine';
 import { QuizSessionProvider } from '../contexts/QuizSessionProvider';
 import { ErrorBoundary } from '@/app/providers/ErrorBoundary';
-import { useQuizManager, QuizState } from './hooks/useQuizManager';
-import { TopicSidebar } from './parts/TopicSidebar';
-import { InitialStateView } from './parts/InitialStateView';
-import { MappingProgressView } from './parts/MappingProgressView';
-import { BriefingView } from './parts/BriefingView';
-import { SmartExamView } from './parts/SmartExamView';
+import { useQuizManager, QuizState } from '../../hooks/useQuizManager';
+import { TopicSidebar } from 'TopicSidebar';
+import { InitialStateView } from 'InitialStateView';
+import { MappingProgressView } from 'MappingProgressView';
+import { BriefingView } from 'BriefingView';
+import { SmartExamView } from 'SmartExamView';
 
 interface QuizModalProps {
   isOpen: boolean;

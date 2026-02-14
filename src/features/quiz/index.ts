@@ -10,4 +10,4 @@ export { QuizSessionProvider } from './components/contexts/QuizSessionProvider';
 export { useQuiz } from './hooks/use-quiz';
 
 // Essential Types for Props/Interaction
-export * from './core/types';
+export * from './types';

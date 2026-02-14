@@ -1,4 +1,5 @@
 import { beforeEach, vi } from 'vitest';
+import '@testing-library/jest-dom';
 import type { ReactNode, CSSProperties } from 'react';
 
 type GlobalThisMock = {
@@ -13,6 +14,12 @@ type GlobalThisMock = {
 (globalThis as GlobalThisMock).SVGLinearGradientElement = class {};
 
 (globalThis as GlobalThisMock).SVGGradientElement = class {};
+
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
 
 class LocalStorageMock {
   private store: Record<string, string> = {};
@@ -171,6 +178,68 @@ vi.mock('recharts', async () => {
     default: { ResponsiveContainer: MockResponsiveContainer },
   };
 });
+
+// Chainable Supabase Mock with Proxy
+const createSupabaseMock = () => {
+  // chainMethods removed as it was unused
+
+  const baseMock: Record<string, unknown> = {
+    from: vi.fn().mockReturnThis(),
+    select: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnThis(),
+    update: vi.fn().mockReturnThis(),
+    upsert: vi.fn().mockReturnThis(),
+    delete: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    neq: vi.fn().mockReturnThis(),
+    gt: vi.fn().mockReturnThis(),
+    gte: vi.fn().mockReturnThis(),
+    lt: vi.fn().mockReturnThis(),
+    lte: vi.fn().mockReturnThis(),
+    like: vi.fn().mockReturnThis(),
+    ilike: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+    in: vi.fn().mockReturnThis(),
+    contains: vi.fn().mockReturnThis(),
+    not: vi.fn().mockReturnThis(),
+    match: vi.fn().mockReturnThis(),
+    filter: vi.fn().mockReturnThis(),
+    order: vi.fn().mockReturnThis(),
+    limit: vi.fn().mockReturnThis(),
+    range: vi.fn().mockReturnThis(),
+    single: vi.fn().mockReturnThis(),
+    maybeSingle: vi.fn().mockReturnThis(),
+    then: vi.fn((resolve) =>
+      (resolve as (value: unknown) => void)({ data: [], error: null })
+    ),
+    catch: vi.fn((reject) => (reject as (reason?: unknown) => void)(null)),
+  };
+
+  return new Proxy(baseMock, {
+    get(target, prop) {
+      if (prop in target) {
+        return target[prop as string];
+      }
+      return vi.fn().mockReturnThis();
+    },
+  });
+};
+
+// Global Supabase Mock
+vi.mock('@/shared/lib/core/supabase', () => ({
+  supabase: createSupabaseMock(),
+}));
+
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
+// Mock PointerCapture for Radix UI
+Element.prototype.setPointerCapture = vi.fn();
+Element.prototype.releasePointerCapture = vi.fn();
+Element.prototype.hasPointerCapture = vi.fn();
 
 beforeEach(() => {
   vi.useRealTimers();

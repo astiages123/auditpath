@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   createQuestion,
@@ -82,7 +83,7 @@ describe('Repository & Persistence Data Integrity Tests', () => {
   });
 
   // --- Helper to create a fluent mock chain ---
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const createSupabaseMock = (responseData?: MockResponseData): any => {
     const chain: MockChain = {};
 
@@ -144,7 +145,6 @@ describe('Repository & Persistence Data Integrity Tests', () => {
       const mockRpc = vi.mocked(supabase.rpc).mockResolvedValue({
         data: { current_session: 5, is_new_session: false },
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const userId = 'user-123';
@@ -166,7 +166,6 @@ describe('Repository & Persistence Data Integrity Tests', () => {
       vi.mocked(supabase.rpc).mockResolvedValue({
         data: null,
         error: { message: 'Server Error', code: '500' },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
 
       const result = await incrementCourseSession('u1', 'c1');
@@ -471,7 +470,6 @@ describe('Repository & Persistence Data Integrity Tests', () => {
       vi.mocked(supabase.auth.getSession).mockResolvedValue({
         data: { session: { access_token: 'token123' } },
         error: null,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } as any);
       const token = await getCurrentSessionToken();
       expect(token).toBe('token123');

@@ -21,16 +21,16 @@ import { toast } from 'sonner';
 import { logger } from '@/shared/lib/core/utils/logger';
 import { useQuiz } from '../../hooks/use-quiz';
 import { QuizCard } from '../ui/QuizCard';
-import { useQuizSession } from '../contexts/QuizSessionContext';
-import { checkAndTriggerBackgroundGeneration } from '../../core/engine';
-import { type QuizQuestion } from '../../core/types';
+import { useQuizSession } from '@/features/quiz/components/contexts/QuizSessionContext';
+import { checkAndTriggerBackgroundGeneration } from '@/features/quiz/core/engine';
+import { type QuizQuestion } from '@/features/quiz/core/types';
 import { processBatchForUI } from '@/features/quiz/core/engine';
 import * as Repository from '@/features/quiz/api/repository';
 import { QuizTimer } from '../ui/QuizTimer';
 import { useAuth } from '@/features/auth';
 import { PostTestDashboard } from './PostTestDashboard';
 import { IntermissionScreen } from './IntermissionScreen';
-import { calculateTestResults } from '@/features/quiz/algoritma/scoring';
+import { calculateTestResults } from '@/features/quiz/lib/engine/scoring';
 import { parseOrThrow } from '@/shared/lib/validation/type-guards';
 import { QuizQuestionSchema } from '@/shared/lib/validation/quiz-schemas';
 import { ErrorBoundary } from '@/app/providers/ErrorBoundary';
@@ -198,7 +198,7 @@ export function QuizEngine({
 
     async function loadBatch() {
       if (sessionState.isInitialized && sessionState.batches.length > 0) {
-        // Get current batch items
+        // Guard clause: Ensure current batch exists
         const currentBatchItems =
           sessionState.batches[sessionState.currentBatchIndex];
         if (!currentBatchItems || currentBatchItems.length === 0) return;
@@ -209,8 +209,7 @@ export function QuizEngine({
 
         try {
           // ANTI-EZBER & SRS INTERCEPTION
-          const currentBatchItems =
-            sessionState.batches[sessionState.currentBatchIndex];
+          // Removed duplicate declaration of currentBatchItems
 
           // Show global loader if we are refreshing
           const isRefeshing = currentBatchItems.some(
@@ -518,7 +517,7 @@ export function QuizEngine({
                     <div className="text-sm font-medium">
                       {/* Global Progress: currentReviewIndex (0-based) + 1 / Total Queue Length */}
                       Soru {sessionState.currentReviewIndex + 1} /{' '}
-                      {sessionState.reviewQueue.length}
+                      {sessionState.reviewQueue?.length ?? 0}
                     </div>
                     <QuizTimer
                       key={state.currentQuestion?.id ?? 'timer'}

@@ -17,6 +17,11 @@ vi.mock('@/shared/lib/core/utils/logger', () => ({
   },
 }));
 
+// Mock env for consistency across tests
+vi.mock('@/config/env', () => ({
+  env: { app: { isDev: true } },
+}));
+
 // Import the mocked logger after vi.mock
 import { logger } from '@/shared/lib/core/utils/logger';
 // Use logger to avoid unused import error
@@ -236,6 +241,63 @@ describe('notes.ts', () => {
         expect(mockFetch).toHaveBeenCalledTimes(2);
       });
 
+      it('should return null when first path returns 404', async () => {
+        mockFetch.mockResolvedValue({
+          ok: false,
+          status: 404,
+          text: () => Promise.resolve('Not Found'),
+        });
+
+        const result = await getNote('test-course');
+
+        expect(result).toBeNull();
+        expect(mockFetch).toHaveBeenCalledTimes(2);
+      });
+
+      it('should return null when first path returns 500', async () => {
+        mockFetch.mockResolvedValue({
+          ok: false,
+          status: 500,
+          text: () => Promise.resolve('Internal Server Error'),
+        });
+
+        const result = await getNote('test-course');
+
+        expect(result).toBeNull();
+        expect(mockFetch).toHaveBeenCalledTimes(2);
+      });
+
+      it('should return null when first path returns 403', async () => {
+        mockFetch.mockResolvedValue({
+          ok: false,
+          status: 403,
+          text: () => Promise.resolve('Forbidden'),
+        });
+
+        const result = await getNote('test-course');
+
+        expect(result).toBeNull();
+        expect(mockFetch).toHaveBeenCalledTimes(2);
+      });
+
+      it('should try fallback when first path returns HTTP error but second succeeds', async () => {
+        mockFetch
+          .mockResolvedValueOnce({
+            ok: false,
+            status: 404,
+            text: () => Promise.resolve(''),
+          })
+          .mockResolvedValueOnce({
+            ok: true,
+            text: () => Promise.resolve('# Fallback Note'),
+          });
+
+        const result = await getNote('test-course');
+
+        expect(result?.content).toBe('# Fallback Note');
+        expect(mockFetch).toHaveBeenCalledTimes(2);
+      });
+
       it('should return null for empty content', async () => {
         mockFetch.mockResolvedValueOnce({
           ok: true,
@@ -285,6 +347,32 @@ describe('notes.ts', () => {
         const result = await getNote('test-course');
 
         expect(result?.content).toBe('success after error');
+      });
+
+      it('should return null when outer catch block is triggered', async () => {
+        // Simulate an error that bypasses inner catch (though unlikely in practice)
+        mockFetch.mockRejectedValue(new Error('Critical outer error'));
+
+        const result = await getNote('test-course');
+
+        expect(result).toBeNull();
+      });
+
+      it('should log error when outer catch block is triggered by slug string conversion', async () => {
+        // eslint-disable-next-line no-restricted-syntax
+        const badSlug = {
+          toString: () => {
+            throw new Error('Slug Error');
+          },
+        } as unknown as string;
+
+        const result = await getNote(badSlug);
+
+        expect(logger.error).toHaveBeenCalledWith(
+          'getNote error:',
+          expect.any(Error)
+        );
+        expect(result).toBeNull();
       });
     });
 

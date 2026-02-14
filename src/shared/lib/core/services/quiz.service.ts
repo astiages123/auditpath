@@ -1,5 +1,5 @@
 import { supabase } from '@/shared/lib/core/supabase';
-import { getSubjectStrategy } from '@/features/quiz/algoritma/strategy';
+import { getSubjectStrategy } from '@/features/quiz/lib/engine/strategy';
 import type {
   BloomStats,
   CognitiveInsight,

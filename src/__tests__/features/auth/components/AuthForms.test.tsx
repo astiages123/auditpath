@@ -24,6 +24,16 @@ vi.mock('sonner', () => ({
   },
 }));
 
+// Mock logger
+vi.mock('@/shared/lib/core/utils/logger', () => ({
+  logger: {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
 describe('AuthForms', () => {
   beforeEach(() => {
     vi.clearAllMocks();

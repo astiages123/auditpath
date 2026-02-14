@@ -5,19 +5,22 @@
  */
 
 import { useCallback, useRef, useState } from 'react';
-import * as Engine from '../core/engine';
-import * as Repository from '../api/repository';
-import { createTimer } from '../core/utils';
-import { type QuizResults, type QuizState } from '../core/types';
-import { QuizQuestion } from '../core/types';
+import * as Engine from '@/features/quiz/core/engine';
+import * as Repository from '@/features/quiz/api/repository';
+import { createTimer } from '@/features/quiz/lib/ai/utils';
+import {
+  type QuizQuestion,
+  type QuizResults,
+  type QuizState,
+} from '@/features/quiz/core/types';
 import { parseOrThrow } from '@/shared/lib/validation/type-guards';
 import { QuizQuestionSchema } from '@/shared/lib/validation/quiz-schemas';
 import {
   calculateInitialResults,
   calculateTestResults,
   updateResults,
-} from '../algoritma/scoring';
-import { QuizFactory } from '../core/factory';
+} from '@/features/quiz/lib/engine/scoring';
+import { QuizFactory } from '@/features/quiz/lib/ai/factory';
 import { type Database } from '@/shared/types/supabase';
 
 /**

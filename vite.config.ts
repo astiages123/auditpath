@@ -1,11 +1,12 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   base: '/',
-  plugins: [react()],
+  plugins: [react(), tsconfigPaths()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
@@ -30,6 +31,14 @@ export default defineConfig(({ mode }) => ({
       output: {
         // Let Vite handle chunking automatically for better compatibility with React 19
       },
+    },
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: './src/test/setup.ts',
+    deps: {
+      inline: [/framer-motion/],
     },
   },
 }));

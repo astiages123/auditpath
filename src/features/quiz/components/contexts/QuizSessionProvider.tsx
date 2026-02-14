@@ -15,16 +15,19 @@ import {
   type QuizSessionState,
   type QuizSessionContextValue,
 } from './QuizSessionContext';
-import { useAuth } from '../../../auth';
+import { useAuth } from '@/features/auth';
 import {
   getSessionInfo,
   recordQuizProgress,
   getQuotaInfo,
   getContentVersion,
   getCourseStats,
-} from '../../api/repository';
-import { getReviewQueue } from '../../core/engine';
-import { type ReviewItem, type QuizResponseType } from '../../core/types';
+} from '@/features/quiz/api/repository';
+import { getReviewQueue } from '@/features/quiz/core/engine';
+import {
+  type ReviewItem,
+  type QuizResponseType,
+} from '@/features/quiz/core/types';
 import { toast } from 'sonner';
 import { logger } from '@/shared/lib/core/utils/logger';
 import { storage } from '@/shared/lib/core/services/storage.service';

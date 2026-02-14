@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { type TestResultSummary } from '../../core/types';
-import { getSubjectStrategy } from '@/features/quiz/algoritma/strategy';
+import { getSubjectStrategy } from '@/features/quiz/lib/engine/strategy';
 import {
   Brain,
   Star,

@@ -1,11 +1,11 @@
 import { createContext, useContext } from 'react';
 import {
-  SessionInfo,
-  QuotaInfo,
-  ReviewItem,
-  CourseStats,
-  QuizResponseType,
-} from '../../core/types';
+  type SessionInfo,
+  type QuotaInfo,
+  type ReviewItem,
+  type CourseStats,
+  type QuizResponseType,
+} from '@/features/quiz/core/types';
 
 export interface QuizSessionState {
   isInitialized: boolean;

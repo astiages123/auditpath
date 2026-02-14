@@ -4,7 +4,7 @@ import { EFFICIENCY_THRESHOLDS } from '@/shared/lib/core/utils/efficiency-math';
 // Using a 1.0x centered symmetric spectrum for flow states
 // New thresholds: 0.25, 0.75, 1.25, 1.75
 
-interface EfficiencyMetrics {
+export interface EfficiencyMetrics {
   totalVideoTime: number; // minutes
   totalPomodoroTime: number; // minutes
 }

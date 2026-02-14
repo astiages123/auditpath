@@ -7,17 +7,23 @@
  * - Factory (Content Generation)
  */
 
-import * as Repository from '../api/repository';
+import * as Repository from '@/features/quiz/api/repository';
 
-import { DebugLogger } from './utils';
+import { DebugLogger } from '@/features/quiz/lib/ai/utils';
 import {
   type QuizResponseType,
   type ReviewItem,
   type SubmissionResult,
 } from '@/features/quiz/core/types';
-import { calculateQuestionWeights, type ChunkMetric } from '../algoritma/exam';
-import { type GenerationLog, QuizFactory } from './factory';
-import { calculateQuizResult } from '../logic/submission-calculator';
+import {
+  calculateQuestionWeights,
+  type ChunkMetric,
+} from '@/features/quiz/lib/engine/exam';
+import {
+  type GenerationLog,
+  QuizFactory,
+} from '@/features/quiz/lib/ai/factory';
+import { calculateQuizResult } from '@/features/quiz/lib/engine/submission-calculator';
 
 import { parseOrThrow } from '@/shared/lib/validation/type-guards';
 import { ChunkMetadataSchema } from '@/shared/lib/validation/quiz-schemas';

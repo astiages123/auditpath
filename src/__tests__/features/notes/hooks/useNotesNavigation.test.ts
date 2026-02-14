@@ -2,36 +2,27 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
 import type { CourseTopic } from '@/shared/types/efficiency';
 
-interface MockStorageService {
-  get: ReturnType<typeof vi.fn>;
-  set: ReturnType<typeof vi.fn>;
-  remove: ReturnType<typeof vi.fn>;
-  clear: ReturnType<typeof vi.fn>;
-  has: ReturnType<typeof vi.fn>;
-  keys: ReturnType<typeof vi.fn>;
-  getRaw: ReturnType<typeof vi.fn>;
-  getTimestamp: ReturnType<typeof vi.fn>;
-  cleanup: ReturnType<typeof vi.fn>;
-}
-
-const createMockStorageService = (): MockStorageService => ({
-  get: vi.fn(),
-  set: vi.fn(),
-  remove: vi.fn(),
-  clear: vi.fn(),
-  has: vi.fn(),
-  keys: vi.fn(),
-  getRaw: vi.fn(),
-  getTimestamp: vi.fn(),
-  cleanup: vi.fn(),
+const { mockStorageInstance } = vi.hoisted(() => {
+  return {
+    mockStorageInstance: {
+      get: vi.fn(),
+      set: vi.fn(),
+      remove: vi.fn(),
+      clear: vi.fn(),
+      has: vi.fn(),
+      keys: vi.fn(),
+      getRaw: vi.fn(),
+      getTimestamp: vi.fn(),
+      cleanup: vi.fn(),
+    },
+  };
 });
 
 // Mock the storage service
 vi.mock('@/shared/lib/core/services/storage.service', () => {
-  const mockStorage = createMockStorageService();
   return {
-    storage: mockStorage,
-    StorageService: vi.fn(() => mockStorage),
+    storage: mockStorageInstance,
+    StorageService: vi.fn(() => mockStorageInstance),
   };
 });
 
@@ -39,7 +30,7 @@ vi.mock('@/shared/lib/core/services/storage.service', () => {
 import { useNotesNavigation } from '@/features/notes/hooks/useNotesNavigation';
 
 describe('useNotesNavigation', () => {
-  const mockStorage = createMockStorageService();
+  const mockStorage = mockStorageInstance;
 
   const createMockChunks = (count: number): CourseTopic[] => {
     return Array.from({ length: count }, (_, index) => ({
