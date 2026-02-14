@@ -1,8 +1,6 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
-@custom-variant dark (&:is(.dark *));
-
 /* AuditPath Custom Theme - Dark Mode Only */
 :root {
   --background: oklch(0.2046 0 0);
@@ -132,6 +130,24 @@
   button,
   a {
     @apply cursor-pointer;
+  }
+
+  /* Force white text for autofill in dark mode forms */
+  .input-white-autofill:-webkit-autofill,
+  .input-white-autofill:-webkit-autofill:hover,
+  .input-white-autofill:-webkit-autofill:focus,
+  .input-white-autofill:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--background) inset !important;
+    -webkit-text-fill-color: white !important;
+    color: white !important;
+    caret-color: white !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Extra specificity for focus to prevent black text */
+  input.input-white-autofill:-webkit-autofill:focus {
+    -webkit-text-fill-color: white !important;
+    color: white !important;
   }
 }
 
