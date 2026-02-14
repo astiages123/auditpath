@@ -1,15 +1,11 @@
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/features/auth/auth.hook';
-import { ProgressHeader } from '@/features/courses/progress-header.component';
-import { CategoryGrid } from '@/features/courses/category-grid.component';
-import {
-  getCategories,
-  getUserStats,
-  getAllCourses,
-} from '@/services/client-db';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { ProgressHeader } from '@/features/courses/components/ProgressHeader';
+import { CategoryGrid } from '@/features/courses/components/CategoryGrid';
+import { getCategories, getUserStats, getAllCourses } from '@/lib/clientDb';
 import { type Category } from '@/types';
 import { logger } from '@/utils/logger';
-import type { ProgressStats } from '@/hooks/use-progress';
+import type { ProgressStats } from '@/hooks/useProgress';
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();

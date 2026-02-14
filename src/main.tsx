@@ -6,13 +6,15 @@ import { Providers } from '@/providers';
 import App from './App';
 import '@/styles/index.css';
 
-import { subjectKnowledgeService } from '@/features/quiz/subject-knowledge.service';
+import { subjectKnowledgeService } from '@/features/quiz/services';
 import { logger } from '@/utils/logger';
 
 // Start preloading subject guidelines
 subjectKnowledgeService
   .preload()
-  .catch((err) => logger.error('Failed to preload subject knowledge', err));
+  .catch((err: any) =>
+    logger.error('Failed to preload subject knowledge', err)
+  );
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

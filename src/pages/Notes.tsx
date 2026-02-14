@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import NotesPage from '@/features/notes/notes-page.component';
+import NotesPage from '@/features/notes/components/NotesPage';
 
 export default function NotesRoute() {
   useEffect(() => {

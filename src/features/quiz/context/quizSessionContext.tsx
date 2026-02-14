@@ -1,0 +1,43 @@
+import { createContext, useContext } from 'react';
+import {
+  type SessionInfo,
+  type QuotaInfo,
+  type ReviewItem,
+  type CourseStats,
+  type QuizResponseType,
+  type QuizSessionState,
+} from '@/features/quiz/types';
+
+export interface QuizSessionContextValue {
+  state: QuizSessionState;
+  initializeSession: (courseId: string) => Promise<void>;
+  recordResponse: (
+    questionId: string,
+    chunkId: string | null,
+    responseType: QuizResponseType,
+    selectedAnswer: number | null,
+
+    timeSpentMs: number,
+    diagnosis?: string,
+    insight?: string
+  ) => Promise<{
+    isTopicRefreshed: boolean;
+    isChainBonusApplied?: boolean;
+  } | void>;
+  getNextReviewItem: () => ReviewItem | null;
+  markReviewComplete: () => void;
+  advanceBatch: () => void;
+  injectScaffolding: (questionId: string, chunkId: string) => void;
+}
+
+export const QuizSessionContext = createContext<QuizSessionContextValue | null>(
+  null
+);
+
+export function useQuizSession() {
+  const context = useContext(QuizSessionContext);
+  if (!context) {
+    throw new Error('useQuizSession must be used within a QuizSessionProvider');
+  }
+  return context;
+}

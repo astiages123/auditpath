@@ -329,12 +329,12 @@ export interface SubjectCompetency {
     totalQuestions: number;
 }
 
-export interface BloomStats {
+export type BloomStats = {
     level: string;
-    correct: number;
-    total: number;
     score: number;
-}
+    questionsSolved: number;
+    correct?: number;
+};
 
 export interface SRSStats {
     new: number;

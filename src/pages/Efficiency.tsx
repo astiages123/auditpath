@@ -1,8 +1,8 @@
 import { TrendingUp } from 'lucide-react';
-import { useTransition } from 'react';
+import { useTransition, useMemo } from 'react';
 import { ErrorBoundary } from '@/ErrorBoundary';
-import { RecentQuizzesCard } from '@/features/efficiency/recent-quizzes-card.component';
-import { CognitiveInsightsCard } from '@/features/efficiency/cognitive-insights-card.component';
+import { RecentQuizzesCard } from '@/features/efficiency/components';
+import { CognitiveInsightsCard } from '@/features/efficiency/components';
 import {
   FocusHubCard,
   LearningLoadCard,
@@ -10,10 +10,78 @@ import {
   PracticeCenterCard,
   ConsistencyHeatmapCard,
   RecentActivitiesContainer,
-} from '@/features/efficiency/efficiency-cards.component';
+} from '@/features/efficiency/components';
+import { useEfficiency } from '@/features/efficiency/hooks';
+
+const EfficiencyDashboard = () => {
+  const efficiencyData = useEfficiency();
+
+  return (
+    <div className="space-y-6">
+      {/* Row 1: Focus Hub + Learning Load */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="min-h-[320px]">
+          <FocusHubCard data={efficiencyData} />
+        </div>
+        <div className="min-h-[320px]">
+          <LearningLoadCard data={efficiencyData} />
+        </div>
+      </div>
+
+      {/* Row 2: Practice Center + Mastery Navigator */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="min-h-[280px]">
+          <PracticeCenterCard data={efficiencyData} />
+        </div>
+        <div className="min-h-[280px]">
+          <MasteryNavigatorCard data={efficiencyData} />
+        </div>
+      </div>
+
+      {/* Row 3: Recent Quizzes + Consistency Heatmap */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="min-h-[350px]">
+          <RecentQuizzesCard recentQuizzes={efficiencyData.recentQuizzes} />
+        </div>
+        <div className="min-h-[350px]">
+          <ConsistencyHeatmapCard data={efficiencyData} />
+        </div>
+      </div>
+
+      {/* Row 4: Cognitive Insights + Recent Activities */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="min-h-[250px]">
+          <CognitiveInsightsCard
+            loading={efficiencyData.loading}
+            cognitiveAnalysis={
+              efficiencyData.cognitiveAnalysis
+                ? {
+                    ...efficiencyData.cognitiveAnalysis,
+                    recentInsights:
+                      efficiencyData.cognitiveAnalysis.recentInsights?.filter(
+                        (i): i is string => i !== null
+                      ),
+                    criticalTopics:
+                      efficiencyData.cognitiveAnalysis.criticalTopics?.map(
+                        (t) => ({
+                          ...t,
+                          diagnosis: t.diagnosis || undefined,
+                        })
+                      ),
+                  }
+                : null
+            }
+          />
+        </div>
+        <div className="min-h-[400px]">
+          <RecentActivitiesContainer data={efficiencyData} />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const EfficiencyPage = () => {
-  // React 19 Concurrent Features: useTransition for dashboard rendering
   const [isPending] = useTransition();
 
   return (
@@ -43,51 +111,12 @@ const EfficiencyPage = () => {
 
           {/* Central Dashboard Engine */}
           <div
-            className="space-y-6"
             style={{
               opacity: isPending ? 0.85 : 1,
               transition: 'opacity 200ms ease-in-out',
             }}
           >
-            {/* Row 1: Focus Hub + Learning Load */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <div className="min-h-[320px]">
-                <FocusHubCard />
-              </div>
-              <div className="min-h-[320px]">
-                <LearningLoadCard />
-              </div>
-            </div>
-
-            {/* Row 2: Practice Center + Mastery Navigator */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <div className="min-h-[280px]">
-                <PracticeCenterCard />
-              </div>
-              <div className="min-h-[280px]">
-                <MasteryNavigatorCard />
-              </div>
-            </div>
-
-            {/* Row 3: Recent Quizzes + Consistency Heatmap */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <div className="min-h-[350px]">
-                <RecentQuizzesCard />
-              </div>
-              <div className="min-h-[350px]">
-                <ConsistencyHeatmapCard />
-              </div>
-            </div>
-
-            {/* Row 4: Cognitive Insights + Recent Activities */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <div className="min-h-[250px]">
-                <CognitiveInsightsCard />
-              </div>
-              <div className="min-h-[400px]">
-                <RecentActivitiesContainer />
-              </div>
-            </div>
+            <EfficiencyDashboard />
           </div>
         </div>
       </div>

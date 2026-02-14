@@ -1,7 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import RootLayout from '@/components/layout/RootLayout';
-import { AuthGuard } from '@/features/auth/auth-guard.component';
+import { AuthProvider } from '@/features/auth/components/AuthProvider';
+import { AuthGuard } from '@/features/auth/components/AuthGuard';
 import { Loader2 } from 'lucide-react';
 import { ErrorBoundary } from '@/ErrorBoundary';
 

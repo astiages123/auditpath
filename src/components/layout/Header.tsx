@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '@/features/auth/auth.hook';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 // import { useProgress } from "@/hooks/use-progress";
 import {
   BookCheck,
@@ -26,12 +26,12 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ProgramModal } from '@/features/courses/program-modal.component';
-import { JourneyModal } from '@/features/courses/journey-modal.component';
-import { AuthModal } from '@/features/auth/auth-modal.component';
+import { ProgramModal } from '@/features/courses/components/ProgramModal';
+import { JourneyModal } from '@/features/courses/components/JourneyModal';
+import { AuthModal } from '@/features/auth/components/AuthModal';
 import { cn } from '@/utils/core';
 import { ROUTES } from '@/config';
-import { usePomodoro } from '@/features/pomodoro/pomodoro.hook';
+import { usePomodoro } from '@/features/pomodoro/hooks';
 
 export function Header() {
   const { user, signOut } = useAuth();

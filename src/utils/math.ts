@@ -1,4 +1,4 @@
-import coursesData from "@/features/courses/courses.json";
+import coursesData from "@/features/courses/services/courses.json";
 
 /**
  * Shared mathematical functions for efficiency and pomodoro calculations.

@@ -4,8 +4,8 @@ import React, {
   useTransition,
   useDeferredValue,
 } from 'react';
-import { supabase } from '@/services/supabase';
-import { ExchangeRateService } from '@/services/exchange-rate-service';
+import { supabase } from '@/lib/supabase';
+import { ExchangeRateService } from '@/api/exchangeRateService';
 import type { Database } from '@/types/database.types';
 
 // Extended type to include latency_ms and status which are in the table but not in the view
@@ -14,12 +14,7 @@ type AiGenerationCost =
     latency_ms?: number | null;
     status?: number | null;
   };
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   XAxis,
   YAxis,
