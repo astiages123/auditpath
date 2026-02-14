@@ -7,27 +7,27 @@
  * - Factory (Content Generation)
  */
 
-import * as Repository from '@/features/quiz/api/repository';
+import * as Repository from "@/features/quiz/api/repository";
 
-import { DebugLogger } from '@/features/quiz/lib/ai/utils';
+import { DebugLogger } from "@/features/quiz/lib/ai/utils";
 import {
   type QuizResponseType,
   type ReviewItem,
   type SubmissionResult,
-} from '@/features/quiz/core/types';
+} from "@/features/quiz/core/types";
 import {
   calculateQuestionWeights,
   type ChunkMetric,
-} from '@/features/quiz/lib/engine/exam';
+} from "@/features/quiz/lib/quiz-logic";
 import {
   type GenerationLog,
   QuizFactory,
-} from '@/features/quiz/lib/ai/factory';
-import { calculateQuizResult } from '@/features/quiz/lib/engine/submission-calculator';
+} from "@/features/quiz/lib/ai/factory";
+import { calculateQuizResult } from "@/features/quiz/lib/quiz-logic";
 
-import { parseOrThrow } from '@/shared/lib/validation/type-guards';
-import { ChunkMetadataSchema } from '@/shared/lib/validation/quiz-schemas';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { parseOrThrow } from "@/shared/validation/type-guards";
+import { ChunkMetadataSchema } from "@/shared/validation/quiz-schemas";
+import { logger } from "@/shared/utils/logger";
 
 // --- Types ---
 
@@ -43,19 +43,19 @@ export interface SessionContext {
 
 export async function startSession(
   userId: string,
-  courseId: string
+  courseId: string,
 ): Promise<SessionContext> {
   const sessionInfo = await Repository.incrementCourseSession(userId, courseId);
   const courseName = await Repository.getCourseName(courseId);
 
   if (!sessionInfo.data) {
-    throw new Error(sessionInfo.error?.message || 'Failed to start session');
+    throw new Error(sessionInfo.error?.message || "Failed to start session");
   }
 
   return {
     userId,
     courseId,
-    courseName: courseName || '',
+    courseName: courseName || "",
     sessionNumber: sessionInfo.data.current_session,
     isNewSession: sessionInfo.data.is_new_session,
   };
@@ -74,9 +74,9 @@ export async function startSession(
 export async function getReviewQueue(
   ctx: SessionContext,
   limit: number = 20,
-  targetChunkId?: string
+  targetChunkId?: string,
 ): Promise<ReviewItem[]> {
-  DebugLogger.group('QuizEngine: Build Queue', {
+  DebugLogger.group("QuizEngine: Build Queue", {
     session: ctx.sessionNumber,
     targetChunkId,
   });
@@ -89,18 +89,18 @@ export async function getReviewQueue(
   const followups = await Repository.fetchQuestionsByStatus(
     ctx.userId,
     ctx.courseId,
-    'pending_followup',
+    "pending_followup",
     ctx.sessionNumber,
-    followupLimit
+    followupLimit,
   );
 
   followups.forEach((q) => {
     if (!usedIds.has(q.question_id)) {
       queue.push({
-        chunkId: q.questions.chunk_id || '',
+        chunkId: q.questions.chunk_id || "",
         questionId: q.question_id,
         courseId: ctx.courseId,
-        status: 'pending_followup',
+        status: "pending_followup",
         priority: 1,
       });
       usedIds.add(q.question_id);
@@ -112,15 +112,15 @@ export async function getReviewQueue(
   if (remainingFollowup > 0) {
     const newFollowups = await Repository.fetchNewFollowups(
       ctx.courseId,
-      remainingFollowup
+      remainingFollowup,
     );
     newFollowups.forEach((q) => {
       if (!usedIds.has(q.id)) {
         queue.push({
-          chunkId: q.chunk_id || '',
+          chunkId: q.chunk_id || "",
           questionId: q.id,
           courseId: ctx.courseId,
-          status: 'pending_followup',
+          status: "pending_followup",
           priority: 1,
         });
         usedIds.add(q.id);
@@ -134,7 +134,7 @@ export async function getReviewQueue(
   let effectiveChunkId = targetChunkId;
   if (targetChunkId) {
     DebugLogger.process(
-      `Waterfall: User intent detected for chunk ${targetChunkId}`
+      `Waterfall: User intent detected for chunk ${targetChunkId}`,
     );
   } else {
     // Fallback: Automatic frontier detection based on last activity
@@ -148,16 +148,16 @@ export async function getReviewQueue(
       ctx.userId,
       ctx.courseId,
       effectiveChunkId,
-      trainingLimit
+      trainingLimit,
     );
 
     trainingQs.forEach((q) => {
       if (!usedIds.has(q.question_id)) {
         queue.push({
-          chunkId: q.questions.chunk_id || '',
+          chunkId: q.questions.chunk_id || "",
           questionId: q.question_id,
           courseId: ctx.courseId,
-          status: 'active',
+          status: "active",
           priority: 2,
         });
         usedIds.add(q.question_id);
@@ -166,23 +166,23 @@ export async function getReviewQueue(
   }
 
   // Fallback Training: If waterfall couldn't fill the quota, use generic active search
-  const remainingTrainingQuota =
-    Math.max(0, followupLimit + trainingLimit) - queue.length;
+  const remainingTrainingQuota = Math.max(0, followupLimit + trainingLimit) -
+    queue.length;
   if (remainingTrainingQuota > 0) {
     const fallbackQs = await Repository.fetchQuestionsByStatus(
       ctx.userId,
       ctx.courseId,
-      'active',
+      "active",
       null,
-      remainingTrainingQuota
+      remainingTrainingQuota,
     );
     fallbackQs.forEach((q) => {
       if (!usedIds.has(q.question_id)) {
         queue.push({
-          chunkId: q.questions.chunk_id || '',
+          chunkId: q.questions.chunk_id || "",
           questionId: q.question_id,
           courseId: ctx.courseId,
-          status: 'active',
+          status: "active",
           priority: 2,
         });
         usedIds.add(q.question_id);
@@ -198,18 +198,18 @@ export async function getReviewQueue(
     const archiveQs = await Repository.fetchQuestionsByStatus(
       ctx.userId,
       ctx.courseId,
-      'archived',
+      "archived",
       ctx.sessionNumber,
-      Math.min(currentRemaining, archiveTarget)
+      Math.min(currentRemaining, archiveTarget),
     );
 
     archiveQs.forEach((q) => {
       if (!usedIds.has(q.question_id)) {
         queue.push({
-          chunkId: q.questions.chunk_id || '',
+          chunkId: q.questions.chunk_id || "",
           questionId: q.question_id,
           courseId: ctx.courseId,
-          status: 'archived',
+          status: "archived",
           priority: 3,
         });
         usedIds.add(q.question_id);
@@ -229,9 +229,9 @@ export async function submitAnswer(
   chunkId: string | null,
   responseType: QuizResponseType,
   timeSpentMs: number,
-  selectedAnswer: number | null
+  selectedAnswer: number | null,
 ): Promise<SubmissionResult> {
-  DebugLogger.group('QuizEngine: Submit Answer', {
+  DebugLogger.group("QuizEngine: Submit Answer", {
     questionId,
     responseType,
   });
@@ -247,11 +247,11 @@ export async function submitAnswer(
   const [chunkMetadata, masteryData, uniqueSolvedCount, totalChunkQuestions] =
     targetChunkId
       ? await Promise.all([
-          Repository.getChunkMetadata(targetChunkId),
-          Repository.getChunkMastery(ctx.userId, targetChunkId),
-          Repository.getUniqueSolvedCountInChunk(ctx.userId, targetChunkId),
-          Repository.getChunkQuestionCount(targetChunkId),
-        ])
+        Repository.getChunkMetadata(targetChunkId),
+        Repository.getChunkMastery(ctx.userId, targetChunkId),
+        Repository.getUniqueSolvedCountInChunk(ctx.userId, targetChunkId),
+        Repository.getChunkQuestionCount(targetChunkId),
+      ])
       : [null, null, 0, 0];
 
   // 2. Pure Business Logic (Calculation)
@@ -262,14 +262,14 @@ export async function submitAnswer(
     questionData,
     chunkMetadata
       ? {
-          content: chunkMetadata.content || null,
-          metadata: parseOrThrow(ChunkMetadataSchema, chunkMetadata.metadata),
-        }
+        content: chunkMetadata.content || null,
+        metadata: parseOrThrow(ChunkMetadataSchema, chunkMetadata.metadata),
+      }
       : null,
     masteryData,
     uniqueSolvedCount,
     totalChunkQuestions,
-    ctx.sessionNumber
+    ctx.sessionNumber,
   );
 
   // 3. Execution (Repository Updates)
@@ -304,7 +304,7 @@ export async function submitAnswer(
         mastery_score: result.newMastery,
         last_reviewed_session: ctx.sessionNumber,
         updated_at: new Date().toISOString(),
-      })
+      }),
     );
   }
 
@@ -327,7 +327,7 @@ export class ExamService {
       onQuestionSaved: (count: number) => void;
       onComplete: () => void;
       onError: (err: Error) => void;
-    }
+    },
   ): Promise<{ success: boolean; questionIds: string[] }> {
     const factory = new QuizFactory();
     const EXAM_TOTAL = 20;
@@ -336,8 +336,8 @@ export class ExamService {
       // 1. Fetch data
       callbacks.onLog({
         id: crypto.randomUUID(),
-        step: 'INIT',
-        message: 'Ders verileri analiz ediliyor...',
+        step: "INIT",
+        message: "Ders verileri analiz ediliyor...",
         details: {},
         timestamp: new Date(),
       });
@@ -350,7 +350,7 @@ export class ExamService {
 
       const masteryRows = await Repository.fetchCourseMastery(courseId, userId);
       const masteryMap = new Map(
-        masteryRows.map((m) => [m.chunk_id, m.mastery_score])
+        masteryRows.map((m) => [m.chunk_id, m.mastery_score]),
       );
 
       const metrics: ChunkMetric[] = chunks.map((c) => ({
@@ -366,7 +366,7 @@ export class ExamService {
       // 2. Calculate distribution
       const weights = calculateQuestionWeights({
         examTotal: EXAM_TOTAL,
-        importance: 'medium', // Default or fetch from course
+        importance: "medium", // Default or fetch from course
         chunks: metrics,
       });
 
@@ -379,14 +379,14 @@ export class ExamService {
 
         const existingDeneme = await Repository.fetchGeneratedQuestions(
           chunkId,
-          'deneme',
-          count
+          "deneme",
+          count,
         );
 
         if (existingDeneme.length < count) {
           callbacks.onLog({
             id: crypto.randomUUID(),
-            step: 'GENERATING',
+            step: "GENERATING",
             message: `Eksik sorular havuzdan tamamlanıyor: ${chunkId}`,
             details: {
               target: count,
@@ -409,17 +409,17 @@ export class ExamService {
               },
             },
             {
-              usageType: 'deneme',
+              usageType: "deneme",
               targetCount: count - existingDeneme.length,
-            }
+            },
           );
         }
 
         // Final fetch after potential generation
         const finalQs = await Repository.fetchGeneratedQuestions(
           chunkId,
-          'deneme',
-          count
+          "deneme",
+          count,
         );
         finalQs.forEach((q) => questionIds.push(q.id));
       }
@@ -431,7 +431,7 @@ export class ExamService {
       };
     } catch (error: unknown) {
       callbacks.onError(
-        error instanceof Error ? error : new Error(String(error))
+        error instanceof Error ? error : new Error(String(error)),
       );
       return { success: false, questionIds: [] };
     }
@@ -439,7 +439,7 @@ export class ExamService {
 
   static async fetchSmartExamFromPool(
     courseId: string,
-    userId: string
+    userId: string,
   ): Promise<{ success: boolean; questionIds: string[] } | null> {
     const EXAM_TOTAL = 20;
 
@@ -447,7 +447,7 @@ export class ExamService {
       const chunks = await Repository.fetchCourseChunks(courseId);
       const masteryRows = await Repository.fetchCourseMastery(courseId, userId);
       const masteryMap = new Map(
-        masteryRows.map((m) => [m.chunk_id, m.mastery_score])
+        masteryRows.map((m) => [m.chunk_id, m.mastery_score]),
       );
 
       const metrics: ChunkMetric[] = chunks.map((c) => ({
@@ -462,7 +462,7 @@ export class ExamService {
 
       const weights = calculateQuestionWeights({
         examTotal: EXAM_TOTAL,
-        importance: 'medium',
+        importance: "medium",
         chunks: metrics,
       });
 
@@ -472,8 +472,8 @@ export class ExamService {
 
         const existingDeneme = await Repository.fetchGeneratedQuestions(
           chunkId,
-          'deneme',
-          count
+          "deneme",
+          count,
         );
 
         if (existingDeneme.length < count) {
@@ -488,7 +488,7 @@ export class ExamService {
         questionIds: questionIds.slice(0, EXAM_TOTAL),
       };
     } catch (error) {
-      logger.error('Pool fetch error:', error as Error);
+      logger.error("Pool fetch error:", error as Error);
       return null;
     }
   }
@@ -499,22 +499,22 @@ export class ExamService {
 export async function processBatchForUI(
   items: { questionId: string; status: string }[],
   chunkId: string | null,
-  onProgress?: (msg: string) => void
+  onProgress?: (msg: string) => void,
 ): Promise<string[]> {
-  const needsRefresh = items.some((i) => i.status === 'archived');
+  const needsRefresh = items.some((i) => i.status === "archived");
 
   if (needsRefresh) {
-    onProgress?.('Ezber bozan taze sorular hazırlanıyor...');
+    onProgress?.("Ezber bozan taze sorular hazırlanıyor...");
   }
 
   const promises = items.map(async (item) => {
-    if (item.status === 'archived' && chunkId) {
+    if (item.status === "archived" && chunkId) {
       try {
         // 1. Try to fetch from Pool
         const pooledQs = await Repository.fetchGeneratedQuestions(
           chunkId,
-          'arsiv',
-          5
+          "arsiv",
+          5,
         );
 
         if (pooledQs.length > 0) {
@@ -527,13 +527,13 @@ export async function processBatchForUI(
         const factory = new QuizFactory();
         const newId = await factory.generateArchiveRefresh(
           chunkId,
-          item.questionId
+          item.questionId,
         );
         if (newId) {
           return newId;
         }
       } catch (e) {
-        logger.error('Archive refresh failed', e as Error);
+        logger.error("Archive refresh failed", e as Error);
       }
     }
     return item.questionId;
@@ -542,7 +542,7 @@ export async function processBatchForUI(
   const results = await Promise.all(promises);
 
   if (needsRefresh) {
-    onProgress?.('Hazır!');
+    onProgress?.("Hazır!");
   }
 
   return results;
@@ -550,7 +550,7 @@ export async function processBatchForUI(
 
 export async function checkAndTriggerBackgroundGeneration(
   chunkId: string,
-  _incorrectIds: string[]
+  _incorrectIds: string[],
 ): Promise<void> {
   const factory = new QuizFactory();
   try {
@@ -560,14 +560,14 @@ export async function checkAndTriggerBackgroundGeneration(
         onLog: () => {},
         onQuestionSaved: () => {},
         onComplete: () => {},
-        onError: (err) => logger.error('Background gen error', { error: err }),
+        onError: (err) => logger.error("Background gen error", { error: err }),
       },
       {
-        usageType: 'antrenman',
+        usageType: "antrenman",
         targetCount: 5, // Top up buffer,
-      }
+      },
     );
   } catch (e) {
-    logger.error('Failed to trigger background generation', e as Error);
+    logger.error("Failed to trigger background generation", e as Error);
   }
 }

@@ -1,19 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/shared/lib/core/supabase';
+import { supabase } from '@/shared/services/supabase';
 import {
   getDailyVideoMilestones,
   getStreakMilestones,
   getTotalActiveDays,
   getUnlockedAchievements,
-} from '@/shared/lib/core/client-db';
+} from '@/shared/services/client-db';
 import {
   ACHIEVEMENTS,
   calculateAchievements,
 } from '@/features/achievements/lib/achievements';
-import { type Rank, RANKS } from '@/shared/lib/core/utils/rank-utils';
+import { type Rank, RANKS } from '@/shared/utils/rank-utils';
 import { ProgressStats } from '@/shared/hooks/use-progress';
 import coursesData from '@/features/courses/data/courses.json';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 export const achievementKeys = {
   all: ['achievements'] as const,

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { type CourseTopic } from '@/shared/types/efficiency';
-import { storage } from '@/shared/lib/core/services/storage.service';
+import { type CourseTopic } from '@/shared/types';
+import { storage } from '@/shared/services/storage.service';
 
 interface UseNotesNavigationProps {
   courseSlug?: string;

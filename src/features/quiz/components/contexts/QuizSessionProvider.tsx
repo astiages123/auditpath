@@ -29,8 +29,8 @@ import {
   type QuizResponseType,
 } from '@/features/quiz/core/types';
 import { toast } from 'sonner';
-import { logger } from '@/shared/lib/core/utils/logger';
-import { storage } from '@/shared/lib/core/services/storage.service';
+import { logger } from '@/shared/utils/logger';
+import { storage } from '@/shared/services/storage.service';
 
 const STORAGE_PREFIX = 'auditpath_quiz_session_';
 

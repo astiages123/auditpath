@@ -1,13 +1,10 @@
+import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/features/auth';
 import { AuthModal } from './AuthModal';
 import { useState } from 'react';
 import { Button } from '@/shared/components/ui/button';
 
-interface AuthGuardProps {
-  children: React.ReactNode;
-}
-
-export function AuthGuard({ children }: AuthGuardProps) {
+export function AuthGuard() {
   const { user, loading } = useAuth();
   const [showModal, setShowModal] = useState(false);
 
@@ -64,5 +61,5 @@ export function AuthGuard({ children }: AuthGuardProps) {
     );
   }
 
-  return <>{children}</>;
+  return <Outlet />;
 }

@@ -1,4 +1,4 @@
-import type { Rank } from '@/shared/types/core';
+import type { Rank } from '@/shared/types';
 
 // Timer durations in seconds
 export const POMODORO_WORK_DURATION_SECONDS = 3000; // 50 minutes

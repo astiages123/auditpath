@@ -5,8 +5,8 @@ import {
   getDailySessionCount,
   getLatestActiveSession,
   updatePomodoroHeartbeat,
-} from '@/shared/lib/core/client-db';
-import { calculateSessionTotals } from '@/shared/lib/core/utils/efficiency-math';
+} from '@/shared/services/client-db';
+import { calculateSessionTotals } from '@/shared/utils/efficiency-math';
 import { toast } from 'sonner';
 import { env } from '@/config/env';
 import { SESSION_VALIDITY_DURATION_MS } from '@/config/constants';
@@ -14,7 +14,7 @@ import { SESSION_VALIDITY_DURATION_MS } from '@/config/constants';
 import { useFaviconManager } from '@/features/pomodoro/hooks/use-favicon-manager';
 
 import { playNotificationSound } from '../lib/audio-utils';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 export function TimerController() {
   const {

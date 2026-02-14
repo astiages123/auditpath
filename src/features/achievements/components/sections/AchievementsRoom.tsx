@@ -12,8 +12,8 @@ import {
   Award,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { getUnlockedAchievements as getDbUnlocked } from '@/shared/lib/core/client-db';
-import { type UnlockedAchievement } from '@/shared/types/efficiency';
+import { getUnlockedAchievements as getDbUnlocked } from '@/shared/services/client-db';
+import { type UnlockedAchievement } from '@/shared/types';
 import {
   Achievement,
   GUILDS,
@@ -25,7 +25,7 @@ import { useProgress } from '@/shared/hooks/use-progress';
 import { SealCard } from '../ui/SealCard';
 import { SealDetailModal } from '../modals/SealDetailModal';
 import { useAuth } from '@/features/auth';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 const GUILD_ORDER: GuildType[] = [
   'HUKUK',

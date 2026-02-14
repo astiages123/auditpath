@@ -5,9 +5,9 @@ import {
   getCategories,
   getUserStats,
   getAllCourses,
-} from '@/shared/lib/core/client-db';
-import { type Category } from '@/shared/types/courses';
-import { logger } from '@/shared/lib/core/utils/logger';
+} from '@/shared/services/client-db';
+import { type Category } from '@/shared/types';
+import { logger } from '@/shared/utils/logger';
 import type { ProgressStats } from '@/shared/hooks/use-progress';
 
 export default function HomePage() {

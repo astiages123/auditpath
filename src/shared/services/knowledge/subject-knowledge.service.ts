@@ -1,6 +1,6 @@
-import { supabase } from '@/shared/lib/core/supabase';
-import type { Database } from '@/shared/types/supabase';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { supabase } from '@/shared/services/supabase';
+import type { Database } from '@/shared/types/database.types';
+import { logger } from '@/shared/utils/logger';
 
 type SubjectGuideline =
   Database['public']['Tables']['subject_guidelines']['Row'];

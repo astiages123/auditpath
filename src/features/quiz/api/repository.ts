@@ -5,18 +5,18 @@
  * Strictly typed and separated from business logic.
  */
 
-import { supabase } from '@/shared/lib/core/supabase';
-import { logger } from '@/shared/lib/core/utils/logger';
-import { type Database, type Json } from '@/shared/types/supabase';
+import { supabase } from '@/shared/services/supabase';
+import { logger } from '@/shared/utils/logger';
+import { type Database, type Json } from '@/shared/types/database.types';
 import { type ChunkMasteryRow } from '../core/types';
-import { parseArray, parseRow } from '@/shared/lib/validation/type-guards';
+import { parseArray, parseRow } from '@/shared/validation/type-guards';
 import {
   ChunkWithContentSchema,
   FollowUpQuestionRowSchema,
   QuestionWithStatusRowSchema,
-} from '@/shared/lib/validation/quiz-schemas';
+} from '@/shared/validation/quiz-schemas';
 import { DAILY_QUOTA, MASTERY_THRESHOLD } from '@/config/constants';
-import { addToOfflineQueue } from '@/shared/lib/core/services/offline-queue.service';
+import { addToOfflineQueue } from '@/shared/services/offline-queue.service';
 
 const quizLogger = logger.withPrefix('[QuizRepository]');
 

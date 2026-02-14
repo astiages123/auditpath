@@ -1,12 +1,17 @@
-export { ProgressHeader } from './components/ui/ProgressHeader';
-export { CategoryGrid } from './components/sections/CategoryGrid';
-export { CourseList } from './components/sections/CourseList';
-export { VideoList } from './components/sections/VideoList';
+export {
+    CategoryGrid,
+    CourseList,
+    JourneyModal,
+    ProgramModal,
+    ProgressHeader,
+    VideoList,
+} from "./components";
 
-// Shared Modals
-export { ProgramModal } from './components/modals/ProgramModal';
-export { JourneyModal } from './components/modals/JourneyModal';
-
-export * from './hooks/use-courses';
-export { default as coursesData } from './data/courses.json';
-export { getCourseIcon } from './lib/course-icons';
+export * from "./hooks/use-courses";
+export { default as coursesData } from "./data/courses.json";
+export {
+    getCourseColor,
+    getCourseIcon,
+    getCourseIconColor,
+} from "./lib/courses-logic";
+export * from "./lib/courses-logic";

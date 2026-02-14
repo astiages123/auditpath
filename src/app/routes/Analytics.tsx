@@ -4,9 +4,9 @@ import React, {
   useTransition,
   useDeferredValue,
 } from 'react';
-import { supabase } from '@/shared/lib/core/supabase';
+import { supabase } from '@/shared/services/supabase';
 import { ExchangeRateService } from '@/shared/services/exchange-rate-service';
-import type { Database } from '@/shared/types/supabase';
+import type { Database } from '@/shared/types/database.types';
 
 // Extended type to include latency_ms and status which are in the table but not in the view
 type AiGenerationCost =
@@ -50,7 +50,7 @@ import {
 } from '@/shared/components/ui/table';
 import { Button } from '@/shared/components/ui/button';
 import { Badge } from '@/shared/components/ui/badge';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 export default function AnalyticsPage() {
   const [logs, setLogs] = useState<AiGenerationCost[]>([]);

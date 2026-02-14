@@ -5,30 +5,33 @@
  * Consolidates GeneratorService, GenerationPipeline, PromptArchitect, and all Task Logic.
  */
 
-import * as Repository from '@/features/quiz/api/repository';
-import { type Json } from '@/shared/types/supabase';
-import { subjectKnowledgeService } from '@/shared/services/knowledge/subject-knowledge.service';
-import { logger } from '@/shared/lib/core/utils/logger';
-import { getSubjectStrategy } from '@/features/quiz/lib/engine/strategy';
-import { type ConceptMapItem } from '@/features/quiz/core/types';
-import { isValid, parseOrThrow } from '@/shared/lib/validation/type-guards';
-import { ChunkMetadataSchema } from '@/shared/lib/validation/quiz-schemas';
+import * as Repository from "@/features/quiz/api/repository";
+import { type Json } from "@/shared/types/database.types";
+import { subjectKnowledgeService } from "@/shared/services/knowledge/subject-knowledge.service";
+import { logger } from "@/shared/utils/logger";
+import { getSubjectStrategy } from "@/features/quiz/lib/quiz-logic";
+import { type ConceptMapItem } from "@/features/quiz/core/types";
+import { isValid, parseOrThrow } from "@/shared/validation/type-guards";
+import { ChunkMetadataSchema } from "@/shared/validation/quiz-schemas";
 
 import {
   type GenerationLog,
   type GenerationStep,
   type GeneratorCallbacks,
-} from './schemas';
+} from "./schemas";
 export type { GenerationLog, GenerationStep, GeneratorCallbacks };
 
-import { PromptArchitect } from './utils';
+import { PromptArchitect } from "./utils";
 
-// --- Tasks imported from ./tasks ---
-import { AnalysisTask } from './tasks/analysis-task';
-import { DraftingTask } from './tasks/drafting-task';
-import { ValidationTask } from './tasks/validation-task';
-import { RevisionTask } from './tasks/revision-task';
-import { FollowUpTask, WrongAnswerContext } from './tasks/follow-up-task';
+// --- Tasks imported from consolidated quiz-tasks ---
+import {
+  AnalysisTask,
+  DraftingTask,
+  FollowUpTask,
+  RevisionTask,
+  ValidationTask,
+  WrongAnswerContext,
+} from "./quiz-tasks";
 
 // --- Main Factory Class ---
 
@@ -42,7 +45,7 @@ export class QuizFactory {
   private createLog(
     step: GenerationStep,
     message: string,
-    details: Record<string, unknown> = {}
+    details: Record<string, unknown> = {},
   ): GenerationLog {
     return {
       id: crypto.randomUUID(),
@@ -65,30 +68,30 @@ export class QuizFactory {
     callbacks: GeneratorCallbacks,
     options: {
       targetCount?: number;
-      usageType?: 'antrenman' | 'arsiv' | 'deneme'; // Still allowed for single-type override if needed
+      usageType?: "antrenman" | "arsiv" | "deneme"; // Still allowed for single-type override if needed
       force?: boolean;
       mappingOnly?: boolean;
-    } = {}
+    } = {},
   ) {
     const log = (
       step: GenerationStep,
       msg: string,
-      details: Record<string, unknown> = {}
+      details: Record<string, unknown> = {},
     ) => {
       callbacks.onLog(this.createLog(step, msg, details));
     };
 
     try {
       // 1. INIT
-      log('INIT', 'Chunk bilgileri yükleniyor...', { chunkId });
+      log("INIT", "Chunk bilgileri yükleniyor...", { chunkId });
 
-      await Repository.updateChunkStatus(chunkId, 'PROCESSING');
+      await Repository.updateChunkStatus(chunkId, "PROCESSING");
 
       const chunk = await Repository.getChunkWithContent(chunkId);
-      if (!chunk) throw new Error('Chunk not found');
+      if (!chunk) throw new Error("Chunk not found");
 
       // 2. MAPPING
-      log('MAPPING', 'Kavram haritası çıkarılıyor...');
+      log("MAPPING", "Kavram haritası çıkarılıyor...");
       const metadata = isValid(ChunkMetadataSchema, chunk.metadata)
         ? parseOrThrow(ChunkMetadataSchema, chunk.metadata)
         : {};
@@ -98,7 +101,7 @@ export class QuizFactory {
 
       // Strategy for importance
       const strategy = getSubjectStrategy(chunk.course_name);
-      const importance = strategy?.importance || 'medium';
+      const importance = strategy?.importance || "medium";
 
       if (concepts.length === 0) {
         const analysisResult = await this.analysisTask.run(
@@ -110,12 +113,12 @@ export class QuizFactory {
           },
           {
             logger: (msg: string, d?: Record<string, unknown>) =>
-              log('MAPPING', msg, d || {}),
-          }
+              log("MAPPING", msg, d || {}),
+          },
         );
 
         if (!analysisResult.success || !analysisResult.data) {
-          throw new Error('Concept mapping failed');
+          throw new Error("Concept mapping failed");
         }
 
         concepts = analysisResult.data.concepts;
@@ -126,7 +129,7 @@ export class QuizFactory {
           chunkId,
           {
             suggested_quotas: aiQuotas,
-          }
+          },
         );
 
         // Also update metadata for backward compatibility
@@ -139,13 +142,13 @@ export class QuizFactory {
         }
 
         if (updateErr) {
-          logger.error('[Factory] Mapping save failed:', updateErr);
+          logger.error("[Factory] Mapping save failed:", updateErr);
           throw new Error(
-            `Kavram haritası kaydedilemedi: ${updateErr.message}`
+            `Kavram haritası kaydedilemedi: ${updateErr.message}`,
           );
         }
 
-        log('MAPPING', 'Bilişsel analiz ve kotalar başarıyla kaydedildi.', {
+        log("MAPPING", "Bilişsel analiz ve kotalar başarıyla kaydedildi.", {
           quotas: aiQuotas,
         });
 
@@ -157,9 +160,9 @@ export class QuizFactory {
 
       // If only mapping is requested, we stop here
       if (options.mappingOnly) {
-        await Repository.updateChunkStatus(chunkId, 'COMPLETED');
+        await Repository.updateChunkStatus(chunkId, "COMPLETED");
         callbacks.onComplete({ success: true, generated: 0 });
-        log('COMPLETED', 'Analiz tamamlandı, soru üretimi için bekleniyor.', {
+        log("COMPLETED", "Analiz tamamlandı, soru üretimi için bekleniyor.", {
           concepts: concepts.length,
         });
         return;
@@ -167,16 +170,16 @@ export class QuizFactory {
 
       // 3. GENERATION LOOP (Multi-type Pooling)
       const guidelines = await subjectKnowledgeService.getGuidelines(
-        chunk.course_name
+        chunk.course_name,
       );
       const cleanContent = PromptArchitect.cleanReferenceImages(
-        chunk.display_content || chunk.content
+        chunk.display_content || chunk.content,
       );
       const sharedContext = PromptArchitect.buildContext(
         cleanContent,
         chunk.course_name,
         chunk.section_title,
-        guidelines
+        guidelines,
       );
 
       // AI Quotas - read from ai_logic column directly
@@ -189,9 +192,9 @@ export class QuizFactory {
       };
 
       // Usage types to process
-      const usageTypes: ('antrenman' | 'deneme' | 'arsiv')[] = options.usageType
+      const usageTypes: ("antrenman" | "deneme" | "arsiv")[] = options.usageType
         ? [options.usageType]
-        : ['antrenman', 'deneme', 'arsiv'];
+        : ["antrenman", "deneme", "arsiv"];
 
       let totalGeneratedCount = 0;
 
@@ -200,7 +203,7 @@ export class QuizFactory {
         let targetTotal = quotas[currentUsageType] || concepts.length;
 
         // If specific usage type, pick a random subset based on quota
-        if (currentUsageType !== 'antrenman') {
+        if (currentUsageType !== "antrenman") {
           targetConcepts = [...concepts]
             .sort(() => 0.5 - Math.random())
             .slice(0, targetTotal);
@@ -211,9 +214,9 @@ export class QuizFactory {
         }
 
         log(
-          'GENERATING',
+          "GENERATING",
           `Havuz üretimi başlıyor: ${currentUsageType.toUpperCase()}`,
-          { target: targetTotal }
+          { target: targetTotal },
         );
 
         let typeGeneratedCount = 0;
@@ -223,22 +226,22 @@ export class QuizFactory {
 
           const concept = targetConcepts[i];
           log(
-            'GENERATING',
+            "GENERATING",
             `[${currentUsageType}] Kavram işleniyor: ${concept.baslik}`,
             {
               index: i + 1,
-            }
+            },
           );
 
           // Check Cache
           const cached = await Repository.fetchCachedQuestion(
             chunkId,
             currentUsageType,
-            concept.baslik
+            concept.baslik,
           );
 
           if (cached) {
-            log('SAVING', "Pool'da zaten var, atlanıyor.", {
+            log("SAVING", "Pool'da zaten var, atlanıyor.", {
               concept: concept.baslik,
               type: currentUsageType,
             });
@@ -259,8 +262,8 @@ export class QuizFactory {
             },
             {
               logger: (msg: string, d?: Record<string, unknown>) =>
-                log('GENERATING', msg, d || {}),
-            }
+                log("GENERATING", msg, d || {}),
+            },
           );
 
           if (!draft.success || !draft.data) continue;
@@ -275,18 +278,18 @@ export class QuizFactory {
             },
             {
               logger: (msg: string, d?: Record<string, unknown>) =>
-                log('VALIDATING', msg, d || {}),
-            }
+                log("VALIDATING", msg, d || {}),
+            },
           );
           let attempts = 0;
 
           while (
             validRes.success &&
-            validRes.data?.decision === 'REJECTED' &&
+            validRes.data?.decision === "REJECTED" &&
             attempts < 2
           ) {
             attempts++;
-            log('VALIDATING', `Revizyon deneniyor (${attempts})...`);
+            log("VALIDATING", `Revizyon deneniyor (${attempts})...`);
             const revRes = await this.revisionTask.run(
               {
                 originalQuestion: question,
@@ -295,8 +298,8 @@ export class QuizFactory {
               },
               {
                 logger: (msg: string, d?: Record<string, unknown>) =>
-                  log('VALIDATING', msg, d || {}),
-              }
+                  log("VALIDATING", msg, d || {}),
+              },
             );
 
             if (!revRes.success || !revRes.data) break;
@@ -308,19 +311,19 @@ export class QuizFactory {
               },
               {
                 logger: (msg: string, d?: Record<string, unknown>) =>
-                  log('VALIDATING', msg, d || {}),
-              }
+                  log("VALIDATING", msg, d || {}),
+              },
             );
           }
 
-          if (validRes.success && validRes.data?.decision === 'APPROVED') {
+          if (validRes.success && validRes.data?.decision === "APPROVED") {
             // Save
             const { error: saveErr } = await Repository.createQuestion({
               chunk_id: chunkId,
               course_id: chunk.course_id,
               section_title: chunk.section_title,
               usage_type: currentUsageType,
-              bloom_level: question.bloomLevel || 'knowledge',
+              bloom_level: question.bloomLevel || "knowledge",
               question_data: {
                 q: question.q,
                 o: question.o,
@@ -338,35 +341,35 @@ export class QuizFactory {
               typeGeneratedCount++;
               totalGeneratedCount++;
               callbacks.onQuestionSaved(totalGeneratedCount);
-              log('SAVING', 'Soru havuza kaydedildi', {
+              log("SAVING", "Soru havuza kaydedildi", {
                 concept: concept.baslik,
                 type: currentUsageType,
               });
             } else {
-              log('ERROR', 'Kayıt hatası', {
+              log("ERROR", "Kayıt hatası", {
                 error: saveErr.message,
               });
             }
           } else {
             log(
-              'ERROR',
+              "ERROR",
               `Kalite standartları karşılanamadığı için [${concept.baslik}] atlandı`,
               {
                 concept: concept.baslik,
-              }
+              },
             );
           }
         }
       }
 
-      await Repository.updateChunkStatus(chunkId, 'COMPLETED');
+      await Repository.updateChunkStatus(chunkId, "COMPLETED");
       callbacks.onComplete({ success: true, generated: totalGeneratedCount });
-      log('COMPLETED', 'İşlem tamamlandı', { total: totalGeneratedCount });
+      log("COMPLETED", "İşlem tamamlandı", { total: totalGeneratedCount });
     } catch (e: unknown) {
-      const errorMessage = e instanceof Error ? e.message : 'Bilinmeyen hata';
-      log('ERROR', errorMessage);
+      const errorMessage = e instanceof Error ? e.message : "Bilinmeyen hata";
+      log("ERROR", errorMessage);
       callbacks.onError(errorMessage);
-      await Repository.updateChunkStatus(chunkId, 'FAILED');
+      await Repository.updateChunkStatus(chunkId, "FAILED");
     }
   }
 
@@ -380,23 +383,23 @@ export class QuizFactory {
       if (!chunk) return null;
 
       const guidelines = await subjectKnowledgeService.getGuidelines(
-        chunk.course_name
+        chunk.course_name,
       );
       const cleanContent = PromptArchitect.cleanReferenceImages(
-        chunk.display_content || chunk.content
+        chunk.display_content || chunk.content,
       );
 
       const result = await this.followUpTask.run({
         context,
-        evidence: context.originalQuestion.evidence || '',
+        evidence: context.originalQuestion.evidence || "",
         chunkContent: cleanContent,
         courseName: chunk.course_name,
         sectionTitle: chunk.section_title,
         guidelines: guidelines
           ? {
-              instruction: guidelines.instruction,
-              few_shot_example: guidelines.few_shot_example,
-            }
+            instruction: guidelines.instruction,
+            few_shot_example: guidelines.few_shot_example,
+          }
           : {},
       });
 
@@ -407,7 +410,7 @@ export class QuizFactory {
         chunk_id: context.chunkId,
         course_id: context.courseId,
         section_title: chunk.section_title,
-        usage_type: 'antrenman',
+        usage_type: "antrenman",
         bloom_level: q.bloomLevel,
         created_by: context.userId,
         parent_question_id: context.originalQuestion.id,
@@ -426,12 +429,12 @@ export class QuizFactory {
       if (saveErr) return null;
       const saved = await Repository.fetchGeneratedQuestions(
         context.chunkId,
-        'antrenman',
-        1
+        "antrenman",
+        1,
       );
       return saved?.[0]?.id || null;
     } catch (e) {
-      logger.error('FollowUp Gen Error:', e as Error);
+      logger.error("FollowUp Gen Error:", e as Error);
       return null;
     }
   }
@@ -441,7 +444,7 @@ export class QuizFactory {
    */
   async generateArchiveRefresh(
     chunkId: string,
-    originalQuestionId: string
+    originalQuestionId: string,
   ): Promise<string | null> {
     try {
       const originalQ = await Repository.getQuestionData(originalQuestionId);
@@ -451,22 +454,22 @@ export class QuizFactory {
       if (!chunk) return null;
 
       const guidelines = await subjectKnowledgeService.getGuidelines(
-        chunk.course_name
+        chunk.course_name,
       );
       const cleanContent = PromptArchitect.cleanReferenceImages(
-        chunk.display_content || chunk.content
+        chunk.display_content || chunk.content,
       );
       const sharedContext = PromptArchitect.buildContext(
         cleanContent,
         chunk.course_name,
         chunk.section_title,
-        guidelines
+        guidelines,
       );
 
       const concept: ConceptMapItem = {
         baslik: originalQ.concept_title,
-        odak: 'Kavram pekiştirme ve tazeleme',
-        seviye: 'Bilgi',
+        odak: "Kavram pekiştirme ve tazeleme",
+        seviye: "Bilgi",
         gorsel: null,
       };
 
@@ -474,7 +477,7 @@ export class QuizFactory {
         concept,
         index: 0,
         courseName: chunk.course_name,
-        usageType: 'arsiv',
+        usageType: "arsiv",
         sharedContextPrompt: sharedContext,
       });
 
@@ -485,8 +488,8 @@ export class QuizFactory {
         chunk_id: chunkId,
         course_id: chunk.course_id,
         section_title: chunk.section_title,
-        usage_type: 'arsiv',
-        bloom_level: q.bloomLevel || 'knowledge',
+        usage_type: "arsiv",
+        bloom_level: q.bloomLevel || "knowledge",
         question_data: {
           q: q.q,
           o: q.o,
@@ -504,12 +507,12 @@ export class QuizFactory {
 
       const saved = await Repository.fetchGeneratedQuestions(
         chunkId,
-        'arsiv',
-        1
+        "arsiv",
+        1,
       );
       return saved?.[0]?.id || null;
     } catch (e) {
-      logger.error('Archive Refresh Error:', e as Error);
+      logger.error("Archive Refresh Error:", e as Error);
       return null;
     }
   }

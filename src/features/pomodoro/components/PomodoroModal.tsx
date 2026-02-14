@@ -12,14 +12,14 @@ import {
   Maximize2,
   Minimize2,
 } from 'lucide-react';
-import { cn } from '@/shared/lib/core/utils';
+import { cn } from '@/shared/utils';
 import { Button } from '@/shared/components/ui/button';
 import { usePomodoro } from '@/features/pomodoro';
 import { useAuth } from '@/features/auth';
-import { upsertPomodoroSession } from '@/shared/lib/core/client-db';
+import { upsertPomodoroSession } from '@/shared/services/client-db';
 import { coursesData } from '@/features/courses';
-import { logger } from '@/shared/lib/core/utils/logger';
-import { Json } from '@/shared/types/supabase';
+import { logger } from '@/shared/utils/logger';
+import { Json } from '@/shared/types/database.types';
 
 // Dialog/Alert Components
 import {

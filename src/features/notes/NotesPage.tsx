@@ -4,15 +4,15 @@ import { ArrowLeft, Loader2, AlertCircle, ChevronUp } from 'lucide-react';
 import {
   getCourseTopics,
   getCourseIdBySlug,
-} from '@/shared/lib/core/client-db';
-import { type CourseTopic } from '@/shared/types/efficiency';
+} from '@/shared/services/client-db';
+import { type CourseTopic } from '@/shared/types';
 import { useAuth } from '@/features/auth';
 import { Button } from '@/shared/components/ui/button';
-import { cn, slugify } from '@/shared/lib/core/utils';
+import { cn, slugify } from '@/shared/utils';
 import { ROUTES } from '@/config/routes';
-import { logger } from '@/shared/lib/core/utils/logger';
-import { ErrorBoundary } from '@/app/providers/ErrorBoundary';
-import { storage } from '@/shared/lib/core/services/storage.service';
+import { logger } from '@/shared/utils/logger';
+import { ErrorBoundary } from '@/app/ErrorBoundary';
+import { storage } from '@/shared/services/storage.service';
 
 // New Components
 import {

@@ -8,7 +8,7 @@ import {
   useSyncAchievementsMutation,
   useUncelebratedQuery,
 } from '@/features/achievements';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 export function useCelebration() {
   const { stats, isLoading } = useProgress();

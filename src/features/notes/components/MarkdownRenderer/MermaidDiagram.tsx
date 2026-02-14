@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, memo } from 'react';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { sanitizeHtml } from '@/shared/utils/sanitizeHtml';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 interface MermaidDiagramProps {
   code: string;

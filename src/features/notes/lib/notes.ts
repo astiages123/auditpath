@@ -1,5 +1,5 @@
 // supabase import removed
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 export interface Note {
   courseId: string;

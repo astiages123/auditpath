@@ -1,5 +1,5 @@
-import { cn, slugify } from '@/shared/lib/core/utils';
-import { type CourseTopic } from '@/shared/types/efficiency';
+import { cn, slugify } from '@/shared/utils';
+import { type CourseTopic } from '@/shared/types';
 import { memo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/config/routes';

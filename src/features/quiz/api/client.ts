@@ -1,7 +1,7 @@
 import { env } from '@/config/env';
 import * as Repository from './repository';
 import { rateLimiter } from './rate-limit';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 import {
   type AIResponse,
   type LLMProvider,

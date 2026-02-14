@@ -4,35 +4,35 @@
  * State management for the quiz flow, using Engine and Repository.
  */
 
-import { useCallback, useRef, useState } from 'react';
-import * as Engine from '@/features/quiz/core/engine';
-import * as Repository from '@/features/quiz/api/repository';
-import { createTimer } from '@/features/quiz/lib/ai/utils';
+import { useCallback, useRef, useState } from "react";
+import * as Engine from "@/features/quiz/core/engine";
+import * as Repository from "@/features/quiz/api/repository";
+import { createTimer } from "@/features/quiz/lib/ai/utils";
 import {
   type QuizQuestion,
   type QuizResults,
   type QuizState,
-} from '@/features/quiz/core/types';
-import { parseOrThrow } from '@/shared/lib/validation/type-guards';
-import { QuizQuestionSchema } from '@/shared/lib/validation/quiz-schemas';
+} from "@/features/quiz/core/types";
+import { parseOrThrow } from "@/shared/validation/type-guards";
+import { QuizQuestionSchema } from "@/shared/validation/quiz-schemas";
 import {
   calculateInitialResults,
   calculateTestResults,
   updateResults,
-} from '@/features/quiz/lib/engine/scoring';
-import { QuizFactory } from '@/features/quiz/lib/ai/factory';
-import { type Database } from '@/shared/types/supabase';
+} from "@/features/quiz/lib/quiz-logic";
+import { QuizFactory } from "@/features/quiz/lib/ai/factory";
+import { type Database } from "@/shared/types/database.types";
 
 /**
  * Helper to map database row to QuizQuestion type safely.
  */
 function mapRowToQuestion(
-  row: Database['public']['Tables']['questions']['Row']
+  row: Database["public"]["Tables"]["questions"]["Row"],
 ): QuizQuestion {
   const data = parseOrThrow(QuizQuestionSchema, row.question_data);
   return {
     ...data,
-    type: data.type || 'multiple_choice',
+    type: data.type || "multiple_choice",
     id: row.id,
     chunk_id: row.chunk_id || undefined,
   };
@@ -43,7 +43,7 @@ export interface UseQuizReturn {
   results: QuizResults;
   generateBatch: (
     count: number,
-    params: { type: 'chunk'; chunkId: string; userId?: string }
+    params: { type: "chunk"; chunkId: string; userId?: string },
   ) => Promise<void>;
   startQuiz: () => void;
   selectAnswer: (index: number) => void;
@@ -58,11 +58,11 @@ export interface UseQuizReturn {
 export interface UseQuizConfig {
   recordResponse?: (
     questionId: string,
-    responseType: 'correct' | 'incorrect' | 'blank',
+    responseType: "correct" | "incorrect" | "blank",
     selectedAnswer: number | null,
     timeSpentMs: number,
     diagnosis?: string,
-    insight?: string
+    insight?: string,
   ) => Promise<unknown>;
 }
 
@@ -85,13 +85,15 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
   });
 
   const [results, setResults] = useState<QuizResults>(
-    calculateInitialResults()
+    calculateInitialResults(),
   );
 
-  const [lastParams, setLastParams] = useState<{
-    count: number;
-    params: { type: 'chunk'; chunkId: string; userId?: string };
-  } | null>(null);
+  const [lastParams, setLastParams] = useState<
+    {
+      count: number;
+      params: { type: "chunk"; chunkId: string; userId?: string };
+    } | null
+  >(null);
 
   // Refs
   const timerRef = useRef(createTimer());
@@ -105,20 +107,20 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
   const generateBatch = useCallback(
     async (
       count: number,
-      params: { type: 'chunk'; chunkId: string; userId?: string }
+      params: { type: "chunk"; chunkId: string; userId?: string },
     ) => {
-      if (params.type === 'chunk' && params.userId) {
+      if (params.type === "chunk" && params.userId) {
         setLastParams({ count, params });
         updateState({ isLoading: true, error: null });
 
         try {
           // 1. Start Session (Engine)
           const chunk = await Repository.getChunkMetadata(params.chunkId);
-          if (!chunk) throw new Error('Chunk not found');
+          if (!chunk) throw new Error("Chunk not found");
 
           const session = await Engine.startSession(
             params.userId,
-            chunk.course_id
+            chunk.course_id,
           );
           sessionContextRef.current = session;
 
@@ -126,7 +128,7 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
           const reviewItems = await Engine.getReviewQueue(
             session,
             count,
-            params.chunkId
+            params.chunkId,
           );
 
           if (reviewItems.length > 0) {
@@ -137,8 +139,8 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
             const sorted = questionIds
               .map((id) => questions.find((q) => q.id === id))
               .filter(
-                (q): q is Database['public']['Tables']['questions']['Row'] =>
-                  !!q
+                (q): q is Database["public"]["Tables"]["questions"]["Row"] =>
+                  !!q,
               );
 
             const mapped = sorted.map(mapRowToQuestion);
@@ -165,24 +167,26 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
                     const reviewItems = await Engine.getReviewQueue(
                       sessionContextRef.current,
                       count,
-                      params.chunkId
+                      params.chunkId,
                     );
 
                     if (reviewItems.length > 0) {
                       const questionIds = reviewItems.map(
-                        (item) => item.questionId
+                        (item) => item.questionId,
                       );
-                      const questions =
-                        await Repository.fetchQuestionsByIds(questionIds);
+                      const questions = await Repository.fetchQuestionsByIds(
+                        questionIds,
+                      );
 
                       // Sort questions to match the reviewItems order
                       const sorted = questionIds
                         .map((id) => questions.find((q) => q.id === id))
                         .filter(
                           (
-                            q
-                          ): q is Database['public']['Tables']['questions']['Row'] =>
-                            !!q
+                            q,
+                          ): q is Database["public"]["Tables"]["questions"][
+                            "Row"
+                          ] => !!q,
                         );
 
                       const mapped = sorted.map(mapRowToQuestion);
@@ -201,17 +205,18 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
                 },
                 onError: (err) => updateState({ error: err, isLoading: false }),
               },
-              { targetCount: count }
+              { targetCount: count },
             );
           }
         } catch (e: unknown) {
-          const errorMessage =
-            e instanceof Error ? e.message : 'Bilinmeyen hata';
+          const errorMessage = e instanceof Error
+            ? e.message
+            : "Bilinmeyen hata";
           updateState({ isLoading: false, error: errorMessage });
         }
       }
     },
-    []
+    [],
   );
 
   const startQuiz = useCallback(() => {
@@ -225,7 +230,7 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
 
       const timeSpent = timerRef.current.stop();
       const isCorrect = index === state.currentQuestion.a;
-      const type = isCorrect ? 'correct' : 'incorrect';
+      const type = isCorrect ? "correct" : "incorrect";
 
       // Update Local Results
       setResults((prev) => updateResults(prev, type, timeSpent));
@@ -245,7 +250,7 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
           state.currentQuestion.chunk_id || null,
           type,
           timeSpent,
-          index
+          index,
         );
 
         updateState({
@@ -261,11 +266,11 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
           index,
           timeSpent,
           state.currentQuestion.diagnosis,
-          state.currentQuestion.insight
+          state.currentQuestion.insight,
         );
       }
     },
-    [state.isAnswered, state.currentQuestion, config]
+    [state.isAnswered, state.currentQuestion, config],
   );
 
   const markAsBlank = useCallback(async () => {
@@ -273,7 +278,7 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
 
     const timeSpent = timerRef.current.stop();
 
-    setResults((prev) => updateResults(prev, 'blank', timeSpent));
+    setResults((prev) => updateResults(prev, "blank", timeSpent));
 
     updateState({
       selectedAnswer: null,
@@ -288,9 +293,9 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
         sessionContextRef.current,
         state.currentQuestion.id,
         state.currentQuestion.chunk_id || null,
-        'blank',
+        "blank",
         timeSpent,
-        null
+        null,
       );
 
       updateState({
@@ -301,11 +306,11 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
     if (config.recordResponse && state.currentQuestion.id) {
       await config.recordResponse(
         state.currentQuestion.id,
-        'blank',
+        "blank",
         null,
         timeSpent,
         state.currentQuestion.diagnosis,
-        state.currentQuestion.insight
+        state.currentQuestion.insight,
       );
     }
   }, [state.isAnswered, state.currentQuestion, config]);
@@ -334,7 +339,7 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
           prevResults.correct,
           prevResults.incorrect,
           prevResults.blank,
-          prevResults.totalTimeMs
+          prevResults.totalTimeMs,
         );
 
         updateState({

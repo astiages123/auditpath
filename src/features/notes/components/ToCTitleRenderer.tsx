@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { cn } from '@/shared/lib/core/utils';
+import { cn } from '@/shared/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';

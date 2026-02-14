@@ -5,9 +5,9 @@ import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { Label } from '@/shared/components/ui/label';
 import { Loader2 } from 'lucide-react';
-import { getSupabase } from '@/shared/lib/core/supabase';
+import { getSupabase } from '@/shared/services/supabase';
 import { toast } from 'sonner';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

@@ -3,11 +3,11 @@
  */
 
 // Essential Public Components
-export { QuizModal } from './components/modal/QuizModal';
-export { QuizSessionProvider } from './components/contexts/QuizSessionProvider';
+export { QuizModal } from "./components/QuizModal";
+export { QuizSessionProvider } from "./components/contexts/QuizSessionProvider";
 
 // Essential Hooks
-export { useQuiz } from './hooks/use-quiz';
+export { useQuiz } from "./hooks/use-quiz";
 
 // Essential Types for Props/Interaction
-export * from './core/types';
+export * from "./core/types";

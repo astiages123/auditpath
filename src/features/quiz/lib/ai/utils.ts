@@ -1,4 +1,4 @@
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 import { z } from 'zod';
 import type {
   AIResponse,

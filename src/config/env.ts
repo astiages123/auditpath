@@ -1,4 +1,4 @@
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 // Extend global types for process.env
 export interface ProcessEnv {

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 /**
  * useFaviconManager

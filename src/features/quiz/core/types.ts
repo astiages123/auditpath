@@ -1,9 +1,9 @@
-import { AIResponseMetadata, LogCallback, Message } from '@/shared/types/core';
+import { AIResponseMetadata, LogCallback, Message } from '@/shared/types';
 import {
   ConceptMapItem,
   QuizQuestion,
   QuizResponseType,
-} from '@/shared/types/quiz';
+} from '@/shared/types';
 
 export { type ConceptMapItem, type QuizQuestion, type QuizResponseType };
 

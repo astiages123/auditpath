@@ -5,8 +5,8 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { slugify } from '@/shared/lib/core/utils';
-import { type CourseTopic } from '@/shared/types/efficiency';
+import { slugify } from '@/shared/utils';
+import { type CourseTopic } from '@/shared/types';
 import { type LocalToCItem } from '../components/LocalToC';
 
 export interface ExtendedToCItem extends LocalToCItem {

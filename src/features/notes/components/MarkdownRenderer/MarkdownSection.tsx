@@ -4,8 +4,8 @@ import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
-import { slugify } from '@/shared/lib/core/utils';
-import { type CourseTopic } from '@/shared/types/efficiency';
+import { slugify } from '@/shared/utils';
+import { type CourseTopic } from '@/shared/types';
 import { markdownComponents } from './MarkdownComponents';
 
 interface MarkdownSectionProps {

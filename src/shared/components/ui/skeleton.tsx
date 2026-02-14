@@ -1,5 +1,5 @@
 import React from 'react';
-import { cn } from '@/shared/lib/core/utils';
+import { cn } from '@/shared/utils';
 
 function Skeleton({
   className,

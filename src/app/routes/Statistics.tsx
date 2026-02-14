@@ -1,4 +1,4 @@
-import { EfficiencyPage } from '@/features/efficiency';
+import EfficiencyPage from './Efficiency';
 
 export default function StatisticsRoute() {
   return <EfficiencyPage />;

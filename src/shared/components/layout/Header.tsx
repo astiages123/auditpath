@@ -33,7 +33,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ProgramModal } from '@/features/courses';
 import { JourneyModal } from '@/features/courses';
 import { AuthModal } from '@/features/auth';
-import { cn } from '@/shared/lib/core/utils';
+import { cn } from '@/shared/utils';
 import { ROUTES } from '@/config/routes';
 import { usePomodoro } from '@/features/pomodoro';
 

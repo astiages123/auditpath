@@ -5,11 +5,11 @@ import {
   getFirstChunkIdForTopic,
   getTopicCompletionStatus,
   getTopicQuestionCount,
-} from '@/shared/lib/core/client-db';
+} from '@/shared/services/client-db';
 import {
   TopicCompletionStats,
   TopicWithCounts,
-} from '@/shared/types/efficiency';
+} from '@/shared/types';
 import { ExamService } from '@/features/quiz/core/engine';
 import { type QuizQuestion } from '@/features/quiz/core/types';
 import * as Repository from '@/features/quiz/api/repository';
@@ -17,9 +17,9 @@ import {
   type GenerationLog,
   QuizFactory,
 } from '@/features/quiz/lib/ai/factory';
-import { parseOrThrow } from '@/shared/lib/validation/type-guards';
-import { QuizQuestionSchema } from '@/shared/lib/validation/quiz-schemas';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { parseOrThrow } from '@/shared/validation/type-guards';
+import { QuizQuestionSchema } from '@/shared/validation/quiz-schemas';
+import { logger } from '@/shared/utils/logger';
 import { MAX_LOG_ENTRIES } from '@/config/constants';
 
 export enum QuizState {

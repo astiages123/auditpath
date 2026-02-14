@@ -4,10 +4,10 @@ import {
   deletePomodoroSession,
   getDailySessionCount,
   upsertPomodoroSession,
-} from '@/shared/lib/core/client-db';
+} from '@/shared/services/client-db';
 import { useAuth } from '@/features/auth';
 import { unlockAudio } from '../lib/audio-utils';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 export type PomodoroMode = 'work' | 'break';
 

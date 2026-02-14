@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import { Copy, Check } from 'lucide-react';
-import { cn } from '@/shared/lib/core/utils';
+import { cn } from '@/shared/utils';
 import { MermaidDiagram } from './MermaidDiagram';
 import { sanitizeHtml } from '@/shared/utils/sanitizeHtml';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 interface CodeBlockProps extends React.HTMLAttributes<HTMLElement> {
   inline?: boolean;

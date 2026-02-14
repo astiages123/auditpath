@@ -1,4 +1,4 @@
-import { cn } from '@/shared/lib/core/utils';
+import { cn } from '@/shared/utils';
 import { memo, useEffect, useRef } from 'react';
 
 export interface ToCItem {

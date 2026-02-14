@@ -1,8 +1,8 @@
-import { supabase } from '@/shared/lib/core/supabase';
+import { supabase } from '@/shared/services/supabase';
 
 import { z } from 'zod';
-import { isValid, parseOrThrow } from '@/shared/lib/validation/type-guards';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { isValid, parseOrThrow } from '@/shared/validation/type-guards';
+import { logger } from '@/shared/utils/logger';
 
 const ExchangeRateApiResponseSchema = z.object({
   rates: z.record(z.string(), z.number()),

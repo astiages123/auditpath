@@ -7,7 +7,7 @@
 
 import pLimit from 'p-limit';
 import { type LLMProvider } from '../core/types';
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 interface Budget {
   remaining: number;

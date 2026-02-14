@@ -3,17 +3,16 @@ import { lazy, Suspense } from 'react';
 import RootLayout from '@/shared/components/layout/RootLayout';
 import { AuthGuard } from '@/features/auth';
 import { Loader2 } from 'lucide-react';
-import { ErrorBoundary } from '@/app/providers/ErrorBoundary';
+import { ErrorBoundary } from '@/app/ErrorBoundary';
 
 import { ROUTES } from '@/config/routes';
+import { Outlet } from 'react-router-dom';
 
 // Moving lazy imports together
 const Home = lazy(() => import('@/app/routes/Home'));
 const Achievements = lazy(() => import('@/app/routes/Achievements'));
 const Statistics = lazy(() => import('@/app/routes/Statistics'));
-const EfficiencyPage = lazy(
-  () => import('@/features/efficiency/pages/EfficiencyPage')
-);
+const EfficiencyPage = lazy(() => import('@/app/routes/Efficiency'));
 const NotesPage = lazy(() => import('@/app/routes/Notes'));
 const AnalyticsPage = lazy(() => import('@/app/routes/Analytics'));
 
@@ -28,86 +27,46 @@ function PageLoader() {
 
 function App() {
   return (
-    <RootLayout>
+    <ErrorBoundary>
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          <Route
-            path={ROUTES.HOME}
-            element={
-              <AuthGuard>
-                <Home />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path={ROUTES.ACHIEVEMENTS}
-            element={
-              <AuthGuard>
-                <Achievements />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path={ROUTES.STATISTICS}
-            element={
-              <AuthGuard>
-                <Statistics />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path={ROUTES.EFFICIENCY}
-            element={
-              <AuthGuard>
-                <ErrorBoundary>
-                  <EfficiencyPage />
-                </ErrorBoundary>
-              </AuthGuard>
-            }
-          />
+          {/* Public Routes would go here if any */}
 
-          <Route
-            path={`${ROUTES.NOTES}/:courseSlug`}
-            element={
-              <AuthGuard>
-                <ErrorBoundary>
-                  <NotesPage />
-                </ErrorBoundary>
-              </AuthGuard>
-            }
-          />
-          <Route
-            path={`${ROUTES.NOTES}/:courseSlug/:topicSlug`}
-            element={
-              <AuthGuard>
-                <ErrorBoundary>
-                  <NotesPage />
-                </ErrorBoundary>
-              </AuthGuard>
-            }
-          />
-          <Route
-            path={ROUTES.ANALYTICS}
-            element={
-              <AuthGuard>
-                <AnalyticsPage />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path={ROUTES.SETTINGS}
-            element={
-              <AuthGuard>
-                <div>Settings Page coming soon...</div>
-              </AuthGuard>
-            }
-          />
+          {/* Protected Routes */}
+          <Route element={<AuthGuard />}>
+            <Route
+              element={
+                <RootLayout>
+                  <Outlet />
+                </RootLayout>
+              }
+            >
+              <Route path={ROUTES.HOME} element={<Home />} />
+              <Route path={ROUTES.ACHIEVEMENTS} element={<Achievements />} />
+              <Route path={ROUTES.STATISTICS} element={<Statistics />} />
+              <Route path={ROUTES.EFFICIENCY} element={<EfficiencyPage />} />
+
+              <Route
+                path={`${ROUTES.NOTES}/:courseSlug`}
+                element={<NotesPage />}
+              />
+              <Route
+                path={`${ROUTES.NOTES}/:courseSlug/:topicSlug`}
+                element={<NotesPage />}
+              />
+              <Route path={ROUTES.ANALYTICS} element={<AnalyticsPage />} />
+              <Route
+                path={ROUTES.SETTINGS}
+                element={<div>Settings Page coming soon...</div>}
+              />
+            </Route>
+          </Route>
 
           {/* Redirect unknown routes to home */}
           <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
         </Routes>
       </Suspense>
-    </RootLayout>
+    </ErrorBoundary>
   );
 }
 

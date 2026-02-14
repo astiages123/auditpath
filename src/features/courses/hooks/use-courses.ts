@@ -6,8 +6,8 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/shared/lib/core/supabase';
-import type { Database } from '@/shared/types/supabase';
+import { supabase } from '@/shared/services/supabase';
+import type { Database } from '@/shared/types/database.types';
 
 type Course = Database['public']['Tables']['courses']['Row'];
 

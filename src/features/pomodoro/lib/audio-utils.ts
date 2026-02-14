@@ -1,4 +1,4 @@
-import { logger } from '@/shared/lib/core/utils/logger';
+import { logger } from '@/shared/utils/logger';
 
 const notificationAudio =
   typeof window !== 'undefined' ? new Audio('/audio/alarm_ring.mp3') : null;

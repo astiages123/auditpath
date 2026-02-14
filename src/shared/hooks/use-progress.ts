@@ -1,8 +1,13 @@
-import { createContext, useContext } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getUserStats } from '@/shared/lib/core/client-db';
-import type { Rank } from '@/shared/types/core';
-import coursesData from '@/features/courses/data/courses.json';
+import { useCallback, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/features/auth";
+import { getUserStats } from "@/shared/services/client-db";
+import type { Rank } from "@/shared/types";
+import coursesData from "@/features/courses/data/courses.json";
+import {
+  calculateStaticTotals,
+  type Category,
+} from "@/shared/utils/progress-math";
 
 export interface ProgressStats {
   completedVideos: number;
@@ -30,62 +35,8 @@ export interface ProgressStats {
 }
 
 export const progressKeys = {
-  all: ['progress'] as const,
+  all: ["progress"] as const,
   user: (userId: string) => [...progressKeys.all, userId] as const,
-};
-
-// Static data calculation (moved from Provider to here or shared util)
-interface Course {
-  id: string;
-  totalVideos: number;
-  totalHours: number;
-}
-interface Category {
-  category: string;
-  slug?: string;
-  courses: Course[];
-}
-
-const calculateStaticTotals = () => {
-  const categories = coursesData as Category[];
-  const categoryStats: Record<
-    string,
-    {
-      completedVideos: number;
-      completedHours: number;
-      totalVideos: number;
-      totalHours: number;
-    }
-  > = {};
-
-  let totalAllVideos = 0;
-  let totalAllHours = 0;
-
-  categories.forEach((cat) => {
-    // Falls back to parsing if slug is missing to prevent crash, though slug should be there now.
-    const categoryName =
-      cat.slug || cat.category.split(' (')[0].split('. ')[1] || cat.category;
-
-    let catTotalVideos = 0;
-    let catTotalHours = 0;
-
-    cat.courses.forEach((course) => {
-      catTotalVideos += course.totalVideos;
-      catTotalHours += course.totalHours;
-    });
-
-    categoryStats[categoryName] = {
-      completedVideos: 0,
-      completedHours: 0,
-      totalVideos: catTotalVideos,
-      totalHours: catTotalHours,
-    };
-
-    totalAllVideos += catTotalVideos;
-    totalAllHours += catTotalHours;
-  });
-
-  return { categoryStats, totalAllVideos, totalAllHours };
 };
 
 const staticTotals = calculateStaticTotals();
@@ -100,36 +51,46 @@ export const defaultStats: ProgressStats = {
   courseProgress: {},
 };
 
-export interface ProgressContextType {
-  stats: ProgressStats;
-  refreshProgress: () => void;
-  isLoading: boolean;
-  streak: number;
-  updateProgressOptimistically: (
-    courseId: string,
-    deltaVideos: number,
-    deltaHours: number
-  ) => void;
-}
-
-export const ProgressContext = createContext<ProgressContextType | undefined>(
-  undefined
-);
-
 export function useProgress() {
-  const context = useContext(ProgressContext);
-  if (context === undefined) {
-    throw new Error('useProgress must be used within a ProgressProvider');
-  }
-  return context;
+  const { user } = useAuth();
+  const userId = user?.id;
+
+  const { data: stats, isLoading, refetch } = useProgressQuery(userId);
+  const { updateProgress } = useOptimisticProgress();
+
+  const refreshProgress = useCallback(() => {
+    refetch();
+  }, [refetch]);
+
+  const updateProgressOptimistically = useCallback(
+    (courseId: string, deltaVideos: number, deltaHours: number) => {
+      if (userId) {
+        updateProgress(userId, courseId, deltaVideos, deltaHours);
+      }
+    },
+    [userId, updateProgress],
+  );
+
+  const value = useMemo(
+    () => ({
+      stats: stats || (defaultStats as ProgressStats),
+      refreshProgress,
+      isLoading,
+      streak: stats?.streak || 0,
+      updateProgressOptimistically,
+    }),
+    [stats, refreshProgress, isLoading, updateProgressOptimistically],
+  );
+
+  return value;
 }
 
 export function useProgressQuery(
   userId?: string,
-  initialStats?: Partial<ProgressStats>
+  initialStats?: Partial<ProgressStats>,
 ) {
   return useQuery({
-    queryKey: progressKeys.user(userId || 'guest'),
+    queryKey: progressKeys.user(userId || "guest"),
     queryFn: async () => {
       if (!userId) return defaultStats;
 
@@ -140,20 +101,19 @@ export function useProgressQuery(
       const mergedCategoryProgress = { ...staticTotals.categoryStats };
 
       if (dbStats.categoryProgress) {
-        Object.entries(dbStats.categoryProgress).forEach(
-          ([catName, stats]: [
-            string,
-            { completedVideos: number; completedHours: number },
-          ]) => {
-            if (mergedCategoryProgress[catName]) {
-              mergedCategoryProgress[catName] = {
-                ...mergedCategoryProgress[catName],
-                completedVideos: stats.completedVideos || 0,
-                completedHours: stats.completedHours || 0,
-              };
-            }
+        Object.entries(dbStats.categoryProgress).forEach(([catName, stats]) => {
+          const catStats = stats as {
+            completedVideos: number;
+            completedHours: number;
+          };
+          if (mergedCategoryProgress[catName]) {
+            mergedCategoryProgress[catName] = {
+              ...mergedCategoryProgress[catName],
+              completedVideos: catStats.completedVideos || 0,
+              completedHours: catStats.completedHours || 0,
+            };
           }
-        );
+        });
       }
 
       return {
@@ -188,7 +148,7 @@ export function useOptimisticProgress() {
     userId: string,
     courseId: string,
     deltaVideos: number,
-    deltaHours: number
+    deltaHours: number,
   ) => {
     queryClient.setQueryData(
       progressKeys.user(userId),
@@ -202,9 +162,8 @@ export function useOptimisticProgress() {
 
         if (!categoryData) return old;
 
-        const categoryName =
-          categoryData.slug ||
-          categoryData.category.split(' (')[0].split('. ')[1] ||
+        const categoryName = categoryData.slug ||
+          categoryData.category.split(" (")[0].split(". ")[1] ||
           categoryData.category;
 
         const existingCatStats = old.categoryProgress[categoryName] || {
@@ -247,7 +206,7 @@ export function useOptimisticProgress() {
           },
           categoryProgress: newCategoryProgress,
         };
-      }
+      },
     );
   };
 

@@ -1,5 +1,5 @@
 import { Card } from '@/shared/components/ui/card';
-import { cn } from '@/shared/lib/core/utils';
+import { cn } from '@/shared/utils';
 import React from 'react';
 
 interface GlassCardProps {
