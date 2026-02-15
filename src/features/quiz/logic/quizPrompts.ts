@@ -34,23 +34,26 @@ BU DERSİN ÖNEM DERECESİ: ${importance.toUpperCase()}
 Belirli bir sayıya odaklanma. Metindeki 10 üzerinden 7 ve üzeri önem puanına sahip **TÜM** kavramları ve **TÜM** istisnaları (Exception Hunter) çıkar. Metin yoğunsa çok, sığ ise az kavram döndür.
 Asla uydurma veya değersiz veri üretme.
 
-Sistem artık kelime sayısı ile değil, senin belirlediğin "Bilişsel Doygunluk Noktası" (Cognitive Saturation) üzerinden kota belirleyecek.
-Görev: Metnin derinliğini ve dersin önem derecesini analiz ederek, bir öğrencinin bu konuyu "emekli etmesi" (tam öğrenmesi) için gereken ideal soru sayılarını (kotaları) belirle.
+Sistem artık kotaları senin belirlediğin "Pedagojik Altın Oran" üzerinden belirleyecek.
+Görev: Metnin derinliğini ve dersin önem derecesini analiz ederek ideal soru sayılarını belirle.
+KOTA SINIRLARI (KESİN KURAL):
+- antrenman: Metindeki benzersiz kavram sayısı (concepts.length) kadar olmalıdır. (Her kavrama 1 soru)
+- deneme: Toplam kavram sayısının en fazla %20'si kadar olmalıdır. (Karmaşık senaryolar için)
+- arsiv: Toplam kavram sayısının en fazla %15'i kadar olmalıdır. (Kritik hatırlatmalar için)
+- Bilişsel Doygunluk: Gereksiz tekrardan kaçın. Eğer konu sığ ise bu oranları daha da aşağı çekebilirsin.
 
 Kurallar:
-1. **Bilişsel Doygunluk:** Gereksiz tekrardan kaçın. Konu ne eksik ne fazla, tam öğrenilsin.
-2. **Terzi Dikimi Kotalar:** Dersin önem derecesine (Importance) ve metnin karmaşıklığına göre kotaları belirle. 
-3. **EXCEPTION HUNTER:** Metinde "Ancak", "İstisnaen", "Şu kadar ki", "Saklı kalmak kaydıyla" gibi ifadelerle başlayan cümleleri TARA. Bu istisnaları ayrı birer kavram durağı olarak MUTLAKA listeye ekle ve 'isException': true olarak işaretle. (Priority 1)
-4. Metnin baş, orta ve son kısımlarından dengeli bir konu dağılımı yap.
-5. Belirlenen kavramlar anlamsal olarak birbirini kapsamamalı (overlap olmamalı), metnin farklı ve bağımsız bölümlerini temsil eden 'ana duraklar' niteliğinde olmalıdır.
-6. 'seviye' alanını şu tanımlara göre belirle:
+1. **EXCEPTION HUNTER:** Metinde "Ancak", "İstisnaen", "Şu kadar ki", "Saklı kalmak kaydıyla" gibi ifadelerle başlayan cümleleri TARA. Bu istisnaları ayrı birer kavram durağı olarak MUTLAKA listeye ekle ve 'isException': true olarak işaretle. (Priority 1)
+2. Metnin baş, orta ve son kısımlarından dengeli bir konu dağılımı yap.
+3. Belirlenen kavramlar anlamsal olarak birbirini kapsamamalı (overlap olmamalı), metnin farklı ve bağımsız bölümlerini temsil eden 'ana duraklar' niteliğinde olmalıdır.
+4. 'seviye' alanını şu tanımlara göre belirle:
    - 'Bilgi': Tanım, kavram ve temel olgular.
    - 'Uygulama': Süreçler, yöntemler ve nasıl yapılır bilgisi.
    - 'Analiz': Neden-sonuç ilişkileri, kıyaslama ve çıkarımlar.
-7. 'odak' alanı 15 kelimeyi geçmemeli ve net bir öğrenme kazanımı belirtmelidir.
-8. Görsel Analizi: Çıktıdaki her objede 'gorsel' anahtarı mutlaka bulunmalıdır. Eğer ilgili görsel yoksa değeri kesinlikle null olmalıdır; anahtarı (key) asla silme veya atlama.
-9. Görsel varsa 'altText' alanına görselin teknik açıklamasını ekle.
-10. Her kavram için anahtar ismi olarak mutlaka 'baslik' kullanılmalıdır.
+5. 'odak' alanı 15 kelimeyi geçmemeli ve net bir öğrenme kazanımı belirtmelidir.
+6. Görsel Analizi: Çıktıdaki her objede 'gorsel' anahtarı mutlaka bulunmalıdır. Eğer ilgili görsel yoksa değeri kesinlikle null olmalıdır; anahtarı (key) asla silme veya atlama.
+7. Görsel varsa 'altText' alanına görselin teknik açıklamasını ekle.
+8. Her kavram için anahtar ismi olarak mutlaka 'baslik' kullanılmalıdır.
 
 **Difficulty Index (Bilişsel Zorluk Endeksi) Kılavuzu:**
 - 1: Giriş seviyesi, basit anlatım, hikaye tarzı (Örn: Tarih giriş)

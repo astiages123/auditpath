@@ -308,7 +308,7 @@ export function isExcellenceAchieved(
     total: number,
 ): boolean {
     const mastery = calculateMastery(results, total);
-    return mastery >= 80;
+    return mastery >= 90;
 }
 
 export function calculateTestResults(
@@ -534,6 +534,7 @@ export function calculateQuizResult(
     questionData: {
         bloom_level: string | null;
         chunk_id: string | null;
+        usage_type?: string | null;
     } | null,
     chunkMetadata: {
         content: string | null;
@@ -547,6 +548,25 @@ export function calculateQuizResult(
     sessionNumber: number,
 ): SubmissionResult {
     const isCorrect = responseType === "correct";
+
+    // Handle 'deneme' (mock) questions separately
+    if (questionData?.usage_type === "deneme") {
+        return {
+            isCorrect,
+            scoreDelta: 0,
+            newMastery: masteryData?.mastery_score || 0,
+            newStatus: calculateShelfStatus(
+                currentStatus?.consecutive_success || 0,
+                isCorrect,
+                timeSpentMs < 30000, // Simplified basic check for mock questions
+            ).newStatus,
+            nextReviewSession: null, // Mock questions don't enter SRS
+            isTopicRefreshed: false,
+            newSuccessCount: currentStatus?.consecutive_success || 0,
+            newFailsCount: currentStatus?.consecutive_fails || 0,
+        };
+    }
+
     const isRepeated = (currentStatus?.consecutive_fails || 0) > 0 ||
         (currentStatus?.consecutive_success || 0) > 0;
 
@@ -585,8 +605,8 @@ export function calculateQuizResult(
     const coverageRatio = totalChunkQuestions > 0
         ? Math.min(1, uniqueSolvedCount / totalChunkQuestions)
         : 0;
-    const coverageScore = coverageRatio * 60;
-    const newMastery = Math.round(coverageScore + scoreChange.newScore * 0.4);
+    const coverageScore = coverageRatio * 40;
+    const newMastery = Math.round(coverageScore + scoreChange.newScore * 0.6);
 
     const isTopicRefreshed = totalChunkQuestions > 0 &&
         uniqueSolvedCount / totalChunkQuestions >= 0.8;

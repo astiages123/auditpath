@@ -185,10 +185,17 @@ export class QuizFactory {
       // AI Quotas - read from ai_logic column directly
       const aiLogic =
         (chunk.ai_logic as { suggested_quotas?: Record<string, number> }) || {};
-      const quotas = aiLogic.suggested_quotas || {
+      const aiQuotas = aiLogic.suggested_quotas || {};
+      const quotas = {
         antrenman: concepts.length,
-        arsiv: Math.ceil(concepts.length * 0.25),
-        deneme: Math.ceil(concepts.length * 0.25),
+        deneme: Math.min(
+          aiQuotas.deneme ?? Math.ceil(concepts.length * 0.2),
+          Math.ceil(concepts.length * 0.2),
+        ),
+        arsiv: Math.min(
+          aiQuotas.arsiv ?? Math.ceil(concepts.length * 0.15),
+          Math.ceil(concepts.length * 0.15),
+        ),
       };
 
       // Usage types to process
