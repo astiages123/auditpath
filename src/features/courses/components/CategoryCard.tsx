@@ -92,12 +92,15 @@ export function CategoryCard({
   return (
     <motion.div
       layout
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
+      transition={{ duration: 0.4, ease: 'easeInOut' }}
       className={cn(
-        'group relative overflow-hidden rounded-2xl border transition-all duration-200',
+        'group relative overflow-hidden rounded-3xl border transition-all duration-500',
         theme.border,
-        theme.bg,
-        isOpen ? 'shadow-2xl border-white/20 bg-zinc-900/90' : theme.hoverBg
+        theme.gradient,
+        theme.hoverGradient,
+        isOpen
+          ? 'shadow-2xl border-white/20 bg-zinc-900/40 backdrop-blur-md'
+          : 'hover:shadow-lg hover:border-white/20 hover:scale-[1.01]'
       )}
     >
       <button

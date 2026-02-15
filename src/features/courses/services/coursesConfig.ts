@@ -43,6 +43,8 @@ export const COURSE_THEME_CONFIG: Record<
         border: string; // Tailwind class
         variable: string; // CSS variable name prefix
         hoverBg: string; // Tailwind class
+        gradient: string; // Dark gradient for cards
+        hoverGradient: string; // Intensified gradient on hover
     }
 > = {
     emerald: {
@@ -51,6 +53,10 @@ export const COURSE_THEME_CONFIG: Record<
         border: "border-emerald-500/20",
         variable: "--course-color-emerald",
         hoverBg: "hover:bg-emerald-500/30",
+        gradient:
+            "bg-linear-to-br from-emerald-500/25 via-zinc-900/95 to-zinc-950",
+        hoverGradient:
+            "hover:from-emerald-500/40 hover:via-zinc-900/90 hover:to-zinc-900",
     },
     amber: {
         bg: "bg-amber-500/20",
@@ -58,6 +64,10 @@ export const COURSE_THEME_CONFIG: Record<
         border: "border-amber-500/20",
         variable: "--course-color-amber",
         hoverBg: "hover:bg-amber-500/30",
+        gradient:
+            "bg-linear-to-br from-amber-500/25 via-zinc-900/95 to-zinc-950",
+        hoverGradient:
+            "hover:from-amber-500/40 hover:via-zinc-900/90 hover:to-zinc-900",
     },
     blue: {
         bg: "bg-blue-500/20",
@@ -65,6 +75,10 @@ export const COURSE_THEME_CONFIG: Record<
         border: "border-blue-500/20",
         variable: "--course-color-blue",
         hoverBg: "hover:bg-blue-500/30",
+        gradient:
+            "bg-linear-to-br from-blue-500/25 via-zinc-900/95 to-zinc-950",
+        hoverGradient:
+            "hover:from-blue-500/40 hover:via-zinc-900/90 hover:to-zinc-900",
     },
     purple: {
         bg: "bg-purple-500/20",
@@ -72,6 +86,10 @@ export const COURSE_THEME_CONFIG: Record<
         border: "border-purple-500/20",
         variable: "--course-color-purple",
         hoverBg: "hover:bg-purple-500/30",
+        gradient:
+            "bg-linear-to-br from-purple-500/25 via-zinc-900/95 to-zinc-950",
+        hoverGradient:
+            "hover:from-purple-500/40 hover:via-zinc-900/90 hover:to-zinc-900",
     },
     rose: {
         bg: "bg-rose-500/20",
@@ -79,6 +97,10 @@ export const COURSE_THEME_CONFIG: Record<
         border: "border-rose-500/20",
         variable: "--course-color-rose",
         hoverBg: "hover:bg-rose-500/30",
+        gradient:
+            "bg-linear-to-br from-rose-500/25 via-zinc-900/95 to-zinc-950",
+        hoverGradient:
+            "hover:from-rose-500/40 hover:via-zinc-900/90 hover:to-zinc-900",
     },
     orange: {
         bg: "bg-orange-500/20",
@@ -86,6 +108,10 @@ export const COURSE_THEME_CONFIG: Record<
         border: "border-orange-500/20",
         variable: "--course-color-orange",
         hoverBg: "hover:bg-orange-500/30",
+        gradient:
+            "bg-linear-to-br from-orange-500/25 via-zinc-900/95 to-zinc-950",
+        hoverGradient:
+            "hover:from-orange-500/40 hover:via-zinc-900/90 hover:to-zinc-900",
     },
     primary: {
         bg: "bg-primary/20",
@@ -93,6 +119,9 @@ export const COURSE_THEME_CONFIG: Record<
         border: "border-primary/20",
         variable: "--course-color-primary",
         hoverBg: "hover:bg-primary/30",
+        gradient: "bg-linear-to-br from-primary/25 via-zinc-900/95 to-zinc-950",
+        hoverGradient:
+            "hover:from-primary/40 hover:via-zinc-900/90 hover:to-zinc-900",
     },
 };
 

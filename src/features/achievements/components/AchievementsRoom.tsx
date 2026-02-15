@@ -173,25 +173,18 @@ export function AchievementsRoom() {
                   className="w-1.5 h-10 rounded-full"
                   style={{
                     backgroundColor: guild.color,
-                    boxShadow:
-                      guildId === 'HYBRID' ? `0 0 15px ${guild.color}` : 'none',
                   }}
                 />
                 <div>
                   <h2 className={`text-xl font-bold flex items-center gap-3`}>
                     {/* İsim */}
-                    <span
-                      className={guildId === 'HYBRID' ? 'text-primary' : ''}
-                    >
-                      {guild.name}
-                    </span>
+                    <span>{guild.name}</span>
 
                     {/* Dinamik İkon (Lonca Rengiyle) */}
                     <span
                       style={{
-                        color: guildId === 'HYBRID' ? undefined : guild.color,
+                        color: guild.color,
                       }}
-                      className={guildId === 'HYBRID' ? 'text-primary' : ''}
                     >
                       {GUILD_ICONS[guildId]}
                     </span>
@@ -202,14 +195,7 @@ export function AchievementsRoom() {
                 </div>
               </div>
 
-              {/* Mühür Izgarası */}
-              <div
-                className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6 ${
-                  guildId === 'HYBRID'
-                    ? 'p-6 rounded-3xl bg-primary/3 border border-primary/10 shadow-inner'
-                    : ''
-                }`}
-              >
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                 {achievements.map((achievement) => (
                   <SealCard
                     key={achievement.id}
