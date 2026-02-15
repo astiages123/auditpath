@@ -245,9 +245,7 @@ function QuizCardComponent({
             <p className="text-muted-foreground text-lg">
               Soru hazırlanıyor...
             </p>
-            <p className="text-muted-foreground/60 text-sm">
-              MiMo V2 Flash AI ile soru üretiliyor
-            </p>
+            <p className="text-muted-foreground/60 text-sm">Soru Üretiliyor</p>
           </div>
         </div>
       </div>

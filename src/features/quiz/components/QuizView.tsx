@@ -85,16 +85,8 @@ export function QuizView({
     startQuiz,
     markAsBlank,
   } = useQuiz({
-    recordResponse: async (qId, type, answer, time, diag, ins) => {
-      return recordResponse(
-        qId,
-        chunkId || null,
-        type,
-        answer,
-        time,
-        diag,
-        ins
-      );
+    recordResponse: async (qId, type, answer, time) => {
+      return recordResponse(qId, chunkId || null, type, answer, time);
     },
   });
 

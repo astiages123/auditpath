@@ -123,23 +123,15 @@ export class QuizFactory {
 
         concepts = analysisResult.data.concepts;
         difficultyIndex = analysisResult.data.difficulty_index;
-        const aiQuotas = analysisResult.data.quotas;
 
-        const { error: updateErr } = await Repository.updateChunkAILogic(
+        const { error: updateErr } = await Repository.updateChunkMetadata(
           chunkId,
           {
-            suggested_quotas: aiQuotas,
-          },
-        );
-
-        // Also update metadata for backward compatibility
-        if (!updateErr) {
-          await Repository.updateChunkMetadata(chunkId, {
             ...((chunk.metadata || {}) as Record<string, unknown>),
             concept_map: concepts as Json,
             difficulty_index: difficultyIndex,
-          });
-        }
+          },
+        );
 
         if (updateErr) {
           logger.error("[Factory] Mapping save failed:", updateErr);
@@ -148,15 +140,23 @@ export class QuizFactory {
           );
         }
 
-        log("MAPPING", "Bilişsel analiz ve kotalar başarıyla kaydedildi.", {
-          quotas: aiQuotas,
+        log("MAPPING", "Bilişsel analiz başarıyla kaydedildi.", {
+          conceptCount: concepts.length,
         });
-
-        // Update local chunk data for the rest of the loop
-        chunk.ai_logic = {
-          suggested_quotas: aiQuotas,
-        };
       }
+
+      const quotas = {
+        antrenman: concepts.length,
+        deneme: Math.ceil(concepts.length * 0.20), // %20 sabit
+        arsiv: Math.ceil(concepts.length * 0.30), // %30 seviyesine yükseltildi
+      };
+
+      // Hesaplanan kesin kotaları veritabanına (ai_logic) yansıt ki UI doğru gösterilsin
+      await Repository.updateChunkAILogic(chunkId, {
+        suggested_quotas: quotas,
+        reasoning:
+          "Sistem tarafından otomatik belirlenen pedagojik kotalar (%20 deneme, %30 arşiv).",
+      });
 
       // If only mapping is requested, we stop here
       if (options.mappingOnly) {
@@ -181,22 +181,6 @@ export class QuizFactory {
         chunk.section_title,
         guidelines,
       );
-
-      // AI Quotas - read from ai_logic column directly
-      const aiLogic =
-        (chunk.ai_logic as { suggested_quotas?: Record<string, number> }) || {};
-      const aiQuotas = aiLogic.suggested_quotas || {};
-      const quotas = {
-        antrenman: concepts.length,
-        deneme: Math.min(
-          aiQuotas.deneme ?? Math.ceil(concepts.length * 0.2),
-          Math.ceil(concepts.length * 0.2),
-        ),
-        arsiv: Math.min(
-          aiQuotas.arsiv ?? Math.ceil(concepts.length * 0.15),
-          Math.ceil(concepts.length * 0.15),
-        ),
-      };
 
       // Usage types to process
       const usageTypes: ("antrenman" | "deneme" | "arsiv")[] = options.usageType

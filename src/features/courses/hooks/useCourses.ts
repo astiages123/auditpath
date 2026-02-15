@@ -6,8 +6,6 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import coursesData from '../services/courses.json';
-import { calculateCategoryProgress } from '../logic/coursesLogic';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database.types';
 

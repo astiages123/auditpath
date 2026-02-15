@@ -34,14 +34,6 @@ BU DERSİN ÖNEM DERECESİ: ${importance.toUpperCase()}
 Belirli bir sayıya odaklanma. Metindeki 10 üzerinden 7 ve üzeri önem puanına sahip **TÜM** kavramları ve **TÜM** istisnaları (Exception Hunter) çıkar. Metin yoğunsa çok, sığ ise az kavram döndür.
 Asla uydurma veya değersiz veri üretme.
 
-Sistem artık kotaları senin belirlediğin "Pedagojik Altın Oran" üzerinden belirleyecek.
-Görev: Metnin derinliğini ve dersin önem derecesini analiz ederek ideal soru sayılarını belirle.
-KOTA SINIRLARI (KESİN KURAL):
-- antrenman: Metindeki benzersiz kavram sayısı (concepts.length) kadar olmalıdır. (Her kavrama 1 soru)
-- deneme: Toplam kavram sayısının en fazla %20'si kadar olmalıdır. (Karmaşık senaryolar için)
-- arsiv: Toplam kavram sayısının en fazla %15'i kadar olmalıdır. (Kritik hatırlatmalar için)
-- Bilişsel Doygunluk: Gereksiz tekrardan kaçın. Eğer konu sığ ise bu oranları daha da aşağı çekebilirsin.
-
 Kurallar:
 1. **EXCEPTION HUNTER:** Metinde "Ancak", "İstisnaen", "Şu kadar ki", "Saklı kalmak kaydıyla" gibi ifadelerle başlayan cümleleri TARA. Bu istisnaları ayrı birer kavram durağı olarak MUTLAKA listeye ekle ve 'isException': true olarak işaretle. (Priority 1)
 2. Metnin baş, orta ve son kısımlarından dengeli bir konu dağılımı yap.
@@ -64,12 +56,7 @@ Kurallar:
 Sadece saf JSON objesi döndür. Markdown bloğu (\`\`\`) veya giriş cümlesi ekleme.
 {
   "difficulty_index": 3, 
-  "concepts": [...],
-  "quotas": {
-    "antrenman": number,
-    "arsiv": number,
-    "deneme": number
-  }
+  "concepts": [...]
 }`;
 
 export const GLOBAL_AI_SYSTEM_PROMPT =
@@ -198,7 +185,7 @@ ${optionsText}
 
 ---
 
-Above the soruyu kaynak metne göre değerlendir ve JSON formatında puanla.`;
+Yukarıdaki soruyu kaynak metne göre değerlendir ve JSON formatında puanla.`;
 }
 
 export function buildFollowUpTaskPrompt(

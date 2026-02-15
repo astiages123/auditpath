@@ -11,11 +11,6 @@ import {
   BarChart2,
   Brain,
 } from 'lucide-react';
-import { useCourses } from '../hooks/useCourses';
-import { CourseCard } from './CourseCard';
-import { CategoryGrid } from './CategoryGrid';
-import { ProgressHeader } from './ProgressHeader';
-import TitleRoadmap from './TitleRoadmap';
 import { VideoList } from './VideoList';
 import { formatDuration } from '@/utils/core';
 import { useProgress } from '@/hooks/useProgress';
@@ -104,11 +99,11 @@ export function CourseList({
         return (
           <div
             key={course.id}
-            className={`rounded-xl border overflow-hidden transition-all duration-500 group
+            className={`rounded-xl border overflow-hidden transition-all duration-200 group
                 ${
                   isCompleted
                     ? 'border-amber-500/50 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/70 shadow-[0_0_15px_-5px_var(--color-amber-500)]'
-                    : 'border-border/50 bg-background/30 hover:border-border/80 hover:bg-background/50'
+                    : 'border-white/5 bg-zinc-900/40 hover:border-white/30 hover:bg-zinc-900/60'
                 }`}
           >
             {/* Course Header */}
@@ -244,7 +239,7 @@ export function CourseList({
                 <VideoList
                   courseId={course.course_slug}
                   dbCourseId={course.id}
-                  categoryColor={categoryColor}
+                  _categoryColor={categoryColor}
                 />
               </div>
             )}

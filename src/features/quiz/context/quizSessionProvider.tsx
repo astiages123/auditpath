@@ -237,10 +237,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
       chunkId: string | null,
       responseType: QuizResponseType,
       selectedAnswer: number | null,
-
-      timeSpentMs: number,
-      diagnosis?: string,
-      insight?: string
+      timeSpentMs: number
     ) => {
       if (!user?.id || !state.sessionInfo) {
         logger.warn('[QuizSession] Cannot record - no session');
@@ -298,7 +295,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
         dispatch({ type: 'SYNC_COMPLETE' });
       }
     },
-    [user?.id, state.sessionInfo]
+    [user?.id, state]
   );
 
   // Get next review item
@@ -308,7 +305,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
       return null;
     }
     return reviewQueue[currentReviewIndex];
-  }, [state.reviewQueue, state.currentReviewIndex]);
+  }, [state]);
 
   // Mark current review as complete and move to next
   const markReviewComplete = useCallback(() => {

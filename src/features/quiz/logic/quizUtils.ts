@@ -4,7 +4,7 @@ import type { AIResponse, LLMProvider, Message } from "@/features/quiz/types";
 import { UnifiedLLMClient } from "@/features/quiz/services/quizClient";
 import { rateLimiter } from "./quizRateLimit";
 import { COMMON_OUTPUT_FORMATS, GENERAL_QUALITY_RULES } from "./quizPrompts";
-import { env } from '@/utils/env';
+import { env } from "@/utils/env";
 
 export class DebugLogger {
   private static isEnabled = env.app.isDev;
@@ -171,7 +171,10 @@ export function parseJsonResponse(
     let cleanText = text.trim();
 
     // 0. </think>...</think> bloklarını temizle (Qwen modelleri bunu ekliyor)
-    cleanText = cleanText.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+    cleanText = cleanText.replace(/<think>[\s\S]*?<\/think>/gi, "").replace(
+      /<think>[\s\S]*/gi,
+      "",
+    ).trim();
 
     // 1. Markdown bloklarını temizle (```json ... ``` veya sadece ``` ... ```)
     const markdownMatch = cleanText.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -332,9 +335,11 @@ export class StructuredGenerator {
           .safeParse(lastResponse);
         if (safeResponse?.usage) {
           const { usage } = safeResponse;
-          if (usage.prompt_cache_hit_tokens || usage.prompt_cache_miss_tokens) {
+          const hits = usage.prompt_cache_hit_tokens ||
+            usage.prompt_tokens_details?.cached_tokens || 0;
+          if (hits > 0 || usage.prompt_cache_miss_tokens) {
             onLog?.("Cache Stats", {
-              hits: usage.prompt_cache_hit_tokens || 0,
+              hits,
               misses: usage.prompt_cache_miss_tokens || 0,
               total: usage.total_tokens || 0,
             });

@@ -8,8 +8,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { GUILDS, getRequirementDescription } from '../logic/achievementsData';
-import { Achievement } from '../types/achievementsTypes';
-import { getRankIcon } from '../utils/rankIcons';
+import type { Achievement } from '../types/achievementsTypes';
 
 interface SealDetailModalProps {
   achievement: Achievement | null;

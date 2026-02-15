@@ -1,7 +1,5 @@
 import { TvMinimalPlay, Clock, ChevronDown, BookOpen } from 'lucide-react';
 import { CourseList } from './CourseList';
-import { useCourses } from '../hooks/useCourses';
-import { calculateCategoryProgress } from '../logic/coursesLogic';
 import { useEffect } from 'react';
 import { useCelebration } from '@/hooks/useCelebration';
 import { useProgress } from '@/hooks/useProgress';
@@ -99,9 +97,7 @@ export function CategoryCard({
         'group relative overflow-hidden rounded-2xl border transition-all duration-200',
         theme.border,
         theme.bg,
-        isOpen
-          ? 'shadow-2xl border-white/20 bg-zinc-900/90'
-          : 'hover:bg-zinc-900/40'
+        isOpen ? 'shadow-2xl border-white/20 bg-zinc-900/90' : theme.hoverBg
       )}
     >
       <button

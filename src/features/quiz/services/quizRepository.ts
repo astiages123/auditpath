@@ -845,6 +845,7 @@ export async function updateChunkAILogic(
   chunkId: string,
   aiLogic: {
     suggested_quotas: { antrenman: number; arsiv: number; deneme: number };
+    reasoning?: string;
   },
 ): Promise<{ success: boolean; error?: Error }> {
   const updateData: Record<string, unknown> = {

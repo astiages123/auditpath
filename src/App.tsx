@@ -28,8 +28,9 @@ function PageLoader() {
 
 function App() {
   return (
-    <ErrorBoundary>
-      <Suspense fallback={<PageLoader />}>
+    <AuthProvider>
+      <ErrorBoundary>
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public Routes would go here if any */}
 
@@ -68,6 +69,7 @@ function App() {
         </Routes>
       </Suspense>
     </ErrorBoundary>
+    </AuthProvider>
   );
 }
 

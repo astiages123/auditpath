@@ -1,5 +1,4 @@
 import { getVirtualDateKey } from "@/utils/helpers";
-import { Session } from "../types/efficiencyTypes";
 
 /**
  * Generates a date range array (inclusive) filling any gaps between start and end.
@@ -36,12 +35,18 @@ export const formatDurationMinutes = (minutes: number): string => {
     return `${m}dk`;
 };
 
+interface RawTimelineItem {
+    type?: string;
+    start?: string | number;
+    end?: string | number;
+}
+
 /**
  * Type guard or converter for timeline items if needed
  */
-export const safeMapTimeline = (rawTimeline: any[]) => {
+export const safeMapTimeline = (rawTimeline: unknown[]) => {
     if (!Array.isArray(rawTimeline)) return [];
-    return rawTimeline.map((item: any) => ({
+    return (rawTimeline as RawTimelineItem[]).map((item) => ({
         type: item.type?.toLowerCase() || "work",
         start: Number(item.start),
         end: Number(item.end),

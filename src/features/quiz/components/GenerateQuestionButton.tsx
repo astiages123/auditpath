@@ -154,7 +154,7 @@ export function GenerateQuestionButton({
 
           // Real-time update for MAPPING phase
           if (log.step === 'MAPPING' && log.details?.conceptCount) {
-            setStatus((prev: any) =>
+            setStatus((prev) =>
               prev
                 ? {
                     ...prev,
@@ -168,11 +168,9 @@ export function GenerateQuestionButton({
         onQuestionSaved: (count: number) => {
           setSavedCount(count);
           // Update status optimistically
-          setStatus((prev: any) =>
-            prev ? { ...prev, used: prev.used + 1 } : prev
-          );
+          setStatus((prev) => (prev ? { ...prev, used: prev.used + 1 } : prev));
         },
-        onComplete: (result: any) => {
+        onComplete: (result: { success: boolean; generated: number }) => {
           setLoading(false);
           refreshStatus();
           onComplete?.();
@@ -181,9 +179,9 @@ export function GenerateQuestionButton({
             toast.success(`${result.generated} soru başarıyla üretildi!`);
           }
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           setLoading(false);
-          toast.error(error);
+          toast.error(String(error));
         },
       });
     } catch (err: unknown) {

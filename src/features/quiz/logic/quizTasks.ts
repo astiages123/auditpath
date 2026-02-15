@@ -92,13 +92,14 @@ export class AnalysisTask extends BaseTask<
         const messages = PromptArchitect.assemble(
             systemPrompt,
             contextPrompt,
-            `Ders Önem Derecesi: ${input.importance}\nLütfen kavram haritasını, bilişsel zorluk endeksini ve ideal öğrenme kotalarını oluştur. JSON formatında çıktı ver.`,
+            `Ders Önem Derecesi: ${input.importance}\nLütfen kavram haritasını ve bilişsel zorluk endeksini oluştur. JSON formatında çıktı ver.`,
         );
 
         const result = await StructuredGenerator.generate(messages, {
             schema: ConceptMapResponseSchema,
             provider: "google",
             model: "gemini-2.5-flash",
+            temperature: 1.0,
             usageType: "analysis",
             maxTokens: 8192,
             onLog: (msg: string, details?: Record<string, unknown>) => {
@@ -159,8 +160,8 @@ export class DraftingTask extends BaseTask<
 
         const result = await StructuredGenerator.generate(messages, {
             schema: GeneratedQuestionSchema,
-            provider: "mimo",
-            temperature: 0.1,
+            provider: "deepseek",
+            temperature: 1.3,
             usageType: "drafting",
             onLog: (msg: string, details?: Record<string, unknown>) =>
                 this.log(context, msg, details),
@@ -291,8 +292,8 @@ export class FollowUpTask extends BaseTask<
 
         const result = await StructuredGenerator.generate(messages, {
             schema: GeneratedQuestionSchema,
-            provider: "mimo",
-            temperature: 0.1,
+            provider: "deepseek",
+            temperature: 1.3,
             onLog: (msg: string, details?: Record<string, unknown>) =>
                 this.log(context, msg, details),
         });
@@ -382,8 +383,8 @@ export class RevisionTask extends BaseTask<
 
         const result = await StructuredGenerator.generate(messages, {
             schema: GeneratedQuestionSchema,
-            provider: "mimo",
-            temperature: 0.1,
+            provider: "deepseek",
+            temperature: 1.3,
             maxRetries: 2,
             usageType: "revision",
             retryPromptTemplate: REVISION_RETRY_TEMPLATE,
@@ -445,6 +446,7 @@ export class ValidationTask extends BaseTask<
         const result = await StructuredGenerator.generate(messages, {
             schema: ValidationResultSchema,
             provider: "cerebras",
+            temperature: 1.3,
             usageType: "validation",
             onLog: (msg: string, details?: Record<string, unknown>) =>
                 this.log(context, msg, details),

@@ -1,12 +1,12 @@
-import { BookOpen, FileText, LucideIcon } from 'lucide-react';
-import { storage } from '@/lib/storageService';
+import { BookOpen, FileText, LucideIcon } from "lucide-react";
+import { storage } from "@/lib/storageService";
 import {
   COURSE_KEYWORD_MAPPINGS,
   COURSE_THEME_CONFIG,
   CourseTheme,
   ICON_OVERRIDES,
-} from '../services/coursesConfig'; // Fixed path
-import coursesData from '../services/courses.json'; // Import data
+} from "../services/coursesConfig"; // Fixed path
+import coursesData from "../services/courses.json"; // Import data
 
 // --- Caches for O(1) Lookup ---
 // We use a simple in-memory cache for the "keyword search" results to avoid looping every render.
@@ -51,7 +51,7 @@ export function getCourseIcon(courseName: string | null): LucideIcon {
  * Helper to determine theme from course name
  */
 function getCourseTheme(courseName: string | null): CourseTheme {
-  if (!courseName) return 'primary';
+  if (!courseName) return "primary";
   const name = courseName.toLowerCase();
 
   if (themeCache.has(name)) {
@@ -65,8 +65,8 @@ function getCourseTheme(courseName: string | null): CourseTheme {
     }
   }
 
-  themeCache.set(name, 'primary');
-  return 'primary';
+  themeCache.set(name, "primary");
+  return "primary";
 }
 
 /**
@@ -86,7 +86,7 @@ export function getCourseIconColor(courseName: string | null): string {
 }
 
 // Storage key prefix for video progress
-const STORAGE_KEY_PREFIX = 'video-progress-';
+const STORAGE_KEY_PREFIX = "video-progress-";
 
 // Get storage key for course
 function getStorageKey(courseId: string): string {
@@ -101,7 +101,7 @@ interface VideoProgressData {
 
 // Load progress from storage
 function loadProgress(courseId: string): Set<number> {
-  if (typeof window === 'undefined') return new Set();
+  if (typeof window === "undefined") return new Set();
 
   try {
     const data = storage.get<VideoProgressData>(getStorageKey(courseId));
@@ -115,7 +115,7 @@ function loadProgress(courseId: string): Set<number> {
 
 // Save progress to storage
 function saveProgress(courseId: string, completedVideos: Set<number>): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   const data: VideoProgressData = {
     completedVideos: Array.from(completedVideos),
@@ -134,7 +134,7 @@ export function getVideoProgress(courseId: string): Set<number> {
 
 export function isVideoCompleted(
   courseId: string,
-  videoNumber: number
+  videoNumber: number,
 ): boolean {
   const progress = loadProgress(courseId);
   return progress.has(videoNumber);
@@ -146,7 +146,7 @@ export function isVideoCompleted(
 export function toggleVideoProgress(
   courseId: string,
   videoNumber: number,
-  completed: boolean
+  completed: boolean,
 ): Set<number> {
   const progress = loadProgress(courseId);
 
@@ -170,7 +170,7 @@ export function toggleVideoProgress(
 export function toggleVideoProgressBatch(
   courseId: string,
   videoNumbers: number[],
-  completed: boolean
+  completed: boolean,
 ): Set<number> {
   const progress = loadProgress(courseId);
 
@@ -199,13 +199,14 @@ export function getCompletedVideoNumbers(courseId: string): number[] {
 // Pure function for course stats
 export function calculateCourseStats(
   completedCount: number,
-  totalVideos: number
+  totalVideos: number,
 ) {
   return {
     completedCount,
     totalVideos,
-    percentage:
-      totalVideos > 0 ? Math.round((completedCount / totalVideos) * 100) : 0,
+    percentage: totalVideos > 0
+      ? Math.round((completedCount / totalVideos) * 100)
+      : 0,
   };
 }
 
@@ -228,7 +229,7 @@ export function getCourseStats(courseId: string, totalVideos: number) {
 export function calculateRankProgress(
   currentPercentage: number,
   currentRankMinPercentage: number | undefined,
-  nextRankMinPercentage: number | undefined
+  nextRankMinPercentage: number | undefined,
 ): number {
   if (
     currentRankMinPercentage === undefined ||
@@ -243,7 +244,7 @@ export function calculateRankProgress(
   if (thresholdDiff <= 0) return 100;
 
   const progress = Math.round(
-    ((currentPercentage - currentRankMinPercentage) / thresholdDiff) * 100
+    ((currentPercentage - currentRankMinPercentage) / thresholdDiff) * 100,
   );
 
   return Math.min(100, Math.max(0, progress));
@@ -259,7 +260,7 @@ export function calculateEstimatedDaysToNextRank(
   totalHours: number,
   completedHours: number,
   nextRankMinPercentage: number | undefined,
-  dailyRateHours: number
+  dailyRateHours: number,
 ): number {
   if (totalHours <= 0 || nextRankMinPercentage === undefined) return 0;
 
@@ -272,25 +273,34 @@ export function calculateEstimatedDaysToNextRank(
 
 // Clear all progress for a course (for testing/reset)
 export function clearCourseProgress(courseId: string): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
   storage.remove(getStorageKey(courseId));
 }
 
 // Get all courses with progress
 export function getAllProgressCourses(): string[] {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === "undefined") return [];
 
   // Use storage service to get all keys with the prefix
   const allKeys = storage.keys();
   return allKeys
     .filter((key) => key.startsWith(STORAGE_KEY_PREFIX))
-    .map((key) => key.replace(STORAGE_KEY_PREFIX, ''));
+    .map((key) => key.replace(STORAGE_KEY_PREFIX, ""));
 }
 
-// Helper to find course videos
+interface SimpleCourse {
+  id: string;
+  videos: Array<{ id: number }>;
+}
+
+interface SimpleCategory {
+  courses: SimpleCourse[];
+}
+
 function findCourseVideos(courseId: string): Array<{ id: number }> | null {
-  for (const category of coursesData as any[]) {
-    const course = category.courses.find((c: any) => c.id === courseId);
+  const categories = coursesData as SimpleCategory[];
+  for (const category of categories) {
+    const course = category.courses.find((c) => c.id === courseId);
     if (course) return course.videos;
   }
   return null;
@@ -298,7 +308,7 @@ function findCourseVideos(courseId: string): Array<{ id: number }> | null {
 
 export function getNextVideo(
   courseId: string,
-  currentVideoId: number
+  currentVideoId: number,
 ): number | null {
   const videos = findCourseVideos(courseId);
   if (!videos) return null;
@@ -311,7 +321,7 @@ export function getNextVideo(
 
 export function getPreviousVideo(
   courseId: string,
-  currentVideoId: number
+  currentVideoId: number,
 ): number | null {
   const videos = findCourseVideos(courseId);
   if (!videos) return null;

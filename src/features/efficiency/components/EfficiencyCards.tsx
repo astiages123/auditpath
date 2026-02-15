@@ -11,7 +11,6 @@ import {
   GoalProgressRing,
   LearningLoadChart,
 } from './EfficiencyCharts';
-import { useEfficiency } from '../hooks';
 import { EfficiencyHeatmap } from './EfficiencyHeatmap';
 import {
   BookOpen,
@@ -405,7 +404,7 @@ export const LearningLoadCard = ({ data }: LearningLoadCardProps) => {
               key={i}
               className="flex-1 rounded-t-lg bg-white/5"
               style={{
-                height: `${Math.random() * 60 + 20}%`,
+                height: `${(((i + 1) * 117) % 60) + 20}%`,
               }}
             />
           ))}

@@ -1,10 +1,9 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { logger } from '@/utils/logger';
 import { Skeleton } from '@/components/ui/skeleton';
 import { VideoItem } from './VideoItem';
-import { type Course } from '@/types';
 import { useVideoActions, VideoActionState } from '../hooks/useVideoActions';
 import { getVideoProgress } from '../services/videoService';
 
@@ -13,33 +12,28 @@ import coursesData from '../services/courses.json';
 
 interface VideoListProps {
   courseId: string; // The slug (e.g., 'iktisat-mikro')
-  dbCourseId: string; // The UUID from Supabase
-  categoryColor: string;
+  dbCourseId: string;
+  _categoryColor?: string;
 }
 
 interface CourseData {
-  id: string; // This matches the slug in courses.json
-  name: string;
   videos: Array<{
-    id: number; // videoNumber
+    id: number;
     title: string;
     duration: string;
     durationMinutes: number;
-    // ... other props
   }>;
 }
-
 interface CategoryData {
-  category: string;
-  courses: CourseData[]; // This type might be loose in JSON, but we access it safely
+  courses: Array<CourseData & { id: string }>;
 }
 
-// Find course by slug
 function findCourse(slug: string): CourseData | null {
   // Adjust based on actual JSON structure.
   // Based on reading: courses.json seems to be array of Categories.
-  for (const category of coursesData as any[]) {
-    const course = category.courses.find((c: any) => c.id === slug); // id in JSON is the slug
+  const categories = coursesData as CategoryData[];
+  for (const category of categories) {
+    const course = category.courses.find((c) => c.id === slug); // id in JSON is the slug
     if (course) return course;
   }
   return null;
@@ -48,10 +42,12 @@ function findCourse(slug: string): CourseData | null {
 export function VideoList({
   courseId,
   dbCourseId,
-  categoryColor,
+  _categoryColor,
 }: VideoListProps) {
   const [videos, setVideos] = useState<VideoActionState[]>([]);
-  const [staticVideos, setStaticVideos] = useState<any[]>([]); // To hold title/duration which are static
+  const [staticVideos, setStaticVideos] = useState<
+    Array<{ id: number; videoNumber: number; title: string; duration: string }>
+  >([]); // To hold title/duration which are static
   const [loading, setLoading] = useState(true);
 
   const { user } = useAuth();
@@ -126,15 +122,18 @@ export function VideoList({
   }, [courseId, dbCourseId, userId]);
 
   // Handler wrapper
-  const onToggle = async (videoNumber: number, isModifierPressed: boolean) => {
-    // Optimistic update via hook
-    const updated = await handleToggleVideo(
-      videos,
-      videoNumber,
-      isModifierPressed
-    );
-    setVideos(updated);
-  };
+  const onToggle = useCallback(
+    async (videoNumber: number, isModifierPressed: boolean) => {
+      // Optimistic update via hook
+      const updated = await handleToggleVideo(
+        videos,
+        videoNumber,
+        isModifierPressed
+      );
+      setVideos(updated);
+    },
+    [videos, handleToggleVideo]
+  );
 
   // Memoized Render Items
   const renderItems = useMemo(() => {
@@ -168,7 +167,7 @@ export function VideoList({
       return (
         <VideoItem
           key={staticV.videoNumber}
-          id={staticV.videoNumber}
+          _id={staticV.videoNumber}
           videoNumber={staticV.videoNumber}
           title={staticV.title}
           duration={staticV.duration}

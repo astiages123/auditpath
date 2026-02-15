@@ -6,11 +6,6 @@ export { type ConceptMapItem, type QuizQuestion, type QuizResponseType };
 export type ConceptMapResult = {
   difficulty_index: number;
   concepts: ConceptMapItem[];
-  quotas: {
-    antrenman: number;
-    arsiv: number;
-    deneme: number;
-  };
 };
 
 export interface ChunkMetadata {
@@ -51,7 +46,7 @@ export interface AIResponse extends AIResponseMetadata {
   content: string;
 }
 
-export type LLMProvider = "cerebras" | "mimo" | "google";
+export type LLMProvider = "cerebras" | "mimo" | "google" | "deepseek";
 
 // --- Knowledge Types ---
 

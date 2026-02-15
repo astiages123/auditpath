@@ -12,8 +12,8 @@ import { logger } from '@/utils/logger';
 // Start preloading subject guidelines
 subjectKnowledgeService
   .preload()
-  .catch((err: any) =>
-    logger.error('Failed to preload subject knowledge', err)
+  .catch((err: unknown) =>
+    logger.error('Failed to preload subject knowledge', err as Error)
   );
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

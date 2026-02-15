@@ -1,10 +1,8 @@
 import { memo } from 'react';
 import { Check, Circle } from 'lucide-react';
-import { useVideoActions } from '../hooks/useVideoActions';
-import { isVideoCompleted } from '../logic/coursesLogic';
 
 interface VideoItemProps {
-  id: number;
+  _id: number;
   videoNumber: number;
   title: string;
   duration: string;
@@ -13,7 +11,7 @@ interface VideoItemProps {
 }
 
 export const VideoItem = memo(function VideoItem({
-  id,
+  _id,
   videoNumber,
   title,
   duration,

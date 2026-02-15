@@ -4,10 +4,8 @@ import {
     Brain,
     Briefcase,
     Calculator,
-    FileText,
     Gavel,
     Globe,
-    Languages,
     LucideIcon,
     PiggyBank,
     Scale,
@@ -44,6 +42,7 @@ export const COURSE_THEME_CONFIG: Record<
         text: string; // Tailwind class
         border: string; // Tailwind class
         variable: string; // CSS variable name prefix
+        hoverBg: string; // Tailwind class
     }
 > = {
     emerald: {
@@ -51,42 +50,49 @@ export const COURSE_THEME_CONFIG: Record<
         text: "text-emerald-500",
         border: "border-emerald-500/20",
         variable: "--course-color-emerald",
+        hoverBg: "hover:bg-emerald-500/30",
     },
     amber: {
         bg: "bg-amber-500/20",
         text: "text-amber-500",
         border: "border-amber-500/20",
         variable: "--course-color-amber",
+        hoverBg: "hover:bg-amber-500/30",
     },
     blue: {
         bg: "bg-blue-500/20",
         text: "text-blue-500",
         border: "border-blue-500/20",
         variable: "--course-color-blue",
+        hoverBg: "hover:bg-blue-500/30",
     },
     purple: {
         bg: "bg-purple-500/20",
         text: "text-purple-500",
         border: "border-purple-500/20",
         variable: "--course-color-purple",
+        hoverBg: "hover:bg-purple-500/30",
     },
     rose: {
         bg: "bg-rose-500/20",
         text: "text-rose-500",
         border: "border-rose-500/20",
         variable: "--course-color-rose",
+        hoverBg: "hover:bg-rose-500/30",
     },
     orange: {
         bg: "bg-orange-500/20",
         text: "text-orange-500",
         border: "border-orange-500/20",
         variable: "--course-color-orange",
+        hoverBg: "hover:bg-orange-500/30",
     },
     primary: {
         bg: "bg-primary/20",
         text: "text-primary",
         border: "border-primary/20",
         variable: "--course-color-primary",
+        hoverBg: "hover:bg-primary/30",
     },
 };
 

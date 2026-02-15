@@ -1,12 +1,7 @@
 // import Image from "next/image";
 import { Lock } from 'lucide-react';
-import {
-  ACHIEVEMENTS,
-  GUILDS,
-  getRequirementDescription,
-} from '../logic/achievementsData';
-import { Achievement } from '../types/achievementsTypes';
-import { getRankIcon } from '../utils/rankIcons';
+import { GUILDS, getRequirementDescription } from '../logic/achievementsData';
+import type { Achievement } from '../types/achievementsTypes';
 
 interface SealCardProps {
   achievement: Achievement;

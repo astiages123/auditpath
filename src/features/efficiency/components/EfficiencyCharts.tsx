@@ -232,10 +232,6 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
 };
 
 // --- Bloom Key Chart (Polar Bar) ---
-interface BloomKeyChartProps {
-  data: BloomStats[];
-}
-
 export const BloomKeyChart = ({ data }: { data: BloomStats[] }) => {
   // We want to transform data to have specific colors for each level
   // Order: Hatırla (Red) -> Anla (Orange) -> Uygula (Yellow) -> Analiz (Green) -> Değerlendir (Blue) -> Yarat (Violet)

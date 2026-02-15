@@ -1,5 +1,4 @@
 import { supabase } from "@/lib/supabase";
-import type { Database } from "@/types/database.types";
 import {
   calculateFocusPower,
   calculateLearningFlow,
@@ -462,7 +461,7 @@ export async function getFocusPowerData({
   });
 
   // Calculate points based on range
-  const assembleData = (targetCount: number, fillAll = true) => {
+  const assembleData = (targetCount: number) => {
     const result: FocusPowerPoint[] = [];
     const loopCount = targetCount;
 

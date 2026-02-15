@@ -14,7 +14,6 @@ import {
 import { motion } from 'framer-motion';
 import { getUnlockedAchievements as getDbUnlocked } from '@/lib/clientDb';
 import { type UnlockedAchievement } from '@/types';
-import { useAchievements } from '../hooks/useAchievements';
 import {
   ACHIEVEMENTS,
   GUILDS,

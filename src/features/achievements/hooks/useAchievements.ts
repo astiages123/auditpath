@@ -7,11 +7,7 @@ import {
   getUnlockedAchievements,
 } from '@/lib/clientDb';
 import { ACHIEVEMENTS, calculateAchievements } from '../logic/achievementsData';
-import {
-  Achievement,
-  ActivityLog,
-  ProgressStats,
-} from '../types/achievementsTypes';
+import { type ProgressStats } from '../types/achievementsTypes';
 import { type Rank, RANKS } from '@/utils/helpers';
 import coursesData from '@/features/courses/services/courses.json';
 import { logger } from '@/utils/logger';

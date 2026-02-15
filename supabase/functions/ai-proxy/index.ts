@@ -1,14 +1,15 @@
 // Deno types
 // EdgeRuntime removed as unused
 
-import { corsHeaders } from '../_shared/cors.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
-const MIMO_API_URL = 'https://api.xiaomimimo.com/v1/chat/completions';
+const CEREBRAS_API_URL = "https://api.cerebras.ai/v1/chat/completions";
+const MIMO_API_URL = "https://api.xiaomimimo.com/v1/chat/completions";
+const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 
 interface ProxyRequest {
-  provider: 'cerebras' | 'mimo' | 'google';
+  provider: "cerebras" | "mimo" | "google" | "deepseek";
   messages: { role: string; content: string }[];
   model?: string;
   temperature?: number;
@@ -32,8 +33,8 @@ interface LogPayload {
 
 Deno.serve(async (req: Request) => {
   // CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   const startTime = Date.now();
@@ -42,15 +43,15 @@ Deno.serve(async (req: Request) => {
 
   try {
     // 1. Authenticate User
-    const authHeader = req.headers.get('Authorization');
+    const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
-      throw new Error('Missing Authorization header');
+      throw new Error("Missing Authorization header");
     }
 
     const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { global: { headers: { Authorization: authHeader } } },
     );
 
     const {
@@ -59,11 +60,11 @@ Deno.serve(async (req: Request) => {
     } = await supabaseClient.auth.getUser();
     if (authError || !user) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized', details: authError }),
+        JSON.stringify({ error: "Unauthorized", details: authError }),
         {
           status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
     userId = user.id;
@@ -73,43 +74,50 @@ Deno.serve(async (req: Request) => {
       (await req.json()) as ProxyRequest;
 
     if (!messages) {
-      return new Response(JSON.stringify({ error: 'messages is required' }), {
+      return new Response(JSON.stringify({ error: "messages is required" }), {
         status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     // Validate provider
-    if (provider && !['cerebras', 'mimo', 'google'].includes(provider)) {
+    if (
+      provider && !["cerebras", "mimo", "google", "deepseek"].includes(provider)
+    ) {
       return new Response(
         JSON.stringify({
           error: "Invalid provider. Supported: 'cerebras', 'mimo', 'google'",
         }),
         {
           status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     // Provider Configuration
     let apiUrl = CEREBRAS_API_URL;
-    let apiKey = Deno.env.get('CEREBRAS_API_KEY');
-    let targetModel = model || 'qwen-3-32b';
-    let activeProvider = provider || 'cerebras';
+    let apiKey = Deno.env.get("CEREBRAS_API_KEY");
+    let targetModel = model || "qwen-3-32b";
+    let activeProvider = provider || "cerebras";
 
     // Modeli isminden tanı (Otomatik Yönlendirme)
-    if (model?.startsWith('gemini')) {
-      activeProvider = 'google';
+    if (model?.startsWith("gemini")) {
+      activeProvider = "google";
       apiUrl =
-        'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
-      apiKey = Deno.env.get('GEMINI_API_KEY');
+        "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+      apiKey = Deno.env.get("GEMINI_API_KEY");
       targetModel = model;
-    } else if (provider === 'mimo') {
-      activeProvider = 'mimo';
+    } else if (provider === "mimo") {
+      activeProvider = "mimo";
       apiUrl = MIMO_API_URL;
-      apiKey = Deno.env.get('MIMO_API_KEY');
-      targetModel = model || 'mimo-v2-flash';
+      apiKey = Deno.env.get("MIMO_API_KEY");
+      targetModel = model || "mimo-v2-flash";
+    } else if (provider === "deepseek") {
+      activeProvider = "deepseek";
+      apiUrl = DEEPSEEK_API_URL;
+      apiKey = Deno.env.get("DEEPSEEK_API_KEY");
+      targetModel = model || "deepseek-chat";
     }
 
     if (!apiKey) {
@@ -119,33 +127,38 @@ Deno.serve(async (req: Request) => {
         }),
         {
           status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     // 3. Call AI Provider
-    const body = {
+    const body: Record<string, unknown> = {
       model: targetModel,
       messages,
       temperature: temperature ?? 0.1,
       max_tokens: max_tokens || 5120,
     };
 
+    // DeepSeek JSON Output modu
+    if (activeProvider === "deepseek") {
+      body.response_format = { type: "json_object" };
+    }
+
     console.log(`[AI Proxy] ${activeProvider} API calling (${targetModel})...`);
 
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
     };
 
-    if (activeProvider === 'mimo') {
-      headers['api-key'] = apiKey; // Mimo specific header
+    if (activeProvider === "mimo") {
+      headers["api-key"] = apiKey; // Mimo specific header
     } else {
-      headers['Authorization'] = `Bearer ${apiKey}`; // Standard OpenAI/Cerebras/Google
+      headers["Authorization"] = `Bearer ${apiKey}`; // Standard OpenAI/Cerebras/Google
     }
 
     const response = await fetch(apiUrl, {
-      method: 'POST',
+      method: "POST",
       headers,
       body: JSON.stringify(body),
     });
@@ -163,21 +176,23 @@ Deno.serve(async (req: Request) => {
             model: targetModel,
             status,
             latency_ms: Date.now() - startTime,
-            usage_type: usage_type || 'unknown_error',
-            error_message: `API Error ${response.status}: ${responseText.substring(
-              0,
-              500
-            )}`,
+            usage_type: usage_type || "unknown_error",
+            error_message: `API Error ${response.status}: ${
+              responseText.substring(
+                0,
+                500,
+              )
+            }`,
           });
         } catch (logError) {
-          console.error('[Proxy Log Error - Error Response]', logError);
+          console.error("[Proxy Log Error - Error Response]", logError);
         }
       }
 
       console.error(
         `[AI Proxy] ${activeProvider} API Error:`,
         response.status,
-        responseText
+        responseText,
       );
       return new Response(
         JSON.stringify({
@@ -186,21 +201,31 @@ Deno.serve(async (req: Request) => {
         }),
         {
           status: response.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
     // 4. Extract Usage & Log
+    // DeepSeek <think> bloğu temizleme
+    let cleanedResponseText = responseText;
+    if (activeProvider === "deepseek") {
+      // Kapanış etiketi olsun ya da olmasın <think> bloğunu temizle
+      cleanedResponseText = responseText
+        .replace(/<think>[\s\S]*?<\/think>/gi, "")
+        .replace(/<think>[\s\S]*/gi, "")
+        .trim();
+    }
+
     let data;
     try {
-      data = JSON.parse(responseText);
+      data = JSON.parse(cleanedResponseText);
     } catch (parseError) {
       console.error(
-        'JSON Parse Error:',
+        "JSON Parse Error:",
         parseError,
-        'Response:',
-        responseText.substring(0, 200)
+        "Response:",
+        responseText.substring(0, 200),
       );
 
       // Log the parse error to DB synchronously
@@ -212,7 +237,7 @@ Deno.serve(async (req: Request) => {
             model: targetModel,
             status: 200, // Provider returned 200, but content was invalid
             latency_ms: Date.now() - startTime,
-            usage_type: usage_type || 'json_parse_error',
+            usage_type: usage_type || "json_parse_error",
             error_message: `JSON Parse Error: ${
               parseError instanceof Error
                 ? parseError.message
@@ -220,22 +245,22 @@ Deno.serve(async (req: Request) => {
             }. Response: ${responseText.substring(0, 200)}`,
           });
         } catch (logError) {
-          console.error('[Proxy Log Error - JSON Parse]', logError);
+          console.error("[Proxy Log Error - JSON Parse]", logError);
         }
       }
 
       // Return raw text or error response
       return new Response(
         JSON.stringify({
-          error: 'Invalid JSON response from AI provider',
+          error: "Invalid JSON response from AI provider",
           details: responseText.substring(0, 500),
         }),
         {
           status: 502, // Bad Gateway (sort of), or just return the text?
           // User asked to log it, but didn't strictly say fail.
           // But if we can't parse, we can't return JSON structure.
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
       );
     }
 
@@ -258,79 +283,80 @@ Deno.serve(async (req: Request) => {
         completion_tokens: completionTokens,
         total_tokens: totalTokens,
         cached_tokens: cachedTokens,
-        usage_type: usage_type || 'generation',
+        usage_type: usage_type || "generation",
       });
     } catch (logError) {
-      console.error('[Proxy Log Error - Success]', logError);
+      console.error("[Proxy Log Error - Success]", logError);
     }
 
     console.log(
-      `[AI Proxy] Success. Tokens: ${totalTokens} (Cached: ${cachedTokens})`
+      `[AI Proxy] Success. Tokens: ${totalTokens} (Cached: ${cachedTokens})`,
     );
 
     return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
-    console.error('[AI Proxy] Error:', errorMessage);
+    const errorMessage = error instanceof Error
+      ? error.message
+      : "Unknown error";
+    console.error("[AI Proxy] Error:", errorMessage);
 
     if (userId) {
       try {
         await logToDB({
           user_id: userId,
-          provider: 'unknown',
-          model: 'unknown',
+          provider: "unknown",
+          model: "unknown",
           status: 500,
           latency_ms: Date.now() - startTime,
-          usage_type: 'proxy_error',
+          usage_type: "proxy_error",
           error_message: errorMessage,
         });
       } catch (logError) {
-        console.error('[Proxy Log Error - Exception]', logError);
+        console.error("[Proxy Log Error - Exception]", logError);
       }
     }
 
     return new Response(JSON.stringify({ error: errorMessage }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
 
 async function logToDB(payload: LogPayload) {
-  console.log('Starting logToDB...');
+  console.log("Starting logToDB...");
 
-  const sbUrl = Deno.env.get('SUPABASE_URL');
-  const sbKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+  const sbUrl = Deno.env.get("SUPABASE_URL");
+  const sbKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
   if (!sbUrl || !sbKey) {
     console.error(
-      'CRITICAL: Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars'
+      "CRITICAL: Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars",
     );
-    console.error('SUPABASE_URL defined:', !!sbUrl);
-    console.error('SUPABASE_SERVICE_ROLE_KEY defined:', !!sbKey);
+    console.error("SUPABASE_URL defined:", !!sbUrl);
+    console.error("SUPABASE_SERVICE_ROLE_KEY defined:", !!sbKey);
     return;
   }
 
   try {
     const adminClient = createClient(sbUrl, sbKey);
 
-    console.log('Inserting payload:', JSON.stringify(payload, null, 2));
+    console.log("Inserting payload:", JSON.stringify(payload, null, 2));
 
     const { data, error } = await adminClient
-      .from('ai_generation_logs')
+      .from("ai_generation_logs")
       .insert(payload)
       .select(); // Select to see returned data if successful
 
     if (error) {
       // Bu log Supabase Dashboard'da görünmeli
-      console.error('DATABASE INSERT ERROR:', JSON.stringify(error, null, 2));
+      console.error("DATABASE INSERT ERROR:", JSON.stringify(error, null, 2));
     } else {
-      console.log('LOG SAVED SUCCESSFULLY:', data);
+      console.log("LOG SAVED SUCCESSFULLY:", data);
     }
   } catch (err) {
-    console.error('CRITICAL LOGGING EXCEPTION:', err);
+    console.error("CRITICAL LOGGING EXCEPTION:", err);
   }
 }

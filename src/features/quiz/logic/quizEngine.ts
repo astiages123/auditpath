@@ -401,7 +401,7 @@ export class ExamService {
                 callbacks.onQuestionSaved(totalSaved);
               },
               onComplete: () => {},
-              onError: (err: any) => {
+              onError: (err: unknown) => {
                 throw new Error(String(err));
               },
             },
@@ -555,8 +555,8 @@ export async function checkAndTriggerBackgroundGeneration(
         onLog: () => {},
         onQuestionSaved: () => {},
         onComplete: () => {},
-        onError: (err: any) =>
-          logger.error("Background gen error", { error: err }),
+        onError: (err: unknown) =>
+          logger.error("Background gen error", { error: String(err) }),
       },
       {
         usageType: "antrenman",

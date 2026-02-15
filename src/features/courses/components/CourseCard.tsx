@@ -8,8 +8,6 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { type Course } from '@/types';
-import { useCourses } from '../hooks/useCourses';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CourseStatsModal } from './CourseStatsModal';

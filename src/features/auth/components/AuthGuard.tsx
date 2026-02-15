@@ -1,13 +1,9 @@
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { AuthModal } from './AuthModal';
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { LoginPage } from './LoginPage';
 
 export function AuthGuard() {
   const { user, loading } = useAuth();
-  const [showModal, setShowModal] = useState(false);
 
   // Auto-open removed as per requirement
   // useEffect(() => {

@@ -1,9 +1,6 @@
 import { createContext, useContext } from 'react';
 import {
-  type SessionInfo,
-  type QuotaInfo,
   type ReviewItem,
-  type CourseStats,
   type QuizResponseType,
   type QuizSessionState,
 } from '@/features/quiz/types';
@@ -16,10 +13,7 @@ export interface QuizSessionContextValue {
     chunkId: string | null,
     responseType: QuizResponseType,
     selectedAnswer: number | null,
-
-    timeSpentMs: number,
-    diagnosis?: string,
-    insight?: string
+    timeSpentMs: number
   ) => Promise<{
     isTopicRefreshed: boolean;
     isChainBonusApplied?: boolean;

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { calculateFocusPower, EFFICIENCY_THRESHOLDS } from "@/utils/math";
+import { EFFICIENCY_THRESHOLDS } from "@/utils/math";
 import { Session } from "../types/efficiencyTypes";
 
 // Composable Hooks

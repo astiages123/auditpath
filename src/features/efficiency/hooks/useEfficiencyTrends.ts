@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { getEfficiencyTrend, getFocusTrend } from '@/lib/clientDb';
+import { useEffect, useState } from "react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { getEfficiencyTrend, getFocusTrend } from "@/lib/clientDb";
 import {
   getConsistencyData,
   getFocusPowerData,
   getLearningLoadData,
-} from '../services/efficiencyService';
-import { DayActivity, EfficiencyTrend } from '@/types';
-import { FocusPowerPoint, LearningLoad } from '../types/efficiencyTypes';
-import { logger } from '@/utils/logger';
+} from "../services/efficiencyService";
+import { DayActivity, EfficiencyTrend, FocusTrend } from "@/types";
+import { FocusPowerPoint, LearningLoad } from "../types/efficiencyTypes";
+import { logger } from "@/utils/logger";
 
 export function useEfficiencyTrends() {
   const { user } = useAuth();
@@ -26,7 +26,7 @@ export function useEfficiencyTrends() {
 
   const [consistencyData, setConsistencyData] = useState<DayActivity[]>([]);
   const [efficiencyTrend, setEfficiencyTrend] = useState<EfficiencyTrend[]>([]);
-  const [focusTrend, setFocusTrend] = useState<any[]>([]);
+  const [focusTrend, setFocusTrend] = useState<FocusTrend[]>([]);
 
   useEffect(() => {
     async function fetchTrends() {
@@ -51,9 +51,9 @@ export function useEfficiencyTrends() {
           getLearningLoadData({ userId: user.id, days: 1 }),
           getLearningLoadData({ userId: user.id, days: 30 }),
           getLearningLoadData({ userId: user.id, days: 180 }),
-          getFocusPowerData({ userId: user.id, range: 'week' }),
-          getFocusPowerData({ userId: user.id, range: 'month' }),
-          getFocusPowerData({ userId: user.id, range: 'all' }),
+          getFocusPowerData({ userId: user.id, range: "week" }),
+          getFocusPowerData({ userId: user.id, range: "month" }),
+          getFocusPowerData({ userId: user.id, range: "all" }),
           getConsistencyData({ userId: user.id, days: 30 }),
         ]);
 
@@ -68,7 +68,7 @@ export function useEfficiencyTrends() {
         setFocusPowerAll(focusPowerAllData || []);
         setConsistencyData(consistency || []);
       } catch (error) {
-        logger.error('Failed to fetch efficiency trends', error as Error);
+        logger.error("Failed to fetch efficiency trends", error as Error);
       } finally {
         setLoading(false);
       }

@@ -1,5 +1,5 @@
 import { TrendingUp } from 'lucide-react';
-import { useTransition, useMemo } from 'react';
+import { useTransition } from 'react';
 import { ErrorBoundary } from '@/ErrorBoundary';
 import { RecentQuizzesCard } from '@/features/efficiency/components';
 import { CognitiveInsightsCard } from '@/features/efficiency/components';

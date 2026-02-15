@@ -1,9 +1,4 @@
-import {
-    QuizAction,
-    QuizSessionState,
-    QuizStatus,
-    ReviewItem,
-} from "../types/quizTypes";
+import { QuizAction, QuizSessionState, ReviewItem } from "../types/quizTypes";
 
 export const initialQuizSessionState: QuizSessionState = {
     status: "IDLE",

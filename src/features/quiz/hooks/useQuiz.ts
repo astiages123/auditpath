@@ -203,8 +203,8 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
                   }
                   updateState({ isLoading: false });
                 },
-                onError: (err: any) =>
-                  updateState({ error: err, isLoading: false }),
+                onError: (err: unknown) =>
+                  updateState({ error: String(err), isLoading: false }),
               },
               { targetCount: count },
             );
