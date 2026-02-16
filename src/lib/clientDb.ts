@@ -1,6 +1,6 @@
-import { supabase } from '@/lib/supabase';
-import type { Category, Course } from '@/types';
-import { logger } from '@/utils/logger';
+import { supabase } from "@/lib/supabase";
+import type { Category, Course } from "@/types";
+import { logger } from "@/utils/logger";
 
 // ============================================================================
 // RE-EXPORTS FROM SERVICE FILES
@@ -12,13 +12,13 @@ export {
   getVideoProgress,
   toggleVideoProgress,
   toggleVideoProgressBatch,
-} from '@/features/courses/services/videoService';
+} from "@/features/courses/services/videoService";
 
 // Achievement Service
 export {
   getUnlockedAchievements,
   unlockAchievement,
-} from '@/features/achievements/services/achievementService';
+} from "@/features/achievements/services/achievementService";
 
 // Pomodoro Service
 export {
@@ -29,13 +29,14 @@ export {
   getRecentSessions,
   updatePomodoroHeartbeat,
   upsertPomodoroSession,
-} from '@/features/pomodoro/services';
+} from "@/features/pomodoro/services";
 
 // Quiz Service
 export {
   getBloomStats,
   getCourseIdBySlug,
   getCoursePoolCount,
+  getCourseProgress,
   getCourseTopics,
   getCourseTopicsWithCounts,
   getFirstChunkIdForTopic,
@@ -49,7 +50,7 @@ export {
   getTopicQuestionCount,
   getTopicQuestions,
   getUniqueCourseTopics,
-} from '@/features/quiz/services/core/quizService';
+} from "@/features/quiz/services/core/quizService";
 
 // User Stats Service
 export {
@@ -57,7 +58,7 @@ export {
   getStreakMilestones,
   getTotalActiveDays,
   getUserStats,
-} from '@/features/achievements/services/userStatsService';
+} from "@/features/achievements/services/userStatsService";
 
 // Efficiency Service
 export {
@@ -65,7 +66,7 @@ export {
   getEfficiencyRatio,
   getEfficiencyTrend,
   getFocusTrend,
-} from '@/features/efficiency/services';
+} from "@/features/efficiency/services";
 
 // Activity Service
 export {
@@ -73,14 +74,14 @@ export {
   getDailyStats,
   getHistoryStats,
   getLast30DaysActivity,
-} from '@/features/efficiency/services/activityService';
+} from "@/features/efficiency/services/activityService";
 
 // Rank Utils
-export type { Rank } from '@/utils/helpers';
-export { getNextRank, getRankForPercentage, RANKS } from '@/utils/helpers';
+export type { Rank } from "@/utils/helpers";
+export { getNextRank, getRankForPercentage, RANKS } from "@/utils/helpers";
 
 // Category Utils
-export { normalizeCategorySlug } from '@/utils/helpers';
+export { normalizeCategorySlug } from "@/utils/helpers";
 
 // ============================================================================
 // SHARED FUNCTIONS (Category & Course Management)
@@ -88,15 +89,14 @@ export { normalizeCategorySlug } from '@/utils/helpers';
 
 export async function getCategories(): Promise<Category[]> {
   const { data: categories, error: catError } = await supabase
-    .from('categories')
-    .select('*, courses(*)')
-    .order('sort_order');
+    .from("categories")
+    .select("*, courses(*)")
+    .order("sort_order");
 
   if (catError || !categories) {
     if (catError) {
-      const isAbort =
-        catError.message?.includes('AbortError') ||
-        catError.code === 'ABORT_ERROR';
+      const isAbort = catError.message?.includes("AbortError") ||
+        catError.code === "ABORT_ERROR";
       if (!isAbort) {
         // Log to external service if needed
       }
@@ -109,12 +109,12 @@ export async function getCategories(): Promise<Category[]> {
 
 export async function getAllCourses(): Promise<Course[]> {
   const { data, error } = await supabase
-    .from('courses')
-    .select('*')
-    .order('sort_order');
+    .from("courses")
+    .select("*")
+    .order("sort_order");
 
   if (error) {
-    logger.error('Error fetching all courses:', error);
+    logger.error("Error fetching all courses:", error);
     return [];
   }
   return data || [];

@@ -23,7 +23,7 @@ export interface LLMClientOptions {
 const PROXY_URL = `${env.supabase.url}/functions/v1/ai-proxy`;
 
 const DEFAULT_MODELS: Record<LLMProvider, string> = {
-  cerebras: "zai-glm-4.7",
+  cerebras: "gpt-oss-120b",
   google: "gemini-2.5-flash",
   mimo: "mimo-v2-flash", // Placeholder for mimo
   deepseek: "deepseek-chat", // Placeholder for deepseek
@@ -84,6 +84,15 @@ export class UnifiedLLMClient {
       return this.processResponse(data, provider, onLog);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
+
+      if (error instanceof Error && error.name === "AbortError") {
+        const timeoutMsg =
+          "Bağlantı zaman aşımına uğradı veya sunucu yanıt vermiyor. Tekrar deneniyor...";
+        onLog?.(timeoutMsg);
+        logger.error(`[${provider}] Zaman aşımı`, error);
+        throw new Error(timeoutMsg);
+      }
+
       logger.error(`[${provider}] İstek hatası`, new Error(errorMsg));
       throw error;
     }
@@ -102,7 +111,7 @@ export class UnifiedLLMClient {
     const contextLength = lastUserMessage?.content.length || 0;
 
     logger.info(`[${provider}] İstek başlatılıyor (Proxy)...`);
-    onLog?.(`${provider} API çağrısı başlatılıyor...`, {
+    onLog?.(`Bağlantı kuruluyor...`, {
       promptLength: contextLength,
       model,
       messageCount: messages.length,
@@ -113,14 +122,23 @@ export class UnifiedLLMClient {
     token: string,
     body: Record<string, unknown>,
   ) {
-    return fetch(PROXY_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+    try {
+      const response = await fetch(PROXY_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      return response;
+    } finally {
+      clearTimeout(timeoutId);
+    }
   }
 
   private static async handleError(
@@ -164,7 +182,7 @@ export class UnifiedLLMClient {
       logger.debug(`[AI Cache] Hit: ${cachedTokens} tokens`);
     }
 
-    onLog?.(`${provider} API yanıtı alındı`, {
+    onLog?.(`Bilgiler alındı...`, {
       responseLength: content.length,
       usage: usageRaw,
       cachedTokens,

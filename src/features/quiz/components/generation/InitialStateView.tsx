@@ -16,12 +16,12 @@ export function InitialStateView({ onGenerate }: InitialStateViewProps) {
           <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
           <div className="space-y-2">
             <h4 className="text-xl font-bold text-amber-600 tracking-tight">
-              Henüz Analiz Edilmedi
+              Bu Konuyu Henüz Keşfetmedik
             </h4>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Bu konunun kapsadığı kavramlar ve zorluk seviyesi henüz
-              belirlenmedi. Eğitim sürecini başlatmak için metni analiz
-              etmeliyiz.
+              Bu bölümdeki kavramları ve zorluk seviyesini senin için henüz
+              analiz etmedim. Hemen başlayıp senin için en uygun antrenmanı
+              hazırlayabilirim.
             </p>
           </div>
         </div>

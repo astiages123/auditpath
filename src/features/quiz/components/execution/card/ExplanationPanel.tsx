@@ -1,9 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { GraduationCap, ChevronDown, Brain } from 'lucide-react';
-import { cn } from '@/utils/core';
+import {
+  GraduationCap,
+  ChevronDown,
+  Brain,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
 import { QuizQuestion } from '@/features/quiz/types';
 import { MathRenderer } from './MathRenderer';
-import { EvidenceCard } from '../EvidenceCard';
 
 interface ExplanationPanelProps {
   question: QuizQuestion;
@@ -14,29 +18,18 @@ interface ExplanationPanelProps {
   optionLabels: string[];
 }
 
-/**
- * ExplanationPanel component
- *
- * Displays the "Hoca Notu" (Trainer's Note) section after a question is answered.
- * Includes:
- * - Animated toggle for the explanation
- * - AuditPath Diagnostics (insights)
- * - Evidence references via EvidenceCard
- * - KaTeX rendered mathematical explanations
- */
 export function ExplanationPanel({
   question,
   isCorrect,
   showExplanation,
   onToggleExplanation,
-  courseId,
   optionLabels,
 }: ExplanationPanelProps) {
   return (
-    <div className="border-t border-border">
+    <div className="border-t border-border/50">
       <div
         onClick={onToggleExplanation}
-        className="w-full px-6 py-3 flex items-center justify-between bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+        className="w-full px-5 py-3 flex items-center justify-between bg-muted/20 hover:bg-muted/40 transition-all cursor-pointer"
         role="button"
         tabIndex={0}
         onKeyDown={(e) => {
@@ -46,17 +39,15 @@ export function ExplanationPanel({
         }}
       >
         <div className="flex items-center gap-2">
-          <GraduationCap className="w-5 h-5 text-primary" />
-          <span className="font-medium text-foreground">Hoca Notu</span>
+          <GraduationCap className="w-4 h-4 text-primary/70" />
+          <span className="font-medium text-sm text-foreground/80">Çözüm</span>
         </div>
-        <div className="flex items-center gap-3">
-          <motion.span
-            animate={{ rotate: showExplanation ? 180 : 0 }}
-            className="text-muted-foreground"
-          >
-            <ChevronDown className="w-4 h-4" />
-          </motion.span>
-        </div>
+        <motion.span
+          animate={{ rotate: showExplanation ? 180 : 0 }}
+          className="text-muted-foreground"
+        >
+          <ChevronDown className="w-4 h-4" />
+        </motion.span>
       </div>
 
       <AnimatePresence>
@@ -67,55 +58,38 @@ export function ExplanationPanel({
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="px-6 py-4 bg-primary/5 border-t border-primary/10">
-              <div
-                className={cn(
-                  'prose prose-sm prose-invert max-w-none',
-                  isCorrect ? 'text-emerald-300' : 'text-foreground'
-                )}
-              >
-                <div className="flex items-start gap-3">
+            <div className="px-5 py-4 bg-muted/10">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
                   {isCorrect ? (
-                    <span className="text-2xl">✅</span>
+                    <div className="flex items-center gap-2 text-emerald-400">
+                      <CheckCircle className="w-5 h-5" />
+                      <span className="font-semibold">Doğru Cevap</span>
+                    </div>
                   ) : (
-                    <span className="text-2xl">📚</span>
+                    <div className="flex items-center gap-2 text-red-400">
+                      <XCircle className="w-5 h-5" />
+                      <span className="font-semibold">
+                        Yanlış - Doğru: {optionLabels[question.a]}
+                      </span>
+                    </div>
                   )}
-                  <div className="flex-1">
-                    {isCorrect && (
-                      <p className="font-bold text-emerald-400 mb-2">
-                        Tebrikler! Doğru cevap.
-                      </p>
-                    )}
-                    {!isCorrect && (
-                      <p className="font-bold text-red-400 mb-2">
-                        Yanlış cevap. Doğru cevap: {optionLabels[question.a]}
-                      </p>
-                    )}
+                </div>
 
-                    {question.insight && (
-                      <div className="mb-4 p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-lg">
-                        <div className="flex items-center gap-2 mb-1 text-indigo-400 font-semibold">
-                          <Brain className="w-4 h-4" />
-                          <span>AuditPath Teşhisi</span>
-                        </div>
-                        <p className="text-sm text-foreground/90 italic">
-                          {question.insight}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Evidence Card */}
-                    {question.evidence && courseId && (
-                      <div className="mb-4">
-                        <EvidenceCard
-                          evidence={question.evidence}
-                          courseId={courseId}
-                        />
-                      </div>
-                    )}
-
-                    <MathRenderer content={question.exp} />
+                {question.insight && (
+                  <div className="p-3 bg-primary/5 border border-primary/10 rounded-lg">
+                    <div className="flex items-center gap-2 mb-1.5 text-primary/80 font-medium text-xs uppercase tracking-wide">
+                      <Brain className="w-3.5 h-3.5" />
+                      <span>İpucu</span>
+                    </div>
+                    <p className="text-sm text-foreground/80 leading-relaxed">
+                      {question.insight}
+                    </p>
                   </div>
+                )}
+
+                <div className="text-md text-foreground/90 leading-relaxed">
+                  <MathRenderer content={question.exp} />
                 </div>
               </div>
             </div>

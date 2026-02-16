@@ -13,7 +13,11 @@ import {
 import { Loader2, Sparkles } from 'lucide-react';
 import { getChunkQuotaStatus } from '@/features/quiz/services/repositories/quizRepository';
 import { type QuotaStatus } from '@/features/quiz/types';
-import { QuizFactory, type GenerationLog, type GenerationStep as LogStep } from '@/features/quiz/logic';
+import {
+  QuizFactory,
+  type GenerationLog,
+  type GenerationStep as LogStep,
+} from '@/features/quiz/logic';
 import { toast } from 'sonner';
 import { QuotaDisplay } from './QuotaDisplay';
 import { GenerationLiveStream } from './GenerationLiveStream';
@@ -34,6 +38,7 @@ const stepProgress: Record<LogStep, number> = {
   MAPPING: 20,
   GENERATING: 50,
   VALIDATING: 75,
+  REVISION: 85,
   SAVING: 90,
   COMPLETED: 100,
   ERROR: 0,

@@ -1,5 +1,4 @@
 import { Loader2, ArrowRight } from 'lucide-react';
-import { MasteryUpdateOverlay } from '../MasteryUpdateOverlay';
 import { type SubmissionResult } from '@/features/quiz/types';
 
 interface QuizActionFooterProps {
@@ -9,38 +8,21 @@ interface QuizActionFooterProps {
   currentBatchIndex: number;
   totalBatches: number;
   lastSubmissionResult: SubmissionResult | null;
-  previousMastery: number | null;
   onNext: () => void;
 }
 
-/**
- * QuizActionFooter Component
- *
- * Displays the post-answer actions and feedback.
- * Includes:
- * - MasteryUpdateOverlay for visual feedback on SRS progress
- * - Dynamic "Next" button (Sıradaki Soru, Sonraki Set, or Testi Bitir)
- * - Loading state during question submission
- */
 export function QuizActionFooter({
   isAnswered,
   isSubmitting,
   queueLength,
   currentBatchIndex,
   totalBatches,
-  lastSubmissionResult,
-  previousMastery,
   onNext,
 }: QuizActionFooterProps) {
   if (!isAnswered) return null;
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-4">
-      <MasteryUpdateOverlay
-        lastSubmissionResult={lastSubmissionResult}
-        previousMastery={previousMastery}
-      />
-
+    <div className="w-full max-w-3xl mx-auto">
       <div className="flex flex-col sm:flex-row gap-3">
         <button
           onClick={onNext}

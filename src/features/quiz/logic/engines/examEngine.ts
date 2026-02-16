@@ -1,190 +1,179 @@
-import * as Repository from "@/features/quiz/services/repositories/quizRepository";
-import { type GenerationLog, QuizFactory } from "../factory/QuizFactory";
+import * as Repository from '@/features/quiz/services/repositories/quizRepository';
 import {
-    calculateQuestionWeights,
-    type ChunkMetric,
-} from "@/features/quiz/logic";
-import { parseOrThrow } from "@/utils/helpers";
-import { ChunkMetadataSchema } from "@/features/quiz/types";
-import { logger } from "@/utils/logger";
+  type GenerationLog,
+  type GeneratorCallbacks,
+  QuizFactory,
+} from '../factory/QuizFactory';
+import {
+  calculateQuestionWeights,
+  type ChunkMetric,
+} from '@/features/quiz/logic';
+import { parseOrThrow } from '@/utils/helpers';
+import { ChunkMetadataSchema } from '@/features/quiz/types';
+import { logger } from '@/utils/logger';
 
 export class ExamService {
-    static async generateSmartExam(
-        courseId: string,
-        courseName: string, // Keep for backward compatibility even if unused
-        userId: string,
-        callbacks: {
-            onLog: (log: GenerationLog) => void;
-            onQuestionSaved: (count: number) => void;
-            onComplete: () => void;
-            onError: (err: Error) => void;
-        },
-    ): Promise<{ success: boolean; questionIds: string[] }> {
-        const factory = new QuizFactory();
-        const EXAM_TOTAL = 20;
+  private static async buildExamDistribution(
+    courseId: string,
+    userId: string,
+    examTotal: number
+  ): Promise<{ weights: Map<string, number>; metrics: ChunkMetric[] }> {
+    const chunks = await Repository.fetchCourseChunks(courseId);
+    const masteryRows = await Repository.fetchCourseMastery(courseId, userId);
+    const masteryMap = new Map(
+      masteryRows.map((m) => [m.chunk_id, m.mastery_score])
+    );
 
-        try {
-            // 1. Fetch data
-            callbacks.onLog({
-                id: crypto.randomUUID(),
-                step: "INIT",
-                message: "Ders verileri analiz ediliyor...",
-                details: {},
-                timestamp: new Date(),
-            });
+    const metrics: ChunkMetric[] = chunks.map((c) => ({
+      id: c.id,
+      concept_count:
+        parseOrThrow(ChunkMetadataSchema, c.metadata).concept_map?.length || 5,
+      difficulty_index:
+        parseOrThrow(ChunkMetadataSchema, c.metadata).difficulty_index || 3,
+      mastery_score: masteryMap.get(c.id) || 0,
+    }));
 
-            const chunks = await Repository.fetchCourseChunks(courseId);
-            const masteryRows = await Repository.fetchCourseMastery(
-                courseId,
-                userId,
-            );
-            const masteryMap = new Map(
-                masteryRows.map((m) => [m.chunk_id, m.mastery_score]),
-            );
+    const weights = calculateQuestionWeights({
+      examTotal,
+      importance: 'medium',
+      chunks: metrics,
+    });
 
-            const metrics: ChunkMetric[] = chunks.map((c) => ({
-                id: c.id,
-                concept_count:
-                    parseOrThrow(ChunkMetadataSchema, c.metadata).concept_map
-                        ?.length ||
-                    5,
-                difficulty_index: parseOrThrow(ChunkMetadataSchema, c.metadata)
-                    .difficulty_index || 3,
-                mastery_score: masteryMap.get(c.id) || 0,
-            }));
+    return { weights, metrics };
+  }
 
-            // 2. Calculate distribution
-            const weights = calculateQuestionWeights({
-                examTotal: EXAM_TOTAL,
-                importance: "medium", // Default or fetch from course
-                chunks: metrics,
-            });
+  static async generateSmartExam(
+    courseId: string,
+    courseName: string,
+    userId: string,
+    callbacks: GeneratorCallbacks
+  ): Promise<{ success: boolean; questionIds: string[] }> {
+    const factory = new QuizFactory();
+    const EXAM_TOTAL = 20;
 
-            const questionIds: string[] = [];
-            let totalSaved = 0;
+    // Report total target immediately for Smart Exam
+    callbacks.onTotalTargetCalculated(EXAM_TOTAL);
 
-            // 3. Process each chunk
-            for (const [chunkId, count] of weights.entries()) {
-                if (count <= 0) continue;
+    try {
+      // 1. Fetch data & calculate distribution
+      callbacks.onLog({
+        id: crypto.randomUUID(),
+        step: 'INIT',
+        message: 'Ders verileri analiz ediliyor...',
+        details: {},
+        timestamp: new Date(),
+      });
 
-                const existingDeneme = await Repository.fetchGeneratedQuestions(
-                    chunkId,
-                    "deneme",
-                    count,
-                );
+      const { weights } = await this.buildExamDistribution(
+        courseId,
+        userId,
+        EXAM_TOTAL
+      );
 
-                if (existingDeneme.length < count) {
-                    callbacks.onLog({
-                        id: crypto.randomUUID(),
-                        step: "GENERATING",
-                        message:
-                            `Eksik sorular havuzdan tamamlanıyor: ${chunkId}`,
-                        details: {
-                            target: count,
-                            existing: existingDeneme.length,
-                        },
-                        timestamp: new Date(),
-                    });
+      const questionIds: string[] = [];
+      let totalSaved = 0;
 
-                    await factory.generateForChunk(
-                        chunkId,
-                        {
-                            onLog: callbacks.onLog,
-                            onQuestionSaved: () => {
-                                totalSaved++;
-                                callbacks.onQuestionSaved(totalSaved);
-                            },
-                            onComplete: () => {},
-                            onError: (err: unknown) => {
-                                throw new Error(String(err));
-                            },
-                        },
-                        {
-                            usageType: "deneme",
-                            targetCount: count - existingDeneme.length,
-                        },
-                    );
-                }
+      // 3. Process each chunk
+      for (const [chunkId, count] of weights.entries()) {
+        if (count <= 0) continue;
 
-                // Final fetch after potential generation
-                const finalQs = await Repository.fetchGeneratedQuestions(
-                    chunkId,
-                    "deneme",
-                    count,
-                );
-                finalQs.forEach((q) => questionIds.push(q.id));
+        const existingDeneme = await Repository.fetchGeneratedQuestions(
+          chunkId,
+          'deneme',
+          count
+        );
+
+        if (existingDeneme.length < count) {
+          callbacks.onLog({
+            id: crypto.randomUUID(),
+            step: 'GENERATING',
+            message: `Eksik sorular havuzdan tamamlanıyor: ${chunkId}`,
+            details: {
+              target: count,
+              existing: existingDeneme.length,
+            },
+            timestamp: new Date(),
+          });
+
+          await factory.generateForChunk(
+            chunkId,
+            {
+              onLog: callbacks.onLog,
+              onTotalTargetCalculated: () => {}, // Handled globally by the exam
+              onQuestionSaved: () => {
+                totalSaved++;
+                callbacks.onQuestionSaved(totalSaved);
+              },
+              onComplete: (res) => {}, // Pipeline completion not needed here
+              onError: (err: string) => {
+                throw new Error(err);
+              },
+            },
+            {
+              usageType: 'deneme',
+              targetCount: count - existingDeneme.length,
             }
-
-            callbacks.onComplete();
-            return {
-                success: true,
-                questionIds: questionIds.slice(0, EXAM_TOTAL),
-            };
-        } catch (error: unknown) {
-            callbacks.onError(
-                error instanceof Error ? error : new Error(String(error)),
-            );
-            return { success: false, questionIds: [] };
+          );
         }
+
+        // Final fetch after potential generation
+        const finalQs = await Repository.fetchGeneratedQuestions(
+          chunkId,
+          'deneme',
+          count
+        );
+        finalQs.forEach((q) => questionIds.push(q.id));
+      }
+
+      callbacks.onComplete({ success: true, generated: totalSaved });
+      return {
+        success: true,
+        questionIds: questionIds.slice(0, EXAM_TOTAL),
+      };
+    } catch (error: unknown) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      callbacks.onError(errorMsg);
+      return { success: false, questionIds: [] };
     }
+  }
 
-    static async fetchSmartExamFromPool(
-        courseId: string,
-        userId: string,
-    ): Promise<{ success: boolean; questionIds: string[] } | null> {
-        const EXAM_TOTAL = 20;
+  static async fetchSmartExamFromPool(
+    courseId: string,
+    userId: string
+  ): Promise<{ success: boolean; questionIds: string[] } | null> {
+    const EXAM_TOTAL = 20;
 
-        try {
-            const chunks = await Repository.fetchCourseChunks(courseId);
-            const masteryRows = await Repository.fetchCourseMastery(
-                courseId,
-                userId,
-            );
-            const masteryMap = new Map(
-                masteryRows.map((m) => [m.chunk_id, m.mastery_score]),
-            );
+    try {
+      const { weights } = await this.buildExamDistribution(
+        courseId,
+        userId,
+        EXAM_TOTAL
+      );
 
-            const metrics: ChunkMetric[] = chunks.map((c) => ({
-                id: c.id,
-                concept_count:
-                    parseOrThrow(ChunkMetadataSchema, c.metadata).concept_map
-                        ?.length ||
-                    5,
-                difficulty_index: parseOrThrow(ChunkMetadataSchema, c.metadata)
-                    .difficulty_index || 3,
-                mastery_score: masteryMap.get(c.id) || 0,
-            }));
+      const questionIds: string[] = [];
+      for (const [chunkId, count] of weights.entries()) {
+        if (count <= 0) continue;
 
-            const weights = calculateQuestionWeights({
-                examTotal: EXAM_TOTAL,
-                importance: "medium",
-                chunks: metrics,
-            });
+        const existingDeneme = await Repository.fetchGeneratedQuestions(
+          chunkId,
+          'deneme',
+          count
+        );
 
-            const questionIds: string[] = [];
-            for (const [chunkId, count] of weights.entries()) {
-                if (count <= 0) continue;
-
-                const existingDeneme = await Repository.fetchGeneratedQuestions(
-                    chunkId,
-                    "deneme",
-                    count,
-                );
-
-                if (existingDeneme.length < count) {
-                    // Pool insufficient for SAK balance
-                    return null;
-                }
-                existingDeneme.forEach((q) => questionIds.push(q.id));
-            }
-
-            return {
-                success: true,
-                questionIds: questionIds.slice(0, EXAM_TOTAL),
-            };
-        } catch (error) {
-            logger.error("Pool fetch error:", error as Error);
-            return null;
+        if (existingDeneme.length < count) {
+          // Pool insufficient for SAK balance
+          return null;
         }
+        existingDeneme.forEach((q) => questionIds.push(q.id));
+      }
+
+      return {
+        success: true,
+        questionIds: questionIds.slice(0, EXAM_TOTAL),
+      };
+    } catch (error) {
+      logger.error('Pool fetch error:', error as Error);
+      return null;
     }
+  }
 }

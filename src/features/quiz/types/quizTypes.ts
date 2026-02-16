@@ -124,10 +124,16 @@ export type QuizAction =
     };
   }
   | { type: "SET_ERROR"; payload: string }
+  | { type: "SET_STATUS"; payload: QuizStatus }
   | { type: "START_PLAYING" }
   | {
     type: "ANSWER_QUESTION";
-    payload: { questionId: string; answerIndex: number; isCorrect: boolean };
+    payload: {
+      questionId: string;
+      answerIndex: number;
+      isCorrect: boolean;
+      responseType: QuizResponseType;
+    };
   }
   | { type: "NEXT_QUESTION" }
   | { type: "PREV_QUESTION" } // Optional, if we want to allow going back (view only)

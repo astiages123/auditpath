@@ -71,7 +71,9 @@ export class QuizFactory {
 
         try {
             // 1. INIT
-            log("INIT", "Chunk bilgileri yükleniyor...", { chunkId });
+            log("INIT", "Ders materyalleri kütüphaneden alınıyor...", {
+                chunkId,
+            });
 
             await Repository.updateChunkStatus(chunkId, "PROCESSING");
 
@@ -79,7 +81,10 @@ export class QuizFactory {
             if (!chunk) throw new Error("Chunk not found");
 
             // 2. MAPPING
-            log("MAPPING", "Kavram haritası çıkarılıyor...");
+            log(
+                "MAPPING",
+                "Konunun kritik noktaları ve can damarları belirleniyor...",
+            );
             const metadata = isValid(ChunkMetadataSchema, chunk.metadata)
                 ? parseOrThrow(ChunkMetadataSchema, chunk.metadata)
                 : {};
@@ -106,7 +111,9 @@ export class QuizFactory {
                 );
 
                 if (!analysisResult.success || !analysisResult.data) {
-                    throw new Error("Concept mapping failed");
+                    throw new Error(
+                        "Sistem şu an çok yoğun, lütfen biraz sonra tekrar deneyin.",
+                    );
                 }
 
                 concepts = analysisResult.data.concepts;
@@ -128,24 +135,32 @@ export class QuizFactory {
                 if (updateErr) {
                     logger.error("[Factory] Mapping save failed:", updateErr);
                     throw new Error(
-                        `Kavram haritası kaydedilemedi: ${updateErr.message}`,
+                        `Öğrenme haritası oluşturulurken küçük bir pürüz çıktı, tekrar deniyoruz: ${updateErr.message}`,
                     );
                 }
 
-                log("MAPPING", "Bilişsel analiz başarıyla kaydedildi.", {
-                    conceptCount: concepts.length,
-                });
+                log(
+                    "MAPPING",
+                    "Harika! Öğrenme yol haritanız başarıyla oluşturuldu.",
+                    {
+                        conceptCount: concepts.length,
+                    },
+                );
             }
 
             const quotas = calculateQuotas(concepts);
             await updateChunkQuotas(chunkId, quotas);
+
+            // Report total target for progress tracking
+            const totalTarget = quotas.antrenman + quotas.deneme + quotas.arsiv;
+            callbacks.onTotalTargetCalculated(totalTarget);
 
             if (options.mappingOnly) {
                 await Repository.updateChunkStatus(chunkId, "COMPLETED");
                 callbacks.onComplete({ success: true, generated: 0 });
                 log(
                     "COMPLETED",
-                    "Analiz tamamlandı, soru üretimi için bekleniyor.",
+                    "Konu analizi bitti, senin için en uygun sorular seçiliyor...",
                     {
                         concepts: concepts.length,
                     },
@@ -182,13 +197,13 @@ export class QuizFactory {
                 success: true,
                 generated: totalGeneratedCount,
             });
-            log("COMPLETED", "İşlem tamamlandı", {
+            log("COMPLETED", "Yeni öğrenme serüveniniz başarıyla hazırlandı!", {
                 total: totalGeneratedCount,
             });
         } catch (e: unknown) {
             const errorMessage = e instanceof Error
                 ? e.message
-                : "Bilinmeyen hata";
+                : "Beklenmedik bir aksaklık oluştu, hemen ilgileniyoruz.";
             log("ERROR", errorMessage);
             callbacks.onError(errorMessage);
             await Repository.updateChunkStatus(chunkId, "FAILED");

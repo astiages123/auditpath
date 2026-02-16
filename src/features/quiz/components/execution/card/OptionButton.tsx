@@ -12,13 +12,6 @@ export interface OptionButtonProps {
   disabled: boolean;
 }
 
-/**
- * OptionButton component for multiple choice quiz questions
- *
- * Displays an option with a label (A, B, C, etc.), supporting
- * KaTeX rendering for math formulas and visual feedback for
- * correct/incorrect selection.
- */
 export const OptionButton = memo(function OptionButton({
   option,
   label,
@@ -27,35 +20,34 @@ export const OptionButton = memo(function OptionButton({
   disabled,
 }: OptionButtonProps) {
   let containerStyle =
-    'border-border hover:border-primary/50 hover:bg-muted/30';
+    'border-border/50 hover:border-primary/40 hover:bg-muted/30';
   let iconComponent = null;
-  let labelStyle = 'bg-muted text-muted-foreground';
+  let labelStyle = 'bg-muted/60 text-muted-foreground';
 
   switch (variant) {
     case 'correct':
-      containerStyle = 'border-emerald-500 bg-emerald-500/10';
+      containerStyle = 'border-emerald-500/50 bg-emerald-500/5';
       labelStyle = 'bg-emerald-500 text-white';
       iconComponent = (
-        <div className="w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
-          <Check className="w-4 h-4 text-white" />
+        <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+          <Check className="w-3.5 h-3.5 text-white" />
         </div>
       );
       break;
     case 'incorrect':
-      containerStyle = 'border-red-500 bg-red-500/10';
+      containerStyle = 'border-red-500/50 bg-red-500/5';
       labelStyle = 'bg-red-500 text-white';
       iconComponent = (
-        <div className="w-6 h-6 rounded-full bg-red-500 flex items-center justify-center shrink-0">
-          <X className="w-4 h-4 text-white" />
+        <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center shrink-0">
+          <X className="w-3.5 h-3.5 text-white" />
         </div>
       );
       break;
     case 'dimmed':
-      containerStyle = 'border-border opacity-50';
+      containerStyle = 'border-border/30 opacity-40';
       break;
     case 'default':
     default:
-      // kept initials
       break;
   }
 
@@ -63,23 +55,23 @@ export const OptionButton = memo(function OptionButton({
     <motion.button
       onClick={onClick}
       disabled={disabled}
-      whileHover={!disabled ? { scale: 1.01 } : {}}
-      whileTap={!disabled ? { scale: 0.99 } : {}}
+      whileHover={!disabled ? { scale: 1.005 } : {}}
+      whileTap={!disabled ? { scale: 0.995 } : {}}
       className={cn(
-        'w-full flex items-start gap-4 p-4 rounded-xl border-2 transition-all duration-200 text-left',
+        'w-full flex items-start gap-3 p-3.5 rounded-lg border transition-all duration-150 text-left',
         containerStyle,
         !disabled && 'cursor-pointer'
       )}
     >
       <span
         className={cn(
-          'w-8 h-8 min-w-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0',
+          'w-7 h-7 min-w-7 rounded-md flex items-center justify-center font-bold text-xs',
           labelStyle
         )}
       >
         {label}
       </span>
-      <div className="flex-1 pt-1 prose prose-sm prose-invert max-w-none">
+      <div className="flex-1 pt-0.5 prose prose-sm prose-invert max-w-none">
         <MathRenderer content={option} />
       </div>
       {iconComponent}

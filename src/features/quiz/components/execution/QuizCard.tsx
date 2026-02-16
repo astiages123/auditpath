@@ -1,28 +1,9 @@
-/**
- * QuizCard Component
- *
- * Displays a single quiz question with:
- * - KaTeX-rendered LaTeX formulas
- * - Interactive option selection
- * - Correct/incorrect visual feedback
- * - Animated explanation panel ("Hoca Notu")
- * - Keyboard navigation (1-5, A-E keys for selection)
- */
-
 import { memo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  GraduationCap,
-  X,
-  RefreshCw,
-  Loader2,
-  SkipForward,
-  Lightbulb,
-} from 'lucide-react';
+import { X, RefreshCw, Loader2, SkipForward, Lightbulb } from 'lucide-react';
 import { toast } from 'sonner';
 import { QuizQuestion } from '@/features/quiz/types';
 
-// Modular Components
 import { MathRenderer } from './card/MathRenderer';
 import { OptionButton } from './card/OptionButton';
 import { ExplanationPanel } from './card/ExplanationPanel';
@@ -38,15 +19,11 @@ interface QuizCardProps {
   onSelectAnswer: (index: number) => void;
   onToggleExplanation: () => void;
   onRetry: () => void;
-  /** Called when user clicks "Boş Bırak" - skips question without answering */
   onBlank?: () => void;
-  /** Course ID for evidence navigation */
-  courseId?: string;
 }
 
 const optionLabels = ['A', 'B', 'C', 'D', 'E'];
 
-// Key mappings for keyboard navigation
 const KEY_TO_INDEX: Record<string, number> = {
   '1': 0,
   a: 0,
@@ -77,12 +54,9 @@ function QuizCardComponent({
   onToggleExplanation,
   onRetry,
   onBlank,
-  courseId,
 }: QuizCardProps) {
-  // Keyboard navigation handler
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      // Don't handle if user is typing in an input
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement
@@ -90,10 +64,8 @@ function QuizCardComponent({
         return;
       }
 
-      // If already answered, ignore option keys
       if (isAnswered) return;
 
-      // Check for option keys (1-5 or A-E)
       const index = KEY_TO_INDEX[e.key];
       if (index !== undefined && question && index < question.o.length) {
         e.preventDefault();
@@ -101,7 +73,6 @@ function QuizCardComponent({
         return;
       }
 
-      // Escape key for blank
       if (e.key === 'Escape' && onBlank) {
         e.preventDefault();
         toast.info('Soru boş bırakıldı');
@@ -111,102 +82,79 @@ function QuizCardComponent({
     [isAnswered, question, onSelectAnswer, onBlank]
   );
 
-  // Attach keyboard listener
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  // Loading state
   if (isLoading) {
     return (
-      <div className="w-full max-w-2xl mx-auto">
-        <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
-          <div className="flex flex-col items-center justify-center py-12 gap-4">
-            <Loader2 className="w-12 h-12 text-primary animate-spin" />
-            <p className="text-muted-foreground text-lg">
-              Soru hazırlanıyor...
-            </p>
-            <p className="text-muted-foreground/60 text-sm">Soru Üretiliyor</p>
-          </div>
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-card border border-border/50 rounded-xl p-12 flex flex-col items-center justify-center gap-4">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <p className="text-muted-foreground">Soru hazırlanıyor...</p>
         </div>
       </div>
     );
   }
 
-  // Error state
   if (error) {
     return (
-      <div className="w-full max-w-2xl mx-auto">
-        <div className="bg-card border border-destructive/30 rounded-2xl p-8 shadow-lg">
-          <div className="flex flex-col items-center justify-center py-8 gap-4">
-            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
-              <X className="w-8 h-8 text-destructive" />
-            </div>
-            <p className="text-destructive font-medium text-lg">{error}</p>
-            <button
-              onClick={onRetry}
-              className="flex items-center gap-2 px-6 py-3 bg-primary text-primary-foreground rounded-xl font-medium hover:bg-primary/90 transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Tekrar Dene
-            </button>
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-card border border-destructive/20 rounded-xl p-8 flex flex-col items-center justify-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center">
+            <X className="w-7 h-7 text-destructive" />
           </div>
+          <p className="text-destructive font-medium">{error}</p>
+          <button
+            onClick={onRetry}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Tekrar Dene
+          </button>
         </div>
       </div>
     );
   }
 
-  // No question loaded
   if (!question) {
     return (
-      <div className="w-full max-w-2xl mx-auto">
-        <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
-          <div className="flex flex-col items-center justify-center py-12 gap-4 text-muted-foreground">
-            <GraduationCap className="w-12 h-12" />
-            <p className="text-lg">Soru bekleniyor...</p>
-          </div>
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-card border border-border/50 rounded-xl p-12 flex flex-col items-center justify-center gap-4 text-muted-foreground">
+          <Loader2 className="w-10 h-10 animate-spin" />
+          <p>Soru bekleniyor...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto space-y-4">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-card border border-border rounded-2xl shadow-lg overflow-hidden"
+        className="bg-card border border-border/50 rounded-xl overflow-hidden"
       >
-        {/* Question Header */}
-        <div className="px-6 py-4 bg-muted/30 border-b border-border">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <GraduationCap className="w-4 h-4" />
-            <span>Banka/İdari Soru</span>
-          </div>
-        </div>
-
-        {/* Question Text & Image */}
-        <div className="p-6">
-          {/* Socratic Mentor Note (Insight) */}
+        <div className="p-5 space-y-4">
           {question.insight && (
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20"
+              className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10"
             >
-              <div className="flex items-center gap-2 mb-2 text-amber-400 font-medium">
-                <Lightbulb className="w-5 h-5" />
-                <span>Mentorun Notu</span>
+              <div className="flex items-center gap-2 text-amber-400/80 text-xs font-medium mb-1">
+                <Lightbulb className="w-3.5 h-3.5" />
+                <span>İpucu</span>
               </div>
-              <p className="text-sm italic text-foreground/80 leading-relaxed">
+              <p className="text-sm text-foreground/80 leading-relaxed">
                 {question.insight}
               </p>
             </motion.div>
           )}
 
           {question.img !== undefined && question.img !== null && (
-            <div className="mb-6 rounded-xl overflow-hidden border border-border bg-muted/20">
+            <div className="rounded-lg overflow-hidden border border-border/30 bg-muted/20">
               <img
                 src={
                   typeof question.img === 'number' &&
@@ -217,19 +165,20 @@ function QuizCardComponent({
                       : ''
                 }
                 alt="Soru Görseli"
-                className="w-full max-h-[300px] object-contain mx-auto"
+                className="w-full max-h-[250px] object-contain mx-auto"
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
             </div>
           )}
-          <div className="text-lg leading-relaxed text-foreground prose prose-sm prose-invert max-w-none">
+
+          <div className="text-base leading-relaxed text-foreground">
             <MathRenderer content={question.q} />
           </div>
         </div>
 
-        <div className="px-6 pb-6 space-y-3">
+        <div className="px-5 pb-5 space-y-2.5">
           {question.o.map((option, index) => {
             const isSelected = selectedAnswer === index;
             const isCorrectOption = question.a === index;
@@ -265,41 +214,37 @@ function QuizCardComponent({
           })}
         </div>
 
-        {/* Boş Bırak Button - Only visible before answering */}
         {!isAnswered && onBlank && (
-          <div className="px-6 pb-4">
+          <div className="px-5 pb-4">
             <button
               onClick={onBlank}
-              className="w-full flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border rounded-xl hover:border-amber-500/50 hover:bg-amber-500/5 transition-all"
+              className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border/50 hover:border-primary/30 hover:bg-primary/5 rounded-lg transition-all"
             >
               <SkipForward className="w-4 h-4" />
               Boş Bırak
             </button>
           </div>
         )}
-
-        {/* Explanation Panel - "Hoca Notu" */}
-        <AnimatePresence>
-          {isAnswered && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden"
-            >
-              <ExplanationPanel
-                question={question}
-                isCorrect={isCorrect}
-                showExplanation={showExplanation}
-                onToggleExplanation={onToggleExplanation}
-                courseId={courseId}
-                optionLabels={optionLabels}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
       </motion.div>
+
+      <AnimatePresence>
+        {isAnswered && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="bg-card border border-border/50 rounded-xl overflow-hidden"
+          >
+            <ExplanationPanel
+              question={question}
+              isCorrect={isCorrect}
+              showExplanation={showExplanation}
+              onToggleExplanation={onToggleExplanation}
+              optionLabels={optionLabels}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

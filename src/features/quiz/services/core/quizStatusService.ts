@@ -453,3 +453,49 @@ export async function getCourseTopicsWithCounts(
         };
     });
 }
+
+/**
+ * Get overall progress for a course (total questions vs solved).
+ *
+ * @param userId User ID
+ * @param courseId Course ID
+ * @returns Progress stats
+ */
+export async function getCourseProgress(userId: string, courseId: string) {
+    // 1. Get total questions in course (Antrenman + Deneme + Arsiv)
+    // excluding mistake copies (parent_question_id is null)
+    const { count: totalQuestions, error: totalError } = await supabase
+        .from("questions")
+        .select("*", { count: "exact", head: true })
+        .eq("course_id", courseId)
+        .is("parent_question_id", null);
+
+    if (totalError) {
+        await handleSupabaseError(totalError, "getCourseProgress/total");
+        return { total: 0, solved: 0, percentage: 0 };
+    }
+
+    // 2. Get unique solved questions for this course
+    const { data: solvedData, error: solvedError } = await supabase
+        .from("user_quiz_progress")
+        .select("question_id")
+        .eq("user_id", userId)
+        .eq("course_id", courseId);
+
+    if (solvedError) {
+        await handleSupabaseError(solvedError, "getCourseProgress/solved");
+        return { total: totalQuestions || 0, solved: 0, percentage: 0 };
+    }
+
+    const solvedIds = new Set(solvedData?.map((s) => s.question_id));
+    const solvedCount = solvedIds.size;
+
+    const total = totalQuestions || 0;
+    const percentage = total > 0 ? Math.round((solvedCount / total) * 100) : 0;
+
+    return {
+        total,
+        solved: solvedCount,
+        percentage,
+    };
+}

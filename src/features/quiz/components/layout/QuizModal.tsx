@@ -5,7 +5,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Brain, ChevronRight, FileText } from 'lucide-react';
+import { Brain, ChevronRight, FileText, Sparkles } from 'lucide-react';
 import { QuizView } from '../execution/QuizView';
 import { QuizSessionProvider } from '@/features/quiz/context/quizSessionProvider';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
@@ -18,6 +18,8 @@ import { InitialStateView } from '../generation/InitialStateView';
 import { MappingProgressView } from '../generation/MappingProgressView';
 import { BriefingView } from '../generation/BriefingView';
 import { SmartExamView } from '../outcomes/SmartExamView';
+import { CourseOverview } from './CourseOverview';
+import { Button } from '@/components/ui/button';
 
 interface QuizModalProps {
   isOpen: boolean;
@@ -50,143 +52,156 @@ export function QuizModal({
     handleBackToTopics,
     handleStartSmartExam,
     resetState,
+    courseProgress,
   } = useQuizManager({ isOpen, courseId, courseName });
 
+  const handleClose = (open: boolean) => {
+    if (!open) {
+      resetState();
+    }
+    onOpenChange(open);
+  };
+
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) {
-          resetState();
-        }
-        onOpenChange(open);
-      }}
-    >
-      <DialogContent className="max-w-7xl h-[90vh] flex flex-col p-0 gap-0 overflow-hidden bg-background">
-        {/* Header */}
-        <div className="flex flex-col h-full overflow-hidden">
-          <DialogHeader className="p-6 border-b border-border/40 bg-muted/20">
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      {/* 1. h-[85vh] ile modal yüksekliğini sabitliyoruz.
+          2. overflow-hidden ile modalın dışına taşmayı ve modalın kendisinin scroll olmasını engelliyoruz.
+      */}
+      <DialogContent className="max-w-6xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden bg-background border-border/50 shadow-2xl">
+        <DialogHeader className="px-6 py-4 border-b border-border/30 bg-muted/10 shrink-0">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
-                <Brain className="w-6 h-6" />
+              <div className="w-9 h-9 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
+                <Brain className="w-5 h-5" />
               </div>
-              <div className="text-left">
-                <DialogTitle className="text-xl font-bold">
+              <div>
+                <DialogTitle className="text-lg font-semibold leading-tight">
                   {courseName}
                 </DialogTitle>
-                <DialogDescription className="text-sm text-muted-foreground flex items-center gap-2">
+                <DialogDescription className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
                   {isQuizActive ? (
                     <>
-                      <span
-                        className="cursor-pointer hover:text-foreground transition-colors"
+                      <button
                         onClick={handleBackToTopics}
+                        className="hover:text-foreground transition-colors underline-offset-2 hover:underline"
                       >
-                        Konu Listesi
-                      </span>
+                        Konular
+                      </button>
                       <ChevronRight className="w-3 h-3" />
-                      <span className="font-medium text-foreground">
+                      <span className="text-foreground font-medium">
                         {selectedTopic?.name}
                       </span>
                     </>
                   ) : (
-                    'Konu Seçimi'
+                    'Bir konu seçerek başla'
                   )}
                 </DialogDescription>
               </div>
             </div>
-          </DialogHeader>
 
-          {/* Content Area */}
-          <div className="flex-1 overflow-hidden relative">
-            {isQuizActive && selectedTopic ? (
-              <div className="h-full overflow-y-auto p-6">
-                <ErrorBoundary>
-                  <QuizSessionProvider>
-                    <QuizView
-                      chunkId={targetChunkId || undefined}
-                      courseId={courseId}
-                      courseName={courseName}
-                      sectionTitle={selectedTopic.name}
-                      content={targetChunkId ? undefined : ' '} // Fallback if no chunk found
-                      initialQuestions={existingQuestions}
-                      onClose={handleBackToTopics} // Use handleBackTo refresh stats
-                    />
-                  </QuizSessionProvider>
-                </ErrorBoundary>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-[300px_1fr] h-full">
-                {/* Left: Topic List */}
-                <TopicSidebar
-                  loading={loading}
-                  topics={topics}
-                  selectedTopic={selectedTopic}
-                  onSelectTopic={setSelectedTopic}
-                />
-                {/* Right: Detail Panel */}
-                <div className="bg-muted/5 flex flex-col h-full overflow-hidden">
-                  {selectedTopic ? (
-                    <div className="flex-1 flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200">
-                      {/* Header: Icon + Title (Sabit kalsın) */}
-                      <div className="flex items-center gap-3 px-6 py-4 text-left border-b border-border/10 shrink-0">
-                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center shrink-0 text-primary">
-                          <FileText className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-bold leading-tight text-foreground truncate">
-                            {selectedTopic.name}
-                          </h3>
-                          <p className="text-xs text-muted-foreground">
-                            {quizState === QuizState.NOT_ANALYZED &&
-                              'Henüz analiz edilmedi'}
-                            {quizState === QuizState.MAPPING &&
-                              'Analiz ediliyor...'}
-                            {quizState === QuizState.BRIEFING &&
-                              'Analiz tamamlandı, antrenman hazır.'}
-                          </p>
-                        </div>
+            <div className="flex items-center gap-2">
+              <DialogTitle className="sr-only">Kapat</DialogTitle>
+            </div>
+          </div>
+        </DialogHeader>
+
+        {/* Gövde Katmanı: flex-1 ve min-h-0. 
+            Burada min-h-0 olmazsa içindeki grid modalı aşağı doğru genişletmeye devam eder.
+        */}
+        <div className="flex-1 min-h-0 overflow-hidden relative">
+          {isQuizActive && selectedTopic ? (
+            <div className="h-full">
+              <ErrorBoundary>
+                <QuizSessionProvider>
+                  <QuizView
+                    chunkId={targetChunkId || undefined}
+                    courseId={courseId}
+                    courseName={courseName}
+                    sectionTitle={selectedTopic.name}
+                    content={targetChunkId ? undefined : ' '}
+                    initialQuestions={existingQuestions}
+                    onClose={handleBackToTopics}
+                  />
+                </QuizSessionProvider>
+              </ErrorBoundary>
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-[300px_1fr] h-full min-h-0">
+              <TopicSidebar
+                loading={loading}
+                topics={topics}
+                selectedTopic={selectedTopic}
+                onSelectTopic={setSelectedTopic}
+                onStartSmartExam={handleStartSmartExam}
+                isGeneratingExam={isGeneratingExam}
+              />
+
+              {/* Sağ panel: min-h-0 ile içindeki elemanın (BriefingView) modalı aşmasını engelliyoruz */}
+              <div className="flex flex-col h-full overflow-hidden bg-muted/5 min-h-0">
+                {selectedTopic ? (
+                  <div className="flex-1 flex flex-col min-h-0">
+                    <div className="flex items-center gap-3 px-6 py-4 border-b border-border/10 shrink-0">
+                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                        <FileText className="w-4 h-4" />
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-foreground truncate">
+                          {selectedTopic.name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          {quizState === QuizState.NOT_ANALYZED &&
+                            'Henüz analiz edilmedi'}
+                          {quizState === QuizState.MAPPING &&
+                            'Analiz ediliyor...'}
+                          {quizState === QuizState.BRIEFING && 'Hazır'}
+                        </p>
+                      </div>
+                    </div>
 
-                      {/* Scrollable Content Area */}
-                      <div className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col items-center justify-start bg-muted/5">
-                        {/* max-w-none kullanarak içeriği tüm alana yayıyoruz */}
-                        <div className="w-full max-w-none flex flex-col items-center justify-start transition-all duration-300 min-h-full">
-                          {quizState === QuizState.NOT_ANALYZED && (
-                            <InitialStateView onGenerate={handleGenerate} />
-                          )}
+                    {/* ASIL ÇÖZÜM: flex-1 overflow-hidden min-h-0 flex flex-col
+                        Bu alan artık dışarı taşamaz. BriefingView burayı doldurur.
+                    */}
+                    <div className="flex-1 overflow-hidden p-6 min-h-0 flex flex-col">
+                      <div className="max-w-5xl mx-auto w-full h-full flex flex-col min-h-0">
+                        {quizState === QuizState.NOT_ANALYZED && (
+                          <InitialStateView onGenerate={handleGenerate} />
+                        )}
 
-                          {quizState === QuizState.MAPPING && (
-                            <MappingProgressView
-                              examProgress={examProgress}
-                              examLogs={examLogs}
+                        {quizState === QuizState.MAPPING && (
+                          <MappingProgressView
+                            examProgress={examProgress}
+                            examLogs={examLogs}
+                          />
+                        )}
+
+                        {quizState === QuizState.BRIEFING &&
+                          completionStatus && (
+                            <BriefingView
+                              completionStatus={completionStatus}
+                              onStartQuiz={handleStartQuiz}
                             />
                           )}
-
-                          {quizState === QuizState.BRIEFING &&
-                            completionStatus && (
-                              <BriefingView
-                                completionStatus={completionStatus}
-                                onStartQuiz={handleStartQuiz}
-                              />
-                            )}
-                        </div>
                       </div>
                     </div>
-                  ) : (
-                    /* Zeki Deneme Görünümü */
-                    <div className="flex-1 overflow-y-auto">
-                      <SmartExamView
-                        isGeneratingExam={isGeneratingExam}
-                        examProgress={examProgress}
-                        examLogs={examLogs}
-                        onStartSmartExam={handleStartSmartExam}
-                      />
-                    </div>
-                  )}
-                </div>{' '}
+                  </div>
+                ) : isGeneratingExam ? (
+                  <div className="flex-1 overflow-y-auto min-h-0">
+                    <SmartExamView
+                      examProgress={examProgress}
+                      examLogs={examLogs}
+                    />
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-y-auto min-h-0">
+                    <CourseOverview
+                      courseName={courseName}
+                      progress={courseProgress}
+                    />
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

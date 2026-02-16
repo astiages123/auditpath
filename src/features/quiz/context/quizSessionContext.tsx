@@ -20,6 +20,7 @@ export interface QuizSessionContextValue {
   } | void>;
   getNextReviewItem: () => ReviewItem | null;
   markReviewComplete: () => void;
+  prevQuestion: () => void;
   advanceBatch: () => void;
   injectScaffolding: (questionId: string, chunkId: string) => void;
 }

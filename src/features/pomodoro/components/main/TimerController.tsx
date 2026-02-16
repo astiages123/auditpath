@@ -42,7 +42,7 @@ export function TimerController() {
     duration,
     isActive,
     isBreak ? 'break' : 'work',
-    !!sessionId
+    isActive && !!sessionId
   );
 
   const { user, session } = useAuth();

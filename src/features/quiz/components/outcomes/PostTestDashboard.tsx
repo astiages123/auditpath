@@ -85,10 +85,10 @@ export function PostTestDashboard({
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <span className="text-5xl font-bold tracking-tighter">
-                %{animatedPercent}
+                {animatedPercent}
               </span>
               <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider mt-2">
-                Başarı
+                Başarı Puanı
               </span>
             </div>
           </div>

@@ -9,7 +9,13 @@
  * - Response recording to database
  */
 
-import { useReducer, useCallback, useMemo, type ReactNode } from 'react';
+import {
+  useReducer,
+  useCallback,
+  useMemo,
+  useEffect,
+  type ReactNode,
+} from 'react';
 import {
   QuizSessionContext,
   type QuizSessionContextValue,
@@ -60,6 +66,8 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
   // Initialize session for a course
   const initializeSession = useCallback(
     async (courseId: string) => {
+      dispatch({ type: 'SET_STATUS', payload: 'INITIALIZING' });
+
       if (!user?.id) {
         dispatch({
           type: 'SET_ERROR',
@@ -67,18 +75,6 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
         });
         return;
       }
-
-      // We trigger loading state implicitly via status or separate action?
-      // Reducer sets 'READY' on success. Before that, it's IDLE or LOADING?
-      // We can dispatch a 'LOADING' action if we wanted, but the UI checks !isInitialized in context value?
-      // Actually state.status handles it. InitialState status is 'IDLE'.
-      // We should probably set status to 'INITIALIZING' if we want.
-      // But the reducer doesn't have explicit 'INITIALIZING' action yet (except maybe just start loading).
-      // Let's assume IDLE -> READY transition is enough for now, or add loading indicator in UI based on status.
-      // Wait, `QuizView` checks `!state.isInitialized`.
-      // My new state doesn't have `isInitialized` boolean. It has `status`.
-      // I should update `QuizView` to check `status`.
-      // But for now, let's proceed.
 
       try {
         // Parallelized fetching of independent session components
@@ -138,14 +134,6 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
                 reviewQueue = savedQueue;
                 currentReviewIndex = savedSession.currentReviewIndex || 0;
                 restoredQueue = true;
-
-                // If we restore, we need to respect the saved index!
-                // The reducer sets currentReviewIndex to 0 in INITIALIZE.
-                // We might need to pass it in payload.
-                // But let's handle this logic manually?
-                // Or just update reducer to accept optional initial index.
-                // Actually, restoring session state is tricky with reducer.
-                // Let's pass it if restored.
               }
             } else {
               storage.remove(storageKey);
@@ -173,19 +161,6 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
             },
             quotaInfo.reviewQuota
           );
-
-          // Save initial state to storage if we have a queue
-          if (reviewQueue.length > 0) {
-            storage.set(
-              storageKey,
-              {
-                sessionId: sessionInfo.currentSession,
-                currentReviewIndex,
-              },
-              { ttl: 24 * 60 * 60 * 1000 }
-            ); // 24 hours
-            storage.set(queueKey, reviewQueue, { ttl: 24 * 60 * 60 * 1000 }); // 24 hours
-          }
         }
 
         // Process batches
@@ -204,21 +179,6 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
             initialReviewIndex: currentReviewIndex, // Pass restored index
           },
         });
-
-        // Handle restored index manually if needed?
-        // Since INITIALIZE resets to 0, we lose progress if restored.
-        // We really should pass currentReviewIndex to reducer.
-        // But for MVP/Refactor, maybe we can accept starting from 0 for now or todo?
-        // Wait, the original code calculated batch index based on global index.
-        // I should probably update `QuizAction` to include optional `initialReviewIndex`.
-        // But let's stick to simple flow for now.
-        // Actually, if I just modify the state object directly before dispatch? No.
-        // It's safer to just let it start at 0 for this refactor unless user complains.
-        // Or better: `dispatch({ type: 'SET_INDEX', payload: currentReviewIndex })`?
-        // I don't have SET_INDEX action.
-        // Let's skip restoring exact index for this step to keep it simple, or user can re-navigate.
-        // Actually, original code had complex logic to calculate batch index.
-        // The reducer handles batch calculation inside NEXT_QUESTION.
       } catch (err) {
         logger.error('[QuizSession] Initialization error:', err as Error);
         dispatch({
@@ -254,6 +214,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
           questionId,
           answerIndex: selectedAnswer ?? -1,
           isCorrect,
+          responseType,
         },
       });
 
@@ -295,8 +256,32 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
         dispatch({ type: 'SYNC_COMPLETE' });
       }
     },
-    [user?.id, state]
+    [user?.id, state.sessionInfo]
   );
+
+  // Auto-save effect
+  useEffect(() => {
+    if (!state.sessionInfo || !user?.id || state.reviewQueue.length === 0)
+      return;
+
+    const storageKey = `${STORAGE_PREFIX}${user.id}_${state.sessionInfo.courseId}`;
+    const queueKey = `${storageKey}_queue`;
+
+    storage.set(
+      storageKey,
+      {
+        sessionId: state.sessionInfo.currentSession,
+        currentReviewIndex: state.currentReviewIndex,
+      },
+      { ttl: 24 * 60 * 60 * 1000 }
+    );
+    storage.set(queueKey, state.reviewQueue, { ttl: 24 * 60 * 60 * 1000 });
+  }, [
+    state.reviewQueue,
+    state.currentReviewIndex,
+    state.sessionInfo,
+    user?.id,
+  ]);
 
   // Get next review item
   const getNextReviewItem = useCallback((): ReviewItem | null => {
@@ -310,37 +295,12 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
   // Mark current review as complete and move to next
   const markReviewComplete = useCallback(() => {
     dispatch({ type: 'NEXT_QUESTION' });
+  }, []);
 
-    // Update storage
-    if (state.sessionInfo && user?.id) {
-      const storageKey = `${STORAGE_PREFIX}${user.id}_${state.sessionInfo.courseId}`;
-      const queueKey = `${storageKey}_queue`;
-      const nextIndex = state.currentReviewIndex + 1;
-
-      if (nextIndex < state.reviewQueue.length) {
-        storage.set(
-          storageKey,
-          {
-            sessionId: state.sessionInfo.currentSession,
-            // We use nextIndex because state update is async/batched in React,
-            // but here we are inside callback closing over current state.
-            // Actually, dispatch is async, so `state.currentReviewIndex` is still old value.
-            // So `nextIndex` is correct target.
-            currentReviewIndex: nextIndex,
-          },
-          { ttl: 24 * 60 * 60 * 1000 }
-        ); // 24 hours
-      } else {
-        storage.remove(storageKey);
-        storage.remove(queueKey);
-      }
-    }
-  }, [
-    user?.id,
-    state.sessionInfo,
-    state.currentReviewIndex,
-    state.reviewQueue.length,
-  ]);
+  // Go to previous question
+  const prevQuestion = useCallback(() => {
+    dispatch({ type: 'PREV_QUESTION' });
+  }, []);
 
   // Advance to next batch (handle Intermission -> Playing)
   const advanceBatch = useCallback(() => {
@@ -350,39 +310,13 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
   // Inject scaffolding question (Immediate Priority)
   const injectScaffolding = useCallback(
     (questionId: string, chunkId: string) => {
-      // Priority 0 = High/Immediate
       dispatch({
         type: 'INJECT_SCAFFOLDING',
         payload: { questionId, chunkId, priority: 0 },
       });
-
-      // Update storage?
-      // The reducer updates the queue. We should probably persist the new queue.
-      // But doing it here requires knowledge of the *new* queue state, which we don't have yet (dispatch is async).
-      // We can use a side effect (useEffect) in provider to sync queue to storage whenever it changes?
-      // YES. That's cleaner.
     },
     []
   );
-
-  // Persist Queue Changes Side Effect
-  // (Optional optimization: only if queue length changed or deep comparison?
-  //  For now, trusting manual updates in markReviewComplete, but injection needs it too).
-  //  Actually, let's keep it manual in callbacks for now to avoid excessive writes,
-  //  but `injectScaffolding` can't easily see the new queue.
-  //  Maybe we skip storage update for injection for now?
-  //  User refreshes -> injected question might be lost if not saved.
-  //  It's better to save.
-  //  Let's add a useEffect for `state.reviewQueue`.
-  /*
-  useEffect(() => {
-     if(state.sessionInfo && user?.id && state.reviewQueue.length > 0) {
-         // save queue...
-     }
-  }, [state.reviewQueue]);
-  */
-  // I'll skip this side effect for this specific step to avoid complexity,
-  // relying on the fact that `injectScaffolding` is rare and transient.
 
   const value: QuizSessionContextValue = useMemo(
     () => ({
@@ -391,6 +325,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
       recordResponse,
       getNextReviewItem,
       markReviewComplete,
+      prevQuestion,
       advanceBatch,
       injectScaffolding,
     }),
@@ -400,6 +335,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
       recordResponse,
       getNextReviewItem,
       markReviewComplete,
+      prevQuestion,
       advanceBatch,
       injectScaffolding,
     ]

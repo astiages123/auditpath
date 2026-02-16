@@ -14,6 +14,7 @@ import {
     TaskContext,
     TaskResult,
 } from "@/features/quiz/logic/tasks/base";
+import { getAIConfig } from "@/utils/aiConfig";
 import * as Repository from "@/features/quiz/services/repositories/quizRepository";
 
 export interface WrongAnswerContext {
@@ -117,8 +118,13 @@ export class FollowUpTask extends BaseTask<
             previousDiagnoses,
         );
 
+        const aiConfig = getAIConfig();
+        const systemPrompt = aiConfig.systemPromptPrefix
+            ? aiConfig.systemPromptPrefix + "\n" + GLOBAL_AI_SYSTEM_PROMPT
+            : GLOBAL_AI_SYSTEM_PROMPT;
+
         const messages = PromptArchitect.assemble(
-            GLOBAL_AI_SYSTEM_PROMPT,
+            systemPrompt,
             contextPrompt,
             taskPrompt,
         );
@@ -126,8 +132,9 @@ export class FollowUpTask extends BaseTask<
         try {
             const result = await StructuredGenerator.generate(messages, {
                 schema: GeneratedQuestionSchema,
-                provider: "deepseek",
-                temperature: 1.3,
+                provider: aiConfig.provider,
+                model: aiConfig.model,
+                temperature: aiConfig.temperature,
                 onLog: (msg: string, details?: Record<string, unknown>) =>
                     this.log(context, msg, details),
             });

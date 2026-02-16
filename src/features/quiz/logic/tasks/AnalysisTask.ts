@@ -10,6 +10,7 @@ import {
     TaskContext,
     TaskResult,
 } from "@/features/quiz/logic/tasks/base";
+import { getAIConfig } from "@/utils/aiConfig";
 
 export interface AnalysisTaskInput {
     content: string;
@@ -26,7 +27,7 @@ export class AnalysisTask extends BaseTask<
         input: AnalysisTaskInput,
         context?: TaskContext,
     ): Promise<TaskResult<ConceptMapResult>> {
-        this.log(context, "Bilişsel Analiz Yapılıyor (Öğrenme Doygunluğu)", {
+        this.log(context, "İçerik derinliği inceleniyor...", {
             course: input.courseName,
             section: input.sectionTitle,
             importance: input.importance,
@@ -42,17 +43,22 @@ export class AnalysisTask extends BaseTask<
             PromptArchitect.cleanReferenceImages(input.content),
         );
 
+        const aiConfig = getAIConfig();
+        const finalSystemPrompt = aiConfig.systemPromptPrefix
+            ? aiConfig.systemPromptPrefix + "\n" + systemPrompt
+            : systemPrompt;
+
         const messages = PromptArchitect.assemble(
-            systemPrompt,
+            finalSystemPrompt,
             contextPrompt,
             `Ders Önem Derecesi: ${input.importance}\nLütfen kavram haritasını ve bilişsel zorluk endeksini oluştur. JSON formatında çıktı ver.`,
         );
 
         const result = await StructuredGenerator.generate(messages, {
             schema: ConceptMapResponseSchema,
-            provider: "google",
-            model: "gemini-2.5-flash",
-            temperature: 1.0,
+            provider: aiConfig.provider,
+            model: aiConfig.model,
+            temperature: aiConfig.temperature,
             usageType: "analysis",
             maxTokens: 8192,
             onLog: (msg: string, details?: Record<string, unknown>) => {
@@ -61,6 +67,6 @@ export class AnalysisTask extends BaseTask<
         });
 
         if (result) return { success: true, data: result };
-        return { success: false, error: "Failed to generate concept map" };
+        return { success: false, error: "Kavram haritası oluşturulamadı." };
     }
 }

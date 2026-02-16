@@ -86,7 +86,8 @@ Deno.serve(async (req: Request) => {
     ) {
       return new Response(
         JSON.stringify({
-          error: "Invalid provider. Supported: 'cerebras', 'mimo', 'google'",
+          error:
+            "Invalid provider. Supported: 'cerebras', 'mimo', 'google', 'deepseek'",
         }),
         {
           status: 400,
@@ -98,7 +99,7 @@ Deno.serve(async (req: Request) => {
     // Provider Configuration
     let apiUrl = CEREBRAS_API_URL;
     let apiKey = Deno.env.get("CEREBRAS_API_KEY");
-    let targetModel = model || "qwen-3-32b";
+    let targetModel = model || "zai-glm-4.7";
     let activeProvider = provider || "cerebras";
 
     // Modeli isminden tanı (Otomatik Yönlendirme)
@@ -137,7 +138,7 @@ Deno.serve(async (req: Request) => {
       model: targetModel,
       messages,
       temperature: temperature ?? 0.1,
-      max_tokens: max_tokens || 5120,
+      max_tokens: max_tokens || 8192,
     };
 
     // DeepSeek JSON Output modu

@@ -15,6 +15,7 @@ import {
     TaskContext,
     TaskResult,
 } from "@/features/quiz/logic/tasks/base";
+import { getAIConfig } from "@/utils/aiConfig";
 
 export interface QuestionToValidate {
     q: string;
@@ -45,16 +46,22 @@ export class ValidationTask extends BaseTask<
             PromptArchitect.cleanReferenceImages(content),
         );
         const taskPrompt = buildValidationTaskPrompt(question);
+        const aiConfig = getAIConfig();
+        const systemPrompt = aiConfig.systemPromptPrefix
+            ? aiConfig.systemPromptPrefix + "\n" + VALIDATION_SYSTEM_PROMPT
+            : VALIDATION_SYSTEM_PROMPT;
+
         const messages = PromptArchitect.assemble(
-            VALIDATION_SYSTEM_PROMPT,
+            systemPrompt,
             contextPrompt,
             taskPrompt,
         );
 
         const result = await StructuredGenerator.generate(messages, {
             schema: ValidationResultSchema,
-            provider: "cerebras",
-            temperature: 1.3,
+            provider: aiConfig.provider,
+            model: aiConfig.model,
+            temperature: aiConfig.temperature,
             usageType: "validation",
             onLog: (msg: string, details?: Record<string, unknown>) =>
                 this.log(context, msg, details),

@@ -179,6 +179,7 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
         await factory.generateForChunk(
           params.chunkId,
           {
+            onTotalTargetCalculated: () => {},
             onLog: () => {},
             onQuestionSaved: (total: number) =>
               updateState({ generatedCount: total }),
@@ -253,7 +254,7 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
               `MASTERY_${state.currentQuestion.chunk_id}_${result.newMastery}`,
             title: "Uzmanlık Seviyesi!",
             description:
-              `Bu konudaki ustalığın %${result.newMastery} seviyesine ulaştı.`,
+              `Bu konudaki ustalığın ${result.newMastery} puana ulaştı.`,
             variant: "achievement",
           });
         }

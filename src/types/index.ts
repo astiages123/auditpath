@@ -132,6 +132,8 @@ export interface BaseQuestion {
     insight?: string;
     evidence?: string;
     chunk_id?: string;
+    courseSlug?: string;
+    topicSlug?: string;
 }
 
 export interface MultipleChoiceQuestion extends BaseQuestion {

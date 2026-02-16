@@ -24,6 +24,7 @@ import { calculateTestResults } from '@/features/quiz/logic';
 import { parseOrThrow } from '@/utils/helpers';
 import { QuizQuestionSchema } from '@/features/quiz/types';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { slugify } from '@/utils/core';
 import {
   QuizLoadingView,
   QuizReadyView,
@@ -69,9 +70,6 @@ export function QuizView({
     advanceBatch,
   } = useQuizSession();
 
-  const isSessionInitialized =
-    sessionState.status !== 'IDLE' && sessionState.status !== 'INITIALIZING';
-
   // Connect SolveQuizService to useQuizSession's recordResponse
   const {
     state,
@@ -90,7 +88,7 @@ export function QuizView({
     },
   });
 
-  const [count] = useState<number>(5);
+  const [count] = useState<number>(10);
   const hasStartedAutoRef = useRef(false);
   const [isFinished, setIsFinished] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -103,32 +101,16 @@ export function QuizView({
 
   // Track incorrect questions for follow-up generation
   const incorrectIdsRef = useRef<string[]>([]);
-  const previousMasteryRef = useRef<number | null>(null);
 
-  // Update previousMastery baseline when question changes or global stats update
-  useEffect(() => {
-    if (!state.isAnswered && sessionState.courseStats) {
-      previousMasteryRef.current = sessionState.courseStats.averageMastery;
-    }
-  }, [state.isAnswered, sessionState.courseStats]);
+  // Track current mastery for display
+  const currentMasteryRef = useRef<number | undefined>(undefined);
 
-  // Initial mastery baseline fallback
+  // Update current mastery when lastSubmissionResult changes
   useEffect(() => {
-    if (
-      chunkId &&
-      user?.id &&
-      previousMasteryRef.current === null &&
-      !sessionState.courseStats
-    ) {
-      Repository.getChunkMastery(user.id, chunkId).then((data) => {
-        if (data) {
-          previousMasteryRef.current = data.mastery_score;
-        } else {
-          previousMasteryRef.current = 0;
-        }
-      });
+    if (state.lastSubmissionResult?.newMastery !== undefined) {
+      currentMasteryRef.current = state.lastSubmissionResult.newMastery;
     }
-  }, [chunkId, user?.id, sessionState.courseStats]);
+  }, [state.lastSubmissionResult]);
 
   // Initialize Session
   useEffect(() => {
@@ -174,8 +156,16 @@ export function QuizView({
     const data = await Repository.fetchQuestionsByIds(ids);
 
     return data.map((q) => {
-      const question = parseOrThrow(QuizQuestionSchema, q.question_data);
+      const questionData = q.question_data as Record<string, any>;
+      const question = parseOrThrow(QuizQuestionSchema, {
+        ...questionData,
+        type: questionData.type || 'multiple_choice',
+      });
       question.id = q.id;
+      // Add slugs for evidence links
+      if (q.course?.course_slug) question.courseSlug = q.course.course_slug;
+      if (q.chunk?.section_title)
+        question.topicSlug = slugify(q.chunk.section_title);
       return question;
     });
   };
@@ -185,7 +175,11 @@ export function QuizView({
     let active = true;
 
     async function loadBatch() {
-      if (isSessionInitialized && sessionState.batches.length > 0) {
+      if (
+        sessionState.status !== 'IDLE' &&
+        sessionState.status !== 'INITIALIZING' &&
+        sessionState.batches.length > 0
+      ) {
         const currentBatchItems =
           sessionState.batches[sessionState.currentBatchIndex];
         if (!currentBatchItems || currentBatchItems.length === 0) return;
@@ -241,7 +235,7 @@ export function QuizView({
   }, [
     initialQuestions,
     loadQuestions,
-    isSessionInitialized,
+    sessionState.status,
     sessionState.batches,
     sessionState.currentBatchIndex,
     chunkId,
@@ -306,6 +300,27 @@ export function QuizView({
     startQuiz();
   }, [startQuiz]);
 
+  // Auto-start when queue is ready
+  useEffect(() => {
+    if (
+      !state.isLoading &&
+      !state.hasStarted &&
+      sessionState.status !== 'IDLE' &&
+      sessionState.status !== 'INITIALIZING' &&
+      !sessionState.error &&
+      state.queue.length > 0
+    ) {
+      handleStart();
+    }
+  }, [
+    state.isLoading,
+    state.hasStarted,
+    sessionState.status,
+    sessionState.error,
+    state.queue.length,
+    handleStart,
+  ]);
+
   const handleIntermissionContinue = () => {
     batchStartResultsRef.current = {
       correct: results.correct,
@@ -360,87 +375,82 @@ export function QuizView({
 
   return (
     <ErrorBoundary>
-      <div className="w-full space-y-6">
-        {/* Loading State with Progress */}
-        {(state.isLoading ||
-          (!isSessionInitialized && !sessionState.error)) && (
-          <QuizLoadingView
-            isLoading={state.isLoading}
-            generatedCount={state.generatedCount}
-            totalToGenerate={state.totalToGenerate}
-          />
-        )}
-
-        {/* Ready to Start State */}
-        {!state.isLoading &&
-          !state.hasStarted &&
-          isSessionInitialized &&
-          !sessionState.error &&
-          state.queue.length > 0 && (
-            <QuizReadyView
-              onStart={handleStart}
-              currentBatchIndex={sessionState.currentBatchIndex}
-              totalBatches={sessionState.totalBatches}
-              generatedCount={state.generatedCount}
-            />
-          )}
-
-        {/* Session Error */}
-        {sessionState.error && (
-          <QuizErrorView
-            error={sessionState.error}
-            onRetry={() => courseId && initializeSession(courseId)}
-          />
-        )}
-
-        {/* Quiz Card - SHOW ONLY IF STARTED */}
-        {!state.isLoading &&
-          isSessionInitialized &&
-          !sessionState.error &&
-          state.hasStarted && (
-            <div
-              className="space-y-6"
-              style={{
-                opacity: isPending ? 0.85 : 1,
-                transition: 'opacity 150ms ease-in-out',
-              }}
-            >
-              {/* Stats Header */}
-              <QuizSessionStats
-                courseStats={sessionState.courseStats}
-                currentReviewIndex={sessionState.currentReviewIndex}
-                totalQueueLength={sessionState.reviewQueue?.length ?? 0}
-                timerIsRunning={!state.isAnswered && !state.isLoading}
-                currentQuestionId={state.currentQuestion?.id}
+      <div className="flex flex-col h-full max-h-[calc(85vh-70px)]">
+        <div className="flex-1 overflow-y-auto p-6 min-h-0">
+          <div className="max-w-4xl mx-auto space-y-6">
+            {/* Loading State with Progress */}
+            {(state.isLoading ||
+              ((sessionState.status === 'IDLE' ||
+                sessionState.status === 'INITIALIZING') &&
+                !sessionState.error)) && (
+              <QuizLoadingView
+                isLoading={state.isLoading}
+                generatedCount={state.generatedCount}
+                totalToGenerate={state.totalToGenerate}
               />
+            )}
 
-              <QuizCard
-                question={state.currentQuestion}
-                selectedAnswer={state.selectedAnswer}
-                isAnswered={state.isAnswered}
-                isCorrect={state.isCorrect}
-                showExplanation={state.showExplanation}
-                isLoading={false}
-                error={state.error}
-                onSelectAnswer={handleSelectAnswer}
-                onToggleExplanation={toggleExplanation}
-                onRetry={retry}
-                onBlank={handleBlank}
-                courseId={courseId}
-              />
+            {/* Auto-start logic handled by useEffect */}
 
-              <QuizActionFooter
-                isAnswered={state.isAnswered}
-                isSubmitting={isSubmitting}
-                queueLength={state.queue.length}
-                currentBatchIndex={sessionState.currentBatchIndex}
-                totalBatches={sessionState.totalBatches}
-                lastSubmissionResult={state.lastSubmissionResult}
-                previousMastery={previousMasteryRef.current}
-                onNext={handleNext}
+            {/* Session Error */}
+            {sessionState.error && (
+              <QuizErrorView
+                error={sessionState.error}
+                onRetry={() => courseId && initializeSession(courseId)}
               />
-            </div>
-          )}
+            )}
+
+            {/* Quiz Card - SHOW ONLY IF STARTED */}
+            {!state.isLoading &&
+              sessionState.status !== 'IDLE' &&
+              sessionState.status !== 'INITIALIZING' &&
+              !sessionState.error &&
+              state.hasStarted && (
+                <div
+                  className="space-y-6"
+                  style={{
+                    opacity: isPending ? 0.85 : 1,
+                    transition: 'opacity 150ms ease-in-out',
+                  }}
+                >
+                  {/* Stats Header */}
+                  <QuizSessionStats
+                    courseStats={sessionState.courseStats}
+                    currentReviewIndex={sessionState.currentReviewIndex}
+                    totalQueueLength={sessionState.reviewQueue?.length ?? 0}
+                    timerIsRunning={!state.isAnswered && !state.isLoading}
+                    currentQuestionId={state.currentQuestion?.id}
+                    currentMastery={currentMasteryRef.current}
+                    lastSubmissionResult={state.lastSubmissionResult}
+                  />
+
+                  <QuizCard
+                    question={state.currentQuestion}
+                    selectedAnswer={state.selectedAnswer}
+                    isAnswered={state.isAnswered}
+                    isCorrect={state.isCorrect}
+                    showExplanation={state.showExplanation}
+                    isLoading={false}
+                    error={state.error}
+                    onSelectAnswer={handleSelectAnswer}
+                    onToggleExplanation={toggleExplanation}
+                    onRetry={retry}
+                    onBlank={handleBlank}
+                  />
+
+                  <QuizActionFooter
+                    isAnswered={state.isAnswered}
+                    isSubmitting={isSubmitting}
+                    queueLength={state.queue.length}
+                    currentBatchIndex={sessionState.currentBatchIndex}
+                    totalBatches={sessionState.totalBatches}
+                    lastSubmissionResult={state.lastSubmissionResult}
+                    onNext={handleNext}
+                  />
+                </div>
+              )}
+          </div>
+        </div>
       </div>
     </ErrorBoundary>
   );

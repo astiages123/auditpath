@@ -111,6 +111,7 @@ export type GenerationStep =
   | "MAPPING"
   | "GENERATING"
   | "VALIDATING"
+  | "REVISION"
   | "SAVING"
   | "COMPLETED"
   | "ERROR";
@@ -125,6 +126,7 @@ export interface GenerationLog {
 
 export interface GeneratorCallbacks {
   onLog: (log: GenerationLog) => void;
+  onTotalTargetCalculated: (target: number) => void;
   onQuestionSaved: (totalSaved: number) => void;
   onComplete: (result: { success: boolean; generated: number }) => void;
   onError: (error: string) => void;

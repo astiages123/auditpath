@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import {
+  getCourseProgress,
   getCourseTopicsWithCounts,
   getFirstChunkIdForTopic,
   getTopicCompletionStatus,
@@ -9,14 +10,12 @@ import { TopicCompletionStats, TopicWithCounts } from "@/types";
 import { ExamService } from "@/features/quiz/logic";
 import { type QuizQuestion } from "@/features/quiz/types";
 import * as Repository from "@/features/quiz/services/repositories/quizRepository";
-import {
-  type GenerationLog,
-  QuizFactory,
-} from "@/features/quiz/logic";
+import { type GenerationLog, QuizFactory } from "@/features/quiz/logic";
 import { parseOrThrow } from "@/utils/helpers";
 import { QuizQuestionSchema } from "@/features/quiz/types";
 import { logger } from "@/utils/logger";
 import { MAX_LOG_ENTRIES } from "@/utils/constants";
+import { AI_MODE } from "@/utils/aiConfig";
 
 export enum QuizState {
   NOT_ANALYZED = "NOT_ANALYZED",
@@ -75,6 +74,13 @@ export function useQuizManager({
   const [completionStatus, setCompletionStatus] = useState<
     TopicCompletionStats | null
   >(null);
+  const [courseProgress, setCourseProgress] = useState<
+    {
+      total: number;
+      solved: number;
+      percentage: number;
+    } | null
+  >(null);
 
   // Quiz Execution State
   const [existingQuestions, setExistingQuestions] = useState<QuizQuestion[]>(
@@ -116,6 +122,16 @@ export function useQuizManager({
         .finally(() => {
           if (mounted) setLoading(false);
         });
+
+      if (user) {
+        getCourseProgress(user.id, courseId).then(
+          (
+            data: { total: number; solved: number; percentage: number } | null,
+          ) => {
+            if (mounted) setCourseProgress(data);
+          },
+        );
+      }
     }
     return () => {
       mounted = false;
@@ -171,9 +187,20 @@ export function useQuizManager({
   const handleGenerate = useCallback(async (mappingOnly: boolean = true) => {
     if (!targetChunkId || !user) return;
 
+    const initialLogs: GenerationLog[] = [];
+    if (AI_MODE === "TEST") {
+      initialLogs.push({
+        id: "ai-warning-" + Date.now(),
+        message: "İçerik analiz ediliyor, bu işlem birkaç dakika sürebilir...",
+        step: "INIT",
+        details: {},
+        timestamp: new Date(),
+      });
+    }
+
     updateGeneration({
       isGenerating: true,
-      logs: [],
+      logs: initialLogs,
       progress: { current: 0, total: 0 },
     });
 
@@ -188,13 +215,19 @@ export function useQuizManager({
               logs: [log, ...prev.logs].slice(0, MAX_LOG_ENTRIES),
             }));
           },
+          onTotalTargetCalculated: (total: number) => {
+            setGeneration((prev) => ({
+              ...prev,
+              progress: { ...prev.progress, total },
+            }));
+          },
           onQuestionSaved: (count: number) => {
             setGeneration((prev) => ({
               ...prev,
               progress: { ...prev.progress, current: count },
             }));
           },
-          onComplete: async () => {
+          onComplete: async (result) => {
             if (selectedTopic && courseId) {
               const newStatus = await getTopicCompletionStatus(
                 user.id,
@@ -237,8 +270,11 @@ export function useQuizManager({
     setExistingQuestions([]);
 
     // Optimistic or fresh reload of topics
-    if (courseId) {
+    if (courseId && user) {
       getCourseTopicsWithCounts(courseId).then(setTopics);
+      getCourseProgress(user.id, courseId).then((
+        data: { total: number; solved: number; percentage: number } | null,
+      ) => setCourseProgress(data));
     }
   }, [courseId]);
 
@@ -263,10 +299,22 @@ export function useQuizManager({
 
   const generateAndFetchExam = useCallback(
     async (userId: string, courseId: string, courseName: string) => {
+      const initialLogs: GenerationLog[] = [];
+      if (AI_MODE === "TEST") {
+        initialLogs.push({
+          id: "ai-warning-" + Date.now(),
+          message:
+            "İçerik analiz ediliyor, bu işlem birkaç dakika sürebilir...",
+          step: "INIT",
+          details: {},
+          timestamp: new Date(),
+        });
+      }
+
       // Prepare generation state
       updateGeneration({
         isGenerating: true,
-        logs: [],
+        logs: initialLogs,
         progress: { current: 0, total: 0 },
       });
 
@@ -281,14 +329,19 @@ export function useQuizManager({
                 ...prev,
                 logs: [log, ...prev.logs].slice(0, MAX_LOG_ENTRIES),
               })),
+            onTotalTargetCalculated: (total: number) =>
+              setGeneration((prev) => ({
+                ...prev,
+                progress: { ...prev.progress, total },
+              })),
             onQuestionSaved: (count: number) =>
               setGeneration((prev) => ({
                 ...prev,
                 progress: { ...prev.progress, current: count },
               })),
-            onComplete: () => {},
-            onError: (err: Error) =>
-              logger.error("Exam generation error:", err),
+            onComplete: (result) => {},
+            onError: (err: string) =>
+              logger.error("Exam generation error:", { message: err }),
           },
         );
 
@@ -378,5 +431,6 @@ export function useQuizManager({
     handleBackToTopics,
     handleStartSmartExam,
     resetState,
+    courseProgress,
   };
 }

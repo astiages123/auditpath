@@ -15,6 +15,7 @@ import {
     TaskContext,
     TaskResult,
 } from "@/features/quiz/logic/tasks/base";
+import { getAIConfig } from "@/utils/aiConfig";
 
 export interface DraftingTaskInput {
     concept: ConceptMapItem;
@@ -54,18 +55,26 @@ export class DraftingTask extends BaseTask<
             previousDiagnoses,
         );
 
+        const aiConfig = getAIConfig();
+        const systemPrompt = aiConfig.systemPromptPrefix
+            ? aiConfig.systemPromptPrefix + "\n" + GLOBAL_AI_SYSTEM_PROMPT
+            : GLOBAL_AI_SYSTEM_PROMPT;
+
         const messages = PromptArchitect.assemble(
-            GLOBAL_AI_SYSTEM_PROMPT,
+            systemPrompt,
             sharedContextPrompt,
-            taskPrompt,
+            taskPrompt +
+                "\n\n### ZORUNLU JSON FORMATI\nLütfen cevabını sadece geçerli bir JSON objesi olarak, ```json ... ``` blokları içinde döndür.",
         );
 
         try {
             const result = await StructuredGenerator.generate(messages, {
                 schema: GeneratedQuestionSchema,
-                provider: "deepseek",
-                temperature: 1.3,
+                provider: aiConfig.provider,
+                model: aiConfig.model,
+                temperature: aiConfig.temperature,
                 usageType: "drafting",
+                maxTokens: 8192,
                 onLog: (msg: string, details?: Record<string, unknown>) =>
                     this.log(context, msg, details),
             });
@@ -80,13 +89,9 @@ export class DraftingTask extends BaseTask<
                 return { success: true, data: question };
             }
         } catch (error) {
-            this.log(context, "Drafting failed, using fallback", { error });
+            this.log(context, "Drafting failed", { error });
         }
 
-        // Return fallback instead of failure
-        return {
-            success: true,
-            data: { ...FALLBACK_QUESTION, concept: concept.baslik },
-        };
+        return { success: false, error: "Drafting failed" };
     }
 }

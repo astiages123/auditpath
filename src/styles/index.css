@@ -385,8 +385,12 @@
 }
 
 /* KaTeX Formula Styling & Container */
+.katex {
+  font-size: 1.02em !important;
+}
+
 .katex .mfrac {
-  font-size: 1.25em;
+  font-size: 1.05em;
 }
 
 .formula-block {

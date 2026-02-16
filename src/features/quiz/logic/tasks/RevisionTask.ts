@@ -14,6 +14,7 @@ import {
     TaskContext,
     TaskResult,
 } from "@/features/quiz/logic/tasks/base";
+import { getAIConfig } from "@/utils/aiConfig";
 
 export interface RevisionTaskInput {
     originalQuestion: GeneratedQuestion;
@@ -74,8 +75,13 @@ export class RevisionTask extends BaseTask<
         Soruyu revize et. Hataları gider, akademik dili koru.
         ${REVISION_RETRY_TEMPLATE}`;
 
+        const aiConfig = getAIConfig();
+        const systemPrompt = aiConfig.systemPromptPrefix
+            ? aiConfig.systemPromptPrefix + "\n" + GLOBAL_AI_SYSTEM_PROMPT
+            : GLOBAL_AI_SYSTEM_PROMPT;
+
         const messages = PromptArchitect.assemble(
-            GLOBAL_AI_SYSTEM_PROMPT,
+            systemPrompt,
             sharedContextPrompt,
             revisionTask,
         );
@@ -83,8 +89,9 @@ export class RevisionTask extends BaseTask<
         try {
             const result = await StructuredGenerator.generate(messages, {
                 schema: GeneratedQuestionSchema,
-                provider: "deepseek",
-                temperature: 1.3,
+                provider: aiConfig.provider,
+                model: aiConfig.model,
+                temperature: aiConfig.temperature,
                 maxRetries: 2,
                 usageType: "revision",
                 retryPromptTemplate: REVISION_RETRY_TEMPLATE,

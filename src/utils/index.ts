@@ -8,3 +8,4 @@ export * from "./math";
 export * from "./routes";
 export * from "./sanitizeHtml";
 export * from "./streakUtils";
+export * from "./aiConfig";

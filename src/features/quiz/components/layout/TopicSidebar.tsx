@@ -4,7 +4,7 @@ import {
   AlertCircle,
   FileText,
   CheckCircle,
-  ChevronRight,
+  Sparkles,
 } from 'lucide-react';
 import { TopicWithCounts } from '@/types';
 
@@ -13,6 +13,8 @@ interface TopicSidebarProps {
   topics: TopicWithCounts[];
   selectedTopic: TopicWithCounts | null;
   onSelectTopic: (topic: TopicWithCounts) => void;
+  onStartSmartExam: () => void;
+  isGeneratingExam: boolean;
 }
 
 export function TopicSidebar({
@@ -20,57 +22,87 @@ export function TopicSidebar({
   topics,
   selectedTopic,
   onSelectTopic,
+  onStartSmartExam,
+  isGeneratingExam,
 }: TopicSidebarProps) {
   return (
-    <div className="border-r border-border/40 overflow-y-auto p-4 space-y-2">
-      {loading ? (
-        <div className="flex items-center justify-center h-40 text-muted-foreground">
-          <Loader2 className="w-6 h-6 animate-spin mr-2" />
-          Konular yükleniyor...
-        </div>
-      ) : topics.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-40 text-muted-foreground text-center p-4">
-          <AlertCircle className="w-8 h-8 mb-2 opacity-50" />
-          <p>Bu derse ait not bulunamadı.</p>
-        </div>
-      ) : (
-        topics.map((topic, index) => (
-          <button
-            key={index}
-            onClick={() => onSelectTopic(topic)}
-            className={`w-full text-left p-4 rounded-xl transition-all border ${
-              selectedTopic?.name === topic.name
-                ? 'bg-primary/5 border-primary/20 ring-1 ring-primary/10 shadow-sm'
-                : 'hover:bg-muted/50 border-transparent hover:border-border/50'
-            }`}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="flex items-start gap-3 pt-0.5 flex-1 min-w-0">
-                <FileText
-                  className={`w-4 h-4 shrink-0 mt-0.5 ${selectedTopic?.name === topic.name ? 'text-primary' : 'text-muted-foreground'}`}
-                />
-                <span
-                  className={`font-medium text-[15px] leading-snug wrap-break-word ${selectedTopic?.name === topic.name ? 'text-foreground' : 'text-muted-foreground'}`}
-                >
-                  {topic.name}
-                </span>
-              </div>
-              {/* Status Icon */}
-              <div className="flex items-center gap-2 shrink-0">
-                {topic.isCompleted && (
-                  <div className="flex items-center gap-1 text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full text-[11px] font-bold">
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>Tamamlandı</span>
-                  </div>
-                )}
-                {selectedTopic?.name === topic.name && (
-                  <ChevronRight className="w-4 h-4 text-primary shrink-0" />
-                )}
-              </div>
+    <div className="border-r border-border/30 overflow-y-auto p-3 flex flex-col gap-1">
+      <div className="mb-4">
+        <button
+          onClick={onStartSmartExam}
+          disabled={isGeneratingExam}
+          className="w-full relative group overflow-hidden rounded-xl border border-primary/20 bg-linear-to-br from-primary/5 via-primary/10 to-transparent p-4 text-left transition-all hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+        >
+          <div className="relative z-10 flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary shadow-inner">
+              <Sparkles
+                className={`w-5 h-5 ${isGeneratingExam ? 'animate-pulse' : ''}`}
+              />
             </div>
-          </button>
-        ))
-      )}
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-bold text-foreground">
+                Deneme Sınavı
+              </h4>
+              <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                Tüm konulardan karışık bir deneme sınav oluştur.
+              </p>
+            </div>
+          </div>
+
+          {/* Background Decorative Element */}
+          <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-primary/5 rounded-full blur-2xl group-hover:bg-primary/10 transition-colors" />
+        </button>
+      </div>
+
+      <div className="flex-1 space-y-1">
+        {loading ? (
+          <div className="flex items-center justify-center h-32 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin mr-2" />
+            <span className="text-sm">Yükleniyor...</span>
+          </div>
+        ) : topics.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-32 text-muted-foreground text-center p-4">
+            <AlertCircle className="w-7 h-7 mb-2 opacity-40" />
+            <p className="text-sm">Konu bulunamadı</p>
+          </div>
+        ) : (
+          topics.map((topic, index) => (
+            <button
+              key={index}
+              onClick={() => onSelectTopic(topic)}
+              className={`w-full text-left p-3 rounded-lg transition-all duration-150 ${
+                selectedTopic?.name === topic.name
+                  ? 'bg-primary/10 border border-primary/20'
+                  : 'hover:bg-muted/40 border border-transparent'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                  <FileText
+                    className={`w-4 h-4 shrink-0 ${
+                      selectedTopic?.name === topic.name
+                        ? 'text-primary'
+                        : 'text-muted-foreground/60'
+                    }`}
+                  />
+                  <span
+                    className={`text-sm truncate ${
+                      selectedTopic?.name === topic.name
+                        ? 'text-foreground font-medium'
+                        : 'text-muted-foreground'
+                    }`}
+                  >
+                    {topic.name}
+                  </span>
+                </div>
+                {topic.isCompleted && (
+                  <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                )}
+              </div>
+            </button>
+          ))
+        )}
+      </div>
     </div>
   );
 }
