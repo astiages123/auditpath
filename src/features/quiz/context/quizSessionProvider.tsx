@@ -20,12 +20,12 @@ import {
   getQuotaInfo,
   getContentVersion,
   getCourseStats,
-} from '@/features/quiz/services/quizRepository';
-import { getReviewQueue, submitAnswer } from '@/features/quiz/logic/quizEngine';
+} from '@/features/quiz/services/repositories/quizRepository';
+import { getReviewQueue, submitAnswer } from '@/features/quiz/logic';
 import { type ReviewItem, type QuizResponseType } from '@/features/quiz/types';
 import { toast } from 'sonner';
 import { logger } from '@/utils/logger';
-import { storage } from '@/lib/storageService';
+import { storage } from '@/lib/storage';
 import {
   initialQuizSessionState,
   quizSessionReducer,

@@ -3,15 +3,11 @@ import {
   type RefObject,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
-import { slugify } from "@/utils/core";
 import { type CourseTopic } from "@/types";
-import { type LocalToCItem } from "../components/LocalToC";
-
-export interface ExtendedToCItem extends LocalToCItem {
-  chunkId: string;
-}
+import { generateTOCFromContent } from "../logic/notesLogic";
 
 interface UseTableOfContentsProps {
   chunks: CourseTopic[];
@@ -29,103 +25,81 @@ export const useTableOfContents = ({
   isProgrammaticScroll,
 }: UseTableOfContentsProps) => {
   const [activeSection, setActiveSection] = useState<string>("");
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // 1. Active Section via IntersectionObserver
   useEffect(() => {
     if (loading || chunks.length === 0) return;
 
+    // Disconnect previous observer
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
     const options = {
       root: mainContentRef.current,
-      rootMargin: "-10% 0% -80% 0%",
-      threshold: 0,
+      // Adjusted rootMargin to better detect headers at the top of the viewport
+      // "0px 0px -40% 0px" means we only care about the top 60% of the viewport
+      rootMargin: "0px 0px -40% 0px",
+      threshold: [0, 1.0],
     };
 
-    const observer = new IntersectionObserver((entries) => {
+    const handleIntersect = (entries: IntersectionObserverEntry[]) => {
       if (isProgrammaticScroll.current) return;
 
-      const intersecting = entries.filter((entry) => entry.isIntersecting);
-      if (intersecting.length > 0) {
-        // Find the topmost intersecting element (smallest boundingClientRect.top)
-        const topMost = intersecting.reduce((prev, curr) =>
-          curr.boundingClientRect.top < prev.boundingClientRect.top
-            ? curr
-            : prev
-        );
-
-        if (topMost.target.id && topMost.target.id !== activeSection) {
-          setActiveSection(topMost.target.id);
-        }
+      // Debounce updates to prevent flickering
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
       }
-    }, options);
+
+      debounceTimeout.current = setTimeout(() => {
+        const intersecting = entries.filter((entry) => entry.isIntersecting);
+        if (intersecting.length > 0) {
+          // Find the topmost intersecting element
+          // We prioritize elements closer to the top of the viewport
+          const topMost = intersecting.reduce((prev, curr) =>
+            curr.boundingClientRect.top < prev.boundingClientRect.top
+              ? curr
+              : prev
+          );
+
+          setActiveSection((prev) => {
+            if (topMost.target.id && topMost.target.id !== prev) {
+              return topMost.target.id;
+            }
+            return prev;
+          });
+        }
+      }, 50); // Small delay to stabilize
+    };
+
+    observerRef.current = new IntersectionObserver(handleIntersect, options);
 
     // Observe all elements with an ID inside the scroll container
-    const sections = mainContentRef.current?.querySelectorAll("[id]");
-    sections?.forEach((section) => observer.observe(section));
+    // Using a timeout to ensure DOM is ready
+    const timer = setTimeout(() => {
+      const sections = mainContentRef.current?.querySelectorAll("[id]");
+      sections?.forEach((section) => observerRef.current?.observe(section));
+    }, 100);
 
-    return () => observer.disconnect();
+    return () => {
+      clearTimeout(timer);
+      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+      if (observerRef.current) observerRef.current.disconnect();
+    };
   }, [
     chunks,
     loading,
     activeChunkId,
-    activeSection,
+    // activeSection, // Removed to prevent re-creation of observer on state change
     mainContentRef,
     isProgrammaticScroll,
   ]);
 
-  // 2. Build Table of Contents (Computed via useMemo instead of useEffect+useState)
+  // 2. Build Table of Contents (Using extracted pure function)
   const toc = useMemo(() => {
-    if (chunks.length === 0) return [];
-
-    const items: ExtendedToCItem[] = [];
-
-    chunks.forEach((chunk) => {
-      const chunkId = slugify(chunk.section_title);
-
-      // Always add the chunk title itself as Level 1
-      if (chunk.section_title) {
-        items.push({
-          id: chunkId,
-          title: chunk.section_title,
-          level: 1,
-          chunkId: chunkId,
-        });
-      }
-
-      const lines = chunk.content.split("\n");
-      lines.forEach((line) => {
-        const h1Match = line.match(/^#\s+(.+)$/);
-        const h2Match = line.match(/^##\s+(.+)$/);
-        const h3Match = line.match(/^###\s+(.+)$/);
-
-        let level = 0;
-        let title = "";
-
-        if (h1Match) {
-          title = h1Match[1].trim();
-          level = 2;
-        } else if (h2Match) {
-          title = h2Match[1].trim();
-          level = 3;
-        } else if (h3Match) {
-          title = h3Match[1].trim();
-          level = 4;
-        }
-
-        if (level > 0) {
-          items.push({
-            id: slugify(title),
-            title: title,
-            level,
-            chunkId: chunkId,
-          });
-        }
-      });
-    });
-
-    // Dedupe
-    return items.filter(
-      (item, index, self) => index === self.findIndex((t) => t.id === item.id),
-    );
+    return generateTOCFromContent(chunks);
   }, [chunks]);
 
   // 3. Derived filtered ToC for Right Panel

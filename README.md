@@ -1,126 +1,129 @@
 # AuditPath 🛡️
 
-**Intelligent Adaptive Learning System for CIA & CISA Certifications**
+**CIA & CISA Sertifikaları için Akıllı Adaptif Öğrenme Sistemi**
 
-![Status](https://img.shields.io/badge/Status-Active_Development-success?style=for-the-badge)
-![Tech Stack](https://img.shields.io/badge/Stack-Vite_7_%7C_React_19_%7C_TypeScript-blue?style=for-the-badge&logo=typescript)
-![AI Power](https://img.shields.io/badge/AI-LLM_Orchestration-purple?style=for-the-badge)
-![Testing](https://img.shields.io/badge/Coverage-High-green?style=for-the-badge)
+![Durum](https://img.shields.io/badge/Durum-Aktif_Geliştirme-success?style=for-the-badge)
+![Stack](https://img.shields.io/badge/Stack-Vite_7_%7C_React_19_%7C_TypeScript-blue?style=for-the-badge&logo=typescript)
+![Veritabanı](https://img.shields.io/badge/DB-Supabase-green?style=for-the-badge)
+![Test](https://img.shields.io/badge/Kapsam-Yüksek-green?style=for-the-badge)
 
-AuditPath is not just a question bank; it's a **cognitive engine** designed to optimize learning retention through advanced algorithms and AI-driven content generation.
-
----
-
-## 🧠 Core Intelligence: SRS & Shelf System
-
-At the heart of AuditPath lies a sophisticated **Spaced Repetition System (SRS)** that adapts to your learning curve.
-
-### The "Shelf" Logic
-
-Our proprietary **Shelf System** manages content lifecycle based on user performance:
-
-- **🎯 3-Strike Rule**: Content moves from `Active` to `Archived` only after **3 consecutive successful recalls**.
-- **⏳ Fibonacci Spacing**: Review intervals expanding aggressively based on success:
-  `[1, 2, 5, 10, 20] Days`
-- **🔄 Zero-Day Reset**: Any failure (`isCorrect: false`) immediately resets progress, reinforcing weak spots.
-
-### Multi-Dimensional Scoring
-
-We calculate mastery using more than just correct answers:
-
-$$
-\text{FinalScore} = \text{BaseScore} \times \text{BloomMultiplier} \times \text{TimeRatio}
-$$
-
-| Component       | Logic                                                      | Impact                               |
-| :-------------- | :--------------------------------------------------------- | :----------------------------------- |
-| **Bloom Level** | `Knowledge (1.0)` → `Application (1.3)` → `Analysis (1.6)` | Rewards deeper cognitive processing. |
-| **Time Ratio**  | `Clamp(Target / Actual, 0.5, 2.0)`                         | Penalizes guessing, rewards fluency. |
+AuditPath, gelişmiş algoritmalar ve AI destekli içerik üretimi ile öğrenme tutumunu optimize eden **bilişsel bir motor**dur.
 
 ---
 
-## 🔗 Mastery Chain Protocol
+## ⚡ Öne Çıkan Özellikler
 
-AuditPath models knowledge as a directed graph where concepts are interconnected.
+### 🧠 Akıllı Tekrar Sistemi (SRS)
 
-### Dependency Rules
+Bildiklerini unutmamak için çalışır. AuditPath, performansına göre içerik yaşam döngüsünü yönetir:
 
-A concept is only considered **Mastered** when:
+| Kural                    | Açıklama                                        |
+| :----------------------- | :---------------------------------------------- |
+| **3 Vuruş Kuralı**       | 3 ardışık başarılı hatırlama → Arşiv            |
+| **Fibonacci Aralıkları** | `[1, 2, 5, 10, 20]` günlük genişleyen aralıklar |
+| **Sıfırlama**            | Herhangi bir hata → başlangıca geri dönüş       |
 
-1.  **Self-Mastery**: User achieves **>80%** success rate on the concept itself.
-2.  **Prerequisite Check**: All prerequisite concepts are at **>85%** mastery.
+### 🔗 Mastery Zinciri
 
-### 🛡️ Resilience Bonus
+Kavramlar arasındaki bağımlılıkları modeller. Bir kavram **Mastery Zinciri** parçası sayılırsa:
 
-Consistency is key.
+1. Kendi başarı oranı **>%80**
+2. Tüm ön koşul kavramlar **>%85**
 
-- Completing a Mastery Chain grants a **+2 Day Resilience Bonus**.
-- This protects your **Streak** against missed study days, encouraging deep learning over superficial cramming.
+Zincir tamamlandığında **+2 gün Resilience Bonus** kazanılır — seriyi koruyan bir "can".
 
----
+### 🤖 AI İçerik Fabrikası
 
-## ⚡ AI Content Factory
+Çok aşamalı üretim hattı ile kaliteli sorular:
 
-Our **Multi-Stage Generation Pipeline** ensures valid, high-quality assessment material.
-
-```mermaid
-graph LR
-    A[Drafting Task] -->|GPT-4o + Zod| B(Validation Task)
-    B -->|Check Logic & Facts| C{Approved?}
-    C -->|Yes| D[Database]
-    C -->|No| E[Revision Task]
-    E --> B
+```
+Analiz → Taslak → Doğrulama → Revizyon
 ```
 
-- **Strict Schema Validation**: All AI outputs are runtime-checked via **Zod**.
-- **Hallucination Control**: A dedicated validator agent cross-references questions with source texts.
-- **Smart Distractors**: Options generated are contextually plausible to test true understanding.
+- **Zod** ile runtime schema kontrolü
+- Hallüsinasyon kontrolü
+- Akıllı şık üretimi (yanlış ama mantıklı seçenekler)
+
+### ⏱️ Web Worker Timer
+
+Ana thread'i meşgul etmeden çalışan Pomodoro ve sınav timer'ları. Ağır UI yükü altında bile **sıfır sapmalı** zaman tutma.
+
+### 🌙 Sanal Tarih Sistemi
+
+- **Gün başlangıcı**: 04:00
+- 03:59'da yapılan çalışma dün sayılır
+- Gece geç saatlere kadar çalışanlar için koruma
 
 ---
 
-## 🏗️ Robust Infrastructure
+## 🛠️ Teknoloji Yığını
 
-Built for reliability and performance.
-
-### ⏱️ Web Worker Timers (`timerWorker.ts`)
-
-We bypass the main thread's event loop lag by running exam and Pomodoro timers in dedicated **Web Workers**. This ensures **zero-drift timekeeping**, even under heavy UI load.
-
-### 🌙 Virtual Date System
-
-Night owls welcome.
-
-- **Day Start**: 04:00 AM
-- **Logic**: Work done at 03:59 AM counts towards _yesterday_.
-- **Benefit**: Protects streaks for late-night study sessions without artificial calendar boundary penalties.
+| Katman                  | Teknoloji                             |
+| :---------------------- | :------------------------------------ |
+| **Frontend**            | React 19, TypeScript, Vite 7          |
+| **UI**                  | Radix UI, Tailwind CSS, Framer Motion |
+| **State**               | Zustand, TanStack Query               |
+| **Backend**             | Supabase (PostgreSQL)                 |
+| **Veri Görselleştirme** | Recharts, Mermaid                     |
+| **Test**                | ESLint, TypeScript                    |
 
 ---
 
-## 🧪 Testing Strategy
-
-Quality Assurance is baked into the DNA of the project.
-
-- **Unit Tests**: Mathematical verification of SRS algorithms and Bloom multipliers.
-- **Integration Tests**: Full simulation of User -> API -> Database flows.
-- **Data Integrity**: Automated schema checks for all AI-generated content.
-
----
-
-## 🚀 Getting Started
+## 🚀 Başlangıç
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-org/auditpath.git
+# Depoyu klonla
+git clone https://github.com/vedatdiyar/auditpath.git
 
-# Install dependencies
+# Bağımlılıkları yükle
 npm install
 
-# Run the development server
+# Geliştirme sunucusunu çalıştır
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) with your browser to see the result.
+[http://localhost:5173](http://localhost:5173) adresinde uygulamayı görüntüle.
 
 ---
 
-© 2024 AuditPath Architecture Team.
+## 📁 Proje Yapısı
+
+```
+src/
+├── api/              # Harici API servisleri (döviz kurları)
+├── components/       # Paylaşılan UI bileşenleri
+├── features/        # Özellik modülleri
+│   ├── auth/        # Kimlik doğrulama
+│   ├── courses/    # Kurs yönetimi
+│   ├── pomodoro/   # Pomodoro timer & oturumlar
+│   ├── quiz/       # Quiz motoru & AI üretimi
+│   └── ...
+├── hooks/          # Özel React hook'ları
+├── lib/            # Supabase, storage, offline
+├── pages/          # Sayfa bileşenleri
+├── shared/         # Paylaşılan modal, kart bileşenleri
+├── store/          # Zustand state yönetimi
+├── styles/         # Global stiller
+├── types/          # TypeScript tip tanımları
+├── utils/          # Yardımcı fonksiyonlar (SRS, mastery, tarih)
+└── workers/        # Web Worker'lar (timer)
+```
+
+---
+
+## 📝 Geliştirme Notları
+
+- **Offline Çalışma**: IndexedDB destekli clientDb + offlineQueueService
+- **Veritabanı**: Supabase migrations `supabase/migrations/`
+- **Tip Üretimi**: `npm run update-types` → Supabase'ten TypeScript tipleri
+- **Linting**: `npm run lint` ve `npm run type-check`
+
+---
+
+## 📄 Lisans
+
+MIT License - 2024 AuditPath
+
+---
+
+_Build with 💻 for CIA & CISA aspirants_

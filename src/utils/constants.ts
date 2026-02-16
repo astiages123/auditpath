@@ -56,3 +56,134 @@ export const RANKS: Rank[] = [
         order: 4,
     },
 ];
+
+// --- Quiz Configuration ---
+
+// Efficiency / Gamification Constants
+export const DAILY_GOAL_MINUTES = 200;
+
+/**
+ * Efficiency thresholds for learning flow analysis.
+ * Symmetric around 1.0x (Optimal)
+ */
+export const EFFICIENCY_THRESHOLDS = {
+    STUCK: 0.25, // < 0.25: Critical Slow (Rose)
+    DEEP: 0.75, // 0.25 - 0.75: Warning Slow (Amber)
+    OPTIMAL_MIN: 0.75, // 0.75 - 1.25: Ideal (Emerald)
+    OPTIMAL_MAX: 1.25,
+    SPEED: 1.75, // 1.25 - 1.75: Warning Fast (Amber)
+    SHALLOW: 1.75, // > 1.75: Critical Fast (Rose)
+};
+
+export const EXAM_STRATEGY: Record<
+    string,
+    { importance: "high" | "medium" | "low" }
+> = {
+    "mikro-iktisat": { importance: "high" },
+    "makro-iktisat": { importance: "high" },
+    "para-banka-ve-kredi": { importance: "high" },
+    "uluslararasi-ticaret": { importance: "low" },
+    "turkiye-ekonomisi": { importance: "low" },
+    "medeni-hukuk": { importance: "medium" },
+    "borclar-hukuku": { importance: "high" },
+    "ticaret-hukuku": { importance: "high" },
+    "icra-ve-iflas-hukuku": { importance: "medium" },
+    "turk-ceza-kanunu": { importance: "low" },
+    "medeni-usul-hukuku": { importance: "low" },
+    "is-hukuku": { importance: "low" },
+    "bankacilik-hukuku": { importance: "high" },
+    "genel-muhasebe": { importance: "high" },
+    "maliye-teorisi": { importance: "medium" },
+    "banka-muhasebesi": { importance: "high" },
+    "isletme-yonetimi": { importance: "low" },
+    "pazarlama-yonetimi": { importance: "low" },
+    "finansal-yonetim": { importance: "high" },
+    matematik: { importance: "high" },
+    "finans-matematigi": { importance: "high" },
+    istatistik: { importance: "medium" },
+    ingilizce: { importance: "high" },
+    "sozel-mantik": { importance: "low" },
+};
+
+export type CourseCategory = "SKILL_BASED" | "SCENARIO_BASED" | "THEORY_BASED";
+
+export const CATEGORY_MAPPINGS: Record<string, CourseCategory> = {
+    İngilizce: "SKILL_BASED",
+    "Sözel Mantık": "SKILL_BASED",
+    Matematik: "SKILL_BASED",
+    "Sayısal Mantık": "SKILL_BASED",
+    İstatistik: "SKILL_BASED",
+    "Medeni Hukuk": "SCENARIO_BASED",
+    "Borçlar Hukuku": "SCENARIO_BASED",
+    "Ticaret Hukuku": "SCENARIO_BASED",
+    "Bankacılık Hukuku": "SCENARIO_BASED",
+    "İcra ve İflas Hukuku": "SCENARIO_BASED",
+    "Türk Ceza Kanunu": "SCENARIO_BASED",
+    "İş Hukuku": "SCENARIO_BASED",
+    "Medeni Usul Hukuku": "SCENARIO_BASED",
+    "Genel Muhasebe": "SCENARIO_BASED",
+    "Banka Muhasebesi": "SCENARIO_BASED",
+    "Finans Matematiği": "SCENARIO_BASED",
+    "Finansal Yönetim": "SCENARIO_BASED",
+    "Mikro İktisat": "THEORY_BASED",
+    "Makro İktisat": "THEORY_BASED",
+    "Para, Banka ve Kredi": "THEORY_BASED",
+    "Uluslararası Ticaret": "THEORY_BASED",
+    "Türkiye Ekonomisi": "THEORY_BASED",
+    "Maliye Teorisi": "THEORY_BASED",
+    "İşletme Yönetimi": "THEORY_BASED",
+    "Pazarlama Yönetimi": "THEORY_BASED",
+};
+
+export const DEFAULT_CATEGORY: CourseCategory = "THEORY_BASED";
+
+export const CATEGORY_DISTRIBUTIONS: Record<
+    CourseCategory,
+    ("knowledge" | "application" | "analysis")[]
+> = {
+    SKILL_BASED: [
+        "knowledge",
+        "application",
+        "application",
+        "application",
+        "application",
+        "application",
+        "application",
+        "analysis",
+        "analysis",
+        "analysis",
+    ],
+    SCENARIO_BASED: [
+        "knowledge",
+        "knowledge",
+        "application",
+        "application",
+        "application",
+        "application",
+        "application",
+        "application",
+        "analysis",
+        "analysis",
+    ],
+    THEORY_BASED: [
+        "knowledge",
+        "knowledge",
+        "application",
+        "application",
+        "application",
+        "application",
+        "application",
+        "application",
+        "analysis",
+        "analysis",
+    ],
+};
+
+export const BLOOM_INSTRUCTIONS = {
+    knowledge:
+        "Temel bilgi ve kavrama düzeyinde, akademik bir dille hazırlanmış öğretici bir soru üret. Tanım, ilke veya kavramsal özelliklere odaklan.",
+    application:
+        "Kuru tanım sorma. Kullanıcının günlük hayatta karşılaşabileceği, isimler ve olaylar içeren spesifik bir 'vaka/senaryo' (vignette) kurgula.",
+    analysis:
+        "Metindeki iki farklı kavramı karşılaştıran veya bir kuralın istisnasını sorgulayan 'muhakeme' odaklı bir soru üret. Soru, 'X olursa Y nasıl etkilenir?' gibi neden-sonuç zinciri kurdurmalıdır.",
+};

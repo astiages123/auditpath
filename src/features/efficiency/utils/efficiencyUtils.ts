@@ -1,57 +1,104 @@
+import { EFFICIENCY_THRESHOLDS } from "@/utils/constants";
 import { getVirtualDateKey } from "@/utils/helpers";
+import { flowState } from "../types/efficiencyTypes";
 
 /**
- * Generates a date range array (inclusive) filling any gaps between start and end.
- * Useful for charts where every day must be represented even if no data exists.
- *
- * @param days - Number of days to generate back from today (or from reference date)
- * @param referenceDate - The reference date (defaults to today)
- * @returns Array of date keys strings (YYYY-MM-DD)
+ * Generates an array of date strings for the last N days.
+ * @param days - Number of days to look back
+ * @returns Array of date strings (YYYY-MM-DD)
  */
-export function generateDateRange(
-    days: number,
-    referenceDate: Date = new Date(),
-): string[] {
+export function generateDateRange(days: number): string[] {
     const dates: string[] = [];
-    // Align reference date to noon to avoid DST issues
-    const currentDate = new Date(referenceDate);
-    currentDate.setHours(12, 0, 0, 0);
-
-    for (let i = days - 1; i >= 0; i--) {
-        const d = new Date(currentDate);
+    for (let i = 0; i < days; i++) {
+        const d = new Date();
         d.setDate(d.getDate() - i);
         dates.push(getVirtualDateKey(d));
     }
     return dates;
 }
 
-/**
- * Safe Helper to format duration in minutes
- */
-export const formatDurationMinutes = (minutes: number): string => {
-    const h = Math.floor(minutes / 60);
-    const m = Math.round(minutes % 60);
-    if (h > 0) return `${h}sa ${m}dk`;
-    return `${m}dk`;
-};
+export interface EfficiencyMetrics {
+    totalVideoTime: number; // minutes
+    totalPomodoroTime: number; // minutes
+}
 
-interface RawTimelineItem {
-    type?: string;
-    start?: string | number;
-    end?: string | number;
+export interface LearningFlowResult {
+    score: number;
+    state: flowState;
 }
 
 /**
- * Type guard or converter for timeline items if needed
+ * Calculates the raw efficiency score (Video / Pomodoro ratio).
+ * @param videoMinutes - Total video watch time in minutes
+ * @param workMinutes - Total pomodoro work time in minutes
+ * @returns Score as a number (e.g. 1.25)
  */
-export const safeMapTimeline = (rawTimeline: unknown[]) => {
-    if (!Array.isArray(rawTimeline)) return [];
-    return (rawTimeline as RawTimelineItem[]).map((item) => ({
-        type: item.type?.toLowerCase() || "work",
-        start: Number(item.start),
-        end: Number(item.end),
-        duration: Math.round(
-            (Number(item.end) - Number(item.start)) / 1000 / 60,
-        ),
-    }));
-};
+export function calculateEfficiencyScore(
+    videoMinutes: number,
+    workMinutes: number,
+): number {
+    if (workMinutes <= 0) return 0;
+    const ratio = videoMinutes / workMinutes;
+    return Number(ratio.toFixed(2));
+}
+
+/**
+ * Calculates the learning flow score and state based on video and pomodoro time.
+ * @param metrics - Object containing totalVideoTime and totalPomodoroTime in minutes
+ * @returns Object containing score (number) and state (flowState)
+ */
+export function calculateLearningFlow(
+    metrics: EfficiencyMetrics,
+): LearningFlowResult {
+    const score = calculateEfficiencyScore(
+        metrics.totalVideoTime,
+        metrics.totalPomodoroTime,
+    );
+
+    // Safety Guard: if no work done, flow is 0 (handled by calculateEfficiencyScore but check for state)
+    if (metrics.totalPomodoroTime === 0) {
+        return { score: 0, state: "stuck" };
+    }
+
+    // 2. Determine State based on 1.0x centered symmetric spectrum
+    let state: flowState;
+
+    if (score < EFFICIENCY_THRESHOLDS.STUCK) {
+        state = "stuck";
+    } else if (score < EFFICIENCY_THRESHOLDS.DEEP) {
+        state = "deep";
+    } else if (score <= EFFICIENCY_THRESHOLDS.OPTIMAL_MAX) {
+        state = "optimal";
+    } else if (score <= EFFICIENCY_THRESHOLDS.SPEED) {
+        state = "speed";
+    } else {
+        state = "shallow";
+    }
+
+    return { score, state };
+}
+
+/**
+ * Calculates the progress percentage towards the daily goal.
+ * @param currentMinutes - Total minutes worked today
+ * @param goalMinutes - Daily goal in minutes
+ * @returns Progress percentage (0-100)
+ */
+export function calculateGoalProgress(
+    currentMinutes: number,
+    goalMinutes: number,
+): number {
+    if (goalMinutes <= 0) return 0;
+    return Math.min(Math.round((currentMinutes / goalMinutes) * 100), 100);
+}
+
+/**
+ * Formats minutes into a readable string (e.g., "3sa 15dk").
+ * @param minutes - Total minutes
+ * @returns Formatted time string
+ */
+export function formatEfficiencyTime(minutes: number): string {
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return `${h}sa ${m}dk`;
+}

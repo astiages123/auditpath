@@ -8,8 +8,8 @@ import { Button } from '@/components/ui/button';
 import { cn, slugify } from '@/utils/core';
 import { ROUTES } from '@/utils/routes';
 import { logger } from '@/utils/logger';
-import { ErrorBoundary } from '@/ErrorBoundary';
-import { storage } from '@/lib/storageService';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { storage } from '@/lib/storage';
 
 // New Components
 import { MarkdownSection } from './MarkdownSection';

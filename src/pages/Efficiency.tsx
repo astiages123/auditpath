@@ -1,6 +1,6 @@
 import { TrendingUp } from 'lucide-react';
 import { useTransition } from 'react';
-import { ErrorBoundary } from '@/ErrorBoundary';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { RecentQuizzesCard } from '@/features/efficiency/components';
 import { CognitiveInsightsCard } from '@/features/efficiency/components';
 import {

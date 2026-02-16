@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { getDailyEfficiencySummary, getDailyStats } from '@/lib/clientDb';
-import { DailyEfficiencySummary } from '@/types';
-import { logger } from '@/utils/logger';
+import { useEffect, useState } from "react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { getDailyEfficiencySummary, getDailyStats } from "@/lib/clientDb";
+import { DailyEfficiencySummary } from "@/types";
+import { useUIStore } from "@/store/useUIStore";
+import { logger } from "@/utils/logger";
 
 export interface DailyMetrics {
   dailyGoalMinutes: number;
@@ -19,8 +20,9 @@ export function useDailyMetrics() {
   const [loading, setLoading] = useState(true);
 
   // Initialize with safe defaults
-  const [efficiencySummary, setEfficiencySummary] =
-    useState<DailyEfficiencySummary | null>(null);
+  const [efficiencySummary, setEfficiencySummary] = useState<
+    DailyEfficiencySummary | null
+  >(null);
   const [dailyGoalMinutes, setDailyGoalMinutes] = useState(200);
   const [todayVideoMinutes, setTodayVideoMinutes] = useState(0);
   const [todayVideoCount, setTodayVideoCount] = useState(0);
@@ -39,6 +41,9 @@ export function useDailyMetrics() {
 
         setEfficiencySummary(summary);
 
+        // Sync with Global UI Store
+        useUIStore.getState().actions.setEfficiencySummary(summary);
+
         if (daily) {
           setDailyGoalMinutes(daily.goalMinutes || 200);
           setTodayVideoMinutes(daily.totalVideoMinutes || 0);
@@ -47,7 +52,7 @@ export function useDailyMetrics() {
           setTrendPercentage(daily.trendPercentage || 0);
         }
       } catch (error) {
-        logger.error('Failed to fetch daily metrics', error as Error);
+        logger.error("Failed to fetch daily metrics", error as Error);
       } finally {
         setLoading(false);
       }

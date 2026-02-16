@@ -5,7 +5,7 @@ import {
   getConsistencyData,
   getFocusPowerData,
   getLearningLoadData,
-} from "../services/efficiencyService";
+} from "../services/analytics/efficiencyService";
 import { DayActivity, EfficiencyTrend, FocusTrend } from "@/types";
 import { FocusPowerPoint, LearningLoad } from "../types/efficiencyTypes";
 import { logger } from "@/utils/logger";

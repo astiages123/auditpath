@@ -1,7 +1,7 @@
 import { ClipboardCheck, Maximize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassCard } from '@/shared/GlassCard';
-import { CardHeader } from './EfficiencyCards';
+import { CardHeader } from '.';
 import { EfficiencyModal } from './EfficiencyModals';
 import { cn } from '@/utils/core';
 import { RecentQuizSession } from '@/types';

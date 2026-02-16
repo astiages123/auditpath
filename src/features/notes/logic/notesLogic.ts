@@ -1,42 +1,68 @@
-// supabase import removed
-import { logger } from '@/utils/logger';
+import { slugify } from "@/utils/core";
+import { type CourseTopic } from "@/types";
+import { type LocalToCItem } from "../components/LocalToC";
 
-export interface Note {
-  courseId: string;
-  content: string;
-  updatedAt: Date;
+export interface ExtendedToCItem extends LocalToCItem {
+  chunkId: string;
 }
 
-// getNote expects the 'slug' (course.id) to be passed
-export async function getNote(
-  slug: string,
-  signal?: AbortSignal
-): Promise<Note | null> {
-  try {
-    // 1. Try to fetch from local files (Standardized path)
-    const paths = [`/notes/${slug}/${slug}.md`, `/notes/${slug}/note.md`];
+/**
+ * Generates a Table of Contents from course chunks.
+ * This is a pure function extracted for better performance and testability.
+ */
+export const generateTOCFromContent = (
+  chunks: CourseTopic[],
+): ExtendedToCItem[] => {
+  if (chunks.length === 0) return [];
 
-    for (const path of paths) {
-      try {
-        const res = await fetch(path, { signal });
-        if (res.ok) {
-          const content = await res.text();
-          if (content && !content.startsWith('<!DOCTYPE html>')) {
-            return {
-              courseId: slug,
-              content,
-              updatedAt: new Date(),
-            };
-          }
-        }
-      } catch {
-        // Continue
-      }
+  const items: ExtendedToCItem[] = [];
+
+  chunks.forEach((chunk) => {
+    const chunkId = slugify(chunk.section_title);
+
+    // Always add the chunk title itself as Level 1
+    if (chunk.section_title) {
+      items.push({
+        id: chunkId,
+        title: chunk.section_title,
+        level: 1,
+        chunkId: chunkId,
+      });
     }
 
-    return null;
-  } catch (error) {
-    logger.error('getNote error:', error as Error);
-    return null;
-  }
-}
+    const lines = chunk.content.split("\n");
+    lines.forEach((line) => {
+      const h1Match = line.match(/^#\s+(.+)$/);
+      const h2Match = line.match(/^##\s+(.+)$/);
+      const h3Match = line.match(/^###\s+(.+)$/);
+
+      let level = 0;
+      let title = "";
+
+      if (h1Match) {
+        title = h1Match[1].trim();
+        level = 2;
+      } else if (h2Match) {
+        title = h2Match[1].trim();
+        level = 3;
+      } else if (h3Match) {
+        title = h3Match[1].trim();
+        level = 4;
+      }
+
+      if (level > 0) {
+        items.push({
+          id: slugify(title),
+          title: title,
+          level,
+          chunkId: chunkId,
+        });
+      }
+    });
+  });
+
+  // Dedupe
+  return items.filter(
+    (item, index, self) => index === self.findIndex((t) => t.id === item.id),
+  );
+};

@@ -1,10 +1,10 @@
 import { lazy, Suspense, useCallback, type ReactNode } from 'react';
-import { Header } from '@/components/layout/Header';
+import { Header } from '@/components/layout/header/Header';
 import { PomodoroModal } from '@/features/pomodoro/components';
 import { TimerController } from '@/features/pomodoro/components';
 import { Toaster } from '@/components/ui/sonner';
 import { useCelebration } from '@/hooks/useCelebration';
-import { useUIStore } from '@/store/uiStore';
+import { useUIStore } from '@/store/useUIStore';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const CelebrationModal = lazy(() =>

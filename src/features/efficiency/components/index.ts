@@ -1,5 +1,5 @@
 export * from "./CognitiveInsightsCard";
-export * from "./EfficiencyCards";
+export * from "./cards";
 export * from "./EfficiencyCharts";
 export * from "./EfficiencyHeatmap";
 export * from "./EfficiencyModals";

@@ -35,7 +35,9 @@ export const CodeBlock = ({
     (code.trim().startsWith('$') && code.trim().endsWith('$'))
   );
 
-  if (isMath) {
+  const sanitizedHtml = React.useMemo(() => {
+    if (!isMath) return null;
+
     const isDisplay = !!(
       code.trim().startsWith('$$') ||
       (match && (match[1] === 'math' || match[1] === 'latex'))
@@ -45,28 +47,28 @@ export const CodeBlock = ({
       .replace(/^(\$\$|\\\[|\\\(|\$)/, '')
       .replace(/(\$\$|\\\]|\\\)|\$)$/, '');
 
-    let sanitizedHtml: string;
     try {
       const html = katex.renderToString(content, {
         displayMode: isDisplay,
         throwOnError: false,
       });
-      sanitizedHtml = sanitizeHtml(html);
+      return { html: sanitizeHtml(html), isDisplay };
     } catch (err) {
       logger.error('KaTeX fallback render error:', err as Error);
-      // Fall through to regular code display if KaTeX fails
-      return null; // Let the component handle fallback
+      return null;
     }
+  }, [code, isMath, match]);
 
-    if (isDisplay) {
+  if (isMath && sanitizedHtml) {
+    if (sanitizedHtml.isDisplay) {
       return (
         <div
           className="my-8 text-lg overflow-x-auto text-center"
-          dangerouslySetInnerHTML={{ __html: sanitizedHtml }}
+          dangerouslySetInnerHTML={{ __html: sanitizedHtml.html }}
         />
       );
     }
-    return <span dangerouslySetInnerHTML={{ __html: sanitizedHtml }} />;
+    return <span dangerouslySetInnerHTML={{ __html: sanitizedHtml.html }} />;
   }
 
   // Handle inline code

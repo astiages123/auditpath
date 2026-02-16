@@ -1,5 +1,5 @@
 import { BookOpen, FileText, LucideIcon } from "lucide-react";
-import { storage } from "@/lib/storageService";
+import { storage } from "@/lib/storage";
 import {
   COURSE_KEYWORD_MAPPINGS,
   COURSE_THEME_CONFIG,

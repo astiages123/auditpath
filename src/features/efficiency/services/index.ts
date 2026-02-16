@@ -1,2 +1,2 @@
-export * from './activityService';
-export * from './efficiencyService';
+export * from "./activity";
+export * from "./analytics";

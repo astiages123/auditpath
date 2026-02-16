@@ -43,6 +43,9 @@ export interface AIResponseMetadata {
         cached_tokens?: number;
         prompt_cache_hit_tokens?: number;
         prompt_cache_miss_tokens?: number;
+        prompt_tokens_details?: {
+            cached_tokens?: number;
+        };
     };
 }
 

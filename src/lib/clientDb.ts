@@ -49,7 +49,7 @@ export {
   getTopicQuestionCount,
   getTopicQuestions,
   getUniqueCourseTopics,
-} from '@/features/quiz/services/quizService';
+} from '@/features/quiz/services/core/quizService';
 
 // User Stats Service
 export {

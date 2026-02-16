@@ -1,29 +1,28 @@
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import {
   getCourseTopicsWithCounts,
   getFirstChunkIdForTopic,
   getTopicCompletionStatus,
-  getTopicQuestionCount,
-} from '@/lib/clientDb';
-import { TopicCompletionStats, TopicWithCounts } from '@/types';
-import { ExamService } from '@/features/quiz/logic/quizEngine';
-import { type QuizQuestion } from '@/features/quiz/types';
-import * as Repository from '@/features/quiz/services/quizRepository';
+} from "@/lib/clientDb";
+import { TopicCompletionStats, TopicWithCounts } from "@/types";
+import { ExamService } from "@/features/quiz/logic";
+import { type QuizQuestion } from "@/features/quiz/types";
+import * as Repository from "@/features/quiz/services/repositories/quizRepository";
 import {
   type GenerationLog,
   QuizFactory,
-} from '@/features/quiz/logic/quizFactory';
-import { parseOrThrow } from '@/utils/helpers';
-import { QuizQuestionSchema } from '@/features/quiz/types';
-import { logger } from '@/utils/logger';
-import { MAX_LOG_ENTRIES } from '@/utils/constants';
+} from "@/features/quiz/logic";
+import { parseOrThrow } from "@/utils/helpers";
+import { QuizQuestionSchema } from "@/features/quiz/types";
+import { logger } from "@/utils/logger";
+import { MAX_LOG_ENTRIES } from "@/utils/constants";
 
 export enum QuizState {
-  NOT_ANALYZED = 'NOT_ANALYZED',
-  MAPPING = 'MAPPING',
-  BRIEFING = 'BRIEFING',
-  ACTIVE = 'ACTIVE',
+  NOT_ANALYZED = "NOT_ANALYZED",
+  MAPPING = "MAPPING",
+  BRIEFING = "BRIEFING",
+  ACTIVE = "ACTIVE",
 }
 
 interface UseQuizManagerProps {
@@ -32,103 +31,151 @@ interface UseQuizManagerProps {
   courseName: string;
 }
 
+interface GenerationState {
+  isGenerating: boolean;
+  logs: GenerationLog[];
+  progress: { current: number; total: number };
+}
+
+const INITIAL_GENERATION_STATE: GenerationState = {
+  isGenerating: false,
+  logs: [],
+  progress: { current: 0, total: 0 },
+};
+
+/**
+ * Helper to transform DB questions to QuizQuestion type
+ */
+function toQuizQuestions(
+  questionsData: Pick<
+    Repository.QuestionWithStatus["questions"],
+    "id" | "question_data"
+  >[],
+): QuizQuestion[] {
+  return questionsData.map((q) => ({
+    ...parseOrThrow(QuizQuestionSchema, q.question_data),
+    id: q.id,
+  }));
+}
+
 export function useQuizManager({
   isOpen,
   courseId,
   courseName,
 }: UseQuizManagerProps) {
   const { user } = useAuth();
+
+  // Topic & Course Data State
   const [topics, setTopics] = useState<TopicWithCounts[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<TopicWithCounts | null>(
-    null
+    null,
   );
   const [targetChunkId, setTargetChunkId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [completionStatus, setCompletionStatus] = useState<
+    TopicCompletionStats | null
+  >(null);
 
-  // Status State
-  const [completionStatus, setCompletionStatus] =
-    useState<TopicCompletionStats | null>(null);
-
+  // Quiz Execution State
   const [existingQuestions, setExistingQuestions] = useState<QuizQuestion[]>(
-    []
+    [],
   );
-
-  // Quiz Engine State
   const [isQuizActive, setIsQuizActive] = useState(false);
 
-  // Exam Generation State
-  const [isGeneratingExam, setIsGeneratingExam] = useState(false);
+  // Generation State (Consolidated)
+  const [generation, setGeneration] = useState<GenerationState>(
+    INITIAL_GENERATION_STATE,
+  );
 
-  // Quiz Flow State
-  const [quizState, setQuizState] = useState<QuizState>(QuizState.NOT_ANALYZED);
-  const [examLogs, setExamLogs] = useState<GenerationLog[]>([]);
-  const [examProgress, setExamProgress] = useState({ current: 0, total: 0 });
+  // --- Derived State ---
 
-  // Determine State
-  // src/features/quiz/components/modal/hooks/useQuizManager.ts içindeki ilgili kısım:
-
-  useEffect(() => {
-    if (isQuizActive) {
-      setQuizState(QuizState.ACTIVE);
-    } else if (isGeneratingExam) {
-      setQuizState(QuizState.MAPPING);
-    } else if (
-      completionStatus &&
-      completionStatus.aiLogic &&
-      completionStatus.concepts &&
+  const quizState = useMemo(() => {
+    if (isQuizActive) return QuizState.ACTIVE;
+    if (generation.isGenerating) return QuizState.MAPPING;
+    if (
+      completionStatus?.aiLogic &&
+      completionStatus?.concepts &&
       completionStatus.concepts.length > 0
     ) {
-      // Sadece hem aiLogic hem de kavramlar varsa BRIEFING'e geç
-      setQuizState(QuizState.BRIEFING);
-    } else {
-      // Diğer tüm durumlarda (veri yoksa veya eksikse) ANALİZ EDİLMEDİ göster
-      setQuizState(QuizState.NOT_ANALYZED);
+      return QuizState.BRIEFING;
     }
-  }, [completionStatus, isQuizActive, isGeneratingExam]);
+    return QuizState.NOT_ANALYZED;
+  }, [isQuizActive, generation.isGenerating, completionStatus]);
 
-  // Fetch topics when modal opens
+  // --- Side Effects ---
+
+  // 1. Load Topics
   useEffect(() => {
-    async function loadTopics() {
-      if (isOpen && courseId) {
-        setLoading(true);
-        const data = await getCourseTopicsWithCounts(courseId);
-        setTopics(data);
-        setLoading(false);
-      }
+    let mounted = true;
+    if (isOpen && courseId) {
+      setLoading(true);
+      getCourseTopicsWithCounts(courseId)
+        .then((data) => {
+          if (mounted) setTopics(data);
+        })
+        .finally(() => {
+          if (mounted) setLoading(false);
+        });
     }
-    loadTopics();
+    return () => {
+      mounted = false;
+    };
   }, [isOpen, courseId]);
 
-  // Fetch question count and chunk ID when topic is selected
+  // 2. Load Topic Details
   useEffect(() => {
-    async function loadData() {
-      if (selectedTopic && courseId && user) {
+    let mounted = true;
+    if (!selectedTopic || !courseId || !user) {
+      setTargetChunkId(null);
+      setCompletionStatus(null);
+      return;
+    }
+
+    async function loadTopicData() {
+      if (!selectedTopic || !courseId || !user) return; // double check for TS
+      try {
         const chunkRes = await getFirstChunkIdForTopic(
           courseId,
-          selectedTopic.name
+          selectedTopic.name,
         );
-        setTargetChunkId(chunkRes);
 
-        const [, status] = await Promise.all([
-          getTopicQuestionCount(courseId, selectedTopic.name),
+        const [status] = await Promise.all([
+          // Note: getTopicQuestionCount is not actually used in the original code's state?
+          // keeping it aligned with original logic which called it but maybe didn't use it directly here
+          // except for logging or side effects. The original setCompletionStatus used result[1].
+          // Ref: getTopicCompletionStatus(user.id, courseId, selectedTopic.name)
           getTopicCompletionStatus(user.id, courseId, selectedTopic.name),
         ]);
 
-        setCompletionStatus(status);
-      } else {
-        setTargetChunkId(null);
-        setCompletionStatus(null);
+        if (mounted) {
+          setTargetChunkId(chunkRes);
+          setCompletionStatus(status);
+        }
+      } catch (error) {
+        logger.error("Error loading topic data", error as Error);
       }
     }
-    loadData();
+
+    loadTopicData();
+    return () => {
+      mounted = false;
+    };
   }, [selectedTopic, courseId, user]);
 
-  const handleGenerate = async (mappingOnly: boolean = true) => {
+  // --- Handlers ---
+
+  const updateGeneration = useCallback((patch: Partial<GenerationState>) => {
+    setGeneration((prev) => ({ ...prev, ...patch }));
+  }, []);
+
+  const handleGenerate = useCallback(async (mappingOnly: boolean = true) => {
     if (!targetChunkId || !user) return;
 
-    setIsGeneratingExam(true);
-    setExamLogs([]);
-    setExamProgress({ current: 0, total: 0 });
+    updateGeneration({
+      isGenerating: true,
+      logs: [],
+      progress: { current: 0, total: 0 },
+    });
 
     try {
       const factory = new QuizFactory();
@@ -136,157 +183,181 @@ export function useQuizManager({
         targetChunkId,
         {
           onLog: (log: GenerationLog) => {
-            setExamLogs((prev) => [log, ...prev].slice(0, MAX_LOG_ENTRIES));
+            setGeneration((prev) => ({
+              ...prev,
+              logs: [log, ...prev.logs].slice(0, MAX_LOG_ENTRIES),
+            }));
           },
           onQuestionSaved: (count: number) => {
-            setExamProgress((prev) => ({ ...prev, current: count }));
+            setGeneration((prev) => ({
+              ...prev,
+              progress: { ...prev.progress, current: count },
+            }));
           },
           onComplete: async () => {
             if (selectedTopic && courseId) {
               const newStatus = await getTopicCompletionStatus(
                 user.id,
                 courseId,
-                selectedTopic.name
+                selectedTopic.name,
               );
               setCompletionStatus(newStatus);
             }
-            setIsGeneratingExam(false);
+            updateGeneration({ isGenerating: false });
           },
           onError: (err: string) => {
-            logger.error('Generation error:', { message: err });
-            setIsGeneratingExam(false);
+            logger.error("Generation error:", { message: err });
+            updateGeneration({ isGenerating: false });
           },
         },
-        { mappingOnly }
+        { mappingOnly },
       );
     } catch (error) {
-      logger.error('Failed to generate:', error as Error);
-      setIsGeneratingExam(false);
+      logger.error("Failed to generate:", error as Error);
+      updateGeneration({ isGenerating: false });
     }
-  };
+  }, [targetChunkId, user, selectedTopic, courseId, updateGeneration]);
 
-  const handleStartQuiz = () => {
+  const handleStartQuiz = useCallback(() => {
     if (
       completionStatus &&
       completionStatus.antrenman.existing < completionStatus.antrenman.quota
     ) {
-      handleGenerate(false); // Start actual question production
+      handleGenerate(false);
       return;
     }
     setExistingQuestions([]);
     setIsQuizActive(true);
-  };
+  }, [completionStatus, handleGenerate]);
 
-  const handleBackToTopics = () => {
+  const handleBackToTopics = useCallback(() => {
     setSelectedTopic(null);
     setIsQuizActive(false);
-    setIsGeneratingExam(false);
-    setExamLogs([]);
+    setGeneration(INITIAL_GENERATION_STATE);
     setExistingQuestions([]);
-    // Reload stats to reflect new progress
+
+    // Optimistic or fresh reload of topics
     if (courseId) {
       getCourseTopicsWithCounts(courseId).then(setTopics);
     }
-  };
+  }, [courseId]);
 
-  const handleStartSmartExam = async () => {
-    if (!user || !courseId || !courseName) return;
+  // --- Start Smart Exam Helpers ---
 
-    // 1. Try to fetch from pool first (SAK optimized but instant)
+  const startExamFromPool = async (userId: string, courseId: string) => {
     const poolResult = await ExamService.fetchSmartExamFromPool(
       courseId,
-      user.id
+      userId,
     );
 
     if (poolResult && poolResult.questionIds.length >= 20) {
-      // INSTANT BYPASS
       const questionsData = await Repository.fetchQuestionsByIds(
-        poolResult.questionIds
+        poolResult.questionIds,
       );
       if (questionsData) {
-        const formattedQuestions = questionsData.map((q) => ({
-          ...parseOrThrow(QuizQuestionSchema, q.question_data),
-          id: q.id,
-        }));
-
-        setExistingQuestions(formattedQuestions);
-        setSelectedTopic({
-          name: 'Karma Deneme Sınavı',
-          isCompleted: false,
-          counts: {
-            antrenman: 0,
-            arsiv: 0,
-            deneme: formattedQuestions.length,
-            total: formattedQuestions.length,
-          },
-        });
-        setIsQuizActive(true);
-        return;
+        return toQuizQuestions(questionsData);
       }
     }
-
-    // 2. Fallback to Generation Flow
-    setIsGeneratingExam(true);
-    setExamLogs([]);
-    setExamProgress({ current: 0, total: 0 });
-
-    try {
-      const result = await ExamService.generateSmartExam(
-        courseId,
-        courseName,
-        user.id,
-        {
-          onLog: (log: GenerationLog) =>
-            setExamLogs((prev) => [log, ...prev].slice(0, MAX_LOG_ENTRIES)),
-          onQuestionSaved: (count: number) =>
-            setExamProgress((prev) => ({
-              ...prev,
-              current: count,
-            })),
-          onComplete: () => {},
-          onError: (err: Error) => {
-            logger.error('Exam generation error:', err);
-          },
-        }
-      );
-
-      if (result.success && result.questionIds.length > 0) {
-        const questionsData = await Repository.fetchQuestionsByIds(
-          result.questionIds
-        );
-
-        if (questionsData) {
-          const formattedQuestions = questionsData.map((q) => ({
-            ...parseOrThrow(QuizQuestionSchema, q.question_data),
-            id: q.id,
-          }));
-
-          setExistingQuestions(formattedQuestions);
-          setSelectedTopic({
-            name: 'Karma Deneme Sınavı',
-            isCompleted: false,
-            counts: {
-              antrenman: 0,
-              arsiv: 0,
-              deneme: formattedQuestions.length,
-              total: formattedQuestions.length,
-            },
-          });
-          setIsQuizActive(true);
-        }
-      }
-    } catch (error) {
-      logger.error('Failed to start smart exam:', error as Error);
-    } finally {
-      setIsGeneratingExam(false);
-    }
+    return null;
   };
 
-  const resetState = () => {
+  const generateAndFetchExam = useCallback(
+    async (userId: string, courseId: string, courseName: string) => {
+      // Prepare generation state
+      updateGeneration({
+        isGenerating: true,
+        logs: [],
+        progress: { current: 0, total: 0 },
+      });
+
+      try {
+        const result = await ExamService.generateSmartExam(
+          courseId,
+          courseName,
+          userId,
+          {
+            onLog: (log: GenerationLog) =>
+              setGeneration((prev) => ({
+                ...prev,
+                logs: [log, ...prev.logs].slice(0, MAX_LOG_ENTRIES),
+              })),
+            onQuestionSaved: (count: number) =>
+              setGeneration((prev) => ({
+                ...prev,
+                progress: { ...prev.progress, current: count },
+              })),
+            onComplete: () => {},
+            onError: (err: Error) =>
+              logger.error("Exam generation error:", err),
+          },
+        );
+
+        if (result.success && result.questionIds.length > 0) {
+          const questionsData = await Repository.fetchQuestionsByIds(
+            result.questionIds,
+          );
+          if (questionsData) {
+            return toQuizQuestions(questionsData);
+          }
+        }
+      } catch (error) {
+        logger.error("Failed to generate smart exam:", error as Error);
+      } finally {
+        updateGeneration({ isGenerating: false });
+      }
+      return null;
+    },
+    [updateGeneration],
+  );
+
+  const handleStartSmartExam = useCallback(async () => {
+    if (!user || !courseId || !courseName) return;
+
+    // 1. Try Pool
+    const pooledQuestions = await startExamFromPool(user.id, courseId);
+    if (pooledQuestions) {
+      setExistingQuestions(pooledQuestions);
+      setSelectedTopic({
+        name: "Karma Deneme Sınavı",
+        isCompleted: false,
+        counts: {
+          antrenman: 0,
+          arsiv: 0,
+          deneme: pooledQuestions.length,
+          total: pooledQuestions.length,
+        },
+      });
+      setIsQuizActive(true);
+      return;
+    }
+
+    // 2. Generate
+    const generatedQuestions = await generateAndFetchExam(
+      user.id,
+      courseId,
+      courseName,
+    );
+    if (generatedQuestions) {
+      setExistingQuestions(generatedQuestions);
+      setSelectedTopic({
+        name: "Karma Deneme Sınavı",
+        isCompleted: false,
+        counts: {
+          antrenman: 0,
+          arsiv: 0,
+          deneme: generatedQuestions.length,
+          total: generatedQuestions.length,
+        },
+      });
+      setIsQuizActive(true);
+    }
+  }, [user, courseId, courseName, generateAndFetchExam]);
+
+  const resetState = useCallback(() => {
     setSelectedTopic(null);
     setIsQuizActive(false);
     setExistingQuestions([]);
-  };
+  }, []);
 
   return {
     user,
@@ -298,10 +369,10 @@ export function useQuizManager({
     completionStatus,
     existingQuestions,
     isQuizActive,
-    isGeneratingExam,
+    isGeneratingExam: generation.isGenerating,
     quizState,
-    examLogs,
-    examProgress,
+    examLogs: generation.logs,
+    examProgress: generation.progress,
     handleStartQuiz,
     handleGenerate,
     handleBackToTopics,

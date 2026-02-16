@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { ErrorBoundary } from '@/ErrorBoundary';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { BrowserRouter } from 'react-router-dom';
 import { Providers } from '@/providers';
 import App from './App';

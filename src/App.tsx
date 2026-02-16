@@ -4,7 +4,7 @@ import RootLayout from '@/components/layout/RootLayout';
 import { AuthProvider } from '@/features/auth/components/AuthProvider';
 import { AuthGuard } from '@/features/auth/components/AuthGuard';
 import { Loader2 } from 'lucide-react';
-import { ErrorBoundary } from '@/ErrorBoundary';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 import { ROUTES } from '@/utils/routes';
 import { Outlet } from 'react-router-dom';
@@ -31,44 +31,44 @@ function App() {
     <AuthProvider>
       <ErrorBoundary>
         <Suspense fallback={<PageLoader />}>
-        <Routes>
-          {/* Public Routes would go here if any */}
+          <Routes>
+            {/* Public Routes would go here if any */}
 
-          {/* Protected Routes */}
-          <Route element={<AuthGuard />}>
-            <Route
-              element={
-                <RootLayout>
-                  <Outlet />
-                </RootLayout>
-              }
-            >
-              <Route path={ROUTES.HOME} element={<Home />} />
-              <Route path={ROUTES.ACHIEVEMENTS} element={<Achievements />} />
-              <Route path={ROUTES.STATISTICS} element={<Statistics />} />
-              <Route path={ROUTES.EFFICIENCY} element={<EfficiencyPage />} />
+            {/* Protected Routes */}
+            <Route element={<AuthGuard />}>
+              <Route
+                element={
+                  <RootLayout>
+                    <Outlet />
+                  </RootLayout>
+                }
+              >
+                <Route path={ROUTES.HOME} element={<Home />} />
+                <Route path={ROUTES.ACHIEVEMENTS} element={<Achievements />} />
+                <Route path={ROUTES.STATISTICS} element={<Statistics />} />
+                <Route path={ROUTES.EFFICIENCY} element={<EfficiencyPage />} />
 
-              <Route
-                path={`${ROUTES.NOTES}/:courseSlug`}
-                element={<NotesPage />}
-              />
-              <Route
-                path={`${ROUTES.NOTES}/:courseSlug/:topicSlug`}
-                element={<NotesPage />}
-              />
-              <Route path={ROUTES.ANALYTICS} element={<AnalyticsPage />} />
-              <Route
-                path={ROUTES.SETTINGS}
-                element={<div>Settings Page coming soon...</div>}
-              />
+                <Route
+                  path={`${ROUTES.NOTES}/:courseSlug`}
+                  element={<NotesPage />}
+                />
+                <Route
+                  path={`${ROUTES.NOTES}/:courseSlug/:topicSlug`}
+                  element={<NotesPage />}
+                />
+                <Route path={ROUTES.ANALYTICS} element={<AnalyticsPage />} />
+                <Route
+                  path={ROUTES.SETTINGS}
+                  element={<div>Settings Page coming soon...</div>}
+                />
+              </Route>
             </Route>
-          </Route>
 
-          {/* Redirect unknown routes to home */}
-          <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
-        </Routes>
-      </Suspense>
-    </ErrorBoundary>
+            {/* Redirect unknown routes to home */}
+            <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </AuthProvider>
   );
 }

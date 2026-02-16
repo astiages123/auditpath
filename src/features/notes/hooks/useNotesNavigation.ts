@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { type CourseTopic } from '@/types';
-import { storage } from '@/lib/storageService';
+import { useEffect, useRef, useState } from "react";
+import { type CourseTopic } from "@/types";
+import { useUIStore } from "@/store/useUIStore";
 
 interface UseNotesNavigationProps {
   courseSlug?: string;
@@ -19,6 +19,8 @@ export const useNotesNavigation = ({
   const mainContentRef = useRef<HTMLDivElement | null>(null);
   const isProgrammaticScroll = useRef<boolean>(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const { lastRead, actions } = useUIStore();
 
   // Cleanup scroll timeout on unmount
   useEffect(() => {
@@ -42,65 +44,85 @@ export const useNotesNavigation = ({
       setScrollProgress(progress);
     };
 
-    mainContent.addEventListener('scroll', handleScroll, { passive: true });
+    mainContent.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
-    return () => mainContent.removeEventListener('scroll', handleScroll);
+    return () => mainContent.removeEventListener("scroll", handleScroll);
   }, [chunks, loading]);
 
   // 2. Scroll to top when topic changes
   useEffect(() => {
-    mainContentRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+    if (!isProgrammaticScroll.current) {
+      mainContentRef.current?.scrollTo({ top: 0, behavior: "instant" });
+    }
   }, [activeChunkId]);
 
   // 3. Save scroll position
   useEffect(() => {
     const mainContent = mainContentRef.current;
-    if (!mainContent || !courseSlug) return;
+    if (!mainContent || !courseSlug || !activeChunkId) return;
 
     const saveScroll = () => {
-      storage.set(
-        `scroll_pos_${courseSlug}`,
-        mainContent.scrollTop.toString(),
-        {
-          ttl: 24 * 60 * 60 * 1000, // 24 hours
-        }
-      );
+      if (isProgrammaticScroll.current) return;
+
+      // Debounce saving to store
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+
+      scrollTimeout.current = setTimeout(() => {
+        actions.setLastReadTopic(
+          courseSlug,
+          activeChunkId,
+          mainContent.scrollTop,
+        );
+      }, 500);
     };
 
-    mainContent.addEventListener('scroll', saveScroll, { passive: true });
-    return () => mainContent.removeEventListener('scroll', saveScroll);
-  }, [courseSlug, loading]);
+    mainContent.addEventListener("scroll", saveScroll, { passive: true });
+    return () => {
+      mainContent.removeEventListener("scroll", saveScroll);
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    };
+  }, [courseSlug, activeChunkId, actions]);
 
   // 4. Restore scroll position
   useEffect(() => {
     if (!loading && chunks.length > 0 && courseSlug && mainContentRef.current) {
-      const savedScroll = storage.get<string>(`scroll_pos_${courseSlug}`);
-      if (savedScroll) {
-        const scrollValue = parseInt(savedScroll, 10);
-        // NaN kontrolü eklendi
-        if (!isNaN(scrollValue)) {
-          const timer = setTimeout(() => {
-            mainContentRef.current?.scrollTo({
-              top: scrollValue,
-              behavior: 'instant' as ScrollBehavior,
-            });
-          }, 100);
-          return () => clearTimeout(timer);
+      const savedState = lastRead[courseSlug];
+
+      if (savedState && savedState.topicId === activeChunkId) {
+        const scrollValue = savedState.scrollPos;
+
+        if (!isNaN(scrollValue) && scrollValue > 0) {
+          // Use a slight delay to ensure content is rendered
+          // Using requestAnimationFrame for better timing
+          requestAnimationFrame(() => {
+            if (mainContentRef.current) {
+              isProgrammaticScroll.current = true;
+              mainContentRef.current.scrollTo({
+                top: scrollValue,
+                behavior: "instant" as ScrollBehavior,
+              });
+
+              // Reset programmatic scroll flag after a short delay
+              setTimeout(() => {
+                isProgrammaticScroll.current = false;
+              }, 100);
+            }
+          });
         }
       }
     }
-  }, [loading, chunks.length, courseSlug]);
+  }, [loading, chunks.length, courseSlug, activeChunkId, lastRead]);
 
   const handleScrollToId = (
     id: string,
-    setActiveSection?: (id: string) => void
+    setActiveSection?: (id: string) => void,
   ) => {
     isProgrammaticScroll.current = true;
     if (setActiveSection) setActiveSection(id);
 
     const element = document.getElementById(id);
     if (element && mainContentRef.current) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
 
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
@@ -110,7 +132,7 @@ export const useNotesNavigation = ({
   };
 
   const scrollToTop = () => {
-    mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    mainContentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return {

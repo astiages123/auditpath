@@ -1,2 +1,2 @@
-export * from "./PomodoroModal";
-export * from "./TimerController";
+export * from "./main";
+export * from "./modal";
