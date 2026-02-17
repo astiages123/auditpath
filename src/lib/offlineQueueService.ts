@@ -5,7 +5,7 @@
  * Used primarily for quiz progress tracking when the user is offline.
  */
 
-import { storage } from "./storage/storage";
+import { storage } from "@/shared/services/storageService";
 import { logger } from "../utils/logger";
 
 const QUEUE_KEY = "offline_quiz_queue";
