@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/core';
 import { calculateFocusPower } from '@/utils/math';
-import { Session } from '../../../types/efficiencyTypes';
+import { Session } from '../types/efficiencyTypes';
 
 interface DistractionDetailsProps {
   sessions: Session[];

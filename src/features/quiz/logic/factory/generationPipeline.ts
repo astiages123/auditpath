@@ -1,10 +1,10 @@
 import * as Repository from "@/features/quiz/services/repositories/quizRepository";
-import { type ConceptMapItem } from "@/features/quiz/types/quizTypes";
+import { type ConceptMapItem } from "@/features/quiz/types";
 import { type Quotas } from "./quotaLogic";
 import {
   type GenerationStep,
   type GeneratorCallbacks,
-} from "@/features/quiz/types/quizEngineSchemas";
+} from "@/features/quiz/types";
 import { ValidationTask } from "@/features/quiz/logic/tasks/ValidationTask";
 import { RevisionTask } from "@/features/quiz/logic/tasks/RevisionTask";
 

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import {
   type TestResultSummary,
   type QuizQuestion,
-} from '@/features/quiz/types/quizTypes';
+} from '@/features/quiz/types';
 import { getSubjectStrategy } from '@/features/quiz/logic/algorithms/strategy';
 import { Home } from 'lucide-react';
 

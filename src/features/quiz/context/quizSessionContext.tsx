@@ -1,9 +1,10 @@
 import { createContext, useContext } from 'react';
+
 import {
-  type ReviewItem,
-  type QuizResponseType,
-  type QuizSessionState,
-} from '@/features/quiz/types/quizTypes';
+  QuizSessionState,
+  ReviewItem,
+  QuizResponseType,
+} from '@/features/quiz/types';
 
 export interface QuizSessionContextValue {
   state: QuizSessionState;

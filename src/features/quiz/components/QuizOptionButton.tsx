@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Check, X } from 'lucide-react';
 import { cn } from '@/utils/core';
-import { MathRenderer } from './MathRenderer';
+import { MathRenderer } from './QuizMathRenderer';
 
 export interface OptionButtonProps {
   option: string;

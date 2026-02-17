@@ -6,7 +6,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { type Database } from "@/types/database.types";
-import { type ChunkMasteryRow } from "@/features/quiz/types/quizTypes";
+import { type ChunkMasteryRow } from "@/features/quiz/types";
 import { safeQuery } from "@/lib/supabaseHelpers";
 
 // --- Types ---

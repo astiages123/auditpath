@@ -5,9 +5,9 @@
  * for Cerebras and Mimo providers.
  */
 
-import pLimit from "p-limit";
-import { type LLMProvider } from "../types/quizTypes";
-import { logger } from "@/utils/logger";
+import pLimit from 'p-limit';
+import { type LLMProvider } from '../types';
+import { logger } from '@/utils/logger';
 
 interface Budget {
   remaining: number;
@@ -29,11 +29,13 @@ export class RateLimitService {
     // Cerebras uses: x-ratelimit-remaining-tokens, x-ratelimit-reset-tokens
     // Mimo follows similar pattern for tokens/requests
 
-    const remaining = headers.get("x-ratelimit-remaining-tokens") ||
-      headers.get("x-ratelimit-remaining");
+    const remaining =
+      headers.get('x-ratelimit-remaining-tokens') ||
+      headers.get('x-ratelimit-remaining');
 
-    const reset = headers.get("x-ratelimit-reset-tokens") ||
-      headers.get("x-ratelimit-reset");
+    const reset =
+      headers.get('x-ratelimit-reset-tokens') ||
+      headers.get('x-ratelimit-reset');
 
     if (remaining) {
       const resetVal = reset ? parseFloat(reset) : 60;
@@ -43,9 +45,8 @@ export class RateLimitService {
       }
       // reset header is often in seconds (for Cerebras) or timestamp
       // We assume seconds if < 1000000, otherwise timestamp
-      const resetTime = resetVal < 1000000
-        ? Date.now() + resetVal * 1000
-        : resetVal;
+      const resetTime =
+        resetVal < 1000000 ? Date.now() + resetVal * 1000 : resetVal;
 
       const parsedRemaining = parseInt(remaining, 10);
       if (Number.isNaN(parsedRemaining)) {
@@ -60,11 +61,9 @@ export class RateLimitService {
 
       if (parsedRemaining < 500) {
         logger.warn(
-          `[RateLimit] Critical: ${provider} budget low (${remaining} tokens). Reset in ${
-            Math.ceil(
-              (resetTime - Date.now()) / 1000,
-            )
-          }s`,
+          `[RateLimit] Critical: ${provider} budget low (${remaining} tokens). Reset in ${Math.ceil(
+            (resetTime - Date.now()) / 1000
+          )}s`
         );
       }
     }
@@ -82,11 +81,9 @@ export class RateLimitService {
         const waitTime = budget.reset - Date.now();
         if (waitTime > 0) {
           logger.info(
-            `[RateLimit] Waiting ${
-              Math.ceil(
-                waitTime / 1000,
-              )
-            }s for ${provider} budget reset...`,
+            `[RateLimit] Waiting ${Math.ceil(
+              waitTime / 1000
+            )}s for ${provider} budget reset...`
           );
           await new Promise((resolve) => setTimeout(resolve, waitTime));
         }

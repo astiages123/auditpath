@@ -5,7 +5,7 @@ import type {
   QuizStats,
   SRSStats,
   SubjectCompetency,
-} from "@/features/quiz/types/quizTypes";
+} from "@/features/quiz/types";
 
 /**
  * Get overall quiz statistics for a user.

@@ -4,11 +4,11 @@ import { PomodoroModal } from '@/features/pomodoro/components/main/PomodoroModal
 import { TimerController } from '@/features/pomodoro/components/main/TimerController';
 import { Toaster } from '@/components/ui/sonner';
 import { useCelebration } from '@/hooks/useCelebration';
-import { useCelebrationStore } from '@/store/useCelebrationStore';
+import { useCelebrationStore } from '@/features/achievements/store';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const CelebrationModal = lazy(() =>
-  import('@/shared/CelebrationModal').then((module) => ({
+  import('@/shared/components/CelebrationModal').then((module) => ({
     default: module.CelebrationModal,
   }))
 );

@@ -14,9 +14,9 @@ import {
 } from 'react';
 import { useQuiz } from '@/features/quiz/hooks/useQuiz';
 import { QuizCard } from './QuizCard';
-import { useQuizSession } from '@/features/quiz/context/quizSessionContext';
+import { useQuizSession } from '@/features/quiz/context/QuizSessionContext';
 import { checkAndTriggerBackgroundGeneration } from '@/features/quiz/logic/engines/backgroundEngine';
-import { type QuizQuestion } from '@/features/quiz/types/quizTypes';
+import { type QuizQuestion } from '@/features/quiz/types';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { PostTestDashboard } from '../outcomes/PostTestDashboard';
 import { IntermissionScreen } from '../outcomes/IntermissionScreen';

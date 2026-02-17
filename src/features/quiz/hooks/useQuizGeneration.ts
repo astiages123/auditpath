@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { type GenerationLog } from "@/features/quiz/types/quizEngineSchemas";
+import { type GenerationLog } from "@/features/quiz/types";
 import { MAX_LOG_ENTRIES } from "@/utils/constants";
 
 export interface GenerationState {

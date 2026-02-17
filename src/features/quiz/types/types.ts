@@ -1,11 +1,11 @@
-import { AIResponseMetadata, LogCallback, Message } from "@/types/common";
+import { AIResponseMetadata, LogCallback, Message } from '@/types/common';
 
 export { type LogCallback, type Message };
 
 export interface ConceptMapItem {
   baslik: string;
   odak: string;
-  seviye: "Bilgi" | "Uygulama" | "Analiz";
+  seviye: 'Bilgi' | 'Uygulama' | 'Analiz';
   gorsel: string | null;
   altText?: string | null;
   isException?: boolean;
@@ -13,9 +13,9 @@ export interface ConceptMapItem {
   [key: string]: unknown;
 }
 
-export type QuizResponseType = "correct" | "incorrect" | "blank";
+export type QuizResponseType = 'correct' | 'incorrect' | 'blank';
 
-export type QuizQuestionType = "multiple_choice" | "true_false";
+export type QuizQuestionType = 'multiple_choice' | 'true_false';
 
 export interface BaseQuestion {
   id?: string;
@@ -33,13 +33,13 @@ export interface BaseQuestion {
 }
 
 export interface MultipleChoiceQuestion extends BaseQuestion {
-  type: "multiple_choice";
+  type: 'multiple_choice';
   o: string[]; // Typically 5 options
   a: number; // Correct index
 }
 
 export interface TrueFalseQuestion extends BaseQuestion {
-  type: "true_false";
+  type: 'true_false';
   o: string[]; // ["Doğru", "Yanlış"]
   a: number; // 0 or 1
 }
@@ -51,7 +51,7 @@ export interface QuizInsert {
   course_id: string;
   chunk_id?: string | null;
   is_correct?: boolean;
-  confidence_level?: "LOW" | "MEDIUM" | "HIGH";
+  confidence_level?: 'LOW' | 'MEDIUM' | 'HIGH';
   answered_at?: string | null;
   response_time_ms?: number | null;
   response_type: QuizResponseType;
@@ -139,13 +139,13 @@ export interface ChunkMasteryRow {
   total_questions_seen: number;
 }
 
-export type QuestionUsageType = "antrenman" | "arsiv" | "deneme";
+export type QuestionUsageType = 'antrenman' | 'arsiv' | 'deneme';
 
 export interface QuizGenerationResult {
   success: boolean;
   question?: QuizQuestion;
   error?: string;
-  status?: "generated" | "quota_reached" | "error";
+  status?: 'generated' | 'quota_reached' | 'error';
 }
 
 export interface QuotaStatus {
@@ -163,7 +163,7 @@ export interface AIResponse extends AIResponseMetadata {
   content: string;
 }
 
-export type LLMProvider = "cerebras" | "mimo" | "google" | "deepseek";
+export type LLMProvider = 'cerebras' | 'mimo' | 'google' | 'deepseek';
 
 // --- Knowledge Types ---
 
@@ -223,50 +223,50 @@ export interface QuizProgressDetails {
 }
 
 export type QuizStatus =
-  | "IDLE"
-  | "INITIALIZING"
-  | "READY"
-  | "PLAYING"
-  | "INTERMISSION"
-  | "FINISHED"
-  | "ERROR";
+  | 'IDLE'
+  | 'INITIALIZING'
+  | 'READY'
+  | 'PLAYING'
+  | 'INTERMISSION'
+  | 'FINISHED'
+  | 'ERROR';
 
 export type QuizAction =
   | {
-    type: "INITIALIZE";
-    payload: {
-      sessionInfo: SessionInfo;
-      quotaInfo: QuotaInfo;
-      reviewQueue: ReviewItem[];
-      batches: ReviewItem[][];
-      totalBatches: number;
-      courseStats: CourseStats | null;
-      initialReviewIndex?: number;
-    };
-  }
-  | { type: "SET_ERROR"; payload: string }
-  | { type: "SET_STATUS"; payload: QuizStatus }
-  | { type: "START_PLAYING" }
+      type: 'INITIALIZE';
+      payload: {
+        sessionInfo: SessionInfo;
+        quotaInfo: QuotaInfo;
+        reviewQueue: ReviewItem[];
+        batches: ReviewItem[][];
+        totalBatches: number;
+        courseStats: CourseStats | null;
+        initialReviewIndex?: number;
+      };
+    }
+  | { type: 'SET_ERROR'; payload: string }
+  | { type: 'SET_STATUS'; payload: QuizStatus }
+  | { type: 'START_PLAYING' }
   | {
-    type: "ANSWER_QUESTION";
-    payload: {
-      questionId: string;
-      answerIndex: number;
-      isCorrect: boolean;
-      responseType: QuizResponseType;
-    };
-  }
-  | { type: "NEXT_QUESTION" }
-  | { type: "PREV_QUESTION" } // Optional, if we want to allow going back (view only)
-  | { type: "FINISH_BATCH" } // Triggers INTERMISSION
-  | { type: "CONTINUE_BATCH" } // Exits INTERMISSION -> PLAYING
-  | { type: "FINISH_QUIZ" }
-  | { type: "SYNC_START" }
-  | { type: "SYNC_COMPLETE" }
+      type: 'ANSWER_QUESTION';
+      payload: {
+        questionId: string;
+        answerIndex: number;
+        isCorrect: boolean;
+        responseType: QuizResponseType;
+      };
+    }
+  | { type: 'NEXT_QUESTION' }
+  | { type: 'PREV_QUESTION' } // Optional, if we want to allow going back (view only)
+  | { type: 'FINISH_BATCH' } // Triggers INTERMISSION
+  | { type: 'CONTINUE_BATCH' } // Exits INTERMISSION -> PLAYING
+  | { type: 'FINISH_QUIZ' }
+  | { type: 'SYNC_START' }
+  | { type: 'SYNC_COMPLETE' }
   | {
-    type: "INJECT_SCAFFOLDING";
-    payload: { questionId: string; chunkId: string; priority: number };
-  };
+      type: 'INJECT_SCAFFOLDING';
+      payload: { questionId: string; chunkId: string; priority: number };
+    };
 
 export interface SessionInfo {
   currentSession: number;
@@ -329,7 +329,7 @@ export interface GeneratedQuestion {
   img?: number | null;
   diagnosis?: string;
   insight?: string | null;
-  bloomLevel: "knowledge" | "application" | "analysis";
+  bloomLevel: 'knowledge' | 'application' | 'analysis';
   concept: string;
 }
 
@@ -337,7 +337,7 @@ export interface SubmissionResult {
   isCorrect: boolean;
   scoreDelta: number;
   newMastery: number;
-  newStatus: "active" | "pending_followup" | "archived";
+  newStatus: 'active' | 'pending_followup' | 'archived';
   isTopicRefreshed: boolean;
   nextReviewSession: number | null;
   newSuccessCount: number;

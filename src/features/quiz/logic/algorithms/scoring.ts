@@ -4,7 +4,7 @@ import {
   type QuizResults,
   type SubmissionResult,
   type TestResultSummary,
-} from "@/features/quiz/types/quizTypes";
+} from "@/features/quiz/types";
 import {
   calculateNextReviewSession,
   calculateShelfStatus,

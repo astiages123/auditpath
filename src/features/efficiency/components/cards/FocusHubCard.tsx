@@ -1,7 +1,7 @@
 import React from 'react';
 import { Target, Maximize2 } from 'lucide-react';
 import { cn } from '@/utils/core';
-import { GlassCard } from '@/shared/GlassCard';
+import { GlassCard } from '@/shared/components/GlassCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EfficiencyModal, FocusHubContent } from '../EfficiencyModals';
 import { GoalProgressRing } from '../charts/GoalProgressRing';

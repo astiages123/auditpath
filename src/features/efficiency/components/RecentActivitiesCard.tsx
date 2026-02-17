@@ -1,7 +1,7 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { FocusPowerPoint, Session } from '../types/efficiencyTypes';
 import { EfficiencyModal } from './EfficiencyModals';
-import { GlassCard } from '@/shared/GlassCard';
+import { GlassCard } from '@/shared/components/GlassCard';
 import { Clock, BookOpen, Maximize2 } from 'lucide-react';
 import { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
 import { SessionListItem } from './SessionListItem';

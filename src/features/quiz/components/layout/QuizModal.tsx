@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Brain, FileText } from 'lucide-react';
 import { QuizView } from '../execution/QuizView';
-import { QuizSessionProvider } from '@/features/quiz/context/quizSessionProvider';
+import { QuizSessionProvider } from '@/features/quiz/context/QuizSessionProvider';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import {
   useQuizManager,

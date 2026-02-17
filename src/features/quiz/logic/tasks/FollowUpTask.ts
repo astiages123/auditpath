@@ -1,5 +1,5 @@
 import { GeneratedQuestion } from "@/features/quiz/types";
-import { GeneratedQuestionSchema } from "@/features/quiz/types/quizEngineSchemas";
+import { GeneratedQuestionSchema } from "@/features/quiz/types";
 import {
     buildFollowUpTaskPrompt,
     GLOBAL_AI_SYSTEM_PROMPT,

@@ -3,15 +3,15 @@ import * as Repository from "@/features/quiz/services/repositories/quizRepositor
 import { subjectKnowledgeService } from "@/features/quiz/services/core/subjectKnowledgeService";
 import { logger } from "@/utils/logger";
 import { getSubjectStrategy } from "@/features/quiz/logic/algorithms/strategy";
-import { type ConceptMapItem } from "@/features/quiz/types/quizTypes";
+import { type ConceptMapItem } from "@/features/quiz/types";
 import { isValid, parseOrThrow } from "@/utils/helpers";
-import { ChunkMetadataSchema } from "@/features/quiz/types/quizSchemas";
+import { ChunkMetadataSchema } from "@/features/quiz/types";
 
 import {
     type GenerationLog,
     type GenerationStep,
     type GeneratorCallbacks,
-} from "@/features/quiz/types/quizEngineSchemas";
+} from "@/features/quiz/types";
 
 import { PromptArchitect } from "@/features/quiz/logic/utils";
 

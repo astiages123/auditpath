@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useTimerStore } from '@/store/useTimerStore';
+import { useTimerStore } from '@/features/pomodoro/store';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 import {

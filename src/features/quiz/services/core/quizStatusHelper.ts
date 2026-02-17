@@ -1,9 +1,9 @@
 import { supabase } from "@/lib/supabase";
 import { handleSupabaseError } from "@/lib/supabaseHelpers";
 import { getSubjectStrategy } from "@/features/quiz/logic/algorithms/strategy";
-import { type ConceptMapItem } from "@/features/quiz/types/quizTypes";
+import { type ConceptMapItem } from "@/features/quiz/types";
 import { isValid, parseOrThrow } from "@/utils/helpers";
-import { ChunkMetadataSchema } from "@/features/quiz/types/quizSchemas";
+import { ChunkMetadataSchema } from "@/features/quiz/types";
 
 interface ChunkInput {
   course_name: string | null;

@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { parseArray } from "@/utils/helpers";
-import { QuestionWithStatusRowSchema } from "@/features/quiz/types/quizSchemas";
+import { QuestionWithStatusRowSchema } from "@/features/quiz/types";
 import { MASTERY_THRESHOLD } from "@/utils/constants";
 import { safeQuery } from "@/lib/supabaseHelpers";
 import { type QuestionWithStatus } from "./quizQuestionRepository";

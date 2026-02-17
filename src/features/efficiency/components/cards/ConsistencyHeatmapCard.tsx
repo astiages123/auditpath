@@ -1,6 +1,6 @@
 import React from 'react';
 import { Calendar } from 'lucide-react';
-import { GlassCard } from '@/shared/GlassCard';
+import { GlassCard } from '@/shared/components/GlassCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EfficiencyHeatmap } from '../EfficiencyHeatmap';
 import { EfficiencyData } from './types';

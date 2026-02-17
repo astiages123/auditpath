@@ -9,7 +9,7 @@ import {
   QuizQuestion,
   QuizResults,
   QuizState,
-} from "@/features/quiz/types/quizTypes";
+} from "@/features/quiz/types";
 
 // Internal Hooks
 import { useCoreState } from "./use-quiz/useCoreState";

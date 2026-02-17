@@ -5,7 +5,7 @@ import {
   type ChunkMetric,
 } from "@/features/quiz/logic/algorithms/distribution";
 import { parseOrThrow } from "@/utils/helpers";
-import { ChunkMetadataSchema } from "@/features/quiz/types/quizSchemas";
+import { ChunkMetadataSchema } from "@/features/quiz/types";
 import { logger } from "@/utils/logger";
 
 export class ExamService {

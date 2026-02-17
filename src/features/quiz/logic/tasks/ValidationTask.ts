@@ -1,7 +1,7 @@
 import {
     ValidationResult,
     ValidationResultSchema,
-} from "@/features/quiz/types/quizEngineSchemas";
+} from "@/features/quiz/types";
 import {
     buildValidationTaskPrompt,
     VALIDATION_SYSTEM_PROMPT,

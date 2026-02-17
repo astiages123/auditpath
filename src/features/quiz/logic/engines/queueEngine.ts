@@ -1,6 +1,6 @@
 import * as Repository from "@/features/quiz/services/repositories/quizRepository";
 import { DebugLogger } from "../../logic/utils";
-import { type ReviewItem } from "@/features/quiz/types/quizTypes";
+import { type ReviewItem } from "@/features/quiz/types";
 import { type SessionContext } from "./sessionEngine";
 
 /**

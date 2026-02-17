@@ -1,11 +1,11 @@
 import { memo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, RefreshCw, Loader2, Lightbulb } from 'lucide-react';
-import { QuizQuestion } from '@/features/quiz/types/quizTypes';
+import { QuizQuestion } from '@/features/quiz/types';
 
-import { MathRenderer } from './card/MathRenderer';
-import { OptionButton } from './card/OptionButton';
-import { ExplanationPanel } from './card/ExplanationPanel';
+import { MathRenderer } from '../QuizMathRenderer';
+import { OptionButton } from '../QuizOptionButton';
+import { ExplanationPanel } from '../QuizExplanationPanel';
 
 interface QuizCardProps {
   question: QuizQuestion | null;

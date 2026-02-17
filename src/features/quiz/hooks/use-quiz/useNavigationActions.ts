@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { QuizResults, QuizState } from '@/features/quiz/types/quizTypes';
+import { QuizResults, QuizState } from '@/features/quiz/types';
 import {
   calculateInitialResults,
   calculateTestResults,

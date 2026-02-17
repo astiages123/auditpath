@@ -3,7 +3,7 @@ import type {
     AIResponse,
     LLMProvider,
     Message,
-} from "@/features/quiz/types/quizTypes";
+} from "@/features/quiz/types";
 import { UnifiedLLMClient } from "@/features/quiz/services/quizClient";
 import { rateLimiter } from "./rateLimit";
 import { parseJsonResponse } from "./ParserUtils";

@@ -12,12 +12,12 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2, Sparkles } from 'lucide-react';
 import { getChunkQuotaStatus } from '@/features/quiz/services/repositories/quizRepository';
-import { type QuotaStatus } from '@/features/quiz/types/quizTypes';
+import { type QuotaStatus } from '@/features/quiz/types';
 import { QuizFactory } from '@/features/quiz/logic/factory/QuizFactory';
 import {
   type GenerationLog,
   type GenerationStep as LogStep,
-} from '@/features/quiz/types/quizEngineSchemas';
+} from '@/features/quiz/types';
 import { toast } from 'sonner';
 import { QuotaDisplay } from './QuotaDisplay';
 import { GenerationLiveStream } from './GenerationLiveStream';

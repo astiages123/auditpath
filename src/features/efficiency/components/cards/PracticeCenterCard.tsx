@@ -1,6 +1,6 @@
 import React from 'react';
 import { Zap, Maximize2 } from 'lucide-react';
-import { GlassCard } from '@/shared/GlassCard';
+import { GlassCard } from '@/shared/components/GlassCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EfficiencyModal, PracticeCenterContent } from '../EfficiencyModals';
 import { BloomKeyChart } from '../charts/BloomKeyChart';

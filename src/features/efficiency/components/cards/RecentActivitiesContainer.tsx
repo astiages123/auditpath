@@ -1,6 +1,6 @@
 import React from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { GlassCard } from '@/shared/GlassCard';
+import { GlassCard } from '@/shared/components/GlassCard';
 import { RecentActivitiesCard } from '../RecentActivitiesCard';
 import { EfficiencyData } from './types';
 

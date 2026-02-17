@@ -1,6 +1,6 @@
 import React from 'react';
 import { QuizTimer } from './QuizTimer';
-import { type CourseStats } from '@/features/quiz/types/quizTypes';
+import { type CourseStats } from '@/features/quiz/types';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface QuizSessionStatsProps {

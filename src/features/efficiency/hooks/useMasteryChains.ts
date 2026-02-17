@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getCourseMastery } from "@/features/achievements/services/userStatsService";
 import { supabase } from "@/lib/supabase";
-import { ConceptMapItem } from "@/features/quiz/types/quizTypes";
+import { ConceptMapItem } from "@/features/quiz/types";
 import { CourseMastery } from "@/features/courses/types/courseTypes";
 
 export function useMasteryChains() {

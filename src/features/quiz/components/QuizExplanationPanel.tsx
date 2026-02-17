@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, Brain, CheckCircle, XCircle } from 'lucide-react';
-import { QuizQuestion } from '@/features/quiz/types/quizTypes';
-import { MathRenderer } from './MathRenderer';
+import { QuizQuestion } from '@/features/quiz/types';
+import { MathRenderer } from './QuizMathRenderer';
 
 interface ExplanationPanelProps {
   question: QuizQuestion;

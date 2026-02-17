@@ -6,7 +6,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { type Database, type Json } from "@/types/database.types";
-import { ChunkWithContentSchema } from "@/features/quiz/types/quizSchemas";
+import { ChunkWithContentSchema } from "@/features/quiz/types";
 import { parseRow } from "@/utils/helpers";
 import { getAntrenmanQuestionCount } from "./quizQuestionRepository";
 import { safeQuery } from "@/lib/supabaseHelpers";

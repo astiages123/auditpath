@@ -1,5 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
-import { GlassCard } from '@/shared/GlassCard';
+import { GlassCard } from '@/shared/components/GlassCard';
 
 export function PageHeaderSkeleton() {
   return (

@@ -7,7 +7,7 @@ import {
   type LLMProvider,
   type LogCallback,
   type Message,
-} from "@/features/quiz/types/quizTypes";
+} from "@/features/quiz/types";
 
 // --- Configuration & Constants ---
 

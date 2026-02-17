@@ -1,4 +1,4 @@
-import { Message } from "@/features/quiz/types/quizTypes";
+import { Message } from "@/features/quiz/types";
 import { COMMON_OUTPUT_FORMATS, GENERAL_QUALITY_RULES } from "./prompts";
 
 export class PromptArchitect {

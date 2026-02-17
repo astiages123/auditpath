@@ -9,10 +9,10 @@ import {
 import { ReactNode } from 'react';
 
 // Extracted Content Components
-import { FocusStreamHub } from './modals/content/FocusStreamHub';
-import { LearningLoadAnalysis } from './modals/content/LearningLoadAnalysis';
-import { PracticePerformanceRadar } from './modals/content/PracticePerformanceRadar';
-import { MasteryProgressNavigator } from './modals/content/MasteryProgressNavigator';
+import { FocusStreamHub } from './EfficiencyFocusStreamModal';
+import { LearningLoadAnalysis } from './EfficiencyLearningLoadModal';
+import { PracticePerformanceRadar } from './EfficiencyPracticeRadarModal';
+import { MasteryProgressNavigator } from './EfficiencyMasteryModal';
 
 // Types
 

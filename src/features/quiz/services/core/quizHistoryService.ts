@@ -3,7 +3,7 @@ import { handleSupabaseError } from "@/lib/supabaseHelpers";
 import type {
   CognitiveInsight,
   RecentQuizSession,
-} from "@/features/quiz/types/quizTypes";
+} from "@/features/quiz/types";
 
 /**
  * Get recent quiz sessions for a user.

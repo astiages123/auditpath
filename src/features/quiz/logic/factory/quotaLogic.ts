@@ -1,5 +1,5 @@
 import * as Repository from "@/features/quiz/services/repositories/quizRepository";
-import { type ConceptMapItem } from "@/features/quiz/types/quizTypes";
+import { type ConceptMapItem } from "@/features/quiz/types";
 
 export interface Quotas {
   antrenman: number;

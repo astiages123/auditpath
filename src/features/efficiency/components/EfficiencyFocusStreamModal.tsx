@@ -1,7 +1,7 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { EfficiencyTrend, Session } from '../../../types/efficiencyTypes';
-import { EfficiencyTrendChart } from '../../charts/EfficiencyTrendChart';
-import { DistractionDetails } from './DistractionDetails';
+import { EfficiencyTrend, Session } from '../types/efficiencyTypes';
+import { EfficiencyTrendChart } from './charts/EfficiencyTrendChart';
+import { DistractionDetails } from './EfficiencyDistractionModal';
 
 interface FocusStreamHubProps {
   sessions: Session[];

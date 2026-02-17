@@ -1,5 +1,5 @@
 import { Json } from "@/types/common";
-import { QuizInsert } from "@/features/quiz/types/quizTypes";
+import { QuizInsert } from "@/features/quiz/types";
 import { z } from "zod";
 
 export const TimelineEventSchema = z.object({

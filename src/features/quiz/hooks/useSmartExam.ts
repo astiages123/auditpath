@@ -1,12 +1,12 @@
 import { useCallback } from "react";
 import { ExamService } from "@/features/quiz/logic/engines/examEngine";
 import * as Repository from "@/features/quiz/services/repositories/quizRepository";
-import { type QuizQuestion } from "@/features/quiz/types/quizTypes";
-import { QuizQuestionSchema } from "@/features/quiz/types/quizSchemas";
+import { type QuizQuestion } from "@/features/quiz/types";
+import { QuizQuestionSchema } from "@/features/quiz/types";
 import { parseOrThrow } from "@/utils/helpers";
 import { logger } from "@/utils/logger";
 import { AI_MODE } from "@/utils/aiConfig";
-import { type GenerationLog } from "@/features/quiz/types/quizEngineSchemas";
+import { type GenerationLog } from "@/features/quiz/types";
 import { MAX_LOG_ENTRIES } from "@/utils/constants";
 
 /**

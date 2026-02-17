@@ -6,7 +6,7 @@ import {
     Session,
 } from "../../types/efficiencyTypes";
 import { RecentSession } from "@/features/pomodoro/types/pomodoroTypes";
-import { BloomStats } from "@/features/quiz/types/quizTypes";
+import { BloomStats } from "@/features/quiz/types";
 
 export interface EfficiencyData {
     loading: boolean;

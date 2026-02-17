@@ -3,7 +3,7 @@ import { logger } from "@/utils/logger";
 import { type Database, type Json } from "@/types/database.types";
 import { parseArray } from "@/utils/helpers";
 import { z } from "zod";
-import { QuestionWithStatusRowSchema } from "@/features/quiz/types/quizSchemas";
+import { QuestionWithStatusRowSchema } from "@/features/quiz/types";
 import { safeQuery } from "@/lib/supabaseHelpers";
 
 const quizLogger = logger.withPrefix("[QuizQuestionRepository]");

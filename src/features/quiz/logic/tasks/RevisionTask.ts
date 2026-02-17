@@ -2,7 +2,7 @@ import { GeneratedQuestion } from "@/features/quiz/types";
 import {
     GeneratedQuestionSchema,
     ValidationResult,
-} from "@/features/quiz/types/quizEngineSchemas";
+} from "@/features/quiz/types";
 import { GLOBAL_AI_SYSTEM_PROMPT } from "@/features/quiz/logic/prompts";
 import {
     PromptArchitect,

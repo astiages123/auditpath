@@ -1,8 +1,8 @@
 import {
   ConceptMapItem,
   GeneratedQuestion,
-} from "@/features/quiz/types/quizTypes";
-import { GeneratedQuestionSchema } from "@/features/quiz/types/quizEngineSchemas";
+} from "@/features/quiz/types";
+import { GeneratedQuestionSchema } from "@/features/quiz/types";
 import {
   buildDraftingTaskPrompt,
   GLOBAL_AI_SYSTEM_PROMPT,

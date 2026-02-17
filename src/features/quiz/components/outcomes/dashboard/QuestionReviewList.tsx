@@ -8,7 +8,7 @@ import {
   MinusCircle,
 } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { QuizQuestion } from '@/features/quiz/types/quizTypes';
+import { QuizQuestion } from '@/features/quiz/types';
 
 interface QuestionReviewListProps {
   history: (QuizQuestion & {

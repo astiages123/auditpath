@@ -7,7 +7,7 @@ import {
   EXAM_STRATEGY,
 } from '@/utils/constants';
 import { BLOOM_INSTRUCTIONS } from '@/features/quiz/logic/prompts';
-import { type ConceptMapItem } from '@/features/quiz/types/quizTypes';
+import { type ConceptMapItem } from '@/features/quiz/types';
 
 // --- Types ---
 export type BloomLevel = Database['public']['Enums']['bloom_level'];

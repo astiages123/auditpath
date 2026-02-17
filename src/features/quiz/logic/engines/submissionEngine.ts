@@ -3,10 +3,10 @@ import { DebugLogger } from "../../logic/utils";
 import {
     type QuizResponseType,
     type SubmissionResult,
-} from "@/features/quiz/types/quizTypes";
+} from "@/features/quiz/types";
 import { calculateQuizResult } from "@/features/quiz/logic/algorithms/scoring";
 import { parseOrThrow } from "@/utils/helpers";
-import { ChunkMetadataSchema } from "@/features/quiz/types/quizSchemas";
+import { ChunkMetadataSchema } from "@/features/quiz/types";
 import { type SessionContext } from "./sessionEngine";
 
 /**

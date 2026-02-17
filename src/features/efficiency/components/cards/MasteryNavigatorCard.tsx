@@ -1,6 +1,6 @@
 import React from 'react';
 import { LayoutGrid, Maximize2 } from 'lucide-react';
-import { GlassCard } from '@/shared/GlassCard';
+import { GlassCard } from '@/shared/components/GlassCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EfficiencyModal, MasteryNavigatorContent } from '../EfficiencyModals';
 import { EfficiencyData } from './types';

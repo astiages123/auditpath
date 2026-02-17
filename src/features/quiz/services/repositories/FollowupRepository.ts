@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { parseArray } from "@/utils/helpers";
-import { FollowUpQuestionRowSchema } from "@/features/quiz/types/quizSchemas";
+import { FollowUpQuestionRowSchema } from "@/features/quiz/types";
 import { safeQuery } from "@/lib/supabaseHelpers";
 import { type FollowUpQuestionRow } from "./quizQuestionRepository";
 

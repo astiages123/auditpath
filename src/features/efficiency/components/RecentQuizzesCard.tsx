@@ -1,10 +1,10 @@
 import { ClipboardCheck, Maximize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { GlassCard } from '@/shared/GlassCard';
+import { GlassCard } from '@/shared/components/GlassCard';
 import { CardHeader } from './cards/CardElements';
 import { EfficiencyModal } from './EfficiencyModals';
 import { cn } from '@/utils/core';
-import { RecentQuizSession } from '@/features/quiz/types/quizTypes';
+import { RecentQuizSession } from '@/features/quiz/types';
 
 interface RecentQuizzesCardProps {
   recentQuizzes: RecentQuizSession[];

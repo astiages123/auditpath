@@ -1,6 +1,6 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { LearningLoad } from '../../../types/efficiencyTypes';
-import { LearningLoadChart } from '../../charts/LearningLoadChart';
+import { LearningLoad } from '../types/efficiencyTypes';
+import { LearningLoadChart } from './charts/LearningLoadChart';
 
 interface LearningLoadAnalysisProps {
   dayData: LearningLoad[];

@@ -1,33 +1,31 @@
-import { useCallback } from "react";
-import { QuizResults, QuizState } from "@/features/quiz/types/quizTypes";
-import { updateResults } from "@/features/quiz/logic/algorithms/scoring";
-import { submitAnswer } from "@/features/quiz/logic/engines/submissionEngine";
-import { useCelebrationStore } from "@/store/useCelebrationStore";
-import { useQuotaStore } from "@/features/quiz/store";
-import { MASTERY_THRESHOLD } from "@/utils/constants";
+import { useCallback } from 'react';
+import { QuizResults, QuizState } from '@/features/quiz/types';
+import { updateResults } from '@/features/quiz/logic/algorithms/scoring';
+import { submitAnswer } from '@/features/quiz/logic/engines/submissionEngine';
+import { useCelebrationStore } from '@/features/achievements/store';
+import { useQuotaStore } from '@/features/quiz/store';
+import { MASTERY_THRESHOLD } from '@/utils/constants';
 
 interface UseInteractionActionsProps {
   state: QuizState;
   updateState: (patch: Partial<QuizState>) => void;
   updateResults: (updater: (prev: QuizResults) => QuizResults) => void;
   timerRef: React.RefObject<{ stop: () => number } | undefined>;
-  sessionContextRef: React.RefObject<
-    {
-      userId: string;
-      courseId: string;
-      courseName?: string;
-      sessionNumber: number;
-      isNewSession: boolean;
-    } | null
-  >;
+  sessionContextRef: React.RefObject<{
+    userId: string;
+    courseId: string;
+    courseName?: string;
+    sessionNumber: number;
+    isNewSession: boolean;
+  } | null>;
   config?: {
     recordResponse?: (
       questionId: string,
-      responseType: "correct" | "incorrect" | "blank",
+      responseType: 'correct' | 'incorrect' | 'blank',
       selectedAnswer: number | null,
       timeSpentMs: number,
       diagnosis?: string,
-      insight?: string,
+      insight?: string
     ) => Promise<unknown>;
   };
 }
@@ -46,12 +44,7 @@ export function useInteractionActions({
       const newIndex = state.selectedAnswer === index ? null : index;
       updateState({ selectedAnswer: newIndex });
     },
-    [
-      state.isAnswered,
-      state.currentQuestion,
-      state.selectedAnswer,
-      updateState,
-    ],
+    [state.isAnswered, state.currentQuestion, state.selectedAnswer, updateState]
   );
 
   const markAsBlank = useCallback(async () => {
@@ -60,7 +53,7 @@ export function useInteractionActions({
     const timeSpent = timerRef.current?.stop();
     if (timeSpent === undefined) return;
 
-    updateResultsState((prev) => updateResults(prev, "blank", timeSpent));
+    updateResultsState((prev) => updateResults(prev, 'blank', timeSpent));
 
     updateState({
       selectedAnswer: null,
@@ -74,9 +67,9 @@ export function useInteractionActions({
         sessionContextRef.current,
         state.currentQuestion.id,
         state.currentQuestion.chunk_id || null,
-        "blank",
+        'blank',
         timeSpent,
-        null,
+        null
       );
 
       updateState({ lastSubmissionResult: result });
@@ -86,11 +79,11 @@ export function useInteractionActions({
     if (config?.recordResponse && state.currentQuestion.id) {
       await config.recordResponse(
         state.currentQuestion.id,
-        "blank",
+        'blank',
         null,
         timeSpent,
         state.currentQuestion.diagnosis,
-        state.currentQuestion.insight,
+        state.currentQuestion.insight
       );
     }
   }, [
@@ -111,7 +104,7 @@ export function useInteractionActions({
       if (timeSpent === undefined) return;
 
       const isCorrect = state.selectedAnswer === state.currentQuestion.a;
-      const type = isCorrect ? "correct" : "incorrect";
+      const type = isCorrect ? 'correct' : 'incorrect';
 
       updateResultsState((prev) => updateResults(prev, type, timeSpent));
 
@@ -128,19 +121,17 @@ export function useInteractionActions({
           state.currentQuestion.chunk_id || null,
           type,
           timeSpent,
-          state.selectedAnswer,
+          state.selectedAnswer
         );
 
         updateState({ lastSubmissionResult: result });
 
         if (result.newMastery >= MASTERY_THRESHOLD) {
           useCelebrationStore.getState().actions.enqueueCelebration({
-            id:
-              `MASTERY_${state.currentQuestion.chunk_id}_${result.newMastery}`,
-            title: "Uzmanlık Seviyesi!",
-            description:
-              `Bu konudaki ustalığın ${result.newMastery} puana ulaştı.`,
-            variant: "achievement",
+            id: `MASTERY_${state.currentQuestion.chunk_id}_${result.newMastery}`,
+            title: 'Uzmanlık Seviyesi!',
+            description: `Bu konudaki ustalığın ${result.newMastery} puana ulaştı.`,
+            variant: 'achievement',
           });
         }
 
@@ -154,7 +145,7 @@ export function useInteractionActions({
           state.selectedAnswer,
           timeSpent,
           state.currentQuestion.diagnosis,
-          state.currentQuestion.insight,
+          state.currentQuestion.insight
         );
       }
     },
@@ -167,7 +158,7 @@ export function useInteractionActions({
       updateState,
       sessionContextRef,
       config,
-    ],
+    ]
   );
 
   return { selectAnswer, markAsBlank, confirmAnswer };

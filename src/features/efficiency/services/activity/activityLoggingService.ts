@@ -3,7 +3,7 @@ import type {
     PomodoroInsert,
     VideoUpsert,
 } from "@/features/pomodoro/types/pomodoroTypes";
-import { type QuizInsert } from "@/features/quiz/types/quizTypes";
+import { type QuizInsert } from "@/features/quiz/types";
 import type { Database } from "@/types/database.types";
 import { logger } from "@/utils/logger";
 

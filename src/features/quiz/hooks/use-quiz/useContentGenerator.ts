@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
-import { QuizQuestion, QuizState } from '@/features/quiz/types/quizTypes';
+import { QuizQuestion, QuizState } from '@/features/quiz/types';
 import * as Repository from '@/features/quiz/services/repositories/quizRepository';
 import { startSession } from '@/features/quiz/logic/engines/sessionEngine';
 import { getReviewQueue } from '@/features/quiz/logic/engines/queueEngine';
 import { QuizFactory } from '@/features/quiz/logic/factory/QuizFactory';
-import { useTimerStore } from '@/store/useTimerStore';
+import { useTimerStore } from '@/features/pomodoro/store';
 import { Database } from '@/types/database.types';
 
 async function fetchAndMapQuestions(questionIds: string[]) {

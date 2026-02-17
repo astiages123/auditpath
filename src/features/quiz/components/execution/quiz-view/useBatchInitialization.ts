@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { logger } from '@/utils/logger';
 import * as Repository from '@/features/quiz/services/repositories/quizRepository';
-import { QuizQuestion } from '@/features/quiz/types/quizTypes';
-import { QuizQuestionSchema } from '@/features/quiz/types/quizSchemas';
+import { QuizQuestion } from '@/features/quiz/types';
+import { QuizQuestionSchema } from '@/features/quiz/types';
 import { parseOrThrow } from '@/utils/helpers';
 import { slugify } from '@/utils/core';
 import { refreshArchivedQuestions } from '@/features/quiz/logic/engines/backgroundEngine';

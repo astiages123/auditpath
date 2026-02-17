@@ -9,9 +9,9 @@ import { getRecentActivitySessions } from "@/features/pomodoro/services/pomodoro
 import {
   CognitiveInsight,
   RecentQuizSession,
-} from "@/features/quiz/types/quizTypes";
+} from "@/features/quiz/types";
 import { RecentSession } from "@/features/pomodoro/types/pomodoroTypes";
-import { BloomStats } from "@/features/quiz/types/quizTypes";
+import { BloomStats } from "@/features/quiz/types";
 import { logger } from "@/utils/logger";
 
 export function useCognitiveInsights() {

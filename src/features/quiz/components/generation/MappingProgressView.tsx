@@ -12,7 +12,7 @@ import {
 import {
   GenerationLog,
   GenerationStep,
-} from '@/features/quiz/types/quizEngineSchemas';
+} from '@/features/quiz/types';
 import { Button } from '@/components/ui/button';
 
 interface MappingProgressViewProps {

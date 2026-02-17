@@ -1,5 +1,5 @@
 import { Database } from '@/types/database.types';
-import { ConceptMapItem } from '@/features/quiz/types/quizTypes';
+import { ConceptMapItem } from '@/features/quiz/types';
 
 export type Course = Database['public']['Tables']['courses']['Row'];
 
