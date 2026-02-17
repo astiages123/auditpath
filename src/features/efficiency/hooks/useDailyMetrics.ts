@@ -3,7 +3,7 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getDailyEfficiencySummary } from "@/features/efficiency/services/analytics/efficiencySummaryService";
 import { getDailyStats } from "@/features/efficiency/services/activity";
 import { DailyEfficiencySummary } from "@/features/efficiency/types/efficiencyTypes";
-import { useEfficiencyStore } from "@/store/useEfficiencyStore";
+import { useEfficiencyStore } from "@/features/efficiency/store";
 import { logger } from "@/utils/logger";
 
 export interface DailyMetrics {
