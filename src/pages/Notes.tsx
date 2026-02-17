@@ -12,7 +12,7 @@ import { cn, slugify } from '@/utils/core';
 import { ROUTES } from '@/utils/routes';
 import { logger } from '@/utils/logger';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { storage } from '@/lib/storage/storage';
+import { storage } from '@/shared/services/storageService';
 
 // New Components
 import { MarkdownSection } from '@/features/notes/components/MarkdownSection';

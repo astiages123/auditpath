@@ -35,7 +35,7 @@ import {
 } from '@/features/quiz/types/quizTypes';
 import { toast } from 'sonner';
 import { logger } from '@/utils/logger';
-import { storage } from '@/lib/storage/storage';
+import { storage } from '@/shared/services/storageService';
 import {
   initialQuizSessionState,
   quizSessionReducer,
