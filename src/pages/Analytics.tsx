@@ -16,7 +16,7 @@ import {
   validateLogs,
   type AiGenerationCost,
 } from '@/features/analytics/logic/analyticsLogic';
-import { handleSupabaseError } from '@/utils/supabaseHelpers';
+import { handleSupabaseError } from '@/lib/supabaseHelpers';
 
 import { AnalyticsHeader } from '@/features/analytics/components/AnalyticsHeader';
 import { AnalyticsStats } from '@/features/analytics/components/AnalyticsStats';

@@ -1,10 +1,10 @@
-import { supabase } from '@/lib/supabase';
-import { logger } from '@/utils/logger';
-import { handleSupabaseError } from '@/utils/supabaseHelpers';
-import type { CourseTopic } from '@/types';
-import { parseOrThrow } from '@/utils/helpers';
-import { QuizQuestionSchema } from '@/features/quiz/types';
-import type { Json } from '@/types/database.types';
+import { supabase } from "@/lib/supabase";
+import { logger } from "@/utils/logger";
+import { handleSupabaseError } from "@/lib/supabaseHelpers";
+import type { CourseTopic } from "@/types";
+import { parseOrThrow } from "@/utils/helpers";
+import { QuizQuestionSchema } from "@/features/quiz/types";
+import type { Json } from "@/types/database.types";
 
 /**
  * Get a note chunk by ID.
@@ -22,15 +22,15 @@ export async function getNoteChunkById(chunkId: string) {
   }
 
   const { data, error } = await supabase
-    .from('note_chunks')
-    .select('content, metadata, course:courses(course_slug)')
-    .eq('id', chunkId)
+    .from("note_chunks")
+    .select("content, metadata, course:courses(course_slug)")
+    .eq("id", chunkId)
     .single();
 
   if (error) {
-    if (error.code !== 'PGRST116') {
+    if (error.code !== "PGRST116") {
       // Ignore single row not found errors
-      await handleSupabaseError(error, 'getNoteChunkById');
+      await handleSupabaseError(error, "getNoteChunkById");
     }
     return null;
   }
@@ -47,18 +47,18 @@ export async function getNoteChunkById(chunkId: string) {
 export async function getCourseTopics(
   userId: string,
   courseId: string | null,
-  signal?: AbortSignal
+  signal?: AbortSignal,
 ): Promise<CourseTopic[]> {
   if (!courseId) return [];
 
   // 1. Get all chunks for this course (sorted by chunk_order)
   let query = supabase
-    .from('note_chunks')
+    .from("note_chunks")
     .select(
-      'id, created_at, course_id, course_name, section_title, chunk_order, content, display_content, status, last_synced_at, metadata, ai_logic'
+      "id, created_at, course_id, course_name, section_title, chunk_order, content, display_content, status, last_synced_at, metadata, ai_logic",
     )
-    .eq('course_id', courseId)
-    .order('chunk_order', { ascending: true });
+    .eq("course_id", courseId)
+    .order("chunk_order", { ascending: true });
 
   if (signal) {
     query = query.abortSignal(signal);
@@ -67,7 +67,7 @@ export async function getCourseTopics(
   const { data: chunks, error: chunksError } = await query;
 
   if (chunksError) {
-    await handleSupabaseError(chunksError, 'getCourseTopics');
+    await handleSupabaseError(chunksError, "getCourseTopics");
     return [];
   }
 
@@ -87,12 +87,12 @@ export async function getCourseTopics(
  */
 export async function getCourseIdBySlug(
   slug: string,
-  _signal?: AbortSignal
+  _signal?: AbortSignal,
 ): Promise<string | null> {
   const query = supabase
-    .from('courses')
-    .select('id')
-    .eq('course_slug', slug)
+    .from("courses")
+    .select("id")
+    .eq("course_slug", slug)
     .limit(1)
     .maybeSingle();
 
@@ -115,13 +115,13 @@ export async function getCourseIdBySlug(
  */
 export async function getUniqueCourseTopics(courseId: string) {
   const { data, error } = await supabase
-    .from('note_chunks')
-    .select('section_title')
-    .eq('course_id', courseId)
-    .order('section_title');
+    .from("note_chunks")
+    .select("section_title")
+    .eq("course_id", courseId)
+    .order("section_title");
 
   if (error) {
-    await handleSupabaseError(error, 'getUniqueCourseTopics');
+    await handleSupabaseError(error, "getUniqueCourseTopics");
     return [];
   }
 
@@ -139,15 +139,15 @@ export async function getUniqueCourseTopics(courseId: string) {
  */
 export async function getFirstChunkIdForTopic(courseId: string, topic: string) {
   const { data, error } = await supabase
-    .from('note_chunks')
-    .select('id')
-    .eq('course_id', courseId)
-    .eq('section_title', topic)
+    .from("note_chunks")
+    .select("id")
+    .eq("course_id", courseId)
+    .eq("section_title", topic)
     .limit(1)
     .maybeSingle();
 
   if (error) {
-    await handleSupabaseError(error, 'getFirstChunkIdForTopic');
+    await handleSupabaseError(error, "getFirstChunkIdForTopic");
     return null;
   }
   return data?.id || null;
@@ -162,14 +162,14 @@ export async function getFirstChunkIdForTopic(courseId: string, topic: string) {
  */
 export async function getTopicQuestions(courseId: string, topic: string) {
   const { data, error } = await supabase
-    .from('questions')
-    .select('*, course:courses(course_slug)')
-    .eq('course_id', courseId)
-    .eq('section_title', topic)
-    .order('created_at', { ascending: true });
+    .from("questions")
+    .select("*, course:courses(course_slug)")
+    .eq("course_id", courseId)
+    .eq("section_title", topic)
+    .order("created_at", { ascending: true });
 
   if (error) {
-    await handleSupabaseError(error, 'getTopicQuestions');
+    await handleSupabaseError(error, "getTopicQuestions");
     return [];
   }
 
@@ -177,7 +177,7 @@ export async function getTopicQuestions(courseId: string, topic: string) {
   return (data || []).map((q: unknown) => {
     const qData = parseOrThrow(
       QuizQuestionSchema,
-      (q as { question_data: Json }).question_data
+      (q as { question_data: Json }).question_data,
     );
     const courseSlug = (q as { course?: { course_slug: string } | null }).course
       ?.course_slug;
@@ -188,8 +188,9 @@ export async function getTopicQuestions(courseId: string, topic: string) {
       a: qData.a,
       exp: qData.exp,
       img: qData.img,
-      imgPath:
-        qData.img && courseSlug ? `/notes/${courseSlug}/media/` : undefined,
+      imgPath: qData.img && courseSlug
+        ? `/notes/${courseSlug}/media/`
+        : undefined,
     };
   });
 }

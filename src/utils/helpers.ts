@@ -1,7 +1,8 @@
-import { z, type ZodError, type ZodSchema } from 'zod';
-import type { Json } from '@/types/database.types';
-import { RANKS } from '@/utils/constants';
-import type { Rank } from '@/types';
+import { z, type ZodError, type ZodSchema } from "zod";
+import type { Json } from "@/types/database.types";
+import { RANKS } from "@/utils/constants";
+export { RANKS };
+import type { Rank } from "@/types";
 
 /**
  * Tarih işlemleri için yardımcı fonksiyonlar.
@@ -46,8 +47,8 @@ export function getVirtualDayStart(date?: Date): Date {
  */
 export function formatDateKey(date: Date): string {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -114,7 +115,7 @@ export function formatDurationShort(decimalHours: number): string {
 export function getRankForPercentage(percentage: number): Rank {
   // Sort by minPercentage descending to find the highest matching rank
   const sortedRanks = [...RANKS].sort(
-    (a, b) => b.minPercentage - a.minPercentage
+    (a, b) => b.minPercentage - a.minPercentage,
   );
   for (const rank of sortedRanks) {
     if (percentage >= rank.minPercentage) {
@@ -149,10 +150,10 @@ export function getNextRank(currentRankId: string): Rank | null {
  */
 export function normalizeCategorySlug(rawName: string): string {
   const slugMap: Record<string, string> = {
-    EKONOMİ: 'EKONOMI',
-    HUKUK: 'HUKUK',
-    'MUHASEBE VE MALİYE': 'MUHASEBE_MALIYE',
-    'GENEL YETENEK VE İNGİZLİCE': 'GENEL_YETENEK',
+    EKONOMİ: "EKONOMI",
+    HUKUK: "HUKUK",
+    "MUHASEBE VE MALİYE": "MUHASEBE_MALIYE",
+    "GENEL YETENEK VE İNGİZLİCE": "GENEL_YETENEK",
   };
   return slugMap[rawName] || rawName;
 }
@@ -183,7 +184,7 @@ export type SafeParseResult<T> = ParseResult<T> | ParseError;
  */
 export function safeParse<T>(
   schema: ZodSchema<T>,
-  data: unknown
+  data: unknown,
 ): SafeParseResult<T> {
   const result = schema.safeParse(data);
 
@@ -198,7 +199,7 @@ export function safeParse<T>(
     success: false,
     error: result.error,
     issues: result.error.issues.map(
-      (issue) => `${issue.path.join('.')}: ${issue.message}`
+      (issue) => `${issue.path.join(".")}: ${issue.message}`,
     ),
   };
 }
@@ -222,7 +223,7 @@ export function parseJsonColumn<T>(schema: ZodSchema<T>, data: Json): T {
  */
 export function safeParseJsonColumn<T>(
   schema: ZodSchema<T>,
-  data: Json
+  data: Json,
 ): SafeParseResult<T> {
   return safeParse(schema, data);
 }
@@ -234,7 +235,7 @@ export function safeParseJsonColumn<T>(
 export function parseArray<T>(
   schema: ZodSchema<T>,
   items: unknown[],
-  options: { onError?: (error: ParseError, index: number) => void } = {}
+  options: { onError?: (error: ParseError, index: number) => void } = {},
 ): T[] {
   const results: T[] = [];
 
@@ -261,7 +262,7 @@ export function isValid<T>(schema: ZodSchema<T>, data: unknown): data is T {
  * Creates a partial schema validator (all fields optional)
  */
 export function createPartialValidator<T extends z.ZodRawShape>(
-  schema: z.ZodObject<T>
+  schema: z.ZodObject<T>,
 ) {
   const partialSchema = schema.partial();
   return {
@@ -276,13 +277,13 @@ export function createPartialValidator<T extends z.ZodRawShape>(
 export function assertValid<T>(
   schema: ZodSchema<T>,
   data: unknown,
-  message = 'Data validation failed'
+  message = "Data validation failed",
 ): asserts data is T {
   const result = schema.safeParse(data);
   if (!result.success) {
     const issues = result.error.issues
-      .map((i) => `${i.path.join('.')}: ${i.message}`)
-      .join(', ');
+      .map((i) => `${i.path.join(".")}: ${i.message}`)
+      .join(", ");
     throw new Error(`${message}: ${issues}`);
   }
 }
