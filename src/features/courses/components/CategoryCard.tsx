@@ -4,7 +4,8 @@ import { useEffect } from 'react';
 import { useCelebration } from '@/hooks/useCelebration';
 import { useProgress } from '@/hooks/useProgress';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn, formatDuration } from '@/utils/core';
+import { cn } from '@/utils/core';
+import { formatDuration } from '@/utils/helpers';
 import {
   CATEGORY_THEMES,
   COURSE_THEME_CONFIG,

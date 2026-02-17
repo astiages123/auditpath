@@ -1,7 +1,7 @@
 import { Briefcase, Crown, type LucideIcon, Shield, Star } from 'lucide-react';
 
-// Re-export RANKS from rank-utils for backward compatibility or ease of use
-export { type Rank, RANKS } from '@/utils/helpers';
+export type { Rank } from '@/types';
+export { RANKS } from '@/utils/constants';
 
 // Rank name to Lucide icon mapping
 export const rankIcons: Record<string, LucideIcon> = {

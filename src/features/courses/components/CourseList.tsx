@@ -12,7 +12,7 @@ import {
   Brain,
 } from 'lucide-react';
 import { VideoList } from './VideoList';
-import { formatDuration } from '@/utils/core';
+import { formatDuration } from '@/utils/helpers';
 import { useProgress } from '@/hooks/useProgress';
 import { useCelebration } from '@/hooks/useCelebration';
 import { getCourseIcon } from '../logic/coursesLogic';

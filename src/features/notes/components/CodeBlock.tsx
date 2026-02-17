@@ -4,7 +4,7 @@ import 'katex/dist/katex.min.css';
 import { Copy, Check } from 'lucide-react';
 import { cn } from '@/utils/core';
 import { MermaidDiagram } from './MermaidDiagram';
-import { sanitizeHtml } from '@/utils/sanitizeHtml';
+import { sanitizeHtml } from '@/lib/storage/sanitizer';
 import { logger } from '@/utils/logger';
 
 interface CodeBlockProps extends React.HTMLAttributes<HTMLElement> {
