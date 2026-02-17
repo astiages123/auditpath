@@ -9,7 +9,7 @@ import { formatDuration } from '@/utils/helpers';
 import {
   CATEGORY_THEMES,
   COURSE_THEME_CONFIG,
-} from '../services/coursesConfig';
+} from '../services/courses-config';
 
 import { type Course } from '@/features/courses/types/courseTypes';
 

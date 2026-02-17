@@ -8,7 +8,7 @@ import {
   getConsistencyData,
   getFocusPowerData,
   getLearningLoadData,
-} from "../services/analytics/efficiencyService";
+} from "../services/analytics";
 import {
   DayActivity,
   EfficiencyTrend,

@@ -5,7 +5,7 @@ import {
   COURSE_THEME_CONFIG,
   CourseTheme,
   ICON_OVERRIDES,
-} from "../services/coursesConfig"; // Fixed path
+} from "../services/courses-config";
 import coursesData from "../services/courses.json"; // Import data
 
 // --- Caches for O(1) Lookup ---

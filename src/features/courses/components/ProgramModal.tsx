@@ -12,7 +12,7 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import {
   WEEKLY_SCHEDULE,
   COURSE_THEME_CONFIG,
-} from '../services/coursesConfig';
+} from '../services/courses-config';
 
 interface ProgramModalProps {
   open: boolean;

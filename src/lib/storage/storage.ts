@@ -3,7 +3,11 @@
  */
 
 import { StorageOptions, StorageService } from "./StorageService";
-import { ContentType, deepSanitize, sanitizeString } from "./sanitizer";
+import {
+    ContentType,
+    deepSanitize,
+    sanitizeString,
+} from "@/shared/utils/sanitizers";
 
 // Export types
 export type { ContentType, StorageOptions };

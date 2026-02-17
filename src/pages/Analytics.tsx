@@ -6,7 +6,7 @@ import React, {
   useMemo,
 } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ExchangeRateService } from '@/services/exchangeRateService';
+import { ExchangeRateService } from '@/features/analytics/services/exchangeRateService';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   StatsSkeleton,

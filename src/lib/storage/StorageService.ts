@@ -6,7 +6,7 @@
  */
 
 import { logger } from "../../utils/logger";
-import { deepSanitize } from "./sanitizer";
+import { deepSanitize } from "@/shared/utils/sanitizers/stateSanitizer";
 
 const storageLogger = logger.withPrefix("[StorageService]");
 

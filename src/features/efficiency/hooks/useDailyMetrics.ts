@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
 import { getDailyEfficiencySummary } from "@/features/efficiency/services/analytics/efficiencySummaryService";
-import { getDailyStats } from "@/features/efficiency/services/activityService";
+import { getDailyStats } from "@/features/efficiency/services/activity";
 import { DailyEfficiencySummary } from "@/features/efficiency/types/efficiencyTypes";
 import { useEfficiencyStore } from "@/store/useEfficiencyStore";
 import { logger } from "@/utils/logger";
