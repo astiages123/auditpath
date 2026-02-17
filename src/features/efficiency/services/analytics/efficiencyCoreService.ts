@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase";
 import { calculateEfficiencyScore } from "../../utils/efficiencyUtils";
 import { getVirtualDayStart } from "@/utils/helpers";
 import { logger } from "@/utils/logger";
-import type { EfficiencyData } from "@/types";
+import type { EfficiencyData } from "@/features/efficiency/types/efficiencyTypes";
 
 /**
  * Get efficiency ratio (video time vs pomodoro time).

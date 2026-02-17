@@ -1,4 +1,80 @@
-import type { Json } from "@/types/database.types";
+import { DetailedSession } from '@/features/pomodoro/types/pomodoroTypes';
+
+export type { DetailedSession };
+
+export interface DailyStats {
+  totalWorkMinutes: number;
+  totalBreakMinutes: number;
+  sessionCount: number;
+  goalMinutes: number;
+  progress: number;
+  goalPercentage: number;
+  trendPercentage: number;
+  dailyGoal: number;
+  totalPauseMinutes: number;
+  totalVideoMinutes: number;
+  completedVideos: number;
+  videoTrendPercentage: number;
+  totalCycles: number;
+}
+
+export type DayActivity = {
+  date: string;
+  count: number;
+  level: 0 | 1 | 2 | 3 | 4;
+  intensity: number;
+  totalMinutes: number;
+};
+
+export interface EfficiencyData {
+  ratio: number;
+  efficiencyScore: number;
+  trend: 'up' | 'down' | 'stable';
+  isAlarm: boolean;
+  videoMinutes: number;
+  pomodoroMinutes: number;
+  quizMinutes: number;
+}
+
+export interface DailyVideoMilestones {
+  maxCount: number; // Tüm zamanlardaki maksimum günlük video sayısı
+  first5Date: string | null; // İlk kez 5+ video izlenen gün
+  first10Date: string | null; // İlk kez 10+ video izlenen gün
+}
+
+export interface CumulativeStats {
+  totalWorkMinutes: number;
+  totalVideoMinutes: number;
+  ratio: number;
+}
+
+export interface HistoryStats {
+  date: string;
+  pomodoro: number;
+  video: number;
+}
+
+export interface FocusTrend {
+  date: string;
+  minutes: number;
+}
+
+export interface EfficiencyTrend {
+  date: string;
+  score: number;
+  workMinutes: number;
+  videoMinutes: number;
+}
+
+export interface DailyEfficiencySummary {
+  efficiencyScore: number;
+  totalCycles: number;
+  netWorkTimeSeconds: number;
+  totalBreakTimeSeconds: number;
+  totalPauseTimeSeconds: number;
+  pauseCount: number;
+  sessions: DetailedSession[];
+}
 
 export type Session = {
   id: string;
@@ -16,7 +92,7 @@ export type Session = {
   pauseIntervals: { start: string; end: string }[]; // Pause times
 };
 
-export { type BloomStats } from "@/types";
+// BloomStats is now in quizTypes.ts
 
 export type LearningLoad = {
   day: string;
@@ -33,65 +109,20 @@ export type FocusPowerPoint = {
   pauseMinutes: number;
 };
 
-export type EfficiencyTrend = {
-  date: string;
-  score: number;
-  videoMinutes: number;
-  workMinutes: number;
-};
+// efficiency trend already defined above
 
-export type RecentSession = {
-  id: string;
-  courseName: string;
-  date: string;
-  durationMinutes: number;
-  efficiencyScore: number;
-  timeline: Json[];
-  totalWorkTime: number;
-  totalBreakTime: number;
-  totalPauseTime: number;
-  pauseCount: number;
-};
+// Activity already defined above
 
-export type DayActivity = {
-  date: string;
-  totalMinutes: number;
-  count: number;
-  level: 0 | 1 | 2 | 3 | 4;
-  intensity: number;
-};
-
-export type flowState = "stuck" | "deep" | "optimal" | "speed" | "shallow";
+export type flowState = 'stuck' | 'deep' | 'optimal' | 'speed' | 'shallow';
 
 // --- Zod Schemas ---
-import { z } from "zod";
+import { z } from 'zod';
+import {
+  PauseIntervalSchema,
+  TimelineEventSchema,
+} from '@/features/pomodoro/types/pomodoroTypes';
 
-export const TimelineEventSchema = z.object({
-  type: z.enum([
-    "work",
-    "break",
-    "pause",
-    "çalışma",
-    "mola",
-    "duraklatma",
-    "duraklama",
-  ]).transform((val) => {
-    // Normalize to English
-    const v = val.toLowerCase();
-    if (v === "çalışma") return "work";
-    if (v === "mola") return "break";
-    if (v === "duraklatma" || v === "duraklama") return "pause";
-    return v as "work" | "break" | "pause";
-  }),
-  start: z.number(),
-  end: z.number().optional(),
-  duration: z.number().optional(),
-});
-
-export const PauseIntervalSchema = z.object({
-  start: z.string(),
-  end: z.string(),
-});
+export { PauseIntervalSchema, TimelineEventSchema };
 
 export const SessionSchema = z.object({
   id: z.string(),

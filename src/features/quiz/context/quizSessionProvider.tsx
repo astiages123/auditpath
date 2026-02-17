@@ -27,11 +27,15 @@ import {
   getContentVersion,
   getCourseStats,
 } from '@/features/quiz/services/repositories/quizRepository';
-import { getReviewQueue, submitAnswer } from '@/features/quiz/logic';
-import { type ReviewItem, type QuizResponseType } from '@/features/quiz/types';
+import { getReviewQueue } from '@/features/quiz/logic/engines/queueEngine';
+import { submitAnswer } from '@/features/quiz/logic/engines/submissionEngine';
+import {
+  type ReviewItem,
+  type QuizResponseType,
+} from '@/features/quiz/types/quizTypes';
 import { toast } from 'sonner';
 import { logger } from '@/utils/logger';
-import { storage } from '@/lib/storage';
+import { storage } from '@/lib/storage/storage';
 import {
   initialQuizSessionState,
   quizSessionReducer,
@@ -256,7 +260,7 @@ export function QuizSessionProvider({ children }: QuizSessionProviderProps) {
         dispatch({ type: 'SYNC_COMPLETE' });
       }
     },
-    [user?.id, state.sessionInfo]
+    [user?.id, state]
   );
 
   // Auto-save effect

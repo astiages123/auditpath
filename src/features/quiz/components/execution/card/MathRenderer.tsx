@@ -30,20 +30,25 @@ export const MathRenderer = memo(function MathRenderer({
   if (!content) return null;
 
   // Clean content: remove (image.ext) references, [GÖRSEL: X] markers and excessive newlines
-  const cleanContent = content
+  let cleanContent = content
     .replace(/\([\w-]+\.(webp|png|jpg|jpeg|gif)\)/gi, '')
     .replace(/\[GÖRSEL:\s*\d+\]/gi, '')
     .replace(/\n\s*\n/g, '\n\n')
     .trim();
 
+  // Format numbers (e.g., 12 000 -> 12.000)
+  cleanContent = cleanContent.replace(/(\d)\s+(?=\d{3}(?:\s|$|\D))/g, '$1.');
+
   return (
-    <ReactMarkdown
-      remarkPlugins={remarkPlugins}
-      rehypePlugins={rehypePlugins}
-      components={markdownComponents}
-    >
-      {cleanContent}
-    </ReactMarkdown>
+    <div className="math-rendering upright-math">
+      <ReactMarkdown
+        remarkPlugins={remarkPlugins}
+        rehypePlugins={rehypePlugins}
+        components={markdownComponents}
+      >
+        {cleanContent}
+      </ReactMarkdown>
+    </div>
   );
 });
 

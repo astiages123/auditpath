@@ -1,66 +1,53 @@
 /**
  * QuizEngine Component
  *
- * Main orchestrator for the quiz flow:
- * - Handles question generation triggers
- * - Manages quiz state via useQuiz hook
- * - Provides navigation and control buttons
+ * Main orchestrator for the quiz flow using specialized hooks.
  */
 
-import { useCallback, useState, useEffect, useRef, useTransition } from 'react';
-import { toast } from 'sonner';
-import { logger } from '@/utils/logger';
+import {
+  useCallback,
+  useState,
+  useEffect,
+  useRef,
+  useTransition,
+  useMemo,
+} from 'react';
 import { useQuiz } from '@/features/quiz/hooks/useQuiz';
 import { QuizCard } from './QuizCard';
 import { useQuizSession } from '@/features/quiz/context/quizSessionContext';
-import { checkAndTriggerBackgroundGeneration } from '@/features/quiz/logic';
-import { type QuizQuestion } from '@/features/quiz/types';
-import { refreshArchivedQuestions } from '@/features/quiz/logic';
-import * as Repository from '@/features/quiz/services/repositories/quizRepository';
+import { checkAndTriggerBackgroundGeneration } from '@/features/quiz/logic/engines/backgroundEngine';
+import { type QuizQuestion } from '@/features/quiz/types/quizTypes';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { PostTestDashboard } from '../outcomes/PostTestDashboard';
 import { IntermissionScreen } from '../outcomes/IntermissionScreen';
-import { calculateTestResults } from '@/features/quiz/logic';
-import { parseOrThrow } from '@/utils/helpers';
-import { QuizQuestionSchema } from '@/features/quiz/types';
+import { calculateTestResults } from '@/features/quiz/logic/algorithms/scoring';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { slugify } from '@/utils/core';
-import {
-  QuizLoadingView,
-  QuizReadyView,
-  QuizErrorView,
-} from './QuizStatusViews';
+import { QuizLoadingView, QuizErrorView } from './QuizStatusViews';
 import { QuizSessionStats } from './QuizSessionStats';
-import { AlertCircle } from 'lucide-react';
+import { QuizFooter } from './QuizFooter';
 
-// Modular Components
-import { QuizActionFooter } from './view/QuizActionFooter';
+// Internal Hooks
+import { useBatchInitialization } from './quiz-view/useBatchInitialization';
 
 interface QuizEngineProps {
-  /** Note chunk ID for generating questions */
   chunkId?: string;
-  /** Direct content for generating questions (alternative to chunkId) */
   courseName?: string;
   sectionTitle?: string;
   content?: string;
-  /** Pre-loaded questions to solve */
   initialQuestions?: QuizQuestion[];
-  /** Called when user wants to generate another question */
   onNextQuestion?: () => void;
-  /** Called when user wants to close the quiz */
   onClose?: () => void;
-  /** Course ID for session management */
   courseId?: string;
+  useMock?: boolean;
 }
 
 export function QuizView({
   chunkId,
   courseName,
-  sectionTitle,
-  content,
   initialQuestions,
   onClose,
   courseId,
+  useMock,
 }: QuizEngineProps) {
   const { user } = useAuth();
   const {
@@ -70,14 +57,15 @@ export function QuizView({
     advanceBatch,
   } = useQuizSession();
 
-  // Connect SolveQuizService to useQuizSession's recordResponse
   const {
     state,
     results,
     generateBatch,
     loadQuestions,
     nextQuestion,
+    previousQuestion,
     selectAnswer,
+    confirmAnswer,
     toggleExplanation,
     retry,
     startQuiz,
@@ -88,185 +76,74 @@ export function QuizView({
     },
   });
 
-  const [count] = useState<number>(10);
-  const hasStartedAutoRef = useRef(false);
   const [isFinished, setIsFinished] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Track batch-specific results to avoid accumulation across batches
+  const [questionResults, setQuestionResults] = useState<
+    Record<string, 'correct' | 'incorrect' | 'blank'>
+  >({});
+  const [fullBatchIds, setFullBatchIds] = useState<string[]>([]);
   const batchStartResultsRef = useRef({ correct: 0, incorrect: 0, blank: 0 });
-
-  // React 19 Concurrent Features: useTransition for smooth question transitions
   const [isPending, startTransition] = useTransition();
-
-  // Track incorrect questions for follow-up generation
   const incorrectIdsRef = useRef<string[]>([]);
-
-  // Track current mastery for display
   const currentMasteryRef = useRef<number | undefined>(undefined);
 
-  // Update current mastery when lastSubmissionResult changes
+  // Initialize Session and Loading Logic
+  useBatchInitialization({
+    chunkId,
+    courseId,
+    user,
+    useMock,
+    initialQuestions,
+    sessionState,
+    quizState: state,
+    initializeSession,
+    loadQuestions,
+    generateBatch,
+    setFullBatchIds,
+  });
+
   useEffect(() => {
     if (state.lastSubmissionResult?.newMastery !== undefined) {
       currentMasteryRef.current = state.lastSubmissionResult.newMastery;
     }
   }, [state.lastSubmissionResult]);
 
-  // Initialize Session
-  useEffect(() => {
-    if (courseId) {
-      initializeSession(courseId);
-    }
-  }, [courseId, initializeSession]);
-
-  const handleGenerate = useCallback(() => {
-    if (chunkId && user?.id) {
-      generateBatch(count, { type: 'chunk', chunkId, userId: user.id });
-    }
-  }, [chunkId, generateBatch, count, user?.id]);
-
-  // Auto-start generation
-  useEffect(() => {
-    if (
-      !hasStartedAutoRef.current &&
-      !state.currentQuestion &&
-      !state.isLoading &&
-      !state.error &&
-      !initialQuestions?.length
-    ) {
-      if (chunkId || (courseName && sectionTitle && content)) {
-        hasStartedAutoRef.current = true;
-        handleGenerate();
-      }
-    }
-  }, [
-    state.currentQuestion,
-    state.isLoading,
-    state.error,
-    chunkId,
-    courseName,
-    sectionTitle,
-    content,
-    initialQuestions,
-    handleGenerate,
-  ]);
-
-  const fetchQuestionsByIds = async (ids: string[]) => {
-    if (ids.length === 0) return [];
-    const data = await Repository.fetchQuestionsByIds(ids);
-
-    return data.map((q) => {
-      const questionData = q.question_data as Record<string, any>;
-      const question = parseOrThrow(QuizQuestionSchema, {
-        ...questionData,
-        type: questionData.type || 'multiple_choice',
-      });
-      question.id = q.id;
-      // Add slugs for evidence links
-      if (q.course?.course_slug) question.courseSlug = q.course.course_slug;
-      if (q.chunk?.section_title)
-        question.topicSlug = slugify(q.chunk.section_title);
-      return question;
-    });
-  };
-
-  // Load initial questions or current batch
-  useEffect(() => {
-    let active = true;
-
-    async function loadBatch() {
-      if (
-        sessionState.status !== 'IDLE' &&
-        sessionState.status !== 'INITIALIZING' &&
-        sessionState.batches.length > 0
-      ) {
-        const currentBatchItems =
-          sessionState.batches[sessionState.currentBatchIndex];
-        if (!currentBatchItems || currentBatchItems.length === 0) return;
-
-        try {
-          const isRefeshing = currentBatchItems.some(
-            (i) => i.status === 'archived'
-          );
-          if (isRefeshing) {
-            toast.loading('Ezber bozan taze sorular hazırlanıyor...', {
-              id: 'archive-refresh',
-            });
-          }
-
-          const finalIds = await refreshArchivedQuestions(
-            currentBatchItems,
-            chunkId || null
-          );
-
-          toast.dismiss('archive-refresh');
-
-          if (isRefeshing) {
-            toast.success('Arşiv taraması tamamlandı!');
-          }
-
-          const questions = await fetchQuestionsByIds(finalIds);
-          if (active) {
-            const sortedQuestions = finalIds
-              .map((id: string) => questions.find((q) => q.id === id))
-              .filter(Boolean) as QuizQuestion[];
-
-            if (sortedQuestions.length > 0) {
-              loadQuestions(sortedQuestions);
-            }
-          }
-        } catch (e) {
-          logger.error('Failed to load batch', e as Error);
-          toast.dismiss('archive-refresh');
-          toast.error('Sorular yüklenirken hata oluştu.');
-        }
-      }
-    }
-
-    if (initialQuestions && initialQuestions.length > 0) {
-      loadQuestions(initialQuestions);
-    } else {
-      loadBatch();
-    }
-
-    return () => {
-      active = false;
-    };
-  }, [
-    initialQuestions,
-    loadQuestions,
-    sessionState.status,
-    sessionState.batches,
-    sessionState.currentBatchIndex,
-    chunkId,
-  ]);
-
-  const handleSelectAnswer = useCallback(
-    async (index: number) => {
-      if (state.isAnswered || !state.currentQuestion) return;
-
-      selectAnswer(index);
-
-      const isCorrect = index === state.currentQuestion.a;
-
+  const handleConfirm = useCallback(async () => {
+    if (isSubmitting || !user?.id || !courseId || !state.currentQuestion)
+      return;
+    setIsSubmitting(true);
+    try {
+      const isCorrect = state.selectedAnswer === state.currentQuestion.a;
       if (!isCorrect && state.currentQuestion?.id) {
         incorrectIdsRef.current.push(state.currentQuestion.id);
-
-        toast.info(
-          'Bu hata analiz edildi ve waterfall mantığıyla sonraki tekrar seanslarına (SRS) enjekte edildi. Lütfen konunun bu kısmını tekrar gözden geçir.',
-          {
-            duration: 5000,
-            icon: <AlertCircle className="w-5 h-5 text-amber-500" />,
-          }
-        );
       }
-    },
-    [selectAnswer, state]
-  );
+      const qId = state.currentQuestion.id;
+      if (qId) {
+        setQuestionResults((prev) => ({
+          ...prev,
+          [qId]: isCorrect ? 'correct' : 'incorrect',
+        }));
+      }
+      await confirmAnswer(user.id, courseId);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [
+    confirmAnswer,
+    state.selectedAnswer,
+    state.currentQuestion,
+    user?.id,
+    isSubmitting,
+    courseId,
+  ]);
 
   const handleBlank = useCallback(async () => {
+    const qId = state.currentQuestion?.id;
+    if (qId) {
+      setQuestionResults((prev) => ({ ...prev, [qId]: 'blank' }));
+    }
     markAsBlank();
-  }, [markAsBlank]);
+  }, [markAsBlank, state.currentQuestion]);
 
   const handleNext = useCallback(async () => {
     if (isSubmitting || !user?.id || !courseId) return;
@@ -280,7 +157,6 @@ export function QuizView({
     }
   }, [nextQuestion, user?.id, courseId, isSubmitting]);
 
-  // Check for finish
   useEffect(() => {
     if (
       state.hasStarted &&
@@ -296,11 +172,6 @@ export function QuizView({
     }
   }, [state, chunkId, user?.id]);
 
-  const handleStart = useCallback(() => {
-    startQuiz();
-  }, [startQuiz]);
-
-  // Auto-start when queue is ready
   useEffect(() => {
     if (
       !state.isLoading &&
@@ -310,7 +181,7 @@ export function QuizView({
       !sessionState.error &&
       state.queue.length > 0
     ) {
-      handleStart();
+      startQuiz();
     }
   }, [
     state.isLoading,
@@ -318,26 +189,50 @@ export function QuizView({
     sessionState.status,
     sessionState.error,
     state.queue.length,
-    handleStart,
+    startQuiz,
   ]);
 
-  const handleIntermissionContinue = () => {
-    batchStartResultsRef.current = {
-      correct: results.correct,
-      incorrect: results.incorrect,
-      blank: results.blank,
-    };
+  const progressData = useMemo(() => {
+    const isReview = sessionState.reviewQueue.length > 0;
+    interface ReviewQueueItem {
+      questionId: string;
+    }
+    const progressQueue = isReview
+      ? sessionState.reviewQueue.map((item: ReviewQueueItem) => item.questionId)
+      : state.currentQuestion
+        ? [
+            state.currentQuestion.id || 'curr',
+            ...state.queue.map((q) => q.id || 'next'),
+          ]
+        : state.queue.map((q) => q.id || 'next');
 
-    startTransition(() => {
-      setIsFinished(false);
-      advanceBatch();
-    });
-  };
+    const progressIndex = isReview
+      ? sessionState.currentReviewIndex
+      : state.generatedCount -
+        state.queue.length -
+        (state.currentQuestion ? 1 : 0);
+
+    const footerProgressIndex =
+      useMock || !isReview
+        ? state.totalToGenerate -
+          state.queue.length -
+          (state.currentQuestion ? 1 : 0)
+        : sessionState.currentReviewIndex;
+
+    return { progressQueue, progressIndex, footerProgressIndex };
+  }, [
+    sessionState.reviewQueue,
+    sessionState.currentReviewIndex,
+    state.currentQuestion,
+    state.queue,
+    state.generatedCount,
+    state.totalToGenerate,
+    useMock,
+  ]);
 
   if (isFinished) {
     const hasMoreBatches =
       sessionState.currentBatchIndex < sessionState.totalBatches - 1;
-
     if (hasMoreBatches) {
       return (
         <IntermissionScreen
@@ -346,7 +241,17 @@ export function QuizView({
           completedBatchQuestions={
             sessionState.batches[sessionState.currentBatchIndex] || []
           }
-          onContinue={handleIntermissionContinue}
+          onContinue={() => {
+            batchStartResultsRef.current = {
+              correct: results.correct,
+              incorrect: results.incorrect,
+              blank: results.blank,
+            };
+            startTransition(() => {
+              setIsFinished(false);
+              advanceBatch();
+            });
+          }}
           correctCount={results.correct - batchStartResultsRef.current.correct}
           incorrectCount={
             results.incorrect - batchStartResultsRef.current.incorrect
@@ -354,31 +259,26 @@ export function QuizView({
         />
       );
     }
-
-    const summaryStats = calculateTestResults(
-      results.correct,
-      results.incorrect,
-      results.blank,
-      results.totalTimeMs
-    );
-
     return (
       <PostTestDashboard
-        results={summaryStats}
+        results={calculateTestResults(
+          results.correct,
+          results.incorrect,
+          results.blank,
+          results.totalTimeMs
+        )}
+        history={state.history}
         courseName={courseName}
-        onClose={() => {
-          onClose?.();
-        }}
+        onClose={() => onClose?.()}
       />
     );
   }
 
   return (
     <ErrorBoundary>
-      <div className="flex flex-col h-full max-h-[calc(85vh-70px)]">
-        <div className="flex-1 overflow-y-auto p-6 min-h-0">
-          <div className="max-w-4xl mx-auto space-y-6">
-            {/* Loading State with Progress */}
+      <div className="flex flex-col h-full overflow-hidden">
+        <div className="flex-1 overflow-hidden p-0 min-h-0">
+          <div className="max-w-full mx-auto h-full flex flex-col">
             {(state.isLoading ||
               ((sessionState.status === 'IDLE' ||
                 sessionState.status === 'INITIALIZING') &&
@@ -389,63 +289,70 @@ export function QuizView({
                 totalToGenerate={state.totalToGenerate}
               />
             )}
-
-            {/* Auto-start logic handled by useEffect */}
-
-            {/* Session Error */}
             {sessionState.error && (
               <QuizErrorView
                 error={sessionState.error}
                 onRetry={() => courseId && initializeSession(courseId)}
               />
             )}
-
-            {/* Quiz Card - SHOW ONLY IF STARTED */}
             {!state.isLoading &&
               sessionState.status !== 'IDLE' &&
               sessionState.status !== 'INITIALIZING' &&
               !sessionState.error &&
               state.hasStarted && (
                 <div
-                  className="space-y-6"
+                  className="flex flex-col h-full min-h-0"
                   style={{
                     opacity: isPending ? 0.85 : 1,
                     transition: 'opacity 150ms ease-in-out',
                   }}
                 >
-                  {/* Stats Header */}
                   <QuizSessionStats
-                    courseStats={sessionState.courseStats}
-                    currentReviewIndex={sessionState.currentReviewIndex}
-                    totalQueueLength={sessionState.reviewQueue?.length ?? 0}
+                    courseStats={
+                      useMock && !sessionState.courseStats
+                        ? { totalQuestionsSolved: 156, averageMastery: 82 }
+                        : sessionState.courseStats
+                    }
+                    currentReviewIndex={progressData.progressIndex}
+                    totalQueueLength={progressData.progressQueue.length}
                     timerIsRunning={!state.isAnswered && !state.isLoading}
                     currentQuestionId={state.currentQuestion?.id}
                     currentMastery={currentMasteryRef.current}
                     lastSubmissionResult={state.lastSubmissionResult}
                   />
-
-                  <QuizCard
-                    question={state.currentQuestion}
-                    selectedAnswer={state.selectedAnswer}
+                  <div className="flex-1 min-h-0">
+                    <QuizCard
+                      question={state.currentQuestion}
+                      selectedAnswer={state.selectedAnswer}
+                      isAnswered={state.isAnswered}
+                      isCorrect={state.isCorrect}
+                      showExplanation={state.showExplanation}
+                      isLoading={false}
+                      error={state.error}
+                      onSelectAnswer={selectAnswer}
+                      onToggleExplanation={toggleExplanation}
+                      onRetry={retry}
+                      onBlank={handleBlank}
+                    />
+                  </div>
+                  <QuizFooter
                     isAnswered={state.isAnswered}
-                    isCorrect={state.isCorrect}
                     showExplanation={state.showExplanation}
-                    isLoading={false}
-                    error={state.error}
-                    onSelectAnswer={handleSelectAnswer}
-                    onToggleExplanation={toggleExplanation}
-                    onRetry={retry}
-                    onBlank={handleBlank}
-                  />
-
-                  <QuizActionFooter
-                    isAnswered={state.isAnswered}
+                    selectedAnswer={state.selectedAnswer}
                     isSubmitting={isSubmitting}
-                    queueLength={state.queue.length}
-                    currentBatchIndex={sessionState.currentBatchIndex}
-                    totalBatches={sessionState.totalBatches}
-                    lastSubmissionResult={state.lastSubmissionResult}
+                    historyLength={state.history.length}
+                    onPrev={previousQuestion}
                     onNext={handleNext}
+                    onConfirm={handleConfirm}
+                    onBlank={handleBlank}
+                    onToggleExplanation={toggleExplanation}
+                    progressQueue={
+                      useMock && fullBatchIds.length > 0
+                        ? fullBatchIds
+                        : progressData.progressQueue
+                    }
+                    progressIndex={progressData.footerProgressIndex}
+                    questionResults={questionResults}
                   />
                 </div>
               )}

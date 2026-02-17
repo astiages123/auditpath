@@ -1,8 +1,11 @@
 import { supabase } from "@/lib/supabase";
 import { calculateFocusPower } from "@/utils/math";
 import { getVirtualDateKey } from "@/utils/helpers";
-import type { DayActivity } from "@/types";
-import type { FocusPowerPoint, LearningLoad } from "../../types/efficiencyTypes";
+import type { DayActivity } from "@/features/efficiency/types/efficiencyTypes";
+import type {
+    FocusPowerPoint,
+    LearningLoad,
+} from "../../types/efficiencyTypes";
 
 export interface LearningLoadParams {
     userId: string;

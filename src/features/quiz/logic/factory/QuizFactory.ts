@@ -1,11 +1,11 @@
 import { type Json } from "@/types/database.types";
 import * as Repository from "@/features/quiz/services/repositories/quizRepository";
-import { subjectKnowledgeService } from "@/features/quiz/services";
+import { subjectKnowledgeService } from "@/features/quiz/services/core/subjectKnowledgeService";
 import { logger } from "@/utils/logger";
 import { getSubjectStrategy } from "@/features/quiz/logic/algorithms/strategy";
-import { type ConceptMapItem } from "@/features/quiz/types";
+import { type ConceptMapItem } from "@/features/quiz/types/quizTypes";
 import { isValid, parseOrThrow } from "@/utils/helpers";
-import { ChunkMetadataSchema } from "@/features/quiz/types";
+import { ChunkMetadataSchema } from "@/features/quiz/types/quizSchemas";
 
 import {
     type GenerationLog,
@@ -59,6 +59,7 @@ export class QuizFactory {
             usageType?: "antrenman" | "arsiv" | "deneme";
             force?: boolean;
             mappingOnly?: boolean;
+            userId?: string;
         } = {},
     ) {
         const log = (

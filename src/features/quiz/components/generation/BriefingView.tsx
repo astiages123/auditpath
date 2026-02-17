@@ -10,7 +10,7 @@ import {
   Play,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { TopicCompletionStats } from '@/types';
+import { TopicCompletionStats } from '@/features/courses/types/courseTypes';
 import { Badge } from '@/components/ui/badge';
 
 interface BriefingViewProps {
@@ -58,7 +58,7 @@ export function BriefingView({
         </button>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[1.2fr_0.8fr] gap-4 flex-1 min-h-0">
+      <div className="grid grid-cols-1 md:grid-cols-[1.0fr_1.0fr] gap-4 flex-1 min-h-0">
         {/* Left: Concepts Table */}
         <motion.div
           variants={itemVariants}
@@ -80,31 +80,31 @@ export function BriefingView({
           </div>
 
           <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin scrollbar-thumb-border/50">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-muted/50 backdrop-blur-md z-10">
-                <tr className="border-b border-border/30">
-                  <th className="px-4 py-2 text-left text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+            <table className="w-full text-sm border-collapse">
+              <thead className="sticky top-0 bg-muted/80 backdrop-blur-md z-10">
+                <tr className="border-b border-border/50">
+                  <th className="px-4 py-3 text-left text-[11px] font-black text-foreground uppercase tracking-wider border-r border-border/30">
                     Kavram Adı
                   </th>
-                  <th className="px-4 py-2 text-right text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+                  <th className="px-4 py-3 text-center text-[11px] font-black text-foreground uppercase tracking-wider">
                     Seviye
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/20">
+              <tbody className="divide-y divide-border/30">
                 {completionStatus.concepts?.map((c, i) => (
                   <tr
                     key={i}
                     className="hover:bg-primary/5 transition-colors group"
                   >
-                    <td className="px-4 py-2.5">
-                      <div className="font-medium text-foreground/90 group-hover:text-foreground">
+                    <td className="px-4 py-3 border-r border-border/10">
+                      <div className="font-bold text-foreground/90 group-hover:text-primary transition-colors">
                         {c.baslik}
                       </div>
                     </td>
-                    <td className="px-4 py-2.5 text-right">
+                    <td className="px-4 py-3 text-center">
                       <span
-                        className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                        className={`inline-flex items-center justify-center min-w-[80px] text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border shadow-xs ${
                           c.seviye === 'Analiz'
                             ? 'bg-red-500/10 text-red-500 border-red-500/20'
                             : c.seviye === 'Uygulama'
@@ -198,7 +198,7 @@ export function BriefingView({
             </div>
 
             <div className="flex items-center gap-2 mb-6 relative z-10">
-              <span className="text-[10px] font-black uppercase text-muted-foreground tracking-[0.15em]">
+              <span className="text-xs font-black uppercase text-muted-foreground tracking-[0.15em]">
                 Soru Dağılımı
               </span>
             </div>
@@ -232,14 +232,14 @@ export function BriefingView({
                   className="text-center p-2 rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div
-                    className={`flex justify-center mb-2 w-8 h-8 mx-auto items-center rounded-lg ${d.bg}`}
+                    className={`flex justify-center mb-2 w-10 h-10 mx-auto items-center rounded-lg ${d.bg}`}
                   >
-                    <d.icon size={16} className={`${d.color}`} />
+                    <d.icon size={22} className={`${d.color}`} />
                   </div>
-                  <div className="text-xl font-black leading-none mb-1">
+                  <div className="text-3xl font-black leading-none mb-1">
                     {d.value}
                   </div>
-                  <div className="text-[9px] font-black text-muted-foreground uppercase tracking-tight">
+                  <div className="text-[11px] font-black text-muted-foreground uppercase tracking-tight">
                     {d.label}
                   </div>
                 </div>

@@ -1,13 +1,10 @@
-import { supabase } from '@/lib/supabase';
-import { handleSupabaseError } from '@/lib/supabaseHelpers';
-import { getSubjectStrategy } from '@/features/quiz/logic';
+import { supabase } from "@/lib/supabase";
+import { handleSupabaseError } from "@/lib/supabaseHelpers";
 import type {
-  ConceptMapItem,
   TopicCompletionStats,
   TopicWithCounts,
-} from '@/types';
-import { isValid, parseOrThrow } from '@/utils/helpers';
-import { ChunkMetadataSchema } from '@/features/quiz/types';
+} from "@/features/courses/types/courseTypes";
+import * as Helper from "./quizStatusHelper";
 
 /**
  * Get the number of questions for a specific topic.
@@ -18,14 +15,14 @@ import { ChunkMetadataSchema } from '@/features/quiz/types';
  */
 export async function getTopicQuestionCount(courseId: string, topic: string) {
   const { count, error } = await supabase
-    .from('questions')
-    .select('*', { count: 'exact', head: true })
-    .eq('course_id', courseId)
-    .eq('section_title', topic)
-    .eq('usage_type', 'antrenman');
+    .from("questions")
+    .select("*", { count: "exact", head: true })
+    .eq("course_id", courseId)
+    .eq("section_title", topic)
+    .eq("usage_type", "antrenman");
 
   if (error) {
-    await handleSupabaseError(error, 'getTopicQuestionCount');
+    await handleSupabaseError(error, "getTopicQuestionCount");
     return 0;
   }
   return count || 0;
@@ -40,16 +37,16 @@ export async function getTopicQuestionCount(courseId: string, topic: string) {
  */
 export async function getCoursePoolCount(
   courseId: string,
-  usageType: 'antrenman' | 'deneme' | 'arsiv'
+  usageType: "antrenman" | "deneme" | "arsiv",
 ) {
   const { count, error } = await supabase
-    .from('questions')
-    .select('*', { count: 'exact', head: true })
-    .eq('course_id', courseId)
-    .eq('usage_type', usageType);
+    .from("questions")
+    .select("*", { count: "exact", head: true })
+    .eq("course_id", courseId)
+    .eq("usage_type", usageType);
 
   if (error) {
-    await handleSupabaseError(error, 'getCoursePoolCount');
+    await handleSupabaseError(error, "getCoursePoolCount");
     return 0;
   }
   return count || 0;
@@ -66,88 +63,16 @@ export async function getCoursePoolCount(
 export async function getTopicCompletionStatus(
   userId: string,
   courseId: string,
-  topic: string
+  topic: string,
 ): Promise<TopicCompletionStats> {
-  // 1. Get Chunk Info
-  const { data: chunk } = await supabase
-    .from('note_chunks')
-    .select('id, course_name, metadata, ai_logic')
-    .eq('course_id', courseId)
-    .eq('section_title', topic)
-    .limit(1)
-    .maybeSingle();
+  // 1. Get Chunk Info & Quotas
+  const chunk = await Helper.fetchTopicChunkInfo(courseId, topic);
+  const { quota, importance, concepts, difficultyIndex, aiLogic } = Helper
+    .calculateTopicQuota(chunk);
 
-  let quota = { total: 0, antrenman: 0, arsiv: 0, deneme: 0 };
-  let importance: 'high' | 'medium' | 'low' = 'medium';
-  let srsDueCount = 0;
-  let aiLogic: {
-    suggested_quotas: { antrenman: number; arsiv: number; deneme: number };
-  } | null = null;
-  let concepts: ConceptMapItem[] = [];
-  let difficultyIndex: number | null = null;
-
-  if (chunk) {
-    // Strategy logic for AI briefing (importance only)
-    const strategy = getSubjectStrategy(chunk.course_name);
-    if (strategy) {
-      importance = strategy.importance;
-    }
-
-    // AI logic from ai_logic column (primary source)
-    aiLogic =
-      (chunk.ai_logic as {
-        suggested_quotas: {
-          antrenman: number;
-          arsiv: number;
-          deneme: number;
-        };
-      }) || null;
-    const aiQuotas = aiLogic?.suggested_quotas;
-
-    // Concepts and Difficulty from metadata
-    const metadata = isValid(ChunkMetadataSchema, chunk.metadata)
-      ? parseOrThrow(ChunkMetadataSchema, chunk.metadata)
-      : null;
-    concepts = metadata?.concept_map || [];
-    difficultyIndex = metadata?.difficulty_index || null;
-
-    const defaultQuotas = { antrenman: 5, arsiv: 1, deneme: 1 };
-
-    // Use AI quotas if available, otherwise use fallback
-    const antrenman = aiQuotas?.antrenman ?? defaultQuotas.antrenman;
-    const arsiv = aiQuotas?.arsiv ?? defaultQuotas.arsiv;
-    const deneme = aiQuotas?.deneme ?? defaultQuotas.deneme;
-
-    quota = {
-      total: antrenman + arsiv + deneme,
-      antrenman,
-      arsiv,
-      deneme,
-    };
-  }
-
-  // SRS Status calculation
-  const { data: sessionCounter } = await supabase
-    .from('course_session_counters')
-    .select('current_session')
-    .eq('course_id', courseId)
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  const currentSession = sessionCounter?.current_session || 1;
-
-  // 2. Get all questions for this topic
-  const { data: questions, error: questionsError } = await supabase
-    .from('questions')
-    .select('id, usage_type, parent_question_id')
-    .eq('course_id', courseId)
-    .eq('section_title', topic);
-
-  if (questionsError || !questions) {
-    await handleSupabaseError(
-      questionsError,
-      'getTopicCompletionStatus/questions'
-    );
+  // 2. Get Questions
+  const questions = await Helper.fetchTopicQuestions(courseId, topic);
+  if (questions.length === 0) {
     return {
       completed: false,
       antrenman: {
@@ -174,120 +99,56 @@ export async function getTopicCompletionStatus(
     };
   }
 
-  // 2.5 Calculate SRS Due Count if topic exists
-  if (chunk) {
-    const { data: dueStatus } = await supabase
-      .from('user_question_status')
-      .select('question_id')
-      .eq('user_id', userId)
-      .eq('status', 'archived')
-      .in(
-        'question_id',
-        questions.map((q) => q.id)
-      )
-      .lte('next_review_session', currentSession || 1);
+  // 3. SRS Status
+  const { data: sessionCounter } = await supabase
+    .from("course_session_counters")
+    .select("current_session")
+    .eq("course_id", courseId)
+    .eq("user_id", userId)
+    .maybeSingle();
 
-    srsDueCount = dueStatus?.length || 0;
-  }
+  const currentSession = sessionCounter?.current_session || 1;
+  const srsDueCount = await Helper.calculateSrsDueCount(
+    userId,
+    questions.map((q) => q.id),
+    currentSession,
+  );
 
-  // 3. Calculate Totals (Existing in DB vs Theoretical Quota)
-  const existingCounts = {
-    antrenman: 0,
-    deneme: 0,
-    arsiv: 0,
-    mistakes: 0,
-  };
-
-  const questionIds = new Set<string>();
-  const idToTypeMap = new Map<
-    string,
-    'antrenman' | 'deneme' | 'arsiv' | 'mistakes'
-  >();
+  // 4. Calculate Existings
+  const existingCounts = { antrenman: 0, deneme: 0, arsiv: 0, mistakes: 0 };
+  const idToTypeMap = new Map<string, string>();
 
   questions.forEach((q) => {
-    questionIds.add(q.id);
-    let type: 'antrenman' | 'deneme' | 'arsiv' | 'mistakes' = 'antrenman'; // default
-
-    if (q.parent_question_id) {
-      type = 'mistakes';
-    } else {
-      // Explicit types
-      if (q.usage_type === 'deneme') type = 'deneme';
-      else if (q.usage_type === 'arsiv') type = 'arsiv';
-      else type = 'antrenman';
+    let type = q.parent_question_id ? "mistakes" : q.usage_type || "antrenman";
+    if (!["antrenman", "deneme", "arsiv", "mistakes"].includes(type)) {
+      type = "antrenman";
     }
 
     idToTypeMap.set(q.id, type);
-    existingCounts[type]++;
+    existingCounts[type as keyof typeof existingCounts]++;
   });
 
-  // 4. Get User Progress
-  const { data: solvedData, error: solvedError } = await supabase
-    .from('user_quiz_progress')
-    .select('question_id')
-    .eq('user_id', userId)
-    .eq('course_id', courseId)
-    .in('question_id', Array.from(questionIds));
+  // 5. Get User Progress
+  const { data: solvedData } = await supabase
+    .from("user_quiz_progress")
+    .select("question_id")
+    .eq("user_id", userId)
+    .eq("course_id", courseId)
+    .in(
+      "question_id",
+      questions.map((q) => q.id),
+    );
 
-  if (solvedError) {
-    await handleSupabaseError(solvedError, 'getTopicCompletionStatus/solved');
-    return {
-      completed: false,
-      antrenman: {
-        solved: 0,
-        total: quota.antrenman,
-        quota: quota.antrenman,
-        existing: existingCounts.antrenman,
-      },
-      deneme: {
-        solved: 0,
-        total: quota.deneme,
-        quota: quota.deneme,
-        existing: existingCounts.deneme,
-      },
-      arsiv: {
-        solved: 0,
-        total: quota.arsiv,
-        quota: quota.arsiv,
-        existing: existingCounts.arsiv,
-        srsDueCount,
-      },
-      mistakes: {
-        solved: 0,
-        total: existingCounts.mistakes,
-        existing: existingCounts.mistakes,
-      },
-      importance,
-    };
-  }
-
-  const solvedCounts = {
-    antrenman: 0,
-    deneme: 0,
-    arsiv: 0,
-    mistakes: 0,
-  };
-
-  const uniqueSolved = new Set<string>();
-  solvedData?.forEach((d) => {
-    if (!uniqueSolved.has(d.question_id)) {
-      uniqueSolved.add(d.question_id);
-      const type = idToTypeMap.get(d.question_id);
-      if (type) {
-        solvedCounts[type]++;
-      }
-    }
+  const solvedCounts = { antrenman: 0, deneme: 0, arsiv: 0, mistakes: 0 };
+  const uniqueSolved = new Set(solvedData?.map((d) => d.question_id));
+  uniqueSolved.forEach((id) => {
+    const type = idToTypeMap.get(id);
+    if (type) solvedCounts[type as keyof typeof solvedCounts]++;
   });
 
-  // Final Totals - taking the max of Quota vs Existing to ensure we don't show "10/5"
   const antrenmanTotal = Math.max(quota.antrenman, existingCounts.antrenman);
-  const denemeTotal = Math.max(quota.deneme, existingCounts.deneme);
-  const arsivTotal = Math.max(quota.arsiv, existingCounts.arsiv);
-  const mistakesTotal = existingCounts.mistakes;
-
-  // Completed logic: Consistent with the UI display
-  const isCompleted =
-    antrenmanTotal > 0 && solvedCounts.antrenman >= antrenmanTotal;
+  const isCompleted = antrenmanTotal > 0 &&
+    solvedCounts.antrenman >= antrenmanTotal;
 
   return {
     completed: isCompleted,
@@ -299,20 +160,20 @@ export async function getTopicCompletionStatus(
     },
     deneme: {
       solved: solvedCounts.deneme,
-      total: denemeTotal,
+      total: Math.max(quota.deneme, existingCounts.deneme),
       quota: quota.deneme,
       existing: existingCounts.deneme,
     },
     arsiv: {
       solved: solvedCounts.arsiv,
-      total: arsivTotal,
+      total: Math.max(quota.arsiv, existingCounts.arsiv),
       quota: quota.arsiv,
       existing: existingCounts.arsiv,
       srsDueCount,
     },
     mistakes: {
       solved: solvedCounts.mistakes,
-      total: mistakesTotal,
+      total: existingCounts.mistakes,
       existing: existingCounts.mistakes,
     },
     importance,
@@ -329,20 +190,20 @@ export async function getTopicCompletionStatus(
  * @returns Array of topics with counts and completion status
  */
 export async function getCourseTopicsWithCounts(
-  courseId: string
+  courseId: string,
 ): Promise<TopicWithCounts[]> {
   const { data: user } = await supabase.auth.getUser();
   const userId = user.user?.id;
 
   // 1. Get topics from note_chunks sorted by chunk_order
   const { data: chunks, error: chunksError } = await supabase
-    .from('note_chunks')
-    .select('section_title, chunk_order')
-    .eq('course_id', courseId)
-    .order('chunk_order', { ascending: true });
+    .from("note_chunks")
+    .select("section_title, chunk_order")
+    .eq("course_id", courseId)
+    .order("chunk_order", { ascending: true });
 
   if (chunksError) {
-    await handleSupabaseError(chunksError, 'getCourseTopicsWithCounts/chunks');
+    await handleSupabaseError(chunksError, "getCourseTopicsWithCounts/chunks");
     return [];
   }
 
@@ -360,14 +221,14 @@ export async function getCourseTopicsWithCounts(
 
   // 2. Fetch all questions for this course to aggregate counts
   const { data: questions, error: questionsError } = await supabase
-    .from('questions')
-    .select('id, section_title, usage_type, parent_question_id')
-    .eq('course_id', courseId);
+    .from("questions")
+    .select("id, section_title, usage_type, parent_question_id")
+    .eq("course_id", courseId);
 
   if (questionsError) {
     await handleSupabaseError(
       questionsError,
-      'getCourseTopicsWithCounts/questions'
+      "getCourseTopicsWithCounts/questions",
     );
     return orderedTopics.map((t) => ({
       name: t,
@@ -380,10 +241,10 @@ export async function getCourseTopicsWithCounts(
   const solvedIds = new Set<string>();
   if (userId) {
     const { data: solved } = await supabase
-      .from('user_quiz_progress')
-      .select('question_id')
-      .eq('user_id', userId)
-      .eq('course_id', courseId);
+      .from("user_quiz_progress")
+      .select("question_id")
+      .eq("user_id", userId)
+      .eq("course_id", courseId);
 
     solved?.forEach((s) => solvedIds.add(s.question_id));
   }
@@ -421,13 +282,13 @@ export async function getCourseTopicsWithCounts(
       if (q.parent_question_id) {
         // Mistake question - doesn't count towards 'Antrenman' total for badge
       } else {
-        if (type === 'antrenman') {
+        if (type === "antrenman") {
           topicStats[t].antrenman += 1;
           if (solvedIds.has(q.id)) {
             topicStats[t].antrenmanSolved += 1;
           }
-        } else if (type === 'arsiv') topicStats[t].arsiv += 1;
-        else if (type === 'deneme') topicStats[t].deneme += 1;
+        } else if (type === "arsiv") topicStats[t].arsiv += 1;
+        else if (type === "deneme") topicStats[t].deneme += 1;
       }
     }
   });
@@ -460,25 +321,25 @@ export async function getCourseProgress(userId: string, courseId: string) {
   // 1. Get total questions in course (Antrenman + Deneme + Arsiv)
   // excluding mistake copies (parent_question_id is null)
   const { count: totalQuestions, error: totalError } = await supabase
-    .from('questions')
-    .select('*', { count: 'exact', head: true })
-    .eq('course_id', courseId)
-    .is('parent_question_id', null);
+    .from("questions")
+    .select("*", { count: "exact", head: true })
+    .eq("course_id", courseId)
+    .is("parent_question_id", null);
 
   if (totalError) {
-    await handleSupabaseError(totalError, 'getCourseProgress/total');
+    await handleSupabaseError(totalError, "getCourseProgress/total");
     return { total: 0, solved: 0, percentage: 0 };
   }
 
   // 2. Get unique solved questions for this course
   const { data: solvedData, error: solvedError } = await supabase
-    .from('user_quiz_progress')
-    .select('question_id')
-    .eq('user_id', userId)
-    .eq('course_id', courseId);
+    .from("user_quiz_progress")
+    .select("question_id")
+    .eq("user_id", userId)
+    .eq("course_id", courseId);
 
   if (solvedError) {
-    await handleSupabaseError(solvedError, 'getCourseProgress/solved');
+    await handleSupabaseError(solvedError, "getCourseProgress/solved");
     return { total: totalQuestions || 0, solved: 0, percentage: 0 };
   }
 

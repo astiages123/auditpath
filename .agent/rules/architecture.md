@@ -8,6 +8,7 @@ trigger: always_on
 - **Klasör İçeriği:** Bir özelliğin (feature) içinde şu alt klasörler bulunmalıdır:
   - `components/`: Sadece o özelliğe özel arayüz parçaları.
   - `hooks/`: Özelliğe özel mantıksal işlevler (useQuiz, useAuth vb.).
+  - `logic/`: Özelliğe özel iş mantığı ve algoritma tanımlamaları.
   - `services/`: Veri çekme ve API işlemleri.
   - `types/`: TypeScript tanımlamaları.
 - **Paylaşılan Bileşenler:** Birden fazla özellik tarafından kullanılan parçalar `src/components/layout/` veya `src/shared/` altına konulmalıdır.

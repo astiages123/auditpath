@@ -5,12 +5,12 @@ import { ProgramModal } from '@/features/courses/components/ProgramModal';
 import { JourneyModal } from '@/features/courses/components/JourneyModal';
 import { AuthModal } from '@/features/auth/components/AuthModal';
 import { ROUTES } from '@/utils/routes';
-import { usePomodoro } from '@/features/pomodoro/hooks';
+import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
 import { BrandSection } from './BrandSection';
 import { DesktopNav } from './DesktopNav';
 import { MobileNav } from './MobileNav';
-import { getNavItems } from './navConfig';
+import { getNavItems } from './nav-config';
 
 export function Header() {
   const { user, signOut } = useAuth();

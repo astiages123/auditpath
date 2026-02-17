@@ -7,4 +7,5 @@ export const ROUTES = {
     ANALYTICS: "/analytics",
     SETTINGS: "/settings",
     NOTES: "/notes",
+    QUIZ: "/quiz",
 } as const;

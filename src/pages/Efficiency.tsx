@@ -1,17 +1,15 @@
 import { TrendingUp } from 'lucide-react';
 import { useTransition } from 'react';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { RecentQuizzesCard } from '@/features/efficiency/components';
-import { CognitiveInsightsCard } from '@/features/efficiency/components';
-import {
-  FocusHubCard,
-  LearningLoadCard,
-  MasteryNavigatorCard,
-  PracticeCenterCard,
-  ConsistencyHeatmapCard,
-  RecentActivitiesContainer,
-} from '@/features/efficiency/components';
-import { useEfficiency } from '@/features/efficiency/hooks';
+import { RecentQuizzesCard } from '@/features/efficiency/components/RecentQuizzesCard';
+import { CognitiveInsightsCard } from '@/features/efficiency/components/CognitiveInsightsCard';
+import { FocusHubCard } from '@/features/efficiency/components/cards/FocusHubCard';
+import { LearningLoadCard } from '@/features/efficiency/components/cards/LearningLoadCard';
+import { MasteryNavigatorCard } from '@/features/efficiency/components/cards/MasteryNavigatorCard';
+import { PracticeCenterCard } from '@/features/efficiency/components/cards/PracticeCenterCard';
+import { ConsistencyHeatmapCard } from '@/features/efficiency/components/cards/ConsistencyHeatmapCard';
+import { RecentActivitiesContainer } from '@/features/efficiency/components/cards/RecentActivitiesContainer';
+import { useEfficiency } from '@/features/efficiency/hooks/useEfficiency';
 
 const EfficiencyDashboard = () => {
   const efficiencyData = useEfficiency();

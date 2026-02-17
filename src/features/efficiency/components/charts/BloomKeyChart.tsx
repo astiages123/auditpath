@@ -5,7 +5,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { BloomStats } from '../../types';
+import { BloomStats } from '@/features/quiz/types';
 
 // --- Bloom Key Chart (Polar Bar) ---
 export const BloomKeyChart = ({ data }: { data: BloomStats[] }) => {

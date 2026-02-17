@@ -1,5 +1,5 @@
 import { env } from "@/utils/env";
-import * as Repository from "./repositories";
+import { getCurrentSessionToken } from "./repositories/quizRepository";
 import { rateLimiter } from "@/features/quiz/logic/rateLimit";
 import { logger } from "@/utils/logger";
 import {
@@ -7,7 +7,7 @@ import {
   type LLMProvider,
   type LogCallback,
   type Message,
-} from "@/features/quiz/types";
+} from "@/features/quiz/types/quizTypes";
 
 // --- Configuration & Constants ---
 
@@ -55,7 +55,7 @@ export class UnifiedLLMClient {
     this.logStart(provider, effectiveModel, messages, onLog);
 
     // Auth
-    const accessToken = await Repository.getCurrentSessionToken();
+    const accessToken = await getCurrentSessionToken();
     if (!accessToken) {
       throw new Error("Oturum bulunamadı. Lütfen giriş yapın.");
     }

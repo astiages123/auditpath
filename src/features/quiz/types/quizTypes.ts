@@ -1,7 +1,126 @@
-import { AIResponseMetadata, LogCallback, Message } from "@/types";
-import { ConceptMapItem, QuizQuestion, QuizResponseType } from "@/types";
+import { AIResponseMetadata, LogCallback, Message } from "@/types/common";
 
-export { type ConceptMapItem, type QuizQuestion, type QuizResponseType };
+export { type LogCallback, type Message };
+
+export interface ConceptMapItem {
+  baslik: string;
+  odak: string;
+  seviye: "Bilgi" | "Uygulama" | "Analiz";
+  gorsel: string | null;
+  altText?: string | null;
+  isException?: boolean;
+  prerequisites?: string[];
+  [key: string]: unknown;
+}
+
+export type QuizResponseType = "correct" | "incorrect" | "blank";
+
+export type QuizQuestionType = "multiple_choice" | "true_false";
+
+export interface BaseQuestion {
+  id?: string;
+  q: string; // Question text
+  exp: string; // Explanation
+  img?: number | null; // Index of the image in imageUrls array
+  imageUrls?: string[]; // Array of image URLs for the chunk
+  imgPath?: string | null; // Legacy/Optional path override
+  diagnosis?: string;
+  insight?: string;
+  evidence?: string;
+  chunk_id?: string;
+  courseSlug?: string;
+  topicSlug?: string;
+}
+
+export interface MultipleChoiceQuestion extends BaseQuestion {
+  type: "multiple_choice";
+  o: string[]; // Typically 5 options
+  a: number; // Correct index
+}
+
+export interface TrueFalseQuestion extends BaseQuestion {
+  type: "true_false";
+  o: string[]; // ["Doğru", "Yanlış"]
+  a: number; // 0 or 1
+}
+
+export type QuizQuestion = MultipleChoiceQuestion | TrueFalseQuestion;
+
+export interface QuizInsert {
+  question_id: string;
+  course_id: string;
+  chunk_id?: string | null;
+  is_correct?: boolean;
+  confidence_level?: "LOW" | "MEDIUM" | "HIGH";
+  answered_at?: string | null;
+  response_time_ms?: number | null;
+  response_type: QuizResponseType;
+  session_number: number;
+  ai_diagnosis?: string | null;
+  ai_insight?: string | null;
+}
+
+export interface QuizStats {
+  totalAnswered: number;
+  correct: number;
+  incorrect: number;
+  blank: number;
+  remaining: number;
+  successRate: number;
+}
+
+export interface SubjectCompetency {
+  subject: string;
+  score: number; // 0-100
+  totalQuestions: number;
+}
+
+export type BloomStats = {
+  level: string;
+  score: number;
+  questionsSolved: number;
+  correct?: number;
+};
+
+export interface SRSStats {
+  new: number;
+  learning: number;
+  review: number;
+  mastered: number;
+}
+
+export interface SessionResultStats {
+  totalQuestions: number;
+  correctCount: number;
+  incorrectCount: number;
+  blankCount: number;
+  timeSpentMs: number;
+  courseId: string;
+  userId: string;
+}
+
+export interface RecentQuizSession {
+  uniqueKey: string;
+  courseName: string;
+  sessionNumber: number;
+  date: string;
+  correct: number;
+  incorrect: number;
+  blank: number;
+  total: number;
+  successRate: number;
+}
+
+export interface CognitiveInsight {
+  id: string;
+  courseId: string;
+  questionId: string;
+  diagnosis: string | null;
+  insight: string | null;
+  consecutiveFails: number;
+  responseType: string;
+  date: string;
+}
 
 export type ConceptMapResult = {
   difficulty_index: number;
@@ -40,8 +159,6 @@ export interface QuotaStatus {
 
 // --- LLM Types ---
 
-export type { LogCallback, Message };
-
 export interface AIResponse extends AIResponseMetadata {
   content: string;
 }
@@ -79,6 +196,10 @@ export interface QuizState {
   hasStarted: boolean;
   summary: TestResultSummary | null;
   lastSubmissionResult: SubmissionResult | null;
+  history: (QuizQuestion & {
+    userAnswer: number | null;
+    isCorrect: boolean | null;
+  })[];
 }
 
 export interface TestResultSummary {

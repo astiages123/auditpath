@@ -3,7 +3,7 @@ import { Zap, Maximize2 } from 'lucide-react';
 import { GlassCard } from '@/shared/GlassCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EfficiencyModal, PracticeCenterContent } from '../EfficiencyModals';
-import { BloomKeyChart } from '../EfficiencyCharts';
+import { BloomKeyChart } from '../charts/BloomKeyChart';
 import { EfficiencyData } from './types';
 import { CardHeader } from './CardElements';
 

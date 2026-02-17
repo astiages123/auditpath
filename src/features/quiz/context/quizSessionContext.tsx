@@ -3,7 +3,7 @@ import {
   type ReviewItem,
   type QuizResponseType,
   type QuizSessionState,
-} from '@/features/quiz/types';
+} from '@/features/quiz/types/quizTypes';
 
 export interface QuizSessionContextValue {
   state: QuizSessionState;

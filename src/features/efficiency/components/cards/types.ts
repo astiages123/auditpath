@@ -1,12 +1,12 @@
 import {
-    BloomStats,
     DayActivity,
     EfficiencyTrend,
     FocusPowerPoint,
     LearningLoad,
-    RecentSession,
     Session,
-} from "../../types";
+} from "../../types/efficiencyTypes";
+import { RecentSession } from "@/features/pomodoro/types/pomodoroTypes";
+import { BloomStats } from "@/features/quiz/types/quizTypes";
 
 export interface EfficiencyData {
     loading: boolean;

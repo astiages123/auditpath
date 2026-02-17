@@ -1,4 +1,4 @@
-import { ConceptMapResult } from "@/features/quiz/types";
+import { ConceptMapResult } from "@/features/quiz/types/quizTypes";
 import { ConceptMapResponseSchema } from "@/features/quiz/types/quizEngineSchemas";
 import { ANALYSIS_SYSTEM_PROMPT } from "@/features/quiz/logic/prompts";
 import {

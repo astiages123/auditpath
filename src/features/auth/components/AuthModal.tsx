@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AuthForms } from './AuthForms';
+import logo from '@/assets/logo.svg';
 
 interface AuthModalProps {
   open: boolean;
@@ -18,11 +19,7 @@ export function AuthModal({ open, onOpenChange }: AuthModalProps) {
       <DialogContent className="sm:max-w-[400px] border-border/40 bg-background/95 backdrop-blur-xl shadow-2xl p-6 gap-6">
         <DialogHeader className="space-y-3 items-center text-center">
           <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-2">
-            <img
-              src="/logo.svg"
-              alt="Logo"
-              className="w-8 h-8 object-contain"
-            />
+            <img src={logo} alt="Logo" className="w-8 h-8 object-contain" />
           </div>
           <DialogTitle className="text-2xl font-bold tracking-tight">
             Tekrar Hoşgeldiniz

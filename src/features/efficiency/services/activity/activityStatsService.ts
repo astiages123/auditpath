@@ -1,6 +1,10 @@
 import { supabase } from "@/lib/supabase";
 import { getCycleCount } from "@/utils/math";
-import type { CumulativeStats, DailyStats, HistoryStats } from "@/types";
+import type {
+    CumulativeStats,
+    DailyStats,
+    HistoryStats,
+} from "@/features/efficiency/types/efficiencyTypes";
 import { logger } from "@/utils/logger";
 import {
     adjustToVirtualDay,
@@ -63,23 +67,20 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
 
     // DB stores Seconds. UI expects Minutes.
     const todaySessionsData = todaySessions || [];
-    const totalWorkSeconds =
-        todaySessionsData.reduce(
-            (acc, s) => acc + (s.total_work_time || 0),
-            0,
-        ) ||
+    const totalWorkSeconds = todaySessionsData.reduce(
+        (acc, s) => acc + (s.total_work_time || 0),
+        0,
+    ) ||
         0;
-    const totalBreakSeconds =
-        todaySessionsData.reduce(
-            (acc, s) => acc + (s.total_break_time || 0),
-            0,
-        ) ||
+    const totalBreakSeconds = todaySessionsData.reduce(
+        (acc, s) => acc + (s.total_break_time || 0),
+        0,
+    ) ||
         0;
-    const totalPauseSeconds =
-        todaySessionsData.reduce(
-            (acc, s) => acc + (s.total_pause_time || 0),
-            0,
-        ) ||
+    const totalPauseSeconds = todaySessionsData.reduce(
+        (acc, s) => acc + (s.total_pause_time || 0),
+        0,
+    ) ||
         0;
 
     // Calculate total cycles
@@ -94,11 +95,10 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
 
     const sessionCount = totalCycles;
 
-    const yesterdayWorkSeconds =
-        yesterdaySessions?.reduce(
-            (acc, s) => acc + (s.total_work_time || 0),
-            0,
-        ) ||
+    const yesterdayWorkSeconds = yesterdaySessions?.reduce(
+        (acc, s) => acc + (s.total_work_time || 0),
+        0,
+    ) ||
         0;
     const yesterdayWorkMinutes = Math.round(yesterdayWorkSeconds / 60);
 

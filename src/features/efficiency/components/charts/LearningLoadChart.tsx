@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
-import { LearningLoad } from '../../types';
+import { LearningLoad } from '../../types/efficiencyTypes';
 
 // --- Learning Load Stacked Bar Chart ---
 export interface LearningLoadProps {

@@ -74,17 +74,17 @@ export function calculateStreak(
  */
 export function calculateStreakMilestones(activeDays: string[]): {
   maxStreak: number;
-  first7StreakDate: string | null;
+  first7DayStreakDate: string | null;
 } {
   if (activeDays.length === 0) {
-    return { maxStreak: 0, first7StreakDate: null };
+    return { maxStreak: 0, first7DayStreakDate: null };
   }
 
   // Streak hesapla - hafta sonu izni kuralıyla
   // Cumartesi (6) veya Pazar (0) günlerinde 1 gün boşluk streak'i bozmaz
   let maxStreak = 0;
   let currentStreak = 0;
-  let first7StreakDate: string | null = null;
+  let first7DayStreakDate: string | null = null;
   let lastActiveDate: Date | null = null;
 
   for (const dayKey of activeDays) {
@@ -131,12 +131,12 @@ export function calculateStreakMilestones(activeDays: string[]): {
     }
 
     // İlk 7 günlük streak
-    if (first7StreakDate === null && currentStreak >= 7) {
-      first7StreakDate = dayKey;
+    if (first7DayStreakDate === null && currentStreak >= 7) {
+      first7DayStreakDate = dayKey;
     }
 
     lastActiveDate = currentDate;
   }
 
-  return { maxStreak, first7StreakDate };
+  return { maxStreak, first7DayStreakDate };
 }

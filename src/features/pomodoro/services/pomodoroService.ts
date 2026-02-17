@@ -6,11 +6,14 @@ import {
   calculateSessionTotals,
   getCycleCount,
 } from "@/utils/math";
-import type { RecentSession, TimelineBlock } from "@/types";
+import type {
+  RecentSession,
+  TimelineBlock,
+} from "@/features/pomodoro/types/pomodoroTypes";
 import {
   TimelineEventSchema,
   type ValidatedTimelineEvent,
-} from "@/features/quiz/types";
+} from "../types/pomodoroTypes";
 import { isValid, parseOrThrow } from "@/utils/helpers";
 import { logger } from "@/utils/logger";
 

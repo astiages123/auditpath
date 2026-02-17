@@ -6,13 +6,13 @@ import {
   getDailySessionCount,
   getLatestActiveSession,
   updatePomodoroHeartbeat,
-} from '@/lib/clientDb';
+} from '@/features/pomodoro/services/pomodoroService';
 import { calculateSessionTotals } from '@/utils/math';
 import { toast } from 'sonner';
 import { env } from '@/utils/env';
 import { SESSION_VALIDITY_DURATION_MS } from '@/utils/constants';
 
-import { useFaviconManager } from '@/features/pomodoro/hooks';
+import { useFaviconManager } from '@/features/pomodoro/hooks/useFaviconManager';
 import { playNotificationSound } from '../../utils/audioUtils';
 import { logger } from '@/utils/logger';
 import faviconSvg from '@/assets/favicon.svg';

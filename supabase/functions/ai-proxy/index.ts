@@ -82,7 +82,8 @@ Deno.serve(async (req: Request) => {
 
     // Validate provider
     if (
-      provider && !["cerebras", "mimo", "google", "deepseek"].includes(provider)
+      provider &&
+      !["cerebras", "mimo", "google", "deepseek"].includes(provider)
     ) {
       return new Response(
         JSON.stringify({
@@ -145,8 +146,6 @@ Deno.serve(async (req: Request) => {
     if (activeProvider === "deepseek") {
       body.response_format = { type: "json_object" };
     }
-
-    console.log(`[AI Proxy] ${activeProvider} API calling (${targetModel})...`);
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -290,10 +289,6 @@ Deno.serve(async (req: Request) => {
       console.error("[Proxy Log Error - Success]", logError);
     }
 
-    console.log(
-      `[AI Proxy] Success. Tokens: ${totalTokens} (Cached: ${cachedTokens})`,
-    );
-
     return new Response(JSON.stringify(data), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
@@ -327,8 +322,6 @@ Deno.serve(async (req: Request) => {
 });
 
 async function logToDB(payload: LogPayload) {
-  console.log("Starting logToDB...");
-
   const sbUrl = Deno.env.get("SUPABASE_URL");
   const sbKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
@@ -344,18 +337,13 @@ async function logToDB(payload: LogPayload) {
   try {
     const adminClient = createClient(sbUrl, sbKey);
 
-    console.log("Inserting payload:", JSON.stringify(payload, null, 2));
-
-    const { data, error } = await adminClient
+    const { error } = await adminClient
       .from("ai_generation_logs")
-      .insert(payload)
-      .select(); // Select to see returned data if successful
+      .insert(payload);
 
     if (error) {
       // Bu log Supabase Dashboard'da görünmeli
       console.error("DATABASE INSERT ERROR:", JSON.stringify(error, null, 2));
-    } else {
-      console.log("LOG SAVED SUCCESSFULLY:", data);
     }
   } catch (err) {
     console.error("CRITICAL LOGGING EXCEPTION:", err);

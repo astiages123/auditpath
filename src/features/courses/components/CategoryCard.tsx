@@ -11,7 +11,7 @@ import {
   COURSE_THEME_CONFIG,
 } from '../services/coursesConfig';
 
-import { type Course } from '@/types';
+import { type Course } from '@/features/courses/types/courseTypes';
 
 // Normalize category names to database slugs for consistent matching
 function normalizeCategorySlug(rawName: string): string {

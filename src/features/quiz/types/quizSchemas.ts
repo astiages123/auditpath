@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * Validation schemas for Quiz domain types
@@ -16,7 +16,7 @@ import { z } from "zod";
 export const ConceptMapItemSchema = z.object({
   baslik: z.string(),
   odak: z.string(),
-  seviye: z.enum(["Bilgi", "Uygulama", "Analiz"]),
+  seviye: z.enum(['Bilgi', 'Uygulama', 'Analiz']),
   gorsel: z.string().nullable(),
   altText: z.string().nullable().optional(),
   isException: z.boolean().optional(),
@@ -45,18 +45,18 @@ export const BaseQuestionSchema = z.object({
 });
 
 export const MultipleChoiceQuestionSchema = BaseQuestionSchema.extend({
-  type: z.literal("multiple_choice"),
+  type: z.literal('multiple_choice'),
   o: z.array(z.string()),
   a: z.number(),
 });
 
 export const TrueFalseQuestionSchema = BaseQuestionSchema.extend({
-  type: z.literal("true_false"),
+  type: z.literal('true_false'),
   o: z.tuple([z.string(), z.string()]).or(z.array(z.string()).length(2)),
   a: z.number().min(0).max(1),
 });
 
-export const QuizQuestionSchema = z.discriminatedUnion("type", [
+export const QuizQuestionSchema = z.discriminatedUnion('type', [
   MultipleChoiceQuestionSchema,
   TrueFalseQuestionSchema,
 ]);
@@ -64,10 +64,10 @@ export const QuizQuestionSchema = z.discriminatedUnion("type", [
 export type ValidatedQuizQuestion = z.infer<typeof QuizQuestionSchema>;
 
 export const QuestionStatusSchema = z.enum([
-  "active",
-  "pending_followup",
-  "archived",
-  "learning",
+  'active',
+  'pending_followup',
+  'archived',
+  'learning',
 ]);
 
 // ============================================================================
@@ -151,10 +151,4 @@ export const ChunkWithContentSchema = z.object({
 // Pomodoro Timeline Schemas
 // ============================================================================
 
-export const TimelineEventSchema = z.object({
-  type: z.enum(["work", "break", "pause", "WORK", "BREAK", "PAUSE"]),
-  start: z.number(),
-  end: z.number().optional().nullable(),
-});
-
-export type ValidatedTimelineEvent = z.infer<typeof TimelineEventSchema>;
+// Timeline schemas removed - no longer needed

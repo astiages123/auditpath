@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2, ArrowRight, Brain } from 'lucide-react';
-import { ReviewItem } from '@/features/quiz/types';
+import { ReviewItem } from '@/features/quiz/types/quizTypes';
 
 interface IntermissionScreenProps {
   batchIndex: number;

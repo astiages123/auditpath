@@ -2,7 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import {
   type GenerationLog,
   type GenerationStep as LogStep,
-} from '@/features/quiz/logic';
+} from '@/features/quiz/types/quizEngineSchemas';
 import {
   Coffee,
   Map,

@@ -1,5 +1,5 @@
 import { cn, slugify } from '@/utils/core';
-import { type CourseTopic } from '@/types';
+import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { memo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';

@@ -1,15 +1,15 @@
-import * as Repository from '@/features/quiz/services/repositories/quizRepository';
-import { type ConceptMapItem } from '@/features/quiz/types';
-import { type Quotas } from './quotaLogic';
+import * as Repository from "@/features/quiz/services/repositories/quizRepository";
+import { type ConceptMapItem } from "@/features/quiz/types/quizTypes";
+import { type Quotas } from "./quotaLogic";
 import {
   type GenerationStep,
   type GeneratorCallbacks,
-} from '@/features/quiz/types/quizEngineSchemas';
-import { ValidationTask } from '@/features/quiz/logic/tasks/ValidationTask';
-import { RevisionTask } from '@/features/quiz/logic/tasks/RevisionTask';
+} from "@/features/quiz/types/quizEngineSchemas";
+import { ValidationTask } from "@/features/quiz/logic/tasks/ValidationTask";
+import { RevisionTask } from "@/features/quiz/logic/tasks/RevisionTask";
 
 // Re-import drafting task from the correct source since QuizFactory used DraftingTask
-import { DraftingTask } from '@/features/quiz/logic/tasks/DraftingTask';
+import { DraftingTask } from "@/features/quiz/logic/tasks/DraftingTask";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -22,9 +22,9 @@ export class GenerationPipeline {
     private log: (
       step: GenerationStep,
       msg: string,
-      details?: Record<string, unknown>
+      details?: Record<string, unknown>,
     ) => void,
-    private callbacks: GeneratorCallbacks
+    private callbacks: GeneratorCallbacks,
   ) {}
 
   async run(
@@ -40,12 +40,13 @@ export class GenerationPipeline {
     cleanContent: string,
     options: {
       targetCount?: number;
-      usageType?: 'antrenman' | 'arsiv' | 'deneme';
-    }
+      usageType?: "antrenman" | "arsiv" | "deneme";
+      userId?: string;
+    },
   ): Promise<number> {
-    const usageTypes: ('antrenman' | 'deneme' | 'arsiv')[] = options.usageType
+    const usageTypes: ("antrenman" | "deneme" | "arsiv")[] = options.usageType
       ? [options.usageType]
-      : ['antrenman', 'deneme', 'arsiv'];
+      : ["antrenman", "deneme", "arsiv"];
 
     let totalGeneratedCount = 0;
 
@@ -53,7 +54,7 @@ export class GenerationPipeline {
       let targetConcepts = concepts;
       let targetTotal = quotas[currentUsageType] || concepts.length;
 
-      if (currentUsageType !== 'antrenman') {
+      if (currentUsageType !== "antrenman") {
         targetConcepts = [...concepts]
           .sort(() => 0.5 - Math.random())
           .slice(0, targetTotal);
@@ -64,9 +65,9 @@ export class GenerationPipeline {
       }
 
       this.log(
-        'GENERATING',
-        'Sizin için yeni bir öğrenme serüveni hazırlıyoruz...',
-        { target: targetTotal }
+        "GENERATING",
+        "Sizin için yeni bir öğrenme serüveni hazırlıyoruz...",
+        { target: targetTotal },
       );
 
       let typeGeneratedCount = 0;
@@ -76,25 +77,25 @@ export class GenerationPipeline {
 
         const concept = targetConcepts[i];
         this.log(
-          'GENERATING',
+          "GENERATING",
           `${concept.baslik} konusu üzerinde çalışılıyor...`,
-          { index: i + 1 }
+          { index: i + 1 },
         );
 
         const cached = await Repository.fetchCachedQuestion(
           chunk.id,
           currentUsageType,
-          concept.baslik
+          concept.baslik,
         );
 
         if (cached) {
           this.log(
-            'SAVING',
-            'Bu soru kütüphanenizde zaten mevcut, atlanıyor.',
+            "SAVING",
+            "Bu soru kütüphanenizde zaten mevcut, atlanıyor.",
             {
               concept: concept.baslik,
               type: currentUsageType,
-            }
+            },
           );
           typeGeneratedCount++;
           totalGeneratedCount++;
@@ -116,8 +117,8 @@ export class GenerationPipeline {
               sharedContextPrompt: sharedContext,
             },
             {
-              logger: (msg, d) => this.log('GENERATING', msg, d),
-            }
+              logger: (msg, d) => this.log("GENERATING", msg, d),
+            },
           );
 
           if (draftRes.success && draftRes.data) break;
@@ -125,9 +126,9 @@ export class GenerationPipeline {
           draftAttempts++;
           if (draftAttempts < maxDraftAttempts) {
             this.log(
-              'GENERATING',
-              'Model şu an yoğun, 5 saniye içinde tekrar denenecek...',
-              { concept: concept.baslik, attempt: draftAttempts }
+              "GENERATING",
+              "Model şu an yoğun, 5 saniye içinde tekrar denenecek...",
+              { concept: concept.baslik, attempt: draftAttempts },
             );
             await sleep(5000);
           }
@@ -135,9 +136,9 @@ export class GenerationPipeline {
 
         if (!draftRes || !draftRes.success || !draftRes.data) {
           this.log(
-            'ERROR',
+            "ERROR",
             `${concept.baslik} için soru oluşturulamadı, atlanıyor.`,
-            { concept: concept.baslik }
+            { concept: concept.baslik },
           );
           continue;
         }
@@ -147,19 +148,19 @@ export class GenerationPipeline {
         // Validation & Revision Loop
         let validRes = await this.validationTask.run(
           { question, content: cleanContent },
-          { logger: (msg, d) => this.log('VALIDATING', msg, d) }
+          { logger: (msg, d) => this.log("VALIDATING", msg, d) },
         );
 
         let attempts = 0;
         while (
           validRes.success &&
-          validRes.data?.decision === 'REJECTED' &&
+          validRes.data?.decision === "REJECTED" &&
           attempts < 2
         ) {
           attempts++;
           this.log(
-            'REVISION',
-            'Sorular daha kaliteli hale getiriliyor (İnce Ayar)...'
+            "REVISION",
+            "Sorular daha kaliteli hale getiriliyor (İnce Ayar)...",
           );
           const revRes = await this.revisionTask.run(
             {
@@ -167,24 +168,25 @@ export class GenerationPipeline {
               validationResult: validRes.data,
               sharedContextPrompt: sharedContext,
             },
-            { logger: (msg, d) => this.log('REVISION', msg, d) }
+            { logger: (msg, d) => this.log("REVISION", msg, d) },
           );
 
           if (!revRes.success || !revRes.data) break;
           question = revRes.data;
           validRes = await this.validationTask.run(
             { question, content: cleanContent },
-            { logger: (msg, d) => this.log('VALIDATING', msg, d) }
+            { logger: (msg, d) => this.log("VALIDATING", msg, d) },
           );
         }
 
-        if (validRes.success && validRes.data?.decision === 'APPROVED') {
+        if (validRes.success && validRes.data?.decision === "APPROVED") {
           const { error: saveErr } = await Repository.createQuestion({
             chunk_id: chunk.id,
             course_id: chunk.course_id,
             section_title: chunk.section_title,
             usage_type: currentUsageType,
-            bloom_level: question.bloomLevel || 'knowledge',
+            bloom_level: question.bloomLevel || "knowledge",
+            created_by: options.userId,
             question_data: {
               q: question.q,
               o: question.o,
@@ -202,20 +204,20 @@ export class GenerationPipeline {
             typeGeneratedCount++;
             totalGeneratedCount++;
             this.callbacks.onQuestionSaved(totalGeneratedCount);
-            this.log('SAVING', 'Yeni sorunuz kütüphaneye özenle eklendi.', {
+            this.log("SAVING", "Yeni sorunuz kütüphaneye özenle eklendi.", {
               concept: concept.baslik,
               type: currentUsageType,
             });
           } else {
-            this.log('ERROR', 'Kayıt hatası', {
+            this.log("ERROR", "Kayıt hatası", {
               error: saveErr.message,
             });
           }
         } else {
           this.log(
-            'ERROR',
+            "ERROR",
             `${concept.baslik} standartlarımıza uymadığı için yeniden denenecek.`,
-            { concept: concept.baslik }
+            { concept: concept.baslik },
           );
         }
       }

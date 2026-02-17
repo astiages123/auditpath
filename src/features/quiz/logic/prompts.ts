@@ -1,4 +1,4 @@
-import type { ConceptMapItem } from "@/features/quiz/types";
+import type { ConceptMapItem } from '@/features/quiz/types';
 
 export const GENERAL_QUALITY_RULES = `## GENEL KALİTE KURALLARI:
 1. **Akademik Dil:** Soru kökü ve şıklar resmi, akademik ve sınav formatına (KPSS) uygun olmalıdır.
@@ -26,7 +26,7 @@ Eğer soruyu kurgularken metindeki bir görseli [GÖRSEL: X] referans alıyorsan
 export const ANALYSIS_SYSTEM_PROMPT = (
   sectionTitle: string,
   courseName: string,
-  importance: string = "medium",
+  importance: string = 'medium'
 ) =>
   `Sen Uzman bir Eğitim İçerik Analistisin (KPSS A Grubu). 
 Görev: ${courseName} altındaki **"${sectionTitle}"** başlıklı metni tarayarak kapsamlı bir soru bankası haritası oluştur.
@@ -60,20 +60,20 @@ Sadece saf JSON objesi döndür. Markdown bloğu (\`\`\`) veya giriş cümlesi e
 }`;
 
 export const GLOBAL_AI_SYSTEM_PROMPT =
-  "Sen KPSS formatında, akademik dille soru yazan uzman bir yapay zekasın. SADECE JSON formatında çıktı ver. Cevabın dışında hiçbir metin, yorum veya markdown karakteri bulunmamalıdır.";
+  'Sen KPSS formatında, akademik dille soru yazan uzman bir yapay zekasın. SADECE JSON formatında çıktı ver. Cevabın dışında hiçbir metin, yorum veya markdown karakteri bulunmamalıdır.';
 
 export function buildDraftingTaskPrompt(
   concept: ConceptMapItem,
   strategy: { bloomLevel: string; instruction: string },
-  usageType: "antrenman" | "deneme" | "arsiv" = "antrenman",
-  previousDiagnoses?: string[],
+  usageType: 'antrenman' | 'deneme' | 'arsiv' = 'antrenman',
+  previousDiagnoses?: string[]
 ): string {
   const parts = [
     `AMAÇ: Metni analiz ederek, belirtilen pedagojik stratejiye uygun tek bir soru üretmek.`,
     `---`,
   ];
 
-  if (usageType === "deneme") {
+  if (usageType === 'deneme') {
     parts.push(`!!! DENEME (SİMÜLASYON) MODU !!! / ZORLUK ARTIRILMIŞTIR
 - **Çeldiriciler:** Şıklar birbirine ÇOK yakın olmalı. "Bariz yanlış" şık kesinlikle olmamalı.
 - **Tuzak:** Doğru cevaba en yakın, güçlü bir çeldirici (distractor) mutlaka ekle.
@@ -101,8 +101,8 @@ LATEX FORMAT ZORUNLULUĞU:
       `GÖRSEL REFERANSI: Soruyu kurgularken '${concept.gorsel}' görseline atıfta bulun veya görselin açıkladığı durumu senaryolaştır.${
         concept.altText
           ? `\nGörsel Açıklaması (Alt-Text): ${concept.altText}`
-          : ""
-      }`,
+          : ''
+      }`
     );
   }
 
@@ -115,14 +115,14 @@ Eğer soru bir senaryo veya analiz içeriyorsa; evidence alanına metindeki daya
   if (previousDiagnoses && previousDiagnoses.length > 0) {
     parts.push(`KULLANICININ GEÇMİŞ HATALARI (BU KONUDA):
 Kullanıcı bu konuda daha önce şu hataları yaptı. Soruları üretirken bu zayıf noktaları özellikle test etmeye çalış:
-${previousDiagnoses.map((d) => `- ${d}`).join("\n")}`);
+${previousDiagnoses.map((d) => `- ${d}`).join('\n')}`);
   }
 
   parts.push(
-    `Lütfen BAĞLAM METNİNİ referans alarak soruyu oluştur ve SADECE JSON döndür.`,
+    `Lütfen BAĞLAM METNİNİ referans alarak soruyu oluştur ve SADECE JSON döndür.`
   );
 
-  return parts.join("\n\n");
+  return parts.join('\n\n');
 }
 
 export const VALIDATION_SYSTEM_PROMPT = `## ROL
@@ -169,7 +169,7 @@ export function buildValidationTaskPrompt(question: {
 }): string {
   const optionsText = question.o
     .map((opt: string, i: number) => `${String.fromCharCode(65 + i)}) ${opt}`)
-    .join("\n");
+    .join('\n');
   const correctAnswer = String.fromCharCode(65 + question.a);
 
   return `## DEĞERLENDİRİLECEK SORU:
@@ -188,6 +188,15 @@ ${optionsText}
 Yukarıdaki soruyu kaynak metne göre değerlendir ve JSON formatında puanla.`;
 }
 
+export const BLOOM_INSTRUCTIONS = {
+  knowledge:
+    'Temel bilgi ve kavrama düzeyinde, akademik bir dille hazırlanmış öğretici bir soru üret. Tanım, ilke veya kavramsal özelliklere odaklan.',
+  application:
+    "Kuru tanım sorma. Kullanıcının günlük hayatta karşılaşabileceği, isimler ve olaylar içeren spesifik bir 'vaka/senaryo' (vignette) kurgula.",
+  analysis:
+    "Metindeki iki farklı kavramı karşılaştıran veya bir kuralın istisnasını sorgulayan 'muhakeme' odaklı bir soru üret. Soru, 'X olursa Y nasıl etkilenir?' gibi neden-sonuç zinciri kurdurmalıdır.",
+};
+
 export function buildFollowUpTaskPrompt(
   evidence: string,
   originalQuestion: { q: string; o: string[]; a: number; exp: string },
@@ -195,7 +204,7 @@ export function buildFollowUpTaskPrompt(
   correctOptionIndex: number,
   targetBloomLevel: string,
   scaffoldingNote: string,
-  previousDiagnoses: string[],
+  previousDiagnoses: string[]
 ): string {
   const taskParts = [
     `## ÖZEL TALİMATLAR`,
@@ -212,20 +221,18 @@ export function buildFollowUpTaskPrompt(
     `ZORLUK: Hedef Seviye: ${targetBloomLevel}${scaffoldingNote}`,
     `## YANLIŞ CEVAPLANAN SORU:\n${JSON.stringify(originalQuestion, null, 2)}`,
     `Kullanıcının verdiği cevap: ${
-      ["A", "B", "C", "D", "E"][incorrectOptionIndex]
+      ['A', 'B', 'C', 'D', 'E'][incorrectOptionIndex]
     } ("${originalQuestion.o[incorrectOptionIndex]}")`,
-    `Doğru cevap: ${["A", "B", "C", "D", "E"][correctOptionIndex]} ("${
+    `Doğru cevap: ${['A', 'B', 'C', 'D', 'E'][correctOptionIndex]} ("${
       originalQuestion.o[correctOptionIndex]
     }")`,
   ];
 
   if (previousDiagnoses.length > 0) {
     taskParts.push(
-      `## KULLANICININ GEÇMİŞ HATALARI:\n${
-        previousDiagnoses
-          .map((d) => `- ${d}`)
-          .join("\n")
-      }`,
+      `## KULLANICININ GEÇMİŞ HATALARI:\n${previousDiagnoses
+        .map((d) => `- ${d}`)
+        .join('\n')}`
     );
   }
 
@@ -249,8 +256,8 @@ export function buildFollowUpTaskPrompt(
 "o": ["A", "B", "C", "D", "E"],
 "a": 0, "exp": "...", "evidence": "...", "img": null,
 "diagnosis": "...", "insight": "..."
-}`,
+}`
   );
 
-  return taskParts.join("\n\n");
+  return taskParts.join('\n\n');
 }

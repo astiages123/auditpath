@@ -1,18 +1,21 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '@/features/auth/hooks/useAuth';
-import { getCourseMastery } from '@/lib/clientDb';
-import { supabase } from '@/lib/supabase';
-import { ConceptMapItem, CourseMastery } from '@/types';
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { getCourseMastery } from "@/features/achievements/services/userStatsService";
+import { supabase } from "@/lib/supabase";
+import { ConceptMapItem } from "@/features/quiz/types/quizTypes";
+import { CourseMastery } from "@/features/courses/types/courseTypes";
 
 export function useMasteryChains() {
   const { user } = useAuth();
   const [courseMastery, setCourseMastery] = useState<CourseMastery[]>([]);
-  const [masteryChainStats, setMasteryChainStats] = useState<{
-    totalChains: number;
-    resilienceBonusDays: number;
-    nodes: unknown[];
-    edges: unknown[];
-  } | null>(null);
+  const [masteryChainStats, setMasteryChainStats] = useState<
+    {
+      totalChains: number;
+      resilienceBonusDays: number;
+      nodes: unknown[];
+      edges: unknown[];
+    } | null
+  >(null);
 
   useEffect(() => {
     async function fetchMastery() {
@@ -28,14 +31,14 @@ export function useMasteryChains() {
       if (!user?.id) return;
 
       const { data: chunksData } = await supabase
-        .from('note_chunks')
-        .select('id, metadata, course_id')
-        .not('metadata', 'is', null);
+        .from("note_chunks")
+        .select("id, metadata, course_id")
+        .not("metadata", "is", null);
 
       const { data: masteryData } = await supabase
-        .from('chunk_mastery')
-        .select('chunk_id, mastery_score')
-        .eq('user_id', user.id);
+        .from("chunk_mastery")
+        .select("chunk_id, mastery_score")
+        .eq("user_id", user.id);
 
       if (!chunksData) return;
 
@@ -62,8 +65,9 @@ export function useMasteryChains() {
         }
       });
 
-      const { calculateMasteryChains, processGraphForAtlas } =
-        await import('@/utils/masteryLogic');
+      const { calculateMasteryChains, processGraphForAtlas } = await import(
+        "@/utils/masteryLogic"
+      );
 
       const rawNodes = calculateMasteryChains(allConcepts, conceptScoreMap);
       const stats = processGraphForAtlas(rawNodes);

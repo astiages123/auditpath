@@ -31,12 +31,12 @@ export const QuizTimer = memo(function QuizTimer({
   return (
     <div
       className={cn(
-        'flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-lg text-sm font-medium tabular-nums',
+        'flex items-center gap-2 text-primary tabular-nums',
         className
       )}
     >
-      <Clock className="w-4 h-4 text-muted-foreground" />
-      <span className="text-foreground">{timeString}</span>
+      <Clock className="w-5 h-5" />
+      <span className="text-xl font-semibold font-heading">{timeString}</span>
     </div>
   );
 });

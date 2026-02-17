@@ -7,27 +7,27 @@
  * REFACTORED: Major functions moved to modular files.
  */
 
-import { supabase } from '@/lib/supabase';
-import { logger } from '@/utils/logger';
-import { type Database, type Json } from '@/types/database.types';
-import { safeQuery } from '@/lib/supabaseHelpers';
+import { supabase } from "@/lib/supabase";
+import { logger } from "@/utils/logger";
+import { type Database, type Json } from "@/types/database.types";
+import { safeQuery } from "@/lib/supabaseHelpers";
 
-const quizLogger = logger.withPrefix('[QuizRepository]');
+const quizLogger = logger.withPrefix("[QuizRepository]");
 
 // --- Re-exports ---
 
-export * from './quizSessionRepository';
-export * from './quizQuestionRepository';
-export * from './quizProgressRepository';
-export * from './quizMetadataRepository';
+export * from "./quizSessionRepository";
+export * from "./quizQuestionRepository";
+export * from "./quizProgressRepository";
+export * from "./quizMetadataRepository";
 
 // --- Remaining Functions ---
 
 export async function getCourseName(courseId: string): Promise<string | null> {
   const { data } = await safeQuery<{ name: string }>(
-    supabase.from('courses').select('name').eq('id', courseId).single(),
-    'getCourseName error',
-    { courseId }
+    supabase.from("courses").select("name").eq("id", courseId).single(),
+    "getCourseName error",
+    { courseId },
   );
   return data?.name || null;
 }
@@ -35,58 +35,58 @@ export async function getCourseName(courseId: string): Promise<string | null> {
 export async function getCurrentSessionToken(): Promise<string | null> {
   const { data, error } = await supabase.auth.getSession();
   if (error) {
-    quizLogger.error('Auth session error', error);
+    quizLogger.error("Auth session error", error);
     return null;
   }
   return data.session?.access_token || null;
 }
 
 export async function getTotalQuestionsInCourse(
-  courseId: string
+  courseId: string,
 ): Promise<number> {
   const { count } = await supabase
-    .from('questions')
-    .select('*', { count: 'exact', head: true })
-    .eq('course_id', courseId);
+    .from("questions")
+    .select("*", { count: "exact", head: true })
+    .eq("course_id", courseId);
   return count || 0;
 }
 
 export async function getArchivedQuestionsCount(
   userId: string,
-  courseId: string
+  courseId: string,
 ): Promise<number> {
   const { count } = await supabase
-    .from('user_question_status')
-    .select('id, questions!inner(course_id)', {
-      count: 'exact',
+    .from("user_question_status")
+    .select("id, questions!inner(course_id)", {
+      count: "exact",
       head: true,
     })
-    .eq('user_id', userId)
-    .eq('status', 'archived')
-    .eq('questions.course_id', courseId);
+    .eq("user_id", userId)
+    .eq("status", "archived")
+    .eq("questions.course_id", courseId);
   return count || 0;
 }
 
 export async function getChunkQuestionCount(chunkId: string): Promise<number> {
   const { count } = await supabase
-    .from('questions')
-    .select('*', { count: 'exact', head: true })
-    .eq('chunk_id', chunkId);
+    .from("questions")
+    .select("*", { count: "exact", head: true })
+    .eq("chunk_id", chunkId);
   return count || 10;
 }
 
 export async function getSolvedQuestionIds(
   userId: string,
-  chunkId: string
+  chunkId: string,
 ): Promise<Set<string>> {
   const { data } = await safeQuery<{ question_id: string }[]>(
     supabase
-      .from('user_quiz_progress')
-      .select('question_id')
-      .eq('user_id', userId)
-      .eq('chunk_id', chunkId),
-    'getSolvedQuestionIds error',
-    { userId, chunkId }
+      .from("user_quiz_progress")
+      .select("question_id")
+      .eq("user_id", userId)
+      .eq("chunk_id", chunkId),
+    "getSolvedQuestionIds error",
+    { userId, chunkId },
   );
 
   return new Set(data?.map((s) => s.question_id) || []);
@@ -94,35 +94,35 @@ export async function getSolvedQuestionIds(
 
 export async function getUniqueSolvedCountInChunk(
   userId: string,
-  chunkId: string
+  chunkId: string,
 ): Promise<number> {
   const { count } = await supabase
-    .from('user_question_status')
-    .select('question_id, questions!inner(chunk_id)', {
-      count: 'exact',
+    .from("user_question_status")
+    .select("question_id, questions!inner(chunk_id)", {
+      count: "exact",
       head: true,
     })
-    .eq('user_id', userId)
-    .eq('questions.chunk_id', chunkId)
-    .in('status', ['archived', 'pending_followup']);
+    .eq("user_id", userId)
+    .eq("questions.chunk_id", chunkId)
+    .in("status", ["archived", "pending_followup"]);
   return count || 0;
 }
 
 export async function getFrontierChunkId(
   userId: string,
-  courseId: string
+  courseId: string,
 ): Promise<string | null> {
   const { data } = await safeQuery<{ chunk_id: string }>(
     supabase
-      .from('chunk_mastery')
-      .select('chunk_id')
-      .eq('user_id', userId)
-      .eq('course_id', courseId)
-      .order('updated_at', { ascending: false })
+      .from("chunk_mastery")
+      .select("chunk_id")
+      .eq("user_id", userId)
+      .eq("course_id", courseId)
+      .order("updated_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
-    'getFrontierChunkId error',
-    { userId, courseId }
+    "getFrontierChunkId error",
+    { userId, courseId },
   );
 
   return data?.chunk_id || null;
@@ -131,19 +131,19 @@ export async function getFrontierChunkId(
 export async function getRecentDiagnoses(
   userId: string,
   chunkId: string,
-  limit: number
+  limit: number,
 ): Promise<string[]> {
   const { data } = await safeQuery<{ ai_diagnosis: string | null }[]>(
     supabase
-      .from('user_quiz_progress')
-      .select('ai_diagnosis')
-      .eq('user_id', userId)
-      .eq('chunk_id', chunkId)
-      .not('ai_diagnosis', 'is', null)
-      .order('answered_at', { ascending: false })
+      .from("user_quiz_progress")
+      .select("ai_diagnosis")
+      .eq("user_id", userId)
+      .eq("chunk_id", chunkId)
+      .not("ai_diagnosis", "is", null)
+      .order("answered_at", { ascending: false })
       .limit(limit),
-    'getRecentDiagnoses error',
-    { userId, chunkId }
+    "getRecentDiagnoses error",
+    { userId, chunkId },
   );
 
   return (data || [])
@@ -153,18 +153,18 @@ export async function getRecentDiagnoses(
 
 export async function getCourseStatsAggregate(
   userId: string,
-  courseId: string
+  courseId: string,
 ) {
   const { data: masteryData } = await safeQuery<
     { total_questions_seen: number | null; mastery_score: number }[]
   >(
     supabase
-      .from('chunk_mastery')
-      .select('total_questions_seen, mastery_score')
-      .eq('user_id', userId)
-      .eq('course_id', courseId),
-    'getCourseStatsAggregate error',
-    { userId, courseId }
+      .from("chunk_mastery")
+      .select("total_questions_seen, mastery_score")
+      .eq("user_id", userId)
+      .eq("course_id", courseId),
+    "getCourseStatsAggregate error",
+    { userId, courseId },
   );
   return masteryData;
 }
@@ -174,12 +174,12 @@ export async function fetchCourseChunks(courseId: string) {
     { id: string; metadata: Json; content: string }[]
   >(
     supabase
-      .from('note_chunks')
-      .select('id, metadata, content')
-      .eq('course_id', courseId)
-      .eq('status', 'COMPLETED'),
-    'fetchCourseChunks error',
-    { courseId }
+      .from("note_chunks")
+      .select("id, metadata, content")
+      .eq("course_id", courseId)
+      .eq("status", "COMPLETED"),
+    "fetchCourseChunks error",
+    { courseId },
   );
   return data || [];
 }
@@ -189,12 +189,12 @@ export async function fetchCourseMastery(courseId: string, userId: string) {
     { chunk_id: string; mastery_score: number }[]
   >(
     supabase
-      .from('chunk_mastery')
-      .select('chunk_id, mastery_score')
-      .eq('course_id', courseId)
-      .eq('user_id', userId),
-    'fetchCourseMastery error',
-    { courseId, userId }
+      .from("chunk_mastery")
+      .select("chunk_id, mastery_score")
+      .eq("course_id", courseId)
+      .eq("user_id", userId),
+    "fetchCourseMastery error",
+    { courseId, userId },
   );
   return data || [];
 }
@@ -202,7 +202,7 @@ export async function fetchCourseMastery(courseId: string, userId: string) {
 export async function fetchPrerequisiteQuestions(
   courseId: string,
   concepts: string[],
-  limit: number
+  limit: number,
 ) {
   const { data } = await safeQuery<
     {
@@ -213,44 +213,44 @@ export async function fetchPrerequisiteQuestions(
     }[]
   >(
     supabase
-      .from('questions')
-      .select('id, chunk_id, concept_title, bloom_level')
-      .eq('course_id', courseId)
-      .in('concept_title', concepts)
+      .from("questions")
+      .select("id, chunk_id, concept_title, bloom_level")
+      .eq("course_id", courseId)
+      .in("concept_title", concepts)
       .limit(limit),
-    'fetchPrerequisiteQuestions error',
-    { courseId, concepts }
+    "fetchPrerequisiteQuestions error",
+    { courseId, concepts },
   );
   return data || [];
 }
 
 export async function fetchGeneratedQuestions(
   chunkId: string,
-  usageType: Database['public']['Enums']['question_usage_type'],
-  limit: number
+  usageType: Database["public"]["Enums"]["question_usage_type"],
+  limit: number,
 ) {
   const { data } = await safeQuery<{ id: string }[]>(
     supabase
-      .from('questions')
-      .select('id')
-      .eq('chunk_id', chunkId)
-      .eq('usage_type', usageType)
-      .order('created_at', { ascending: false })
+      .from("questions")
+      .select("id")
+      .eq("chunk_id", chunkId)
+      .eq("usage_type", usageType)
+      .order("created_at", { ascending: false })
       .limit(limit),
-    'fetchGeneratedQuestions error',
-    { chunkId, usageType }
+    "fetchGeneratedQuestions error",
+    { chunkId, usageType },
   );
   return data || [];
 }
 
 export async function updateChunkMetadata(
   chunkId: string,
-  metadata: Json
+  metadata: Json,
 ): Promise<{ success: boolean; error?: Error }> {
   const { error } = await safeQuery<null>(
-    supabase.from('note_chunks').update({ metadata }).eq('id', chunkId),
-    'updateChunkMetadata error',
-    { chunkId }
+    supabase.from("note_chunks").update({ metadata }).eq("id", chunkId),
+    "updateChunkMetadata error",
+    { chunkId },
   );
 
   if (error) return { success: false, error };
@@ -258,13 +258,13 @@ export async function updateChunkMetadata(
 }
 
 export async function createQuestion(
-  payload: Database['public']['Tables']['questions']['Insert']
+  payload: Database["public"]["Tables"]["questions"]["Insert"],
 ): Promise<{ success: boolean; id?: string; error?: Error }> {
   const { data, error } = await safeQuery<{ id: string }>(
-    supabase.from('questions').insert(payload).select('id').single(),
-    'createQuestion error',
+    supabase.from("questions").insert(payload).select("id").single(),
+    "createQuestion error",
     { chunkId: payload.chunk_id },
-    payload as Record<string, unknown> // offline payload
+    payload as Record<string, unknown>, // offline payload
   );
 
   if (error) return { success: false, error };
@@ -272,13 +272,13 @@ export async function createQuestion(
 }
 
 export async function createQuestions(
-  payloads: Database['public']['Tables']['questions']['Insert'][]
+  payloads: Database["public"]["Tables"]["questions"]["Insert"][],
 ): Promise<{ success: boolean; ids?: string[]; error?: Error }> {
   const { data, error } = await safeQuery<{ id: string }[]>(
-    supabase.from('questions').insert(payloads).select('id'),
-    'createQuestions error',
+    supabase.from("questions").insert(payloads).select("id"),
+    "createQuestions error",
     { count: payloads.length },
-    { payloads, _type: 'bulk_create_questions' } // offline payload
+    { payloads, _type: "bulk_create_questions" }, // offline payload
   );
 
   if (error) return { success: false, error };

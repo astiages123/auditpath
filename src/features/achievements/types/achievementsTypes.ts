@@ -1,4 +1,14 @@
-import type { Rank } from "@/types";
+import type { Rank } from "@/types/auth";
+
+export interface UnlockedAchievement {
+    id: string;
+    unlockedAt: string;
+}
+
+export interface StreakMilestones {
+    maxStreak: number;
+    first7DayStreakDate: string | null;
+}
 
 export type GuildType =
     | "HUKUK"

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Maximize2, Minimize2, X } from 'lucide-react';
 import { cn } from '@/utils/core';
-import { usePomodoro } from '@/features/pomodoro/hooks';
+import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
 interface TimerDisplayProps {
   isExpanded: boolean;

@@ -6,7 +6,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { type CourseTopic } from "@/types";
+import { type CourseTopic } from "@/features/courses/types/courseTypes";
 import { generateTOCFromContent } from "../logic/notesLogic";
 
 interface UseTableOfContentsProps {

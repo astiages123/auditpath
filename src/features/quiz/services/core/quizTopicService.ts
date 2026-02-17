@@ -1,9 +1,9 @@
 import { supabase } from "@/lib/supabase";
 import { logger } from "@/utils/logger";
 import { handleSupabaseError } from "@/lib/supabaseHelpers";
-import type { CourseTopic } from "@/types";
+import type { CourseTopic } from "@/features/courses/types/courseTypes";
 import { parseOrThrow } from "@/utils/helpers";
-import { QuizQuestionSchema } from "@/features/quiz/types";
+import { QuizQuestionSchema } from "@/features/quiz/types/quizSchemas";
 import type { Json } from "@/types/database.types";
 
 /**

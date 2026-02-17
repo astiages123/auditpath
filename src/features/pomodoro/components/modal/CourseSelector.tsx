@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Search, Play, Target, X } from 'lucide-react';
 import coursesData from '@/features/courses/services/courses.json';
-import { usePomodoro } from '@/features/pomodoro/hooks';
+import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
 interface CourseSelectorProps {
   onClose: () => void;

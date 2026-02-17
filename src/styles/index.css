@@ -386,11 +386,27 @@
 
 /* KaTeX Formula Styling & Container */
 .katex {
-  font-size: 1.02em !important;
+  font-size: 1em !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 500 !important;
+  line-height: 1.65 !important;
 }
 
 .katex .mfrac {
-  font-size: 1.05em;
+  font-size: 1.2em !important;
+  line-height: 1.65 !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 500 !important;
+}
+
+/* Add spacing between fraction line and numerator/denominator */
+.katex .mfrac .vlist-r {
+  padding: 0.15em 0 !important;
+}
+
+.katex .mfrac .reset-size6,
+.katex .mfrac .size6 {
+  font-size: 0.85em !important;
 }
 
 .formula-block {
@@ -605,4 +621,22 @@ td > .katex {
   border-radius: var(--radius-xl);
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   border: 1px solid var(--border);
+}
+/* KaTeX variables should not be italic */
+.katex .mord.mathnormal,
+.upright-math .katex .mord.mathnormal,
+.upright-math .katex .mord,
+.upright-math .katex .msupsub,
+.upright-math .katex .mbin,
+.upright-math .katex .mrel,
+.upright-math .katex .minner,
+.upright-math .katex .mop,
+.upright-math .katex .mi,
+.upright-math .katex .mo,
+.upright-math .katex .mn,
+.upright-math .katex .ms,
+.upright-math .katex .mtext,
+.upright-math .katex .mspace {
+  font-style: normal !important;
+  font-family: var(--font-sans) !important;
 }

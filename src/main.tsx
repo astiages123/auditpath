@@ -6,7 +6,7 @@ import { Providers } from '@/providers';
 import App from './App';
 import '@/styles/index.css';
 
-import { subjectKnowledgeService } from '@/features/quiz/services';
+import { subjectKnowledgeService } from '@/features/quiz/services/core/subjectKnowledgeService';
 import { logger } from '@/utils/logger';
 
 // Start preloading subject guidelines

@@ -7,9 +7,9 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/utils/core';
-import { usePomodoro } from '@/features/pomodoro/hooks';
+import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { upsertPomodoroSession } from '@/lib/clientDb';
+import { upsertPomodoroSession } from '@/features/pomodoro/services/pomodoroService';
 import { logger } from '@/utils/logger';
 import { Json } from '@/types/database.types';
 

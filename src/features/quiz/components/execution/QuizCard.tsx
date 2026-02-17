@@ -1,8 +1,7 @@
 import { memo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, RefreshCw, Loader2, SkipForward, Lightbulb } from 'lucide-react';
-import { toast } from 'sonner';
-import { QuizQuestion } from '@/features/quiz/types';
+import { X, RefreshCw, Loader2, Lightbulb } from 'lucide-react';
+import { QuizQuestion } from '@/features/quiz/types/quizTypes';
 
 import { MathRenderer } from './card/MathRenderer';
 import { OptionButton } from './card/OptionButton';
@@ -64,7 +63,7 @@ function QuizCardComponent({
         return;
       }
 
-      if (isAnswered) return;
+      if (isAnswered || e.ctrlKey || e.metaKey) return;
 
       const index = KEY_TO_INDEX[e.key];
       if (index !== undefined && question && index < question.o.length) {
@@ -75,7 +74,6 @@ function QuizCardComponent({
 
       if (e.key === 'Escape' && onBlank) {
         e.preventDefault();
-        toast.info('Soru boş bırakıldı');
         onBlank();
       }
     },
@@ -130,122 +128,129 @@ function QuizCardComponent({
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-card border border-border/50 rounded-xl overflow-hidden"
-      >
-        <div className="p-5 space-y-4">
-          {question.insight && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/10"
-            >
-              <div className="flex items-center gap-2 text-amber-400/80 text-xs font-medium mb-1">
-                <Lightbulb className="w-3.5 h-3.5" />
-                <span>İpucu</span>
+    <motion.div
+      animate={{ maxWidth: isAnswered && showExplanation ? '1152px' : '896px' }} // max-w-6xl (72rem/1152px) vs max-w-4xl (56rem/896px)
+      transition={{ type: 'spring', damping: 32, stiffness: 160 }}
+      className="w-full mx-auto py-1 md:py-2 flex flex-col h-full"
+    >
+      <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0 overflow-hidden">
+        {/* Question Side */}
+        <motion.div
+          layout
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: 'spring', damping: 32, stiffness: 160 }}
+          className={`w-full h-full flex flex-col ${isAnswered && showExplanation ? 'lg:w-[65%]' : 'w-full'}`}
+        >
+          <div className="bg-transparent flex flex-col h-full min-h-0 group">
+            <div className="p-2 md:p-3 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+              <div className="space-y-3">
+                {question.insight && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20"
+                  >
+                    <div className="flex items-center gap-2 text-amber-500 text-[10px] font-bold uppercase tracking-widest mb-1.5 font-heading">
+                      <Lightbulb className="w-3.5 h-3.5" />
+                      <span>İpucu</span>
+                    </div>
+                    <p className="text-sm text-foreground/90 leading-relaxed font-medium">
+                      {question.insight}
+                    </p>
+                  </motion.div>
+                )}
+
+                {question.img !== undefined && question.img !== null && (
+                  <div className="rounded-2xl overflow-hidden border border-white/5 bg-white/5">
+                    <img
+                      src={
+                        typeof question.img === 'number' &&
+                        question.imageUrls?.[question.img]
+                          ? question.imageUrls[question.img]
+                          : typeof question.img === 'string'
+                            ? `${question.imgPath || ''}${question.img}`
+                            : ''
+                      }
+                      alt="Soru Görseli"
+                      className="w-full max-h-[160px] object-contain mx-auto"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+
+                <div className="text-lg md:text-xl font-medium text-white/90 leading-relaxed font-sans">
+                  <MathRenderer content={question.q} />
+                </div>
               </div>
-              <p className="text-sm text-foreground/80 leading-relaxed">
-                {question.insight}
-              </p>
+
+              <div className="flex flex-col gap-2 md:gap-3">
+                {question.o.map((option, index) => {
+                  const isSelected = selectedAnswer === index;
+                  const isCorrectOption = question.a === index;
+
+                  let variant: 'default' | 'correct' | 'incorrect' | 'dimmed' =
+                    'default';
+
+                  if (isAnswered) {
+                    const showCorrectness = selectedAnswer !== null;
+                    if (showCorrectness) {
+                      if (isCorrectOption) {
+                        variant = 'correct';
+                      } else if (isSelected && !isCorrectOption) {
+                        variant = 'incorrect';
+                      } else {
+                        variant = 'dimmed';
+                      }
+                    } else {
+                      variant = 'dimmed';
+                    }
+                  }
+
+                  return (
+                    <OptionButton
+                      key={index}
+                      option={option}
+                      label={optionLabels[index]}
+                      variant={variant}
+                      isSelected={isSelected}
+                      onClick={() => !isAnswered && onSelectAnswer(index)}
+                      disabled={isAnswered}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Explanation Side */}
+        <AnimatePresence>
+          {isAnswered && showExplanation && (
+            <motion.div
+              layout
+              initial={{ opacity: 0, x: 20, width: 0 }}
+              animate={{ opacity: 1, x: 0, width: '35%' }}
+              exit={{ opacity: 0, x: 20, width: 0 }}
+              transition={{ type: 'spring', damping: 32, stiffness: 160 }}
+              className="w-full h-full min-h-0"
+            >
+              <div className="bg-card border border-white/5 rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col">
+                <ExplanationPanel
+                  question={question}
+                  isCorrect={isCorrect}
+                  showExplanation={showExplanation}
+                  onToggleExplanation={onToggleExplanation}
+                  optionLabels={optionLabels}
+                />
+              </div>
             </motion.div>
           )}
-
-          {question.img !== undefined && question.img !== null && (
-            <div className="rounded-lg overflow-hidden border border-border/30 bg-muted/20">
-              <img
-                src={
-                  typeof question.img === 'number' &&
-                  question.imageUrls?.[question.img]
-                    ? question.imageUrls[question.img]
-                    : typeof question.img === 'string'
-                      ? `${question.imgPath || ''}${question.img}`
-                      : ''
-                }
-                alt="Soru Görseli"
-                className="w-full max-h-[250px] object-contain mx-auto"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            </div>
-          )}
-
-          <div className="text-base leading-relaxed text-foreground">
-            <MathRenderer content={question.q} />
-          </div>
-        </div>
-
-        <div className="px-5 pb-5 space-y-2.5">
-          {question.o.map((option, index) => {
-            const isSelected = selectedAnswer === index;
-            const isCorrectOption = question.a === index;
-
-            let variant: 'default' | 'correct' | 'incorrect' | 'dimmed' =
-              'default';
-
-            if (isAnswered) {
-              const showCorrectness = selectedAnswer !== null;
-              if (showCorrectness) {
-                if (isCorrectOption) {
-                  variant = 'correct';
-                } else if (isSelected && !isCorrectOption) {
-                  variant = 'incorrect';
-                } else {
-                  variant = 'dimmed';
-                }
-              } else {
-                variant = 'dimmed';
-              }
-            }
-
-            return (
-              <OptionButton
-                key={index}
-                option={option}
-                label={optionLabels[index]}
-                variant={variant}
-                onClick={() => !isAnswered && onSelectAnswer(index)}
-                disabled={isAnswered}
-              />
-            );
-          })}
-        </div>
-
-        {!isAnswered && onBlank && (
-          <div className="px-5 pb-4">
-            <button
-              onClick={onBlank}
-              className="w-full flex items-center justify-center gap-2 py-2.5 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border/50 hover:border-primary/30 hover:bg-primary/5 rounded-lg transition-all"
-            >
-              <SkipForward className="w-4 h-4" />
-              Boş Bırak
-            </button>
-          </div>
-        )}
-      </motion.div>
-
-      <AnimatePresence>
-        {isAnswered && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="bg-card border border-border/50 rounded-xl overflow-hidden"
-          >
-            <ExplanationPanel
-              question={question}
-              isCorrect={isCorrect}
-              showExplanation={showExplanation}
-              onToggleExplanation={onToggleExplanation}
-              optionLabels={optionLabels}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+        </AnimatePresence>
+      </div>
+    </motion.div>
   );
 }
 

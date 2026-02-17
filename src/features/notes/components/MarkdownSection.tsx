@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import { slugify } from '@/utils/core';
-import { type CourseTopic } from '@/types';
+import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { markdownComponents } from './MarkdownComponents';
 
 interface MarkdownSectionProps {

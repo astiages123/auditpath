@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { DayActivity } from "@/types";
+import type { DayActivity } from "@/features/efficiency/types/efficiencyTypes";
 import { logger } from "@/utils/logger";
 import { formatDateKey } from "./activityUtils";
 

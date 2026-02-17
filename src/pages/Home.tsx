@@ -2,10 +2,18 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ProgressHeader } from '@/features/courses/components/ProgressHeader';
 import { CategoryGrid } from '@/features/courses/components/CategoryGrid';
-import { getCategories, getUserStats, getAllCourses } from '@/lib/clientDb';
-import { type Category } from '@/types';
+import {
+  getCategories,
+  getAllCourses,
+} from '@/features/courses/services/courseService';
+import { getUserStats } from '@/features/achievements/services/userStatsService';
+import { type Category } from '@/features/courses/types/courseTypes';
 import { logger } from '@/utils/logger';
 import type { ProgressStats } from '@/hooks/useProgress';
+import {
+  HomeProgressSkeleton,
+  CategoryGridSkeleton,
+} from '@/shared/components/SkeletonTemplates';
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
@@ -129,12 +137,10 @@ export default function HomePage() {
   const currentStats = stats || defaultStats;
 
   if (loading && categories.length === 0) {
-    // Show Loading but also allow access to Quiz for testing if needed?
-    // Usually loading blocks everything.
-    // Let's assume loading completes fast because our mocks are instant.
     return (
-      <div className="container mx-auto px-4 py-8 md:py-12 flex justify-center">
-        Yükleniyor...
+      <div className="container mx-auto px-4 py-8 md:py-12">
+        <HomeProgressSkeleton />
+        <CategoryGridSkeleton />
       </div>
     );
   }

@@ -1,5 +1,5 @@
 import { logger } from "@/utils/logger";
-import { GeneratedQuestion } from "@/features/quiz/types";
+import { GeneratedQuestion } from "@/features/quiz/types/quizTypes";
 
 export const FALLBACK_QUESTION: GeneratedQuestion = {
     q: "Bu soru şu an yüklenemedi. Lütfen 'Sonraki Soru' butonuna basarak devam ediniz. (Sistem güvenliği için otomatik placeholder)",

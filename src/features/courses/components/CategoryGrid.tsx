@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { CategoryCard } from './CategoryCard';
-import { type Category } from '@/types';
+import { type Category } from '@/features/courses/types/courseTypes';
 import { motion } from 'framer-motion';
 
 interface CategoryGridProps {

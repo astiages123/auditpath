@@ -1,5 +1,5 @@
 import { slugify } from "@/utils/core";
-import { type CourseTopic } from "@/types";
+import { type CourseTopic } from "@/features/courses/types/courseTypes";
 import { type LocalToCItem } from "../components/LocalToC";
 
 export interface ExtendedToCItem extends LocalToCItem {

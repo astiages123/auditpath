@@ -1,12 +1,19 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { getEfficiencyTrend, getFocusTrend } from "@/lib/clientDb";
+import {
+  getEfficiencyTrend,
+  getFocusTrend,
+} from "../services/analytics/efficiencyTrendService";
 import {
   getConsistencyData,
   getFocusPowerData,
   getLearningLoadData,
 } from "../services/analytics/efficiencyService";
-import { DayActivity, EfficiencyTrend, FocusTrend } from "@/types";
+import {
+  DayActivity,
+  EfficiencyTrend,
+  FocusTrend,
+} from "@/features/efficiency/types/efficiencyTypes";
 import { FocusPowerPoint, LearningLoad } from "../types/efficiencyTypes";
 import { logger } from "@/utils/logger";
 

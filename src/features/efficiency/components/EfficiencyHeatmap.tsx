@@ -1,4 +1,4 @@
-import { DayActivity } from '@/types';
+import { DayActivity } from '@/features/efficiency/types/efficiencyTypes';
 import { cn } from '@/utils/core';
 import {
   Tooltip,

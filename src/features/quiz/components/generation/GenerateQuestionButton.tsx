@@ -12,12 +12,12 @@ import {
 } from '@/components/ui/dialog';
 import { Loader2, Sparkles } from 'lucide-react';
 import { getChunkQuotaStatus } from '@/features/quiz/services/repositories/quizRepository';
-import { type QuotaStatus } from '@/features/quiz/types';
+import { type QuotaStatus } from '@/features/quiz/types/quizTypes';
+import { QuizFactory } from '@/features/quiz/logic/factory/QuizFactory';
 import {
-  QuizFactory,
   type GenerationLog,
   type GenerationStep as LogStep,
-} from '@/features/quiz/logic';
+} from '@/features/quiz/types/quizEngineSchemas';
 import { toast } from 'sonner';
 import { QuotaDisplay } from './QuotaDisplay';
 import { GenerationLiveStream } from './GenerationLiveStream';
@@ -109,6 +109,7 @@ export function GenerateQuestionButton({
     try {
       const factory = new QuizFactory();
       await factory.generateForChunk(chunkId, {
+        onTotalTargetCalculated: () => {},
         onLog: (log: GenerationLog) => {
           setLogs((prev) => [...prev, log]);
           setCurrentStep(log.step);

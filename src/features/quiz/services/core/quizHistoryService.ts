@@ -1,6 +1,9 @@
-import { supabase } from '@/lib/supabase';
-import { handleSupabaseError } from '@/lib/supabaseHelpers';
-import type { CognitiveInsight, RecentQuizSession } from '@/types';
+import { supabase } from "@/lib/supabase";
+import { handleSupabaseError } from "@/lib/supabaseHelpers";
+import type {
+  CognitiveInsight,
+  RecentQuizSession,
+} from "@/features/quiz/types/quizTypes";
 
 /**
  * Get recent quiz sessions for a user.
@@ -11,11 +14,11 @@ import type { CognitiveInsight, RecentQuizSession } from '@/types';
  */
 export async function getRecentQuizSessions(
   userId: string,
-  limit: number = 5
+  limit: number = 5,
 ): Promise<RecentQuizSession[]> {
   // Fetch last 500 answers to reconstruct sessions
   const { data: rawData, error } = await supabase
-    .from('user_quiz_progress')
+    .from("user_quiz_progress")
     .select(
       `
             course_id,
@@ -23,14 +26,14 @@ export async function getRecentQuizSessions(
             response_type,
             answered_at,
             course:courses(name)
-        `
+        `,
     )
-    .eq('user_id', userId)
-    .order('answered_at', { ascending: false })
+    .eq("user_id", userId)
+    .order("answered_at", { ascending: false })
     .limit(500);
 
   if (error || !rawData) {
-    await handleSupabaseError(error, 'getRecentQuizSessions');
+    await handleSupabaseError(error, "getRecentQuizSessions");
     return [];
   }
 
@@ -50,7 +53,7 @@ export async function getRecentQuizSessions(
       if (!sessionsMap.has(key)) {
         sessionsMap.set(key, {
           uniqueKey: key,
-          courseName: row.course?.name || 'Kavram Testi',
+          courseName: row.course?.name || "Kavram Testi",
           sessionNumber: sNum,
           date: row.answered_at || new Date().toISOString(),
           correct: 0,
@@ -63,8 +66,8 @@ export async function getRecentQuizSessions(
 
       const session = sessionsMap.get(key)!;
       session.total++;
-      if (row.response_type === 'correct') session.correct++;
-      else if (row.response_type === 'incorrect') session.incorrect++;
+      if (row.response_type === "correct") session.correct++;
+      else if (row.response_type === "incorrect") session.incorrect++;
       else session.blank++;
 
       // Keep the latest timestamp for the session
@@ -74,7 +77,7 @@ export async function getRecentQuizSessions(
       ) {
         session.date = row.answered_at;
       }
-    }
+    },
   );
 
   const sessions = Array.from(sessionsMap.values())
@@ -96,34 +99,34 @@ export async function getRecentQuizSessions(
  */
 export async function getRecentCognitiveInsights(
   userId: string,
-  limit: number = 30
+  limit: number = 30,
 ): Promise<CognitiveInsight[]> {
   // 1. Fetch recent progress with diagnosis or insight
   const { data: progressData, error } = await supabase
-    .from('user_quiz_progress')
+    .from("user_quiz_progress")
     .select(
-      'id, course_id, question_id, ai_diagnosis, ai_insight, response_type, answered_at'
+      "id, course_id, question_id, ai_diagnosis, ai_insight, response_type, answered_at",
     )
-    .eq('user_id', userId)
-    .or('ai_diagnosis.neq.null,ai_insight.neq.null')
-    .order('answered_at', { ascending: false })
+    .eq("user_id", userId)
+    .or("ai_diagnosis.neq.null,ai_insight.neq.null")
+    .order("answered_at", { ascending: false })
     .limit(limit);
 
   if (error || !progressData) {
-    await handleSupabaseError(error, 'getRecentCognitiveInsights');
+    await handleSupabaseError(error, "getRecentCognitiveInsights");
     return [];
   }
 
   // 2. Fetch current consecutive_fails for these questions
   const questionIds = Array.from(
-    new Set(progressData.map((p) => p.question_id))
+    new Set(progressData.map((p) => p.question_id)),
   );
 
   const { data: statusData } = await supabase
-    .from('user_question_status')
-    .select('question_id, consecutive_fails')
-    .eq('user_id', userId)
-    .in('question_id', questionIds);
+    .from("user_question_status")
+    .select("question_id, consecutive_fails")
+    .eq("user_id", userId)
+    .in("question_id", questionIds);
 
   const failsMap = new Map<string, number>();
   if (statusData) {

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/features/auth/hooks/useAuth";
-import { getDailyEfficiencySummary, getDailyStats } from "@/lib/clientDb";
-import { DailyEfficiencySummary } from "@/types";
-import { useUIStore } from "@/store/useUIStore";
+import { getDailyEfficiencySummary } from "@/features/efficiency/services/analytics/efficiencySummaryService";
+import { getDailyStats } from "@/features/efficiency/services/activityService";
+import { DailyEfficiencySummary } from "@/features/efficiency/types/efficiencyTypes";
+import { useEfficiencyStore } from "@/store/useEfficiencyStore";
 import { logger } from "@/utils/logger";
 
 export interface DailyMetrics {
@@ -41,8 +42,8 @@ export function useDailyMetrics() {
 
         setEfficiencySummary(summary);
 
-        // Sync with Global UI Store
-        useUIStore.getState().actions.setEfficiencySummary(summary);
+        // Sync with Global Efficiency Store
+        useEfficiencyStore.getState().actions.setEfficiencySummary(summary);
 
         if (daily) {
           setDailyGoalMinutes(daily.goalMinutes || 200);

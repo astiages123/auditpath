@@ -2,7 +2,7 @@ import { z, type ZodError, type ZodSchema } from "zod";
 import type { Json } from "@/types/database.types";
 import { RANKS } from "@/utils/constants";
 export { RANKS };
-import type { Rank } from "@/types";
+import type { Rank } from "@/types/auth";
 
 /**
  * Tarih işlemleri için yardımcı fonksiyonlar.

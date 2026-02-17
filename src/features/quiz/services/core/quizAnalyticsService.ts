@@ -1,11 +1,11 @@
-import { supabase } from '@/lib/supabase';
-import { handleSupabaseError } from '@/lib/supabaseHelpers';
+import { supabase } from "@/lib/supabase";
+import { handleSupabaseError } from "@/lib/supabaseHelpers";
 import type {
   BloomStats,
   QuizStats,
   SRSStats,
   SubjectCompetency,
-} from '@/types';
+} from "@/features/quiz/types/quizTypes";
 
 /**
  * Get overall quiz statistics for a user.
@@ -15,12 +15,12 @@ import type {
  */
 export async function getQuizStats(userId: string): Promise<QuizStats> {
   const { data, error } = await supabase
-    .from('user_quiz_progress')
-    .select('response_type')
-    .eq('user_id', userId);
+    .from("user_quiz_progress")
+    .select("response_type")
+    .eq("user_id", userId);
 
   if (error) {
-    await handleSupabaseError(error, 'getQuizStats');
+    await handleSupabaseError(error, "getQuizStats");
     return {
       totalAnswered: 0,
       correct: 0,
@@ -32,11 +32,11 @@ export async function getQuizStats(userId: string): Promise<QuizStats> {
   }
 
   const totalAnswered = data?.length || 0;
-  const correct =
-    data?.filter((r) => r.response_type === 'correct').length || 0;
+  const correct = data?.filter((r) => r.response_type === "correct").length ||
+    0;
   const incorrect =
-    data?.filter((r) => r.response_type === 'incorrect').length || 0;
-  const blank = data?.filter((r) => r.response_type === 'blank').length || 0;
+    data?.filter((r) => r.response_type === "incorrect").length || 0;
+  const blank = data?.filter((r) => r.response_type === "blank").length || 0;
 
   return {
     totalAnswered,
@@ -44,8 +44,9 @@ export async function getQuizStats(userId: string): Promise<QuizStats> {
     incorrect,
     blank,
     remaining: 0,
-    successRate:
-      totalAnswered > 0 ? Math.round((correct / totalAnswered) * 100) : 0,
+    successRate: totalAnswered > 0
+      ? Math.round((correct / totalAnswered) * 100)
+      : 0,
   };
 }
 
@@ -56,28 +57,28 @@ export async function getQuizStats(userId: string): Promise<QuizStats> {
  * @returns Array of subject competency scores
  */
 export async function getSubjectCompetency(
-  userId: string
+  userId: string,
 ): Promise<SubjectCompetency[]> {
-  const coursesRes = await supabase.from('courses').select('id, name');
+  const coursesRes = await supabase.from("courses").select("id, name");
   if (coursesRes.error) return [];
 
   const courseMap = new Map(coursesRes.data.map((c) => [c.id, c.name]));
 
   const { data, error } = await supabase
-    .from('user_quiz_progress')
-    .select('course_id, response_type')
-    .eq('user_id', userId);
+    .from("user_quiz_progress")
+    .select("course_id, response_type")
+    .eq("user_id", userId);
 
   if (error || !data) return [];
 
   const stats: Record<string, { correct: number; total: number }> = {};
 
   data.forEach((row) => {
-    const cName = courseMap.get(row.course_id) || 'Unknown';
+    const cName = courseMap.get(row.course_id) || "Unknown";
     if (!stats[cName]) stats[cName] = { correct: 0, total: 0 };
 
     stats[cName].total += 1;
-    if (row.response_type === 'correct') {
+    if (row.response_type === "correct") {
       stats[cName].correct += 1;
     }
   });
@@ -100,9 +101,9 @@ export async function getSubjectCompetency(
  */
 export async function getBloomStats(userId: string): Promise<BloomStats[]> {
   const { data, error } = await supabase
-    .from('user_quiz_progress')
-    .select('response_type, question:questions(bloom_level)')
-    .eq('user_id', userId);
+    .from("user_quiz_progress")
+    .select("response_type, question:questions(bloom_level)")
+    .eq("user_id", userId);
 
   if (error || !data) return [];
 
@@ -120,11 +121,11 @@ export async function getBloomStats(userId: string): Promise<BloomStats[]> {
       const bloomLevel = row.question?.bloom_level;
       if (bloomLevel && levels[bloomLevel]) {
         levels[bloomLevel].total += 1;
-        if (row.response_type === 'correct') {
+        if (row.response_type === "correct") {
           levels[bloomLevel].correct += 1;
         }
       }
-    }
+    },
   );
 
   return Object.entries(levels).map(([key, val]) => ({
@@ -143,9 +144,9 @@ export async function getBloomStats(userId: string): Promise<BloomStats[]> {
  */
 export async function getSRSStats(userId: string): Promise<SRSStats> {
   const { data, error } = await supabase
-    .from('chunk_mastery')
-    .select('mastery_score')
-    .eq('user_id', userId);
+    .from("chunk_mastery")
+    .select("mastery_score")
+    .eq("user_id", userId);
 
   if (error || !data) return { new: 0, learning: 0, review: 0, mastered: 0 };
 

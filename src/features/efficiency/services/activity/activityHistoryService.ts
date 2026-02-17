@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import type { RecentActivity } from "@/types";
+import type { RecentActivity } from "@/features/pomodoro/types/pomodoroTypes";
 import { logger } from "@/utils/logger";
 
 interface PomodoroSessionRow {

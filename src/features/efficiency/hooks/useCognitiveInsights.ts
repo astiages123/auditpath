@@ -1,14 +1,18 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/features/auth/hooks/useAuth";
+import { getBloomStats } from "@/features/quiz/services/core/quizAnalyticsService";
 import {
-  getBloomStats,
-  getRecentActivitySessions,
   getRecentCognitiveInsights,
   getRecentQuizSessions,
-} from '@/lib/clientDb';
-import { CognitiveInsight, RecentQuizSession, RecentSession } from '@/types';
-import { BloomStats } from '../types/efficiencyTypes';
-import { logger } from '@/utils/logger';
+} from "@/features/quiz/services/core/quizHistoryService";
+import { getRecentActivitySessions } from "@/features/pomodoro/services/pomodoroService";
+import {
+  CognitiveInsight,
+  RecentQuizSession,
+} from "@/features/quiz/types/quizTypes";
+import { RecentSession } from "@/features/pomodoro/types/pomodoroTypes";
+import { BloomStats } from "@/features/quiz/types/quizTypes";
+import { logger } from "@/utils/logger";
 
 export function useCognitiveInsights() {
   const { user } = useAuth();
@@ -40,7 +44,7 @@ export function useCognitiveInsights() {
         setRecentQuizzes(quizzes || []);
         setCognitiveInsights(cognitive || []);
       } catch (err) {
-        logger.error('Failed to fetch cognitive insights', err as Error);
+        logger.error("Failed to fetch cognitive insights", err as Error);
         setError(err as Error);
       } finally {
         setLoading(false);
@@ -52,11 +56,11 @@ export function useCognitiveInsights() {
 
   // Derived State: Bloom Radar Data
   const bloomRadarData = useMemo(() => {
-    const order = ['Bilgi', 'Analiz', 'Uygula'];
+    const order = ["Bilgi", "Analiz", "Uygula"];
     const mapLevel: Record<string, string> = {
-      knowledge: 'Bilgi',
-      application: 'Uygula',
-      analysis: 'Analiz',
+      knowledge: "Bilgi",
+      application: "Uygula",
+      analysis: "Analiz",
     };
 
     if (!bloomStats || bloomStats.length === 0) {
@@ -97,7 +101,7 @@ export function useCognitiveInsights() {
 
     cognitiveInsights.forEach((c) => {
       totalAttempts++;
-      if (c.responseType === 'correct') totalCorrect++;
+      if (c.responseType === "correct") totalCorrect++;
       totalConsecutiveFails += c.consecutiveFails;
 
       if (c.diagnosis) {
@@ -106,8 +110,9 @@ export function useCognitiveInsights() {
       }
     });
 
-    const rawScore =
-      totalAttempts > 0 ? (totalCorrect / totalAttempts) * 100 : 0;
+    const rawScore = totalAttempts > 0
+      ? (totalCorrect / totalAttempts) * 100
+      : 0;
     const penalty = totalConsecutiveFails * 5;
     const focusScore = Math.max(0, Math.round(rawScore - penalty));
 
@@ -117,7 +122,7 @@ export function useCognitiveInsights() {
       .map(([text, count]) => ({ text, count }));
 
     const recentInsights = Array.from(
-      new Set(cognitiveInsights.map((c) => c.insight).filter(Boolean))
+      new Set(cognitiveInsights.map((c) => c.insight).filter(Boolean)),
     ).slice(0, 5);
 
     const criticalTopics = cognitiveInsights

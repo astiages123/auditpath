@@ -7,7 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { FocusPowerPoint } from '../../types';
+import { FocusPowerPoint } from '../../types/efficiencyTypes';
 
 // --- New Component: Focus Power Trend Chart ---
 export interface FocusPowerTrendProps {

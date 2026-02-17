@@ -1,27 +1,23 @@
-import * as Repository from '@/features/quiz/services/repositories/quizRepository';
-import {
-  type GenerationLog,
-  type GeneratorCallbacks,
-  QuizFactory,
-} from '../factory/QuizFactory';
+import * as Repository from "@/features/quiz/services/repositories/quizRepository";
+import { type GeneratorCallbacks, QuizFactory } from "../factory/QuizFactory";
 import {
   calculateQuestionWeights,
   type ChunkMetric,
-} from '@/features/quiz/logic';
-import { parseOrThrow } from '@/utils/helpers';
-import { ChunkMetadataSchema } from '@/features/quiz/types';
-import { logger } from '@/utils/logger';
+} from "@/features/quiz/logic/algorithms/distribution";
+import { parseOrThrow } from "@/utils/helpers";
+import { ChunkMetadataSchema } from "@/features/quiz/types/quizSchemas";
+import { logger } from "@/utils/logger";
 
 export class ExamService {
   private static async buildExamDistribution(
     courseId: string,
     userId: string,
-    examTotal: number
+    examTotal: number,
   ): Promise<{ weights: Map<string, number>; metrics: ChunkMetric[] }> {
     const chunks = await Repository.fetchCourseChunks(courseId);
     const masteryRows = await Repository.fetchCourseMastery(courseId, userId);
     const masteryMap = new Map(
-      masteryRows.map((m) => [m.chunk_id, m.mastery_score])
+      masteryRows.map((m) => [m.chunk_id, m.mastery_score]),
     );
 
     const metrics: ChunkMetric[] = chunks.map((c) => ({
@@ -35,7 +31,7 @@ export class ExamService {
 
     const weights = calculateQuestionWeights({
       examTotal,
-      importance: 'medium',
+      importance: "medium",
       chunks: metrics,
     });
 
@@ -46,7 +42,7 @@ export class ExamService {
     courseId: string,
     courseName: string,
     userId: string,
-    callbacks: GeneratorCallbacks
+    callbacks: GeneratorCallbacks,
   ): Promise<{ success: boolean; questionIds: string[] }> {
     const factory = new QuizFactory();
     const EXAM_TOTAL = 20;
@@ -58,8 +54,8 @@ export class ExamService {
       // 1. Fetch data & calculate distribution
       callbacks.onLog({
         id: crypto.randomUUID(),
-        step: 'INIT',
-        message: 'Ders verileri analiz ediliyor...',
+        step: "INIT",
+        message: "Ders verileri analiz ediliyor...",
         details: {},
         timestamp: new Date(),
       });
@@ -67,7 +63,7 @@ export class ExamService {
       const { weights } = await this.buildExamDistribution(
         courseId,
         userId,
-        EXAM_TOTAL
+        EXAM_TOTAL,
       );
 
       const questionIds: string[] = [];
@@ -79,14 +75,14 @@ export class ExamService {
 
         const existingDeneme = await Repository.fetchGeneratedQuestions(
           chunkId,
-          'deneme',
-          count
+          "deneme",
+          count,
         );
 
         if (existingDeneme.length < count) {
           callbacks.onLog({
             id: crypto.randomUUID(),
-            step: 'GENERATING',
+            step: "GENERATING",
             message: `Eksik sorular havuzdan tamamlanıyor: ${chunkId}`,
             details: {
               target: count,
@@ -104,23 +100,23 @@ export class ExamService {
                 totalSaved++;
                 callbacks.onQuestionSaved(totalSaved);
               },
-              onComplete: (res) => {}, // Pipeline completion not needed here
+              onComplete: () => {}, // Pipeline completion not needed here
               onError: (err: string) => {
                 throw new Error(err);
               },
             },
             {
-              usageType: 'deneme',
+              usageType: "deneme",
               targetCount: count - existingDeneme.length,
-            }
+            },
           );
         }
 
         // Final fetch after potential generation
         const finalQs = await Repository.fetchGeneratedQuestions(
           chunkId,
-          'deneme',
-          count
+          "deneme",
+          count,
         );
         finalQs.forEach((q) => questionIds.push(q.id));
       }
@@ -139,7 +135,7 @@ export class ExamService {
 
   static async fetchSmartExamFromPool(
     courseId: string,
-    userId: string
+    userId: string,
   ): Promise<{ success: boolean; questionIds: string[] } | null> {
     const EXAM_TOTAL = 20;
 
@@ -147,7 +143,7 @@ export class ExamService {
       const { weights } = await this.buildExamDistribution(
         courseId,
         userId,
-        EXAM_TOTAL
+        EXAM_TOTAL,
       );
 
       const questionIds: string[] = [];
@@ -156,8 +152,8 @@ export class ExamService {
 
         const existingDeneme = await Repository.fetchGeneratedQuestions(
           chunkId,
-          'deneme',
-          count
+          "deneme",
+          count,
         );
 
         if (existingDeneme.length < count) {
@@ -172,7 +168,7 @@ export class ExamService {
         questionIds: questionIds.slice(0, EXAM_TOTAL),
       };
     } catch (error) {
-      logger.error('Pool fetch error:', error as Error);
+      logger.error("Pool fetch error:", error as Error);
       return null;
     }
   }

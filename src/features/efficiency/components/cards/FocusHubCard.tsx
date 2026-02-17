@@ -4,7 +4,7 @@ import { cn } from '@/utils/core';
 import { GlassCard } from '@/shared/GlassCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EfficiencyModal, FocusHubContent } from '../EfficiencyModals';
-import { GoalProgressRing } from '../EfficiencyCharts';
+import { GoalProgressRing } from '../charts/GoalProgressRing';
 import { EfficiencyData } from './types';
 import { CardHeader, TrendBadge } from './CardElements';
 import { getFlowColor, getFlowStatusLabel } from './utils';

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -5,7 +6,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Brain, ChevronRight, FileText, Sparkles } from 'lucide-react';
+import { Brain, FileText } from 'lucide-react';
 import { QuizView } from '../execution/QuizView';
 import { QuizSessionProvider } from '@/features/quiz/context/quizSessionProvider';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
@@ -19,7 +20,6 @@ import { MappingProgressView } from '../generation/MappingProgressView';
 import { BriefingView } from '../generation/BriefingView';
 import { SmartExamView } from '../outcomes/SmartExamView';
 import { CourseOverview } from './CourseOverview';
-import { Button } from '@/components/ui/button';
 
 interface QuizModalProps {
   isOpen: boolean;
@@ -55,11 +55,24 @@ export function QuizModal({
     courseProgress,
   } = useQuizManager({ isOpen, courseId, courseName });
 
+  const [isMockMode, setIsMockMode] = useState(false);
+
   const handleClose = (open: boolean) => {
     if (!open) {
       resetState();
+      setIsMockMode(false);
     }
     onOpenChange(open);
+  };
+
+  const startMockQuiz = () => {
+    setIsMockMode(true);
+    handleStartQuiz();
+  };
+
+  const handleBack = () => {
+    setIsMockMode(false);
+    handleBackToTopics();
   };
 
   return (
@@ -67,33 +80,40 @@ export function QuizModal({
       {/* 1. h-[85vh] ile modal yüksekliğini sabitliyoruz.
           2. overflow-hidden ile modalın dışına taşmayı ve modalın kendisinin scroll olmasını engelliyoruz.
       */}
-      <DialogContent className="max-w-6xl h-[85vh] flex flex-col p-0 gap-0 overflow-hidden bg-background border-border/50 shadow-2xl">
-        <DialogHeader className="px-6 py-4 border-b border-border/30 bg-muted/10 shrink-0">
+      <DialogContent className="max-w-[95vw] h-[95vh] flex flex-col p-0 gap-0 overflow-hidden bg-background border-border/50 shadow-2xl">
+        <DialogHeader
+          className={`px-6 border-b transition-all duration-300 bg-muted/5 shrink-0 ${isQuizActive ? 'py-2.5 opacity-80' : 'py-5'}`}
+        >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
-                <Brain className="w-5 h-5" />
+              <div
+                className={`transition-all duration-300 bg-primary/10 text-primary rounded-lg flex items-center justify-center ${isQuizActive ? 'w-7 h-7' : 'w-10 h-10'}`}
+              >
+                <Brain className={isQuizActive ? 'w-4 h-4' : 'w-6 h-6'} />
               </div>
               <div>
-                <DialogTitle className="text-lg font-semibold leading-tight">
+                <DialogTitle
+                  className={`font-bold tracking-tight transition-all duration-300 ${isQuizActive ? 'text-sm' : 'text-xl'}`}
+                >
                   {courseName}
                 </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                <DialogDescription className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5 uppercase tracking-widest font-semibold">
                   {isQuizActive ? (
                     <>
                       <button
-                        onClick={handleBackToTopics}
-                        className="hover:text-foreground transition-colors underline-offset-2 hover:underline"
+                        onClick={handleBack}
+                        className="hover:text-primary transition-colors"
                       >
                         Konular
                       </button>
-                      <ChevronRight className="w-3 h-3" />
-                      <span className="text-foreground font-medium">
-                        {selectedTopic?.name}
+                      <span className="opacity-20">/</span>
+                      <span className="text-foreground/60">
+                        {selectedTopic?.name ||
+                          (isMockMode ? 'Mock Sorular' : '')}
                       </span>
                     </>
                   ) : (
-                    'Bir konu seçerek başla'
+                    'Konu Seçimi'
                   )}
                 </DialogDescription>
               </div>
@@ -109,7 +129,7 @@ export function QuizModal({
             Burada min-h-0 olmazsa içindeki grid modalı aşağı doğru genişletmeye devam eder.
         */}
         <div className="flex-1 min-h-0 overflow-hidden relative">
-          {isQuizActive && selectedTopic ? (
+          {isQuizActive && (selectedTopic || isMockMode) ? (
             <div className="h-full">
               <ErrorBoundary>
                 <QuizSessionProvider>
@@ -117,22 +137,24 @@ export function QuizModal({
                     chunkId={targetChunkId || undefined}
                     courseId={courseId}
                     courseName={courseName}
-                    sectionTitle={selectedTopic.name}
+                    sectionTitle={selectedTopic?.name || 'Mock Sorular'}
                     content={targetChunkId ? undefined : ' '}
-                    initialQuestions={existingQuestions}
-                    onClose={handleBackToTopics}
+                    initialQuestions={isMockMode ? [] : existingQuestions}
+                    onClose={handleBack}
+                    useMock={isMockMode}
                   />
                 </QuizSessionProvider>
               </ErrorBoundary>
             </div>
           ) : (
-            <div className="grid md:grid-cols-[300px_1fr] h-full min-h-0">
+            <div className="grid md:grid-cols-[280px_1fr] h-full min-h-0">
               <TopicSidebar
                 loading={loading}
                 topics={topics}
                 selectedTopic={selectedTopic}
                 onSelectTopic={setSelectedTopic}
                 onStartSmartExam={handleStartSmartExam}
+                onStartMockQuiz={startMockQuiz}
                 isGeneratingExam={isGeneratingExam}
               />
 
@@ -162,7 +184,7 @@ export function QuizModal({
                         Bu alan artık dışarı taşamaz. BriefingView burayı doldurur.
                     */}
                     <div className="flex-1 overflow-hidden p-6 min-h-0 flex flex-col">
-                      <div className="max-w-5xl mx-auto w-full h-full flex flex-col min-h-0">
+                      <div className="max-w-7xl mx-auto w-full h-full flex flex-col min-h-0">
                         {quizState === QuizState.NOT_ANALYZED && (
                           <InitialStateView onGenerate={handleGenerate} />
                         )}

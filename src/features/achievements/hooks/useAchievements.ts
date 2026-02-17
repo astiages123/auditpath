@@ -1,14 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { getDailyVideoMilestones } from '@/features/courses/services/videoService';
 import {
-  getDailyVideoMilestones,
   getStreakMilestones,
   getTotalActiveDays,
-  getUnlockedAchievements,
-} from '@/lib/clientDb';
+} from '@/features/achievements/services/userStatsService';
+import { getUnlockedAchievements } from '@/features/achievements/services/achievementService';
 import { ACHIEVEMENTS, calculateAchievements } from '../logic/achievementsData';
 import { type ProgressStats } from '../types/achievementsTypes';
-import { type Rank, RANKS } from '@/utils/helpers';
+import { RANKS } from '@/utils/helpers';
+import type { Rank } from '@/types/auth';
 import coursesData from '@/features/courses/services/courses.json';
 import { logger } from '@/utils/logger';
 
@@ -45,9 +46,7 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
 
   // C. Fetch Current DB State
   const dbUnlocked = await getUnlockedAchievements(userId);
-  const dbIds = new Set<string>(
-    dbUnlocked.map((x: { achievement_id: string }) => x.achievement_id)
-  );
+  const dbIds = new Set<string>(dbUnlocked.map((x) => x.id));
 
   // B. Calculate Eligible IDs
   const eligibleIds = new Set<string>();
@@ -112,8 +111,10 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
         unlockDate = new Date(dailyMilestones.first10Date).toISOString();
       }
       // Sönmeyen Meşale (7 gün seri) - ilk kez 7 günlük streak tamamlandığı gün
-      if (id === 'special-03' && streakMilestones.first7StreakDate) {
-        unlockDate = new Date(streakMilestones.first7StreakDate).toISOString();
+      if (id === 'special-03' && streakMilestones.first7DayStreakDate) {
+        unlockDate = new Date(
+          streakMilestones.first7DayStreakDate
+        ).toISOString();
       }
 
       return {
@@ -245,12 +246,12 @@ export function useAchievements(userId: string) {
     queryFn: async () => {
       if (!userId) return [];
       const unlocked = await getUnlockedAchievements(userId);
-      const unlockedIds = new Set(unlocked.map((u) => u.achievement_id));
+      const unlockedIds = new Set(unlocked.map((u) => u.id));
 
       return ACHIEVEMENTS.map((a) => ({
         ...a,
         isUnlocked: unlockedIds.has(a.id),
-        unlockedAt: unlocked.find((u) => u.achievement_id === a.id)?.unlockedAt,
+        unlockedAt: unlocked.find((u) => u.id === a.id)?.unlockedAt,
       }));
     },
     enabled: !!userId,

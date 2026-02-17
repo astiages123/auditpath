@@ -1,11 +1,14 @@
-import { supabase } from '@/lib/supabase';
-import { calculateFocusPower, getCycleCount } from '@/utils/math';
-import { getVirtualDayStart, isValid, parseOrThrow } from '@/utils/helpers';
-import { TimelineEventSchema } from '../../types/efficiencyTypes';
-import { z } from 'zod';
-import { handleSupabaseError } from '@/lib/supabaseHelpers';
+import { supabase } from "@/lib/supabase";
+import { calculateFocusPower, getCycleCount } from "@/utils/math";
+import { getVirtualDayStart, isValid, parseOrThrow } from "@/utils/helpers";
+import { TimelineEventSchema } from "../../types/efficiencyTypes";
+import { z } from "zod";
+import { handleSupabaseError } from "@/lib/supabaseHelpers";
 
-import type { DailyEfficiencySummary, DetailedSession } from '@/types';
+import type {
+  DailyEfficiencySummary,
+  DetailedSession,
+} from "@/features/efficiency/types/efficiencyTypes";
 
 /**
  * Get daily efficiency summary for the master card.
@@ -14,25 +17,25 @@ import type { DailyEfficiencySummary, DetailedSession } from '@/types';
  * @returns Daily efficiency summary
  */
 export async function getDailyEfficiencySummary(
-  userId: string
+  userId: string,
 ): Promise<DailyEfficiencySummary> {
   const today = getVirtualDayStart();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
   const { data: todaySessions, error } = await supabase
-    .from('pomodoro_sessions')
+    .from("pomodoro_sessions")
     .select(
-      'id, course_name, started_at, total_work_time, total_break_time, total_pause_time, pause_count, efficiency_score, timeline'
+      "id, course_name, started_at, total_work_time, total_break_time, total_pause_time, pause_count, efficiency_score, timeline",
     )
-    .eq('user_id', userId)
-    .gte('started_at', today.toISOString())
-    .lt('started_at', tomorrow.toISOString())
-    .or('total_work_time.gte.60,total_break_time.gte.60')
-    .order('started_at', { ascending: true });
+    .eq("user_id", userId)
+    .gte("started_at", today.toISOString())
+    .lt("started_at", tomorrow.toISOString())
+    .or("total_work_time.gte.60,total_break_time.gte.60")
+    .order("started_at", { ascending: true });
 
   if (error) {
-    await handleSupabaseError(error, 'getDailyEfficiencySummary');
+    await handleSupabaseError(error, "getDailyEfficiencySummary");
   }
 
   const sessionsData = todaySessions || [];
@@ -74,7 +77,7 @@ export async function getDailyEfficiencySummary(
 
     return {
       id: s.id,
-      courseName: s.course_name || 'Bilinmeyen Ders',
+      courseName: s.course_name || "Bilinmeyen Ders",
       workTimeSeconds: work,
       breakTimeSeconds: brk,
       pauseTimeSeconds: pause,
@@ -87,7 +90,7 @@ export async function getDailyEfficiencySummary(
   const dailyFocusPower = calculateFocusPower(
     totalWork,
     totalBreak,
-    totalPause
+    totalPause,
   );
 
   return {

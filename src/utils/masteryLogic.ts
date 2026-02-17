@@ -1,10 +1,10 @@
-import { type ConceptMapItem } from '@/types';
+import { type ConceptMapItem } from "@/features/quiz/types/quizTypes";
 
 export interface MasteryNode {
   id: string; // concept title
   label: string;
   mastery: number; // 0-100
-  status: 'mastered' | 'in-progress' | 'weak';
+  status: "mastered" | "in-progress" | "weak";
   prerequisites: string[]; // IDs of prerequisite nodes
   isChainComplete: boolean; // True if this node AND all prereqs are mastered
   depth: number; // For visualization layer
@@ -27,7 +27,7 @@ export interface MasteryChainStats {
 export function calculateMasteryChains(
   concepts: ConceptMapItem[],
   masteryMap: Record<string, number>, // concept_title -> mastery_score
-  depth = 0
+  depth = 0,
 ): MasteryNode[] {
   // Flatten the concept map into nodes
   // Note: This logic assumes 'concepts' might be a flat list or nested.
@@ -37,9 +37,9 @@ export function calculateMasteryChains(
     const score = masteryMap[concept.baslik] || 0;
 
     // Determine Status based on Score
-    let status: MasteryNode['status'] = 'weak';
-    if (score >= 80) status = 'mastered';
-    else if (score >= 50) status = 'in-progress';
+    let status: MasteryNode["status"] = "weak";
+    if (score >= 80) status = "mastered";
+    else if (score >= 50) status = "in-progress";
 
     // Check Chain Condition
     // Chain = This node >= 80% AND All Prereqs >= 85%
@@ -49,7 +49,7 @@ export function calculateMasteryChains(
         (pTitle: string) => {
           const pScore = masteryMap[pTitle] || 0;
           return pScore >= 85;
-        }
+        },
       );
       // If no prereqs, it's a "Root" chain start? Or trivial chain?
       // "Varsa, tüm prerequisites..." -> If none, maybe it counts as chain start if mastered?
@@ -85,12 +85,12 @@ export function calculateMasteryChains(
  * Simple BFS/DFS to assign levels.
  */
 export function processGraphForAtlas(
-  rawNodes: MasteryNode[]
+  rawNodes: MasteryNode[],
 ): MasteryChainStats {
   const nodeMap = new Map<string, MasteryNode>();
   rawNodes.forEach((n) => nodeMap.set(n.id, n));
 
-  const edges: MasteryChainStats['edges'] = [];
+  const edges: MasteryChainStats["edges"] = [];
   let chainCount = 0;
 
   rawNodes.forEach((node) => {
@@ -99,7 +99,7 @@ export function processGraphForAtlas(
       // Find prereq node
       const pNode = nodeMap.get(pId);
       const isStrong = Boolean(
-        pNode && node.mastery >= 80 && pNode.mastery >= 85
+        pNode && node.mastery >= 80 && pNode.mastery >= 85,
       );
 
       edges.push({

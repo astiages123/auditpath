@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { type CourseTopic } from "@/types";
-import { useUIStore } from "@/store/useUIStore";
+import { type CourseTopic } from "@/features/courses/types/courseTypes";
+import { useNotesStore } from "@/store/useNotesStore";
 
 interface UseNotesNavigationProps {
   courseSlug?: string;
@@ -20,7 +20,8 @@ export const useNotesNavigation = ({
   const isProgrammaticScroll = useRef<boolean>(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  const { lastRead, actions } = useUIStore();
+  const lastRead = useNotesStore((state) => state.lastRead);
+  const actions = useNotesStore((state) => state.actions);
 
   // Cleanup scroll timeout on unmount
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { Play, Pause, Coffee, Briefcase, CheckCircle2 } from 'lucide-react';
 import { cn } from '@/utils/core';
 import { Button } from '@/components/ui/button';
-import { usePomodoro } from '@/features/pomodoro/hooks';
+import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
 interface TimerControlsProps {
   isExpanded: boolean;

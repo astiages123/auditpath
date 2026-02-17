@@ -1,6 +1,6 @@
 import React from 'react';
-import { Brain, Loader2 } from 'lucide-react';
-import { GenerationLog } from '@/features/quiz/logic';
+import { Loader2 } from 'lucide-react';
+import { GenerationLog } from '@/features/quiz/types/quizEngineSchemas';
 
 interface SmartExamViewProps {
   isGeneratingExam: boolean;

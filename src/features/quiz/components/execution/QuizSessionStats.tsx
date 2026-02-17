@@ -1,6 +1,6 @@
 import React from 'react';
 import { QuizTimer } from './QuizTimer';
-import { type CourseStats } from '@/features/quiz/types';
+import { type CourseStats } from '@/features/quiz/types/quizTypes';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 
 interface QuizSessionStatsProps {
@@ -31,18 +31,14 @@ export const QuizSessionStats: React.FC<QuizSessionStatsProps> = ({
   const mastery = currentMastery ?? courseStats.averageMastery;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-muted/20 rounded-xl border border-border/30">
+    <div className="flex items-center justify-between px-6 md:px-10 py-3 md:py-4 border-b border-white/5 bg-transparent">
       <div className="flex items-center gap-6">
-        <div className="flex flex-col">
-          <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-            Çözülen
-          </span>
-          <span className="text-base font-bold text-foreground">
-            {courseStats.totalQuestionsSolved}
-          </span>
-        </div>
+        <QuizTimer
+          key={currentQuestionId ?? 'timer'}
+          isRunning={timerIsRunning}
+        />
 
-        <div className="w-px h-8 bg-border/30" />
+        <div className="w-px h-8 bg-border/20 mx-2" />
 
         <div className="flex flex-col">
           <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
@@ -73,17 +69,12 @@ export const QuizSessionStats: React.FC<QuizSessionStatsProps> = ({
         </div>
       </div>
 
-      <div className="text-right flex flex-col items-end gap-1">
-        <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-          Soru
-        </span>
-        <div className="text-sm font-medium">
-          {currentReviewIndex + 1} / {totalQueueLength ?? 0}
-        </div>
-        <QuizTimer
-          key={currentQuestionId ?? 'timer'}
-          isRunning={timerIsRunning}
-        />
+      <div className="text-sm font-medium text-muted-foreground font-heading uppercase tracking-widest">
+        Soru{' '}
+        <span className="text-foreground">
+          {Math.min(currentReviewIndex + 1, totalQueueLength)}
+        </span>{' '}
+        / {totalQueueLength}
       </div>
     </div>
   );

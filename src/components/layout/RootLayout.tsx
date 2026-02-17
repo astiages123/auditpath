@@ -1,10 +1,10 @@
 import { lazy, Suspense, useCallback, type ReactNode } from 'react';
 import { Header } from '@/components/layout/header/Header';
-import { PomodoroModal } from '@/features/pomodoro/components';
-import { TimerController } from '@/features/pomodoro/components';
+import { PomodoroModal } from '@/features/pomodoro/components/main/PomodoroModal';
+import { TimerController } from '@/features/pomodoro/components/main/TimerController';
 import { Toaster } from '@/components/ui/sonner';
 import { useCelebration } from '@/hooks/useCelebration';
-import { useUIStore } from '@/store/useUIStore';
+import { useCelebrationStore } from '@/store/useCelebrationStore';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
 const CelebrationModal = lazy(() =>
@@ -16,18 +16,19 @@ const CelebrationModal = lazy(() =>
 export default function RootLayout({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   useCelebration();
-  const {
-    currentCelebration: current,
-    isCelebrationOpen: isOpen,
-    actions,
-  } = useUIStore();
+
+  const current = useCelebrationStore((state) => state.currentCelebration);
+  const isOpen = useCelebrationStore((state) => state.isCelebrationOpen);
+  const closeCelebration = useCelebrationStore(
+    (state) => state.actions.closeCelebration
+  );
 
   const handleComplete = useCallback(async () => {
     if (current && current.onClose) {
       await current.onClose();
     }
-    actions.closeCelebration();
-  }, [actions, current]);
+    closeCelebration();
+  }, [closeCelebration, current]);
 
   return (
     <div className="flex flex-col min-h-screen">

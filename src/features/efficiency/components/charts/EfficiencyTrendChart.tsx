@@ -11,7 +11,7 @@ import {
   Cell,
 } from 'recharts';
 import { cn } from '@/utils/core';
-import { EfficiencyTrend } from '@/types';
+import { EfficiencyTrend } from '@/features/efficiency/types/efficiencyTypes';
 
 // --- Efficiency Trend Chart ---
 export interface EfficiencyTrendProps {

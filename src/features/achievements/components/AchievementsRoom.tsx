@@ -12,8 +12,8 @@ import {
   Award,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { getUnlockedAchievements as getDbUnlocked } from '@/lib/clientDb';
-import { type UnlockedAchievement } from '@/types';
+import { getUnlockedAchievements as getDbUnlocked } from '@/features/achievements/services/achievementService';
+import { type UnlockedAchievement } from '@/features/achievements/types/achievementsTypes';
 import {
   ACHIEVEMENTS,
   GUILDS,
@@ -71,10 +71,7 @@ export function AchievementsRoom() {
         // Using achievement_id as the key in the map
         setUnlockedAchievements(
           new Map(
-            dbUnlocked.map((a: UnlockedAchievement) => [
-              a.achievement_id,
-              a.unlockedAt,
-            ])
+            dbUnlocked.map((a: UnlockedAchievement) => [a.id, a.unlockedAt])
           )
         );
       } catch (error) {

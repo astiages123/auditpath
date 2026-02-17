@@ -1,5 +1,5 @@
-import * as Repository from '@/features/quiz/services/repositories/quizRepository';
-import { type ConceptMapItem } from '@/features/quiz/types';
+import * as Repository from "@/features/quiz/services/repositories/quizRepository";
+import { type ConceptMapItem } from "@/features/quiz/types/quizTypes";
 
 export interface Quotas {
   antrenman: number;
@@ -27,11 +27,11 @@ export function calculateQuotas(concepts: ConceptMapItem[]): Quotas {
 
 export async function updateChunkQuotas(
   chunkId: string,
-  quotas: Quotas
+  quotas: Quotas,
 ): Promise<void> {
   await Repository.updateChunkAILogic(chunkId, {
     suggested_quotas: quotas,
     reasoning:
-      'Sistem tarafından otomatik belirlenen pedagojik kotalar (%100 antrenman, %30 arşiv, %20 deneme).',
+      "Sistem tarafından otomatik belirlenen pedagojik kotalar (%100 antrenman, %30 arşiv, %20 deneme).",
   });
 }

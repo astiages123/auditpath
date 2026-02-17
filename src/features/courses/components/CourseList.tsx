@@ -16,7 +16,7 @@ import { formatDuration } from '@/utils/helpers';
 import { useProgress } from '@/hooks/useProgress';
 import { useCelebration } from '@/hooks/useCelebration';
 import { getCourseIcon } from '../logic/coursesLogic';
-import { type Course } from '@/types';
+import { type Course } from '@/features/courses/types/courseTypes';
 
 // Lazy load modals to reduce initial bundle size and split CSS (Katex)
 const QuizModal = lazy(() =>

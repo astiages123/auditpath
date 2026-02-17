@@ -1,5 +1,5 @@
 import { Loader2, ArrowRight } from 'lucide-react';
-import { type SubmissionResult } from '@/features/quiz/types';
+import { type SubmissionResult } from '@/features/quiz/types/quizTypes';
 
 interface QuizActionFooterProps {
   isAnswered: boolean;

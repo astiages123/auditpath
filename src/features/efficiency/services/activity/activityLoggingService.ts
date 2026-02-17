@@ -1,5 +1,9 @@
 import { supabase } from "@/lib/supabase";
-import type { PomodoroInsert, QuizInsert, VideoUpsert } from "@/types";
+import type {
+    PomodoroInsert,
+    VideoUpsert,
+} from "@/features/pomodoro/types/pomodoroTypes";
+import { type QuizInsert } from "@/features/quiz/types/quizTypes";
 import type { Database } from "@/types/database.types";
 import { logger } from "@/utils/logger";
 

@@ -3,7 +3,7 @@ import { BookOpen, Maximize2 } from 'lucide-react';
 import { GlassCard } from '@/shared/GlassCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EfficiencyModal, LearningLoadContent } from '../EfficiencyModals';
-import { LearningLoadChart } from '../EfficiencyCharts';
+import { LearningLoadChart } from '../charts/LearningLoadChart';
 import { EfficiencyData } from './types';
 import { CardHeader } from './CardElements';
 

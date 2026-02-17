@@ -1,6 +1,9 @@
 import { supabase } from "@/lib/supabase";
 import { getVirtualDateKey, getVirtualDayStart } from "@/utils/helpers";
-import type { EfficiencyTrend, FocusTrend } from "@/types";
+import type {
+    EfficiencyTrend,
+    FocusTrend,
+} from "@/features/efficiency/types/efficiencyTypes";
 import { generateDateRange } from "../../utils/efficiencyUtils";
 
 /**
