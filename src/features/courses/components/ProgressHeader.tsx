@@ -1,5 +1,5 @@
 import { Clock, TrendingUp, Flame, CalendarDays } from 'lucide-react';
-import { useProgress } from '@/hooks/useProgress';
+import { useProgress } from '@/shared/hooks/useProgress';
 import {
   calculateRankProgress,
   calculateEstimatedDaysToNextRank,

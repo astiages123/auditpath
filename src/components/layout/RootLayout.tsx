@@ -3,7 +3,7 @@ import { Header } from '@/components/layout/header/Header';
 import { PomodoroModal } from '@/features/pomodoro/components/main/PomodoroModal';
 import { TimerController } from '@/features/pomodoro/components/main/TimerController';
 import { Toaster } from '@/components/ui/sonner';
-import { useCelebration } from '@/hooks/useCelebration';
+import { useCelebration } from '@/shared/hooks/useCelebration';
 import { useCelebrationStore } from '@/features/achievements/store';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 

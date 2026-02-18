@@ -4,7 +4,7 @@ import type {
     EfficiencyTrend,
     FocusTrend,
 } from "@/features/efficiency/types/efficiencyTypes";
-import { generateDateRange } from "../../utils/efficiencyUtils";
+import { generateDateRange } from "../../logic/efficiencyHelpers";
 
 /**
  * Get focus trend (work time) over the last 30 days.

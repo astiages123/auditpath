@@ -185,5 +185,5 @@ export async function getAntrenmanQuestionCount(
 }
 
 // Re-export specialized repositories
-export * from "./TrainingRepository";
-export * from "./FollowupRepository";
+export * from "./trainingRepository";
+export * from "./followupRepository";

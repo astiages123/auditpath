@@ -13,7 +13,7 @@ import {
 import { Loader2, Sparkles } from 'lucide-react';
 import { getChunkQuotaStatus } from '@/features/quiz/services/repositories/quizRepository';
 import { type QuotaStatus } from '@/features/quiz/types';
-import { QuizFactory } from '@/features/quiz/logic/factory/QuizFactory';
+import { QuizFactory } from '@/features/quiz/logic/factory/quizFactory';
 import {
   type GenerationLog,
   type GenerationStep as LogStep,

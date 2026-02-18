@@ -1,8 +1,8 @@
 import { TvMinimalPlay, Clock, ChevronDown, BookOpen } from 'lucide-react';
 import { CourseList } from './CourseList';
 import { useEffect } from 'react';
-import { useCelebration } from '@/hooks/useCelebration';
-import { useProgress } from '@/hooks/useProgress';
+import { useCelebration } from '@/shared/hooks/useCelebration';
+import { useProgress } from '@/shared/hooks/useProgress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/core';
 import { formatDuration } from '@/utils/helpers';

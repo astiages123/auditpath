@@ -14,7 +14,7 @@ import {
 } from 'react';
 import { useQuiz } from '@/features/quiz/hooks/useQuiz';
 import { QuizCard } from './QuizCard';
-import { useQuizSession } from '@/features/quiz/context/QuizSessionContext';
+import { useQuizSession } from '@/features/quiz/hooks/context/QuizSessionContext';
 import { checkAndTriggerBackgroundGeneration } from '@/features/quiz/logic/engines/backgroundEngine';
 import { type QuizQuestion } from '@/features/quiz/types';
 import { useAuth } from '@/features/auth/hooks/useAuth';

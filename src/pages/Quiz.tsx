@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { QuizSessionProvider } from '@/features/quiz/context/QuizSessionProvider';
+import { QuizSessionProvider } from '@/features/quiz/hooks/context/QuizSessionProvider';
 import { QuizView } from '@/features/quiz/components/execution/QuizView';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Loader2 } from 'lucide-react';

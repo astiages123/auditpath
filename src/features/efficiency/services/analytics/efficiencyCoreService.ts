@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { calculateEfficiencyScore } from "../../utils/efficiencyUtils";
+import { calculateEfficiencyScore } from "../../logic/efficiencyHelpers";
 import { getVirtualDayStart } from "@/utils/helpers";
 import { logger } from "@/utils/logger";
 import type { EfficiencyData } from "@/features/efficiency/types/efficiencyTypes";

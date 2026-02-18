@@ -1,6 +1,6 @@
 import { PostgrestError } from '@supabase/supabase-js';
 import { logger } from '@/utils/logger';
-import { addToOfflineQueue } from '@/lib/offlineQueueService';
+import { addToOfflineQueue } from '@/shared/services/offlineQueueService';
 
 const safeQueryLogger = logger.withPrefix('[SafeQuery]');
 

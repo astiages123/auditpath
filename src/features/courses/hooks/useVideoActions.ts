@@ -1,7 +1,7 @@
 import { logger } from '@/utils/logger';
 import { toast } from 'sonner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useProgress } from '@/hooks/useProgress';
+import { useProgress } from '@/shared/hooks/useProgress';
 import {
   toggleVideoProgress,
   toggleVideoProgressBatch,

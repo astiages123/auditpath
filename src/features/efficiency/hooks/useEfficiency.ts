@@ -5,7 +5,7 @@ import {
   calculateGoalProgress,
   calculateLearningFlow,
   formatEfficiencyTime,
-} from "../utils/efficiencyUtils";
+} from "../logic/efficiencyHelpers";
 
 // Composable Hooks
 import { useDailyMetrics } from "./useDailyMetrics";

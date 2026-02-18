@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { getTopicCompletionStatus } from "@/features/quiz/services/core/quizStatusService";
-import { QuizFactory } from "@/features/quiz/logic/factory/QuizFactory";
+import { QuizFactory } from "@/features/quiz/logic/factory/quizFactory";
 import { type QuizQuestion } from "@/features/quiz/types";
 import { logger } from "@/utils/logger";
 import { AI_MODE } from "@/utils/aiConfig";

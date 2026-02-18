@@ -6,7 +6,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import TitleRoadmap from './TitleRoadmap';
-import { useProgress } from '@/hooks/useProgress';
+import { useProgress } from '@/shared/hooks/useProgress';
 // React imports removed as they were unused
 // getRanks unused import removed
 

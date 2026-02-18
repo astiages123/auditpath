@@ -9,7 +9,7 @@ import {
 import { getUserStats } from '@/features/achievements/services/userStatsService';
 import { type Category } from '@/features/courses/types/courseTypes';
 import { logger } from '@/utils/logger';
-import type { ProgressStats } from '@/hooks/useProgress';
+import type { ProgressStats } from '@/shared/hooks/useProgress';
 import {
   HomeProgressSkeleton,
   CategoryGridSkeleton,

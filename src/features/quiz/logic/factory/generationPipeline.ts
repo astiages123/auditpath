@@ -5,11 +5,11 @@ import {
   type GenerationStep,
   type GeneratorCallbacks,
 } from "@/features/quiz/types";
-import { ValidationTask } from "@/features/quiz/logic/tasks/ValidationTask";
-import { RevisionTask } from "@/features/quiz/logic/tasks/RevisionTask";
+import { ValidationTask } from "@/features/quiz/logic/tasks/validationTask";
+import { RevisionTask } from "@/features/quiz/logic/tasks/revisionTask";
 
 // Re-import drafting task from the correct source since QuizFactory used DraftingTask
-import { DraftingTask } from "@/features/quiz/logic/tasks/DraftingTask";
+import { DraftingTask } from "@/features/quiz/logic/tasks/draftingTask";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 

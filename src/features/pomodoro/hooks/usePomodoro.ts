@@ -6,7 +6,7 @@ import {
   upsertPomodoroSession,
 } from '@/features/pomodoro/services/pomodoroService';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { unlockAudio } from '../utils/audioUtils';
+import { unlockAudio } from '../logic/audioUtils';
 import { logger } from '@/utils/logger';
 
 export type PomodoroMode = 'work' | 'break';

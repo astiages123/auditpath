@@ -1,5 +1,5 @@
 import * as Repository from '@/features/quiz/services/repositories/quizRepository';
-import { QuizFactory } from '../factory/QuizFactory';
+import { QuizFactory } from '../factory/quizFactory';
 import { logger } from '@/utils/logger';
 
 /**

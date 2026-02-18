@@ -13,8 +13,8 @@ import {
 } from 'lucide-react';
 import { VideoList } from './VideoList';
 import { formatDuration } from '@/utils/helpers';
-import { useProgress } from '@/hooks/useProgress';
-import { useCelebration } from '@/hooks/useCelebration';
+import { useProgress } from '@/shared/hooks/useProgress';
+import { useCelebration } from '@/shared/hooks/useCelebration';
 import { getCourseIcon } from '../logic/coursesLogic';
 import { type Course } from '@/features/courses/types/courseTypes';
 

@@ -20,7 +20,7 @@ import {
   getAchievementsByGuild,
 } from '../logic/achievementsData';
 import { Achievement, GuildType } from '../types/achievementsTypes';
-import { useProgress } from '@/hooks/useProgress';
+import { useProgress } from '@/shared/hooks/useProgress';
 import { SealCard } from './SealCard';
 import { SealDetailModal } from './SealDetailModal';
 import { useAuth } from '@/features/auth/hooks/useAuth';

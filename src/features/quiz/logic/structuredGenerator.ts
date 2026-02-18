@@ -6,7 +6,7 @@ import type {
 } from "@/features/quiz/types";
 import { UnifiedLLMClient } from "@/features/quiz/services/quizClient";
 import { rateLimiter } from "./rateLimit";
-import { parseJsonResponse } from "./ParserUtils";
+import { parseJsonResponse } from "./parserUtils";
 import { logger } from "@/utils/logger";
 
 export interface StructuredOptions<T> {

@@ -16,12 +16,12 @@ import {
 import { PromptArchitect } from "@/features/quiz/logic/utils";
 
 // --- Tasks and Modules ---
-import { AnalysisTask } from "@/features/quiz/logic/tasks/AnalysisTask";
-import { DraftingTask } from "@/features/quiz/logic/tasks/DraftingTask";
+import { AnalysisTask } from "@/features/quiz/logic/tasks/analysisTask";
+import { DraftingTask } from "@/features/quiz/logic/tasks/draftingTask";
 import {
     FollowUpTask,
     type WrongAnswerContext,
-} from "@/features/quiz/logic/tasks/FollowUpTask";
+} from "@/features/quiz/logic/tasks/followUpTask";
 
 import { calculateQuotas, updateChunkQuotas } from "./quotaLogic";
 import { GenerationPipeline } from "./generationPipeline";

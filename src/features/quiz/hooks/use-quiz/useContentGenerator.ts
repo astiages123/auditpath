@@ -3,7 +3,7 @@ import { QuizQuestion, QuizState } from '@/features/quiz/types';
 import * as Repository from '@/features/quiz/services/repositories/quizRepository';
 import { startSession } from '@/features/quiz/logic/engines/sessionEngine';
 import { getReviewQueue } from '@/features/quiz/logic/engines/queueEngine';
-import { QuizFactory } from '@/features/quiz/logic/factory/QuizFactory';
+import { QuizFactory } from '@/features/quiz/logic/factory/quizFactory';
 import { useTimerStore } from '@/features/pomodoro/store';
 import { Database } from '@/types/database.types';
 

@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useProgress } from '@/hooks/useProgress';
+import { useProgress } from '@/shared/hooks/useProgress';
 import { useCelebrationStore } from '@/features/achievements/store';
-import { getCelebrationAsset } from '@/features/achievements/utils/celebrationAssets';
+import { getCelebrationAsset } from '@/features/achievements/logic/data/celebrationAssets';
 import { markAsCelebrated } from '@/features/achievements/hooks/useAchievements';
 import { useSyncAchievementsMutation } from '@/features/achievements/hooks/useAchievements';
 import { useUncelebratedQuery } from '@/features/achievements/hooks/useAchievements';

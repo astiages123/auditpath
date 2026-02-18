@@ -9,7 +9,7 @@ import {
 import { cn } from '@/utils/core';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RANKS } from '@/features/achievements/utils/rankIcons';
+import { RANKS } from '@/features/achievements/logic/data/rankIcons';
 export { RANKS };
 
 interface TitleRoadmapProps {

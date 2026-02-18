@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { QuizResults, QuizState } from "@/features/quiz/types";
 import { calculateInitialResults } from "@/features/quiz/logic/algorithms/scoring";
-import { createTimer } from "@/features/quiz/logic/QuizTimer";
+import { createTimer } from "@/features/quiz/logic/quizTimer";
 import { SessionContext } from "@/features/quiz/logic/engines/sessionEngine";
 
 export function useCoreState() {

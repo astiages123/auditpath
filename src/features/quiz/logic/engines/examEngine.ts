@@ -1,5 +1,5 @@
 import * as Repository from "@/features/quiz/services/repositories/quizRepository";
-import { type GeneratorCallbacks, QuizFactory } from "../factory/QuizFactory";
+import { type GeneratorCallbacks, QuizFactory } from "../factory/quizFactory";
 import {
   calculateQuestionWeights,
   type ChunkMetric,

@@ -13,7 +13,7 @@ import { env } from '@/utils/env';
 import { SESSION_VALIDITY_DURATION_MS } from '@/utils/constants';
 
 import { useFaviconManager } from '@/features/pomodoro/hooks/useFaviconManager';
-import { playNotificationSound } from '../../utils/audioUtils';
+import { playNotificationSound } from '../../logic/audioUtils';
 import { logger } from '@/utils/logger';
 import faviconSvg from '@/assets/favicon.svg';
 

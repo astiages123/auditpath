@@ -6,7 +6,7 @@
  */
 
 import { storage } from "@/shared/services/storageService";
-import { logger } from "../utils/logger";
+import { logger } from "@/utils/logger";
 
 const QUEUE_KEY = "offline_quiz_queue";
 const MAX_QUEUE_SIZE = 100;
