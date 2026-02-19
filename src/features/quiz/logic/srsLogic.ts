@@ -2,8 +2,6 @@ import {
   type ConceptMapItem,
   type ExamDistributionInput,
   type ExamSubjectWeight,
-  type MasteryChainStats,
-  type MasteryNode,
   type QuizResponseType,
   type SubmissionResult,
 } from '@/features/quiz/types';
@@ -18,7 +16,7 @@ import {
   type BloomLevel,
   calculateScoreChange,
   calculateTMax,
-} from './scoringLogic';
+} from './quizCoreLogic';
 import { BLOOM_INSTRUCTIONS } from './prompts';
 
 // --- Constants ---
@@ -301,80 +299,5 @@ export function calculateQuizResult(
     isTopicRefreshed,
     newSuccessCount: srsResult.newSuccessCount,
     newFailsCount,
-  };
-}
-
-export function calculateMasteryChains(
-  concepts: ConceptMapItem[],
-  masteryMap: Record<string, number>,
-  depth = 0
-): MasteryNode[] {
-  return concepts.map((concept) => {
-    const score = masteryMap[concept.baslik] || 0;
-    let status: MasteryNode['status'] = 'weak';
-    if (score >= 80) status = 'mastered';
-    else if (score >= 50) status = 'in-progress';
-
-    let isChainComplete = false;
-    if (score >= 80) {
-      const prereqsMet = (concept.prerequisites || []).every(
-        (pTitle: string) => {
-          const pScore = masteryMap[pTitle] || 0;
-          return pScore >= 85;
-        }
-      );
-      isChainComplete = prereqsMet;
-    }
-
-    return {
-      id: concept.baslik,
-      label: concept.baslik,
-      mastery: score,
-      status,
-      prerequisites: concept.prerequisites || [],
-      isChainComplete,
-      depth,
-      data: {
-        focus: concept.odak,
-      },
-    };
-  });
-}
-
-export function processGraphForAtlas(
-  rawNodes: MasteryNode[]
-): MasteryChainStats {
-  const nodeMap = new Map<string, MasteryNode>();
-  rawNodes.forEach((n) => nodeMap.set(n.id, n));
-
-  const edges: MasteryChainStats['edges'] = [];
-  let chainCount = 0;
-
-  rawNodes.forEach((node) => {
-    node.prerequisites.forEach((pId) => {
-      const pNode = nodeMap.get(pId);
-      const isStrong = Boolean(
-        pNode && node.mastery >= 80 && pNode.mastery >= 85
-      );
-
-      edges.push({
-        source: pId,
-        target: node.id,
-        isStrong,
-      });
-    });
-
-    if (node.isChainComplete && node.prerequisites.length > 0) {
-      chainCount++;
-    }
-  });
-
-  const resilienceBonusDays = chainCount * 2;
-
-  return {
-    totalChains: chainCount,
-    resilienceBonusDays,
-    nodes: rawNodes,
-    edges,
   };
 }

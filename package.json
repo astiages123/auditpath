@@ -16,7 +16,7 @@
     "preview": "vite preview",
     "db:seed": "tsx scripts/db/seed-db.ts",
     "sync": "tsx scripts/notion-sync/index.ts",
-    "update-types": "dotenv -e .env.local -- npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/shared/types/supabase.ts",
+    "update-types": "dotenv -e .env.local -- npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types/database.types.ts",
     "check-all": "npm run type-check && npm run lint && npm run style && npm run format",
     "prepare": "husky"
   },
@@ -53,7 +53,6 @@
     "katex": "^0.16.27",
     "lucide-react": "^0.562.0",
     "mermaid": "^11.12.2",
-    "next-themes": "^0.4.6",
     "p-limit": "^7.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",

@@ -1,11 +1,198 @@
 import { memo, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, RefreshCw, Loader2, Lightbulb } from 'lucide-react';
+import {
+  X,
+  RefreshCw,
+  Loader2,
+  Lightbulb,
+  Check,
+  Brain,
+  ChevronDown,
+  CheckCircle,
+  XCircle,
+} from 'lucide-react';
 import { QuizQuestion } from '@/features/quiz/types';
+import { cn } from '@/utils/core';
 
-import { MathRenderer } from './QuizMathRenderer';
-import { OptionButton } from './QuizOptionButton';
-import { ExplanationPanel } from './QuizExplanationPanel';
+import { MathRenderer } from './QuizStatus';
+
+// --- Sub-components (formerly separate files) ---
+
+interface OptionButtonProps {
+  option: string;
+  label: string;
+  variant: 'default' | 'correct' | 'incorrect' | 'dimmed';
+  isSelected?: boolean;
+  onClick: () => void;
+  disabled: boolean;
+}
+
+const OptionButton = memo(function OptionButton({
+  option,
+  label,
+  variant,
+  isSelected,
+  onClick,
+  disabled,
+}: OptionButtonProps) {
+  let containerStyle =
+    'border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10';
+  let iconComponent = null;
+  let labelStyle =
+    'bg-white/10 text-white/60 group-hover:bg-white/20 group-hover:text-white';
+
+  if (isSelected && variant === 'default') {
+    containerStyle = 'border-primary/60 bg-primary/5 hover:bg-primary/10';
+    labelStyle = 'bg-primary/20 text-primary group-hover:bg-primary/30';
+  }
+
+  switch (variant) {
+    case 'correct':
+      containerStyle = 'border-primary bg-primary/10';
+      labelStyle = 'bg-primary text-black';
+      iconComponent = (
+        <div className="w-6 h-6 rounded-full border-2 border-primary flex items-center justify-center bg-primary text-black ml-auto">
+          <Check className="w-3.5 h-3.5 font-black" />
+        </div>
+      );
+      break;
+    case 'incorrect':
+      containerStyle = 'border-red-500/50 bg-red-500/10';
+      labelStyle = 'bg-red-500 text-white';
+      iconComponent = (
+        <div className="w-6 h-6 rounded-full border-2 border-red-500 flex items-center justify-center bg-red-500 text-white ml-auto">
+          <X className="w-3.5 h-3.5 font-black" />
+        </div>
+      );
+      break;
+    case 'dimmed':
+      containerStyle = 'border-white/5 opacity-40';
+      break;
+    case 'default':
+    default:
+      break;
+  }
+
+  return (
+    <motion.button
+      onClick={onClick}
+      disabled={disabled}
+      whileHover={!disabled ? { scale: 1.005 } : {}}
+      whileTap={!disabled ? { scale: 0.995 } : {}}
+      className={cn(
+        'group w-full flex items-center gap-3 md:gap-4 p-2.5 md:p-3 rounded-xl border transition-all duration-200 text-left',
+        containerStyle,
+        !disabled && 'cursor-pointer'
+      )}
+    >
+      <div
+        className={cn(
+          'w-8 h-8 min-w-[32px] rounded-lg flex items-center justify-center font-bold text-sm transition-colors',
+          labelStyle
+        )}
+      >
+        {label}
+      </div>
+      <div className="flex-1 font-medium text-base text-white/70 group-hover:text-white transition-colors">
+        <MathRenderer content={option} />
+      </div>
+      {iconComponent}
+    </motion.button>
+  );
+});
+
+interface ExplanationPanelProps {
+  question: QuizQuestion;
+  isCorrect: boolean | null;
+  showExplanation: boolean;
+  onToggleExplanation: () => void;
+  optionLabels: string[];
+}
+
+function ExplanationPanel({
+  question,
+  isCorrect,
+  showExplanation,
+  onToggleExplanation,
+  optionLabels,
+}: ExplanationPanelProps) {
+  return (
+    <div className="flex flex-col h-full bg-transparent">
+      <div
+        onClick={onToggleExplanation}
+        className="w-full px-6 py-4 flex items-center justify-between bg-black/10 hover:bg-black/20 transition-all cursor-pointer border-b border-white/5"
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            onToggleExplanation();
+          }
+        }}
+      >
+        <div className="flex items-center gap-2 text-primary">
+          <Brain className="w-5 h-5" />
+          <h3 className="font-bold text-sm uppercase tracking-widest font-heading">
+            Çözüm
+          </h3>
+        </div>
+        <motion.span
+          animate={{ rotate: showExplanation ? 180 : 0 }}
+          className="text-white/40"
+        >
+          <ChevronDown className="w-5 h-5" />
+        </motion.span>
+      </div>
+
+      <AnimatePresence>
+        {showExplanation && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="flex-1 overflow-y-auto custom-scrollbar"
+          >
+            <div className="p-6 md:p-8 space-y-6">
+              <div className="flex items-center gap-3">
+                {isCorrect ? (
+                  <div className="flex items-center gap-2 text-primary bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20">
+                    <CheckCircle className="w-4 h-4" />
+                    <span className="font-bold text-xs uppercase tracking-wider">
+                      Doğru Cevap
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 text-red-400 bg-red-400/10 px-3 py-1.5 rounded-lg border border-red-400/20">
+                    <XCircle className="w-4 h-4" />
+                    <span className="font-bold text-xs uppercase tracking-wider">
+                      Yanlış - Doğru Seçenek: {optionLabels[question.a]}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                {question.insight && (
+                  <p className="text-sm leading-relaxed text-white/70 italic">
+                    {question.insight}
+                  </p>
+                )}
+
+                <div className="p-5 bg-black/30 border border-white/5 rounded-xl font-sans text-sm leading-relaxed text-white/80">
+                  <div className="prose prose-invert prose-sm max-w-none prose-p:leading-relaxed prose-pre:bg-transparent">
+                    <MathRenderer content={question.exp} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// --- Main Component ---
 
 interface QuizCardProps {
   question: QuizQuestion | null;

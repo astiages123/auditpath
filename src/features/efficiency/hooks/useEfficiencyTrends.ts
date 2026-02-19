@@ -1,14 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
-  getEfficiencyTrend,
-  getFocusTrend,
-} from '../services/efficiencyTrendService';
-import {
   getConsistencyData,
+  getEfficiencyTrend,
   getFocusPowerData,
+  getFocusTrend,
   getLearningLoadData,
-} from '../services/analytics';
+} from '../services/efficiencyDataService';
 import {
   DayActivity,
   EfficiencyTrend,

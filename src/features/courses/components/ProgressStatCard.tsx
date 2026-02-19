@@ -94,7 +94,7 @@ export function ProgressStatCard({
           ) : (
             <>
               <div className="flex items-baseline">
-                <span className={cn('text-4xl font-black text-white')}>
+                <span className={cn('text-2xl font-black text-white')}>
                   {value}
                 </span>
                 {suffix && (

@@ -7,18 +7,19 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Brain, FileText } from 'lucide-react';
-import { QuizContainer } from './QuizContainer';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import {
   useQuizManager,
   QuizState,
 } from '@/features/quiz/hooks/useQuizManager';
-import { TopicSidebar } from './TopicSidebar';
-import { InitialStateView } from './InitialStateView';
-import { MappingProgressView } from './MappingProgressView';
-import { BriefingView } from './BriefingView';
-import { SmartExamView } from './SmartExamView';
-import { CourseOverview } from './CourseOverview';
+import { TopicSidebar } from './QuizSideComponents';
+import { InitialStateView, CourseOverview } from './QuizIntroViews';
+import {
+  MappingProgressView,
+  BriefingView,
+  SmartExamView,
+} from './QuizFlowViews';
+import { QuizContainer } from './QuizView';
 
 interface QuizModalProps {
   isOpen: boolean;

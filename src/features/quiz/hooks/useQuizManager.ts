@@ -4,9 +4,9 @@ import {
   getCourseTopicsWithCounts,
   getTopicCompletionStatus,
 } from '@/features/quiz/services/quizStatusService';
-import { getFirstChunkIdForTopic } from '@/features/quiz/services/quizTopicService';
+import { getFirstChunkIdForTopic } from '@/features/quiz/services/quizService';
 import * as QuizService from '@/features/quiz/services/quizService';
-import { generateForChunk } from '@/features/quiz/logic/quizLogic';
+import { generateForChunk } from '@/features/quiz/logic/quizParser';
 import {
   type GenerationLog,
   type QuizQuestion,

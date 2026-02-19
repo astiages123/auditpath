@@ -1,4 +1,4 @@
-import type { ConceptMapItem } from '@/features/quiz/types';
+import { type ConceptMapItem, type Message } from '@/features/quiz/types';
 
 export const GENERAL_QUALITY_RULES = `## GENEL KALİTE KURALLARI:
 1. **Akademik Dil:** Soru kökü ve şıklar resmi, akademik ve sınav formatına (KPSS) uygun olmalıdır.
@@ -22,6 +22,86 @@ LaTeX ifadeleri için JSON içinde çift ters eğik çizgi kullanmak (\\) EN KR�
 }
 ## SİSTEM MESAJI:
 Eğer soruyu kurgularken metindeki bir görseli [GÖRSEL: X] referans alıyorsan, o görselin numarasını (0, 1, 2 gibi) 'img' alanına yaz. Eğer sorunun bir görselle doğrudan ilgisi yoksa 'img' değerini null bırak.`;
+
+// --- Prompt Architect & Assembly ---
+
+export class PromptArchitect {
+  static assemble(
+    systemPrompt: string,
+    contextPrompt: string,
+    taskPrompt: string
+  ): Message[] {
+    const fixedContext = this.normalizeText(contextPrompt);
+    const dynamicTask = this.normalizeText(taskPrompt);
+
+    return [
+      { role: 'system', content: this.normalizeText(systemPrompt) },
+      {
+        role: 'user',
+        content: `${fixedContext}\n\n--- GÖREV ---\n${dynamicTask}`,
+      },
+    ];
+  }
+
+  static buildContext(
+    content: string,
+    courseName?: string,
+    sectionTitle?: string,
+    guidelines?: {
+      instruction?: string;
+      few_shot_example?: unknown;
+      bad_few_shot_example?: unknown;
+    } | null
+  ): string {
+    const parts: string[] = [];
+
+    if (courseName && courseName.trim()) {
+      parts.push(`## DERS: ${courseName.trim()}`);
+    }
+    if (sectionTitle && sectionTitle.trim()) {
+      parts.push(`## KONU: ${sectionTitle.trim()}`);
+    }
+
+    if (guidelines) {
+      parts.push('## DERS REHBERİ VE KURALLAR:');
+      if (guidelines.instruction && guidelines.instruction.trim()) {
+        parts.push(`### TEKNİK KURALLAR\n${guidelines.instruction.trim()}`);
+      }
+      if (guidelines.few_shot_example) {
+        const exampleStr = JSON.stringify(guidelines.few_shot_example, null, 2);
+        parts.push(`\n### İYİ ÖRNEK (Bunu model al):\n${exampleStr}`);
+      }
+      if (guidelines.bad_few_shot_example) {
+        const badExampleStr = JSON.stringify(
+          guidelines.bad_few_shot_example,
+          null,
+          2
+        );
+        parts.push(`\n### KÖTÜ ÖRNEK (Bundan kaçın):\n${badExampleStr}`);
+      }
+    }
+
+    parts.push(GENERAL_QUALITY_RULES);
+    parts.push(COMMON_OUTPUT_FORMATS);
+    parts.push('## BAĞLAM METNİ:');
+    parts.push(this.normalizeText(content));
+
+    return parts
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0)
+      .join('\n\n');
+  }
+
+  static cleanReferenceImages(content: string): string {
+    return content.replace(/!\[[^\]]*\]\([^)]+\)/g, '[GÖRSEL]');
+  }
+
+  private static normalizeText(text: string): string {
+    return text.replace(/\r\n/g, '\n').trim();
+  }
+}
+
+// --- Dynamic Prompt Builders ---
 
 export const ANALYSIS_SYSTEM_PROMPT = (
   sectionTitle: string,

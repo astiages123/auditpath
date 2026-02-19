@@ -13,17 +13,19 @@ import { DAILY_QUOTA } from '@/features/quiz/utils/constants';
 import {
   fetchCourseChunks,
   fetchCourseMastery,
-  fetchGeneratedQuestions,
-  fetchNewFollowups,
-  fetchQuestionsByStatus,
-  fetchWaterfallTrainingQuestions,
   getCourseName,
   getCourseStatsAggregate,
   getFrontierChunkId,
 } from './quizCoreService';
+import {
+  fetchGeneratedQuestions,
+  fetchNewFollowups,
+  fetchQuestionsByStatus,
+  fetchWaterfallTrainingQuestions,
+} from './quizQuestionService';
 import { incrementCourseSession } from './quizSubmissionService';
 import { calculateQuestionWeights } from '@/features/quiz/logic/srsLogic';
-import { generateForChunk } from '@/features/quiz/logic/parserLogic';
+import { generateForChunk } from '../logic/quizParser';
 
 export async function getRecentQuizSessions(
   userId: string,

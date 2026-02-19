@@ -11,16 +11,16 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Loader2, Sparkles } from 'lucide-react';
-import { getChunkQuotaStatus } from '@/features/quiz/services/quizService';
+import { getChunkQuotaStatus } from '@/features/quiz/services/quizQuestionService';
 import { type QuotaStatus } from '@/features/quiz/types';
-import { generateForChunk } from '@/features/quiz/logic/quizLogic';
+import { generateForChunk } from '@/features/quiz/logic/quizParser';
 import {
   type GenerationLog,
   type GenerationStep as LogStep,
 } from '@/features/quiz/types';
 import { toast } from 'sonner';
-import { QuotaDisplay } from './QuotaDisplay';
-import { GenerationLiveStream } from './GenerationLiveStream';
+import { QuotaDisplay } from './QuizIntroViews';
+import { GenerationLiveStream } from './QuizIntroViews';
 
 interface GenerateQuestionButtonProps {
   chunkId: string;

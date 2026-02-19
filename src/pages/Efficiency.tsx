@@ -3,11 +3,13 @@ import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { RecentQuizzesCard } from '@/features/efficiency/components/RecentQuizzesCard';
 import { CognitiveInsightsCard } from '@/features/efficiency/components/CognitiveInsightsCard';
 import { FocusHubCard } from '@/features/efficiency/components/FocusHubCard';
-import { LearningLoadCard } from '@/features/efficiency/components/LearningLoadCard';
-import { MasteryNavigatorCard } from '@/features/efficiency/components/MasteryNavigatorCard';
+import {
+  LearningLoadCard,
+  MasteryNavigatorCard,
+  ConsistencyHeatmapCard,
+} from '@/features/efficiency/components/EfficiencyLearningInsights';
 import { PracticeCenterCard } from '@/features/efficiency/components/PracticeCenterCard';
-import { ConsistencyHeatmapCard } from '@/features/efficiency/components/ConsistencyHeatmapCard';
-import { RecentActivitiesContainer } from '@/features/efficiency/components/RecentActivitiesContainer';
+import { RecentActivitiesContainer } from '@/features/efficiency/components/EfficiencyActivities';
 import { useCognitiveInsights } from '@/features/efficiency/hooks/useCognitiveInsights';
 
 const EfficiencyDashboard = () => {

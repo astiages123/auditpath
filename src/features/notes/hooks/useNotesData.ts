@@ -2,7 +2,7 @@ import { useEffect, useState, useTransition } from 'react';
 import {
   getCourseIdBySlug,
   getCourseTopics,
-} from '@/features/quiz/services/quizTopicService';
+} from '@/features/quiz/services/quizCoreService';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { storage } from '@/shared/services/storageService';
 import { logger } from '@/utils/logger';

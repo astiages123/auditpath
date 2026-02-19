@@ -10,7 +10,7 @@ import type { Rank } from '@/types/auth';
 import { JourneyModal } from './JourneyModal';
 import { motion } from 'framer-motion';
 import { formatDurationShort } from '@/utils/formatters';
-import { WEEKLY_SCHEDULE } from '@/features/courses/services/courses-config';
+import { WEEKLY_SCHEDULE } from '@/features/courses/utils/coursesConfig';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RankCard } from './RankCard';
 import { ProgressStatCard } from './ProgressStatCard';

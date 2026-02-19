@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { getDailyEfficiencySummary } from '@/features/efficiency/services/efficiencySummaryService';
-import { getDailyStats } from '@/features/efficiency/services/activityStatsService';
+import { getDailyEfficiencySummary } from '@/features/efficiency/services/efficiencyDataService';
+import { getDailyStats } from '@/features/efficiency/services/activityService';
 import { DailyEfficiencySummary } from '@/features/efficiency/types/efficiencyTypes';
 import { useEfficiencyStore } from '@/features/efficiency/store/useEfficiencyStore';
 import { logger } from '@/utils/logger';

@@ -7,15 +7,17 @@ import {
   type QuizResponseType,
   type SubmissionResult,
 } from '@/features/quiz/types';
-import { calculateQuizResult } from '@/features/quiz/logic/quizLogic';
+import { calculateQuizResult } from '../logic/srsLogic';
 import {
   getChunkMastery,
   getChunkMetadata,
+  getUserQuestionStatus,
+} from './quizCoreService';
+import {
   getChunkQuestionCount,
   getQuestionData,
   getUniqueSolvedCountInChunk,
-  getUserQuestionStatus,
-} from './quizCoreService';
+} from './quizQuestionService';
 
 export async function updateChunkMetadata(
   chunkId: string,

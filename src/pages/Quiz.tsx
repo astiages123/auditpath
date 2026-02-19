@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { QuizContainer } from '@/features/quiz/components/QuizContainer';
+import { QuizContainer } from '@/features/quiz/components/QuizView';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/utils/routes';
-import { preloadSubjectKnowledge } from '@/features/quiz/services/subjectKnowledgeService';
+import { preloadSubjectKnowledge } from '@/features/quiz/services/quizInfoService';
 import { logger } from '@/utils/logger';
 
 export const QuizPage: React.FC = () => {

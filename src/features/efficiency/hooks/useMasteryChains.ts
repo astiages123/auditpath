@@ -7,7 +7,7 @@ import { CourseMastery } from '@/features/courses/types/courseTypes';
 import {
   calculateMasteryChains,
   processGraphForAtlas,
-} from '@/features/quiz/logic/mastery';
+} from '@/features/quiz/logic/quizCoreLogic';
 
 export function useMasteryChains() {
   const { user } = useAuth();

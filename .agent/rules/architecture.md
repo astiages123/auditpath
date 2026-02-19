@@ -14,8 +14,8 @@ trigger: always_on
   - `logic/`: Özelliğe özel iş mantığı, algoritmalar ve yardımcı fonksiyonlar.
   - `services/`: Veri çekme ve API işlemleri.
   - `store/`: Zustand store dosyaları.
+  - `utils/`: Özelliğe özel yardımcı fonksiyonlar ve sabitler.
 - **Yasak Alt Klasörler:**
-  - `utils/` → Feature içinde KULLANILMAZ. Yardımcı fonksiyonlar `logic/` altına konulmalıdır.
   - `context/` → Ayrı klasör olarak KULLANILMAZ. Context/Provider dosyaları `hooks/` altına konulmalıdır.
 
 ## Paylaşılan Katmanlar

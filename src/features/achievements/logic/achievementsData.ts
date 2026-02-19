@@ -1,13 +1,12 @@
-export { GUILDS } from './guilds';
-export { ACHIEVEMENTS } from './definitions';
+export { ACHIEVEMENTS, GUILDS } from './definitions';
 export {
-  getRequirementDescription,
   getAchievementsByGuild,
+  getRequirementDescription,
 } from './achievementUtils';
 export {
   calculateAchievements,
-  isAchievementUnlocked,
   checkTopicMastery,
+  isAchievementUnlocked,
 } from './achievementEngine';
 
 export type {

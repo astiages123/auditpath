@@ -58,7 +58,7 @@ export function TimerController() {
   // 1. Core Tick using Web Worker
   useEffect(() => {
     const worker = new Worker(
-      new URL('../../../../workers/timerWorker.ts', import.meta.url),
+      new URL('../../../workers/timerWorker.ts', import.meta.url),
       { type: 'module' }
     );
 

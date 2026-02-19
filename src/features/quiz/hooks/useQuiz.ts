@@ -1,30 +1,16 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   QuizQuestion,
-  QuizResponseType,
   QuizResults,
   QuizState,
   SessionContext,
-  TrueFalseQuestion,
-  MultipleChoiceQuestion,
 } from '@/features/quiz/types';
 import {
   calculateInitialResults,
   calculateTestResults,
-  updateResults,
-} from '@/features/quiz/logic/quizLogic';
-import { createTimer } from '@/features/quiz/logic/quizTimer';
-import {
-  fetchQuestionsByIds,
-  getReviewQueue,
-  startQuizSession,
-  submitQuizAnswer,
-} from '@/features/quiz/services/quizService';
-import { generateForChunk } from '@/features/quiz/logic/quizLogic';
-import { usePomodoroSessionStore } from '@/features/pomodoro/store';
-import { useCelebrationStore } from '@/features/achievements/store';
-import { useQuotaStore } from '@/features/quiz/store';
-import { MASTERY_THRESHOLD } from '@/features/quiz/utils/constants';
+} from '@/features/quiz/logic/quizCoreLogic';
+import { useQuizTimer } from './useQuizTimer';
+import { useQuizSessionControls, useQuizSubmission } from './useQuizSession';
 
 export function useQuiz() {
   const [state, setState] = useState<QuizState>({
@@ -47,12 +33,49 @@ export function useQuiz() {
   const [results, setResults] = useState<QuizResults>(
     calculateInitialResults()
   );
-  const timerRef = useRef(createTimer());
-  const sessionContextRef = useRef<SessionContext | null>(null);
+  const [sessionContext, setSessionContext] = useState<SessionContext | null>(
+    null
+  );
 
   const updateState = useCallback((patch: Partial<QuizState>) => {
     setState((prev) => ({ ...prev, ...patch }));
   }, []);
+
+  const { startTimer, stopTimer, resetTimer } = useQuizTimer();
+
+  const loadQuestionsIntoState = useCallback(
+    (questions: QuizQuestion[]) => {
+      if (questions.length === 0) return;
+      const [first, ...rest] = questions;
+      updateState({
+        currentQuestion: first,
+        queue: rest,
+        totalToGenerate: questions.length,
+        generatedCount: questions.length,
+        isLoading: false,
+        hasStarted: true,
+      });
+      startTimer();
+    },
+    [updateState, startTimer]
+  );
+
+  const { startQuiz } = useQuizSessionControls({
+    updateState,
+    loadQuestionsIntoState,
+    _resetTimer: resetTimer,
+    setSessionContext,
+  });
+
+  const { submitAnswer } = useQuizSubmission({
+    currentQuestion: state.currentQuestion,
+    sessionContext,
+    selectedAnswer: state.selectedAnswer,
+    isAnswered: state.isAnswered,
+    setResults,
+    updateState,
+    stopTimer,
+  });
 
   const resetState = useCallback(() => {
     setState({
@@ -72,91 +95,9 @@ export function useQuiz() {
       history: [],
     });
     setResults(calculateInitialResults());
-    timerRef.current.reset();
-  }, []);
-
-  // --- Initialization ---
-  const loadQuestionsIntoState = useCallback(
-    (questions: QuizQuestion[]) => {
-      if (questions.length === 0) return;
-      const [first, ...rest] = questions;
-      updateState({
-        currentQuestion: first,
-        queue: rest,
-        totalToGenerate: questions.length,
-        generatedCount: questions.length,
-        isLoading: false,
-        hasStarted: true,
-      });
-    },
-    [updateState]
-  );
-
-  const startQuiz = useCallback(
-    async (userId: string, courseId: string, chunkId?: string) => {
-      updateState({ isLoading: true, error: null });
-      try {
-        const session = await startQuizSession(userId, courseId);
-        sessionContextRef.current = session;
-        usePomodoroSessionStore
-          .getState()
-          .setSessionId(session.sessionNumber.toString());
-
-        const queue = await getReviewQueue(session, 10, chunkId);
-        if (queue.length > 0) {
-          const questions = await fetchQuestionsByIds(
-            queue.map((i) => i.questionId)
-          );
-          loadQuestionsIntoState(
-            questions.map((q) => {
-              const qd = q.question_data as
-                | TrueFalseQuestion
-                | MultipleChoiceQuestion;
-              return {
-                ...qd,
-                id: q.id,
-              } as QuizQuestion;
-            })
-          );
-        } else if (chunkId) {
-          await generateForChunk(
-            chunkId,
-            {
-              onLog: () => {},
-              onTotalTargetCalculated: () => {},
-              onQuestionSaved: (count) =>
-                updateState({ generatedCount: count }),
-              onComplete: async () => {
-                const newQueue = await getReviewQueue(session, 10, chunkId);
-                const newQs = await fetchQuestionsByIds(
-                  newQueue.map((i) => i.questionId)
-                );
-                loadQuestionsIntoState(
-                  newQs.map((q) => {
-                    const qd = q.question_data as
-                      | TrueFalseQuestion
-                      | MultipleChoiceQuestion;
-                    return {
-                      ...qd,
-                      id: q.id,
-                    } as QuizQuestion;
-                  })
-                );
-              },
-              onError: (err) => updateState({ error: err, isLoading: false }),
-            },
-            { usageType: 'antrenman', userId }
-          );
-        } else {
-          updateState({ isLoading: false, error: 'Soru bulunamadı.' });
-        }
-      } catch (e: unknown) {
-        const error = e as Error;
-        updateState({ isLoading: false, error: error.message });
-      }
-    },
-    [updateState, loadQuestionsIntoState]
-  );
+    setSessionContext(null);
+    resetTimer();
+  }, [resetTimer]);
 
   // --- User Actions ---
   const selectAnswer = useCallback(
@@ -167,65 +108,6 @@ export function useQuiz() {
       });
     },
     [state.isAnswered, state.currentQuestion, state.selectedAnswer, updateState]
-  );
-
-  const submitAnswer = useCallback(
-    async (type: QuizResponseType = 'correct') => {
-      if (
-        state.isAnswered ||
-        !state.currentQuestion ||
-        !sessionContextRef.current
-      )
-        return;
-
-      const actualType =
-        type === 'correct'
-          ? state.selectedAnswer === state.currentQuestion.a
-            ? 'correct'
-            : 'incorrect'
-          : type;
-      const timeSpent = timerRef.current.stop();
-
-      setResults((prev) =>
-        updateResults(prev, actualType as QuizResponseType, timeSpent)
-      );
-      updateState({
-        isAnswered: true,
-        isCorrect: actualType === 'correct',
-        showExplanation: actualType !== 'blank',
-      });
-
-      const result = await submitQuizAnswer(
-        sessionContextRef.current,
-        state.currentQuestion.id!,
-        state.currentQuestion.chunk_id || null,
-        actualType as QuizResponseType,
-        timeSpent,
-        state.selectedAnswer
-      );
-
-      updateState({ lastSubmissionResult: result });
-
-      if (
-        result.newMastery >= MASTERY_THRESHOLD &&
-        state.currentQuestion.chunk_id
-      ) {
-        useCelebrationStore.getState().enqueueCelebration({
-          id: `MASTERY_${state.currentQuestion.chunk_id}_${result.newMastery}`,
-          title: 'Uzmanlık Seviyesi!',
-          description: `Bu konudaki ustalığın ${result.newMastery} puana ulaştı.`,
-          variant: 'achievement',
-        });
-      }
-      useQuotaStore.getState().decrementQuota();
-    },
-    [
-      state.isAnswered,
-      state.currentQuestion,
-      state.selectedAnswer,
-      updateState,
-      setResults,
-    ]
   );
 
   const nextQuestion = useCallback(() => {
@@ -250,8 +132,8 @@ export function useQuiz() {
         isCorrect: null,
         lastSubmissionResult: null,
       });
-      timerRef.current.reset();
-      timerRef.current.start();
+      resetTimer();
+      startTimer();
     } else {
       const summary = calculateTestResults(
         results.correct,
@@ -266,7 +148,7 @@ export function useQuiz() {
         hasStarted: false,
       });
     }
-  }, [state, results, updateState]);
+  }, [state, results, updateState, resetTimer, startTimer]);
 
   const previousQuestion = useCallback(() => {
     if (state.history.length === 0) return;

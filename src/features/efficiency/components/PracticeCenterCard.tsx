@@ -54,9 +54,7 @@ export const PracticeCenterCard = () => {
         </div>
       }
     >
-      <PracticeCenterContent>
-        <BloomKeyChart data={bloomStats} />
-      </PracticeCenterContent>
+      <PracticeCenterContent data={bloomStats} />
     </EfficiencyModal>
   );
 };

@@ -30,6 +30,7 @@ trigger: always_on
 
 - `any` tipi kullanılmamalıdır. Her şeyin tipi `src/types/` veya özellik altındaki `types/` klasöründe tanımlanmalıdır.
 - Veri tabanı dönüşleri için `database.types.ts` referans alınmalıdır.
+- **Dosya Boyutu:** 500 satırı bariz aşan (örn: 520+ satır) dosyalar, kodun okunabilirliğini ve yönetilebilirliğini korumak adına bölünmeli veya yeniden yapılandırılmalıdır.
 
 ## İçe Aktarmalar (Imports)
 

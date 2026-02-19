@@ -8,10 +8,7 @@ import { cn } from '@/utils/core';
 import { formatDuration } from '@/utils/formatters';
 import { normalizeCategorySlug } from '../utils/categoryHelpers';
 
-import {
-  CATEGORY_THEMES,
-  COURSE_THEME_CONFIG,
-} from '../services/courses-config';
+import { CATEGORY_THEMES, COURSE_THEME_CONFIG } from '../utils/coursesConfig';
 
 import { type Course } from '@/features/courses/types/courseTypes';
 

@@ -1,0 +1,583 @@
+# AuditPath — Kapsamlı Kod Denetim Raporu
+
+📅 **Tarih:** 19 Şubat 2026
+📁 **Proje:** AuditPath (Tek kullanıcılı hobi projesi)
+🔍 **Tarama Kapsamı:** Tüm kaynak kod, konfigürasyon, migration ve scriptler
+
+---
+
+## 1. DOSYA VE KLASÖR ORGANİZASYONU
+
+---
+
+### Bulgu 1.1 — Quiz services içinde `repositories/` alt klasörü
+
+❌ **SORUN:** Quiz feature'ın `services/` klasöründe [repositories/quizRepository.ts](file:///Users/vedatdiyar/Desktop/AuditPath/src/features/quiz/services/repositories/quizRepository.ts) adında bir alt klasör ve dosya var. Bu yapı feature alt klasör kurallarında tanımlı değil — services altında alt klasör açılmamalı.
+
+📁 **LOKASYON:** [src/features/quiz/services/repositories/quizRepository.ts](file:///Users/vedatdiyar/Desktop/AuditPath/src/features/quiz/services/repositories/quizRepository.ts)
+
+⚠️ **NEDEN SORUN:** Feature yapısında `repositories/` alt klasörü tanımlı değil. Dosya adı ([quizRepository.ts](file:///Users/vedatdiyar/Desktop/AuditPath/src/features/quiz/services/repositories/quizRepository.ts)) isimlendirme kurallarına uyuyor ama konumu yanlış.
+
+✅ **YAPILACAK:** [quizRepository.ts](file:///Users/vedatdiyar/Desktop/AuditPath/src/features/quiz/services/repositories/quizRepository.ts) dosyasını doğrudan `services/` klasörüne taşı. `repositories/` klasörünü sil. Import yollarını güncelle.
+
+📊 **ÖNCELİK:** 🟡 Orta
+
+---
+
+### Bulgu 1.2 — Efficiency services aşırı bölünmüş (11 dosya + alt klasör)
+
+❌ **SORUN:** `src/features/efficiency/services/` içinde 11 ayrı servis dosyası ve bir `analytics/` alt klasörü var. Bu kadar küçük ve benzer dosya yönetimi zorlaştırır.
+
+📁 **LOKASYON:** `src/features/efficiency/services/` — `activityHistoryService.ts`, `activityLoggingService.ts`, `activityStatsService.ts`, `activityUtils.ts`, `activityVisualService.ts`, `efficiencyChartService.ts`, `efficiencyCoreService.ts`, `efficiencySummaryService.ts`, `efficiencyTrendService.ts`, `analytics/index.ts` + 2 barrel export
+
+⚠️ **NEDEN SORUN:** Bir değişiklik yapmak için hangi dosyaya bakacağını bulmak zorlaşır. AI düzenleme yapacakken çok fazla bağlam dosyası okuması gerekir. Ayrıca `analytics/` alt klasörü feature yapısında tanımsız.
+
+✅ **YAPILACAK:** İlişkili dosyaları birleştir:
+- `activityHistoryService.ts` + `activityStatsService.ts` + `activityLoggingService.ts` → `activityService.ts`
+- `efficiencyChartService.ts` + `efficiencyTrendService.ts` + `efficiencySummaryService.ts` → `efficiencyDataService.ts`
+- `analytics/` alt klasörünü kaldır, içeriğini uygun servis dosyasına taşı.
+
+📊 **ÖNCELİK:** 🟡 Orta
+
+---
+
+### Bulgu 1.3 — `activityUtils.ts` yanlış yerde
+
+❌ **SORUN:** `activityUtils.ts` dosyası `services/` altında ama içeriği yardımcı fonksiyonlar (`getVirtualToday`, `adjustToVirtualDay`, `formatDateKey`). Bu bir servis dosyası değil.
+
+📁 **LOKASYON:** `src/features/efficiency/services/activityUtils.ts`
+
+⚠️ **NEDEN SORUN:** `services/` klasöründe "utils" isimli dosya bulunması kafa karıştırır. Bu dosya ya `logic/` ya da `utils/` altına taşınmalı.
+
+✅ **YAPILACAK:** Bu dosyayı `src/features/efficiency/utils/activityHelpers.ts` veya `src/features/efficiency/logic/activityHelpers.ts` olarak taşı.
+
+📊 **ÖNCELİK:** 🔵 Düşük
+
+---
+
+### Bulgu 1.4 — Feature tutarlılığı analizi
+
+Mevcut feature'ların klasör yapıları:
+
+| Feature | components | hooks | logic | services | types | store | utils |
+|---|---|---|---|---|---|---|---|
+| achievements | ✅ 3 | ✅ 1 | ✅ 15 | ✅ 5 | ✅ 1 | ✅ 2 | ✅ 2 |
+| analytics | ✅ 4 | ✅ 1 | ✅ 1 | ✅ 2 | ✅ 1 | — | — |
+| auth | ✅ 4 | ✅ 1 | — | — | ✅ 1 | — | — |
+| courses | ✅ 13 | ✅ 3 | ✅ 2 | ✅ 4 | ✅ 1 | — | ✅ 2 |
+| efficiency | ✅ 25 | ✅ 5 | ✅ 3 | ✅ 11 | ✅ 1 | ✅ 1 | ✅ 1 |
+| notes | ✅ 8 | ✅ 3 | ✅ 2 | — | ✅ 1 | ✅ 2 | — |
+| pomodoro | ✅ 6 | ✅ 2 | ✅ 2 | ✅ 1 | ✅ 1 | ✅ 4 | ✅ 1 |
+| quiz | ✅ 29 | ✅ 6 | ✅ 12 | ✅ 13 | ✅ 3 | ✅ 2 | ✅ 1 |
+
+⚠️ **DİKKAT:** `store/` kullanımı tutarsız (analytics, auth, courses'da yok). Bu kendi başına sorun değil (her feature'ın store'a ihtiyacı olmayabilir), ama quiz ve efficiency'nin çok fazla dosyası var.
+
+📊 **ÖNCELİK:** 🔵 Düşük
+
+---
+
+## 2. CLEAN CODE — KISS (Basit Tut)
+
+---
+
+### Bulgu 2.1 — Quiz servis dosyasının sadece barrel export olması + altında 13 dosya
+
+❌ **SORUN:** `quizService.ts` dosyası hiçbir iş mantığı içermiyor, sadece 10 diğer dosyadan re-export yapıyor (barrel export). Altında 13 ayrı servis dosyası var — tek kullanıcılı hobi projesi için bu çok fazla.
+
+📁 **LOKASYON:** `src/features/quiz/services/quizService.ts`
+
+⚠️ **NEDEN SORUN:** Quiz servisleri aşırı bölünmüş: `quizCoreService.ts`, `quizQuestionService.ts`, `quizSubmissionService.ts`, `quizHistoryService.ts`, `quizTopicService.ts`, `quizStatusService.ts`, `quizStatusHelper.ts`, `quizClient.ts`, `subjectKnowledgeService.ts`, `quizAnalyticsService.ts`, `mockQuizData.ts`. Hangi dosyaya bakacağını bulmak zorlaşır.
+
+✅ **YAPILACAK:** Servisleri mantıksal gruplara göre birleştir:
+- `quizCoreService.ts` + `quizStatusService.ts` + `quizStatusHelper.ts` → `quizCoreService.ts`
+- `quizQuestionService.ts` + `quizTopicService.ts` → `quizQuestionService.ts`
+
+📊 **ÖNCELİK:** 🟡 Orta
+
+---
+
+### Bulgu 2.2 — Quiz logic klasöründe 12 dosya
+
+❌ **SORUN:** `src/features/quiz/logic/` altında 12 ayrı dosya var. İlişkili mantıklar çok ufak dosyalara bölünmüş.
+
+📁 **LOKASYON:** `src/features/quiz/logic/` — `debugLogger.ts`, `mastery.ts`, `parserLogic.ts`, `parserUtils.ts`, `promptArchitect.ts`, `prompts.ts`, `quizLogic.ts`, `quizTimer.ts`, `rateLimit.ts`, `scoringLogic.ts`, `srsLogic.ts`, `structuredGenerator.ts`
+
+⚠️ **NEDEN SORUN:** 12 dosya AI'ın bağlam oluşturmasını zorlaştırır.
+
+✅ **YAPILACAK:** İlişkili dosyaları birleştir:
+- `parserLogic.ts` + `parserUtils.ts` → `parser.ts`
+- `promptArchitect.ts` + `prompts.ts` → `prompts.ts`
+- `scoringLogic.ts` + `mastery.ts` → `scoring.ts`
+
+📊 **ÖNCELİK:** 🔵 Düşük
+
+---
+
+### Bulgu 2.3 — Achievements logic'te 15 dosya
+
+❌ **SORUN:** `src/features/achievements/logic/` altında 15 dosya var. Çoğu başarım tanımları için ayrı dosyalar (`accounting.ts`, `economy.ts`, `general.ts`, `guilds.ts`, `hybrid.ts`, `law.ts`, `special.ts`).
+
+📁 **LOKASYON:** `src/features/achievements/logic/`
+
+⚠️ **NEDEN SORUN:** Her kategori için ayrı dosya mantıklı olabilir ama sayı çok fazla.
+
+✅ **YAPILACAK:** Kategori dosyalarını tek bir `definitions.ts` dosyasında birleştir (her kategori bir section olarak). `achievementEngine.ts`, `achievementUtils.ts`, `celebrationAssets.ts` ayrı kalabilir.
+
+📊 **ÖNCELİK:** 🔵 Düşük
+
+---
+
+## 3. CLEAN CODE — DRY (Kendini Tekrar Etme)
+
+---
+
+### Bulgu 3.1 — useUIStore toast sistemi ile sonner çakışması
+
+❌ **SORUN:** `useUIStore.ts` dosyasında kendi toast (bildirim) sistemi tanımlanmış (`addToast`, `removeToast`, `clearToasts`). Ancak projede zaten `sonner` paketi kullanılıyor ve mimari kurallarda hata bildirimi için `sonner` kullanılması zorunlu.
+
+📁 **LOKASYON:** `src/shared/store/useUIStore.ts` (satır 38-54)
+
+⚠️ **NEDEN SORUN:** Aynı işi yapan iki farklı sistem var. Mimari kurallarla çelişiyor.
+
+✅ **YAPILACAK:** `useUIStore`'dan toast ile ilgili tüm kodu kaldır (`Toast` tipi, `addToast`, `removeToast`, `clearToasts`). Tüm bildirimlerin `sonner` üzerinden yapılıp yapılmadığını kontrol et.
+
+📊 **ÖNCELİK:** 🟠 Yüksek
+
+---
+
+## 4. CLEAN CODE — YAGNI (Gerekmeyeni Yazma)
+
+---
+
+### Bulgu 4.1 — `mockQuizData.ts` aktif kullanımda mı?
+
+❌ **SORUN:** `src/features/quiz/services/mockQuizData.ts` dosyası var. Test verileri içeriyor olabilir ama projede test altyapısı yok.
+
+📁 **LOKASYON:** `src/features/quiz/services/mockQuizData.ts`
+
+⚠️ **NEDEN SORUN:** Kullanılmayan test verileri dosyası boş yere yer kaplar ve kafa karıştırır.
+
+✅ **YAPILACAK:** Bu dosyanın herhangi bir yerden import edilip edilmediğini kontrol et. Edilmiyorsa sil.
+
+📊 **ÖNCELİK:** 🔵 Düşük
+
+---
+
+### Bulgu 4.2 — `AI_MODE` sabiti hardcoded (kodun içine gömülmüş)
+
+❌ **SORUN:** `aiConfig.ts` dosyasında `AI_MODE` sabiti doğrudan `'PRODUCTION'` olarak yazılmış. TEST/PRODUCTION geçişi için kod değiştirmek gerekiyor.
+
+📁 **LOKASYON:** `src/utils/aiConfig.ts` satır 1
+
+⚠️ **NEDEN SORUN:** AI sağlayıcısını değiştirmek istediğinde dosyayı açıp kodu değiştirmen gerekir. Bu, çevre değişkeni (environment variable — `.env` dosyasında tutulan ayar) ile yönetilmeli.
+
+✅ **YAPILACAK:** `AI_MODE` değerini `.env` dosyasından oku: `const AI_MODE = import.meta.env.VITE_AI_MODE || 'PRODUCTION'`
+
+📊 **ÖNCELİK:** 🟡 Orta
+
+---
+
+## 5. CLEAN CODE — SRP (Her Dosya Tek İş Yapsın)
+
+---
+
+### Bulgu 5.1 — `useQuiz.ts` çok fazla sorumluluk taşıyor (311 satır)
+
+❌ **SORUN:** `useQuiz.ts` dosyası 311 satırda hem state yönetimi, hem API çağrıları, hem kullanıcı etkileşimleri, hem zamanlayıcı yönetimi, hem sonuç hesaplama yapıyor.
+
+📁 **LOKASYON:** `src/features/quiz/hooks/useQuiz.ts`
+
+⚠️ **NEDEN SORUN:** AI bu dosyayı düzenlerken tüm 311 satırı anlaması gerekiyor. Bir hata olduğunda sorunun kaynağını bulmak zorlaşıyor.
+
+✅ **YAPILACAK:** Bu hook'u bölmek için adımlar:
+- Zamanlayıcı mantığını `useQuizTimer.ts` hook'una taşı
+- Cevap gönderme/doğrulama mantığını `useQuizSubmission.ts` hook'una taşı
+- Ana `useQuiz.ts` sadece bu hook'ları birleştirsin
+
+📊 **ÖNCELİK:** 🟠 Yüksek
+
+---
+
+### Bulgu 5.2 — Efficiency feature'da 25 bileşen dosyası
+
+❌ **SORUN:** `src/features/efficiency/components/` altında 25 bileşen dosyası var. Tek bir feature için bu çok fazla.
+
+📁 **LOKASYON:** `src/features/efficiency/components/`
+
+⚠️ **NEDEN SORUN:** Bir değişiklik yaparken hangi bileşene bakacağını bulmak zorlaşır.
+
+✅ **YAPILACAK:** İlişkili bileşenleri birleştir (örn. modal bileşenlerini tek bir `EfficiencyModals.tsx` dosyasında topla — zaten var ama ayrı modal dosyaları da mevcut).
+
+📊 **ÖNCELİK:** 🔵 Düşük
+
+---
+
+### Bulgu 5.3 — Quiz components klasöründe 29 bileşen
+
+❌ **SORUN:** `src/features/quiz/components/` altında 29 bileşen dosyası var.
+
+📁 **LOKASYON:** `src/features/quiz/components/`
+
+⚠️ **NEDEN SORUN:** AI bir quiz komponenti düzenlerken 29 dosya arasından doğru olanı bulması gerekiyor.
+
+✅ **YAPILACAK:** İlişkili bileşenleri birleştir:
+- `QuizCard.tsx` + `QuizOptionButton.tsx` + `QuizExplanationPanel.tsx` → `QuizCard.tsx`
+- `QuizSessionStats.tsx` + `QuizTimer.tsx` + `ProgressDots.tsx` → `QuizProgress.tsx`
+
+📊 **ÖNCELİK:** 🔵 Düşük
+
+---
+
+## 6. KOD OKUNABİLİRLİĞİ
+
+---
+
+### Bulgu 6.1 — `courses-config.ts` dosya adı tutarsız
+
+❌ **SORUN:** `courses-config.ts` dosya adı kebab-case kullanmış. Ancak isimlendirme kurallarına göre konfigürasyon dosyaları kebab-case olabilir. **Ama** bu dosya bir servis/logic dosyası gibi davranıyorsa camelCase olmalı.
+
+📁 **LOKASYON:** `src/features/courses/services/courses-config.ts`
+
+⚠️ **NEDEN SORUN:** Kural: "Stil ve Konfigürasyon: kebab-case". Eğer bu gerçekten bir konfigürasyon dosyasıysa ismi doğru. Ama `services/` altında olması tartışmalı — `utils/` veya `logic/` altına taşınabilir.
+
+✅ **YAPILACAK:** Dosyanın içeriğine bak: servis mi yoksa konfigürasyon mu? Konfigürasyonsa `utils/` altına taşı. Servis gibi davranıyorsa `coursesConfig.ts` olarak yeniden adlandır.
+
+📊 **ÖNCELİK:** 🔵 Düşük
+
+---
+
+## 7. AI-ASSISTED DEVELOPMENT UYUMU
+
+---
+
+### Bulgu 7.1 — Quiz feature 66 dosyalık devasa modül
+
+❌ **SORUN:** Quiz feature'ı 66 dosya içeriyor (29 bileşen, 6 hook, 12 logic, 13 servis, 3 tip, 2 store, 1 utils). Bu, AI'ın bu feature üzerinde çalışırken çok fazla bağlam okuması gerektiği anlamına geliyor.
+
+📁 **LOKASYON:** `src/features/quiz/`
+
+⚠️ **NEDEN SORUN:** AI bu feature'da bir değişiklik yapmak için onlarca dosyayı okuması gerekir. Hata riski artar, işlem süresi uzar.
+
+✅ **YAPILACAK:** Yukarıdaki birleştirme önerilerini uygulayarak dosya sayısını ~40'a düşür.
+
+📊 **ÖNCELİK:** 🟠 Yüksek
+
+---
+
+### Bulgu 7.2 — Feature'lar arası bağımlılık
+
+❌ **SORUN:** `useQuiz.ts` dosyası 3 farklı feature'dan import yapıyor:
+- `pomodoro/store` → `usePomodoroSessionStore`
+- `achievements/store` → `useCelebrationStore`
+- `quiz/store` → `useQuotaStore`
+
+📁 **LOKASYON:** `src/features/quiz/hooks/useQuiz.ts` satır 24-27
+
+⚠️ **NEDEN SORUN:** Feature'lar birbirine bağımlı hale geliyor. Quiz'i düzenlemek için pomodoro ve achievements'ı da bilmek gerekiyor.
+
+✅ **YAPILACAK:** Çapraz feature etkileşimlerini event-based (olay tabanlı) yapıya taşı veya `shared/hooks/` altında bir köprü hook oluştur.
+
+📊 **ÖNCELİK:** 🟡 Orta
+
+---
+
+## 8. MODERN REACT & TYPESCRIPT STANDARTLARI
+
+---
+
+### Bulgu 8.1 — ✅ `any` kullanımı yok
+
+Tüm kaynak kodda `as any` veya `: any` tip kullanımı arandı — **hiç bulunmadı**. ESLint'te `@typescript-eslint/no-explicit-any: 'error'` kuralı aktif.
+
+📊 **DURUM:** ✅ Sorun yok
+
+---
+
+### Bulgu 8.2 — ✅ Fonksiyonel bileşenler + React Compiler aktif
+
+Tüm bileşenler fonksiyonel. `babel-plugin-react-compiler` ve `eslint-plugin-react-compiler` aktif.
+
+📊 **DURUM:** ✅ Sorun yok
+
+---
+
+### Bulgu 8.3 — `useQuizSessionState.ts` içinde stale closure riski
+
+❌ **SORUN:** `recordResponse` fonksiyonunun dependency array'inde (bağımlılık listesinde) `state` nesnesinin tamamı var. Bu, state her değiştiğinde fonksiyonun yeniden oluşturulmasına neden olur.
+
+📁 **LOKASYON:** `src/features/quiz/hooks/useQuizSessionState.ts` satır 185
+
+⚠️ **NEDEN SORUN:** Gereksiz yeniden hesaplamalar olur. `state.sessionInfo` yeterli olabilir.
+
+✅ **YAPILACAK:** Dependency array'i `[user?.id, state.sessionInfo]` olarak daralt.
+
+📊 **ÖNCELİK:** 🟡 Orta
+
+---
+
+## 9. HATA YÖNETİMİ
+
+---
+
+### Bulgu 9.1 — ✅ Global ErrorBoundary mevcut ve aktif
+
+`main.tsx`'de en dış katmanda, `App.tsx`'de rota seviyesinde — çift katmanlı koruma.
+
+📊 **DURUM:** ✅ Sorun yok
+
+---
+
+### Bulgu 9.2 — ✅ Try-catch kullanımı tutarlı
+
+📊 **DURUM:** ✅ Sorun yok
+
+---
+
+## 10. DEPENDENCY & PAKET ANALİZİ
+
+---
+
+### Bulgu 10.1 — `next-themes` bir Vite+React projesi için ideal değil
+
+❌ **SORUN:** `next-themes` paketi normalde Next.js projeleri için tasarlanmış. Bu proje Vite + React kullanıyor.
+
+📁 **LOKASYON:** `package.json` satır 56
+
+⚠️ **NEDEN SORUN:** Çalışıyor ama "next" adı kafa karıştırıcı. 
+
+✅ **YAPILACAK:** Aktif kullanılıyorsa ve çalışıyorsa dokunma. Ama daha hafif bir alternatif düşünülebilir.
+
+📊 **ÖNCELİK:** 🔵 Düşük
+
+---
+
+## 11. KONFİGÜRASYON & GÜVENLİK
+
+---
+
+### Bulgu 11.1 — ✅ .env dosyaları .gitignore'da korunuyor
+
+`.gitignore` dosyasında `.env*` kalıbı var. Tüm `.env` dosyaları Git'e dahil edilmiyor.
+
+📊 **DURUM:** ✅ Sorun yok
+
+---
+
+### Bulgu 11.2 — ✅ Kod içinde API key yok
+
+- `env.ts`: Sadece `VITE_SUPABASE_URL` ve `VITE_SUPABASE_ANON_KEY` okuyor (bunlar açık anahtarlar)
+- `supabase.ts`: `env.ts`'den değer alıyor, hardcoded key yok
+- `aiConfig.ts`: API key içermiyor
+- `ai-proxy/index.ts`: API key'ler `Deno.env.get()` ile sunucu ortamından okunuyor
+
+📊 **DURUM:** ✅ Sorun yok
+
+---
+
+### Bulgu 11.3 — ✅ RLS (satır bazlı erişim kontrolü) aktif
+
+Tüm tablolarda RLS etkin. Policy'ler doğru kurulmuş.
+
+📊 **DURUM:** ✅ Sorun yok
+
+---
+
+### Bulgu 11.4 — `dangerouslySetInnerHTML` kullanımı (XSS riski)
+
+❌ **SORUN:** 2 dosyada `dangerouslySetInnerHTML` kullanılıyor.
+
+📁 **LOKASYON:**
+- `src/features/notes/components/CodeBlock.tsx` — satır 67, 71 (sanitizedHtml ile ✅)
+- `src/features/notes/components/MermaidDiagram.tsx` — satır 90 (SVG direkt enjekte)
+
+⚠️ **NEDEN SORUN:** `CodeBlock.tsx`'de sanitize edilmiş — sorun yok. Ama `MermaidDiagram.tsx`'deki SVG çıktısı sanitize edilmiyor olabilir.
+
+✅ **YAPILACAK:** `MermaidDiagram.tsx`'deki SVG çıktısının `DOMPurify.sanitize(svg)` ile temizlenip temizlenmediğini kontrol et. Temizlenmiyorsa ekle.
+
+📊 **ÖNCELİK:** 🟡 Orta
+
+---
+
+## 12. PERFORMANS
+
+---
+
+### Bulgu 12.1 — ✅ Route-based code splitting aktif
+
+`App.tsx`'de tüm sayfalar `React.lazy` ile yükleniyor. `Suspense` ile sarmalanmış.
+
+📊 **DURUM:** ✅ Sorun yok
+
+---
+
+## 13. SCRIPTS KLASÖRÜ
+
+---
+
+### Bulgu 13.1 — ✅ Notion sync scriptleri düzenli yapıda
+
+`scripts/notion-sync/` altında 9 dosya, `npm run sync` komutu tanımlı. Aktif kullanımda.
+
+📊 **DURUM:** ✅ Sorun yok
+
+---
+
+## 14. SUPABASE MIGRATION DOSYALARI
+
+---
+
+### Bulgu 14.1 — ✅ Migration'lar mantıklı sırada
+
+7 migration dosyası kronolojik sırada. RLS aktif. Index'ler eklenmiş.
+
+📊 **DURUM:** ✅ Sorun yok
+
+---
+
+## 15. SHARED VE UTILS AYRIMI
+
+---
+
+### Bulgu 15.1 — Supabase types çıktı yolu tutarsızlığı
+
+❌ **SORUN:** `package.json`'daki `update-types` script'i çıktıyı `src/shared/types/supabase.ts`'e yönlendiriyor. Ama projede `src/types/database.types.ts` dosyası kullanılıyor ve `src/shared/types/` klasörü mevcut olmayabilir.
+
+📁 **LOKASYON:** `package.json` satır 19 ve `src/types/database.types.ts`
+
+⚠️ **NEDEN SORUN:** Script çalıştırıldığında çıktı yanlış yere gidebilir veya kullanılmayan bir dosya oluşturabilir.
+
+✅ **YAPILACAK:** `package.json`'daki `update-types` script'inin çıktı yolunu `src/types/database.types.ts` olarak düzelt.
+
+📊 **ÖNCELİK:** 🟠 Yüksek
+
+---
+
+### Bulgu 15.2 — `src/utils/sanitizers/` alt klasörü + `sanitizers.ts` çakışması
+
+❌ **SORUN:** `src/utils/` altında hem `sanitizers/` alt klasörü (içinde `htmlSanitizer.ts`, `stateSanitizer.ts`) hem de `sanitizers.ts` dosyası var.
+
+📁 **LOKASYON:** `src/utils/sanitizers/` ve `src/utils/sanitizers.ts`
+
+⚠️ **NEDEN SORUN:** Aynı konuda hem alt klasör hem kök dosya var. Hangisi aktif?
+
+✅ **YAPILACAK:** `sanitizers.ts` dosyasının barrel export mi yoksa ayrı bir dosya mı olduğunu kontrol et. Birleştir veya birini sil.
+
+📊 **ÖNCELİK:** 🔵 Düşük
+
+---
+
+### Bulgu 15.3 — `src/utils/core.ts` adı belirsiz
+
+❌ **SORUN:** `core.ts` adı çok genel. İçinde ne olduğu adından anlaşılmıyor.
+
+📁 **LOKASYON:** `src/utils/core.ts`
+
+⚠️ **NEDEN SORUN:** AI bu dosyanın ne iş yaptığını anlamak için her seferinde açıp okuması gerekir.
+
+✅ **YAPILACAK:** Dosyanın içeriğine bakarak daha açıklayıcı bir isim ver (örn. `commonHelpers.ts`, `domUtils.ts` vb.)
+
+📊 **ÖNCELİK:** 🔵 Düşük
+
+---
+
+## 16. AI-PROXY FONKSİYONU
+
+---
+
+### Bulgu 16.1 — `ai-proxy/index.ts` 353 satır, tek dosya
+
+❌ **SORUN:** Edge function 353 satır tek dosyada. İçinde kimlik doğrulama, provider yönlendirme, API çağrısı, hata yönetimi ve loglama var.
+
+📁 **LOKASYON:** `supabase/functions/ai-proxy/index.ts`
+
+⚠️ **NEDEN SORUN:** 353 satır tek dosyada AI için zor. Ancak Edge function'da dosya bölme kısıtlı.
+
+✅ **YAPILACAK:** Şu an dokunma. Provider mantığını ileride ayrı bir dosyaya çıkarmak düşünülebilir.
+
+📊 **ÖNCELİK:** 🔵 Düşük
+
+---
+
+---
+
+# RAPOR SONU — ÖZET BÖLÜMLER
+
+---
+
+## ⚡ HEMEN YAPILABİLECEKLER
+
+1. **`AI_MODE` sabitini `.env`'den oku:**
+   📁 `src/utils/aiConfig.ts` satır 1 → `const AI_MODE = import.meta.env.VITE_AI_MODE || 'PRODUCTION'` yap
+
+2. **`activityUtils.ts` dosyasını doğru yere taşı:**
+   📁 `src/features/efficiency/services/activityUtils.ts` → `src/features/efficiency/utils/activityHelpers.ts`
+
+3. **`useUIStore`'dan toast kodunu kaldır** (sonner zaten var):
+   📁 `src/shared/store/useUIStore.ts`
+
+4. **`useQuizSessionState.ts`'de `recordResponse`'un bağımlılık listesini daralt:**
+   📁 `src/features/quiz/hooks/useQuizSessionState.ts` satır 185 → `[user?.id, state.sessionInfo]`
+
+5. **`update-types` script yolunu düzelt:**
+   📁 `package.json` satır 19 → çıktıyı `src/types/database.types.ts`'e yönlendir
+
+---
+
+## 🔴 KRİTİK SORUNLAR
+
+Uygulamayı doğrudan bozan bir güvenlik açığı veya hata **bulunamadı**.
+
+Dikkat edilmesi gereken noktalar:
+- `MermaidDiagram.tsx`'deki `dangerouslySetInnerHTML` — SVG sanitize edildiğinden emin ol
+- `useUIStore` toast sistemi ve `sonner` çakışması — hangisi aktif olduğu netleştirilmeli
+
+---
+
+## 🗑️ SİLİNECEKLER
+
+| Dosya/Klasör | Neden? |
+|---|---|
+| `src/features/quiz/services/repositories/` | Standart dışı alt klasör, dosyayı `services/` altına taşı |
+| `src/features/quiz/services/mockQuizData.ts` | Kullanılmıyorsa gereksiz test verisi |
+| `src/features/efficiency/services/analytics/` | Standart dışı alt klasör, içeriği uygun servis dosyasına taşı |
+| `useUIStore` toast kodu | Sonner ile çakışıyor |
+
+---
+
+## 🔧 YENİDEN YAZILACAKLAR
+
+| Dosya | Ne değişmeli | Büyüklük |
+|---|---|---|
+| `src/features/quiz/hooks/useQuiz.ts` | Timer, submission logic ayrı hook'lara bölünmeli | **Orta iş** |
+| `src/features/efficiency/services/` (11 dosya) | 4-5 dosyaya birleştirilmeli | **Orta iş** |
+| `src/features/quiz/services/` (13 dosya) | 5-6 dosyaya birleştirilmeli | **Orta iş** |
+| `src/features/achievements/logic/` (15 dosya) | Kategori tanımlamaları tek dosyada birleştirilmeli | **Küçük iş** |
+
+---
+
+## 📊 GENEL SAĞLIK SKORU
+
+| Kategori | Puan | Gerekçe |
+|---|---|---|
+| **Kod Sadeliği (KISS)** | **6/10** | Quiz (66 dosya) ve efficiency (47 dosya) feature'ları aşırı bölünmüş. Hobi projesi için gereksiz karmaşıklık. |
+| **Tekrarsızlık (DRY)** | **8/10** | `any` yok, fonksiyonlar iyi ayrılmış. `useUIStore` toast + sonner çakışması düzeltilmeli. |
+| **Sorumluluk Ayrımı (SRP)** | **6/10** | `useQuiz.ts` çok fazla sorumluluk taşıyor. Ama `QuizView.tsx` gibi iyi ayrılmış örnekler de var. |
+| **AI Okunabilirliği** | **7/10** | Feature yapısı tutarlı, utils/ doğru kullanılıyor. Ama quiz (66 dosya) ve feature'lar arası bağımlılıklar AI'ı zorluyor. |
+| **Modern Standartlar** | **9/10** | React Compiler aktif, `any` yasak, fonksiyonel bileşenler, lazy loading, ErrorBoundary, Zustand. Çok modern yapı. |
+| **Güvenlik** | **9/10** | RLS aktif, API key'ler güvenli, .env gitignore'da. Sadece Mermaid SVG sanitizasyonu kontrol edilmeli. |
+| | | |
+| **TOPLAM** | **45/60** | |
+
+---
+
+### GENEL DURUM: İyi — İyileştirme Alanları Var
+
+Proje güvenlik, modern standartlar ve mimari kurallarla genel uyum açısından iyi durumda. `utils/` klasörleri kurallara uygun kullanılıyor. Ana sorun: **quiz ve efficiency feature'ları tek kullanıcılı hobi projesi için gereğinden fazla bölünmüş.**
+
+### Önce ele alınması gereken 5 alan (öncelik sırasına göre):
+
+1. **`useUIStore` toast kodunu kaldır** — Sonner ile çakışma, mimari kurala aykırı — **Küçük iş**
+2. **`useQuiz.ts` hook'unu böl** — 311 satırlık SRP ihlali — **Orta iş**
+3. **Quiz servislerini birleştir** — 13 dosya → 5-6 dosya — **Orta iş**
+4. **`update-types` script yolunu düzelt** — Yanlış çıktı yolu — **Küçük iş**
+5. **Efficiency servislerini birleştir** — 11 dosya + alt klasör → 4-5 dosya — **Orta iş**

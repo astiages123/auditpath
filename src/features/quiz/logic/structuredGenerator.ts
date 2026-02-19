@@ -1,8 +1,8 @@
 import { z } from 'zod';
 import type { AIResponse, LLMProvider, Message } from '@/features/quiz/types';
-import { UnifiedLLMClient } from '@/features/quiz/services/quizClient';
-import { rateLimiter } from './rateLimit';
-import { parseJsonResponse } from './parserUtils';
+import { UnifiedLLMClient } from '@/features/quiz/services/quizInfoService';
+import { rateLimiter } from './quizCoreLogic';
+import { parseJsonResponse } from './quizParser';
 import { logger } from '@/utils/logger';
 
 export interface StructuredOptions<T> {
