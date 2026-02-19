@@ -4,12 +4,12 @@ import {
   calculateRankProgress,
   calculateEstimatedDaysToNextRank,
 } from '../logic/coursesLogic';
-import { useState, useMemo, useSyncExternalStore } from 'react';
-import { RANKS } from '@/utils/constants';
+import { useState, useSyncExternalStore } from 'react';
+import { RANKS } from '@/features/achievements/utils/constants';
 import type { Rank } from '@/types/auth';
 import { JourneyModal } from './JourneyModal';
 import { motion } from 'framer-motion';
-import { formatDurationShort } from '@/utils/helpers';
+import { formatDurationShort } from '@/utils/formatters';
 import { WEEKLY_SCHEDULE } from '@/features/courses/services/courses-config';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RankCard } from './RankCard';
@@ -100,31 +100,21 @@ export function ProgressHeader({
   }
 
   // Calculate estimated days strictly until NEXT RANK based on real daily average
-  const displayEstimatedDays = useMemo(() => {
-    if (!isHydrated || !stats || !nextRank || displayTotalHours <= 0) {
-      return initialEstimatedDays;
-    }
+  const displayEstimatedDays =
+    !isHydrated || !stats || !nextRank || displayTotalHours <= 0
+      ? initialEstimatedDays
+      : calculateEstimatedDaysToNextRank(
+          displayTotalHours,
+          displayCompletedHours,
+          nextRank.minPercentage,
+          stats.dailyAverage || 2
+        );
 
-    return calculateEstimatedDaysToNextRank(
-      displayTotalHours,
-      displayCompletedHours,
-      nextRank.minPercentage,
-      stats.dailyAverage || 2
-    );
-  }, [
-    isHydrated,
-    stats,
-    nextRank,
-    displayTotalHours,
-    displayCompletedHours,
-    initialEstimatedDays,
-  ]);
-
-  const currentRankImage = useMemo(() => {
+  const currentRankImage = (() => {
     if (!currentRank) return '/ranks/rank1.webp';
     const index = RANKS.findIndex((r: Rank) => r.name === currentRank.name);
     return `/ranks/rank${(index >= 0 ? index : 0) + 1}.webp`;
-  }, [currentRank]);
+  })();
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },

@@ -1,6 +1,6 @@
 import pLimit from 'p-limit';
 
-import { DRY_RUN, NOTION_DATABASE_ID, MAX_CONCURRENT_PAGES } from './config';
+import { DRY_RUN, MAX_CONCURRENT_PAGES, NOTION_DATABASE_ID } from './config';
 import { notion, supabase } from './clients';
 import { setupCalloutTransformer } from './clients';
 import { processPage } from './page-processor';
@@ -26,7 +26,7 @@ export async function syncNotionToSupabase(): Promise<SyncStatistics> {
   }
 
   const courseLookupMap = new Map<string, string>();
-  coursesData.forEach((c) => {
+  (coursesData as { id: string; name: string }[]).forEach((c) => {
     courseLookupMap.set(c.name.trim(), c.id);
   });
   console.log(`Loaded ${courseLookupMap.size} courses into lookup map.`);
@@ -42,12 +42,18 @@ export async function syncNotionToSupabase(): Promise<SyncStatistics> {
 
   const existingChunksMap = new Map<string, number>();
   if (allChunks) {
-    allChunks.forEach((chunk) => {
-      const key = `${chunk.course_id}:::${chunk.section_title}`;
-      if (chunk.metadata) {
-        const meta = chunk.metadata as {
+    (
+      allChunks as {
+        course_id: string;
+        section_title: string;
+        metadata: {
           notion_last_edited_time?: string;
         } | null;
+      }[]
+    ).forEach((chunk) => {
+      const key = `${chunk.course_id}:::${chunk.section_title}`;
+      if (chunk.metadata) {
+        const meta = chunk.metadata;
         if (meta && meta.notion_last_edited_time) {
           existingChunksMap.set(
             key,
@@ -63,7 +69,7 @@ export async function syncNotionToSupabase(): Promise<SyncStatistics> {
 
   console.log('Connecting to Notion...');
   const response = await notion.databases.query({
-    database_id: NOTION_DATABASE_ID,
+    database_id: NOTION_DATABASE_ID as string,
     filter: {
       property: 'Durum',
       status: { equals: 'Tamamlandı' },
@@ -116,7 +122,12 @@ export async function syncNotionToSupabase(): Promise<SyncStatistics> {
       if (fetchError) {
         console.error('Error fetching chunks for cleanup:', fetchError);
       } else if (dbChunks) {
-        const chunksToDelete = dbChunks.filter((chunk) => {
+        interface DbChunk {
+          id: string;
+          course_id: string;
+          section_title: string;
+        }
+        const chunksToDelete = (dbChunks as DbChunk[]).filter((chunk) => {
           const key = `${chunk.course_id}:::${chunk.section_title}`;
           return !activeSections.has(key);
         });

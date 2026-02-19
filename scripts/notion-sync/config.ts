@@ -3,11 +3,11 @@ import * as dotenv from 'dotenv';
 dotenv.config({ path: '.env' });
 dotenv.config({ path: '.env.local' });
 
-export const NOTION_TOKEN = process.env.NOTION_TOKEN!;
-export const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID!;
+export const NOTION_TOKEN = process.env.NOTION_TOKEN;
+export const NOTION_DATABASE_ID = process.env.NOTION_DATABASE_ID;
 export const SUPABASE_URL =
-  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL!;
-export const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+export const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 export const DRY_RUN =
   process.env.DRY_RUN === 'true' || process.argv.includes('--dry-run');

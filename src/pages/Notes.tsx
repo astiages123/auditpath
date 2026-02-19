@@ -1,18 +1,12 @@
-import React, { useEffect, useState, useMemo, useTransition } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertCircle, ChevronUp } from 'lucide-react';
-import {
-  getCourseTopics,
-  getCourseIdBySlug,
-} from '@/features/quiz/services/core/quizTopicService';
-import { type CourseTopic } from '@/features/courses/types/courseTypes';
+
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { cn, slugify } from '@/utils/core';
 import { ROUTES } from '@/utils/routes';
-import { logger } from '@/utils/logger';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { storage } from '@/shared/services/storageService';
 
 // New Components
 import { MarkdownSection } from '@/features/notes/components/MarkdownSection';
@@ -23,6 +17,7 @@ import { LocalToC } from '@/features/notes/components/LocalToC';
 // New Hooks
 import { useNotesNavigation } from '@/features/notes/hooks/useNotesNavigation';
 import { useTableOfContents } from '@/features/notes/hooks/useTableOfContents';
+import { useNotesData } from '@/features/notes/hooks/useNotesData';
 
 export default function NotesPage() {
   const { courseSlug, topicSlug } = useParams<{
@@ -32,20 +27,17 @@ export default function NotesPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Data State
-  const [chunks, setChunks] = useState<CourseTopic[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [courseName, setCourseName] = useState('');
+  // Use Centralized Data Hook
+  const { chunks, loading, error, courseName, isPending } = useNotesData({
+    courseSlug: courseSlug || '',
+    userId: user?.id,
+  });
 
-  // React 19 Concurrent Features: useTransition for heavy markdown rendering
-  const [isPending, startTransition] = useTransition();
-
-  const activeChunkId = useMemo(() => {
-    if (topicSlug) return topicSlug;
-    if (chunks.length > 0) return slugify(chunks[0].section_title);
-    return '';
-  }, [topicSlug, chunks]);
+  const activeChunkId = topicSlug
+    ? topicSlug
+    : chunks.length > 0
+      ? slugify(chunks[0].section_title)
+      : '';
 
   // Use Custom Hooks
   const {
@@ -69,104 +61,6 @@ export default function NotesPage() {
       mainContentRef,
       isProgrammaticScroll,
     });
-
-  // Fetch Data
-  useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
-
-    async function fetchNotes() {
-      if (!user?.id || !courseSlug) {
-        setLoading(false);
-        return;
-      }
-      try {
-        setLoading(true);
-        const targetId = await getCourseIdBySlug(courseSlug, signal);
-        if (signal.aborted) return;
-        if (!targetId) {
-          setError('Ders bulunamadı.');
-          return;
-        }
-
-        const cacheKey = `cached_notes_v6_${targetId}`;
-        const cached = storage.get<{ data: CourseTopic[]; timestamp: number }>(
-          cacheKey
-        );
-        if (cached?.data) {
-          setChunks(cached.data);
-          setCourseName(cached.data[0]?.course_name || '');
-          setLoading(false);
-        }
-
-        const data = await getCourseTopics(user.id, targetId, signal);
-        if (signal.aborted) return;
-
-        const processedData = data.map((chunk) => {
-          const metadata = chunk.metadata as { images?: string[] } | null;
-          const imageUrls = metadata?.images || [];
-          let content = chunk.display_content || chunk.content;
-
-          content = content.replace(/[\u2000-\u200b]/g, ' ');
-
-          const usedIndices = new Set<number>();
-          imageUrls.forEach((url, idx) => {
-            const marker = new RegExp(`\\[GÖRSEL:\\s*${idx}\\]`, 'gi');
-            if (content.match(marker)) {
-              content = content.replace(marker, `\n\n![Görsel](${url})\n\n`);
-              usedIndices.add(idx);
-            }
-          });
-
-          const unusedImages = imageUrls.filter(
-            (_, idx) => !usedIndices.has(idx)
-          );
-          if (unusedImages.length > 0 && !content.includes('![')) {
-            content += unusedImages
-              .map((url) => `\n\n![Görsel](${url})`)
-              .join('');
-          }
-
-          return {
-            ...chunk,
-            section_title: chunk.section_title,
-            content: content,
-          };
-        });
-
-        // Wrap heavy state updates in startTransition to prevent UI blocking
-        if (processedData.length > 0) {
-          startTransition(() => {
-            setChunks(processedData);
-            setCourseName(processedData[0].course_name);
-          });
-          storage.set(
-            cacheKey,
-            {
-              timestamp: Date.now(),
-              data: processedData,
-            },
-            { ttl: 7 * 24 * 60 * 60 * 1000 }
-          ); // 7 days cache
-        } else if (!cached) {
-          setError('Bu ders için henüz içerik bulunmuyor.');
-        }
-      } catch (err) {
-        if (signal.aborted) return;
-        logger.error('Notes loading error', err as Error);
-        setError('Notlar yüklenirken bir hata oluştu.');
-      } finally {
-        if (!signal.aborted) {
-          setLoading(false);
-        }
-      }
-    }
-    fetchNotes();
-
-    return () => {
-      controller.abort();
-    };
-  }, [courseSlug, user?.id]);
 
   // Update URL if no topicSlug is present but we have chunks
   useEffect(() => {
@@ -204,7 +98,7 @@ export default function NotesPage() {
         <h1 className="text-2xl font-bold mb-2">Eyvah!</h1>
         <p className="text-muted-foreground max-w-md mb-8">{error}</p>
         <Button asChild>
-          <Link to={ROUTES.COURSES}>Derslere Dön</Link>
+          <Link to={ROUTES.HOME}>Derslere Dön</Link>
         </Button>
       </div>
     );
@@ -217,7 +111,7 @@ export default function NotesPage() {
         <aside className="w-72 shrink-0 border-r border-border/15 bg-card/10 backdrop-blur-xl hidden lg:block">
           <div className="h-20 flex flex-col justify-center px-6 border-b border-border/10 bg-card/5 relative overflow-hidden">
             <Link
-              to={ROUTES.COURSES}
+              to={ROUTES.HOME}
               className="group inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all duration-300 mb-1.5"
             >
               <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />

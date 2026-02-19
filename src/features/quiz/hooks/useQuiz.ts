@@ -1,65 +1,81 @@
-/**
- * useQuiz Hook
- *
- * State management for the quiz flow, using specialized internal hooks.
- */
-
-import { useCallback } from "react";
+import { useCallback, useRef, useState } from 'react';
 import {
   QuizQuestion,
+  QuizResponseType,
   QuizResults,
   QuizState,
-} from "@/features/quiz/types";
+  SessionContext,
+  TrueFalseQuestion,
+  MultipleChoiceQuestion,
+} from '@/features/quiz/types';
+import {
+  calculateInitialResults,
+  calculateTestResults,
+  updateResults,
+} from '@/features/quiz/logic/quizLogic';
+import { createTimer } from '@/features/quiz/logic/quizTimer';
+import {
+  fetchQuestionsByIds,
+  getReviewQueue,
+  startQuizSession,
+  submitQuizAnswer,
+} from '@/features/quiz/services/quizService';
+import { generateForChunk } from '@/features/quiz/logic/quizLogic';
+import { usePomodoroSessionStore } from '@/features/pomodoro/store';
+import { useCelebrationStore } from '@/features/achievements/store';
+import { useQuotaStore } from '@/features/quiz/store';
+import { MASTERY_THRESHOLD } from '@/features/quiz/utils/constants';
 
-// Internal Hooks
-import { useCoreState } from "./use-quiz/useCoreState";
-import { useInteractionActions } from "./use-quiz/useInteractionActions";
-import { useNavigationActions } from "./use-quiz/useNavigationActions";
-import { useContentGenerator } from "./use-quiz/useContentGenerator";
+export function useQuiz() {
+  const [state, setState] = useState<QuizState>({
+    currentQuestion: null,
+    queue: [],
+    totalToGenerate: 0,
+    generatedCount: 0,
+    isLoading: false,
+    error: null,
+    selectedAnswer: null,
+    isAnswered: false,
+    showExplanation: false,
+    isCorrect: null,
+    hasStarted: false,
+    summary: null,
+    lastSubmissionResult: null,
+    history: [],
+  });
 
-export interface UseQuizReturn {
-  state: QuizState;
-  results: QuizResults;
-  generateBatch: (
-    count: number,
-    params: { type: "chunk"; chunkId: string; userId?: string },
-  ) => Promise<void>;
-  startQuiz: () => void;
-  selectAnswer: (index: number) => void;
-  confirmAnswer: (userId: string, courseId: string) => Promise<void>;
-  markAsBlank: () => void;
-  nextQuestion: (userId: string, courseId: string) => Promise<void>;
-  previousQuestion: () => void;
-  toggleExplanation: () => void;
-  reset: () => void;
-  retry: () => Promise<void>;
-  loadQuestions: (questions: QuizQuestion[]) => void;
-}
+  const [results, setResults] = useState<QuizResults>(
+    calculateInitialResults()
+  );
+  const timerRef = useRef(createTimer());
+  const sessionContextRef = useRef<SessionContext | null>(null);
 
-export interface UseQuizConfig {
-  recordResponse?: (
-    questionId: string,
-    responseType: "correct" | "incorrect" | "blank",
-    selectedAnswer: number | null,
-    timeSpentMs: number,
-    diagnosis?: string,
-    insight?: string,
-  ) => Promise<unknown>;
-}
+  const updateState = useCallback((patch: Partial<QuizState>) => {
+    setState((prev) => ({ ...prev, ...patch }));
+  }, []);
 
-export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
-  const {
-    state,
-    updateState,
-    results,
-    setResults,
-    updateResults,
-    timerRef,
-    sessionContextRef,
-    lastParams,
-    setParams,
-  } = useCoreState();
+  const resetState = useCallback(() => {
+    setState({
+      currentQuestion: null,
+      queue: [],
+      totalToGenerate: 0,
+      generatedCount: 0,
+      isLoading: false,
+      error: null,
+      selectedAnswer: null,
+      isAnswered: false,
+      showExplanation: false,
+      isCorrect: null,
+      hasStarted: false,
+      summary: null,
+      lastSubmissionResult: null,
+      history: [],
+    });
+    setResults(calculateInitialResults());
+    timerRef.current.reset();
+  }, []);
 
+  // --- Initialization ---
   const loadQuestionsIntoState = useCallback(
     (questions: QuizQuestion[]) => {
       if (questions.length === 0) return;
@@ -70,72 +86,225 @@ export function useQuiz(config: UseQuizConfig = {}): UseQuizReturn {
         totalToGenerate: questions.length,
         generatedCount: questions.length,
         isLoading: false,
+        hasStarted: true,
       });
     },
-    [updateState],
+    [updateState]
   );
 
-  const { generateBatch } = useContentGenerator({
-    updateState,
-    loadQuestionsIntoState,
-    setParams,
-    sessionContextRef,
-  });
+  const startQuiz = useCallback(
+    async (userId: string, courseId: string, chunkId?: string) => {
+      updateState({ isLoading: true, error: null });
+      try {
+        const session = await startQuizSession(userId, courseId);
+        sessionContextRef.current = session;
+        usePomodoroSessionStore
+          .getState()
+          .setSessionId(session.sessionNumber.toString());
 
-  const { selectAnswer, confirmAnswer, markAsBlank } = useInteractionActions({
-    state,
-    updateState,
-    updateResults,
-    timerRef,
-    sessionContextRef,
-    config,
-  });
-
-  const { nextQuestion, previousQuestion, toggleExplanation, reset } =
-    useNavigationActions({
-      state,
-      results,
-      updateState,
-      setResults,
-      timerRef,
-    });
-
-  const startQuiz = useCallback(() => {
-    updateState({ hasStarted: true });
-    timerRef.current.start();
-  }, [updateState, timerRef]);
-
-  const retry = useCallback(async () => {
-    if (lastParams && lastParams.params.userId) {
-      reset();
-      await generateBatch(lastParams.count, lastParams.params);
-    }
-  }, [lastParams, generateBatch, reset]);
-
-  const loadQuestions = useCallback(
-    (questions: QuizQuestion[]) => {
-      if (questions.length > 0) {
-        loadQuestionsIntoState(questions);
-        timerRef.current.reset();
-        timerRef.current.start();
+        const queue = await getReviewQueue(session, 10, chunkId);
+        if (queue.length > 0) {
+          const questions = await fetchQuestionsByIds(
+            queue.map((i) => i.questionId)
+          );
+          loadQuestionsIntoState(
+            questions.map((q) => {
+              const qd = q.question_data as
+                | TrueFalseQuestion
+                | MultipleChoiceQuestion;
+              return {
+                ...qd,
+                id: q.id,
+              } as QuizQuestion;
+            })
+          );
+        } else if (chunkId) {
+          await generateForChunk(
+            chunkId,
+            {
+              onLog: () => {},
+              onTotalTargetCalculated: () => {},
+              onQuestionSaved: (count) =>
+                updateState({ generatedCount: count }),
+              onComplete: async () => {
+                const newQueue = await getReviewQueue(session, 10, chunkId);
+                const newQs = await fetchQuestionsByIds(
+                  newQueue.map((i) => i.questionId)
+                );
+                loadQuestionsIntoState(
+                  newQs.map((q) => {
+                    const qd = q.question_data as
+                      | TrueFalseQuestion
+                      | MultipleChoiceQuestion;
+                    return {
+                      ...qd,
+                      id: q.id,
+                    } as QuizQuestion;
+                  })
+                );
+              },
+              onError: (err) => updateState({ error: err, isLoading: false }),
+            },
+            { usageType: 'antrenman', userId }
+          );
+        } else {
+          updateState({ isLoading: false, error: 'Soru bulunamadı.' });
+        }
+      } catch (e: unknown) {
+        const error = e as Error;
+        updateState({ isLoading: false, error: error.message });
       }
     },
-    [loadQuestionsIntoState, timerRef],
+    [updateState, loadQuestionsIntoState]
   );
+
+  // --- User Actions ---
+  const selectAnswer = useCallback(
+    (index: number) => {
+      if (state.isAnswered || !state.currentQuestion) return;
+      updateState({
+        selectedAnswer: state.selectedAnswer === index ? null : index,
+      });
+    },
+    [state.isAnswered, state.currentQuestion, state.selectedAnswer, updateState]
+  );
+
+  const submitAnswer = useCallback(
+    async (type: QuizResponseType = 'correct') => {
+      if (
+        state.isAnswered ||
+        !state.currentQuestion ||
+        !sessionContextRef.current
+      )
+        return;
+
+      const actualType =
+        type === 'correct'
+          ? state.selectedAnswer === state.currentQuestion.a
+            ? 'correct'
+            : 'incorrect'
+          : type;
+      const timeSpent = timerRef.current.stop();
+
+      setResults((prev) =>
+        updateResults(prev, actualType as QuizResponseType, timeSpent)
+      );
+      updateState({
+        isAnswered: true,
+        isCorrect: actualType === 'correct',
+        showExplanation: actualType !== 'blank',
+      });
+
+      const result = await submitQuizAnswer(
+        sessionContextRef.current,
+        state.currentQuestion.id!,
+        state.currentQuestion.chunk_id || null,
+        actualType as QuizResponseType,
+        timeSpent,
+        state.selectedAnswer
+      );
+
+      updateState({ lastSubmissionResult: result });
+
+      if (
+        result.newMastery >= MASTERY_THRESHOLD &&
+        state.currentQuestion.chunk_id
+      ) {
+        useCelebrationStore.getState().enqueueCelebration({
+          id: `MASTERY_${state.currentQuestion.chunk_id}_${result.newMastery}`,
+          title: 'Uzmanlık Seviyesi!',
+          description: `Bu konudaki ustalığın ${result.newMastery} puana ulaştı.`,
+          variant: 'achievement',
+        });
+      }
+      useQuotaStore.getState().decrementQuota();
+    },
+    [
+      state.isAnswered,
+      state.currentQuestion,
+      state.selectedAnswer,
+      updateState,
+      setResults,
+    ]
+  );
+
+  const nextQuestion = useCallback(() => {
+    const newHistory = [...state.history];
+    if (state.currentQuestion && state.isAnswered) {
+      newHistory.push({
+        ...state.currentQuestion,
+        userAnswer: state.selectedAnswer,
+        isCorrect: state.isCorrect,
+      });
+    }
+
+    if (state.queue.length > 0) {
+      const [next, ...rest] = state.queue;
+      updateState({
+        currentQuestion: next,
+        queue: rest,
+        history: newHistory,
+        selectedAnswer: null,
+        isAnswered: false,
+        showExplanation: false,
+        isCorrect: null,
+        lastSubmissionResult: null,
+      });
+      timerRef.current.reset();
+      timerRef.current.start();
+    } else {
+      const summary = calculateTestResults(
+        results.correct,
+        results.incorrect,
+        results.blank,
+        results.totalTimeMs
+      );
+      updateState({
+        summary,
+        currentQuestion: null,
+        history: newHistory,
+        hasStarted: false,
+      });
+    }
+  }, [state, results, updateState]);
+
+  const previousQuestion = useCallback(() => {
+    if (state.history.length === 0) return;
+    const newHistory = [...state.history];
+    const prev = newHistory.pop()!;
+    const newQueue = state.currentQuestion
+      ? [state.currentQuestion, ...state.queue]
+      : state.queue;
+
+    updateState({
+      currentQuestion: prev,
+      queue: newQueue,
+      history: newHistory,
+      selectedAnswer: prev.userAnswer,
+      isAnswered: true,
+      showExplanation: true,
+      isCorrect: prev.isCorrect,
+    });
+  }, [state.currentQuestion, state.queue, state.history, updateState]);
+
+  const toggleExplanation = useCallback(() => {
+    updateState({ showExplanation: !state.showExplanation });
+  }, [state.showExplanation, updateState]);
+
+  // --- Progress Calculation ---
+  const progressIndex =
+    state.generatedCount - state.queue.length - (state.currentQuestion ? 1 : 0);
 
   return {
     state,
     results,
-    generateBatch,
+    progressIndex,
     startQuiz,
     selectAnswer,
-    confirmAnswer,
-    markAsBlank,
+    submitAnswer,
     nextQuestion,
     previousQuestion,
     toggleExplanation,
-    reset,
-    retry,
-    loadQuestions,
+    resetState,
   };
 }

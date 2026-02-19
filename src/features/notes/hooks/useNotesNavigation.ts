@@ -21,7 +21,7 @@ export const useNotesNavigation = ({
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const lastRead = useNotesStore((state) => state.lastRead);
-  const actions = useNotesStore((state) => state.actions);
+  const setLastReadTopic = useNotesStore((state) => state.setLastReadTopic);
 
   // Cleanup scroll timeout on unmount
   useEffect(() => {
@@ -69,11 +69,7 @@ export const useNotesNavigation = ({
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
 
       scrollTimeout.current = setTimeout(() => {
-        actions.setLastReadTopic(
-          courseSlug,
-          activeChunkId,
-          mainContent.scrollTop
-        );
+        setLastReadTopic(courseSlug, activeChunkId, mainContent.scrollTop);
       }, 500);
     };
 
@@ -82,7 +78,7 @@ export const useNotesNavigation = ({
       mainContent.removeEventListener('scroll', saveScroll);
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     };
-  }, [courseSlug, activeChunkId, actions]);
+  }, [courseSlug, activeChunkId, setLastReadTopic]);
 
   // 4. Restore scroll position
   useEffect(() => {

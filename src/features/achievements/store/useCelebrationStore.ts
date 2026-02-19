@@ -19,13 +19,10 @@ export interface CelebrationStore {
   celebrationQueue: CelebrationEvent[];
   currentCelebration: CelebrationEvent | null;
   isCelebrationOpen: boolean;
-
-  actions: {
-    enqueueCelebration: (event: CelebrationEvent) => void;
-    nextCelebration: () => void;
-    closeCelebration: () => void;
-    clearCelebrations: () => void;
-  };
+  enqueueCelebration: (event: CelebrationEvent) => void;
+  nextCelebration: () => void;
+  closeCelebration: () => void;
+  clearCelebrations: () => void;
 }
 
 export const useCelebrationStore = create<CelebrationStore>()((set, get) => ({
@@ -33,56 +30,54 @@ export const useCelebrationStore = create<CelebrationStore>()((set, get) => ({
   currentCelebration: null,
   isCelebrationOpen: false,
 
-  actions: {
-    enqueueCelebration: (event) => {
-      const { currentCelebration, celebrationQueue } = get();
-      if (
-        currentCelebration?.id === event.id ||
-        celebrationQueue.some((e) => e.id === event.id)
-      ) {
-        return;
-      }
-      set((state) => {
-        if (!state.currentCelebration) {
-          return {
-            currentCelebration: event,
-            isCelebrationOpen: true,
-          };
-        }
+  enqueueCelebration: (event) => {
+    const { currentCelebration, celebrationQueue } = get();
+    if (
+      currentCelebration?.id === event.id ||
+      celebrationQueue.some((e) => e.id === event.id)
+    ) {
+      return;
+    }
+    set((state) => {
+      if (!state.currentCelebration) {
         return {
-          celebrationQueue: [...state.celebrationQueue, event],
+          currentCelebration: event,
+          isCelebrationOpen: true,
         };
-      });
-    },
-
-    nextCelebration: () => {
-      set((state) => {
-        const nextEvent = state.celebrationQueue[0] || null;
-        const remainingQueue = state.celebrationQueue.slice(1);
-        if (nextEvent) {
-          return {
-            currentCelebration: nextEvent,
-            celebrationQueue: remainingQueue,
-            isCelebrationOpen: true,
-          };
-        } else {
-          return {
-            currentCelebration: null,
-            isCelebrationOpen: false,
-          };
-        }
-      });
-    },
-
-    closeCelebration: () => {
-      get().actions.nextCelebration();
-    },
-
-    clearCelebrations: () =>
-      set({
-        celebrationQueue: [],
-        currentCelebration: null,
-        isCelebrationOpen: false,
-      }),
+      }
+      return {
+        celebrationQueue: [...state.celebrationQueue, event],
+      };
+    });
   },
+
+  nextCelebration: () => {
+    set((state) => {
+      const nextEvent = state.celebrationQueue[0] || null;
+      const remainingQueue = state.celebrationQueue.slice(1);
+      if (nextEvent) {
+        return {
+          currentCelebration: nextEvent,
+          celebrationQueue: remainingQueue,
+          isCelebrationOpen: true,
+        };
+      } else {
+        return {
+          currentCelebration: null,
+          isCelebrationOpen: false,
+        };
+      }
+    });
+  },
+
+  closeCelebration: () => {
+    get().nextCelebration();
+  },
+
+  clearCelebrations: () =>
+    set({
+      celebrationQueue: [],
+      currentCelebration: null,
+      isCelebrationOpen: false,
+    }),
 }));

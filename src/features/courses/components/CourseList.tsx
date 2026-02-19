@@ -12,7 +12,7 @@ import {
   Brain,
 } from 'lucide-react';
 import { VideoList } from './VideoList';
-import { formatDuration } from '@/utils/helpers';
+import { formatDuration } from '@/utils/formatters';
 import { useProgress } from '@/shared/hooks/useProgress';
 import { useCelebration } from '@/shared/hooks/useCelebration';
 import { getCourseIcon } from '../logic/coursesLogic';
@@ -20,7 +20,7 @@ import { type Course } from '@/features/courses/types/courseTypes';
 
 // Lazy load modals to reduce initial bundle size and split CSS (Katex)
 const QuizModal = lazy(() =>
-  import('@/features/quiz/components/layout/QuizModal').then((module) => ({
+  import('@/features/quiz/components/QuizModal').then((module) => ({
     default: module.QuizModal,
   }))
 );

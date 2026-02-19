@@ -1,11 +1,11 @@
-import { type Achievement } from "../types/achievementsTypes";
-import { LAW_ACHIEVEMENTS } from "./data/law";
-import { ECONOMY_ACHIEVEMENTS } from "./data/economy";
-import { ACCOUNTING_ACHIEVEMENTS } from "./data/accounting";
-import { GENERAL_ACHIEVEMENTS } from "./data/general";
-import { HYBRID_ACHIEVEMENTS } from "./data/hybrid";
-import { SPECIAL_ACHIEVEMENTS } from "./data/special";
-import { TITLE_ACHIEVEMENTS } from "./data/titles";
+import { type Achievement } from '../types/achievementsTypes';
+import { LAW_ACHIEVEMENTS } from './law';
+import { ECONOMY_ACHIEVEMENTS } from './economy';
+import { ACCOUNTING_ACHIEVEMENTS } from './accounting';
+import { GENERAL_ACHIEVEMENTS } from './general';
+import { HYBRID_ACHIEVEMENTS } from './hybrid';
+import { SPECIAL_ACHIEVEMENTS } from './special';
+import { TITLE_ACHIEVEMENTS } from './titles';
 
 export const ACHIEVEMENTS: Achievement[] = [
   ...LAW_ACHIEVEMENTS,

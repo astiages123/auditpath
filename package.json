@@ -6,13 +6,19 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "type-check": "tsc -b",
+    "type-check": "tsc --noEmit",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "style": "stylelint \"**/*.css\"",
+    "style:fix": "stylelint \"**/*.css\" --fix",
+    "format": "prettier --check .",
+    "format:fix": "prettier --write .",
     "preview": "vite preview",
     "db:seed": "tsx scripts/db/seed-db.ts",
     "sync": "tsx scripts/notion-sync/index.ts",
     "update-types": "dotenv -e .env.local -- npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/shared/types/supabase.ts",
-    "format": "prettier --write ."
+    "check-all": "npm run type-check && npm run lint && npm run style && npm run format",
+    "prepare": "husky"
   },
   "prettier": {
     "semi": true,
@@ -75,16 +81,22 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.2",
+    "babel-plugin-react-compiler": "^1.0.0",
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-compiler": "^19.1.0-rc.2",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.4.26",
     "globals": "^17.0.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "notion-to-md": "^3.1.9",
     "pg": "^8.16.3",
     "prettier": "^3.8.1",
     "sharp": "^0.34.5",
+    "stylelint": "^17.3.0",
+    "stylelint-config-standard": "^40.0.0",
     "supabase": "^2.76.3",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
@@ -93,5 +105,16 @@
     "typescript-eslint": "^8.53.0",
     "vite": "^7.3.1",
     "vite-tsconfig-paths": "^6.1.1"
+  },
+  "lint-staged": {
+    "*.{js,ts,jsx,tsx}": [
+      "npm run lint:fix"
+    ],
+    "*.css": [
+      "npm run style:fix"
+    ],
+    "*": [
+      "npm run format:fix"
+    ]
   }
 }

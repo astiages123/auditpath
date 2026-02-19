@@ -1,210 +1,204 @@
 import {
-    BarChart3,
-    BookOpen,
-    Brain,
-    Briefcase,
-    Calculator,
-    Gavel,
-    Globe,
-    LucideIcon,
-    PiggyBank,
-    Scale,
-    TrendingUp,
-} from "lucide-react";
+  BarChart3,
+  BookOpen,
+  Brain,
+  Briefcase,
+  Calculator,
+  Gavel,
+  Globe,
+  LucideIcon,
+  PiggyBank,
+  Scale,
+  TrendingUp,
+} from 'lucide-react';
 
 // --- Types ---
 
 export interface WeeklyScheduleItem {
-    id: number;
-    dayIndex: number; // 0 = Sunday, 1 = Monday, etc.
-    dayName: string;
-    subject: string;
-    icon: LucideIcon;
-    theme: CourseTheme; // Refers to a key in COURSE_THEMES
-    matchDays: number[]; // Days index that this schedule item applies to
+  id: number;
+  dayIndex: number; // 0 = Sunday, 1 = Monday, etc.
+  dayName: string;
+  subject: string;
+  icon: LucideIcon;
+  theme: CourseTheme; // Refers to a key in COURSE_THEMES
+  matchDays: number[]; // Days index that this schedule item applies to
 }
 
 export type CourseTheme =
-    | "emerald"
-    | "amber"
-    | "blue"
-    | "purple"
-    | "rose"
-    | "orange"
-    | "primary";
+  | 'emerald'
+  | 'amber'
+  | 'blue'
+  | 'purple'
+  | 'rose'
+  | 'orange'
+  | 'primary';
 
 // --- Constants ---
 
 export const COURSE_THEME_CONFIG: Record<
-    CourseTheme,
-    {
-        bg: string; // Tailwind class
-        text: string; // Tailwind class
-        border: string; // Tailwind class
-        variable: string; // CSS variable name prefix
-        hoverBg: string; // Tailwind class
-        gradient: string; // Dark gradient for cards
-        hoverGradient: string; // Intensified gradient on hover
-    }
+  CourseTheme,
+  {
+    bg: string; // Tailwind class
+    text: string; // Tailwind class
+    border: string; // Tailwind class
+    variable: string; // CSS variable name prefix
+    hoverBg: string; // Tailwind class
+    gradient: string; // Dark gradient for cards
+    hoverGradient: string; // Intensified gradient on hover
+  }
 > = {
-    emerald: {
-        bg: "bg-emerald-500/20",
-        text: "text-emerald-500",
-        border: "border-emerald-500/20",
-        variable: "--course-color-emerald",
-        hoverBg: "hover:bg-emerald-500/30",
-        gradient:
-            "bg-linear-to-br from-emerald-500/25 via-zinc-900/95 to-zinc-950",
-        hoverGradient:
-            "hover:from-emerald-500/40 hover:via-zinc-900/90 hover:to-zinc-900",
-    },
-    amber: {
-        bg: "bg-amber-500/20",
-        text: "text-amber-500",
-        border: "border-amber-500/20",
-        variable: "--course-color-amber",
-        hoverBg: "hover:bg-amber-500/30",
-        gradient:
-            "bg-linear-to-br from-amber-500/25 via-zinc-900/95 to-zinc-950",
-        hoverGradient:
-            "hover:from-amber-500/40 hover:via-zinc-900/90 hover:to-zinc-900",
-    },
-    blue: {
-        bg: "bg-blue-500/20",
-        text: "text-blue-500",
-        border: "border-blue-500/20",
-        variable: "--course-color-blue",
-        hoverBg: "hover:bg-blue-500/30",
-        gradient:
-            "bg-linear-to-br from-blue-500/25 via-zinc-900/95 to-zinc-950",
-        hoverGradient:
-            "hover:from-blue-500/40 hover:via-zinc-900/90 hover:to-zinc-900",
-    },
-    purple: {
-        bg: "bg-purple-500/20",
-        text: "text-purple-500",
-        border: "border-purple-500/20",
-        variable: "--course-color-purple",
-        hoverBg: "hover:bg-purple-500/30",
-        gradient:
-            "bg-linear-to-br from-purple-500/25 via-zinc-900/95 to-zinc-950",
-        hoverGradient:
-            "hover:from-purple-500/40 hover:via-zinc-900/90 hover:to-zinc-900",
-    },
-    rose: {
-        bg: "bg-rose-500/20",
-        text: "text-rose-500",
-        border: "border-rose-500/20",
-        variable: "--course-color-rose",
-        hoverBg: "hover:bg-rose-500/30",
-        gradient:
-            "bg-linear-to-br from-rose-500/25 via-zinc-900/95 to-zinc-950",
-        hoverGradient:
-            "hover:from-rose-500/40 hover:via-zinc-900/90 hover:to-zinc-900",
-    },
-    orange: {
-        bg: "bg-orange-500/20",
-        text: "text-orange-500",
-        border: "border-orange-500/20",
-        variable: "--course-color-orange",
-        hoverBg: "hover:bg-orange-500/30",
-        gradient:
-            "bg-linear-to-br from-orange-500/25 via-zinc-900/95 to-zinc-950",
-        hoverGradient:
-            "hover:from-orange-500/40 hover:via-zinc-900/90 hover:to-zinc-900",
-    },
-    primary: {
-        bg: "bg-primary/20",
-        text: "text-primary",
-        border: "border-primary/20",
-        variable: "--course-color-primary",
-        hoverBg: "hover:bg-primary/30",
-        gradient: "bg-linear-to-br from-primary/25 via-zinc-900/95 to-zinc-950",
-        hoverGradient:
-            "hover:from-primary/40 hover:via-zinc-900/90 hover:to-zinc-900",
-    },
+  emerald: {
+    bg: 'bg-emerald-500/20',
+    text: 'text-emerald-500',
+    border: 'border-emerald-500/20',
+    variable: '--course-color-emerald',
+    hoverBg: 'hover:bg-emerald-500/30',
+    gradient: 'bg-linear-to-br from-emerald-500/25 via-zinc-900/95 to-zinc-950',
+    hoverGradient:
+      'hover:from-emerald-500/40 hover:via-zinc-900/90 hover:to-zinc-900',
+  },
+  amber: {
+    bg: 'bg-amber-500/20',
+    text: 'text-amber-500',
+    border: 'border-amber-500/20',
+    variable: '--course-color-amber',
+    hoverBg: 'hover:bg-amber-500/30',
+    gradient: 'bg-linear-to-br from-amber-500/25 via-zinc-900/95 to-zinc-950',
+    hoverGradient:
+      'hover:from-amber-500/40 hover:via-zinc-900/90 hover:to-zinc-900',
+  },
+  blue: {
+    bg: 'bg-blue-500/20',
+    text: 'text-blue-500',
+    border: 'border-blue-500/20',
+    variable: '--course-color-blue',
+    hoverBg: 'hover:bg-blue-500/30',
+    gradient: 'bg-linear-to-br from-blue-500/25 via-zinc-900/95 to-zinc-950',
+    hoverGradient:
+      'hover:from-blue-500/40 hover:via-zinc-900/90 hover:to-zinc-900',
+  },
+  purple: {
+    bg: 'bg-purple-500/20',
+    text: 'text-purple-500',
+    border: 'border-purple-500/20',
+    variable: '--course-color-purple',
+    hoverBg: 'hover:bg-purple-500/30',
+    gradient: 'bg-linear-to-br from-purple-500/25 via-zinc-900/95 to-zinc-950',
+    hoverGradient:
+      'hover:from-purple-500/40 hover:via-zinc-900/90 hover:to-zinc-900',
+  },
+  rose: {
+    bg: 'bg-rose-500/20',
+    text: 'text-rose-500',
+    border: 'border-rose-500/20',
+    variable: '--course-color-rose',
+    hoverBg: 'hover:bg-rose-500/30',
+    gradient: 'bg-linear-to-br from-rose-500/25 via-zinc-900/95 to-zinc-950',
+    hoverGradient:
+      'hover:from-rose-500/40 hover:via-zinc-900/90 hover:to-zinc-900',
+  },
+  orange: {
+    bg: 'bg-orange-500/20',
+    text: 'text-orange-500',
+    border: 'border-orange-500/20',
+    variable: '--course-color-orange',
+    hoverBg: 'hover:bg-orange-500/30',
+    gradient: 'bg-linear-to-br from-orange-500/25 via-zinc-900/95 to-zinc-950',
+    hoverGradient:
+      'hover:from-orange-500/40 hover:via-zinc-900/90 hover:to-zinc-900',
+  },
+  primary: {
+    bg: 'bg-primary/20',
+    text: 'text-primary',
+    border: 'border-primary/20',
+    variable: '--course-color-primary',
+    hoverBg: 'hover:bg-primary/30',
+    gradient: 'bg-linear-to-br from-primary/25 via-zinc-900/95 to-zinc-950',
+    hoverGradient:
+      'hover:from-primary/40 hover:via-zinc-900/90 hover:to-zinc-900',
+  },
 };
 
 export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
-    {
-        id: 1,
-        dayIndex: 1,
-        dayName: "Pazartesi",
-        subject: "Ekonomi",
-        icon: BookOpen,
-        theme: "emerald",
-        matchDays: [1],
-    },
-    {
-        id: 2,
-        dayIndex: 2,
-        dayName: "Salı",
-        subject: "Hukuk",
-        icon: BookOpen,
-        theme: "rose",
-        matchDays: [2],
-    },
-    {
-        id: 3,
-        dayIndex: 3,
-        dayName: "Çarşamba",
-        subject: "Ekonomi",
-        icon: BookOpen,
-        theme: "emerald",
-        matchDays: [3],
-    },
-    {
-        id: 4,
-        dayIndex: 4,
-        dayName: "Perşembe",
-        subject: "Hukuk",
-        icon: BookOpen,
-        theme: "rose",
-        matchDays: [4],
-    },
-    {
-        id: 5,
-        dayIndex: 5,
-        dayName: "Cuma",
-        subject: "Genel Yetenek - İngilizce",
-        icon: BookOpen,
-        theme: "purple",
-        matchDays: [5],
-    },
-    {
-        id: 6,
-        dayIndex: 6,
-        dayName: "Cumartesi / Pazar",
-        subject: "Muhasebe ve Maliye",
-        icon: BookOpen,
-        theme: "blue",
-        matchDays: [6, 0],
-    },
+  {
+    id: 1,
+    dayIndex: 1,
+    dayName: 'Pazartesi',
+    subject: 'Ekonomi',
+    icon: BookOpen,
+    theme: 'emerald',
+    matchDays: [1],
+  },
+  {
+    id: 2,
+    dayIndex: 2,
+    dayName: 'Salı',
+    subject: 'Hukuk',
+    icon: BookOpen,
+    theme: 'rose',
+    matchDays: [2],
+  },
+  {
+    id: 3,
+    dayIndex: 3,
+    dayName: 'Çarşamba',
+    subject: 'Ekonomi',
+    icon: BookOpen,
+    theme: 'emerald',
+    matchDays: [3],
+  },
+  {
+    id: 4,
+    dayIndex: 4,
+    dayName: 'Perşembe',
+    subject: 'Hukuk',
+    icon: BookOpen,
+    theme: 'rose',
+    matchDays: [4],
+  },
+  {
+    id: 5,
+    dayIndex: 5,
+    dayName: 'Cuma',
+    subject: 'Genel Yetenek - İngilizce',
+    icon: BookOpen,
+    theme: 'purple',
+    matchDays: [5],
+  },
+  {
+    id: 6,
+    dayIndex: 6,
+    dayName: 'Cumartesi / Pazar',
+    subject: 'Muhasebe ve Maliye',
+    icon: BookOpen,
+    theme: 'blue',
+    matchDays: [6, 0],
+  },
 ];
 
 export const CATEGORY_THEMES: Record<
-    string,
-    {
-        Icon: LucideIcon;
-        theme: CourseTheme;
-    }
+  string,
+  {
+    Icon: LucideIcon;
+    theme: CourseTheme;
+  }
 > = {
-    EKONOMİ: {
-        Icon: TrendingUp,
-        theme: "emerald",
-    },
-    HUKUK: {
-        Icon: Scale,
-        theme: "rose",
-    },
-    "MUHASEBE VE MALİYE": {
-        Icon: Calculator,
-        theme: "purple",
-    },
-    "GENEL YETENEK VE İNGİLİZCE": {
-        Icon: Brain,
-        theme: "orange",
-    },
+  EKONOMİ: {
+    Icon: TrendingUp,
+    theme: 'emerald',
+  },
+  HUKUK: {
+    Icon: Scale,
+    theme: 'rose',
+  },
+  'MUHASEBE VE MALİYE': {
+    Icon: Calculator,
+    theme: 'purple',
+  },
+  'GENEL YETENEK VE İNGİLİZCE': {
+    Icon: Brain,
+    theme: 'orange',
+  },
 };
 
 // Map old color names to our themes if needed, or just use the config directly.
@@ -238,57 +232,57 @@ export const CATEGORY_THEMES: Record<
 
 // Mappings for course keywords to themes and icons
 export const COURSE_KEYWORD_MAPPINGS: Array<{
-    keywords: string[];
-    theme: CourseTheme;
-    icon: LucideIcon;
+  keywords: string[];
+  theme: CourseTheme;
+  icon: LucideIcon;
 }> = [
-    {
-        keywords: ["mikro", "makro", "iktisat", "ekonomi"],
-        theme: "emerald",
-        icon: TrendingUp,
-    },
-    {
-        keywords: [
-            "hukuk",
-            "anayasa",
-            "ceza",
-            "idare",
-            "borçlar",
-            "eşya",
-            "ticaret",
-        ],
-        theme: "rose",
-        icon: Gavel,
-    },
-    {
-        keywords: ["muhasebe", "hesap", "finans"],
-        theme: "blue", // Muhasebe -> Blue
-        icon: Calculator,
-    },
-    {
-        keywords: ["maliye", "vergi", "bütçe"],
-        theme: "purple", // Maliye -> Purple
-        icon: PiggyBank,
-    },
-    {
-        keywords: ["ingilizce", "english", "dil"],
-        theme: "orange",
-        icon: Globe,
-    },
-    {
-        keywords: ["genel yetenek", "türkçe", "matematik", "tarih", "coğrafya"],
-        theme: "orange",
-        icon: Brain,
-    },
-    // Fallbacks or specific overrides
-    {
-        keywords: ["devlet"],
-        theme: "rose",
-        icon: Briefcase,
-    },
+  {
+    keywords: ['mikro', 'makro', 'iktisat', 'ekonomi'],
+    theme: 'emerald',
+    icon: TrendingUp,
+  },
+  {
+    keywords: [
+      'hukuk',
+      'anayasa',
+      'ceza',
+      'idare',
+      'borçlar',
+      'eşya',
+      'ticaret',
+    ],
+    theme: 'rose',
+    icon: Gavel,
+  },
+  {
+    keywords: ['muhasebe', 'hesap', 'finans'],
+    theme: 'blue', // Muhasebe -> Blue
+    icon: Calculator,
+  },
+  {
+    keywords: ['maliye', 'vergi', 'bütçe'],
+    theme: 'purple', // Maliye -> Purple
+    icon: PiggyBank,
+  },
+  {
+    keywords: ['ingilizce', 'english', 'dil'],
+    theme: 'orange',
+    icon: Globe,
+  },
+  {
+    keywords: ['genel yetenek', 'türkçe', 'matematik', 'tarih', 'coğrafya'],
+    theme: 'orange',
+    icon: Brain,
+  },
+  // Fallbacks or specific overrides
+  {
+    keywords: ['devlet'],
+    theme: 'rose',
+    icon: Briefcase,
+  },
 ];
 
 // Special case overrides for icons if the keyword limits were too broad above
 export const ICON_OVERRIDES: Array<{ keyword: string; icon: LucideIcon }> = [
-    { keyword: "makro", icon: BarChart3 },
+  { keyword: 'makro', icon: BarChart3 },
 ];

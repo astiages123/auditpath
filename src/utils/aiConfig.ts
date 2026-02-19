@@ -8,7 +8,7 @@ export interface AIConfig {
 
 /**
  * Returns the AI configuration based on the current AI_MODE.
- * TEST mode uses MiMo, PRODUCTION mode uses DeepSeek.
+ * TEST mode uses MiMo, PRODUCTION mode uses Cerebras (gpt-oss-120b).
  */
 export const getAIConfig = (): AIConfig => {
   if (AI_MODE === 'PRODUCTION') {

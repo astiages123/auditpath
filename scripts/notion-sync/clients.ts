@@ -4,8 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 
 import {
   NOTION_TOKEN,
-  SUPABASE_URL,
   SUPABASE_SERVICE_KEY,
+  SUPABASE_URL,
   validateConfig,
 } from './config';
 import type { Database, RichTextItemResponse } from './types';
@@ -14,8 +14,8 @@ validateConfig();
 
 export const notion = new Client({ auth: NOTION_TOKEN });
 export const supabase = createClient<Database>(
-  SUPABASE_URL,
-  SUPABASE_SERVICE_KEY
+  SUPABASE_URL as string,
+  SUPABASE_SERVICE_KEY as string
 );
 export const n2m = new NotionToMarkdown({ notionClient: notion });
 

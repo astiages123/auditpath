@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { logger } from '@/utils/logger';
@@ -121,66 +121,62 @@ export function VideoList({
     };
   }, [courseId, dbCourseId, userId]);
 
-  // Handler wrapper
-  const onToggle = useCallback(
-    async (videoNumber: number, isModifierPressed: boolean) => {
-      // Optimistic update via hook
-      const updated = await handleToggleVideo(
-        videos,
-        videoNumber,
-        isModifierPressed
-      );
-      setVideos(updated);
-    },
-    [videos, handleToggleVideo]
-  );
-
-  // Memoized Render Items
-  const renderItems = useMemo(() => {
-    if (loading) {
-      // Skeleton Array
-      return Array.from({ length: 5 }).map((_, i) => (
-        <div
-          key={i}
-          className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-zinc-900/20"
-        >
-          <Skeleton className="w-6 h-6 rounded-full" />
-          <Skeleton className="h-4 w-[20px]" />
-          <div className="flex-1">
-            <Skeleton className="h-4 w-3/4" />
-          </div>
-          <Skeleton className="w-12 h-6 rounded-md" />
-        </div>
-      ));
-    }
-
-    if (staticVideos.length === 0) {
-      return (
-        <div className="p-4 text-center text-muted-foreground text-sm">
-          Video bulunamadı.
-        </div>
-      );
-    }
-
-    return staticVideos.map((staticV) => {
-      const state = videos.find((v) => v.videoNumber === staticV.videoNumber);
-      return (
-        <VideoItem
-          key={staticV.videoNumber}
-          _id={staticV.videoNumber}
-          videoNumber={staticV.videoNumber}
-          title={staticV.title}
-          duration={staticV.duration}
-          completed={state?.completed || false}
-          onToggle={onToggle}
-        />
-      );
-    });
-  }, [loading, staticVideos, videos, onToggle]);
+  const onToggle = async (videoNumber: number, isModifierPressed: boolean) => {
+    const updated = await handleToggleVideo(
+      videos,
+      videoNumber,
+      isModifierPressed
+    );
+    setVideos(updated);
+  };
 
   return (
     <div className="p-4 space-y-4">
-      <div className="grid gap-2">{renderItems}</div>
+      <div className="grid gap-2">
+        {(() => {
+          if (loading) {
+            // Skeleton Array
+            return Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-zinc-900/20"
+              >
+                <Skeleton className="w-6 h-6 rounded-full" />
+                <Skeleton className="h-4 w-[20px]" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+                <Skeleton className="w-12 h-6 rounded-md" />
+              </div>
+            ));
+          }
+
+          if (staticVideos.length === 0) {
+            return (
+              <div className="p-4 text-center text-muted-foreground text-sm">
+                Video bulunamadı.
+              </div>
+            );
+          }
+
+          return staticVideos.map((staticV) => {
+            const state = videos.find(
+              (v) => v.videoNumber === staticV.videoNumber
+            );
+            return (
+              <VideoItem
+                key={staticV.videoNumber}
+                _id={staticV.videoNumber}
+                videoNumber={staticV.videoNumber}
+                title={staticV.title}
+                duration={staticV.duration}
+                completed={state?.completed || false}
+                onToggle={onToggle}
+              />
+            );
+          });
+        })()}
+      </div>
     </div>
   );
 }

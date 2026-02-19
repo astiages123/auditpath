@@ -1,21 +1,21 @@
-import { supabase } from "@/lib/supabase";
-import type { Json } from "@/types/database.types";
+import { supabase } from '@/lib/supabase';
+import type { Json } from '@/types/database.types';
 import {
-  calculateFocusPower,
   calculatePauseCount,
   calculateSessionTotals,
   getCycleCount,
-} from "@/utils/math";
+} from '@/features/pomodoro/logic/sessionMath';
+import { calculateFocusPower } from '@/features/efficiency/logic/metricsCalc';
 import type {
   RecentSession,
   TimelineBlock,
-} from "@/features/pomodoro/types/pomodoroTypes";
+} from '@/features/pomodoro/types/pomodoroTypes';
 import {
   TimelineEventSchema,
   type ValidatedTimelineEvent,
-} from "../types/pomodoroTypes";
-import { isValid, parseOrThrow } from "@/utils/helpers";
-import { logger } from "@/utils/logger";
+} from '../types/pomodoroTypes';
+import { isValid, parseOrThrow } from '@/utils/validation';
+import { logger } from '@/utils/logger';
 
 /**
  * Create or update a pomodoro session.
@@ -33,7 +33,7 @@ export async function upsertPomodoroSession(
     startedAt: string | number | Date;
     isCompleted?: boolean;
   },
-  userId: string,
+  userId: string
 ) {
   const totals = calculateSessionTotals(session.timeline);
   const pauseCount = calculatePauseCount(session.timeline);
@@ -43,7 +43,7 @@ export async function upsertPomodoroSession(
   const efficiencyScore = calculateFocusPower(
     totals.totalWork,
     totals.totalBreak,
-    totals.totalPause,
+    totals.totalPause
   );
 
   // Validate if courseId is a UUID
@@ -55,9 +55,9 @@ export async function upsertPomodoroSession(
   if (!uuidRegex.test(session.courseId)) {
     // If not a UUID, it's likely a slug. Try to resolve it.
     const { data: course } = await supabase
-      .from("courses")
-      .select("id, name")
-      .eq("course_slug", session.courseId)
+      .from('courses')
+      .select('id, name')
+      .eq('course_slug', session.courseId)
       .maybeSingle();
 
     if (course) {
@@ -70,7 +70,7 @@ export async function upsertPomodoroSession(
   }
 
   const { data, error } = await supabase
-    .from("pomodoro_sessions")
+    .from('pomodoro_sessions')
     .upsert({
       id: session.id,
       user_id: userId,
@@ -101,11 +101,11 @@ export async function upsertPomodoroSession(
  */
 export async function getLatestActiveSession(userId: string) {
   const { data } = await supabase
-    .from("pomodoro_sessions")
-    .select("*, course:courses(*, category:categories(*))")
-    .eq("user_id", userId)
-    .order("started_at", { ascending: false })
-    .neq("is_completed", true)
+    .from('pomodoro_sessions')
+    .select('*, course:courses(*, category:categories(*))')
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
+    .neq('is_completed', true)
     .limit(1)
     .maybeSingle();
 
@@ -119,11 +119,11 @@ export async function getLatestActiveSession(userId: string) {
  */
 export async function deletePomodoroSession(sessionId: string) {
   const { error } = await supabase
-    .from("pomodoro_sessions")
+    .from('pomodoro_sessions')
     .delete()
-    .eq("id", sessionId);
+    .eq('id', sessionId);
 
-  if (error) logger.error("Error deleting session:", error);
+  if (error) logger.error('Error deleting session:', error);
 }
 
 /**
@@ -138,10 +138,10 @@ export async function updatePomodoroHeartbeat(
   stats?: {
     efficiency_score?: number;
     total_paused_time?: number;
-  },
+  }
 ): Promise<void> {
   const { error } = await supabase
-    .from("pomodoro_sessions")
+    .from('pomodoro_sessions')
     .update({
       last_active_at: new Date().toISOString(),
       ...(stats?.efficiency_score !== undefined
@@ -151,7 +151,7 @@ export async function updatePomodoroHeartbeat(
         ? { total_pause_time: stats.total_paused_time }
         : {}),
     })
-    .eq("id", sessionId);
+    .eq('id', sessionId);
 
   if (error) {
     // Heartbeat failed
@@ -176,10 +176,10 @@ export async function getDailySessionCount(userId: string) {
   today.setHours(4, 0, 0, 0);
 
   const { data, error } = await supabase
-    .from("pomodoro_sessions")
-    .select("timeline")
-    .eq("user_id", userId)
-    .gte("started_at", today.toISOString());
+    .from('pomodoro_sessions')
+    .select('timeline')
+    .eq('user_id', userId)
+    .gte('started_at', today.toISOString());
 
   if (error) {
     return 0;
@@ -188,7 +188,7 @@ export async function getDailySessionCount(userId: string) {
   // Count work cycles in all sessions today
   const totalCycles = (data || []).reduce(
     (acc, s) => acc + getCycleCount(s.timeline),
-    0,
+    0
   );
   return totalCycles;
 }
@@ -202,20 +202,20 @@ export async function getDailySessionCount(userId: string) {
  */
 export async function getRecentSessions(
   userId: string,
-  limit: number = 20,
+  limit: number = 20
 ): Promise<TimelineBlock[]> {
   const { data, error } = await supabase
-    .from("pomodoro_sessions")
+    .from('pomodoro_sessions')
     .select(
-      "id, course_name, started_at, ended_at, total_work_time, total_break_time, total_pause_time, timeline",
+      'id, course_name, started_at, ended_at, total_work_time, total_break_time, total_pause_time, timeline'
     )
-    .eq("user_id", userId)
-    .or("total_work_time.gte.60,total_break_time.gte.60") // Molaları da getir
-    .order("started_at", { ascending: false })
+    .eq('user_id', userId)
+    .or('total_work_time.gte.60,total_break_time.gte.60') // Molaları da getir
+    .order('started_at', { ascending: false })
     .limit(limit);
 
   if (error || !data) {
-    logger.error("Error fetching recent sessions:", error);
+    logger.error('Error fetching recent sessions:', error);
     return [];
   }
 
@@ -239,11 +239,11 @@ export async function getRecentSessions(
     let timeline: Json[] = [];
     if (Array.isArray(s.timeline)) {
       timeline = s.timeline;
-    } else if (typeof s.timeline === "string") {
+    } else if (typeof s.timeline === 'string') {
       try {
         timeline = JSON.parse(s.timeline);
       } catch (e) {
-        logger.error("Failed to parse timeline string:", e as Error);
+        logger.error('Failed to parse timeline string:', e as Error);
       }
     }
 
@@ -266,26 +266,26 @@ export async function getRecentSessions(
 
       if (tStart < Infinity) {
         startTime = new Date(
-          Math.min(new Date(s.started_at).getTime(), tStart),
+          Math.min(new Date(s.started_at).getTime(), tStart)
         ).toISOString();
       }
       if (tEnd > -Infinity) {
         endTime = new Date(
-          Math.max(new Date(s.ended_at).getTime(), tEnd),
+          Math.max(new Date(s.ended_at).getTime(), tEnd)
         ).toISOString();
       }
     }
 
     return {
       id: s.id,
-      courseName: s.course_name || "Bilinmeyen Ders",
+      courseName: s.course_name || 'Bilinmeyen Ders',
       startTime,
       endTime,
       durationSeconds: workTime,
       totalDurationSeconds: workTime + breakTime + pauseTime,
       pauseSeconds: pauseTime,
       breakSeconds: breakTime,
-      type: breakTime > workTime ? "break" : "work",
+      type: breakTime > workTime ? 'break' : 'work',
       timeline: validatedTimeline,
     };
   });
@@ -300,25 +300,25 @@ export async function getRecentSessions(
  */
 export async function getRecentActivitySessions(
   userId: string,
-  limit: number = 5,
+  limit: number = 5
 ): Promise<RecentSession[]> {
   const { data, error } = await supabase
-    .from("pomodoro_sessions")
+    .from('pomodoro_sessions')
     .select(
-      "id, course_name, started_at, total_work_time, total_break_time, total_pause_time, pause_count, efficiency_score, timeline",
+      'id, course_name, started_at, total_work_time, total_break_time, total_pause_time, pause_count, efficiency_score, timeline'
     )
-    .eq("user_id", userId)
-    .order("started_at", { ascending: false })
+    .eq('user_id', userId)
+    .order('started_at', { ascending: false })
     .limit(limit);
 
   if (error) {
-    logger.error("Error fetching recent activity sessions:", error);
+    logger.error('Error fetching recent activity sessions:', error);
     return [];
   }
 
   return (data || []).map((s) => ({
     id: s.id,
-    courseName: s.course_name || "Bilinmeyen Ders",
+    courseName: s.course_name || 'Bilinmeyen Ders',
     date: s.started_at,
     durationMinutes: Math.round((s.total_work_time || 0) / 60),
     efficiencyScore: s.efficiency_score || 0,

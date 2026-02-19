@@ -5,10 +5,10 @@
  * Used primarily for quiz progress tracking when the user is offline.
  */
 
-import { storage } from "@/shared/services/storageService";
-import { logger } from "@/utils/logger";
+import { storage } from '@/shared/services/storageService';
+import { logger } from '@/utils/logger';
 
-const QUEUE_KEY = "offline_quiz_queue";
+const QUEUE_KEY = 'offline_quiz_queue';
 const MAX_QUEUE_SIZE = 100;
 
 export interface QueuedQuizProgress {
@@ -27,7 +27,7 @@ export function addToOfflineQueue(payload: Record<string, unknown>): void {
 
     // Prevent duplicates by checking question_id
     const existingIndex = queue.findIndex(
-      (item) => item.payload.question_id === payload.question_id,
+      (item) => item.payload.question_id === payload.question_id
     );
 
     if (existingIndex !== -1) {
@@ -51,12 +51,12 @@ export function addToOfflineQueue(payload: Record<string, unknown>): void {
     // Limit queue size (FIFO)
     if (queue.length > MAX_QUEUE_SIZE) {
       queue.shift();
-      logger.warn("Offline queue exceeded max size, removed oldest entry");
+      logger.warn('Offline queue exceeded max size, removed oldest entry');
     }
 
     storage.set(QUEUE_KEY, queue, { ttl: 7 * 24 * 60 * 60 * 1000 }); // 7 days
   } catch (error) {
-    logger.error("Failed to add to offline queue", error as Error);
+    logger.error('Failed to add to offline queue', error as Error);
   }
 }
 
@@ -75,7 +75,7 @@ export function removeFromOfflineQueue(id: string): void {
     const queue = getOfflineQueue().filter((item) => item.id !== id);
     storage.set(QUEUE_KEY, queue, { ttl: 7 * 24 * 60 * 60 * 1000 });
   } catch (error) {
-    logger.error("Failed to remove from offline queue", error as Error);
+    logger.error('Failed to remove from offline queue', error as Error);
   }
 }
 
@@ -99,7 +99,7 @@ export function incrementRetryCount(id: string): void {
     });
     storage.set(QUEUE_KEY, queue, { ttl: 7 * 24 * 60 * 60 * 1000 });
   } catch (error) {
-    logger.error("Failed to increment retry count", error as Error);
+    logger.error('Failed to increment retry count', error as Error);
   }
 }
 
@@ -129,8 +129,8 @@ export interface SyncResult {
 
 export async function syncOfflineQueue(
   syncFn: (
-    payload: Record<string, unknown>,
-  ) => Promise<{ success: boolean; error?: Error }>,
+    payload: Record<string, unknown>
+  ) => Promise<{ success: boolean; error?: Error }>
 ): Promise<SyncResult[]> {
   const queue = getOfflineQueue();
   const results: SyncResult[] = [];
@@ -161,7 +161,7 @@ export async function syncOfflineQueue(
       results.push({
         id: item.id,
         success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error instanceof Error ? error.message : 'Unknown error',
       });
     }
   }

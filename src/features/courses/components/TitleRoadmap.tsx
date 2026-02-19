@@ -1,4 +1,3 @@
-import React, { useMemo } from 'react';
 import {
   Sparkles,
   Trophy,
@@ -9,7 +8,7 @@ import {
 import { cn } from '@/utils/core';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RANKS } from '@/features/achievements/logic/data/rankIcons';
+import { RANKS } from '@/features/achievements/utils/constants';
 export { RANKS };
 
 interface TitleRoadmapProps {
@@ -21,18 +20,16 @@ export default function TitleRoadmap({
   watchedVideos,
   requiredVideos,
 }: TitleRoadmapProps) {
-  const milestones = useMemo(() => {
-    const sortedRanks = [...RANKS].sort(
-      (a, b) => a.minPercentage - b.minPercentage
-    );
-    return sortedRanks.map((rank, index) => ({
-      id: rank.id,
-      title: rank.name,
-      threshold: rank.minPercentage,
-      motto: rank.motto,
-      imagePath: `/ranks/rank${index + 1}.webp`,
-    }));
-  }, []);
+  const sortedRanks = [...RANKS].sort(
+    (a, b) => a.minPercentage - b.minPercentage
+  );
+  const milestones = sortedRanks.map((rank, index) => ({
+    id: rank.id,
+    title: rank.name,
+    threshold: rank.minPercentage,
+    motto: rank.motto,
+    imagePath: `/ranks/rank${index + 1}.webp`,
+  }));
 
   const progress =
     requiredVideos > 0

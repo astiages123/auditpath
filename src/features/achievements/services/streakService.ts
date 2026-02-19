@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { calculateStreakMilestones } from '@/utils/streakUtils';
+import { calculateStreakMilestones } from '@/features/achievements/logic/streakLogic';
 import type { StreakMilestones } from '@/features/achievements/types/achievementsTypes';
 
 /**

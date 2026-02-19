@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useProgress } from '@/shared/hooks/useProgress';
-import { useCelebrationStore } from '@/features/achievements/store';
-import { getCelebrationAsset } from '@/features/achievements/logic/data/celebrationAssets';
+import { useCelebrationStore } from '@/features/achievements/store/useCelebrationStore';
+import { getCelebrationAsset } from '@/features/achievements/logic/celebrationAssets';
 import { markAsCelebrated } from '@/features/achievements/hooks/useAchievements';
 import { useSyncAchievementsMutation } from '@/features/achievements/hooks/useAchievements';
 import { useUncelebratedQuery } from '@/features/achievements/hooks/useAchievements';
@@ -11,9 +11,7 @@ import { logger } from '@/utils/logger';
 export function useCelebration() {
   const { stats, isLoading } = useProgress();
   const { user } = useAuth();
-  const enqueue = useCelebrationStore(
-    (state) => state.actions.enqueueCelebration
-  );
+  const enqueue = useCelebrationStore((state) => state.enqueueCelebration);
   const lastStatsRef = useRef<string>('');
 
   // Prevent double-processing of the same achievement ID during the session

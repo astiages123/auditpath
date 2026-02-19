@@ -1,7 +1,9 @@
 import { supabase } from '@/lib/supabase';
 
 import { z } from 'zod';
-import { isValid, parseOrThrow } from '@/utils/helpers';
+
+import { isValid, parseOrThrow } from '@/utils/validation';
+
 import { logger } from '@/utils/logger';
 
 const ExchangeRateApiResponseSchema = z.object({

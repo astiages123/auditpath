@@ -5,24 +5,15 @@ import { useCelebration } from '@/shared/hooks/useCelebration';
 import { useProgress } from '@/shared/hooks/useProgress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/core';
-import { formatDuration } from '@/utils/helpers';
+import { formatDuration } from '@/utils/formatters';
+import { normalizeCategorySlug } from '../utils/categoryHelpers';
+
 import {
   CATEGORY_THEMES,
   COURSE_THEME_CONFIG,
 } from '../services/courses-config';
 
 import { type Course } from '@/features/courses/types/courseTypes';
-
-// Normalize category names to database slugs for consistent matching
-function normalizeCategorySlug(rawName: string): string {
-  const slugMap: Record<string, string> = {
-    EKONOMİ: 'EKONOMI',
-    HUKUK: 'HUKUK',
-    'MUHASEBE VE MALİYE': 'MUHASEBE_MALIYE',
-    'GENEL YETENEK VE İNGİLİZCE': 'GENEL_YETENEK',
-  };
-  return slugMap[rawName] || rawName;
-}
 
 interface CategoryCardProps {
   id: string;

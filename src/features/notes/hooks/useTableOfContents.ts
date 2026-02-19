@@ -5,9 +5,9 @@ import {
   useMemo,
   useRef,
   useState,
-} from "react";
-import { type CourseTopic } from "@/features/courses/types/courseTypes";
-import { generateTOCFromContent } from "../logic/notesLogic";
+} from 'react';
+import { type CourseTopic } from '@/features/courses/types/courseTypes';
+import { generateTOCFromContent } from '../logic/notesLogic';
 
 interface UseTableOfContentsProps {
   chunks: CourseTopic[];
@@ -24,7 +24,7 @@ export const useTableOfContents = ({
   mainContentRef,
   isProgrammaticScroll,
 }: UseTableOfContentsProps) => {
-  const [activeSection, setActiveSection] = useState<string>("");
+  const [activeSection, setActiveSection] = useState<string>('');
   const observerRef = useRef<IntersectionObserver | null>(null);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -41,7 +41,7 @@ export const useTableOfContents = ({
       root: mainContentRef.current,
       // Adjusted rootMargin to better detect headers at the top of the viewport
       // "0px 0px -40% 0px" means we only care about the top 60% of the viewport
-      rootMargin: "0px 0px -40% 0px",
+      rootMargin: '0px 0px -40% 0px',
       threshold: [0, 1.0],
     };
 
@@ -79,7 +79,7 @@ export const useTableOfContents = ({
     // Observe all elements with an ID inside the scroll container
     // Using a timeout to ensure DOM is ready
     const timer = setTimeout(() => {
-      const sections = mainContentRef.current?.querySelectorAll("[id]");
+      const sections = mainContentRef.current?.querySelectorAll('[id]');
       sections?.forEach((section) => observerRef.current?.observe(section));
     }, 100);
 
@@ -103,12 +103,9 @@ export const useTableOfContents = ({
   }, [chunks]);
 
   // 3. Derived filtered ToC for Right Panel
-  const currentChunkToC = useMemo(() => {
-    if (!activeChunkId) return [];
-    return toc.filter(
-      (item) => item.chunkId === activeChunkId && item.level > 1,
-    );
-  }, [toc, activeChunkId]);
+  const currentChunkToC = activeChunkId
+    ? toc.filter((item) => item.chunkId === activeChunkId && item.level > 1)
+    : [];
 
   return {
     toc,

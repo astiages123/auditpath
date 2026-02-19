@@ -1,12 +1,10 @@
-import { supabase } from "@/lib/supabase";
-import {
-  getNextRank,
-  getRankForPercentage,
-  getVirtualDateKey,
-  normalizeCategorySlug,
-} from "@/utils/helpers";
-import { calculateStreak } from "@/utils/streakUtils";
-import coursesData from "@/features/courses/services/courses.json";
+import { supabase } from '@/lib/supabase';
+import { getNextRank, getRankForPercentage } from '../utils/rankHelpers';
+import { normalizeCategorySlug } from '@/features/courses/utils/categoryHelpers';
+import { getVirtualDateKey } from '@/utils/dateHelpers';
+
+import { calculateStreak } from '@/features/achievements/logic/streakLogic';
+import coursesData from '@/features/courses/services/courses.json';
 
 /**
  * Get comprehensive user statistics including progress, streak, and rank.
@@ -14,9 +12,9 @@ import coursesData from "@/features/courses/services/courses.json";
 export async function getUserStats(userId: string) {
   try {
     const { data: categories, error: catError } = await supabase
-      .from("categories")
-      .select("*, courses(*)")
-      .order("sort_order");
+      .from('categories')
+      .select('*, courses(*)')
+      .order('sort_order');
 
     if (catError) throw catError;
     const cats = categories || [];
@@ -43,7 +41,7 @@ export async function getUserStats(userId: string) {
             h += c.totalHours || 0;
             v += c.totalVideos || 0;
           });
-        },
+        }
       );
       return { h, v };
     };
@@ -51,26 +49,24 @@ export async function getUserStats(userId: string) {
     const jsonTotals = getTotalsFromJSON();
     const dbTotalHours = cats.reduce(
       (sum, cat) => sum + (cat.total_hours || 0),
-      0,
+      0
     );
     const dbTotalVideos = cats.reduce(
       (sum, cat) =>
         sum + cat.courses.reduce((s, c) => s + (c.total_videos || 0), 0),
-      0,
+      0
     );
 
-    const globalTotalHours = dbTotalHours > 0
-      ? dbTotalHours
-      : jsonTotals.h || 280;
-    const globalTotalVideos = dbTotalVideos > 0
-      ? dbTotalVideos
-      : jsonTotals.v || 550;
+    const globalTotalHours =
+      dbTotalHours > 0 ? dbTotalHours : jsonTotals.h || 280;
+    const globalTotalVideos =
+      dbTotalVideos > 0 ? dbTotalVideos : jsonTotals.v || 550;
 
     const { data: progress, error: progressError } = await supabase
-      .from("video_progress")
-      .select("*, video:videos(duration_minutes, course_id)")
-      .eq("user_id", userId)
-      .eq("completed", true);
+      .from('video_progress')
+      .select('*, video:videos(duration_minutes, course_id)')
+      .eq('user_id', userId)
+      .eq('completed', true);
 
     if (progressError) throw progressError;
 
@@ -109,8 +105,8 @@ export async function getUserStats(userId: string) {
         if (video) {
           const durationHours = video.duration_minutes / 60;
           completedHours += durationHours;
-          const courseSlug = courseIdToSlugMap[video.course_id] ||
-            video.course_id;
+          const courseSlug =
+            courseIdToSlugMap[video.course_id] || video.course_id;
           courseProgress[courseSlug] = (courseProgress[courseSlug] || 0) + 1;
 
           const catName = courseToCategoryMap[video.course_id];
@@ -121,10 +117,11 @@ export async function getUserStats(userId: string) {
               categoryProgress[normalizedCatName] = {
                 completedVideos: 0,
                 completedHours: 0,
-                totalVideos: cat?.courses.reduce(
-                  (sum, c) => sum + (c.total_videos || 0),
-                  0,
-                ) || 0,
+                totalVideos:
+                  cat?.courses.reduce(
+                    (sum, c) => sum + (c.total_videos || 0),
+                    0
+                  ) || 0,
                 totalHours: cat?.total_hours || 0,
               };
             }
@@ -136,28 +133,30 @@ export async function getUserStats(userId: string) {
     }
 
     const progressPercentage = Math.round(
-      (completedHours / globalTotalHours) * 100,
+      (completedHours / globalTotalHours) * 100
     );
-    const currentRank = completedVideos > 0
-      ? getRankForPercentage(progressPercentage)
-      : undefined;
+    const currentRank =
+      completedVideos > 0
+        ? getRankForPercentage(progressPercentage)
+        : undefined;
     const nextRank = currentRank ? getNextRank(currentRank.id) : null;
 
     let rankProgress = 100;
     if (currentRank && nextRank) {
       const diff = nextRank.minPercentage - currentRank.minPercentage;
-      rankProgress = diff > 0
-        ? Math.min(
-          100,
-          Math.max(
-            0,
-            Math.round(
-              ((progressPercentage - currentRank.minPercentage) / diff) *
-                100,
-            ),
-          ),
-        )
-        : 100;
+      rankProgress =
+        diff > 0
+          ? Math.min(
+              100,
+              Math.max(
+                0,
+                Math.round(
+                  ((progressPercentage - currentRank.minPercentage) / diff) *
+                    100
+                )
+              )
+            )
+          : 100;
     } else if (!currentRank) {
       rankProgress = 0;
     }
@@ -168,14 +167,14 @@ export async function getUserStats(userId: string) {
     const streak = calculateStreak(activeDays, firstActivityKey);
 
     const hoursRemaining = Math.max(0, globalTotalHours - completedHours);
-    const dailyAverage = activeDays.size > 0
-      ? completedHours / activeDays.size
-      : 0;
-    const estimatedDays = hoursRemaining > 0
-      ? dailyAverage > 0
-        ? Math.ceil(hoursRemaining / dailyAverage)
-        : Math.ceil(hoursRemaining / 2)
-      : 0;
+    const dailyAverage =
+      activeDays.size > 0 ? completedHours / activeDays.size : 0;
+    const estimatedDays =
+      hoursRemaining > 0
+        ? dailyAverage > 0
+          ? Math.ceil(hoursRemaining / dailyAverage)
+          : Math.ceil(hoursRemaining / 2)
+        : 0;
 
     return {
       completedVideos,
@@ -191,13 +190,14 @@ export async function getUserStats(userId: string) {
       progressPercentage,
       estimatedDays,
       dailyAverage,
-      todayVideoCount: progress?.filter((p) => {
-        const dateStr = p.completed_at || p.updated_at;
-        return (
-          dateStr &&
-          getVirtualDateKey(new Date(dateStr)) === getVirtualDateKey()
-        );
-      }).length || 0,
+      todayVideoCount:
+        progress?.filter((p) => {
+          const dateStr = p.completed_at || p.updated_at;
+          return (
+            dateStr &&
+            getVirtualDateKey(new Date(dateStr)) === getVirtualDateKey()
+          );
+        }).length || 0,
     };
   } catch {
     return null;
@@ -205,6 +205,6 @@ export async function getUserStats(userId: string) {
 }
 
 // Re-export specialized services
-export * from "./courseMasteryService";
-export * from "./streakService";
-export * from "./activeDaysService";
+export * from './courseMasteryService';
+export * from './streakService';
+export * from './activeDaysService';

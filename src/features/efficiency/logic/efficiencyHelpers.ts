@@ -1,6 +1,6 @@
-import { EFFICIENCY_THRESHOLDS } from "@/utils/constants";
-import { getVirtualDateKey } from "@/utils/helpers";
-import { flowState } from "../types/efficiencyTypes";
+import { EFFICIENCY_THRESHOLDS } from '../utils/constants';
+import { getVirtualDateKey } from '@/utils/dateHelpers';
+import { flowState } from '../types/efficiencyTypes';
 
 /**
  * Generates an array of date strings for the last N days.
@@ -8,23 +8,23 @@ import { flowState } from "../types/efficiencyTypes";
  * @returns Array of date strings (YYYY-MM-DD)
  */
 export function generateDateRange(days: number): string[] {
-    const dates: string[] = [];
-    for (let i = 0; i < days; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        dates.push(getVirtualDateKey(d));
-    }
-    return dates;
+  const dates: string[] = [];
+  for (let i = 0; i < days; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    dates.push(getVirtualDateKey(d));
+  }
+  return dates;
 }
 
 export interface EfficiencyMetrics {
-    totalVideoTime: number; // minutes
-    totalPomodoroTime: number; // minutes
+  totalVideoTime: number; // minutes
+  totalPomodoroTime: number; // minutes
 }
 
 export interface LearningFlowResult {
-    score: number;
-    state: flowState;
+  score: number;
+  state: flowState;
 }
 
 /**
@@ -34,12 +34,12 @@ export interface LearningFlowResult {
  * @returns Score as a number (e.g. 1.25)
  */
 export function calculateEfficiencyScore(
-    videoMinutes: number,
-    workMinutes: number,
+  videoMinutes: number,
+  workMinutes: number
 ): number {
-    if (workMinutes <= 0) return 0;
-    const ratio = videoMinutes / workMinutes;
-    return Number(ratio.toFixed(2));
+  if (workMinutes <= 0) return 0;
+  const ratio = videoMinutes / workMinutes;
+  return Number(ratio.toFixed(2));
 }
 
 /**
@@ -48,34 +48,34 @@ export function calculateEfficiencyScore(
  * @returns Object containing score (number) and state (flowState)
  */
 export function calculateLearningFlow(
-    metrics: EfficiencyMetrics,
+  metrics: EfficiencyMetrics
 ): LearningFlowResult {
-    const score = calculateEfficiencyScore(
-        metrics.totalVideoTime,
-        metrics.totalPomodoroTime,
-    );
+  const score = calculateEfficiencyScore(
+    metrics.totalVideoTime,
+    metrics.totalPomodoroTime
+  );
 
-    // Safety Guard: if no work done, flow is 0 (handled by calculateEfficiencyScore but check for state)
-    if (metrics.totalPomodoroTime === 0) {
-        return { score: 0, state: "stuck" };
-    }
+  // Safety Guard: if no work done, flow is 0 (handled by calculateEfficiencyScore but check for state)
+  if (metrics.totalPomodoroTime === 0) {
+    return { score: 0, state: 'stuck' };
+  }
 
-    // 2. Determine State based on 1.0x centered symmetric spectrum
-    let state: flowState;
+  // 2. Determine State based on 1.0x centered symmetric spectrum
+  let state: flowState;
 
-    if (score < EFFICIENCY_THRESHOLDS.STUCK) {
-        state = "stuck";
-    } else if (score < EFFICIENCY_THRESHOLDS.DEEP) {
-        state = "deep";
-    } else if (score <= EFFICIENCY_THRESHOLDS.OPTIMAL_MAX) {
-        state = "optimal";
-    } else if (score <= EFFICIENCY_THRESHOLDS.SPEED) {
-        state = "speed";
-    } else {
-        state = "shallow";
-    }
+  if (score < EFFICIENCY_THRESHOLDS.STUCK) {
+    state = 'stuck';
+  } else if (score < EFFICIENCY_THRESHOLDS.DEEP) {
+    state = 'deep';
+  } else if (score <= EFFICIENCY_THRESHOLDS.OPTIMAL_MAX) {
+    state = 'optimal';
+  } else if (score <= EFFICIENCY_THRESHOLDS.SPEED) {
+    state = 'speed';
+  } else {
+    state = 'shallow';
+  }
 
-    return { score, state };
+  return { score, state };
 }
 
 /**
@@ -85,11 +85,11 @@ export function calculateLearningFlow(
  * @returns Progress percentage (0-100)
  */
 export function calculateGoalProgress(
-    currentMinutes: number,
-    goalMinutes: number,
+  currentMinutes: number,
+  goalMinutes: number
 ): number {
-    if (goalMinutes <= 0) return 0;
-    return Math.min(Math.round((currentMinutes / goalMinutes) * 100), 100);
+  if (goalMinutes <= 0) return 0;
+  return Math.min(Math.round((currentMinutes / goalMinutes) * 100), 100);
 }
 
 /**
@@ -98,7 +98,7 @@ export function calculateGoalProgress(
  * @returns Formatted time string
  */
 export function formatEfficiencyTime(minutes: number): string {
-    const h = Math.floor(minutes / 60);
-    const m = minutes % 60;
-    return `${h}sa ${m}dk`;
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${h}sa ${m}dk`;
 }

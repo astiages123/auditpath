@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef } from "react";
-import { logger } from "@/utils/logger";
-import faviconIco from "@/assets/favicon.ico";
+import { useCallback, useEffect, useRef } from 'react';
+import { logger } from '@/utils/logger';
+import faviconIco from '@/assets/favicon.ico';
 
 /**
  * useFaviconManager
@@ -19,8 +19,8 @@ export function useFaviconManager(
   timeLeft: number,
   totalTime: number,
   isActive: boolean,
-  mode: "work" | "break",
-  enabled: boolean = true,
+  mode: 'work' | 'break',
+  enabled: boolean = true
 ) {
   const faviconRef = useRef<HTMLLinkElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -30,18 +30,19 @@ export function useFaviconManager(
     if (faviconRef.current) {
       faviconRef.current.href = faviconIco;
     }
-    document.title = "AuditPath";
+    // eslint-disable-next-line react-compiler/react-compiler
+    document.title = 'AuditPath';
   }, []);
 
   const getColors = useCallback(() => {
     const style = getComputedStyle(document.documentElement);
 
-    const destructive = style.getPropertyValue("--destructive") ||
-      "0.6368 0.2078 25.3313";
-    const primary = style.getPropertyValue("--primary") ||
-      "0.8554 0.1969 158.6115";
-    const muted = style.getPropertyValue("--muted-foreground") ||
-      "82.968% 0.00009 271.152";
+    const destructive =
+      style.getPropertyValue('--destructive') || '0.6368 0.2078 25.3313';
+    const primary =
+      style.getPropertyValue('--primary') || '0.8554 0.1969 158.6115';
+    const muted =
+      style.getPropertyValue('--muted-foreground') || '82.968% 0.00009 271.152';
 
     return {
       work: `oklch(${destructive})`,
@@ -52,13 +53,13 @@ export function useFaviconManager(
 
   const drawFavicon = useCallback(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
+    const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
 
     ctx.clearRect(0, 0, 64, 64);
 
     const colors = getColors();
-    let strokeColor = mode === "work" ? colors.work : colors.break;
+    let strokeColor = mode === 'work' ? colors.work : colors.break;
 
     if (!isActive && timeLeft < totalTime) {
       strokeColor = colors.paused;
@@ -77,7 +78,7 @@ export function useFaviconManager(
         ctx.drawImage(imageRef.current, offset, offset, size, size);
         ctx.restore();
       } catch (e) {
-        logger.debug("Favicon draw error:", { error: String(e) });
+        logger.debug('Favicon draw error:', { error: String(e) });
       }
     }
 
@@ -90,14 +91,14 @@ export function useFaviconManager(
 
     ctx.strokeStyle = strokeColor;
     ctx.lineWidth = 4;
-    ctx.lineCap = "round";
+    ctx.lineCap = 'round';
 
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, startAngle, endAngle, false);
     ctx.stroke();
 
     if (faviconRef.current) {
-      faviconRef.current.href = canvas.toDataURL("image/png");
+      faviconRef.current.href = canvas.toDataURL('image/png');
     }
   }, [mode, isActive, timeLeft, totalTime, getColors]);
 
@@ -107,24 +108,22 @@ export function useFaviconManager(
     const minutes = Math.floor(absTime / 60);
     const seconds = Math.floor(absTime % 60);
 
-    const timeSign = isOvertime ? "+" : "";
-    const formattedTime = `${timeSign}${
-      minutes
-        .toString()
-        .padStart(2, "0")
-    }:${seconds.toString().padStart(2, "0")}`;
+    const timeSign = isOvertime ? '+' : '';
+    const formattedTime = `${timeSign}${minutes
+      .toString()
+      .padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-    let prefix = "";
+    let prefix = '';
     if (!isActive) {
-      prefix = "⏸️ ";
+      prefix = '⏸️ ';
     }
 
-    let statusIcon = "🔴";
-    let statusText = "Odaklanıyor...";
+    let statusIcon = '🔴';
+    let statusText = 'Odaklanıyor...';
 
-    if (mode === "break") {
-      statusIcon = "🟢";
-      statusText = "Mola";
+    if (mode === 'break') {
+      statusIcon = '🟢';
+      statusText = 'Mola';
     }
 
     document.title = `${prefix}${statusIcon}${formattedTime} ${statusText}`;
@@ -134,15 +133,15 @@ export function useFaviconManager(
     let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
 
     if (!link) {
-      link = document.createElement("link");
-      link.rel = "icon";
+      link = document.createElement('link');
+      link.rel = 'icon';
       document.head.appendChild(link);
     }
 
     faviconRef.current = link;
 
     if (!canvasRef.current) {
-      const canvas = document.createElement("canvas");
+      const canvas = document.createElement('canvas');
       canvas.width = 64;
       canvas.height = 64;
       canvasRef.current = canvas;
@@ -150,7 +149,7 @@ export function useFaviconManager(
 
     if (!imageRef.current) {
       const img = new Image();
-      img.crossOrigin = "anonymous";
+      img.crossOrigin = 'anonymous';
       img.src = faviconIco;
 
       img.onload = () => {
@@ -158,7 +157,7 @@ export function useFaviconManager(
       };
       img.onerror = () => {
         logger.warn(
-          "Favicon image could not be loaded, drawing only progress ring.",
+          'Favicon image could not be loaded, drawing only progress ring.'
         );
         imageRef.current = null;
       };
@@ -166,6 +165,9 @@ export function useFaviconManager(
 
     return () => {
       resetToDefault();
+      faviconRef.current = null;
+      canvasRef.current = null;
+      imageRef.current = null;
     };
   }, [resetToDefault]);
 

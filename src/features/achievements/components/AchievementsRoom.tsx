@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 // Yeni ikonlar eklendi: Scale (Hukuk), Coins (Ekonomi), Landmark (Muhasebe), Globe (Genel)
 import {
   Library,
@@ -58,7 +58,7 @@ export function AchievementsRoom() {
     useState<Achievement | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const achievementsByGuild = useMemo(() => getAchievementsByGuild(), []);
+  const achievementsByGuild = getAchievementsByGuild();
 
   useEffect(() => {
     if (isLoading || !user || !stats) return;
@@ -82,10 +82,10 @@ export function AchievementsRoom() {
     fetchUnlockedAchievements();
   }, [stats, isLoading, user]);
 
-  const handleSealClick = useCallback((achievement: Achievement) => {
+  const handleSealClick = (achievement: Achievement) => {
     setSelectedAchievement(achievement);
     setIsModalOpen(true);
-  }, []);
+  };
 
   const totalAchievements = ACHIEVEMENTS.filter(
     (a) => a.guild !== 'TITLES'

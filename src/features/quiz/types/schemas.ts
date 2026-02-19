@@ -93,6 +93,15 @@ export const QuestionRowSchema = z.object({
   question_data: z.unknown(),
 });
 
+export const PartialQuestionRowSchema = z.object({
+  id: z.string(),
+  chunk_id: z.string(),
+  question_data: z.unknown(),
+  bloom_level: z.string().nullable(),
+  concept_title: z.string().nullable(),
+  usage_type: z.string().nullable(),
+});
+
 export const QuestionWithStatusRowSchema = z.object({
   question_id: z.string(),
   status: QuestionStatusSchema,

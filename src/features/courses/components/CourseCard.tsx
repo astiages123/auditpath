@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CourseStatsModal } from './CourseStatsModal';
 import { ROUTES } from '@/utils/routes';
+import { formatDuration } from '@/utils/formatters';
 import {
   Tooltip,
   TooltipContent,
@@ -47,15 +48,6 @@ export function CourseCard({
   const progressPercent =
     totalVideos > 0 ? (completedVideos / totalVideos) * 100 : 0;
   const isCompleted = completedVideos === totalVideos && totalVideos > 0;
-
-  // Format hours to readable string
-  const formatHours = (hours: number) => {
-    const h = Math.floor(hours);
-    const m = Math.round((hours - h) * 60);
-    if (h === 0) return `${m} dk`;
-    if (m === 0) return `${h} saat`;
-    return `${h} saat ${m} dk`;
-  };
 
   const sizeClasses = {
     default: 'h-full',
@@ -100,7 +92,7 @@ export function CourseCard({
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5" />
-                  <span>{formatHours(totalHours)}</span>
+                  <span>{formatDuration(totalHours)}</span>
                 </div>
               </div>
 

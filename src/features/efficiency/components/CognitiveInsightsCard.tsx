@@ -1,6 +1,6 @@
 import { GlassCard } from '@/shared/components/GlassCard';
 import { Brain, AlertTriangle, Lightbulb, Zap } from 'lucide-react';
-import { CardHeader } from './cards/CardElements';
+import { CardHeader } from './CardElements';
 import { cn } from '@/utils/core';
 
 export interface CognitiveAnalysis {

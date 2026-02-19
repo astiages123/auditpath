@@ -1,15 +1,22 @@
-import React, { Suspense } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { QuizSessionProvider } from '@/features/quiz/hooks/context/QuizSessionProvider';
-import { QuizView } from '@/features/quiz/components/execution/QuizView';
+import { QuizContainer } from '@/features/quiz/components/QuizContainer';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/utils/routes';
+import { preloadSubjectKnowledge } from '@/features/quiz/services/subjectKnowledgeService';
+import { logger } from '@/utils/logger';
 
 export const QuizPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
+
+  // Preload subject knowledge when QuizPage mounts
+  useEffect(() => {
+    preloadSubjectKnowledge().catch((err: unknown) =>
+      logger.error('Failed to preload subject knowledge', err as Error)
+    );
+  }, []);
 
   if (!courseId) {
     return (
@@ -23,17 +30,7 @@ export const QuizPage: React.FC = () => {
   return (
     <div className="container py-8">
       <ErrorBoundary>
-        <QuizSessionProvider>
-          <Suspense
-            fallback={
-              <div className="flex items-center justify-center min-h-[400px]">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            }
-          >
-            <QuizView courseId={courseId} />
-          </Suspense>
-        </QuizSessionProvider>
+        <QuizContainer courseId={courseId} />
       </ErrorBoundary>
     </div>
   );

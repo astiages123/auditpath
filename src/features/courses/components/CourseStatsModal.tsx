@@ -5,12 +5,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, Award, CheckCircle2, TrendingUp } from 'lucide-react';
 
 interface CourseStatsModalProps {

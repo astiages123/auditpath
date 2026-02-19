@@ -1,6 +1,64 @@
-import { AIResponseMetadata, LogCallback, Message } from '@/types/common';
+import { LogCallback, Message } from '@/types/common';
+import type { Json } from '@/types/database.types';
 
 export { type LogCallback, type Message };
+export type { Json };
+
+// AI Response types
+export interface AIResponse {
+  content: string;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    cached_tokens?: number;
+  };
+}
+
+export type LLMProvider = 'cerebras' | 'google' | 'mimo' | 'deepseek';
+
+// Quiz analytics types
+export interface QuizInsert {
+  id?: string;
+  course_id: string;
+  chunk_id?: string | null;
+  question_data: QuizQuestion;
+  bloom_level?: string | null;
+  concept_title?: string | null;
+  created_at?: string;
+}
+
+export interface BloomStats {
+  level: string;
+  correct: number;
+  questionsSolved: number;
+  score: number;
+}
+
+export interface QuizStats {
+  totalQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  blankAnswers: number;
+  averageTime: number;
+  masteryScore: number;
+}
+
+export interface SRSStats {
+  totalCards: number;
+  dueCards: number;
+  newCards: number;
+  reviewCards: number;
+  retentionRate: number;
+}
+
+export interface SubjectCompetency {
+  subject: string;
+  score: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  masteryLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+}
 
 export interface ConceptMapItem {
   baslik: string;
@@ -46,57 +104,59 @@ export interface TrueFalseQuestion extends BaseQuestion {
 
 export type QuizQuestion = MultipleChoiceQuestion | TrueFalseQuestion;
 
-export interface QuizInsert {
-  question_id: string;
-  course_id: string;
-  chunk_id?: string | null;
-  is_correct?: boolean;
-  confidence_level?: 'LOW' | 'MEDIUM' | 'HIGH';
-  answered_at?: string | null;
-  response_time_ms?: number | null;
-  response_type: QuizResponseType;
-  session_number: number;
-  ai_diagnosis?: string | null;
-  ai_insight?: string | null;
+export interface GeneratedQuestion extends Omit<BaseQuestion, 'id'> {
+  o: string[];
+  a: number;
+  bloomLevel: string;
+  concept: string;
 }
 
-export interface QuizStats {
-  totalAnswered: number;
-  correct: number;
-  incorrect: number;
-  blank: number;
-  remaining: number;
-  successRate: number;
-}
-
-export interface SubjectCompetency {
-  subject: string;
-  score: number; // 0-100
-  totalQuestions: number;
-}
-
-export type BloomStats = {
-  level: string;
-  score: number;
-  questionsSolved: number;
-  correct?: number;
-};
-
-export interface SRSStats {
-  new: number;
-  learning: number;
-  review: number;
-  mastered: number;
-}
-
-export interface SessionResultStats {
-  totalQuestions: number;
-  correctCount: number;
-  incorrectCount: number;
-  blankCount: number;
-  timeSpentMs: number;
-  courseId: string;
+export interface SessionContext {
   userId: string;
+  courseId: string;
+  sessionNumber: number;
+  isNewSession: boolean;
+  courseName?: string;
+}
+
+export interface AdvancedScoreResult {
+  baseDelta: number;
+  finalScore: number;
+  bloomCoeff: number;
+  timeRatio: number;
+}
+
+export interface ExamDistributionInput {
+  examTotal: number;
+  importance: 'high' | 'medium' | 'low';
+  chunks: ChunkMetric[];
+}
+
+export interface ExamSubjectWeight {
+  subject?: string;
+  importance: 'high' | 'medium' | 'low';
+  examTotal?: number;
+}
+
+export interface MasteryNode {
+  id: string;
+  label: string;
+  mastery: number;
+  status: 'mastered' | 'in-progress' | 'weak';
+  prerequisites: string[];
+  isChainComplete: boolean;
+  depth: number;
+  data: {
+    focus: string;
+    aiInsight?: string;
+  };
+}
+
+export interface MasteryChainStats {
+  totalChains: number;
+  resilienceBonusDays: number;
+  nodes: MasteryNode[];
+  edges: { source: string; target: string; isStrong: boolean }[];
 }
 
 export interface RecentQuizSession {
@@ -118,69 +178,59 @@ export interface CognitiveInsight {
   diagnosis: string | null;
   insight: string | null;
   consecutiveFails: number;
-  responseType: string;
+  responseType: string | null;
   date: string;
 }
 
-export type ConceptMapResult = {
-  difficulty_index: number;
-  concepts: ConceptMapItem[];
-};
-
-export interface ChunkMetadata {
-  difficulty_index?: number;
-  concept_map?: ConceptMapItem[];
-}
-
-export interface ChunkMasteryRow {
-  chunk_id: string;
-  mastery_score: number;
-  last_full_review_at: string | null;
-  total_questions_seen: number;
-}
-
-export type QuestionUsageType = 'antrenman' | 'arsiv' | 'deneme';
-
-export interface QuizGenerationResult {
-  success: boolean;
-  question?: QuizQuestion;
-  error?: string;
-  status?: 'generated' | 'quota_reached' | 'error';
-}
-
-export interface QuotaStatus {
-  used: number;
-  quota: { total: number };
-  conceptCount: number;
-  isFull: boolean;
-  status: string; // "SYNCED" | "PROCESSING" | "COMPLETED" | "FAILED"
-  difficultyIndex?: number;
-}
-
-// --- LLM Types ---
-
-export interface AIResponse extends AIResponseMetadata {
-  content: string;
-}
-
-export type LLMProvider = 'cerebras' | 'mimo' | 'google' | 'deepseek';
-
-// --- Knowledge Types ---
-
-/**
- * Subject Knowledge Module Interface
- * Each Banka/İdari subject exports a constant conforming to this interface.
- */
-export interface SubjectKnowledge {
-  /** Unique identifier in snake_case (e.g., "ceza_hukuku") */
+export interface ChunkMetric {
   id: string;
-  /** "Anayasa" - Core rules and constraints for question generation */
-  constitution: string;
-  /** "Altın Örnek" - Example question with full feedback architecture */
-  fewShot: string;
+  concept_count: number;
+  difficulty_index: number;
+  mastery_score: number;
 }
 
-// --- Quiz State & Results Types ---
+export interface QuestionWithStatus {
+  question_id: string;
+  status: 'active' | 'pending_followup' | 'archived' | 'learning';
+  next_review_session: number | null;
+  questions: {
+    id: string;
+    chunk_id: string | null;
+    course_id: string;
+    parent_question_id: string | null;
+    question_data: QuizQuestion;
+  };
+}
+
+export interface RepositoryQuestion {
+  id: string;
+  chunk_id: string | null;
+  question_data: QuizQuestion | Json;
+  bloom_level: string | null;
+  concept_title: string | null;
+  usage_type: string | null;
+  course?: { course_slug: string } | null;
+  chunk?: { section_title: string } | null;
+}
+
+export interface UserQuestionStatusRow {
+  question_id: string;
+  status: 'active' | 'pending_followup' | 'archived' | 'learning';
+  consecutive_success: number;
+  consecutive_fails: number;
+  next_review_session: number | null;
+}
+
+export interface SubmissionResult {
+  isCorrect: boolean;
+  scoreDelta: number;
+  newMastery: number;
+  newStatus: 'active' | 'pending_followup' | 'archived';
+  isTopicRefreshed: boolean;
+  nextReviewSession: number | null;
+  newSuccessCount: number;
+  newFailsCount: number;
+}
 
 export interface QuizState {
   currentQuestion: QuizQuestion | null;
@@ -216,13 +266,16 @@ export interface QuizResults {
   totalTimeMs: number;
 }
 
-export interface QuizProgressDetails {
-  totalQuestions: number;
-  currentQuestionIndex: number;
-  remainingInQueue: number;
+export interface ReviewItem {
+  questionId: string;
+  status: 'active' | 'pending_followup' | 'archived';
+  nextReview?: number | null;
+  priority?: number;
+  chunkId?: string;
+  courseId?: string;
 }
 
-export type QuizStatus =
+export type QuizSessionStatus =
   | 'IDLE'
   | 'INITIALIZING'
   | 'READY'
@@ -231,52 +284,29 @@ export type QuizStatus =
   | 'FINISHED'
   | 'ERROR';
 
-export type QuizAction =
-  | {
-      type: 'INITIALIZE';
-      payload: {
-        sessionInfo: SessionInfo;
-        quotaInfo: QuotaInfo;
-        reviewQueue: ReviewItem[];
-        batches: ReviewItem[][];
-        totalBatches: number;
-        courseStats: CourseStats | null;
-        initialReviewIndex?: number;
-      };
-    }
-  | { type: 'SET_ERROR'; payload: string }
-  | { type: 'SET_STATUS'; payload: QuizStatus }
-  | { type: 'START_PLAYING' }
-  | {
-      type: 'ANSWER_QUESTION';
-      payload: {
-        questionId: string;
-        answerIndex: number;
-        isCorrect: boolean;
-        responseType: QuizResponseType;
-      };
-    }
-  | { type: 'NEXT_QUESTION' }
-  | { type: 'PREV_QUESTION' } // Optional, if we want to allow going back (view only)
-  | { type: 'FINISH_BATCH' } // Triggers INTERMISSION
-  | { type: 'CONTINUE_BATCH' } // Exits INTERMISSION -> PLAYING
-  | { type: 'FINISH_QUIZ' }
-  | { type: 'SYNC_START' }
-  | { type: 'SYNC_COMPLETE' }
-  | {
-      type: 'INJECT_SCAFFOLDING';
-      payload: { questionId: string; chunkId: string; priority: number };
-    };
+export type QuotaInfo = {
+  dailyLimit?: number;
+  dailyQuota?: number;
+  remaining?: number;
+  remainingReview?: number;
+  used: number;
+  pendingReviewCount?: number;
+  reviewQuota?: number;
+  isMaintenanceMode?: boolean;
+} | null;
 
-export interface SessionInfo {
-  currentSession: number;
-  totalSessions: number;
-  courseId: string;
-}
+export type CourseStats = {
+  totalQuestions?: number;
+  totalQuestionsSolved?: number;
+  correctAnswers?: number;
+  incorrectAnswers?: number;
+  masteryScore?: number;
+  averageMastery?: number;
+} | null;
 
 export interface QuizSessionState {
-  status: QuizStatus;
-  sessionInfo: SessionInfo | null;
+  status: QuizSessionStatus;
+  sessionInfo: { currentSession: number; courseId: string } | null;
   quotaInfo: QuotaInfo | null;
   reviewQueue: ReviewItem[];
   batches: ReviewItem[][];
@@ -286,60 +316,116 @@ export interface QuizSessionState {
   courseStats: CourseStats | null;
   error: string | null;
   isSyncing: boolean;
-
-  // SSoT fields
-  currentQuestion: QuizQuestion | null; // Currently active question to display
+  currentQuestion: QuizQuestion | null;
   results: QuizResults;
   isAnswered: boolean;
   selectedAnswer: number | null;
-  isCorrect: boolean | null; // For immediate feedback
-  startTime: number | null; // For timing
+  isCorrect: boolean | null;
+  startTime: number | null;
 }
 
-export interface QuotaInfo {
-  dailyQuota: number;
-  used: number;
-  pendingReviewCount: number;
-  isMaintenanceMode: boolean;
-  reviewQuota: number;
+export interface InitializePayload {
+  sessionInfo: { currentSession: number; courseId: string };
+  quotaInfo: QuotaInfo;
+  courseStats: CourseStats;
+  reviewQueue?: unknown[];
+  batches?: unknown[][];
+  totalBatches?: number;
+  initialReviewIndex?: number;
 }
 
-export interface ReviewItem {
-  questionId: string;
-  status: string;
-  nextReview?: number | null;
-  priority?: number;
-  chunkId?: string;
-  courseId?: string;
-}
-
-export interface CourseStats {
-  totalQuestionsSolved: number;
-  averageMastery: number;
-}
-
-// --- Generator Types ---
-
-export interface GeneratedQuestion {
-  q: string;
-  o: string[];
-  a: number;
-  exp: string;
-  evidence: string;
-  img?: number | null;
-  diagnosis?: string;
-  insight?: string | null;
-  bloomLevel: 'knowledge' | 'application' | 'analysis';
-  concept: string;
-}
-
-export interface SubmissionResult {
+export interface AnswerPayload {
+  questionId?: string;
+  answerIndex?: number;
+  responseType?: string;
+  selectedAnswer?: number | null;
   isCorrect: boolean;
-  scoreDelta: number;
-  newMastery: number;
-  newStatus: 'active' | 'pending_followup' | 'archived';
-  isTopicRefreshed: boolean;
-  nextReviewSession: number | null;
-  newSuccessCount: number;
-  newFailsCount: number;
+  timeSpent?: number;
+}
+
+export interface ScaffoldingPayload {
+  questionId: string;
+  chunkId?: string;
+  hint?: string;
+  priority?: number;
+}
+
+export type QuizAction =
+  | { type: 'INITIALIZE'; payload: InitializePayload }
+  | { type: 'SET_ERROR'; payload: string }
+  | { type: 'SET_STATUS'; payload: QuizSessionStatus }
+  | { type: 'START_PLAYING' }
+  | { type: 'ANSWER_QUESTION'; payload: AnswerPayload }
+  | { type: 'SYNC_START' }
+  | { type: 'SYNC_COMPLETE' }
+  | { type: 'NEXT_QUESTION' }
+  | { type: 'FINISH_BATCH' }
+  | { type: 'CONTINUE_BATCH' }
+  | { type: 'INJECT_SCAFFOLDING'; payload: ScaffoldingPayload }
+  | { type: 'FINISH_QUIZ' }
+  | { type: 'PREV_QUESTION' };
+
+export interface ChunkMetadata {
+  difficulty_index?: number;
+  concept_map?: ConceptMapItem[];
+  [key: string]: unknown;
+}
+
+export interface ChunkMasteryRow {
+  chunk_id: string;
+  user_id: string;
+  mastery_score: number;
+  last_full_review_at: string | null;
+  streak: number;
+  total_questions_seen: number;
+}
+
+export interface QuotaStatus {
+  used: number;
+  quota: {
+    total: number;
+  };
+  isFull: boolean;
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+  conceptCount: number;
+}
+
+// Note: GenerationStep, GenerationLog, GeneratorCallbacks, and ValidationResult
+// are defined in schemas.ts to avoid duplication
+
+// Quiz Statistics
+export interface QuizStats {
+  totalQuestions: number;
+  correctAnswers: number;
+  incorrectAnswers: number;
+  blankAnswers: number;
+  averageTime: number;
+  masteryScore: number;
+  totalAnswered?: number; // For backwards compatibility
+  correct?: number;
+  incorrect?: number;
+  blank?: number;
+  remaining?: number;
+  successRate?: number;
+}
+
+export interface SRSStats {
+  totalCards: number;
+  dueCards: number;
+  newCards: number;
+  reviewCards: number;
+  retentionRate: number;
+  // Legacy fields for backwards compatibility
+  new?: number;
+  learning?: number;
+  review?: number;
+  mastered?: number;
+}
+
+export interface SubjectCompetency {
+  subject: string;
+  score: number;
+  totalQuestions: number;
+  correctAnswers: number;
+  masteryLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert';
 }

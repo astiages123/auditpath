@@ -1,6 +1,10 @@
-import { DetailedSession } from '@/features/pomodoro/types/pomodoroTypes';
+import {
+  DetailedSession,
+  RecentSession,
+} from '@/features/pomodoro/types/pomodoroTypes';
+import { BloomStats } from '@/features/quiz/types';
 
-export type { DetailedSession };
+export type { DetailedSession, RecentSession, BloomStats };
 
 export interface DailyStats {
   totalWorkMinutes: number;
@@ -114,6 +118,39 @@ export type FocusPowerPoint = {
 // Activity already defined above
 
 export type flowState = 'stuck' | 'deep' | 'optimal' | 'speed' | 'shallow';
+
+// Card-specific EfficiencyData (moved from components/cards/types.ts)
+export interface CardEfficiencyData {
+  loading: boolean;
+  currentWorkMinutes: number;
+  todayVideoMinutes: number;
+  todayVideoCount: number;
+  videoTrendPercentage: number;
+  sessions: Session[];
+  dailyGoalMinutes: number;
+  efficiencyTrend: EfficiencyTrend[];
+  trendPercentage: number;
+  learningFlow: number;
+  flowState: string;
+  goalProgress: number;
+  loadWeek: LearningLoad[];
+  loadDay: LearningLoad[];
+  loadMonth: LearningLoad[];
+  loadAll: LearningLoad[];
+  bloomStats: BloomStats[];
+  lessonMastery: {
+    lessonId: string;
+    title: string;
+    mastery: number;
+    videoProgress: number;
+    questionProgress: number;
+  }[];
+  consistencyData: DayActivity[];
+  recentSessions: RecentSession[];
+  focusPowerWeek: FocusPowerPoint[];
+  focusPowerMonth: FocusPowerPoint[];
+  focusPowerAll: FocusPowerPoint[];
+}
 
 // --- Zod Schemas ---
 import { z } from 'zod';

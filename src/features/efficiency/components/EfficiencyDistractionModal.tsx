@@ -7,7 +7,7 @@ import {
   Timer,
 } from 'lucide-react';
 import { cn } from '@/utils/core';
-import { calculateFocusPower } from '@/utils/math';
+import { calculateFocusPower } from '@/features/efficiency/logic/metricsCalc';
 import { Session } from '../types/efficiencyTypes';
 
 interface DistractionDetailsProps {

@@ -1,1 +1,1 @@
-export * from './useQuotaStore'
+export * from './useQuotaStore';

@@ -1,4 +1,4 @@
-import { User as SupabaseUser } from "@supabase/supabase-js";
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
 /**
  * Standard User interface, potentially extending Supabase User with app-specific fields
@@ -9,10 +9,10 @@ export type User = SupabaseUser;
  * Generic API response wrapper
  */
 export interface ApiResponse<T = unknown> {
-    success: boolean;
-    data?: T;
-    error?: string;
-    status?: number;
+  success: boolean;
+  data?: T;
+  error?: string;
+  status?: number;
 }
 
 /**
@@ -23,41 +23,47 @@ export type Timestamp = string; // ISO String
 /**
  * Common Theme/Visual types
  */
-export type ThemeMode = "light" | "dark" | "system";
+export type ThemeMode = 'light' | 'dark' | 'system';
 
 /**
  * LLM Interaction Base Types
  */
 export interface Message {
-    role: "system" | "user" | "assistant";
-    content: string;
+  role: 'system' | 'user' | 'assistant';
+  content: string;
 }
 
 export interface AIResponseMetadata {
-    usage?: {
-        prompt_tokens: number;
-        completion_tokens: number;
-        total_tokens: number;
-        cached_tokens?: number;
-        prompt_cache_hit_tokens?: number;
-        prompt_cache_miss_tokens?: number;
-        prompt_tokens_details?: {
-            cached_tokens?: number;
-        };
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+    cached_tokens?: number;
+    prompt_cache_hit_tokens?: number;
+    prompt_cache_miss_tokens?: number;
+    prompt_tokens_details?: {
+      cached_tokens?: number;
     };
+  };
 }
 
 /**
  * General purpose logging callback
  */
 export type LogCallback = (
-    message: string,
-    details?: Record<string, unknown>,
+  message: string,
+  details?: Record<string, unknown>
 ) => void;
 
 /**
  * Common Json type
  */
-export type Json = string | number | boolean | null | {
-    [key: string]: Json | undefined;
-} | Json[];
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | {
+      [key: string]: Json | undefined;
+    }
+  | Json[];

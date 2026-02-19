@@ -3,10 +3,10 @@ import { n2m, supabase } from './clients';
 import { processImagesInMarkdown } from './image-process';
 import { chunkContent } from './chunk-service';
 import type {
-  PageObjectResponse,
-  RichTextItemResponse,
-  PageProcessResult,
   NoteChunksInsert,
+  PageObjectResponse,
+  PageProcessResult,
+  RichTextItemResponse,
 } from './types';
 
 const TOLERANCE_MS = 2000;
@@ -128,16 +128,18 @@ export async function processPage(
       }
 
       const { error: upsertError } = await supabase.from('note_chunks').upsert(
-        {
-          course_id: courseId,
-          course_name: courseName,
-          section_title: sectionTitle,
-          content: chunkText,
-          display_content: displayText,
-          chunk_order: chunkOrder,
-          status: 'SYNCED',
-          metadata: baseMetadata,
-        } as NoteChunksInsert,
+        [
+          {
+            course_id: courseId,
+            course_name: courseName,
+            section_title: sectionTitle,
+            content: chunkText,
+            display_content: displayText,
+            chunk_order: chunkOrder,
+            status: 'SYNCED',
+            metadata: baseMetadata,
+          } as NoteChunksInsert,
+        ],
         { onConflict: 'course_id,section_title,chunk_order' }
       );
 

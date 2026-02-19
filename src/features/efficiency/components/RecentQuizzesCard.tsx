@@ -1,14 +1,12 @@
 import { ClipboardCheck, Maximize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassCard } from '@/shared/components/GlassCard';
-import { CardHeader } from './cards/CardElements';
+import { CardHeader } from './CardElements';
 import { EfficiencyModal } from './EfficiencyModals';
 import { cn } from '@/utils/core';
+import { useCognitiveInsights } from '../hooks/useCognitiveInsights';
+import { Skeleton } from '@/components/ui/skeleton';
 import { RecentQuizSession } from '@/features/quiz/types';
-
-interface RecentQuizzesCardProps {
-  recentQuizzes: RecentQuizSession[];
-}
 
 const formatDate = (dateStr: string) => {
   return new Date(dateStr).toLocaleDateString('tr-TR', {
@@ -106,10 +104,41 @@ const QuizHistoryContent = ({ quizzes }: { quizzes: RecentQuizSession[] }) => (
   </div>
 );
 
-export const RecentQuizzesCard = ({
-  recentQuizzes,
-}: RecentQuizzesCardProps) => {
+export const RecentQuizzesCard = () => {
+  const { loading, recentQuizzes } = useCognitiveInsights();
   const displayQuizzes = recentQuizzes.slice(0, 5);
+
+  if (loading) {
+    return (
+      <GlassCard className="h-full flex flex-col p-6">
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex items-center gap-4">
+            <Skeleton className="h-10 w-10 rounded-xl bg-white/5" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-32 bg-white/5" />
+              <Skeleton className="h-3 w-48 bg-white/5" />
+            </div>
+          </div>
+        </div>
+        <div className="mt-6 flex-1 space-y-3">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="p-4 rounded-2xl bg-white/3 border border-white/5"
+            >
+              <div className="flex justify-between items-center">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-32 bg-white/5" />
+                  <Skeleton className="h-3 w-24 bg-white/5" />
+                </div>
+                <Skeleton className="h-8 w-12 bg-white/5" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </GlassCard>
+    );
+  }
 
   return (
     <EfficiencyModal

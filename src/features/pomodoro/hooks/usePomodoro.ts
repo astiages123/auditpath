@@ -1,5 +1,10 @@
-import { useCallback, useEffect, useRef } from 'react'; // useRef ve useEffect eklendi
-import { useTimerStore } from '@/features/pomodoro/store';
+import { useCallback, useEffect, useRef } from 'react';
+import { z } from 'zod';
+import {
+  useTimerStore,
+  usePomodoroSessionStore,
+  usePomodoroUIStore,
+} from '@/features/pomodoro/store';
 import {
   deletePomodoroSession,
   getDailySessionCount,
@@ -9,35 +14,52 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { unlockAudio } from '../logic/audioUtils';
 import { logger } from '@/utils/logger';
 
+// Timeline event schema for validation
+const TimelineEventSchema = z.object({
+  type: z.enum(['work', 'break', 'pause']),
+  start: z.number(),
+  end: z.number().optional(),
+});
+
+const TimelineSchema = z.array(TimelineEventSchema);
+
 export type PomodoroMode = 'work' | 'break';
 
 export function usePomodoro() {
+  // Timer state
   const {
     timeLeft,
     isActive,
     isBreak,
     startTime,
-    getPauseDuration,
-    selectedCourse,
+    duration,
+    pauseStartTime,
     startTimer,
     pauseTimer,
     resetTimer,
     setMode,
-    setCourse,
-    duration,
-    isWidgetOpen,
-    setWidgetOpen,
+  } = useTimerStore();
+
+  // Session state
+  const {
+    sessionId,
     sessionCount,
     incrementSession,
-    sessionId,
     setSessionId,
     timeline,
     setSessionCount,
     setHasRestored,
     originalStartTime,
-    pauseStartTime,
-    tick, // tick fonksiyonu eklendi
-  } = useTimerStore();
+    getPauseDuration,
+    resetSession,
+    addTimelineEvent,
+  } = usePomodoroSessionStore();
+
+  // UI state
+  const { selectedCourse, setCourse, isWidgetOpen, setWidgetOpen } =
+    usePomodoroUIStore();
+
+  const tick = useTimerStore((state) => state.tick);
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -53,15 +75,16 @@ export function usePomodoro() {
     );
 
     // Worker'dan gelen 'TICK' mesajlarını dinle
-    workerRef.current = worker; // Assign the worker to the ref
+    workerRef.current = worker;
     workerRef.current.onmessage = (e) => {
       if (e.data === 'TICK') {
-        tick(); // Store'daki zaman azaltma lojiğini tetikle
+        tick();
       }
     };
 
     // Component kapandığında worker'ı sonlandır (Memory leak önleme)
     return () => {
+      workerRef.current!.onmessage = null;
       workerRef.current?.terminate();
     };
   }, [tick]);
@@ -84,6 +107,9 @@ export function usePomodoro() {
       setSessionId(currentSessionId);
     }
 
+    // Timeline'a work event ekle
+    addTimelineEvent({ type: 'work', start: now });
+
     // Veritabanı Kaydı (First Insert Strategy)
     if (userId && currentSessionId && selectedCourse) {
       try {
@@ -92,8 +118,9 @@ export function usePomodoro() {
             id: currentSessionId,
             courseId: selectedCourse.id,
             courseName: selectedCourse.name,
-            timeline:
-              timeline.length > 0 ? timeline : [{ type: 'work', start: now }],
+            timeline: TimelineSchema.parse(
+              timeline.length > 0 ? timeline : [{ type: 'work', start: now }]
+            ),
             startedAt: originalStartTime || now,
             isCompleted: false,
           },
@@ -158,7 +185,7 @@ export function usePomodoro() {
       incrementSession();
     }
 
-    // Worker'ı yeni mod için resetle/başlat (Opsiyonel: START gönderilebilir)
+    // Worker'ı yeni mod için resetle/başlat
     workerRef.current?.postMessage('START');
     startTimer();
   }, [isBreak, setMode, incrementSession, startTimer]);
@@ -168,8 +195,8 @@ export function usePomodoro() {
       await deletePomodoroSession(sessionId);
     }
     workerRef.current?.postMessage('RESET');
-    const { resetAll } = useTimerStore.getState();
-    resetAll();
+    resetTimer();
+    resetSession();
     setHasRestored(true);
   };
 
@@ -204,8 +231,8 @@ export function usePomodoro() {
     sessionId,
     finishDay: async () => {
       workerRef.current?.postMessage('RESET');
-      const { resetAll } = useTimerStore.getState();
-      resetAll();
+      resetTimer();
+      resetSession();
     },
     duration,
     timeLeft,
@@ -213,6 +240,6 @@ export function usePomodoro() {
     setOpen: setWidgetOpen,
     originalStartTime,
     pauseStartTime,
-    workerRef, // Test ortamı için ekledik
+    workerRef,
   };
 }

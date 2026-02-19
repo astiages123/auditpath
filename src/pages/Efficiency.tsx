@@ -1,48 +1,47 @@
 import { TrendingUp } from 'lucide-react';
-import { useTransition } from 'react';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { RecentQuizzesCard } from '@/features/efficiency/components/RecentQuizzesCard';
 import { CognitiveInsightsCard } from '@/features/efficiency/components/CognitiveInsightsCard';
-import { FocusHubCard } from '@/features/efficiency/components/cards/FocusHubCard';
-import { LearningLoadCard } from '@/features/efficiency/components/cards/LearningLoadCard';
-import { MasteryNavigatorCard } from '@/features/efficiency/components/cards/MasteryNavigatorCard';
-import { PracticeCenterCard } from '@/features/efficiency/components/cards/PracticeCenterCard';
-import { ConsistencyHeatmapCard } from '@/features/efficiency/components/cards/ConsistencyHeatmapCard';
-import { RecentActivitiesContainer } from '@/features/efficiency/components/cards/RecentActivitiesContainer';
-import { useEfficiency } from '@/features/efficiency/hooks/useEfficiency';
+import { FocusHubCard } from '@/features/efficiency/components/FocusHubCard';
+import { LearningLoadCard } from '@/features/efficiency/components/LearningLoadCard';
+import { MasteryNavigatorCard } from '@/features/efficiency/components/MasteryNavigatorCard';
+import { PracticeCenterCard } from '@/features/efficiency/components/PracticeCenterCard';
+import { ConsistencyHeatmapCard } from '@/features/efficiency/components/ConsistencyHeatmapCard';
+import { RecentActivitiesContainer } from '@/features/efficiency/components/RecentActivitiesContainer';
+import { useCognitiveInsights } from '@/features/efficiency/hooks/useCognitiveInsights';
 
 const EfficiencyDashboard = () => {
-  const efficiencyData = useEfficiency();
+  const { loading, cognitiveAnalysis } = useCognitiveInsights();
 
   return (
     <div className="space-y-6">
       {/* Row 1: Focus Hub + Learning Load */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="min-h-[320px]">
-          <FocusHubCard data={efficiencyData} />
+          <FocusHubCard />
         </div>
         <div className="min-h-[320px]">
-          <LearningLoadCard data={efficiencyData} />
+          <LearningLoadCard />
         </div>
       </div>
 
       {/* Row 2: Practice Center + Mastery Navigator */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="min-h-[280px]">
-          <PracticeCenterCard data={efficiencyData} />
+          <PracticeCenterCard />
         </div>
         <div className="min-h-[280px]">
-          <MasteryNavigatorCard data={efficiencyData} />
+          <MasteryNavigatorCard />
         </div>
       </div>
 
       {/* Row 3: Recent Quizzes + Consistency Heatmap */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="min-h-[350px]">
-          <RecentQuizzesCard recentQuizzes={efficiencyData.recentQuizzes} />
+          <RecentQuizzesCard />
         </div>
         <div className="min-h-[350px]">
-          <ConsistencyHeatmapCard data={efficiencyData} />
+          <ConsistencyHeatmapCard />
         </div>
       </div>
 
@@ -50,29 +49,27 @@ const EfficiencyDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="min-h-[250px]">
           <CognitiveInsightsCard
-            loading={efficiencyData.loading}
+            loading={loading}
             cognitiveAnalysis={
-              efficiencyData.cognitiveAnalysis
+              cognitiveAnalysis
                 ? {
-                    ...efficiencyData.cognitiveAnalysis,
-                    recentInsights:
-                      efficiencyData.cognitiveAnalysis.recentInsights?.filter(
-                        (i): i is string => i !== null
-                      ),
-                    criticalTopics:
-                      efficiencyData.cognitiveAnalysis.criticalTopics?.map(
-                        (t) => ({
-                          ...t,
-                          diagnosis: t.diagnosis || undefined,
-                        })
-                      ),
+                    ...cognitiveAnalysis,
+                    recentInsights: cognitiveAnalysis.recentInsights?.filter(
+                      (i): i is string => i !== null
+                    ),
+                    criticalTopics: cognitiveAnalysis.criticalTopics?.map(
+                      (t) => ({
+                        ...t,
+                        diagnosis: t.diagnosis || undefined,
+                      })
+                    ),
                   }
                 : null
             }
           />
         </div>
         <div className="min-h-[400px]">
-          <RecentActivitiesContainer data={efficiencyData} />
+          <RecentActivitiesContainer />
         </div>
       </div>
     </div>
@@ -80,8 +77,6 @@ const EfficiencyDashboard = () => {
 };
 
 const EfficiencyPage = () => {
-  const [isPending] = useTransition();
-
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-background text-foreground pb-20 m-5">
@@ -108,12 +103,7 @@ const EfficiencyPage = () => {
           </div>
 
           {/* Central Dashboard Engine */}
-          <div
-            style={{
-              opacity: isPending ? 0.85 : 1,
-              transition: 'opacity 200ms ease-in-out',
-            }}
-          >
+          <div>
             <EfficiencyDashboard />
           </div>
         </div>

@@ -1,10 +1,13 @@
-import { useCallback, useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { getUserStats } from "@/features/achievements/services/userStatsService";
-import type { Rank } from "@/types/auth";
-import coursesData from "@/features/courses/services/courses.json";
-import { calculateStaticTotals, type Category } from "@/utils/math";
+import { useCallback, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { getUserStats } from '@/features/achievements/services/userStatsService';
+import type { Rank } from '@/types/auth';
+import coursesData from '@/features/courses/services/courses.json';
+import {
+  calculateStaticTotals,
+  type Category,
+} from '@/features/courses/logic/courseStats';
 
 export interface ProgressStats {
   completedVideos: number;
@@ -32,7 +35,7 @@ export interface ProgressStats {
 }
 
 export const progressKeys = {
-  all: ["progress"] as const,
+  all: ['progress'] as const,
   user: (userId: string) => [...progressKeys.all, userId] as const,
 };
 
@@ -65,7 +68,7 @@ export function useProgress() {
         updateProgress(userId, courseId, deltaVideos, deltaHours);
       }
     },
-    [userId, updateProgress],
+    [userId, updateProgress]
   );
 
   const value = useMemo(
@@ -76,7 +79,7 @@ export function useProgress() {
       streak: stats?.streak || 0,
       updateProgressOptimistically,
     }),
-    [stats, refreshProgress, isLoading, updateProgressOptimistically],
+    [stats, refreshProgress, isLoading, updateProgressOptimistically]
   );
 
   return value;
@@ -84,10 +87,10 @@ export function useProgress() {
 
 export function useProgressQuery(
   userId?: string,
-  initialStats?: Partial<ProgressStats>,
+  initialStats?: Partial<ProgressStats>
 ) {
   return useQuery({
-    queryKey: progressKeys.user(userId || "guest"),
+    queryKey: progressKeys.user(userId || 'guest'),
     queryFn: async () => {
       if (!userId) return defaultStats;
 
@@ -145,7 +148,7 @@ export function useOptimisticProgress() {
     userId: string,
     courseId: string,
     deltaVideos: number,
-    deltaHours: number,
+    deltaHours: number
   ) => {
     queryClient.setQueryData(
       progressKeys.user(userId),
@@ -159,8 +162,9 @@ export function useOptimisticProgress() {
 
         if (!categoryData) return old;
 
-        const categoryName = categoryData.slug ||
-          categoryData.category.split(" (")[0].split(". ")[1] ||
+        const categoryName =
+          categoryData.slug ||
+          categoryData.category.split(' (')[0].split('. ')[1] ||
           categoryData.category;
 
         const existingCatStats = old.categoryProgress[categoryName] || {
@@ -203,7 +207,7 @@ export function useOptimisticProgress() {
           },
           categoryProgress: newCategoryProgress,
         };
-      },
+      }
     );
   };
 

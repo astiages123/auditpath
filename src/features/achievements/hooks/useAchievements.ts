@@ -8,7 +8,7 @@ import {
 import { getUnlockedAchievements } from '@/features/achievements/services/achievementService';
 import { ACHIEVEMENTS, calculateAchievements } from '../logic/achievementsData';
 import { type ProgressStats } from '../types/achievementsTypes';
-import { RANKS } from '@/utils/helpers';
+import { RANKS } from '../utils/constants';
 import type { Rank } from '@/types/auth';
 import coursesData from '@/features/courses/services/courses.json';
 import { logger } from '@/utils/logger';

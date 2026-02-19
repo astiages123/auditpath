@@ -40,10 +40,6 @@ function App() {
             >
               <Route path={ROUTES.HOME} element={<Home />} />
               <Route path={ROUTES.ACHIEVEMENTS} element={<Achievements />} />
-              <Route
-                path={ROUTES.STATISTICS}
-                element={<Navigate to={ROUTES.EFFICIENCY} replace />}
-              />
               <Route path={ROUTES.EFFICIENCY} element={<EfficiencyPage />} />
 
               <Route
@@ -56,10 +52,6 @@ function App() {
               />
               <Route path={ROUTES.ANALYTICS} element={<AnalyticsPage />} />
               <Route path={`${ROUTES.QUIZ}/:courseId`} element={<QuizPage />} />
-              <Route
-                path={ROUTES.SETTINGS}
-                element={<div>Settings Page coming soon...</div>}
-              />
             </Route>
           </Route>
 

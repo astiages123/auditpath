@@ -8,11 +8,11 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/utils/core';
-import { calculateFocusPower } from '@/utils/math';
+import { calculateFocusPower } from '@/features/efficiency/logic/metricsCalc';
 import { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
 import { Session } from '../types/efficiencyTypes';
 import { EfficiencyModal } from './EfficiencyModals';
-import { SessionGanttChart } from './charts/SessionGanttChart';
+import { SessionGanttChart } from './SessionGanttChart';
 
 interface SessionListItemProps {
   session: RecentSession;

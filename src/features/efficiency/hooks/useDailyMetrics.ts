@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
-import { getDailyEfficiencySummary } from "@/features/efficiency/services/analytics/efficiencySummaryService";
-import { getDailyStats } from "@/features/efficiency/services/activity";
-import { DailyEfficiencySummary } from "@/features/efficiency/types/efficiencyTypes";
-import { useEfficiencyStore } from "@/features/efficiency/store";
-import { logger } from "@/utils/logger";
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/features/auth/hooks/useAuth';
+import { getDailyEfficiencySummary } from '@/features/efficiency/services/efficiencySummaryService';
+import { getDailyStats } from '@/features/efficiency/services/activityStatsService';
+import { DailyEfficiencySummary } from '@/features/efficiency/types/efficiencyTypes';
+import { useEfficiencyStore } from '@/features/efficiency/store/useEfficiencyStore';
+import { logger } from '@/utils/logger';
 
 export interface DailyMetrics {
   dailyGoalMinutes: number;
@@ -21,9 +21,8 @@ export function useDailyMetrics() {
   const [loading, setLoading] = useState(true);
 
   // Initialize with safe defaults
-  const [efficiencySummary, setEfficiencySummary] = useState<
-    DailyEfficiencySummary | null
-  >(null);
+  const [efficiencySummary, setEfficiencySummary] =
+    useState<DailyEfficiencySummary | null>(null);
   const [dailyGoalMinutes, setDailyGoalMinutes] = useState(200);
   const [todayVideoMinutes, setTodayVideoMinutes] = useState(0);
   const [todayVideoCount, setTodayVideoCount] = useState(0);
@@ -43,7 +42,7 @@ export function useDailyMetrics() {
         setEfficiencySummary(summary);
 
         // Sync with Global Efficiency Store
-        useEfficiencyStore.getState().actions.setEfficiencySummary(summary);
+        useEfficiencyStore.getState().setEfficiencySummary(summary);
 
         if (daily) {
           setDailyGoalMinutes(daily.goalMinutes || 200);
@@ -53,7 +52,7 @@ export function useDailyMetrics() {
           setTrendPercentage(daily.trendPercentage || 0);
         }
       } catch (error) {
-        logger.error("Failed to fetch daily metrics", error as Error);
+        logger.error('Failed to fetch daily metrics', error as Error);
       } finally {
         setLoading(false);
       }

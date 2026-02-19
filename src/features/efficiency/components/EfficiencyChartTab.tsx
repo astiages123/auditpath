@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { cn } from '@/utils/core';
-import { FocusPowerTrendChart } from './charts/FocusPowerTrendChart';
+import { FocusPowerTrendChart } from './FocusPowerTrendChart';
 import { FocusPowerPoint } from '../types/efficiencyTypes';
 
 interface EfficiencyChartTabProps {

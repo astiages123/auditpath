@@ -1,21 +1,21 @@
-import { useEffect, useState } from "react";
-import { useAuth } from "@/features/auth/hooks/useAuth";
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   getEfficiencyTrend,
   getFocusTrend,
-} from "../services/analytics/efficiencyTrendService";
+} from '../services/efficiencyTrendService';
 import {
   getConsistencyData,
   getFocusPowerData,
   getLearningLoadData,
-} from "../services/analytics";
+} from '../services/analytics';
 import {
   DayActivity,
   EfficiencyTrend,
   FocusTrend,
-} from "@/features/efficiency/types/efficiencyTypes";
-import { FocusPowerPoint, LearningLoad } from "../types/efficiencyTypes";
-import { logger } from "@/utils/logger";
+} from '@/features/efficiency/types/efficiencyTypes';
+import { FocusPowerPoint, LearningLoad } from '../types/efficiencyTypes';
+import { logger } from '@/utils/logger';
 
 export function useEfficiencyTrends() {
   const { user } = useAuth();
@@ -58,9 +58,9 @@ export function useEfficiencyTrends() {
           getLearningLoadData({ userId: user.id, days: 1 }),
           getLearningLoadData({ userId: user.id, days: 30 }),
           getLearningLoadData({ userId: user.id, days: 180 }),
-          getFocusPowerData({ userId: user.id, range: "week" }),
-          getFocusPowerData({ userId: user.id, range: "month" }),
-          getFocusPowerData({ userId: user.id, range: "all" }),
+          getFocusPowerData({ userId: user.id, range: 'week' }),
+          getFocusPowerData({ userId: user.id, range: 'month' }),
+          getFocusPowerData({ userId: user.id, range: 'all' }),
           getConsistencyData({ userId: user.id, days: 30 }),
         ]);
 
@@ -75,7 +75,7 @@ export function useEfficiencyTrends() {
         setFocusPowerAll(focusPowerAllData || []);
         setConsistencyData(consistency || []);
       } catch (error) {
-        logger.error("Failed to fetch efficiency trends", error as Error);
+        logger.error('Failed to fetch efficiency trends', error as Error);
       } finally {
         setLoading(false);
       }

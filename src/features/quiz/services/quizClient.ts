@@ -1,13 +1,13 @@
-import { env } from "@/utils/env";
-import { getCurrentSessionToken } from "./repositories/quizRepository";
-import { rateLimiter } from "@/features/quiz/logic/rateLimit";
-import { logger } from "@/utils/logger";
+import { env } from '@/utils/env';
+import { getCurrentSessionToken } from './repositories/quizRepository';
+import { rateLimiter } from '@/features/quiz/logic/rateLimit';
+import { logger } from '@/utils/logger';
 import {
   type AIResponse,
   type LLMProvider,
   type LogCallback,
   type Message,
-} from "@/features/quiz/types";
+} from '@/features/quiz/types';
 
 // --- Configuration & Constants ---
 
@@ -23,10 +23,10 @@ export interface LLMClientOptions {
 const PROXY_URL = `${env.supabase.url}/functions/v1/ai-proxy`;
 
 const DEFAULT_MODELS: Record<LLMProvider, string> = {
-  cerebras: "gpt-oss-120b",
-  google: "gemini-2.5-flash",
-  mimo: "mimo-v2-flash", // Placeholder for mimo
-  deepseek: "deepseek-chat", // Placeholder for deepseek
+  cerebras: 'gpt-oss-120b',
+  google: 'gemini-2.5-flash',
+  mimo: 'mimo-v2-flash', // Placeholder for mimo
+  deepseek: 'deepseek-chat', // Placeholder for deepseek
 };
 
 const DEFAULT_CONFIG = {
@@ -39,7 +39,7 @@ const DEFAULT_CONFIG = {
 export class UnifiedLLMClient {
   static async generate(
     messages: Message[],
-    options: LLMClientOptions,
+    options: LLMClientOptions
   ): Promise<AIResponse> {
     const {
       provider,
@@ -50,28 +50,25 @@ export class UnifiedLLMClient {
       onLog,
     } = options;
 
-    const effectiveModel = model || DEFAULT_MODELS[provider] || "gpt-oss-120b";
+    const effectiveModel = model || DEFAULT_MODELS[provider] || 'gpt-oss-120b';
 
     this.logStart(provider, effectiveModel, messages, onLog);
 
     // Auth
     const accessToken = await getCurrentSessionToken();
     if (!accessToken) {
-      throw new Error("Oturum bulunamadı. Lütfen giriş yapın.");
+      throw new Error('Oturum bulunamadı. Lütfen giriş yapın.');
     }
 
     try {
-      const response = await this.makeRequest(
-        accessToken,
-        {
-          provider,
-          model: effectiveModel,
-          messages,
-          temperature,
-          max_tokens: maxTokens,
-          usage_type: usageType,
-        },
-      );
+      const response = await this.makeRequest(accessToken, {
+        provider,
+        model: effectiveModel,
+        messages,
+        temperature,
+        max_tokens: maxTokens,
+        usage_type: usageType,
+      });
 
       // Rate Limiter Sync
       rateLimiter.syncHeaders(response.headers, provider);
@@ -85,9 +82,9 @@ export class UnifiedLLMClient {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
 
-      if (error instanceof Error && error.name === "AbortError") {
+      if (error instanceof Error && error.name === 'AbortError') {
         const timeoutMsg =
-          "Bağlantı zaman aşımına uğradı veya sunucu yanıt vermiyor. Tekrar deneniyor...";
+          'Bağlantı zaman aşımına uğradı veya sunucu yanıt vermiyor. Tekrar deneniyor...';
         onLog?.(timeoutMsg);
         logger.error(`[${provider}] Zaman aşımı`, error);
         throw new Error(timeoutMsg);
@@ -102,12 +99,12 @@ export class UnifiedLLMClient {
     provider: string,
     model: string,
     messages: Message[],
-    onLog?: LogCallback,
+    onLog?: LogCallback
   ) {
     const lastUserMessage = messages
       .slice()
       .reverse()
-      .find((m) => m.role === "user");
+      .find((m) => m.role === 'user');
     const contextLength = lastUserMessage?.content.length || 0;
 
     logger.info(`[${provider}] İstek başlatılıyor (Proxy)...`);
@@ -120,16 +117,16 @@ export class UnifiedLLMClient {
 
   private static async makeRequest(
     token: string,
-    body: Record<string, unknown>,
+    body: Record<string, unknown>
   ) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
     try {
       const response = await fetch(PROXY_URL, {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(body),
@@ -144,7 +141,7 @@ export class UnifiedLLMClient {
   private static async handleError(
     response: Response,
     provider: string,
-    onLog?: LogCallback,
+    onLog?: LogCallback
   ) {
     const errorText = await response.text();
     logger.error(`[${provider} Proxy] API Hatası: ${response.status}`, {
@@ -152,10 +149,10 @@ export class UnifiedLLMClient {
     });
     onLog?.(`${provider} API hatası`, {
       status: response.status,
-      body: "[REDACTED FOR SECURITY]",
+      body: '[REDACTED FOR SECURITY]',
     });
     throw new Error(
-      `${provider} API Hatası (${response.status}): ${errorText}`,
+      `${provider} API Hatası (${response.status}): ${errorText}`
     );
   }
 
@@ -172,9 +169,9 @@ export class UnifiedLLMClient {
       };
     },
     provider: string,
-    onLog?: LogCallback,
+    onLog?: LogCallback
   ): AIResponse {
-    const content = data.choices?.[0]?.message?.content || "";
+    const content = data.choices?.[0]?.message?.content || '';
     const usageRaw = data.usage;
     const cachedTokens = usageRaw?.prompt_tokens_details?.cached_tokens || 0;
 
@@ -192,11 +189,11 @@ export class UnifiedLLMClient {
       content,
       usage: usageRaw
         ? {
-          prompt_tokens: usageRaw.prompt_tokens,
-          completion_tokens: usageRaw.completion_tokens,
-          total_tokens: usageRaw.total_tokens,
-          cached_tokens: cachedTokens,
-        }
+            prompt_tokens: usageRaw.prompt_tokens,
+            completion_tokens: usageRaw.completion_tokens,
+            total_tokens: usageRaw.total_tokens,
+            cached_tokens: cachedTokens,
+          }
         : undefined,
     };
   }

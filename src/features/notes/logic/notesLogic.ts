@@ -1,6 +1,6 @@
-import { slugify } from "@/utils/core";
-import { type CourseTopic } from "@/features/courses/types/courseTypes";
-import { type LocalToCItem } from "../components/LocalToC";
+import { slugify } from '@/utils/core';
+import { type CourseTopic } from '@/features/courses/types/courseTypes';
+import { type LocalToCItem } from '../components/LocalToC';
 
 export interface ExtendedToCItem extends LocalToCItem {
   chunkId: string;
@@ -11,7 +11,7 @@ export interface ExtendedToCItem extends LocalToCItem {
  * This is a pure function extracted for better performance and testability.
  */
 export const generateTOCFromContent = (
-  chunks: CourseTopic[],
+  chunks: CourseTopic[]
 ): ExtendedToCItem[] => {
   if (chunks.length === 0) return [];
 
@@ -30,14 +30,14 @@ export const generateTOCFromContent = (
       });
     }
 
-    const lines = chunk.content.split("\n");
+    const lines = chunk.content.split('\n');
     lines.forEach((line) => {
       const h1Match = line.match(/^#\s+(.+)$/);
       const h2Match = line.match(/^##\s+(.+)$/);
       const h3Match = line.match(/^###\s+(.+)$/);
 
       let level = 0;
-      let title = "";
+      let title = '';
 
       if (h1Match) {
         title = h1Match[1].trim();
@@ -63,6 +63,6 @@ export const generateTOCFromContent = (
 
   // Dedupe
   return items.filter(
-    (item, index, self) => index === self.findIndex((t) => t.id === item.id),
+    (item, index, self) => index === self.findIndex((t) => t.id === item.id)
   );
 };
