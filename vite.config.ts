@@ -23,9 +23,21 @@ export default defineConfig(({ mode }) => ({
     'process.env.NODE_ENV': JSON.stringify(mode),
   },
   build: {
+    chunkSizeWarningLimit: 600,
     rollupOptions: {
       output: {
-        manualChunks: undefined,
+        manualChunks(id) {
+          if (id.includes('katex')) return 'vendor-katex';
+          if (id.includes('mermaid')) return 'vendor-mermaid';
+          if (id.includes('cytoscape')) return 'vendor-cytoscape';
+          if (
+            id.includes('node_modules/recharts') ||
+            id.includes('node_modules/d3')
+          )
+            return 'vendor-charts';
+          if (id.includes('node_modules/react')) return 'vendor-react';
+          if (id.includes('@supabase')) return 'vendor-supabase';
+        },
       },
     },
   },
