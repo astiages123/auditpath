@@ -82,3 +82,12 @@ export function parseArray<T>(
 export function isValid<T>(schema: ZodSchema<T>, data: unknown): data is T {
   return schema.safeParse(data).success;
 }
+
+/**
+ * Checks if a string is a valid UUID
+ */
+export function isValidUuid(id: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    id
+  );
+}

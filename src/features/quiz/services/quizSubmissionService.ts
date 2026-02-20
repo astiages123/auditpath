@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { type Database, type Json } from '@/types/database.types';
 import { safeQuery } from '@/lib/supabaseHelpers';
-import { parseOrThrow } from '@/utils/validation';
+import { isValidUuid, parseOrThrow } from '@/utils/validation';
 import {
   ChunkMetadataSchema,
   type QuizResponseType,
@@ -107,6 +107,8 @@ export async function finishQuizSession(stats: {
 export async function recordQuizProgress(
   payload: Database['public']['Tables']['user_quiz_progress']['Insert']
 ): Promise<{ success: boolean; error?: Error }> {
+  if (!isValidUuid(payload.question_id)) return { success: true };
+
   const { error } = await safeQuery(
     supabase.from('user_quiz_progress').insert(payload),
     'recordQuizProgress error',
@@ -120,6 +122,8 @@ export async function recordQuizProgress(
 export async function upsertUserQuestionStatus(
   payload: Database['public']['Tables']['user_question_status']['Insert']
 ): Promise<{ success: boolean; error?: Error }> {
+  if (!isValidUuid(payload.question_id)) return { success: true };
+
   const { error } = await safeQuery(
     supabase
       .from('user_question_status')

@@ -13,6 +13,7 @@ interface ProgressStatCardProps {
   subText?: string;
   colorClass?: string;
   showSkeleton?: boolean;
+  compact?: boolean;
   variants: Variants;
   children?: React.ReactNode;
 }
@@ -26,6 +27,7 @@ export function ProgressStatCard({
   subText,
   colorClass = 'text-white',
   showSkeleton,
+  compact,
   variants,
   children,
 }: ProgressStatCardProps) {
@@ -63,56 +65,101 @@ export function ProgressStatCard({
     <motion.div
       variants={variants}
       className={cn(
-        'relative overflow-hidden rounded-3xl border p-5 group bg-linear-to-br',
+        'relative overflow-hidden rounded-3xl border group bg-linear-to-br',
+        compact ? 'p-4' : 'p-5',
         borderClass,
         gradientClass
       )}
     >
-      {BgIcon && (
+      {BgIcon && !compact && (
         <div className="absolute -right-4 -top-4 opacity-10 group-hover:scale-110 transition-transform duration-700">
           <BgIcon className={cn('w-24 h-24', colorClass.split(' ')[0])} />
         </div>
       )}
-      <div className="relative flex flex-col justify-between h-full space-y-4">
-        <div className="flex items-center gap-2">
-          <div className={cn('p-2 rounded-xl border', iconBgClass)}>
-            <Icon className="w-4 h-4" />
-          </div>
-          <span
-            className={cn(
-              'text-xs font-semibold uppercase tracking-wider',
-              colorClass.includes('text-white') ? 'text-white/70' : colorClass
-            )}
-          >
-            {label}
-          </span>
-        </div>
 
-        <div>
-          {showSkeleton ? (
-            <Skeleton className="h-10 w-24 bg-zinc-800" />
-          ) : (
-            <>
-              <div className="flex items-baseline">
-                <span className={cn('text-lg font-black text-white')}>
+      {compact ? (
+        <div className="relative flex items-center justify-between h-full gap-4">
+          <div className="flex items-center gap-3 w-full">
+            <div
+              className={cn('p-2.5 rounded-xl border shrink-0', iconBgClass)}
+            >
+              <Icon className="w-5 h-5" />
+            </div>
+            <div className="flex flex-col flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn('text-2xl font-black text-white leading-none')}
+                >
                   {value}
                 </span>
-                {suffix && (
-                  <span className="ml-1 text-sm font-medium text-muted-foreground">
-                    {suffix}
+                <div className="flex flex-col">
+                  <span
+                    className={cn(
+                      'text-[10px] font-bold uppercase tracking-widest leading-none mb-0.5',
+                      colorClass.includes('text-white')
+                        ? 'text-white/70'
+                        : colorClass
+                    )}
+                  >
+                    {label}
                   </span>
-                )}
+                  {suffix && (
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase leading-none">
+                      {suffix}
+                    </span>
+                  )}
+                </div>
               </div>
               {subText && (
-                <p className="text-[11px] text-muted-foreground mt-1">
+                <p className="text-[10px] text-muted-foreground leading-tight mt-2 truncate opacity-70">
                   {subText}
                 </p>
               )}
-            </>
-          )}
-          {children}
+            </div>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="relative flex flex-col justify-between h-full space-y-4">
+          <div className="flex items-center gap-2">
+            <div className={cn('p-2 rounded-xl border', iconBgClass)}>
+              <Icon className="w-4 h-4" />
+            </div>
+            <span
+              className={cn(
+                'text-xs font-semibold uppercase tracking-wider',
+                colorClass.includes('text-white') ? 'text-white/70' : colorClass
+              )}
+            >
+              {label}
+            </span>
+          </div>
+
+          <div>
+            {showSkeleton ? (
+              <Skeleton className="h-10 w-24 bg-zinc-800" />
+            ) : (
+              <>
+                <div className="flex items-baseline">
+                  <span className={cn('text-lg font-black text-white')}>
+                    {value}
+                  </span>
+                  {suffix && (
+                    <span className="ml-1 text-sm font-medium text-muted-foreground">
+                      {suffix}
+                    </span>
+                  )}
+                </div>
+                {subText && (
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    {subText}
+                  </p>
+                )}
+              </>
+            )}
+            {children}
+          </div>
+        </div>
+      )}
     </motion.div>
   );
 }

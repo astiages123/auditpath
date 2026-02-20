@@ -109,16 +109,16 @@ export function CategoryCard({
               <h3 className="text-xl font-bold text-white tracking-tight">
                 {name}
               </h3>
-              <div className="flex items-center gap-4 mt-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                <span className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                <span className="flex items-center gap-1.5 whitespace-nowrap bg-white/5 px-2 py-0.5 rounded-full">
                   <BookOpen className="w-3.5 h-3.5" />
                   {courses.length} Kurs
                 </span>
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1.5 whitespace-nowrap bg-white/5 px-2 py-0.5 rounded-full">
                   <TvMinimalPlay className="w-3.5 h-3.5" />
                   {displayCompletedVideos}/{displayTotalVideos}
                 </span>
-                <span className="flex items-center gap-1.5">
+                <span className="flex items-center gap-1.5 whitespace-nowrap bg-white/5 px-2 py-0.5 rounded-full">
                   <Clock className="w-3.5 h-3.5" />
                   {formatDuration(displayCompletedHours)}
                 </span>

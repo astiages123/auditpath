@@ -3,13 +3,13 @@ import { logger } from '@/utils/logger';
 import { type Database, type Json } from '@/types/database.types';
 import { safeQuery } from '@/lib/supabaseHelpers';
 import { z } from 'zod';
-import { parseArray } from '@/utils/validation';
+import { isValidUuid, parseArray } from '@/utils/validation';
 import {
   PartialQuestionRowSchema,
   type QuestionWithStatus,
   QuestionWithStatusRowSchema,
-  type RepositoryQuestion,
   type QuizQuestion,
+  type RepositoryQuestion,
 } from '@/features/quiz/types';
 import { MASTERY_THRESHOLD } from '@/features/quiz/utils/constants';
 
@@ -18,6 +18,7 @@ const quizLogger = logger.withPrefix('[QuizQuestionService]');
 export async function getTotalQuestionsInCourse(
   courseId: string
 ): Promise<number> {
+  if (!isValidUuid(courseId)) return 0;
   const { count } = await supabase
     .from('questions')
     .select('*', { count: 'exact', head: true })
@@ -26,6 +27,7 @@ export async function getTotalQuestionsInCourse(
 }
 
 export async function getChunkQuestionCount(chunkId: string): Promise<number> {
+  if (!isValidUuid(chunkId)) return 10;
   const { count } = await supabase
     .from('questions')
     .select('*', { count: 'exact', head: true })
@@ -53,6 +55,7 @@ export async function getSolvedQuestionIds(
   userId: string,
   chunkId: string
 ): Promise<Set<string>> {
+  if (!isValidUuid(chunkId)) return new Set();
   const { data } = await safeQuery<{ question_id: string }[]>(
     supabase
       .from('user_quiz_progress')
@@ -70,6 +73,7 @@ export async function getUniqueSolvedCountInChunk(
   userId: string,
   chunkId: string
 ): Promise<number> {
+  if (!isValidUuid(chunkId)) return 0;
   const { count } = await supabase
     .from('user_question_status')
     .select('question_id, questions!inner(chunk_id)', {
@@ -112,6 +116,7 @@ export async function fetchGeneratedQuestions(
   usageType: Database['public']['Enums']['question_usage_type'],
   limit: number
 ) {
+  if (!isValidUuid(chunkId)) return [];
   const { data } = await safeQuery<{ id: string; question_data: Json }[]>(
     supabase
       .from('questions')
@@ -192,6 +197,24 @@ export async function fetchQuestionsByStatus(
   }) as QuestionWithStatus[];
 }
 
+export async function fetchQuestionsByCourse(
+  courseId: string,
+  limit: number = 10
+): Promise<RepositoryQuestion[]> {
+  const { data } = await safeQuery<RepositoryQuestion[]>(
+    supabase
+      .from('questions')
+      .select(
+        'id, chunk_id, question_data, bloom_level, concept_title, usage_type, course:courses(course_slug), chunk:note_chunks(section_title)'
+      )
+      .eq('course_id', courseId)
+      .limit(limit),
+    'fetchQuestionsByCourse error',
+    { courseId }
+  );
+  return data || [];
+}
+
 export async function fetchQuestionsByIds(
   ids: string[]
 ): Promise<RepositoryQuestion[]> {
@@ -212,6 +235,7 @@ export async function fetchQuestionsByIds(
 export async function getQuestionData(
   questionId: string
 ): Promise<RepositoryQuestion | null> {
+  if (!isValidUuid(questionId)) return null;
   const { data } = await safeQuery<RepositoryQuestion>(
     supabase
       .from('questions')
@@ -262,6 +286,7 @@ export async function fetchActiveQuestionsFromChunk(
   chunkId: string,
   limit: number
 ): Promise<QuestionWithStatus[]> {
+  if (!isValidUuid(chunkId)) return [];
   const { data } = await safeQuery<unknown[]>(
     supabase
       .from('user_question_status')
@@ -290,6 +315,7 @@ export async function fetchNullQuestionsFromChunk(
   chunkId: string,
   limit: number
 ): Promise<QuestionWithStatus[]> {
+  if (!isValidUuid(chunkId)) return [];
   const { data } = await safeQuery<unknown[]>(
     supabase
       .from('questions')
@@ -343,6 +369,7 @@ export async function fetchWaterfallTrainingQuestions(
     chunkId: string,
     currentLimit: number
   ): Promise<QuestionWithStatus[]> => {
+    if (!isValidUuid(chunkId)) return [];
     const activeQuestions = await fetchActiveQuestionsFromChunk(
       userId,
       chunkId,
@@ -361,7 +388,9 @@ export async function fetchWaterfallTrainingQuestions(
     return [...activeQuestions, ...nullQuestions];
   };
 
-  const targetResults = await getFromChunk(targetChunkId, limit);
+  const targetResults = isValidUuid(targetChunkId)
+    ? await getFromChunk(targetChunkId, limit)
+    : [];
   results.push(...targetResults);
 
   if (results.length >= limit) return results.slice(0, limit);
@@ -372,7 +401,13 @@ export async function fetchWaterfallTrainingQuestions(
       .select('chunk_id')
       .eq('user_id', userId)
       .eq('course_id', courseId)
-      .neq('chunk_id', targetChunkId)
+      .filter(
+        'chunk_id',
+        'neq',
+        isValidUuid(targetChunkId)
+          ? targetChunkId
+          : '00000000-0000-0000-0000-000000000000'
+      )
       .lt('mastery_score', MASTERY_THRESHOLD)
       .order('updated_at', { ascending: false }),
     'fetchWaterfallTrainingQuestions weakChunks error',

@@ -53,35 +53,35 @@ export default function TitleRoadmap({
   // const visualProgress = useMemo(() => { ... }); // REMOVED unused visualProgress
 
   return (
-    <Card className="mx-auto w-full max-w-4xl border-primary/10 bg-background/95 backdrop-blur-xl shadow-2xl overflow-hidden relative ring-1 ring-border/50">
+    <Card className="mx-auto w-full border-none bg-transparent shadow-none overflow-visible relative">
       {/* Arka Plan Süslemeleri - Daha hafif */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
 
       {/* Header: Kompaktlaştırıldı */}
-      <CardHeader className="relative flex flex-row items-center justify-between py-4 px-6 border-b border-border/40">
+      <CardHeader className="relative flex flex-row items-center justify-between pt-2 pb-4 px-0 border-b border-border/10">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-xl ring-1 ring-primary/20">
             <Sparkles className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <CardTitle className="text-xl font-bold tracking-tight">
+            <CardTitle className="text-lg sm:text-xl font-bold tracking-tight">
               Unvan Yolculuğu
             </CardTitle>
-            <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">
+            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
               Seviye:{' '}
               <span className="text-primary">{currentMilestone.title}</span>
             </p>
           </div>
         </div>
         <div className="flex items-baseline gap-1 bg-muted/40 px-3 py-1 rounded-xl border border-border/50">
-          <span className="text-2xl font-black font-mono text-primary leading-none">
+          <span className="text-xl sm:text-2xl font-black font-mono text-primary leading-none">
             {progress}
           </span>
-          <span className="text-[10px] font-bold text-muted-foreground">%</span>
+          <span className="text-[9px] font-bold text-muted-foreground">%</span>
         </div>
       </CardHeader>
 
-      <CardContent className="p-4 md:p-6 space-y-6">
+      <CardContent className="px-0 py-6 space-y-8">
         {/* İlerleme Çubuğu: Dengeli yükseklik */}
         <div className="relative mx-4 mb-10 mt-2">
           <div className="h-2.5 bg-muted/60 rounded-full overflow-hidden ring-1 ring-border/10 shadow-inner">
@@ -132,7 +132,7 @@ export default function TitleRoadmap({
         </div>
 
         {/* Rütbe Grid: 4'lü yapı, optimize boyutlar */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {milestones.map((milestone, index) => {
             const isCompleted = progress >= milestone.threshold;
             const isCurrent = index === currentRankIndex;

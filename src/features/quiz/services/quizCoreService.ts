@@ -7,7 +7,7 @@ import {
   QuizQuestionSchema,
 } from '@/features/quiz/types';
 import type { CourseTopic } from '@/features/courses/types/courseTypes';
-import { parseOrThrow } from '@/utils/validation';
+import { isValidUuid, parseOrThrow } from '@/utils/validation';
 
 const quizLogger = logger.withPrefix('[QuizCoreService]');
 
@@ -68,6 +68,7 @@ export async function getRecentDiagnoses(
   chunkId: string,
   limit: number
 ): Promise<string[]> {
+  if (!isValidUuid(chunkId)) return [];
   const { data } = await safeQuery<{ ai_diagnosis: string | null }[]>(
     supabase
       .from('user_quiz_progress')
@@ -129,9 +130,7 @@ export async function fetchCourseMastery(courseId: string, userId: string) {
  */
 export async function getNoteChunkById(chunkId: string) {
   // Basic UUID validation to prevent Postgres errors
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  if (!uuidRegex.test(chunkId)) {
+  if (!isValidUuid(chunkId)) {
     quizLogger.warn(`Invalid UUID passed to getNoteChunkById: ${chunkId}`);
     return null;
   }
@@ -334,6 +333,8 @@ export async function getUserQuestionStatus(
   consecutive_fails: number;
   next_review_session: number | null;
 } | null> {
+  if (!isValidUuid(questionId)) return null;
+
   const { data } = await safeQuery<{
     question_id: string;
     status: string;
@@ -368,6 +369,7 @@ export async function getChunkMastery(
   userId: string,
   chunkId: string
 ): Promise<ChunkMasteryRow | null> {
+  if (!isValidUuid(chunkId)) return null;
   const { data } = await safeQuery<{
     chunk_id: string;
     mastery_score: number;
@@ -404,6 +406,7 @@ export async function getChunkMetadata(chunkId: string): Promise<{
   status: string;
   content: string;
 } | null> {
+  if (!isValidUuid(chunkId)) return null;
   const { data } = await safeQuery<{
     course_id: string;
     metadata: Json;
@@ -422,6 +425,7 @@ export async function getChunkMetadata(chunkId: string): Promise<{
 }
 
 export async function getChunkWithContent(chunkId: string) {
+  if (!isValidUuid(chunkId)) return null;
   const { data } = await safeQuery<Record<string, unknown>>(
     supabase
       .from('note_chunks')

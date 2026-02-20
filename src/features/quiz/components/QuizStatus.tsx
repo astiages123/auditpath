@@ -13,6 +13,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { cn } from '@/utils/stringHelpers';
+import { cleanMathContent } from '@/features/quiz/utils/mathUtils';
 
 // ============================================================================
 // Timer & Progress Components (formerly in QuizProgress.tsx)
@@ -310,13 +311,7 @@ interface MathRendererProps {
 export const MathRenderer = memo(function MathRenderer({
   content,
 }: MathRendererProps) {
-  if (!content) return null;
-  const cleanContent = content
-    .replace(/\([\w-]+\.(webp|png|jpg|jpeg|gif)\)/gi, '')
-    .replace(/\[GÖRSEL:\s*\d+\]/gi, '')
-    .replace(/\n\s*\n/g, '\n\n')
-    .trim()
-    .replace(/(\d)\s+(?=\d{3}(?:\s|$|\D))/g, '$1.');
+  const cleanContent = cleanMathContent(content);
 
   return (
     <div className="math-rendering upright-math">

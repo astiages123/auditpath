@@ -48,15 +48,15 @@ export const QuizFooter: FC<QuizFooterProps> = ({
         selectedAnswer={selectedAnswer}
       />
 
-      <div className="flex items-center gap-6 w-full md:w-auto">
+      <div className="flex items-center gap-2 md:gap-6 w-full md:w-auto">
         {historyLength > 0 && (
           <button
             onClick={onPrev}
             disabled={isSubmitting}
-            className="flex-1 md:flex-none px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2"
+            className="flex-1 md:flex-none px-2 sm:px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5 sm:gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="md:hidden lg:inline text-xs font-bold uppercase tracking-wider">
+            <span className="md:hidden lg:inline text-[10px] sm:text-xs font-bold uppercase tracking-wider whitespace-nowrap">
               Geri
             </span>
           </button>
@@ -69,10 +69,10 @@ export const QuizFooter: FC<QuizFooterProps> = ({
               animate={{ opacity: 1, scale: 1, x: 0 }}
               exit={{ opacity: 0, scale: 0.9, x: 10 }}
               onClick={onToggleExplanation}
-              className="flex-1 md:flex-none px-4 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+              className="flex-1 md:flex-none px-2 sm:px-4 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all active:scale-95 flex items-center justify-center gap-1.5 sm:gap-2"
             >
               <Brain className="w-4 h-4" />
-              <span className="text-xs font-bold uppercase tracking-wider">
+              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider whitespace-nowrap">
                 Çözümü Gör
               </span>
             </motion.button>
@@ -84,7 +84,7 @@ export const QuizFooter: FC<QuizFooterProps> = ({
             isAnswered ? onNext : selectedAnswer !== null ? onConfirm : onBlank
           }
           disabled={isSubmitting}
-          className={`flex-1 md:flex-none px-6 py-2 rounded-xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2 font-heading active:scale-95 disabled:opacity-50 group ${
+          className={`flex-1 md:flex-none px-3 sm:px-6 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 font-heading active:scale-95 disabled:opacity-50 group ${
             isAnswered || selectedAnswer !== null
               ? 'bg-primary text-black shadow-lg shadow-primary/10 hover:bg-primary/90'
               : 'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white'
@@ -94,7 +94,7 @@ export const QuizFooter: FC<QuizFooterProps> = ({
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
             <>
-              <span>
+              <span className="whitespace-nowrap">
                 {isAnswered
                   ? 'Sonraki Soru'
                   : selectedAnswer !== null

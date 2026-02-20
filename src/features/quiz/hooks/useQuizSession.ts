@@ -9,6 +9,7 @@ import {
   TrueFalseQuestion,
 } from '../types';
 import {
+  fetchQuestionsByCourse,
   fetchQuestionsByIds,
   getReviewQueue,
   startQuizSession,
@@ -20,6 +21,7 @@ import { usePomodoroSessionStore } from '@/features/pomodoro/store';
 import { useCelebrationStore } from '@/features/achievements/store';
 import { useQuotaStore } from '@/features/quiz/store';
 import { updateResults } from '../logic/quizCoreLogic';
+import { MOCK_QUESTIONS } from '../utils/mockQuestions';
 
 // ============================================================================
 // Quiz Session Controls (formerly in useQuizSession.ts)
@@ -41,6 +43,20 @@ export function useQuizSessionControls({
   const startQuiz = useCallback(
     async (userId: string, courseId: string, chunkId?: string) => {
       updateState({ isLoading: true, error: null });
+
+      // Handle Mock Mode immediately to avoid DB errors with invalid UUIDs
+      if (chunkId === 'MOCK_QUIZ') {
+        setSessionContext({
+          userId,
+          courseId,
+          courseName: 'Örnek Sorular (Mock)',
+          sessionNumber: 0,
+          isNewSession: false,
+        });
+        loadQuestionsIntoState(MOCK_QUESTIONS);
+        return;
+      }
+
       try {
         const session = await startQuizSession(userId, courseId);
         setSessionContext(session);
@@ -95,10 +111,27 @@ export function useQuizSessionControls({
             { usageType: 'antrenman', userId }
           );
         } else {
-          updateState({
-            isLoading: false,
-            error: 'Soru bulunamadı.',
-          });
+          // Empty queue: Fetch random questions from the course
+          const randomQs = await fetchQuestionsByCourse(courseId, 10);
+
+          if (randomQs.length > 0) {
+            loadQuestionsIntoState(
+              randomQs.map((q) => {
+                const qd = q.question_data as
+                  | TrueFalseQuestion
+                  | MultipleChoiceQuestion;
+                return {
+                  ...qd,
+                  id: q.id,
+                } as QuizQuestion;
+              })
+            );
+          } else {
+            updateState({
+              isLoading: false,
+              error: 'Soru bulunamadı.',
+            });
+          }
         }
       } catch (e: unknown) {
         const error = e as Error;

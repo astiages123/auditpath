@@ -71,7 +71,7 @@ export function QuizView({
                   currentQuestionId={state.currentQuestion?.id}
                   lastSubmissionResult={state.lastSubmissionResult}
                 />
-                <div className="flex-1 min-h-0">
+                <div className="flex-1 min-h-0 overflow-hidden">
                   <QuizCard
                     question={state.currentQuestion}
                     selectedAnswer={state.selectedAnswer}

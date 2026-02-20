@@ -56,6 +56,22 @@ function QuizCardComponent({
   onRetry,
   onBlank,
 }: QuizCardProps) {
+  const explanationRef = useRef<HTMLDivElement>(null);
+
+  // Scroll into view when explanation is shown on mobile
+  useEffect(() => {
+    if (isAnswered && showExplanation && window.innerWidth < 1024) {
+      // Small delay to allow AnimatePresence to complete entry animation
+      const timer = setTimeout(() => {
+        explanationRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isAnswered, showExplanation]);
+
   // Use a Ref to keep the event listener stable while still having access to latest state/props
   const stateRef = useRef({
     question,
@@ -161,21 +177,29 @@ function QuizCardComponent({
 
   return (
     <motion.div
-      animate={{ maxWidth: isAnswered && showExplanation ? '1152px' : '896px' }} // max-w-6xl (72rem/1152px) vs max-w-4xl (56rem/896px)
+      animate={{ maxWidth: isAnswered && showExplanation ? '1152px' : '896px' }}
       transition={{ type: 'spring', damping: 32, stiffness: 160 }}
-      className="w-full mx-auto py-1 md:py-2 flex flex-col h-full"
+      className="w-full mx-auto py-1 md:py-2 flex flex-col h-full overflow-hidden"
     >
-      <div className="flex flex-col lg:flex-row gap-6 h-full min-h-0 overflow-hidden">
+      <div
+        className={`flex flex-col lg:flex-row gap-4 md:gap-6 h-full min-h-0 ${isAnswered && showExplanation ? 'overflow-y-auto lg:overflow-hidden' : 'overflow-hidden'}`}
+      >
         {/* Question Side */}
         <motion.div
           layout
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', damping: 32, stiffness: 160 }}
-          className={`w-full h-full flex flex-col ${isAnswered && showExplanation ? 'lg:w-[65%]' : 'w-full'}`}
+          className={`w-full flex-shrink-0 flex flex-col transition-all duration-500 ${
+            isAnswered && showExplanation
+              ? 'h-auto lg:h-full lg:w-[65%]'
+              : 'h-full w-full'
+          }`}
         >
           <div className="bg-transparent flex flex-col h-full min-h-0 group">
-            <div className="p-2 md:p-3 space-y-3 md:space-y-4 overflow-y-auto custom-scrollbar flex-1 min-h-0">
+            <div
+              className={`p-2 md:p-3 space-y-3 md:space-y-4 flex-1 min-h-0 ${isAnswered && showExplanation ? 'lg:overflow-y-auto' : 'overflow-y-auto'} custom-scrollbar`}
+            >
               <div className="space-y-3">
                 {question.insight && (
                   <motion.div
@@ -262,12 +286,13 @@ function QuizCardComponent({
         <AnimatePresence>
           {isAnswered && showExplanation && (
             <motion.div
+              ref={explanationRef}
               layout
-              initial={{ opacity: 0, x: 20, width: 0 }}
-              animate={{ opacity: 1, x: 0, width: '35%' }}
-              exit={{ opacity: 0, x: 20, width: 0 }}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ type: 'spring', damping: 32, stiffness: 160 }}
-              className="w-full h-full min-h-0"
+              className="w-full lg:w-[35%] h-auto lg:h-full min-h-0 flex-shrink-0"
             >
               <div className="bg-card border border-white/5 rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col">
                 <ExplanationPanel

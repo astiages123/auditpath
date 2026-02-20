@@ -77,7 +77,7 @@ export function QuizModal({
       {/* 1. h-[85vh] ile modal yüksekliğini sabitliyoruz.
           2. overflow-hidden ile modalın dışına taşmayı ve modalın kendisinin scroll olmasını engelliyoruz.
       */}
-      <DialogContent className="max-w-[95vw] h-[95vh] flex flex-col p-0 gap-0 overflow-hidden bg-background border-border/50 shadow-2xl">
+      <DialogContent className="w-[94vw] h-[94vh] sm:max-w-7xl sm:h-[85vh] flex flex-col p-0 gap-0 overflow-hidden bg-background border-border/50 shadow-2xl">
         <DialogHeader
           className={`px-6 border-b transition-all duration-300 bg-muted/5 shrink-0 ${isQuizActive ? 'py-2.5 opacity-80' : 'py-5'}`}
         >
@@ -130,7 +130,9 @@ export function QuizModal({
             <div className="h-full">
               <ErrorBoundary>
                 <QuizContainer
-                  chunkId={targetChunkId || undefined}
+                  chunkId={
+                    isMockMode ? 'MOCK_QUIZ' : targetChunkId || undefined
+                  }
                   courseId={courseId}
                   onClose={handleBack}
                 />
