@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cleanMathContent } from '@/features/quiz/utils/mathUtils';
+import { cleanMathContent, shuffle } from '@/features/quiz/utils/mathUtils';
 
 describe('cleanMathContent', () => {
   it('should escape percentage signs in math mode', () => {
@@ -42,5 +42,21 @@ describe('cleanMathContent', () => {
     expect(cleanMathContent(null)).toBe('');
     expect(cleanMathContent(undefined)).toBe('');
     expect(cleanMathContent('')).toBe('');
+  });
+});
+
+describe('shuffle', () => {
+  it('should return an array with the same elements', () => {
+    const input = [1, 2, 3, 4, 5];
+    const result = shuffle(input);
+    expect(result).toHaveLength(input.length);
+    expect(result.sort()).toEqual(input.sort());
+  });
+
+  it('should not modify the original array', () => {
+    const input = [1, 2, 3];
+    const original = [...input];
+    shuffle(input);
+    expect(input).toEqual(original);
   });
 });

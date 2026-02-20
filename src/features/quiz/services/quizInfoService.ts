@@ -1,7 +1,8 @@
 import { env } from '@/utils/env';
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/utils/logger';
-import { rateLimiter } from '@/features/quiz/logic/quizCoreLogic';
+import pLimit from 'p-limit';
+import { LLM_TIMEOUT_MS } from '@/utils/constants';
 import type { Database } from '@/types/database.types';
 import {
   type AIResponse,
@@ -153,6 +154,78 @@ export const subjectKnowledgeService = {
 };
 
 // ============================================================================
+// Rate Limiter (formerly in quizCoreLogic.ts)
+// ============================================================================
+
+interface Budget {
+  remaining: number;
+  reset: number;
+}
+
+export class RateLimitService {
+  private limit = pLimit(1);
+  private budgets: Map<LLMProvider, Budget> = new Map();
+
+  syncHeaders(headers: Headers, provider: LLMProvider) {
+    const remaining =
+      headers.get('x-ratelimit-remaining-tokens') ||
+      headers.get('x-ratelimit-remaining');
+    const reset =
+      headers.get('x-ratelimit-reset-tokens') ||
+      headers.get('x-ratelimit-reset');
+
+    if (remaining) {
+      const resetVal = reset ? parseFloat(reset) : 60;
+      if (Number.isNaN(resetVal)) {
+        logger.warn(`[RateLimit] Invalid reset value for ${provider}`);
+        return;
+      }
+      const resetTime =
+        resetVal < 1000000 ? Date.now() + resetVal * 1000 : resetVal;
+      const parsedRemaining = parseInt(remaining, 10);
+
+      if (Number.isNaN(parsedRemaining)) {
+        logger.warn(`[RateLimit] Invalid remaining value for ${provider}`);
+        return;
+      }
+
+      this.budgets.set(provider, {
+        remaining: parsedRemaining,
+        reset: resetTime,
+      });
+
+      if (parsedRemaining < 500) {
+        logger.warn(
+          `[RateLimit] Critical: ${provider} budget low (${remaining} tokens). Reset in ${Math.ceil(
+            (resetTime - Date.now()) / 1000
+          )}s`
+        );
+      }
+    }
+  }
+
+  async schedule<T>(task: () => Promise<T>, provider: LLMProvider): Promise<T> {
+    return this.limit(async () => {
+      const budget = this.budgets.get(provider);
+      if (budget && budget.remaining <= 0) {
+        const waitTime = budget.reset - Date.now();
+        if (waitTime > 0) {
+          logger.info(
+            `[RateLimit] Waiting ${Math.ceil(
+              waitTime / 1000
+            )}s for ${provider} budget reset...`
+          );
+          await new Promise((resolve) => setTimeout(resolve, waitTime));
+        }
+      }
+      return task();
+    });
+  }
+}
+
+export const rateLimiter = new RateLimitService();
+
+// ============================================================================
 // Unified LLM Client (formerly quizClient.ts)
 // ============================================================================
 
@@ -257,7 +330,7 @@ export class UnifiedLLMClient {
     body: Record<string, unknown>
   ) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    const timeoutId = setTimeout(() => controller.abort(), LLM_TIMEOUT_MS);
     try {
       return await fetch(PROXY_URL, {
         method: 'POST',

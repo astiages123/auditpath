@@ -1,8 +1,8 @@
 import {
+  CourseStats,
   QuizAction,
   QuizSessionState,
   ReviewItem,
-  CourseStats,
 } from '@/features/quiz/types';
 
 export const initialQuizSessionState: QuizSessionState = {
@@ -101,6 +101,29 @@ export function quizSessionReducer(
           }
         : { totalQuestionsSolved: 1 };
 
+      const updatedReviewQueue = state.reviewQueue.map((item, idx) =>
+        idx === state.currentReviewIndex
+          ? {
+              ...item,
+              userAnswer: answerIndex ?? null,
+              isCorrectAnswer: isCorrect,
+            }
+          : item
+      );
+
+      const updatedBatches = state.batches.map((batch) =>
+        batch.map((item) =>
+          item.questionId ===
+          state.reviewQueue[state.currentReviewIndex]?.questionId
+            ? {
+                ...item,
+                userAnswer: answerIndex ?? null,
+                isCorrectAnswer: isCorrect,
+              }
+            : item
+        )
+      );
+
       return {
         ...state,
         isAnswered: true,
@@ -115,6 +138,8 @@ export function quizSessionReducer(
         },
         courseStats: newCourseStats,
         isSyncing: true,
+        reviewQueue: updatedReviewQueue,
+        batches: updatedBatches,
       };
     }
 
@@ -166,12 +191,16 @@ export function quizSessionReducer(
         };
       }
 
+      const nextQuestionItem = state.reviewQueue[nextIndex];
+
       return {
         ...state,
         currentReviewIndex: nextIndex,
-        isAnswered: false,
-        selectedAnswer: null,
-        isCorrect: null,
+        isAnswered:
+          nextQuestionItem?.userAnswer !== undefined &&
+          nextQuestionItem?.userAnswer !== null,
+        selectedAnswer: nextQuestionItem?.userAnswer ?? null,
+        isCorrect: nextQuestionItem?.isCorrectAnswer ?? null,
         status: 'PLAYING',
       };
     }
@@ -235,12 +264,15 @@ export function quizSessionReducer(
 
     case 'PREV_QUESTION': {
       const prevIndex = Math.max(0, state.currentReviewIndex - 1);
+      const prevQuestionItem = state.reviewQueue[prevIndex];
       return {
         ...state,
         currentReviewIndex: prevIndex,
-        isAnswered: false,
-        selectedAnswer: null,
-        isCorrect: null,
+        isAnswered:
+          prevQuestionItem?.userAnswer !== undefined &&
+          prevQuestionItem?.userAnswer !== null,
+        selectedAnswer: prevQuestionItem?.userAnswer ?? null,
+        isCorrect: prevQuestionItem?.isCorrectAnswer ?? null,
         status: 'PLAYING',
       };
     }

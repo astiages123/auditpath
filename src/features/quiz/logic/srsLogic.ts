@@ -228,15 +228,12 @@ export function calculateQuizResult(
   const isCorrect = responseType === 'correct';
 
   if (questionData?.usage_type === 'deneme') {
+    // Deneme soruları SRS ve puanlama sisteminden bağımsızdır, hiçbir veriyi etkilemez.
     return {
       isCorrect,
       scoreDelta: 0,
       newMastery: masteryData?.mastery_score || 0,
-      newStatus: calculateShelfStatus(
-        currentStatus?.consecutive_success || 0,
-        isCorrect,
-        timeSpentMs < 30000
-      ).newStatus,
+      newStatus: 'active', // Deneme soruları durumu değiştirmez, varsayılan 'active' döner
       nextReviewSession: null,
       isTopicRefreshed: false,
       newSuccessCount: currentStatus?.consecutive_success || 0,

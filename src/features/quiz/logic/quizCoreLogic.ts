@@ -1,145 +1,12 @@
-/* eslint-disable no-console */
-import { logger } from '@/utils/logger';
-import pLimit from 'p-limit';
 import type { Database } from '@/types/database.types';
 import {
   type AdvancedScoreResult,
   type ConceptMapItem,
-  type LLMProvider,
+  type MasteryNode,
   type QuizResponseType,
   type QuizResults,
   type TestResultSummary,
 } from '../types';
-
-// ============================================================================
-// Debug Logger (formerly debugLogger.ts)
-// ============================================================================
-
-export class DebugLogger {
-  private static hasGroupSupport(): boolean {
-    return typeof console !== 'undefined' && 'groupCollapsed' in console;
-  }
-
-  private static hasTableSupport(): boolean {
-    return typeof console !== 'undefined' && 'table' in console;
-  }
-
-  static group(name: string, data?: Record<string, unknown>) {
-    if (!this.hasGroupSupport()) {
-      logger.debug(`--- ${name} ---`, data);
-      return;
-    }
-    console.groupCollapsed(`🔧 ${name}`);
-    if (data) {
-      logger.debug('Details:', data);
-    }
-  }
-
-  static groupEnd() {
-    if (!this.hasGroupSupport()) return;
-    console.groupEnd();
-  }
-
-  static input(message: string, data?: Record<string, unknown>) {
-    logger.debug(`⬇️ INPUT: ${message}`, data);
-  }
-
-  static process(message: string, data?: Record<string, unknown>) {
-    logger.debug(`⚡ PROCESS: ${message}`, data);
-  }
-
-  static output(message: string, data?: Record<string, unknown>) {
-    logger.debug(`✅ OUTPUT: ${message}`, data);
-  }
-
-  static db(operation: string, table: string, data?: Record<string, unknown>) {
-    logger.debug(`🗄️ DB: ${operation} on [${table}]`, data);
-  }
-
-  static error(message: string, error?: unknown) {
-    logger.error(`❌ ERROR: ${message}`, { error });
-  }
-
-  static table(data: Record<string, unknown> | unknown[]) {
-    if (!this.hasTableSupport()) {
-      logger.debug('Table:', { data });
-      return;
-    }
-    console.table(data);
-  }
-}
-
-// ============================================================================
-// Rate Limiter (formerly rateLimit.ts)
-// ============================================================================
-
-interface Budget {
-  remaining: number;
-  reset: number;
-}
-
-export class RateLimitService {
-  private limit = pLimit(1);
-  private budgets: Map<LLMProvider, Budget> = new Map();
-
-  syncHeaders(headers: Headers, provider: LLMProvider) {
-    const remaining =
-      headers.get('x-ratelimit-remaining-tokens') ||
-      headers.get('x-ratelimit-remaining');
-    const reset =
-      headers.get('x-ratelimit-reset-tokens') ||
-      headers.get('x-ratelimit-reset');
-
-    if (remaining) {
-      const resetVal = reset ? parseFloat(reset) : 60;
-      if (Number.isNaN(resetVal)) {
-        logger.warn(`[RateLimit] Invalid reset value for ${provider}`);
-        return;
-      }
-      const resetTime =
-        resetVal < 1000000 ? Date.now() + resetVal * 1000 : resetVal;
-      const parsedRemaining = parseInt(remaining, 10);
-
-      if (Number.isNaN(parsedRemaining)) {
-        logger.warn(`[RateLimit] Invalid remaining value for ${provider}`);
-        return;
-      }
-
-      this.budgets.set(provider, {
-        remaining: parsedRemaining,
-        reset: resetTime,
-      });
-
-      if (parsedRemaining < 500) {
-        logger.warn(
-          `[RateLimit] Critical: ${provider} budget low (${remaining} tokens). Reset in ${Math.ceil(
-            (resetTime - Date.now()) / 1000
-          )}s`
-        );
-      }
-    }
-  }
-
-  async schedule<T>(task: () => Promise<T>, provider: LLMProvider): Promise<T> {
-    return this.limit(async () => {
-      const budget = this.budgets.get(provider);
-      if (budget && budget.remaining <= 0) {
-        const waitTime = budget.reset - Date.now();
-        if (waitTime > 0) {
-          logger.info(
-            `[RateLimit] Waiting ${Math.ceil(
-              waitTime / 1000
-            )}s for ${provider} budget reset...`
-          );
-          await new Promise((resolve) => setTimeout(resolve, waitTime));
-        }
-      }
-      return task();
-    });
-  }
-}
-
-export const rateLimiter = new RateLimitService();
 
 // ============================================================================
 // Quiz Timer (formerly quizTimer.ts)
@@ -337,20 +204,6 @@ export function calculateTMax(
 // ============================================================================
 // Mastery Nodes & Atlas Processing (formerly scoring.ts/mastery.ts)
 // ============================================================================
-
-export interface MasteryNode {
-  id: string;
-  label: string;
-  mastery: number;
-  status: 'mastered' | 'in-progress' | 'weak';
-  prerequisites: string[];
-  isChainComplete: boolean;
-  depth: number;
-  data: {
-    focus: string;
-    aiInsight?: string;
-  };
-}
 
 export function calculateMasteryChains(
   concepts: ConceptMapItem[],

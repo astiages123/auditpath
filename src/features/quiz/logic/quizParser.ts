@@ -25,19 +25,12 @@ import { getSubjectGuidelines } from '@/features/quiz/services/quizInfoService';
 import * as Repository from '@/features/quiz/services/quizService';
 import { determineNodeStrategy, getSubjectStrategy } from './srsLogic';
 import { calculateQuotas } from './quizCoreLogic';
+import { shuffle } from '../utils/mathUtils';
 
 const parserLogger = logger.withPrefix('[ParserLogic]');
 
-const FALLBACK_QUESTION: Omit<GeneratedQuestion, 'concept'> = {
-  q: 'Bu konuyla ilgili bir soru şu an hazırlanamadı. Lütfen materyali tekrar gözden geçir.',
-  o: ['Devam et', 'Tekrar dene', 'Atla', 'Bitti', 'Yardım'],
-  a: 0,
-  exp: 'Sistem yoğunluğu nedeniyle geçici bir durum oluştu.',
-  bloomLevel: 'knowledge',
-  evidence: 'Sistem mesajı',
-  diagnosis: 'Generation failure fallback',
-  insight: 'Generic backup',
-};
+// FALLBACK_QUESTION removed based on audit recommendation.
+// Revision failures will now return null and be skipped.
 
 // --- LLM Response Parsing Utilities (formerly in parserUtils) ---
 
@@ -242,7 +235,7 @@ export async function reviseQuestion(
   originalQuestion: GeneratedQuestion,
   validationResult: ValidationResult,
   sharedContextPrompt: string
-): Promise<GeneratedQuestion> {
+): Promise<GeneratedQuestion | null> {
   const revisionTask = `Aşağıdaki soru REDDEDİLMİŞTİR. Lütfen revize et.\n\n## REDDEDİLEN SORU:\n${JSON.stringify(
     originalQuestion,
     null,
@@ -276,10 +269,7 @@ export async function reviseQuestion(
     } as GeneratedQuestion;
   }
 
-  return {
-    ...FALLBACK_QUESTION,
-    concept: originalQuestion.concept,
-  } as GeneratedQuestion;
+  return null;
 }
 
 export async function generateForChunk(
@@ -386,7 +376,7 @@ export async function generateForChunk(
       const targetConcepts =
         type === 'antrenman'
           ? concepts
-          : [...concepts].sort(() => 0.5 - Math.random()).slice(0, typeQuotas);
+          : shuffle([...concepts]).slice(0, typeQuotas);
 
       for (
         let i = 0;
@@ -417,7 +407,19 @@ export async function generateForChunk(
 
         const validation = await validateQuestion(question, cleanContent);
         if (validation?.decision === 'REJECTED') {
-          question = await reviseQuestion(question, validation, sharedContext);
+          const revised = await reviseQuestion(
+            question,
+            validation,
+            sharedContext
+          );
+          if (!revised) {
+            log(
+              'REVISION',
+              `Revizyon başarısız, kavram atlanıyor: ${concept.baslik}`
+            );
+            continue;
+          }
+          question = revised;
         }
 
         const { error: saveErr } = await Repository.createQuestion({

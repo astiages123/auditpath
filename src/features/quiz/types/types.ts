@@ -42,6 +42,12 @@ export interface QuizStats {
   blankAnswers: number;
   averageTime: number;
   masteryScore: number;
+  totalAnswered?: number; // For backwards compatibility
+  correct?: number;
+  incorrect?: number;
+  blank?: number;
+  remaining?: number;
+  successRate?: number;
 }
 
 export interface SRSStats {
@@ -50,6 +56,11 @@ export interface SRSStats {
   newCards: number;
   reviewCards: number;
   retentionRate: number;
+  // Legacy fields for backwards compatibility
+  new?: number;
+  learning?: number;
+  review?: number;
+  mastered?: number;
 }
 
 export interface SubjectCompetency {
@@ -273,6 +284,8 @@ export interface ReviewItem {
   priority?: number;
   chunkId?: string;
   courseId?: string;
+  userAnswer?: number | null;
+  isCorrectAnswer?: boolean | null;
 }
 
 export type QuizSessionStatus =
@@ -392,40 +405,3 @@ export interface QuotaStatus {
 
 // Note: GenerationStep, GenerationLog, GeneratorCallbacks, and ValidationResult
 // are defined in schemas.ts to avoid duplication
-
-// Quiz Statistics
-export interface QuizStats {
-  totalQuestions: number;
-  correctAnswers: number;
-  incorrectAnswers: number;
-  blankAnswers: number;
-  averageTime: number;
-  masteryScore: number;
-  totalAnswered?: number; // For backwards compatibility
-  correct?: number;
-  incorrect?: number;
-  blank?: number;
-  remaining?: number;
-  successRate?: number;
-}
-
-export interface SRSStats {
-  totalCards: number;
-  dueCards: number;
-  newCards: number;
-  reviewCards: number;
-  retentionRate: number;
-  // Legacy fields for backwards compatibility
-  new?: number;
-  learning?: number;
-  review?: number;
-  mastered?: number;
-}
-
-export interface SubjectCompetency {
-  subject: string;
-  score: number;
-  totalQuestions: number;
-  correctAnswers: number;
-  masteryLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert';
-}

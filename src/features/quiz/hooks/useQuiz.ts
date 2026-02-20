@@ -10,7 +10,10 @@ import {
   calculateTestResults,
 } from '@/features/quiz/logic/quizCoreLogic';
 import { useQuizTimer } from './useQuizTimer';
-import { useQuizSessionControls, useQuizSubmission } from './useQuizSession';
+import {
+  useQuizSessionControls,
+  useQuizSubmission,
+} from './useQuizSessionLogic';
 
 export function useQuiz() {
   const [state, setState] = useState<QuizState>({
