@@ -1,7 +1,5 @@
 # AuditPath 🛡️
 
-**CIA & CISA Sertifikaları için Akıllı Adaptif Öğrenme Sistemi**
-
 ![Durum](https://img.shields.io/badge/Durum-Aktif_Geliştirme-success?style=for-the-badge)
 ![Stack](https://img.shields.io/badge/Stack-Vite_7_%7C_React_19_%7C_TypeScript-blue?style=for-the-badge&logo=typescript)
 ![Veritabanı](https://img.shields.io/badge/DB-Supabase-green?style=for-the-badge)
@@ -54,6 +52,36 @@ Ana thread'i meşgul etmeden çalışan Pomodoro ve sınav timer'ları. Ağır U
 - 03:59'da yapılan çalışma dün sayılır
 - Gece geç saatlere kadar çalışanlar için koruma
 
+### 🔄 Notion Senkronizasyonu
+
+Öğrenme içerikleri Notion üzerinden yönetilir ve özel entegrasyon aracı (`scripts/notion-sync`) sayesinde tek tuşla Supabase veritabanına aktarılır. Bu sayede veri girişi büyük ölçüde hızlanır ve yapılandırılır.
+
+### 📝 Gelişmiş Not Motoru (Notes)
+
+Soruların veya referansların açıklama sayfaları için zenginleştirilmiş okuma deneyimi sunar:
+
+- **Markdown & HTML** desteği
+- **KaTeX** üzerinden matematik denklemlerini görselleştirme
+- **Mermaid** formülü ile mimari ve akış şemalarını okuyabildiğiniz kod blokları desteği
+
+### 🏆 Oyunlaştırma (Achievements)
+
+Sürekli gelişimi teşvik etmek için tasarlanmış bağımsız bir **Başarı ve Rozet Sistemi**. Kullanıcı, sistem tarafından izlenen başarı metriklerini aşarak rozetlerin kilidini kırar.
+
+### 📊 Analitik ve Performans (Analytics)
+
+Zaman kullanımını ve tekrar eden başarıyı takip eden kapsamlı paneller:
+
+- **`Recharts` Desteği**: Pomodoro odak oturumları, test başarı oranları vb. için zengin grafikler.
+- Her kavrama ait **Mastery Skorları** üzerinden hazırlık seviyesinin canlı raporlanması.
+
+### 📶 Çevrimdışı Çalışma (Offline-First)
+
+İnternet bağlantısı olmadan da kesintisiz çalışma sağlayan özel bir katman mimarisi:
+
+- **IndexedDB (`clientDb`)**: Veriler lokalde birikir ve sayfanın en hızlı şekilde cevap vermesini sağlar
+- **`offlineQueueService`**: Yapılan her çevrimdışı işlemin (sorunun çözülmesi, pomodoro saati vs.) arkaya atılıp, bağlantı geldiğinde güvenle senkronize edilmesini sağlar.
+
 ---
 
 ## 🛠️ Teknoloji Yığını
@@ -66,23 +94,6 @@ Ana thread'i meşgul etmeden çalışan Pomodoro ve sınav timer'ları. Ağır U
 | **Backend**             | Supabase (PostgreSQL)                 |
 | **Veri Görselleştirme** | Recharts, Mermaid                     |
 | **Test**                | ESLint, TypeScript                    |
-
----
-
-## 🚀 Başlangıç
-
-```bash
-# Depoyu klonla
-git clone https://github.com/vedatdiyar/auditpath.git
-
-# Bağımlılıkları yükle
-npm install
-
-# Geliştirme sunucusunu çalıştır
-npm run dev
-```
-
-[http://localhost:5173](http://localhost:5173) adresinde uygulamayı görüntüle.
 
 ---
 
@@ -123,7 +134,3 @@ src/
 ## 📄 Lisans
 
 MIT License - 2024 AuditPath
-
----
-
-_Build with 💻 for CIA & CISA aspirants_
