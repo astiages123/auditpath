@@ -1,4 +1,4 @@
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { memo } from 'react';
 import { ToCTitleRenderer } from './ToCTitleRenderer';
 

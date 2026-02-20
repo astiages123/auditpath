@@ -39,8 +39,7 @@ export async function createQuestion(
   const { data, error } = await safeQuery<{ id: string }>(
     supabase.from('questions').insert(payload).select('id').single(),
     'createQuestion error',
-    { chunkId: payload.chunk_id },
-    payload as Record<string, unknown>
+    { chunkId: payload.chunk_id, ...payload }
   );
 
   if (error) return { success: false, error };
@@ -53,8 +52,7 @@ export async function createQuestions(
   const { data, error } = await safeQuery<{ id: string }[]>(
     supabase.from('questions').insert(payloads).select('id'),
     'createQuestions error',
-    { count: payloads.length },
-    { payloads, _type: 'bulk_create_questions' }
+    { count: payloads.length, payloads, _type: 'bulk_create_questions' }
   );
 
   if (error) return { success: false, error };
@@ -112,8 +110,7 @@ export async function recordQuizProgress(
   const { error } = await safeQuery(
     supabase.from('user_quiz_progress').insert(payload),
     'recordQuizProgress error',
-    { questionId: payload.question_id },
-    payload as Record<string, unknown>
+    { questionId: payload.question_id, ...payload }
   );
 
   if (error) return { success: false, error };
@@ -128,8 +125,7 @@ export async function upsertUserQuestionStatus(
       .from('user_question_status')
       .upsert(payload, { onConflict: 'user_id,question_id' }),
     'upsertUserQuestionStatus error',
-    { questionId: payload.question_id },
-    { ...payload, _type: 'upsert_status' }
+    { questionId: payload.question_id, ...payload, _type: 'upsert_status' }
   );
 
   if (error) return { success: false, error };
@@ -144,8 +140,7 @@ export async function upsertChunkMastery(
       .from('chunk_mastery')
       .upsert(payload, { onConflict: 'user_id,chunk_id' }),
     'upsertChunkMastery error',
-    { chunkId: payload.chunk_id },
-    { ...payload, _type: 'upsert_mastery' }
+    { chunkId: payload.chunk_id, ...payload, _type: 'upsert_mastery' }
   );
 
   if (error) return { success: false, error };

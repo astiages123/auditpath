@@ -1,15 +1,15 @@
 import { TrendingUp } from 'lucide-react';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
-import { RecentQuizzesCard } from '@/features/efficiency/components/RecentQuizzesCard';
-import { CognitiveInsightsCard } from '@/features/efficiency/components/CognitiveInsightsCard';
-import { FocusHubCard } from '@/features/efficiency/components/FocusHubCard';
 import {
+  RecentQuizzesCard,
+  CognitiveInsightsCard,
+  FocusHubCard,
   LearningLoadCard,
   MasteryNavigatorCard,
   ConsistencyHeatmapCard,
-} from '@/features/efficiency/components/EfficiencyLearningInsights';
-import { PracticeCenterCard } from '@/features/efficiency/components/PracticeCenterCard';
-import { RecentActivitiesContainer } from '@/features/efficiency/components/EfficiencyActivities';
+  PracticeCenterCard,
+  RecentActivitiesContainer,
+} from '@/features/efficiency/components';
 import { useCognitiveInsights } from '@/features/efficiency/hooks/useCognitiveInsights';
 
 const EfficiencyDashboard = () => {

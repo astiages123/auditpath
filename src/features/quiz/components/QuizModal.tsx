@@ -10,16 +10,14 @@ import { Brain, FileText } from 'lucide-react';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import {
   useQuizManager,
-  QuizState,
+  QUIZ_PHASE,
 } from '@/features/quiz/hooks/useQuizManager';
 import { TopicSidebar } from './QuizSideComponents';
 import { InitialStateView, CourseOverview } from './QuizIntroViews';
-import {
-  MappingProgressView,
-  BriefingView,
-  SmartExamView,
-} from './QuizFlowViews';
-import { QuizContainer } from './QuizView';
+import { MappingProgressView } from './MappingProgressView';
+import { BriefingView } from './BriefingView';
+import { SmartExamView } from './SmartExamView';
+import { QuizContainer } from './QuizContainer';
 
 interface QuizModalProps {
   isOpen: boolean;
@@ -43,7 +41,7 @@ export function QuizModal({
     completionStatus,
     isQuizActive,
     isGeneratingExam,
-    quizState,
+    quizPhase,
     examLogs,
     examProgress,
     handleStartQuiz,
@@ -163,11 +161,11 @@ export function QuizModal({
                           {selectedTopic.name}
                         </h3>
                         <p className="text-xs text-muted-foreground">
-                          {quizState === QuizState.NOT_ANALYZED &&
+                          {quizPhase === QUIZ_PHASE.NOT_ANALYZED &&
                             'Henüz analiz edilmedi'}
-                          {quizState === QuizState.MAPPING &&
+                          {quizPhase === QUIZ_PHASE.MAPPING &&
                             'Analiz ediliyor...'}
-                          {quizState === QuizState.BRIEFING && 'Hazır'}
+                          {quizPhase === QUIZ_PHASE.BRIEFING && 'Hazır'}
                         </p>
                       </div>
                     </div>
@@ -177,18 +175,18 @@ export function QuizModal({
                     */}
                     <div className="flex-1 overflow-hidden p-6 min-h-0 flex flex-col">
                       <div className="max-w-7xl mx-auto w-full h-full flex flex-col min-h-0">
-                        {quizState === QuizState.NOT_ANALYZED && (
+                        {quizPhase === QUIZ_PHASE.NOT_ANALYZED && (
                           <InitialStateView onGenerate={handleGenerate} />
                         )}
 
-                        {quizState === QuizState.MAPPING && (
+                        {quizPhase === QUIZ_PHASE.MAPPING && (
                           <MappingProgressView
                             examProgress={examProgress}
                             examLogs={examLogs}
                           />
                         )}
 
-                        {quizState === QuizState.BRIEFING &&
+                        {quizPhase === QUIZ_PHASE.BRIEFING &&
                           completionStatus && (
                             <BriefingView
                               completionStatus={completionStatus}

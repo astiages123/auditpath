@@ -16,8 +16,8 @@
     "preview": "vite preview",
     "db:seed": "tsx scripts/db/seed-db.ts",
     "sync": "tsx scripts/notion-sync/index.ts",
-    "update-types": "dotenv -e .env.local -- npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types/database.types.ts",
-    "check-all": "npm run type-check && npm run lint && npm run style && npm run format",
+    "update-types": "dotenv -e .env.local -- sh -c 'npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types/database.types.ts'",
+    "check-all": "npm run format && npm run style && npm run lint && npm run type-check",
     "prepare": "husky"
   },
   "prettier": {
@@ -27,7 +27,6 @@
     "trailingComma": "es5"
   },
   "dependencies": {
-    "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-checkbox": "^1.3.3",
@@ -56,7 +55,6 @@
     "p-limit": "^7.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "react-hook-form": "^7.71.1",
     "react-markdown": "^10.1.0",
     "react-medium-image-zoom": "^5.4.0",
     "react-router-dom": "^7.12.0",
@@ -82,6 +80,7 @@
     "@vitejs/plugin-react": "^5.1.2",
     "babel-plugin-react-compiler": "^1.0.0",
     "dotenv": "^17.2.3",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-compiler": "^19.1.0-rc.2",
@@ -103,7 +102,8 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.53.0",
     "vite": "^7.3.1",
-    "vite-tsconfig-paths": "^6.1.1"
+    "vite-tsconfig-paths": "^6.1.1",
+    "vitest": "^4.0.18"
   },
   "lint-staged": {
     "*.{js,ts,jsx,tsx}": [

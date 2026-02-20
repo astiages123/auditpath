@@ -1,6 +1,6 @@
 import { LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Variants } from 'framer-motion';
 
@@ -94,17 +94,17 @@ export function ProgressStatCard({
           ) : (
             <>
               <div className="flex items-baseline">
-                <span className={cn('text-2xl font-black text-white')}>
+                <span className={cn('text-lg font-black text-white')}>
                   {value}
                 </span>
                 {suffix && (
-                  <span className="ml-2 text-sm font-medium text-muted-foreground">
+                  <span className="ml-1 text-sm font-medium text-muted-foreground">
                     {suffix}
                   </span>
                 )}
               </div>
               {subText && (
-                <p className="text-[10px] text-muted-foreground mt-1">
+                <p className="text-[11px] text-muted-foreground mt-1">
                   {subText}
                 </p>
               )}

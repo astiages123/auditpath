@@ -1,4 +1,4 @@
-import React from 'react';
+import { FC, ElementType } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ChevronDown, LogOut, Sparkles, ChartScatter } from 'lucide-react';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { ROUTES } from '@/utils/routes';
 
 interface DesktopNavProps {
@@ -25,7 +25,7 @@ interface DesktopNavProps {
     label: string;
     href?: string;
     action?: () => void;
-    icon: React.ElementType;
+    icon: ElementType;
     color: string;
     auth: boolean;
   }[];
@@ -34,7 +34,7 @@ interface DesktopNavProps {
   mounted: boolean;
 }
 
-export const DesktopNav: React.FC<DesktopNavProps> = ({
+export const DesktopNav: FC<DesktopNavProps> = ({
   user,
   pathname,
   navItems,

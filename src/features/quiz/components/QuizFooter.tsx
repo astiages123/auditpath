@@ -1,4 +1,4 @@
-import React from 'react';
+import { FC } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Loader2, Brain } from 'lucide-react';
 import { ProgressDots } from './QuizStatus';
@@ -24,7 +24,7 @@ interface QuizFooterProps {
   questionResults: Record<string, 'correct' | 'incorrect' | 'blank'>;
 }
 
-export const QuizFooter: React.FC<QuizFooterProps> = ({
+export const QuizFooter: FC<QuizFooterProps> = ({
   isAnswered,
   showExplanation,
   selectedAnswer,

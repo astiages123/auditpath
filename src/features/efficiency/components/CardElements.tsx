@@ -1,6 +1,6 @@
-import React from 'react';
+import { memo, ElementType, ReactNode } from 'react';
 import { TrendingUp, TrendingDown } from 'lucide-react';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 
 // Reusable Trend Badge component
@@ -26,7 +26,7 @@ export const TrendBadge = ({ percentage }: { percentage: number }) => {
 };
 
 // Shared CardHeader component for consistency
-export const CardHeader = React.memo(
+export const CardHeader = memo(
   ({
     icon: Icon,
     iconColor = 'text-primary',
@@ -36,13 +36,13 @@ export const CardHeader = React.memo(
     badge,
     action,
   }: {
-    icon: React.ElementType;
+    icon: ElementType;
     iconColor?: string;
     iconBg?: string;
     title: string;
     subtitle: string;
-    badge?: React.ReactNode;
-    action?: React.ReactNode;
+    badge?: ReactNode;
+    action?: ReactNode;
   }) => (
     <div className="flex justify-between items-start">
       <div className="flex items-center gap-4">
@@ -70,7 +70,7 @@ export interface StatCardProps {
   title: string;
   value: string | number;
   subtitle?: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   trend?: string;
   trendLabel?: string;
   className?: string;

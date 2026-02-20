@@ -1,11 +1,11 @@
-import React from 'react';
+import { FC } from 'react';
 import { DollarSign } from 'lucide-react';
 
 interface AnalyticsHeaderProps {
   rate: number;
 }
 
-export const AnalyticsHeader: React.FC<AnalyticsHeaderProps> = ({ rate }) => {
+export const AnalyticsHeader: FC<AnalyticsHeaderProps> = ({ rate }) => {
   return (
     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border/40 pb-6">
       <div className="space-y-1">

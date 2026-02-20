@@ -2,8 +2,9 @@ import { ClipboardCheck, Maximize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { CardHeader } from './CardElements';
-import { EfficiencyModal } from './EfficiencyModals';
-import { cn } from '@/utils/core';
+
+import { EfficiencyModal } from './EfficiencyModal';
+import { cn } from '@/utils/stringHelpers';
 import { useCognitiveInsights } from '../hooks/useCognitiveInsights';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RecentQuizSession } from '@/features/quiz/types';

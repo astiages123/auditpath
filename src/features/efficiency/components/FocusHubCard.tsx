@@ -1,14 +1,15 @@
-import React from 'react';
+import { useMemo } from 'react';
 import { Target, Maximize2 } from 'lucide-react';
 
 import { GlassCard } from '@/shared/components/GlassCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { EfficiencyModal, FocusHubContent } from './EfficiencyModals';
+import { EfficiencyModal } from './EfficiencyModal';
+import { FocusStreamHub as FocusHubContent } from './FocusStreamHub';
 import { GoalProgressRing } from './GoalProgressRing';
 import { Session } from '../types/efficiencyTypes';
 import { CardHeader, TrendBadge } from './CardElements';
 import { getFlowColor, getFlowStatusLabel } from '../logic/flowStateConfig';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { useDailyMetrics } from '../hooks/useDailyMetrics';
 import { useEfficiencyTrends } from '../hooks/useEfficiencyTrends';
 import { useEfficiencyLogic } from '../hooks/useEfficiency';
@@ -42,7 +43,7 @@ export const FocusHubCard = () => {
   const { learningFlow, flowState, goalProgress } = logic;
 
   // Transform sessions for the modal
-  const sessions: Session[] = React.useMemo(() => {
+  const sessions: Session[] = useMemo(() => {
     if (!efficiencySummary?.sessions) return [];
 
     return efficiencySummary.sessions.map((s: unknown) => {

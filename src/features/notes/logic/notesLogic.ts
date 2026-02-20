@@ -1,4 +1,4 @@
-import { slugify } from '@/utils/core';
+import { slugify } from '@/utils/stringHelpers';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { type LocalToCItem } from '../components/LocalToC';
 

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { z } from 'zod';
 import {
-  useTimerStore,
   usePomodoroSessionStore,
   usePomodoroUIStore,
+  useTimerStore,
 } from '@/features/pomodoro/store';
 import {
   deletePomodoroSession,
@@ -70,7 +70,7 @@ export function usePomodoro() {
   useEffect(() => {
     // Worker'ı başlatıyoruz (Vite URL yapısı)
     const worker = new Worker(
-      new URL('../../../workers/timerWorker.ts', import.meta.url),
+      new URL('../logic/timerWorker.ts', import.meta.url),
       { type: 'module' }
     );
 

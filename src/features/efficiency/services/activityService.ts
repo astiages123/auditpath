@@ -2,17 +2,23 @@ import { supabase } from '@/lib/supabase';
 import { getCycleCount } from '@/features/pomodoro/logic/sessionMath';
 import type {
   PomodoroInsert,
-  VideoUpsert,
   RecentActivity,
+  VideoUpsert,
 } from '@/features/pomodoro/types/pomodoroTypes';
 import type {
   CumulativeStats,
   DailyStats,
-  HistoryStats,
   DayActivity,
+  HistoryStats,
 } from '@/features/efficiency/types/efficiencyTypes';
 import type { Database } from '@/types/database.types';
 import { logger } from '@/utils/logger';
+import { VIRTUAL_DAY_START_HOUR } from '@/utils/constants';
+import {
+  formatDateKey,
+  getVirtualDate,
+  getVirtualDayStart,
+} from '@/utils/dateHelpers';
 
 // ============== TYPES ==============
 
@@ -49,43 +55,9 @@ type ActivityData = PomodoroInsert | VideoUpsert | QuizProgressData;
 
 // ============== UTILITY FUNCTIONS (from activityUtils.ts) ==============
 
-/**
- * Gets the current virtual day's start time (04:00 AM).
- * If the current time is before 04:00 AM, it returns 04:00 AM of the previous calendar day.
- */
-function getVirtualToday(): Date {
-  const now = new Date();
-  const today = new Date(now);
-
-  if (now.getHours() < 4) {
-    today.setDate(today.getDate() - 1);
-  }
-  today.setHours(4, 0, 0, 0);
-
-  return today;
-}
-
-/**
- * Adjusts a given date to its virtual day.
- * If the time is before 04:00 AM, it's considered part of the previous day.
- */
-function adjustToVirtualDay(date: Date): Date {
-  const adjusted = new Date(date);
-  if (adjusted.getHours() < 4) {
-    adjusted.setDate(adjusted.getDate() - 1);
-  }
-  return adjusted;
-}
-
-/**
- * Formats a date as YYYY-MM-DD.
- */
-function formatDateKey(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-    2,
-    '0'
-  )}-${String(date.getDate()).padStart(2, '0')}`;
-}
+// Re-mapping for internal usage without refactoring all calls:
+const getVirtualToday = getVirtualDayStart;
+const adjustToVirtualDay = getVirtualDate;
 
 // ============== LOGGING FUNCTIONS (from activityLoggingService.ts) ==============
 
@@ -364,7 +336,7 @@ export async function getHistoryStats(
 
   const startDate = new Date(today);
   startDate.setDate(startDate.getDate() - (days - 1));
-  startDate.setHours(4, 0, 0, 0);
+  startDate.setHours(VIRTUAL_DAY_START_HOUR, 0, 0, 0);
 
   // 1. Fetch Pomodoro Sessions
   const { data: sessions, error: sessionError } = await supabase

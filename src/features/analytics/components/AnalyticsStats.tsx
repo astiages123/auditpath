@@ -1,4 +1,4 @@
-import React from 'react';
+import { FC } from 'react';
 import { TrendingUp, Cpu, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
@@ -10,7 +10,7 @@ interface AnalyticsStatsProps {
   formatCurrency: (value: number) => string;
 }
 
-export const AnalyticsStats: React.FC<AnalyticsStatsProps> = ({
+export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
   totalCostTry,
   totalCostUsd,
   totalRequests,

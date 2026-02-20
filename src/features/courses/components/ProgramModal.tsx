@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { WEEKLY_SCHEDULE, COURSE_THEME_CONFIG } from '../utils/coursesConfig';
 

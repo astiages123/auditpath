@@ -5,10 +5,10 @@ import {
   Lock,
   ChevronRight,
 } from 'lucide-react';
-import { cn } from '@/utils/core';
+import { RANKS } from '@/features/achievements/utils/constants';
+import { cn } from '@/utils/stringHelpers';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RANKS } from '@/features/achievements/utils/constants';
 export { RANKS };
 
 interface TitleRoadmapProps {

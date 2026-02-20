@@ -22,12 +22,14 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { parseOrThrow } from '@/utils/validation';
 import { MAX_LOG_ENTRIES } from '../utils/constants';
 
-export enum QuizState {
-  NOT_ANALYZED = 'NOT_ANALYZED',
-  MAPPING = 'MAPPING',
-  BRIEFING = 'BRIEFING',
-  ACTIVE = 'ACTIVE',
-}
+export const QUIZ_PHASE = {
+  NOT_ANALYZED: 'NOT_ANALYZED',
+  MAPPING: 'MAPPING',
+  BRIEFING: 'BRIEFING',
+  ACTIVE: 'ACTIVE',
+} as const;
+
+export type QuizPhase = (typeof QUIZ_PHASE)[keyof typeof QUIZ_PHASE];
 
 export interface GenerationState {
   isGenerating: boolean;
@@ -138,20 +140,48 @@ export function useQuizManager({
   }, [selectedTopic, courseId, user]);
 
   // --- Derived State ---
-  const quizState = (() => {
-    if (isQuizActive) return QuizState.ACTIVE;
-    if (generation.isGenerating) return QuizState.MAPPING;
+  const quizPhase = (() => {
+    if (isQuizActive) return QUIZ_PHASE.ACTIVE;
+    if (generation.isGenerating) return QUIZ_PHASE.MAPPING;
     if (
       completionStatus?.aiLogic &&
       completionStatus?.concepts &&
       completionStatus.concepts.length > 0
     ) {
-      return QuizState.BRIEFING;
+      return QUIZ_PHASE.BRIEFING;
     }
-    return QuizState.NOT_ANALYZED;
+    return QUIZ_PHASE.NOT_ANALYZED;
   })();
 
   // --- Generation Handlers ---
+  const createGenerationCallbacks = useCallback(
+    (onCompleteExtra?: () => void | Promise<void>) => ({
+      onLog: (log: GenerationLog) =>
+        setGeneration((prev) => ({
+          ...prev,
+          logs: [log, ...prev.logs].slice(0, MAX_LOG_ENTRIES),
+        })),
+      onTotalTargetCalculated: (total: number) =>
+        setGeneration((prev) => ({
+          ...prev,
+          progress: { ...prev.progress, total },
+        })),
+      onQuestionSaved: (count: number) =>
+        setGeneration((prev) => ({
+          ...prev,
+          progress: { ...prev.progress, current: count },
+        })),
+      onComplete: async () => {
+        if (onCompleteExtra) await onCompleteExtra();
+        setGeneration((prev) => ({ ...prev, isGenerating: false }));
+      },
+      onError: (err: string) => {
+        logger.error('Generation error:', { message: err });
+        setGeneration((prev) => ({ ...prev, isGenerating: false }));
+      },
+    }),
+    []
+  );
   const handleGenerate = useCallback(
     async (_mappingOnly: boolean = true) => {
       if (!targetChunkId) return;
@@ -179,38 +209,16 @@ export function useQuizManager({
       try {
         await generateForChunk(
           targetChunkId,
-          {
-            onLog: (log: GenerationLog) =>
-              setGeneration((prev) => ({
-                ...prev,
-                logs: [log, ...prev.logs].slice(0, MAX_LOG_ENTRIES),
-              })),
-            onTotalTargetCalculated: (total: number) =>
-              setGeneration((prev) => ({
-                ...prev,
-                progress: { ...prev.progress, total },
-              })),
-            onQuestionSaved: (count: number) =>
-              setGeneration((prev) => ({
-                ...prev,
-                progress: { ...prev.progress, current: count },
-              })),
-            onComplete: async () => {
-              if (selectedTopic && user) {
-                const newStatus = await getTopicCompletionStatus(
-                  user.id,
-                  courseId,
-                  selectedTopic.name
-                );
-                setCompletionStatus(newStatus);
-              }
-              setGeneration((prev) => ({ ...prev, isGenerating: false }));
-            },
-            onError: (err: string) => {
-              logger.error('Generation error:', { message: err });
-              setGeneration((prev) => ({ ...prev, isGenerating: false }));
-            },
-          },
+          createGenerationCallbacks(async () => {
+            if (selectedTopic && user) {
+              const newStatus = await getTopicCompletionStatus(
+                user.id,
+                courseId,
+                selectedTopic.name
+              );
+              setCompletionStatus(newStatus);
+            }
+          }),
           {}
         );
       } catch (error) {
@@ -218,7 +226,7 @@ export function useQuizManager({
         setGeneration((prev) => ({ ...prev, isGenerating: false }));
       }
     },
-    [targetChunkId, user, selectedTopic, courseId]
+    [targetChunkId, user, selectedTopic, courseId, createGenerationCallbacks]
   );
 
   // --- Smart Exam Logic ---
@@ -267,26 +275,11 @@ export function useQuizManager({
     });
 
     try {
-      const result = await QuizService.generateSmartExam(courseId, user.id, {
-        onLog: (log: GenerationLog) =>
-          setGeneration((prev) => ({
-            ...prev,
-            logs: [log, ...prev.logs].slice(0, MAX_LOG_ENTRIES),
-          })),
-        onTotalTargetCalculated: (total: number) =>
-          setGeneration((prev) => ({
-            ...prev,
-            progress: { ...prev.progress, total },
-          })),
-        onQuestionSaved: (count: number) =>
-          setGeneration((prev) => ({
-            ...prev,
-            progress: { ...prev.progress, current: count },
-          })),
-        onComplete: () => {},
-        onError: (err: string) =>
-          logger.error('Exam generation error:', { message: err }),
-      });
+      const result = await QuizService.generateSmartExam(
+        courseId,
+        user.id,
+        createGenerationCallbacks()
+      );
 
       if (result.success && result.questionIds.length > 0) {
         const questionsData = await QuizService.fetchQuestionsByIds(
@@ -305,7 +298,7 @@ export function useQuizManager({
       setGeneration((prev) => ({ ...prev, isGenerating: false }));
     }
     return null;
-  }, [user, courseId]);
+  }, [user, courseId, createGenerationCallbacks]);
 
   const handleStartQuiz = useCallback(() => {
     if (
@@ -381,7 +374,7 @@ export function useQuizManager({
     existingQuestions,
     isQuizActive,
     isGeneratingExam: generation.isGenerating,
-    quizState,
+    quizPhase,
     examLogs: generation.logs,
     examProgress: generation.progress,
     handleStartQuiz,

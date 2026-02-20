@@ -1,4 +1,3 @@
-// import Image from "next/image";
 import { Lock } from 'lucide-react';
 import { GUILDS, getRequirementDescription } from '../logic/achievementsData';
 import type { Achievement } from '../types/achievementsTypes';

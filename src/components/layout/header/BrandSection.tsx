@@ -1,9 +1,9 @@
-import React from 'react';
+import { FC } from 'react';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import logo from '@/assets/logo.svg';
 
-export const BrandSection: React.FC = () => {
+export const BrandSection: FC = () => {
   return (
     <Link
       to={ROUTES.HOME}

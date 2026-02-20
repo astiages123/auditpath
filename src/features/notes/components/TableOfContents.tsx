@@ -1,4 +1,4 @@
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { memo, useEffect, useRef } from 'react';
 
 export interface ToCItem {

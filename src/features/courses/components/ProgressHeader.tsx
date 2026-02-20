@@ -179,6 +179,7 @@ export function ProgressHeader({
 
       <ProgressStatCard
         icon={CalendarDays}
+        bgIcon={CalendarDays}
         label="Günün Odağı"
         value={todaysSubject}
         subText="Sınav takvimine göre bugün"
@@ -189,6 +190,7 @@ export function ProgressHeader({
 
       <ProgressStatCard
         icon={Clock}
+        bgIcon={Clock}
         label="Zaman ve Video"
         value=""
         colorClass="text-purple-400"
@@ -197,7 +199,7 @@ export function ProgressHeader({
       >
         <div className="grid grid-cols-2 gap-2 mt-4">
           <div className="space-y-0.5">
-            <p className="text-[10px] text-muted-foreground">Süre</p>
+            <p className="text-sm text-muted-foreground">Süre</p>
             {showSkeleton ? (
               <Skeleton className="h-5 w-16 bg-zinc-800" />
             ) : (
@@ -205,14 +207,14 @@ export function ProgressHeader({
                 <span className="text-sm font-bold text-white">
                   {formatDurationShort(displayCompletedHours)}
                 </span>
-                <span className="text-[8px] text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   /{formatDurationShort(displayTotalHours)}
                 </span>
               </div>
             )}
           </div>
           <div className="space-y-0.5 border-l border-white/5 pl-2">
-            <p className="text-[10px] text-muted-foreground">Video</p>
+            <p className="text-sm text-muted-foreground">Video</p>
             {showSkeleton ? (
               <Skeleton className="h-5 w-16 bg-zinc-800" />
             ) : (
@@ -220,7 +222,7 @@ export function ProgressHeader({
                 <span className="text-sm font-bold text-white">
                   {displayCompletedVideos}
                 </span>
-                <span className="text-[8px] text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   /{displayTotalVideos}
                 </span>
               </div>

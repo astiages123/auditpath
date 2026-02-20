@@ -7,7 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { LucideIcon } from 'lucide-react';
 
 interface CelebrationModalProps {

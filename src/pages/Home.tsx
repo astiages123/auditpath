@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useHomeData } from '@/features/courses/hooks/useHomeData';
-import { ProgressHeader } from '@/features/courses/components/ProgressHeader';
-import { CategoryGrid } from '@/features/courses/components/CategoryGrid';
+import { ProgressHeader, CategoryGrid } from '@/features/courses/components';
 import {
   HomeProgressSkeleton,
   CategoryGridSkeleton,

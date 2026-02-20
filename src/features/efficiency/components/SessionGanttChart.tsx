@@ -1,5 +1,5 @@
 import { Play, Coffee, Pause } from 'lucide-react';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { Session } from '../types/efficiencyTypes';
 
 export type TimelineEvent = NonNullable<Session['timeline']>[number];

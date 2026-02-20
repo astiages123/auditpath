@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
@@ -29,16 +30,21 @@ export default defineConfig(({ mode }) => ({
         manualChunks(id) {
           if (id.includes('katex')) return 'vendor-katex';
           if (id.includes('mermaid')) return 'vendor-mermaid';
-          if (id.includes('cytoscape')) return 'vendor-cytoscape';
           if (
             id.includes('node_modules/recharts') ||
             id.includes('node_modules/d3')
-          )
+          ) {
             return 'vendor-charts';
+          }
           if (id.includes('node_modules/react')) return 'vendor-react';
           if (id.includes('@supabase')) return 'vendor-supabase';
         },
       },
     },
+  },
+  test: {
+    globals: true,
+    environment: 'node',
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
   },
 }));

@@ -1,10 +1,10 @@
+import { ReactNode } from 'react';
 import { Card } from '@/components/ui/card';
-import { cn } from '@/utils/core';
-import React from 'react';
+import { cn } from '@/utils/stringHelpers';
 
 interface GlassCardProps {
   className?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   onClick?: () => void;
 }
 

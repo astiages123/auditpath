@@ -1,4 +1,4 @@
-import React from 'react';
+import { FC } from 'react';
 import { History, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -68,7 +68,7 @@ const getUsageTypeBadge = (type: string | null) => {
   }
 };
 
-export const AnalyticsTable: React.FC<AnalyticsTableProps> = ({
+export const AnalyticsTable: FC<AnalyticsTableProps> = ({
   logs,
   visibleCount,
   deferredVisibleCount,

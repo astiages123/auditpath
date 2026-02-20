@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef, FC, ReactNode } from 'react';
 import {
   Target,
   Trophy,
@@ -111,7 +111,7 @@ interface QuotaDisplayProps {
   conceptCount: number;
 }
 
-export const QuotaDisplay: React.FC<QuotaDisplayProps> = ({
+export const QuotaDisplay: FC<QuotaDisplayProps> = ({
   displayedUsed,
   displayedQuota,
   loading,
@@ -208,7 +208,7 @@ export function InitialStateView({ onGenerate }: InitialStateViewProps) {
 // Generation Live Stream (formerly GenerationLiveStream.tsx)
 // ============================================================================
 
-const stepIcons: Record<GenerationStep, React.ReactNode> = {
+const stepIcons: Record<GenerationStep, ReactNode> = {
   INIT: <Coffee className="w-3.5 h-3.5" />,
   MAPPING: <MapIcon className="w-3.5 h-3.5" />,
   GENERATING: <PenTool className="w-3.5 h-3.5" />,
@@ -245,7 +245,7 @@ interface GenerationLiveStreamProps {
   logs: GenerationLog[];
 }
 
-export const GenerationLiveStream: React.FC<GenerationLiveStreamProps> = ({
+export const GenerationLiveStream: FC<GenerationLiveStreamProps> = ({
   logs,
 }) => {
   const logContainerRef = useRef<HTMLDivElement>(null);

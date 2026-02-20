@@ -1,5 +1,4 @@
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,28 +29,48 @@ const authSchema = z.object({
   password: z.string().min(6, 'Şifre en az 6 karakter olmalıdır.'),
 });
 
-type AuthFormData = z.infer<typeof authSchema>;
+interface FormErrors {
+  identifier?: string;
+  password?: string;
+}
 
 export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
   const supabase = getSupabase();
+  const [formData, setFormData] = useState({ identifier: '', password: '' });
+  const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm<AuthFormData>({
-    resolver: zodResolver(authSchema),
-    defaultValues: {
-      identifier: '',
-      password: '',
-    },
-  });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setFormData((prev) => ({ ...prev, [id]: value }));
+    // Clear error when user changes input
+    if (errors[id as keyof FormErrors]) {
+      setErrors((prev) => ({ ...prev, [id]: undefined }));
+    }
+  };
 
-  const onSubmit = async (data: AuthFormData) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErrors({});
+
     try {
-      let loginEmail = data.identifier;
+      // Zod validation
+      const validation = authSchema.safeParse(formData);
+      if (!validation.success) {
+        const fieldErrors: FormErrors = {};
+        validation.error.issues.forEach((err) => {
+          if (err.path[0]) {
+            fieldErrors[err.path[0] as keyof FormErrors] = err.message;
+          }
+        });
+        setErrors(fieldErrors);
+        setIsSubmitting(false);
+        return;
+      }
 
-      // Basit email regex kontrolü (zod içindekine benzer)
+      const data = validation.data;
+      let loginEmail = data.identifier;
       const isEmail = EMAIL_REGEX.test(data.identifier);
 
       if (!isEmail) {
@@ -80,12 +99,14 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
       const message =
         (error as { message?: string }).message || 'Bir hata oluştu.';
       toast.error(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="grid gap-6">
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit}>
         <div className="grid gap-4">
           <div className="grid gap-2">
             <Label htmlFor="identifier" className="text-foreground/90">
@@ -99,11 +120,12 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
               autoCorrect="off"
               disabled={isSubmitting}
               className="input-white-autofill bg-background/50 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all duration-300 text-white caret-white placeholder:text-white/70"
-              {...register('identifier')}
+              value={formData.identifier}
+              onChange={handleChange}
             />
             {errors.identifier && (
               <p className="text-sm text-destructive font-medium bg-destructive/10 px-2 py-1 rounded-md">
-                {errors.identifier.message}
+                {errors.identifier}
               </p>
             )}
           </div>
@@ -118,11 +140,12 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
               autoComplete="current-password"
               disabled={isSubmitting}
               className="input-white-autofill bg-background/50 border-white/10 focus:border-primary/50 focus:ring-primary/20 transition-all duration-300 text-white caret-white placeholder:text-white/70"
-              {...register('password')}
+              value={formData.password}
+              onChange={handleChange}
             />
             {errors.password && (
               <p className="text-sm text-destructive font-medium bg-destructive/10 px-2 py-1 rounded-md">
-                {errors.password.message}
+                {errors.password}
               </p>
             )}
           </div>

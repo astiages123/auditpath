@@ -1,6 +1,6 @@
 import { ChevronRight, Target, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 import { type Rank } from '@/types/auth';
 import type { Variants } from 'framer-motion';

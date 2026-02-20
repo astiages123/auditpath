@@ -20,7 +20,7 @@ import { type Course } from '@/features/courses/types/courseTypes';
 
 // Lazy load modals to reduce initial bundle size and split CSS (Katex)
 const QuizModal = lazy(() =>
-  import('@/features/quiz/components/QuizModal').then((module) => ({
+  import('@/features/quiz/components').then((module) => ({
     default: module.QuizModal,
   }))
 );

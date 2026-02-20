@@ -4,10 +4,9 @@ import { useEffect } from 'react';
 import { useCelebration } from '@/shared/hooks/useCelebration';
 import { useProgress } from '@/shared/hooks/useProgress';
 import { motion, AnimatePresence } from 'framer-motion';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { formatDuration } from '@/utils/formatters';
 import { normalizeCategorySlug } from '../utils/categoryHelpers';
-
 import { CATEGORY_THEMES, COURSE_THEME_CONFIG } from '../utils/coursesConfig';
 
 import { type Course } from '@/features/courses/types/courseTypes';

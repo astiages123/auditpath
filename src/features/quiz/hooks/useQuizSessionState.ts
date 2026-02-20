@@ -12,9 +12,9 @@ import {
 import { logger } from '@/utils/logger';
 import { storage } from '@/shared/services/storageService';
 import {
-  quizSessionReducer,
-  initialQuizSessionState,
   createBatches,
+  initialQuizSessionState,
+  quizSessionReducer,
 } from './quizReducer';
 
 const STORAGE_PREFIX = 'auditpath_quiz_session_';
@@ -191,15 +191,11 @@ export function useQuizSessionState() {
     const storageKey = `${STORAGE_PREFIX}${user.id}_${state.sessionInfo.courseId}`;
     const queueKey = `${storageKey}_queue`;
 
-    storage.set(
-      storageKey,
-      {
-        sessionId: state.sessionInfo.currentSession,
-        currentReviewIndex: state.currentReviewIndex,
-      },
-      { ttl: 24 * 60 * 60 * 1000 }
-    );
-    storage.set(queueKey, state.reviewQueue, { ttl: 24 * 60 * 60 * 1000 });
+    storage.set(storageKey, {
+      sessionId: state.sessionInfo.currentSession,
+      currentReviewIndex: state.currentReviewIndex,
+    });
+    storage.set(queueKey, state.reviewQueue);
   }, [
     state.reviewQueue,
     state.currentReviewIndex,

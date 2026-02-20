@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { FocusPowerTrendChart } from './FocusPowerTrendChart';
 import { FocusPowerPoint } from '../types/efficiencyTypes';
 

@@ -31,6 +31,12 @@ interface LogPayload {
   error_message?: string;
 }
 
+const sbUrl = Deno.env.get('SUPABASE_URL') ?? '';
+const sbKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
+
+// Singleton admin client for logging to avoid repeated connections
+const adminClient = createClient(sbUrl, sbKey);
+
 Deno.serve(async (req: Request) => {
   // CORS preflight
   if (req.method === 'OPTIONS') {
@@ -48,11 +54,9 @@ Deno.serve(async (req: Request) => {
       throw new Error('Missing Authorization header');
     }
 
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const supabaseClient = createClient(sbUrl, sbKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
 
     const {
       data: { user },
@@ -323,27 +327,19 @@ async function safeLog(payload: LogPayload, context: string): Promise<void> {
 }
 
 async function logToDB(payload: LogPayload) {
-  const sbUrl = Deno.env.get('SUPABASE_URL');
-  const sbKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-
   if (!sbUrl || !sbKey) {
     console.error(
       'CRITICAL: Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars'
     );
-    console.error('SUPABASE_URL defined:', !!sbUrl);
-    console.error('SUPABASE_SERVICE_ROLE_KEY defined:', !!sbKey);
     return;
   }
 
   try {
-    const adminClient = createClient(sbUrl, sbKey);
-
     const { error } = await adminClient
       .from('ai_generation_logs')
       .insert(payload);
 
     if (error) {
-      // Bu log Supabase Dashboard'da görünmeli
       console.error('DATABASE INSERT ERROR:', JSON.stringify(error, null, 2));
     }
   } catch (err) {

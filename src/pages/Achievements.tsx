@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { AchievementsRoom } from '@/features/achievements/components/AchievementsRoom';
-// import { Metadata } from 'next'; // Vite uses index.html or Helmet for metadata
 
 export default function AchievementsPage() {
   useEffect(() => {

@@ -30,7 +30,10 @@ trigger: always_on
 
 - `any` tipi kullanılmamalıdır. Her şeyin tipi `src/types/` veya özellik altındaki `types/` klasöründe tanımlanmalıdır.
 - Veri tabanı dönüşleri için `database.types.ts` referans alınmalıdır.
-- **Dosya Boyutu:** 500 satırı bariz aşan (örn: 520+ satır) dosyalar, kodun okunabilirliğini ve yönetilebilirliğini korumak adına bölünmeli veya yeniden yapılandırılmalıdır.
+- **Dosya Boyutu:**
+  - **Servis ve Logic dosyaları (`.ts`):** Fonksiyonlar birbirinden bağımsız ve `// === SECTION ===` yorumlarıyla ayrılmış olduğu sürece **600 satıra kadar** kabul edilebilir. Bu dosyalarda AI yalnızca ilgili fonksiyonu okur, tüm dosyayı kavramak gerekmez. Bölmek ortak import/tip tekrarına yol açacağı için tercih edilmez.
+  - **Component dosyaları (`.tsx`):** İçinde **birbirinden bağımsız** component'lar varsa (ortak state veya helper paylaşmıyorlarsa) her component kendi dosyasına ayrılmalıdır. Ortak state veya helper paylaşan component'lar aynı dosyada kalabilir.
+  - **Veri dosyaları:** Sabit veri listeleri (`definitions.ts`, `config.ts` gibi) satır sınırına tabi değildir.
 
 ## İçe Aktarmalar (Imports)
 

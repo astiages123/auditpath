@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import { Copy, Check } from 'lucide-react';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { MermaidDiagram } from './MermaidDiagram';
 import { sanitizeHtml } from '@/utils/sanitizers/htmlSanitizer';
 import { logger } from '@/utils/logger';

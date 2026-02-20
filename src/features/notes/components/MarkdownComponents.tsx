@@ -1,13 +1,27 @@
-import React from 'react';
+import {
+  ReactNode,
+  isValidElement,
+  cloneElement,
+  ReactElement,
+  Children,
+  HTMLAttributes,
+  ImgHTMLAttributes,
+  BlockquoteHTMLAttributes,
+  OlHTMLAttributes,
+  LiHTMLAttributes,
+  TableHTMLAttributes,
+  TdHTMLAttributes,
+  ThHTMLAttributes,
+} from 'react';
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
 import 'katex/dist/katex.min.css';
-import { cn, slugify } from '@/utils/core';
+import { cn, slugify } from '@/utils/stringHelpers';
 import { CodeBlock } from './CodeBlock';
 
 // --- Helpers ---
 
-export const getText = (node: React.ReactNode): string => {
+export const getText = (node: ReactNode): string => {
   if (!node) return '';
   if (typeof node === 'string') return node;
   if (typeof node === 'number') return String(node);
@@ -15,21 +29,21 @@ export const getText = (node: React.ReactNode): string => {
   if (
     typeof node === 'object' &&
     node !== null &&
-    'props' in (node as { props?: { children?: React.ReactNode } }) &&
-    (node as { props: { children?: React.ReactNode } }).props?.children
+    'props' in (node as { props?: { children?: ReactNode } }) &&
+    (node as { props: { children?: ReactNode } }).props?.children
   ) {
     return getText(
-      (node as { props: { children?: React.ReactNode } }).props.children
+      (node as { props: { children?: ReactNode } }).props.children
     );
   }
   return '';
 };
 
 // Helper to remove only the FIRST occurrence of the bulb emoji in the React tree
-export const removeFirstBulb = (node: React.ReactNode): React.ReactNode => {
+export const removeFirstBulb = (node: ReactNode): ReactNode => {
   let found = false;
 
-  const process = (n: React.ReactNode): React.ReactNode => {
+  const process = (n: ReactNode): ReactNode => {
     if (found) return n;
 
     if (typeof n === 'string') {
@@ -40,31 +54,31 @@ export const removeFirstBulb = (node: React.ReactNode): React.ReactNode => {
       return n;
     }
 
-    if (React.isValidElement(n)) {
-      const children = (n.props as { children?: React.ReactNode }).children;
+    if (isValidElement(n)) {
+      const children = (n.props as { children?: ReactNode }).children;
       if (children) {
-        return React.cloneElement(
-          n as React.ReactElement,
+        return cloneElement(
+          n as ReactElement,
           undefined,
-          React.Children.map(children, process)
+          Children.map(children, process)
         );
       }
     }
 
     if (Array.isArray(n)) {
-      return React.Children.map(n, process);
+      return Children.map(n, process);
     }
 
     return n;
   };
 
-  return React.Children.map(node, process);
+  return Children.map(node, process);
 };
 
 // --- Custom Components ---
 
 export const markdownComponents = {
-  h1: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => {
+  h1: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
     const text = getText(children);
     const subId = slugify(text);
     return (
@@ -73,7 +87,7 @@ export const markdownComponents = {
       </h3>
     );
   },
-  h2: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => {
+  h2: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
     const text = getText(children);
     const subId = slugify(text);
     return (
@@ -82,7 +96,7 @@ export const markdownComponents = {
       </h4>
     );
   },
-  h3: ({ children, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => {
+  h3: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
     const text = getText(children);
     const subId = slugify(text);
     return (
@@ -96,7 +110,7 @@ export const markdownComponents = {
     ...props
   }: {
     node?: { children?: { type: string; tagName?: string }[] };
-  } & React.HTMLAttributes<HTMLParagraphElement>) => {
+  } & HTMLAttributes<HTMLParagraphElement>) => {
     const hasImage = node?.children?.some(
       (child) => child.type === 'element' && child.tagName === 'img'
     );
@@ -108,7 +122,7 @@ export const markdownComponents = {
       />
     );
   },
-  img: ({ ...props }: React.ImgHTMLAttributes<HTMLImageElement>) => (
+  img: ({ ...props }: ImgHTMLAttributes<HTMLImageElement>) => (
     <span className="block my-1 mb-6 w-full text-center">
       <Zoom classDialog="custom-zoom-modal">
         <img
@@ -126,7 +140,7 @@ export const markdownComponents = {
   blockquote: ({
     children,
     ...props
-  }: React.BlockquoteHTMLAttributes<HTMLQuoteElement>) => {
+  }: BlockquoteHTMLAttributes<HTMLQuoteElement>) => {
     const text = getText(children);
     const isCallout = text.trim().startsWith('💡');
 
@@ -157,44 +171,40 @@ export const markdownComponents = {
       </blockquote>
     );
   },
-  ul: ({ ...props }: React.HTMLAttributes<HTMLUListElement>) => (
-    <ul {...props} />
-  ),
-  ol: ({ ...props }: React.OlHTMLAttributes<HTMLOListElement>) => (
-    <ol {...props} />
-  ),
-  li: ({ children, ...props }: React.LiHTMLAttributes<HTMLLIElement>) => (
+  ul: ({ ...props }: HTMLAttributes<HTMLUListElement>) => <ul {...props} />,
+  ol: ({ ...props }: OlHTMLAttributes<HTMLOListElement>) => <ol {...props} />,
+  li: ({ children, ...props }: LiHTMLAttributes<HTMLLIElement>) => (
     <li {...props}>{children}</li>
   ),
-  strong: ({ children, ...props }: React.HTMLAttributes<HTMLElement>) => (
+  strong: ({ children, ...props }: HTMLAttributes<HTMLElement>) => (
     <strong {...props}>{children}</strong>
   ),
   code: CodeBlock,
-  table: ({ ...props }: React.TableHTMLAttributes<HTMLTableElement>) => (
+  table: ({ ...props }: TableHTMLAttributes<HTMLTableElement>) => (
     <div className="not-prose overflow-x-auto my-10 border border-primary/10 rounded-2xl shadow-xl shadow-primary/5 overflow-hidden bg-card/30 backdrop-blur-sm">
       <table className="w-full text-sm text-left" {...props} />
     </div>
   ),
-  thead: ({ ...props }: React.HTMLAttributes<HTMLTableSectionElement>) => (
+  thead: ({ ...props }: HTMLAttributes<HTMLTableSectionElement>) => (
     <thead
       className="bg-primary/5 text-xs uppercase text-muted-foreground"
       {...props}
     />
   ),
-  th: ({ ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) => (
+  th: ({ ...props }: ThHTMLAttributes<HTMLTableCellElement>) => (
     <th className="px-6 py-3 font-medium tracking-wider" {...props} />
   ),
-  tr: ({ ...props }: React.HTMLAttributes<HTMLTableRowElement>) => (
+  tr: ({ ...props }: HTMLAttributes<HTMLTableRowElement>) => (
     <tr
       className="border-b border-white/5 hover:bg-white/5 transition-colors"
       {...props}
     />
   ),
-  td: ({ ...props }: React.TdHTMLAttributes<HTMLTableCellElement>) => (
+  td: ({ ...props }: TdHTMLAttributes<HTMLTableCellElement>) => (
     <td className="px-6 py-4" {...props} />
   ),
   // KaTeX Display Fix
-  div: ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => {
+  div: ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => {
     if (className?.includes('katex-display')) {
       return (
         <div

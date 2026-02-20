@@ -1,7 +1,7 @@
 import { GlassCard } from '@/shared/components/GlassCard';
 import { Brain, AlertTriangle, Lightbulb, Zap } from 'lucide-react';
 import { CardHeader } from './CardElements';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 
 export interface CognitiveAnalysis {
   focusScore?: number;

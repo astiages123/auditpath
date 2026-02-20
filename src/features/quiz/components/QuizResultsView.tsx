@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, memo } from 'react';
+import { useEffect, useState, useRef, memo, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Home,
@@ -16,8 +16,8 @@ import {
   type QuizQuestion,
   type ExamSubjectWeight,
 } from '@/features/quiz/types';
-import { calculateTestResults } from '../logic/quizCoreLogic';
-import { getSubjectStrategy } from '../logic/srsLogic';
+import { calculateTestResults } from '@/features/quiz/logic/quizCoreLogic';
+import { getSubjectStrategy } from '@/features/quiz/logic/srsLogic';
 
 // ============================================================================
 // Internal Sub-components (formerly standalone files)
@@ -328,13 +328,22 @@ export function QuizResultsView({
   onClose,
 }: QuizResultsViewProps) {
   const [animatedPercent, setAnimatedPercent] = useState(0);
-  const stats = calculateTestResults(
-    results.correct,
-    results.incorrect,
-    results.blank,
-    results.totalTimeMs
+
+  const stats = useMemo(
+    () =>
+      calculateTestResults(
+        results.correct,
+        results.incorrect,
+        results.blank,
+        results.totalTimeMs
+      ),
+    [results.correct, results.incorrect, results.blank, results.totalTimeMs]
   );
-  const strategy = courseName ? getSubjectStrategy(courseName) : undefined;
+
+  const strategy = useMemo(
+    () => (courseName ? getSubjectStrategy(courseName) : undefined),
+    [courseName]
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => setAnimatedPercent(stats.percentage), 500);

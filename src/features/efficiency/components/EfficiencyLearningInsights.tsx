@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   BarChart,
   Bar,
@@ -12,11 +11,9 @@ import {
 import { BookOpen, Maximize2, Activity, Target } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  EfficiencyModal,
-  LearningLoadContent,
-  MasteryNavigatorContent,
-} from './EfficiencyModals';
+import { EfficiencyModal } from './EfficiencyModal';
+import { LearningLoadAnalysis as LearningLoadContent } from './LearningLoadAnalysis';
+import { MasteryProgressNavigator as MasteryNavigatorContent } from './MasteryProgressNavigator';
 import { CardHeader } from './CardElements';
 import { EfficiencyHeatmap } from './EfficiencyHeatmap';
 import { useEfficiencyTrends } from '../hooks/useEfficiencyTrends';

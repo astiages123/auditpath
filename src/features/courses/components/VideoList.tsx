@@ -6,8 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { VideoItem } from './VideoItem';
 import { useVideoActions, VideoActionState } from '../hooks/useVideoActions';
 import { getVideoProgress } from '../services/videoService';
-
-// Load videos from courses.json (already bundled)
 import coursesData from '../services/courses.json';
 
 interface VideoListProps {

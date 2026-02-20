@@ -12,7 +12,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 
 // ============================================================================
 // Timer & Progress Components (formerly in QuizProgress.tsx)

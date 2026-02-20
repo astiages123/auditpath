@@ -207,6 +207,7 @@ export type Database = {
           sort_order: number | null;
           total_hours: number | null;
           total_videos: number | null;
+          updated_at: string | null;
         };
         Insert: {
           category_id?: string | null;
@@ -219,6 +220,7 @@ export type Database = {
           sort_order?: number | null;
           total_hours?: number | null;
           total_videos?: number | null;
+          updated_at?: string | null;
         };
         Update: {
           category_id?: string | null;
@@ -231,6 +233,7 @@ export type Database = {
           sort_order?: number | null;
           total_hours?: number | null;
           total_videos?: number | null;
+          updated_at?: string | null;
         };
         Relationships: [
           {

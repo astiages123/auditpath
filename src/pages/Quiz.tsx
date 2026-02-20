@@ -1,13 +1,13 @@
-import React, { useEffect } from 'react';
+import { useEffect, FC } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { QuizContainer } from '@/features/quiz/components/QuizView';
+import { QuizView } from '@/features/quiz/components';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/utils/routes';
 import { preloadSubjectKnowledge } from '@/features/quiz/services/quizInfoService';
 import { logger } from '@/utils/logger';
 
-export const QuizPage: React.FC = () => {
+export const QuizPage: FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
 
@@ -30,7 +30,7 @@ export const QuizPage: React.FC = () => {
   return (
     <div className="container py-8">
       <ErrorBoundary>
-        <QuizContainer courseId={courseId} />
+        <QuizView courseId={courseId} />
       </ErrorBoundary>
     </div>
   );

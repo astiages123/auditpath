@@ -1,4 +1,4 @@
-import React from 'react';
+import { FC } from 'react';
 import { TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -17,7 +17,7 @@ interface AnalyticsChartProps {
   formatCurrency: (value: number) => string;
 }
 
-export const AnalyticsChart: React.FC<AnalyticsChartProps> = ({
+export const AnalyticsChart: FC<AnalyticsChartProps> = ({
   dailyData,
   isMounted,
   formatCurrency,

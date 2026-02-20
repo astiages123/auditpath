@@ -1,5 +1,5 @@
-import React, { memo } from 'react';
-import { cn } from '@/utils/core';
+import { memo } from 'react';
+import { cn } from '@/utils/stringHelpers';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';

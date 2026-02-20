@@ -85,14 +85,10 @@ export function useNotesData({
             setCourseName(processedData[0].course_name);
           });
 
-          storage.set(
-            cacheKey,
-            {
-              timestamp: Date.now(),
-              data: processedData,
-            },
-            { ttl: 7 * 24 * 60 * 60 * 1000 } // 7 days cache
-          );
+          storage.set(cacheKey, {
+            timestamp: Date.now(),
+            data: processedData,
+          });
         } else if (!cached) {
           setError('Bu ders için henüz içerik bulunmuyor.');
         }

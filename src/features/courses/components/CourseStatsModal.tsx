@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, Award, CheckCircle2, TrendingUp } from 'lucide-react';
+// COURSES_CONFIG removed if unused
 
 interface CourseStatsModalProps {
   open: boolean;

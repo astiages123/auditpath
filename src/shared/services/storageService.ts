@@ -1,12 +1,6 @@
-/**
- * Storage Service
- *
- * Centralized localStorage management with type safety,
- * error handling, and XSS protection.
- */
-
 import { logger } from '../../utils/logger';
 import { ContentType, deepSanitize } from '@/utils/sanitizers';
+import { DEFAULT_STORAGE_TTL_MS } from '@/utils/constants';
 
 const storageLogger = logger.withPrefix('[StorageService]');
 
@@ -16,23 +10,13 @@ export interface StorageItem<T> {
   version?: string;
 }
 
-export interface StorageOptions {
-  prefix?: string;
-  ttl?: number; // Time to live in milliseconds
-  version?: string;
-}
-
 export type { ContentType };
 
 const DEFAULT_PREFIX = 'auditpath_';
-const DEFAULT_TTL = 24 * 60 * 60 * 1000; // 24 hours
+const DEFAULT_TTL = DEFAULT_STORAGE_TTL_MS; // 24 hours
 
-/**
- * Safely parses JSON with error handling
- */
 function safeParse<T>(json: string | null): T | null {
   if (!json) return null;
-
   try {
     return JSON.parse(json) as T;
   } catch (error) {
@@ -41,44 +25,24 @@ function safeParse<T>(json: string | null): T | null {
   }
 }
 
-/**
- * StorageService class
- * Centralized localStorage operations with type safety and security
- */
-export class StorageService {
-  readonly prefix: string;
-  readonly defaultTtl: number;
+function getKey(key: string): string {
+  return `${DEFAULT_PREFIX}${key}`;
+}
 
-  constructor(options: StorageOptions = {}) {
-    this.prefix = options.prefix || DEFAULT_PREFIX;
-    this.defaultTtl = options.ttl || DEFAULT_TTL;
-  }
-
-  /**
-   * Gets the full key with prefix
-   */
-  private getKey(key: string): string {
-    return `${this.prefix}${key}`;
-  }
-
-  /**
-   * Retrieves an item from localStorage
-   */
+export const storage = {
   get<T>(key: string): T | null {
     try {
-      const fullKey = this.getKey(key);
+      const fullKey = getKey(key);
       const item = localStorage.getItem(fullKey);
       const parsed = safeParse<StorageItem<T>>(item);
 
       if (!parsed) return null;
 
-      // Check TTL
-      if (this.defaultTtl && Date.now() - parsed.timestamp > this.defaultTtl) {
+      if (DEFAULT_TTL && Date.now() - parsed.timestamp > DEFAULT_TTL) {
         this.remove(key);
         return null;
       }
 
-      // Sanitize the value before returning
       return deepSanitize(parsed.value);
     } catch (error) {
       storageLogger.error('Failed to get item from localStorage', {
@@ -87,55 +51,24 @@ export class StorageService {
       });
       return null;
     }
-  }
+  },
 
-  /**
-   * Retrieves raw data without TTL check
-   */
-  getRaw<T>(key: string): StorageItem<T> | null {
+  set<T>(key: string, value: T, options?: { version?: string }): void {
+    const fullKey = getKey(key);
     try {
-      const fullKey = this.getKey(key);
-      const item = localStorage.getItem(fullKey);
-      return safeParse<StorageItem<T>>(item);
-    } catch (error) {
-      storageLogger.error('Failed to get raw item from localStorage', {
-        key,
-        error,
-      });
-      return null;
-    }
-  }
-
-  /**
-   * Stores an item in localStorage
-   */
-  set<T>(
-    key: string,
-    value: T,
-    options?: { ttl?: number; version?: string }
-  ): void {
-    try {
-      const fullKey = this.getKey(key);
       const item: StorageItem<T> = {
         value,
         timestamp: Date.now(),
         version: options?.version,
       };
-
       localStorage.setItem(fullKey, JSON.stringify(item));
     } catch (error) {
-      storageLogger.error('Failed to set item in localStorage', {
-        key,
-        error,
-      });
-
-      // Handle quota exceeded error
+      storageLogger.error('Failed to set item in localStorage', { key, error });
       if (error instanceof Error && error.name === 'QuotaExceededError') {
         this.cleanup();
-        // Retry once
         try {
           localStorage.setItem(
-            this.getKey(key),
+            fullKey,
             JSON.stringify({
               value,
               timestamp: Date.now(),
@@ -150,14 +83,11 @@ export class StorageService {
         }
       }
     }
-  }
+  },
 
-  /**
-   * Removes an item from localStorage
-   */
   remove(key: string): void {
     try {
-      const fullKey = this.getKey(key);
+      const fullKey = getKey(key);
       localStorage.removeItem(fullKey);
     } catch (error) {
       storageLogger.error('Failed to remove item from localStorage', {
@@ -165,93 +95,42 @@ export class StorageService {
         error,
       });
     }
-  }
+  },
 
-  /**
-   * Clears all items with the current prefix
-   */
   clear(): void {
     try {
       const keysToRemove: string[] = [];
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith(this.prefix)) {
+        if (key && key.startsWith(DEFAULT_PREFIX)) {
           keysToRemove.push(key);
         }
       }
-      keysToRemove.forEach((key) => localStorage.removeItem(key));
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
     } catch (error) {
       storageLogger.error('Failed to clear localStorage', { error });
     }
-  }
+  },
 
-  /**
-   * Gets the timestamp of an item
-   */
-  getTimestamp(key: string): number | null {
-    const item = this.getRaw<unknown>(key);
-    return item?.timestamp || null;
-  }
-
-  /**
-   * Checks if an item exists and is not expired
-   */
-  has(key: string): boolean {
-    return this.get<unknown>(key) !== null;
-  }
-
-  /**
-   * Returns all keys with the current prefix
-   */
-  keys(): string[] {
-    try {
-      const result: string[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith(this.prefix)) {
-          result.push(key.slice(this.prefix.length));
-        }
-      }
-      return result;
-    } catch (error) {
-      storageLogger.error('Failed to get keys from localStorage', {
-        error,
-      });
-      return [];
-    }
-  }
-
-  /**
-   * Cleanup expired items to free space
-   */
   cleanup(): void {
     try {
       const now = Date.now();
       const keysToRemove: string[] = [];
-
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (key && key.startsWith(this.prefix)) {
+        if (key && key.startsWith(DEFAULT_PREFIX)) {
           const item = safeParse<StorageItem<unknown>>(
             localStorage.getItem(key)
           );
-          if (
-            item &&
-            this.defaultTtl &&
-            now - item.timestamp > this.defaultTtl
-          ) {
+          if (item && DEFAULT_TTL && now - item.timestamp > DEFAULT_TTL) {
             keysToRemove.push(key);
           }
         }
       }
-
-      keysToRemove.forEach((key) => localStorage.removeItem(key));
+      keysToRemove.forEach((k) => localStorage.removeItem(k));
       storageLogger.info(`Cleaned up ${keysToRemove.length} expired items`);
     } catch (error) {
       storageLogger.error('Failed to cleanup localStorage', { error });
     }
-  }
-}
-
-// Export singleton instance
-export const storage = new StorageService();
+  },
+};

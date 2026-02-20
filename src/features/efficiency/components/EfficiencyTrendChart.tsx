@@ -10,7 +10,7 @@ import {
   ReferenceLine,
   Cell,
 } from 'recharts';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { EfficiencyTrend } from '@/features/efficiency/types/efficiencyTypes';
 
 // --- Efficiency Trend Chart ---

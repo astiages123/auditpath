@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { upsertPomodoroSession } from '@/features/pomodoro/services/pomodoroService';

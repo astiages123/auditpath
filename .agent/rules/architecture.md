@@ -8,7 +8,7 @@ trigger: always_on
 
 - **Özellik Bazlı Yapı:** Her ana işlev `src/features/` altında kendi klasörüne sahip olmalıdır.
 - **Klasör İçeriği:** Bir özelliğin (feature) içinde şu alt klasörler bulunabilir:
-  - `components/`: Sadece o özelliğe özel arayüz parçaları. (**Zorunlu**)
+  - `components/`: Sadece o özelliğe özel arayüz parçaları. **Alt klasör içermemeli, düz bir yapıda olmalıdır.** (**Zorunlu**)
   - `types/`: TypeScript tanımlamaları. (**Zorunlu**)
   - `hooks/`: Özelliğe özel React hook'ları ve context dosyaları.
   - `logic/`: Özelliğe özel iş mantığı, algoritmalar ve yardımcı fonksiyonlar.

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import {
   useTimerStore,
   usePomodoroSessionStore,
@@ -11,15 +11,15 @@ import {
   getLatestActiveSession,
   updatePomodoroHeartbeat,
 } from '@/features/pomodoro/services/pomodoroService';
-import { calculateSessionTotals } from '@/features/pomodoro/logic/sessionMath';
 import { toast } from 'sonner';
-import { env } from '@/utils/env';
 import { SESSION_VALIDITY_DURATION_MS } from '@/utils/constants';
 
 import { useFaviconManager } from '@/features/pomodoro/hooks/useFaviconManager';
-import { playNotificationSound } from '../logic/audioUtils';
+import { useTimerNotifications } from '@/features/pomodoro/hooks/useTimerNotifications';
+import { useTimerPersistence } from '@/features/pomodoro/hooks/useTimerPersistence';
+import { calculateSessionTotals } from '../logic/sessionMath';
+
 import { logger } from '@/utils/logger';
-import faviconSvg from '@/assets/favicon.svg';
 
 export function TimerController() {
   // Timer state
@@ -40,6 +40,9 @@ export function TimerController() {
   // UI state
   const { selectedCourse, setCourse } = usePomodoroUIStore();
 
+  const { user, session } = useAuth();
+  const userId = user?.id;
+
   // Dynamic Favicon & Title Manager
   useFaviconManager(
     timeLeft,
@@ -49,16 +52,31 @@ export function TimerController() {
     isActive && !!sessionId
   );
 
-  const { user, session } = useAuth();
-  const userId = user?.id;
+  // Notifications Manager
+  useTimerNotifications({
+    timeLeft,
+    isActive,
+    isBreak,
+    sessionId,
+    originalStartTime,
+    startTime,
+  });
 
-  // To prevent double notifications for the same event
-  const lastNotifiedRef = useRef<string | null>(null);
+  // Persistence (Safety Save) Manager
+  useTimerPersistence({
+    userId,
+    sessionId,
+    selectedCourse,
+    timeline,
+    startTime,
+    originalStartTime,
+    accessToken: session?.access_token,
+  });
 
   // 1. Core Tick using Web Worker
   useEffect(() => {
     const worker = new Worker(
-      new URL('../../../workers/timerWorker.ts', import.meta.url),
+      new URL('../logic/timerWorker.ts', import.meta.url),
       { type: 'module' }
     );
 
@@ -192,145 +210,6 @@ export function TimerController() {
 
     return () => clearInterval(heartbeatInterval);
   }, [sessionId, isActive, timeline]);
-
-  // 4. Session Completion & Notifications
-  useEffect(() => {
-    const checkCompletion = () => {
-      // We use <= 0 to catch any skips
-      if (timeLeft <= 0 && isActive) {
-        const uniqueSessionKey =
-          sessionId ||
-          `anonymous-${originalStartTime || startTime || 'unknown'}`;
-        const notificationKey = `${uniqueSessionKey}-${isBreak ? 'break' : 'work'}`;
-
-        // PREVENT DOUBLE FIRE
-        if (lastNotifiedRef.current === notificationKey) return;
-        lastNotifiedRef.current = notificationKey;
-
-        const message = !isBreak
-          ? 'Harika iş çıkardın! Şimdi kısa bir mola zamanı. ☕'
-          : 'Mola bitti, tekrar odaklanmaya hazır mısın? 💪';
-
-        // Sonner Toast
-        toast.success(message, { duration: 2000 });
-
-        // Notification Tool
-        const sendNotification = () => {
-          if (
-            'Notification' in window &&
-            Notification.permission === 'granted'
-          ) {
-            try {
-              const notification = new Notification('Pomodoro: Süre Doldu!', {
-                body: message,
-                icon: faviconSvg,
-                tag: notificationKey,
-                requireInteraction: true,
-              });
-
-              notification.onclick = () => {
-                window.focus();
-                notification.close();
-              };
-            } catch (e: unknown) {
-              logger.error('Desktop Notification failed', e as Error);
-            }
-          }
-        };
-
-        if (Notification.permission === 'granted') {
-          sendNotification();
-        } else if (Notification.permission === 'default') {
-          Notification.requestPermission().then((permission) => {
-            if (permission === 'granted') sendNotification();
-          });
-        }
-
-        playNotificationSound();
-      }
-    };
-
-    checkCompletion();
-
-    // Catch-up when tab becomes visible
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        checkCompletion();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () =>
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [
-    timeLeft,
-    isActive,
-    isBreak,
-    sessionId,
-    userId,
-    selectedCourse,
-    timeline,
-    originalStartTime,
-    startTime,
-  ]);
-
-  // 5. Beacon (Safety Save)
-  useEffect(() => {
-    const handleUnload = () => {
-      if (userId && sessionId && selectedCourse && timeline.length > 0) {
-        const now = Date.now();
-        // Ensure all timeline entries are closed for the safety save
-        const closedTimeline = timeline.map((e) => ({
-          ...e,
-          end: e.end || now,
-        }));
-
-        const { totalWork, totalBreak, totalPause } =
-          calculateSessionTotals(closedTimeline);
-        const payload = {
-          id: sessionId,
-          user_id: userId,
-          course_id: selectedCourse.id,
-          course_name: selectedCourse.name,
-          timeline: closedTimeline,
-          started_at: new Date(
-            originalStartTime || startTime || now
-          ).toISOString(),
-          ended_at: new Date(now).toISOString(),
-          total_work_time: totalWork,
-          total_break_time: totalBreak,
-          total_pause_time: totalPause,
-          is_completed: false,
-        };
-
-        const supabaseUrl = env.supabase.url;
-        const supabaseKey = env.supabase.anonKey;
-
-        fetch(`${supabaseUrl}/rest/v1/pomodoro_sessions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: supabaseKey,
-            Authorization: `Bearer ${session?.access_token || supabaseKey}`,
-            Prefer: 'resolution=merge-duplicates',
-          },
-          body: JSON.stringify(payload),
-          keepalive: true,
-        }).catch((err: unknown) => logger.error('Beacon Error:', err as Error));
-      }
-    };
-
-    window.addEventListener('beforeunload', handleUnload);
-    return () => window.removeEventListener('beforeunload', handleUnload);
-  }, [
-    userId,
-    sessionId,
-    selectedCourse,
-    timeline,
-    startTime,
-    originalStartTime,
-    session,
-  ]);
 
   return null;
 }

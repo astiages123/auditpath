@@ -123,9 +123,7 @@ function saveProgress(courseId: string, completedVideos: Set<number>): void {
     updatedAt: Date.now(),
   };
 
-  storage.set(getStorageKey(courseId), data, {
-    ttl: 365 * 24 * 60 * 60 * 1000, // 1 year retention
-  });
+  storage.set(getStorageKey(courseId), data);
 }
 
 // Export functions for use in components
@@ -282,10 +280,16 @@ export function getAllProgressCourses(): string[] {
   if (typeof window === 'undefined') return [];
 
   // Use storage service to get all keys with the prefix
-  const allKeys = storage.keys();
+  const allKeys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith('auditpath_')) {
+      allKeys.push(key.replace('auditpath_', ''));
+    }
+  }
   return allKeys
-    .filter((key) => key.startsWith(STORAGE_KEY_PREFIX))
-    .map((key) => key.replace(STORAGE_KEY_PREFIX, ''));
+    .filter((key: string) => key.startsWith(STORAGE_KEY_PREFIX))
+    .map((key: string) => key.replace(STORAGE_KEY_PREFIX, ''));
 }
 
 interface SimpleCourse {

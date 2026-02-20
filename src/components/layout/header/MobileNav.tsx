@@ -1,10 +1,10 @@
-import React from 'react';
+import { FC, ElementType } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Menu, X, LogOut } from 'lucide-react';
-import { cn } from '@/utils/core';
+import { cn } from '@/utils/stringHelpers';
 
 interface MobileNavProps {
   user: {
@@ -16,7 +16,7 @@ interface MobileNavProps {
     label: string;
     href?: string;
     action?: () => void;
-    icon: React.ElementType;
+    icon: ElementType;
     color: string;
     auth: boolean;
   }[];
@@ -26,7 +26,7 @@ interface MobileNavProps {
   setAuthModalOpen: (open: boolean) => void;
 }
 
-export const MobileNav: React.FC<MobileNavProps> = ({
+export const MobileNav: FC<MobileNavProps> = ({
   user,
   pathname,
   navItems,

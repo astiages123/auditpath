@@ -1,4 +1,3 @@
-// import Image from "next/image";
 import { Calendar, Award } from 'lucide-react';
 import {
   Dialog,

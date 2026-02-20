@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { Dispatch, SetStateAction, useCallback } from 'react';
 import {
   MultipleChoiceQuestion,
   QuizQuestion,
@@ -16,7 +16,9 @@ import {
 } from '../services/quizService';
 import { generateForChunk } from '../logic/quizParser';
 import { MASTERY_THRESHOLD } from '../utils/constants';
-import { useFeatureBridge } from '@/shared/hooks/useFeatureBridge';
+import { usePomodoroSessionStore } from '@/features/pomodoro/store';
+import { useCelebrationStore } from '@/features/achievements/store';
+import { useQuotaStore } from '@/features/quiz/store';
 import { updateResults } from '../logic/quizCoreLogic';
 
 // ============================================================================
@@ -36,15 +38,15 @@ export function useQuizSessionControls({
   _resetTimer,
   setSessionContext,
 }: UseQuizSessionControlsProps) {
-  const { setPomodoroSessionId } = useFeatureBridge();
-
   const startQuiz = useCallback(
     async (userId: string, courseId: string, chunkId?: string) => {
       updateState({ isLoading: true, error: null });
       try {
         const session = await startQuizSession(userId, courseId);
         setSessionContext(session);
-        setPomodoroSessionId(session.sessionNumber.toString());
+        usePomodoroSessionStore
+          .getState()
+          .setSessionId(session.sessionNumber.toString());
 
         const queue = await getReviewQueue(session, 10, chunkId);
         if (queue.length > 0) {
@@ -103,12 +105,7 @@ export function useQuizSessionControls({
         updateState({ isLoading: false, error: error.message });
       }
     },
-    [
-      updateState,
-      loadQuestionsIntoState,
-      setPomodoroSessionId,
-      setSessionContext,
-    ]
+    [updateState, loadQuestionsIntoState, setSessionContext]
   );
 
   return { startQuiz };
@@ -123,7 +120,7 @@ interface UseQuizSubmissionProps {
   sessionContext: SessionContext | null;
   selectedAnswer: number | null;
   isAnswered: boolean;
-  setResults: React.Dispatch<React.SetStateAction<QuizResults>>;
+  setResults: Dispatch<SetStateAction<QuizResults>>;
   updateState: (patch: Partial<QuizState>) => void;
   stopTimer: () => number;
 }
@@ -137,8 +134,6 @@ export function useQuizSubmission({
   updateState,
   stopTimer,
 }: UseQuizSubmissionProps) {
-  const { triggerCelebration, decrementQuizQuota } = useFeatureBridge();
-
   const submitAnswer = useCallback(
     async (type: QuizResponseType = 'correct') => {
       if (isAnswered || !currentQuestion || !sessionContext) {
@@ -176,14 +171,14 @@ export function useQuizSubmission({
       updateState({ lastSubmissionResult: result });
 
       if (result.newMastery >= MASTERY_THRESHOLD && currentQuestion.chunk_id) {
-        triggerCelebration({
+        useCelebrationStore.getState().enqueueCelebration({
           id: `MASTERY_${currentQuestion.chunk_id}_${result.newMastery}`,
           title: 'Uzmanlık Seviyesi!',
           description: `Bu konudaki ustalığın ${result.newMastery} puana ulaştı.`,
           variant: 'achievement',
         });
       }
-      decrementQuizQuota();
+      useQuotaStore.getState().decrementQuota();
     },
     [
       isAnswered,
@@ -193,8 +188,6 @@ export function useQuizSubmission({
       stopTimer,
       setResults,
       updateState,
-      triggerCelebration,
-      decrementQuizQuota,
     ]
   );
 

@@ -1,8 +1,8 @@
-import React from 'react';
 import { Zap, Maximize2 } from 'lucide-react';
 import { GlassCard } from '@/shared/components/GlassCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { EfficiencyModal, PracticeCenterContent } from './EfficiencyModals';
+import { EfficiencyModal } from './EfficiencyModal';
+import { PracticePerformanceRadar as PracticeCenterContent } from './PracticePerformanceRadar';
 import { BloomKeyChart } from './BloomKeyChart';
 import { CardHeader } from './CardElements';
 import { useCognitiveInsights } from '../hooks/useCognitiveInsights';

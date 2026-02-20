@@ -1,18 +1,20 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, AlertCircle, ChevronUp } from 'lucide-react';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Button } from '@/components/ui/button';
-import { cn, slugify } from '@/utils/core';
+import { cn, slugify } from '@/utils/stringHelpers';
 import { ROUTES } from '@/utils/routes';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 // New Components
-import { MarkdownSection } from '@/features/notes/components/MarkdownSection';
-import { markdownComponents } from '@/features/notes/components/MarkdownComponents';
-import { GlobalNavigation } from '@/features/notes/components/GlobalNavigation';
-import { LocalToC } from '@/features/notes/components/LocalToC';
+import {
+  MarkdownSection,
+  markdownComponents,
+  GlobalNavigation,
+  LocalToC,
+} from '@/features/notes/components';
 
 // New Hooks
 import { useNotesNavigation } from '@/features/notes/hooks/useNotesNavigation';

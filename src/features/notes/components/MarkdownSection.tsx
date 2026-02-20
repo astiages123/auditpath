@@ -1,10 +1,10 @@
-import React, { memo } from 'react';
+import { memo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
-import { slugify } from '@/utils/core';
+import { slugify } from '@/utils/stringHelpers';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { markdownComponents } from './MarkdownComponents';
 

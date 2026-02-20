@@ -1,7 +1,6 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { Header } from '@/components/layout/header/Header';
-import { PomodoroModal } from '@/features/pomodoro/components/PomodoroModal';
-import { TimerController } from '@/features/pomodoro/components/TimerController';
+import { PomodoroModal, TimerController } from '@/features/pomodoro/components';
 import { Toaster } from '@/components/ui/sonner';
 import { useCelebration } from '@/shared/hooks/useCelebration';
 import { useCelebrationStore } from '@/features/achievements/store/useCelebrationStore';

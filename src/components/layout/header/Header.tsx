@@ -1,8 +1,7 @@
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useState } from 'react';
-import { ProgramModal } from '@/features/courses/components/ProgramModal';
-import { JourneyModal } from '@/features/courses/components/JourneyModal';
+import { ProgramModal, JourneyModal } from '@/features/courses/components';
 import { AuthModal } from '@/features/auth/components/AuthModal';
 import { ROUTES } from '@/utils/routes';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
