@@ -139,8 +139,8 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
                 const status = getStatusInfo(dScore);
 
                 return (
-                  <div className="bg-[#1a1c1e] border border-white/10 text-slate-50 rounded-xl shadow-xl p-3 text-xs space-y-2 min-w-[200px] z-50">
-                    <p className="font-bold border-b border-white/10 pb-2 text-center text-white">
+                  <div className="bg-[#1a1c1e] border border-border-subtle text-slate-50 rounded-xl shadow-xl p-3 text-xs space-y-2 min-w-[200px] z-50">
+                    <p className="font-bold border-b border-border-subtle pb-2 text-center text-white">
                       {label
                         ? new Date(label as string | number).toLocaleDateString(
                             'tr-TR',
@@ -162,7 +162,7 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
                       </div>
                       <div
                         className={cn(
-                          'text-[12px] font-bold text-center px-2 py-2 rounded-lg bg-white/5',
+                          'text-[12px] font-bold text-center px-2 py-2 rounded-lg bg-surface',
                           status.color
                         )}
                       >

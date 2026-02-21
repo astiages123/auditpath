@@ -373,17 +373,12 @@ export async function generateSmartExam(
       masteryRows.map((m: MasteryRow) => [m.chunk_id, Number(m.mastery_score)])
     );
 
-    type ChunkRow = {
-      id: string;
-      metadata: import('@/types/database.types').Json;
-      content: string;
-    };
-    const metrics: ChunkMetric[] = chunks.map((c: ChunkRow) => ({
+    const metrics: ChunkMetric[] = chunks.map((c) => ({
       id: c.id,
       concept_count:
-        (c.metadata as { concept_map?: unknown[] }).concept_map?.length || 5,
+        (c.ai_logic as { concept_map?: unknown[] })?.concept_map?.length || 5,
       difficulty_index:
-        (c.metadata as { difficulty_index?: number }).difficulty_index || 3,
+        (c.ai_logic as { difficulty_index?: number })?.difficulty_index || 3,
       mastery_score: masteryMap.get(c.id) || 0,
     }));
 

@@ -89,7 +89,7 @@ export const SessionListItem: FC<SessionListItemProps> = ({
   const TriggerContent = (
     <div className="p-4 flex items-center justify-between bg-white/2 border border-white/5 hover:bg-white/5 hover:border-white/10 rounded-xl transition-all cursor-pointer group">
       <div className="flex items-center gap-4">
-        <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
+        <div className="w-10 h-10 rounded-xl bg-surface flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
           <BookOpen className="w-5 h-5" />
         </div>
         <div className="text-left flex flex-col gap-0.5">
@@ -202,7 +202,7 @@ export const SessionListItem: FC<SessionListItemProps> = ({
                 </span>
               </span>
             </div>
-            <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+            <div className="h-2 w-full bg-surface rounded-full overflow-hidden">
               <div
                 className={cn(
                   'h-full transition-all duration-700 rounded-full',

@@ -1,6 +1,8 @@
 import { Lock } from 'lucide-react';
 import { GUILDS, getRequirementDescription } from '../logic/achievementsData';
 import type { Achievement } from '../types/achievementsTypes';
+import { cn } from '@/utils/stringHelpers';
+import { Card } from '@/components/ui/card';
 
 interface SealCardProps {
   achievement: Achievement;
@@ -11,10 +13,36 @@ interface SealCardProps {
 export function SealCard({ achievement, isUnlocked, onClick }: SealCardProps) {
   const guild = GUILDS[achievement.guild];
 
+  const sealTooltipClass = cn(
+    'tooltip-float',
+    'bottom-full left-1/2 -translate-x-1/2 mb-2 min-w-max'
+  );
+
+  const sealImageClass = cn(
+    'object-contain transition-all duration-300 w-full h-full',
+    isUnlocked ? 'seal-unlocked seal-glow' : 'seal-locked'
+  );
+
+  const titleClass = cn(
+    'text-sm font-semibold text-center transition-colors',
+    isUnlocked ? 'text-foreground' : 'text-muted-foreground'
+  );
+
+  const sealCardClass = cn(
+    'seal-card relative group flex flex-col items-center',
+    'p-4 rounded-2xl cursor-pointer',
+    'bg-card/50 border border-border/50',
+    'hover:border-primary/30',
+    'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary'
+  );
+
   return (
-    <button
+    <Card
+      variant="glass"
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="seal-card relative group flex flex-col items-center p-4 rounded-2xl bg-card/50 border border-border/50 hover:border-primary/30 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+      className={sealCardClass}
       aria-label={`${achievement.title} - ${isUnlocked ? 'Açık' : 'Kilitli'}`}
     >
       {/* Seal Image */}
@@ -22,9 +50,7 @@ export function SealCard({ achievement, isUnlocked, onClick }: SealCardProps) {
         <img
           src={achievement.imagePath}
           alt={achievement.title}
-          className={`object-contain transition-all duration-300 w-full h-full ${
-            isUnlocked ? 'seal-unlocked seal-glow' : 'seal-locked'
-          }`}
+          className={sealImageClass}
         />
 
         {/* Lock icon overlay for locked achievements */}
@@ -38,18 +64,13 @@ export function SealCard({ achievement, isUnlocked, onClick }: SealCardProps) {
       </div>
 
       {/* Title */}
-      <h3
-        className={`text-sm font-semibold text-center transition-colors ${
-          isUnlocked ? 'text-foreground' : 'text-muted-foreground'
-        }`}
-        style={{ fontFamily: 'var(--font-heading)' }}
-      >
+      <h3 className={titleClass} style={{ fontFamily: 'var(--font-heading)' }}>
         {achievement.title}
       </h3>
 
       {/* Requirement Tooltip - shown on hover for locked */}
       {!isUnlocked && (
-        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg bg-popover border border-border shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10 min-w-max">
+        <div className={sealTooltipClass}>
           <p className="text-xs text-muted-foreground whitespace-nowrap">
             <span className="font-medium text-foreground">Gereksinim: </span>
             {getRequirementDescription(achievement.requirement)}
@@ -66,6 +87,6 @@ export function SealCard({ achievement, isUnlocked, onClick }: SealCardProps) {
           style={{ backgroundColor: guild.color }}
         />
       )}
-    </button>
+    </Card>
   );
 }

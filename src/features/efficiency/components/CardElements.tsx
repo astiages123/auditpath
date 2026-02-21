@@ -96,11 +96,11 @@ export const StatCard = ({
         )}
       >
         <div className="flex justify-between items-start mb-2">
-          <Skeleton className="h-4 w-24 bg-white/5" />
-          {icon && <Skeleton className="h-8 w-8 rounded-full bg-white/5" />}
+          <Skeleton className="h-4 w-24 bg-surface" />
+          {icon && <Skeleton className="h-8 w-8 rounded-full bg-surface" />}
         </div>
-        <Skeleton className="h-8 w-16 mb-2 bg-white/5" />
-        <Skeleton className="h-4 w-32 bg-white/5" />
+        <Skeleton className="h-8 w-16 mb-2 bg-surface" />
+        <Skeleton className="h-4 w-32 bg-surface" />
       </div>
     );
   }
@@ -115,7 +115,7 @@ export const StatCard = ({
       <div className="flex justify-between items-start mb-2">
         <h3 className="text-sm font-medium text-slate-400">{title}</h3>
         {icon && (
-          <div className="p-2 bg-white/5 rounded-lg text-white/80">{icon}</div>
+          <div className="p-2 bg-surface rounded-lg text-white/80">{icon}</div>
         )}
       </div>
       <div className="flex items-baseline gap-2">

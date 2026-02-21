@@ -18,6 +18,7 @@ import {
   type GenerationLog,
   type GenerationStep as LogStep,
 } from '@/features/quiz/types';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { toast } from 'sonner';
 import { QuotaDisplay } from './QuizIntroViews';
 import { GenerationLiveStream } from './QuizIntroViews';
@@ -58,6 +59,7 @@ export function GenerateQuestionButton({
   const [logs, setLogs] = useState<GenerationLog[]>([]);
   const [currentStep, setCurrentStep] = useState<LogStep | null>(null);
   const [savedCount, setSavedCount] = useState(0);
+  const { user } = useAuth();
 
   // Load status when modal opens
   const refreshStatus = useCallback(async () => {
@@ -107,46 +109,50 @@ export function GenerateQuestionButton({
     setSavedCount(0);
 
     try {
-      await generateForChunk(chunkId, {
-        onTotalTargetCalculated: () => {},
-        onLog: (log: GenerationLog) => {
-          setLogs((prev) => [...prev, log]);
-          setCurrentStep(log.step);
+      await generateForChunk(
+        chunkId,
+        {
+          onTotalTargetCalculated: () => {},
+          onLog: (log: GenerationLog) => {
+            setLogs((prev) => [...prev, log]);
+            setCurrentStep(log.step);
 
-          // Real-time update for MAPPING phase
-          if (log.step === 'MAPPING' && log.details?.conceptCount) {
-            setStatus((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    conceptCount:
-                      Number(log.details.conceptCount) || prev.conceptCount,
-                  }
-                : prev
+            // Real-time update for MAPPING phase
+            if (log.step === 'MAPPING' && log.details?.conceptCount) {
+              setStatus((prev) =>
+                prev
+                  ? {
+                      ...prev,
+                      conceptCount:
+                        Number(log.details.conceptCount) || prev.conceptCount,
+                    }
+                  : prev
+              );
+            }
+          },
+          onQuestionSaved: (count: number) => {
+            setSavedCount(count);
+            // Update status optimistically
+            setStatus((prev: QuotaStatus | null) =>
+              prev ? { ...prev, used: prev.used + 1 } : prev
             );
-          }
-        },
-        onQuestionSaved: (count: number) => {
-          setSavedCount(count);
-          // Update status optimistically
-          setStatus((prev: QuotaStatus | null) =>
-            prev ? { ...prev, used: prev.used + 1 } : prev
-          );
-        },
-        onComplete: (result: { success: boolean; generated: number }) => {
-          setLoading(false);
-          refreshStatus();
-          onComplete?.();
+          },
+          onComplete: (result: { success: boolean; generated: number }) => {
+            setLoading(false);
+            refreshStatus();
+            onComplete?.();
 
-          if (result.success) {
-            toast.success(`${result.generated} soru başarıyla üretildi!`);
-          }
+            if (result.success) {
+              toast.success(`${result.generated} soru başarıyla üretildi!`);
+            }
+          },
+          onError: (error: unknown) => {
+            setLoading(false);
+            toast.error(String(error));
+          },
         },
-        onError: (error: unknown) => {
-          setLoading(false);
-          toast.error(String(error));
-        },
-      });
+        { userId: user?.id }
+      );
     } catch (err: unknown) {
       logger.error('[QuizGen] Kritik hata:', err as Error);
       setLoading(false);

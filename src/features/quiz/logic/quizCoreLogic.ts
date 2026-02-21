@@ -15,25 +15,61 @@ import {
 export function createTimer() {
   let startTime: number | null = null;
   let accumulatedTime = 0;
+  let isRunning = false;
+
+  const handleVisibilityChange = () => {
+    if (
+      document.visibilityState === 'hidden' &&
+      isRunning &&
+      startTime !== null
+    ) {
+      accumulatedTime += Date.now() - startTime;
+      startTime = null;
+      isRunning = false;
+    } else if (
+      document.visibilityState === 'visible' &&
+      !isRunning &&
+      startTime === null
+    ) {
+      startTime = Date.now();
+      isRunning = true;
+    }
+  };
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+  }
 
   return {
     start: () => {
-      if (startTime === null) startTime = Date.now();
+      if (startTime === null) {
+        startTime = Date.now();
+        isRunning = true;
+      }
     },
     stop: () => {
       if (startTime !== null) {
         accumulatedTime += Date.now() - startTime;
         startTime = null;
+        isRunning = false;
       }
       return accumulatedTime;
     },
     reset: () => {
       startTime = Date.now();
       accumulatedTime = 0;
+      isRunning = true;
     },
     clear: () => {
       startTime = null;
       accumulatedTime = 0;
+      isRunning = false;
+      if (typeof document !== 'undefined') {
+        document.removeEventListener(
+          'visibilitychange',
+          handleVisibilityChange
+        );
+      }
     },
     getTime: () => {
       if (startTime !== null) {

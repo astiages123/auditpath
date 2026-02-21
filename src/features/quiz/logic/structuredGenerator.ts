@@ -6,11 +6,13 @@ import {
 } from '@/features/quiz/services/quizInfoService';
 import { parseJsonResponse } from './quizParser';
 import { logger } from '@/utils/logger';
+import { type AITask, getTaskConfig } from '@/utils/aiConfig';
 
 export interface StructuredOptions<T> {
   schema: z.ZodSchema<T>;
   maxTokens?: number;
-  provider: LLMProvider;
+  provider?: LLMProvider;
+  task?: AITask;
   temperature?: number;
   maxRetries?: number;
   retryPromptTemplate?: string;
@@ -28,7 +30,6 @@ export class StructuredGenerator {
   ): Promise<T | null> {
     const {
       schema,
-      provider,
       maxRetries = 2,
       retryPromptTemplate = DEFAULT_RETRY_PROMPT,
       onLog,
@@ -48,17 +49,22 @@ export class StructuredGenerator {
 
       let lastResponse: AIResponse | null = null;
       try {
+        const effectiveProvider =
+          options.provider ||
+          getTaskConfig(options.task || 'drafting').provider;
+
         const response: AIResponse = await rateLimiter.schedule(
           () =>
             UnifiedLLMClient.generate(currentMessages, {
-              provider,
+              provider: options.provider,
               model: options.model,
-              temperature: options.temperature ?? 0.1,
-              usageType: options.usageType,
+              task: options.task,
+              temperature: options.temperature,
+              usageType: options.usageType || options.task,
               maxTokens: options.maxTokens,
               onLog,
             }),
-          provider
+          effectiveProvider
         );
         lastResponse = response;
 

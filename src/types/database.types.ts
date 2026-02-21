@@ -271,7 +271,6 @@ export type Database = {
           course_id: string;
           course_name: string;
           created_at: string | null;
-          display_content: string | null;
           id: string;
           last_synced_at: string | null;
           metadata: Json | null;
@@ -285,7 +284,6 @@ export type Database = {
           course_id: string;
           course_name: string;
           created_at?: string | null;
-          display_content?: string | null;
           id?: string;
           last_synced_at?: string | null;
           metadata?: Json | null;
@@ -301,7 +299,6 @@ export type Database = {
           course_id?: string;
           course_name?: string;
           created_at?: string | null;
-          display_content?: string | null;
           id?: string;
           last_synced_at?: string | null;
           metadata?: Json | null;
@@ -631,6 +628,33 @@ export type Database = {
           },
         ];
       };
+      user_quotas: {
+        Row: {
+          created_at: string | null;
+          daily_limit: number | null;
+          last_reset_date: string | null;
+          updated_at: string | null;
+          used_today: number | null;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string | null;
+          daily_limit?: number | null;
+          last_reset_date?: string | null;
+          updated_at?: string | null;
+          used_today?: number | null;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string | null;
+          daily_limit?: number | null;
+          last_reset_date?: string | null;
+          updated_at?: string | null;
+          used_today?: number | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       users: {
         Row: {
           created_at: string;
@@ -721,7 +745,7 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'Video_courseId_fkey';
-            columns: ['course_id'];
+            columns: ['video_id'];
             isOneToOne: false;
             referencedRelation: 'courses';
             referencedColumns: ['id'];
@@ -774,6 +798,7 @@ export type Database = {
       };
     };
     Functions: {
+      check_and_increment_quota: { Args: { p_user_id: string }; Returns: Json };
       get_course_content_version: {
         Args: { p_course_id: string };
         Returns: string;
@@ -782,6 +807,7 @@ export type Database = {
         Args: { username_input: string };
         Returns: string;
       };
+      get_user_quota_info: { Args: never; Returns: Json };
       increment_course_session: {
         Args: { p_course_id: string; p_user_id: string };
         Returns: {

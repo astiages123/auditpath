@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useQuiz } from '@/features/quiz/hooks/useQuiz';
+import { useQuizEngine } from '@/features/quiz/hooks/useQuizEngine';
 import { QuizView } from './QuizView';
 
 interface QuizContainerProps {
@@ -24,7 +24,7 @@ export function QuizContainer({
     nextQuestion,
     previousQuestion,
     toggleExplanation,
-  } = useQuiz();
+  } = useQuizEngine();
 
   useEffect(() => {
     if (user?.id && courseId) {

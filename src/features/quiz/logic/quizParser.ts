@@ -1,6 +1,9 @@
 import { type Json } from '@/types/database.types';
 import {
-  ChunkMetadataSchema,
+  AILogicSchema,
+  BatchGeneratedQuestionSchema,
+  BatchValidationResult,
+  BatchValidationResultSchema,
   type ConceptMapItem,
   ConceptMapResponseSchema,
   type GeneratedQuestion,
@@ -10,15 +13,16 @@ import {
   ValidationResultSchema,
 } from '@/features/quiz/types';
 import {
-  ANALYSIS_SYSTEM_PROMPT,
-  buildDraftingTaskPrompt,
-  buildValidationTaskPrompt,
+  buildAnalysisPrompt,
+  buildBatchValidationPrompt,
+  buildDraftingPrompt,
+  buildValidationPrompt,
   GLOBAL_AI_SYSTEM_PROMPT,
   PromptArchitect,
   VALIDATION_SYSTEM_PROMPT,
 } from '@/features/quiz/logic/prompts';
 import { StructuredGenerator } from '@/features/quiz/logic/structuredGenerator';
-import { getAIConfig } from '@/utils/aiConfig';
+import { getTaskConfig } from '@/utils/aiConfig';
 import { isValid, parseOrThrow } from '@/utils/validation';
 import { logger } from '@/utils/logger';
 import { getSubjectGuidelines } from '@/features/quiz/services/quizInfoService';
@@ -124,7 +128,7 @@ export async function runChunkAnalysis(input: {
   sectionTitle: string;
   importance: 'high' | 'medium' | 'low';
 }) {
-  const systemPrompt = ANALYSIS_SYSTEM_PROMPT(
+  const systemPrompt = buildAnalysisPrompt(
     input.sectionTitle,
     input.courseName,
     input.importance
@@ -132,7 +136,7 @@ export async function runChunkAnalysis(input: {
   const contextPrompt = PromptArchitect.buildContext(
     PromptArchitect.cleanReferenceImages(input.content)
   );
-  const aiConfig = getAIConfig();
+  const aiConfig = getTaskConfig('analysis');
 
   const messages = PromptArchitect.assemble(
     aiConfig.systemPromptPrefix
@@ -144,9 +148,7 @@ export async function runChunkAnalysis(input: {
 
   return await StructuredGenerator.generate(messages, {
     schema: ConceptMapResponseSchema,
-    provider: aiConfig.provider,
-    model: aiConfig.model,
-    usageType: 'analysis',
+    task: 'analysis',
   });
 }
 
@@ -162,12 +164,12 @@ export async function draftQuestion(input: {
     input.concept,
     input.courseName
   );
-  const taskPrompt = buildDraftingTaskPrompt(
-    input.concept,
+  const taskPrompt = buildDraftingPrompt(
+    [input.concept],
     strategy,
     input.usageType
   );
-  const aiConfig = getAIConfig();
+  const aiConfig = getTaskConfig('drafting');
 
   const messages = PromptArchitect.assemble(
     aiConfig.systemPromptPrefix
@@ -180,9 +182,7 @@ export async function draftQuestion(input: {
 
   const result = await StructuredGenerator.generate(messages, {
     schema: GeneratedQuestionSchema,
-    provider: aiConfig.provider,
-    model: aiConfig.model,
-    usageType: 'drafting',
+    task: 'drafting',
   });
 
   if (!result) return null;
@@ -195,6 +195,59 @@ export async function draftQuestion(input: {
   } as GeneratedQuestion;
 }
 
+export async function draftBatch(input: {
+  concepts: { concept: ConceptMapItem; index: number }[];
+  courseName: string;
+  usageType: 'antrenman' | 'deneme' | 'arsiv';
+  sharedContextPrompt: string;
+}): Promise<GeneratedQuestion[] | null> {
+  if (input.concepts.length === 0) return [];
+
+  const strategy = determineNodeStrategy(
+    input.concepts[0].index,
+    input.concepts[0].concept,
+    input.courseName
+  );
+  const taskPrompt = buildDraftingPrompt(
+    input.concepts.map((c) => c.concept),
+    strategy,
+    input.usageType
+  );
+  const aiConfig = getTaskConfig('drafting');
+
+  const messages = PromptArchitect.assemble(
+    aiConfig.systemPromptPrefix
+      ? aiConfig.systemPromptPrefix + '\n' + GLOBAL_AI_SYSTEM_PROMPT
+      : GLOBAL_AI_SYSTEM_PROMPT,
+    input.sharedContextPrompt,
+    taskPrompt +
+      '\n\n### ZORUNLU JSON FORMATI\nLütfen cevabını sadece geçerli bir JSON objesi olarak döndür.'
+  );
+
+  const result = await StructuredGenerator.generate(messages, {
+    schema: BatchGeneratedQuestionSchema,
+    task: 'drafting',
+  });
+
+  if (!result) return null;
+
+  return result.questions.map((q, i) => {
+    // LLM might return fewer questions than requested in case of error, handle gently
+    const inputConcept = input.concepts[i] || input.concepts[0];
+    const itemStrategy = determineNodeStrategy(
+      inputConcept.index,
+      inputConcept.concept,
+      input.courseName
+    );
+    return {
+      ...q,
+      bloomLevel: itemStrategy.bloomLevel,
+      img: q.img ?? null,
+      concept: inputConcept.concept.baslik,
+    } as GeneratedQuestion;
+  });
+}
+
 export async function validateQuestion(
   question: GeneratedQuestion,
   content: string
@@ -202,8 +255,8 @@ export async function validateQuestion(
   const contextPrompt = PromptArchitect.buildContext(
     PromptArchitect.cleanReferenceImages(content)
   );
-  const taskPrompt = buildValidationTaskPrompt(question);
-  const aiConfig = getAIConfig();
+  const taskPrompt = buildValidationPrompt(question);
+  const aiConfig = getTaskConfig('validation');
 
   const messages = PromptArchitect.assemble(
     aiConfig.systemPromptPrefix
@@ -215,9 +268,7 @@ export async function validateQuestion(
 
   const result = await StructuredGenerator.generate(messages, {
     schema: ValidationResultSchema,
-    provider: aiConfig.provider,
-    model: aiConfig.model,
-    usageType: 'validation',
+    task: 'validation',
   });
 
   if (result) {
@@ -226,6 +277,42 @@ export async function validateQuestion(
     } else if (result.total_score < 70 && result.decision === 'APPROVED') {
       result.decision = 'REJECTED';
     }
+    return result;
+  }
+  return null;
+}
+
+export async function validateBatch(
+  questions: GeneratedQuestion[],
+  content: string
+): Promise<BatchValidationResult | null> {
+  const contextPrompt = PromptArchitect.buildContext(
+    PromptArchitect.cleanReferenceImages(content)
+  );
+  const taskPrompt = buildBatchValidationPrompt(questions);
+  const aiConfig = getTaskConfig('validation');
+
+  const messages = PromptArchitect.assemble(
+    aiConfig.systemPromptPrefix
+      ? aiConfig.systemPromptPrefix + '\n' + VALIDATION_SYSTEM_PROMPT
+      : VALIDATION_SYSTEM_PROMPT,
+    contextPrompt,
+    taskPrompt
+  );
+
+  const result = await StructuredGenerator.generate(messages, {
+    schema: BatchValidationResultSchema,
+    task: 'validation',
+  });
+
+  if (result) {
+    result.results.forEach((r) => {
+      if (r.total_score >= 70 && r.decision === 'REJECTED') {
+        r.decision = 'APPROVED';
+      } else if (r.total_score < 70 && r.decision === 'APPROVED') {
+        r.decision = 'REJECTED';
+      }
+    });
     return result;
   }
   return null;
@@ -243,7 +330,7 @@ export async function reviseQuestion(
   )}\n\n## KRİTİK HATALAR:\n${validationResult.critical_faults.join(
     '\n'
   )}\n\n## ÖNERİ:\n${validationResult.improvement_suggestion}`;
-  const aiConfig = getAIConfig();
+  const aiConfig = getTaskConfig('revision');
 
   const messages = PromptArchitect.assemble(
     aiConfig.systemPromptPrefix
@@ -255,9 +342,7 @@ export async function reviseQuestion(
 
   const result = await StructuredGenerator.generate(messages, {
     schema: GeneratedQuestionSchema,
-    provider: aiConfig.provider,
-    model: aiConfig.model,
-    usageType: 'revision',
+    task: 'revision',
   });
 
   if (result) {
@@ -309,18 +394,24 @@ export async function generateForChunk(
     const chunk = await Repository.getChunkWithContent(chunkId);
     if (!chunk) throw new Error('Chunk not found');
 
-    const metadata = isValid(ChunkMetadataSchema, chunk.metadata)
-      ? parseOrThrow(ChunkMetadataSchema, chunk.metadata)
+    const aiLogic = isValid(AILogicSchema, chunk.ai_logic)
+      ? parseOrThrow(AILogicSchema, chunk.ai_logic)
       : {};
-    let concepts: ConceptMapItem[] =
-      (metadata.concept_map as ConceptMapItem[]) || [];
-    let difficultyIndex = metadata.difficulty_index || 3;
 
-    if (concepts.length === 0) {
+    const existingConcepts: ConceptMapItem[] =
+      (aiLogic.concept_map as ConceptMapItem[]) || [];
+
+    // CACHE CONTROL: Skip analysis if we have valid concepts and it's not invalidated
+    const isCacheValid = existingConcepts.length > 0 && !aiLogic.invalidated_at;
+
+    let concepts: ConceptMapItem[] = existingConcepts;
+    let difficultyIndex = aiLogic.difficulty_index || 3;
+
+    if (!isCacheValid) {
       log('MAPPING', 'Konunun kritik noktaları belirleniyor...');
       const strategy = getSubjectStrategy((chunk.course_name as string) || '');
       const analysisResult = await runChunkAnalysis({
-        content: (chunk.display_content as string) || (chunk.content as string),
+        content: chunk.content as string,
         courseName: (chunk.course_name as string) || '',
         sectionTitle: (chunk.section_title as string) || '',
         importance: strategy?.importance || 'medium',
@@ -332,15 +423,20 @@ export async function generateForChunk(
       concepts = analysisResult.concepts;
       difficultyIndex = analysisResult.difficulty_index;
 
-      await Repository.updateChunkMetadata(chunkId, {
-        ...((chunk.metadata || {}) as Record<string, unknown>),
+      await Repository.updateChunkAILogic(chunkId, {
+        ...((chunk.ai_logic || {}) as Record<string, unknown>),
         concept_map: concepts as Json,
         difficulty_index: difficultyIndex,
-      });
+        generated_at: new Date().toISOString(),
+        invalidated_at: null, // Reset invalidation
+      } as Record<string, Json>);
+    } else {
+      log('MAPPING', 'Önceden oluşturulmuş kavram haritası yükleniyor...');
     }
 
     const quotas = calculateQuotas(concepts);
     await Repository.updateChunkAILogic(chunkId, {
+      ...((chunk.ai_logic || {}) as Record<string, unknown>),
       suggested_quotas: quotas,
       reasoning: 'Otomatik pedagojik kotalar.',
     } as Record<string, Json>);
@@ -360,7 +456,7 @@ export async function generateForChunk(
       (chunk.course_name as string) || ''
     );
     const cleanContent = PromptArchitect.cleanReferenceImages(
-      (chunk.display_content as string) || (chunk.content as string)
+      chunk.content as string
     );
     const sharedContext = PromptArchitect.buildContext(
       cleanContent,
@@ -377,6 +473,13 @@ export async function generateForChunk(
         type === 'antrenman'
           ? concepts
           : shuffle([...concepts]).slice(0, typeQuotas);
+
+      // --- NEW BATCHING LOGIC START ---
+      let draftingBuffer: {
+        index: number;
+        concept: ConceptMapItem;
+      }[] = [];
+      const BATCH_SIZE = 3;
 
       for (
         let i = 0;
@@ -396,69 +499,124 @@ export async function generateForChunk(
           continue;
         }
 
-        let question = await draftQuestion({
-          concept,
-          index: i,
-          courseName: (chunk.course_name as string) || '',
-          usageType: type,
-          sharedContextPrompt: sharedContext,
-        });
-        if (!question) continue;
+        draftingBuffer.push({ index: i, concept });
 
-        const validation = await validateQuestion(question, cleanContent);
-        if (validation?.decision === 'REJECTED') {
-          const revised = await reviseQuestion(
-            question,
-            validation,
-            sharedContext
+        const isLastIteration =
+          i === targetConcepts.length - 1 ||
+          draftingBuffer.length + totalGeneratedCount >= totalTarget;
+
+        if (
+          draftingBuffer.length >= BATCH_SIZE ||
+          (isLastIteration && draftingBuffer.length > 0)
+        ) {
+          log(
+            'GENERATING',
+            `${draftingBuffer.length} adet kavram için soru tasarlanıyor...`
           );
-          if (!revised) {
+
+          const draftedBatchResult = await draftBatch({
+            concepts: draftingBuffer,
+            courseName: (chunk.course_name as string) || '',
+            usageType: type,
+            sharedContextPrompt: sharedContext,
+          });
+
+          if (draftedBatchResult) {
             log(
-              'REVISION',
-              `Revizyon başarısız, kavram atlanıyor: ${concept.baslik}`
+              'VALIDATING',
+              `${draftedBatchResult.length} soruluk bir grup doğrulanıyor...`
             );
-            continue;
+            const validationResponse = await validateBatch(
+              draftedBatchResult,
+              cleanContent
+            );
+
+            for (let j = 0; j < draftedBatchResult.length; j++) {
+              const bufferItem = draftingBuffer[j];
+              if (!bufferItem) continue; // Safety check if LLM returned more questions than concepts
+
+              let question = draftedBatchResult[j];
+              const validation = validationResponse?.results.find(
+                (r: BatchValidationResult['results'][number]) => r.index === j
+              );
+
+              if (!validation || validation.decision === 'REJECTED') {
+                log(
+                  'REVISION',
+                  `${bufferItem.concept.baslik} sorusu için revizyon yapılıyor...`
+                );
+                // Max retries for batches will be implicitly 1 via individual reviseQuestion call
+                const revised = await reviseQuestion(
+                  question,
+                  validation || {
+                    index: j,
+                    total_score: 0,
+                    decision: 'REJECTED',
+                    critical_faults: ['Batch validation error'],
+                    improvement_suggestion:
+                      'Soru formatı tamamen hatalı, lütfen yönergelere uyarak tekrar yazın',
+                  },
+                  sharedContext
+                );
+
+                if (!revised) {
+                  log(
+                    'REVISION',
+                    `Revizyon başarısız, kavram atlanıyor: ${bufferItem.concept.baslik}`
+                  );
+                  continue;
+                }
+                question = revised;
+              }
+
+              log(
+                'SAVING',
+                `${bufferItem.concept.baslik} kütüphaneye ekleniyor...`
+              );
+              const { error: saveErr } = await Repository.createQuestion({
+                chunk_id: chunk.id as string,
+                course_id: chunk.course_id as string,
+                section_title: chunk.section_title as string,
+                usage_type: type,
+                bloom_level: (question.bloomLevel || 'knowledge') as
+                  | 'knowledge'
+                  | 'analysis'
+                  | 'application'
+                  | null
+                  | undefined,
+                created_by: options.userId,
+                question_data: {
+                  q: question.q,
+                  o: question.o,
+                  a: question.a,
+                  exp: question.exp,
+                  img: question.img,
+                  evidence: question.evidence,
+                  diagnosis: question.diagnosis,
+                  insight: question.insight,
+                },
+                concept_title: bufferItem.concept.baslik,
+              });
+
+              if (!saveErr) {
+                totalGeneratedCount++;
+                callbacks.onQuestionSaved(totalGeneratedCount);
+              }
+            }
           }
-          question = revised;
-        }
 
-        const { error: saveErr } = await Repository.createQuestion({
-          chunk_id: chunk.id as string,
-          course_id: chunk.course_id as string,
-          section_title: chunk.section_title as string,
-          usage_type: type,
-          bloom_level: (question.bloomLevel || 'knowledge') as
-            | 'knowledge'
-            | 'analysis'
-            | 'application'
-            | null
-            | undefined,
-          created_by: options.userId,
-          question_data: {
-            q: question.q,
-            o: question.o,
-            a: question.a,
-            exp: question.exp,
-            img: question.img,
-            evidence: question.evidence,
-            diagnosis: question.diagnosis,
-            insight: question.insight,
-          },
-          concept_title: concept.baslik,
-        });
-
-        if (!saveErr) {
-          totalGeneratedCount++;
-          callbacks.onQuestionSaved(totalGeneratedCount);
+          draftingBuffer = [];
         }
       }
     }
 
     await Repository.updateChunkStatus(chunkId, 'COMPLETED');
+    log('COMPLETED', 'Tüm işlemler başarıyla tamamlandı!');
     callbacks.onComplete({ success: true, generated: totalGeneratedCount });
   } catch (e: unknown) {
     const error = e as Error;
     parserLogger.error('Generation Error:', error);
+    log('ERROR', `Hata oluştu: ${error.message}`);
     callbacks.onError(error.message || 'Error occurred during generation.');
     await Repository.updateChunkStatus(chunkId, 'FAILED');
   }

@@ -1,4 +1,4 @@
-import { QuizQuestion } from '../types';
+import { type QuizQuestion } from '@/features/quiz/types';
 
 export const MOCK_QUESTIONS: QuizQuestion[] = [
   {

@@ -84,7 +84,7 @@ export const DistractionDetails = ({ sessions }: DistractionDetailsProps) => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex flex-col items-center text-center">
+        <div className="bg-surface border border-border-subtle p-5 rounded-2xl flex flex-col items-center text-center">
           <div className="p-3 bg-violet-500/10 rounded-xl mb-3">
             <Timer className="w-5 h-5 text-violet-400" />
           </div>
@@ -102,7 +102,7 @@ export const DistractionDetails = ({ sessions }: DistractionDetailsProps) => {
           </span>
         </div>
 
-        <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex flex-col items-center">
+        <div className="bg-surface border border-border-subtle p-5 rounded-2xl flex flex-col items-center">
           <div className="p-3 bg-amber-500/10 rounded-xl mb-3">
             <ZapOff className="w-5 h-5 text-amber-400" />
           </div>
@@ -117,7 +117,7 @@ export const DistractionDetails = ({ sessions }: DistractionDetailsProps) => {
           </span>
         </div>
 
-        <div className="bg-white/5 border border-white/10 p-5 rounded-2xl flex flex-col items-center">
+        <div className="bg-surface border border-border-subtle p-5 rounded-2xl flex flex-col items-center">
           <div className="p-3 bg-rose-500/10 rounded-xl mb-3">
             <Clock className="w-5 h-5 text-rose-400" />
           </div>
@@ -169,7 +169,7 @@ export const DistractionDetails = ({ sessions }: DistractionDetailsProps) => {
             ))}
           </div>
         ) : (
-          <div className="p-12 text-center rounded-2xl bg-white/2 border border-dashed border-white/10">
+          <div className="p-12 text-center rounded-2xl bg-white/2 border border-dashed border-border-subtle">
             <Info className="w-8 h-8 text-muted-foreground/20 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">
               Bugün henüz bir duraklatma kaydedilmedi.

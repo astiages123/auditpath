@@ -81,7 +81,7 @@ export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
                   </TooltipTrigger>
                   <TooltipContent
                     side="top"
-                    className="bg-card/95 backdrop-blur-md border-white/10 p-3 shadow-xl"
+                    className="bg-card/95 backdrop-blur-md border-border-subtle p-3 shadow-xl"
                   >
                     <div className="text-xs space-y-1">
                       <p className="font-medium text-white">
@@ -91,7 +91,7 @@ export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
                         <span
                           className={cn(
                             'w-2 h-2 rounded-full',
-                            level === 0 ? 'bg-white/10' : 'bg-emerald-500'
+                            level === 0 ? 'bg-surface-hover' : 'bg-emerald-500'
                           )}
                         />
                         {day.totalMinutes} dk odaklanma

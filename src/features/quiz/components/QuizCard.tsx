@@ -182,7 +182,7 @@ function QuizCardComponent({
       className="w-full mx-auto py-1 md:py-2 flex flex-col h-full overflow-hidden"
     >
       <div
-        className={`flex flex-col lg:flex-row gap-4 md:gap-6 h-full min-h-0 ${isAnswered && showExplanation ? 'overflow-y-auto lg:overflow-hidden' : 'overflow-hidden'}`}
+        className={`flex flex-col lg:flex-row gap-4 md:gap-4 h-full min-h-0 ${isAnswered && showExplanation ? 'overflow-y-auto lg:overflow-hidden' : 'overflow-hidden'}`}
       >
         {/* Question Side */}
         <motion.div
@@ -192,7 +192,7 @@ function QuizCardComponent({
           transition={{ type: 'spring', damping: 32, stiffness: 160 }}
           className={`w-full flex-shrink-0 flex flex-col transition-all duration-500 ${
             isAnswered && showExplanation
-              ? 'h-auto lg:h-full lg:w-[65%]'
+              ? 'h-auto lg:h-full lg:w-[64%]'
               : 'h-full w-full'
           }`}
         >
@@ -292,7 +292,7 @@ function QuizCardComponent({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ type: 'spring', damping: 32, stiffness: 160 }}
-              className="w-full lg:w-[35%] h-auto lg:h-full min-h-0 flex-shrink-0"
+              className="w-full lg:flex-1 h-auto lg:h-full min-h-0"
             >
               <div className="bg-card border border-white/5 rounded-2xl overflow-hidden shadow-2xl h-full flex flex-col">
                 <ExplanationPanel

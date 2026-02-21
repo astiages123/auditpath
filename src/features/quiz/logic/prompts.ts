@@ -14,7 +14,7 @@ Sadece ve sadece aşağıdaki JSON şemasına uygun çıktı ver. Markdown veya 
 LaTeX ifadeleri için JSON içinde çift ters eğik çizgi kullanmak (\\) EN KRİTİK kuraldır. Aksi takdirde sistem çöker.
 {
   "q": "Soru metni... (Gerekirse [GÖRSEL: X] içerir, LaTeX içerirse \\\\ komutlarını MUTLAKA çiftle)",
-  "o": ["A", "B", "C", "D", "E"],
+  "o": ["Seçenek 1", "Seçenek 2", "Seçenek 3", "Seçenek 4", "Seçenek 5"], // A), B) gibi harfler KESİNLİKLE EKLEMEYİN. Sade metin/LaTeX olmalı.
   "a": 0, // 0-4 arası index
   "exp": "Açıklama... (LaTeX içerirse \\\\ komutlarını MUTLAKA çiftle)",
   "evidence": "Cevabı doğrulayan metin alıntısı...",
@@ -103,12 +103,12 @@ export class PromptArchitect {
 
 // --- Dynamic Prompt Builders ---
 
-export const ANALYSIS_SYSTEM_PROMPT = (
+export function buildAnalysisPrompt(
   sectionTitle: string,
   courseName: string,
   importance: string = 'medium'
-) =>
-  `Sen Uzman bir Eğitim İçerik Analistisin (KPSS A Grubu). 
+): string {
+  return `Sen Uzman bir Eğitim İçerik Analistisin (KPSS A Grubu). 
 Görev: ${courseName} altındaki **"${sectionTitle}"** başlıklı metni tarayarak kapsamlı bir soru bankası haritası oluştur.
 BU DERSİN ÖNEM DERECESİ: ${importance.toUpperCase()}
 Belirli bir sayıya odaklanma. Metindeki 10 üzerinden 7 ve üzeri önem puanına sahip **TÜM** kavramları ve **TÜM** istisnaları (Exception Hunter) çıkar. Metin yoğunsa çok, sığ ise az kavram döndür.
@@ -138,18 +138,19 @@ Sadece saf JSON objesi döndür. Markdown bloğu (\`\`\`) veya giriş cümlesi e
   "difficulty_index": 3, 
   "concepts": [...]
 }`;
+}
 
 export const GLOBAL_AI_SYSTEM_PROMPT =
   'Sen KPSS formatında, akademik dille soru yazan uzman bir yapay zekasın. SADECE JSON formatında çıktı ver. Cevabın dışında hiçbir metin, yorum veya markdown karakteri bulunmamalıdır.';
 
-export function buildDraftingTaskPrompt(
-  concept: ConceptMapItem,
+export function buildDraftingPrompt(
+  concepts: ConceptMapItem[],
   strategy: { bloomLevel: string; instruction: string },
   usageType: 'antrenman' | 'deneme' | 'arsiv' = 'antrenman',
   previousDiagnoses?: string[]
 ): string {
   const parts = [
-    `AMAÇ: Metni analiz ederek, belirtilen pedagojik stratejiye uygun tek bir soru üretmek.`,
+    `AMAÇ: Metni analiz ederek, belirtilen pedagojik stratejiye uygun, verilen her bir kavram için TEK BİR SORU (toplamda ${concepts.length} soru) üretmek.`,
     `---`,
   ];
 
@@ -171,20 +172,26 @@ LATEX FORMAT ZORUNLULUĞU:
 - Tüm sayısal verileri, matematiksel formülleri, değişkenleri ($x, y, P, Q$) ve teknik sembolleri ($IS-LM, \\sigma^2, \\alpha$ vb.) **hem soru metninde (q) hem de açıklamada (exp)** KESİNLİKLE LaTeX formatında yaz.
 - Örn: "faiz oranı %5" yerine "$r = 5\\%$" veya "$P = 100$" şeklinde.`);
 
-  parts.push(`HEDEF KAVRAM VE ODAK:
+  const conceptsText = concepts
+    .map((concept, index) => {
+      let text = `### Soru - İndeks [${index}]
 - Kavram: ${concept.baslik}
 - Odak Noktası: ${concept.odak}
-- Bloom Seviyesi: ${concept.seviye || strategy.bloomLevel}`);
+- Bloom Seviyesi: ${concept.seviye || strategy.bloomLevel}`;
+      if (concept.gorsel) {
+        text += `\nGÖRSEL REFERANSI: Soruyu kurgularken '${concept.gorsel}' görseline atıfta bulun veya görselin açıkladığı durumu senaryolaştır.${
+          concept.altText
+            ? `\nGörsel Açıklaması (Alt-Text): ${concept.altText}`
+            : ''
+        }`;
+      }
+      return text;
+    })
+    .join('\n\n');
 
-  if (concept.gorsel) {
-    parts.push(
-      `GÖRSEL REFERANSI: Soruyu kurgularken '${concept.gorsel}' görseline atıfta bulun veya görselin açıkladığı durumu senaryolaştır.${
-        concept.altText
-          ? `\nGörsel Açıklaması (Alt-Text): ${concept.altText}`
-          : ''
-      }`
-    );
-  }
+  parts.push(
+    `HEDEF KAVRAMLAR VE ODAK NOKTALARI (Her biri için indeks sırasını koruyarak ayrı bir soru üret):\n\n${conceptsText}`
+  );
 
   parts.push(`PEDAGOJİK STRATEJİ:
 ${strategy.instruction}
@@ -198,8 +205,25 @@ Kullanıcı bu konuda daha önce şu hataları yaptı. Soruları üretirken bu z
 ${previousDiagnoses.map((d) => `- ${d}`).join('\n')}`);
   }
 
+  parts.push(`ŞIK (SEÇENEK) KURALLARI:
+- 'o' dizisi içindeki her bir eleman SADECE seçeneğin kendisini içermelidir.
+- Şıkların başına "A) ", "B- ", "1. " gibi harf veya rakam KESİNLİKLE koymayın. Sistem bunları otomatik eklemektedir.
+- Örn: "A) Türkiye" yerine sadece "Türkiye" yazın.`);
+
   parts.push(
-    `Lütfen BAĞLAM METNİNİ referans alarak soruyu oluştur ve SADECE JSON döndür.`
+    `Lütfen BAĞLAM METNİNİ referans alarak soruları oluştur ve SADECE JSON döndür.
+Çıktı Formatı:
+{
+  "questions": [
+    {
+      "q": "soru metni",
+      "o": ["şık 1", "şık 2", "şık 3", "şık 4", "şık 5"],
+      "a": 0,
+      "exp": "açıklama",
+      "evidence": "kanıt"
+    }
+  ]
+}`
   );
 
   return parts.join('\n\n');
@@ -225,6 +249,7 @@ Soruyu 100 tam puan üzerinden değerlendir. Aşağıdaki her bir hata için bel
 - **Total Score < 70 ise:** "REJECTED" (Yukarıdaki tablodan en az bir ciddi hata yapılmış demektir)
 
 **ÖNEMLİ:**
+- Her bir soruyu diğerlerinden bağımsız olarak değerlendir.
 - Eğer karar "APPROVED" ise: \`critical_faults\` dizisini BOŞ bırak ([]), \`improvement_suggestion\` alanını BOŞ string ("") bırak.
 - Eğer karar "REJECTED" ise: Hataları ve düzeltme önerisini yaz.
 
@@ -233,7 +258,7 @@ Soruyu 100 tam puan üzerinden değerlendir. Aşağıdaki her bir hata için bel
 - Soru teknik olarak doğru ve çözülebilir ise, "daha iyi olabilirdi" diye reddetme, ONAYLA.
 
 ## ÇIKTI FORMATI (ZORUNLU):
-Sadece aşağıdaki JSON yapısını döndür:
+SADECE aşağıdaki JSON yapısını döndür:
 {
   "total_score": 0-100 arası sayı,
   "decision": "APPROVED" veya "REJECTED",
@@ -241,18 +266,60 @@ Sadece aşağıdaki JSON yapısını döndür:
   "improvement_suggestion": "öneri"
 }`;
 
-export function buildValidationTaskPrompt(question: {
-  q: string;
-  o: string[];
-  a: number;
-  exp: string;
-}): string {
+export const BATCH_VALIDATION_SYSTEM_PROMPT = `## ROL
+Sen AuditPath için "Güvenlik ve Doğruluk Kontrolü Uzmanısın".
+Görevin: Üretilen KPSS sorularının teknik ve bilimsel doğruluğunu kontrol etmektir. "HATA YOKLUĞU"na odaklanmalısın.
+
+## DEĞERLENDİRME KRİTERLERİ VE PUAN KIRMA TABLOSU
+Soruyu 100 tam puan üzerinden değerlendir. Aşağıdaki her bir hata için belirtilen puanı KESİNTİSİZ düş:
+
+| Hata Türü | Kesilecek Puan | Açıklama |
+| :--- | :--- | :--- |
+| **Bilimsel/Teknik Hata** | **-100 Puan** | Bilgi hatası, yanlış çözüm veya metne aykırılık (Anında REJECTED). |
+| **Çeldirici Zayıflığı** | **-40 Puan** | Mantıksız, bariz yanlış veya soruyla ilgisiz şıklar. |
+| **LaTeX Yazım Hatası** | **-30 Puan** | Ters eğik çizgi hataları ($ veya \\\\ eksikliği) ve JSON kaçış hataları. |
+| **Açıklama/Kanıt Uyumsuzluğu** | **-30 Puan** | exp veya evidence alanının soruyla veya metinle çelişmesi. |
+| **Akademik Dil Uyumsuzluğu** | **-20 Puan** | KPSS formatına uymayan laubali veya basit anlatım. |
+
+## KARAR MEKANİZMASI
+- **Total Score >= 70 ise:** "APPROVED"
+- **Total Score < 70 ise:** "REJECTED" (Yukarıdaki tablodan en az bir ciddi hata yapılmış demektir)
+
+**ÖNEMLİ:**
+- Her bir soruyu diğerlerinden bağımsız olarak değerlendir.
+- Eğer karar "APPROVED" ise: \`critical_faults\` dizisini BOŞ bırak ([]), \`improvement_suggestion\` alanını BOŞ string ("") bırak.
+- Eğer karar "REJECTED" ise: Hataları ve düzeltme önerisini yaz.
+
+## GÜVENLİK KONTROLÜ (SAFETY CHECK) İLKESİ
+- Sadece bariz hataları, halüsinasyonları ve teknik yanlışları reddet.
+- Soru teknik olarak doğru ve çözülebilir ise, "daha iyi olabilirdi" diye reddetme, ONAYLA.
+
+## ÇIKTI FORMATI (ZORUNLU):
+Birden fazla soruyu tek seferde değerlendireceksin. Her soru için girdiğinde verilen 'index' değerini koruyarak SADECE aşağıdaki JSON yapısını döndür:
+{
+  "results": [
+    {
+      "index": 0,
+      "total_score": 0-100 arası sayı,
+      "decision": "APPROVED" veya "REJECTED",
+      "critical_faults": ["hata1", "hata2"],
+      "improvement_suggestion": "öneri"
+    }
+  ]
+}`;
+
+import { type GeneratedQuestion } from '@/features/quiz/types';
+
+export function buildValidationPrompt(question: GeneratedQuestion): string {
   const optionsText = question.o
-    .map((opt: string, i: number) => `${String.fromCharCode(65 + i)}) ${opt}`)
-    .join('\n');
+    .map(
+      (opt: string, index: number) =>
+        `${String.fromCharCode(65 + index)}) ${opt}`
+    )
+    .join('\\n');
   const correctAnswer = String.fromCharCode(65 + question.a);
 
-  return `## DEĞERLENDİRİLECEK SORU:
+  return `Aşağıdaki soruyu kaynak metne göre değerlendir:
 
 **Soru:** ${question.q}
 
@@ -261,11 +328,28 @@ ${optionsText}
 
 **Doğru Cevap:** ${correctAnswer}
 
-**Açıklama:** ${question.exp}
+**Açıklama/Kanıt:** ${question.exp}
 
----
+Lütfen sadece belirtilen formatta geçerli bir JSON döndür.`;
+}
 
-Yukarıdaki soruyu kaynak metne göre değerlendir ve JSON formatında puanla.`;
+export function buildBatchValidationPrompt(
+  questions: GeneratedQuestion[]
+): string {
+  const questionsText = questions
+    .map((question, index) => {
+      const optionsText = question.o
+        .map(
+          (opt: string, i: number) => `${String.fromCharCode(65 + i)}) ${opt}`
+        )
+        .join('\n');
+      const correctAnswer = String.fromCharCode(65 + question.a);
+
+      return `### Soru - İndeks [${index}]\n\n**Soru:** ${question.q}\n\n**Şıklar:**\n${optionsText}\n\n**Doğru Cevap:** ${correctAnswer}\n\n**Açıklama:** ${question.exp}\n\n---`;
+    })
+    .join('\n\n');
+
+  return `## DEĞERLENDİRİLECEK SORULAR:\n\n${questionsText}\n\nYukarıdaki soruları kaynak metne göre ayrı ayrı değerlendir ve SADECE istenen formattaki JSON'u üret.`;
 }
 
 export const BLOOM_INSTRUCTIONS = {
@@ -277,7 +361,7 @@ export const BLOOM_INSTRUCTIONS = {
     "Metindeki iki farklı kavramı karşılaştıran veya bir kuralın istisnasını sorgulayan 'muhakeme' odaklı bir soru üret. Soru, 'X olursa Y nasıl etkilenir?' gibi neden-sonuç zinciri kurdurmalıdır.",
 };
 
-export function buildFollowUpTaskPrompt(
+export function buildFollowUpPrompt(
   evidence: string,
   originalQuestion: { q: string; o: string[]; a: number; exp: string },
   incorrectOptionIndex: number,

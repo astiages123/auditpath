@@ -74,10 +74,24 @@ export const QuestionStatusSchema = z.enum([
 // Chunk Metadata Schemas
 // ============================================================================
 
-export const ChunkMetadataSchema = z.object({
+export const AILogicSchema = z.object({
   difficulty_index: z.number().optional(),
   concept_map: z.array(ConceptMapItemSchema).optional(),
+  suggested_quotas: z
+    .object({
+      antrenman: z.number(),
+      arsiv: z.number(),
+      deneme: z.number(),
+    })
+    .optional(),
+  reasoning: z.string().optional(),
+  generated_at: z.string().optional(), // ISO date of analysis
+  invalidated_at: z.string().optional(), // ISO date if manually or automatically invalidated
 });
+
+export type ValidatedAILogic = z.infer<typeof AILogicSchema>;
+
+export const ChunkMetadataSchema = z.object({}).passthrough();
 
 export type ValidatedChunkMetadata = z.infer<typeof ChunkMetadataSchema>;
 
@@ -150,10 +164,9 @@ export const ChunkWithContentSchema = z.object({
   metadata: z.unknown(),
   status: z.string(),
   content: z.string(),
-  display_content: z.string().nullable(),
   course_name: z.string().nullable(),
   section_title: z.string().nullable(),
-  ai_logic: z.record(z.string(), z.unknown()).optional(),
+  ai_logic: z.unknown(),
 });
 
 // ============================================================================
@@ -227,6 +240,14 @@ export const GeneratedQuestionSchema = z.object({
   insight: z.string().max(500).nullable().optional(),
 });
 
+export const BatchGeneratedQuestionSchema = z.object({
+  questions: z.array(GeneratedQuestionSchema),
+});
+
+export type BatchGeneratedQuestion = z.infer<
+  typeof BatchGeneratedQuestionSchema
+>;
+
 export const ValidationResultSchema = z.preprocess(
   (data: unknown) => {
     const item = data as Record<string, unknown>;
@@ -266,6 +287,20 @@ export const ValidationResultSchema = z.preprocess(
 );
 
 export type ValidationResult = z.infer<typeof ValidationResultSchema>;
+
+export const BatchValidationResultSchema = z.object({
+  results: z.array(
+    z.object({
+      index: z.number(),
+      total_score: z.coerce.number().min(0).max(100),
+      decision: z.enum(['APPROVED', 'REJECTED']),
+      critical_faults: z.array(z.string()).default([]),
+      improvement_suggestion: z.string().default(''),
+    })
+  ),
+});
+
+export type BatchValidationResult = z.infer<typeof BatchValidationResultSchema>;
 
 export type GenerationStep =
   | 'INIT'

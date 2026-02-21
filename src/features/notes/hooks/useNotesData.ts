@@ -72,10 +72,7 @@ export function useNotesData({
           const metadata = chunk.metadata as { images?: string[] } | null;
           return {
             ...chunk,
-            content: processTopicContent(
-              chunk.display_content || chunk.content,
-              metadata
-            ),
+            content: processTopicContent(chunk.content, metadata),
           };
         });
 

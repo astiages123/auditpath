@@ -4,13 +4,17 @@ import { DRY_RUN, MAX_CONCURRENT_PAGES, NOTION_DATABASE_ID } from './config';
 import { notion, supabase } from './clients';
 import { setupCalloutTransformer } from './clients';
 import { processPage } from './page-processor';
-import type { PageObjectResponse, SyncStatistics } from './types';
+import type {
+  NoteChunksSelect,
+  PageObjectResponse,
+  SyncStatistics,
+} from './types';
 
 export async function syncNotionToSupabase(): Promise<SyncStatistics> {
   const startTime = new Date();
   console.log(`Starting sync... (Dry Run: ${DRY_RUN})`);
 
-  setupCalloutTransformer();
+  await setupCalloutTransformer();
 
   console.log('Fetching courses from Supabase for lookup...');
   const { data: coursesData, error: coursesError } = await supabase
@@ -34,31 +38,37 @@ export async function syncNotionToSupabase(): Promise<SyncStatistics> {
   console.log('Fetching existing chunks for fast lookup...');
   const { data: allChunks, error: chunksError } = await supabase
     .from('note_chunks')
-    .select('course_id, section_title, metadata');
+    .select('course_id, section_title, metadata, ai_logic');
 
   if (chunksError) {
     console.error('Error fetching existing chunks:', chunksError);
   }
 
-  const existingChunksMap = new Map<string, number>();
-  if (allChunks) {
-    (
-      allChunks as {
-        course_id: string;
-        section_title: string;
-        metadata: {
-          notion_last_edited_time?: string;
-        } | null;
-      }[]
-    ).forEach((chunk) => {
+  const existingChunksMap = new Map<
+    string,
+    { timestamp: number; metadata: Record<string, unknown>; aiLogic: unknown }
+  >();
+  if (allChunks && allChunks.length > 0) {
+    (allChunks as NoteChunksSelect[]).forEach((chunk) => {
       const key = `${chunk.course_id}:::${chunk.section_title}`;
-      if (chunk.metadata) {
-        const meta = chunk.metadata;
-        if (meta && meta.notion_last_edited_time) {
-          existingChunksMap.set(
-            key,
-            new Date(meta.notion_last_edited_time).getTime()
-          );
+      const meta = chunk.metadata as Record<string, unknown> | null;
+      const aiLogic = chunk.ai_logic;
+      if (meta && meta.notion_last_edited_time) {
+        const time = new Date(meta.notion_last_edited_time as string).getTime();
+        if (!isNaN(time)) {
+          const existing = existingChunksMap.get(key)?.timestamp || 0;
+          if (time >= existing) {
+            existingChunksMap.set(key, {
+              timestamp: time,
+              metadata: meta,
+              aiLogic,
+            });
+          }
+        }
+      } else if (meta) {
+        const existing = existingChunksMap.get(key);
+        if (!existing) {
+          existingChunksMap.set(key, { timestamp: 0, metadata: meta, aiLogic });
         }
       }
     });
@@ -66,6 +76,11 @@ export async function syncNotionToSupabase(): Promise<SyncStatistics> {
   console.log(
     `Loaded ${existingChunksMap.size} existing chunks into cache map.`
   );
+  if (existingChunksMap.size === 0 && allChunks && allChunks.length > 0) {
+    console.log(
+      'Warning: Chunks found but no valid metadata. Check if metadata keys match.'
+    );
+  }
 
   console.log('Connecting to Notion...');
   const response = await notion.databases.query({

@@ -27,7 +27,7 @@ const ScoreBoard = ({
 }) => {
   return (
     <div className="flex items-center gap-2">
-      <div className="flex flex-col items-center justify-center size-15 rounded-xl bg-emerald-900/50">
+      <div className="flex-col flex-center size-15 rounded-xl bg-emerald-900/50">
         <span className="text-sm font-black text-white leading-none">
           {correct}
         </span>
@@ -35,7 +35,7 @@ const ScoreBoard = ({
           Doğru
         </span>
       </div>
-      <div className="flex flex-col items-center justify-center size-15 rounded-xl bg-rose-900/50">
+      <div className="flex-col flex-center size-15 rounded-xl bg-rose-900/50">
         <span className="text-sm font-black text-white leading-none">
           {incorrect}
         </span>
@@ -43,7 +43,7 @@ const ScoreBoard = ({
           Yanlış
         </span>
       </div>
-      <div className="flex flex-col items-center justify-center size-15 rounded-xl bg-amber-900/50">
+      <div className="flex-col flex-center size-15 rounded-xl bg-amber-900/50">
         <span className="text-sm font-black text-white leading-none">
           {blank}
         </span>
@@ -64,7 +64,7 @@ const QuizHistoryContent = ({ quizzes }: { quizzes: RecentQuizSession[] }) => (
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
-          className="p-4 rounded-2xl bg-white/3 border border-white/5 hover:bg-white/6 transition-all group flex items-center justify-between"
+          className="p-4 rounded-2xl bg-white/3 border border-white/5 hover:bg-white/6 transition-all group flex-between"
         >
           <div className="flex flex-col gap-1">
             <h4 className="font-semibold text-white/90 group-hover:text-emerald-400 transition-colors">
@@ -114,10 +114,10 @@ export const RecentQuizzesCard = () => {
       <GlassCard className="h-full flex flex-col p-6">
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-xl bg-white/5" />
+            <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-32 bg-white/5" />
-              <Skeleton className="h-3 w-48 bg-white/5" />
+              <Skeleton className="h-4 w-32 bg-surface" />
+              <Skeleton className="h-3 w-48 bg-surface" />
             </div>
           </div>
         </div>
@@ -127,12 +127,12 @@ export const RecentQuizzesCard = () => {
               key={i}
               className="p-4 rounded-2xl bg-white/3 border border-white/5"
             >
-              <div className="flex justify-between items-center">
+              <div className="flex-between">
                 <div className="space-y-2">
-                  <Skeleton className="h-4 w-32 bg-white/5" />
-                  <Skeleton className="h-3 w-24 bg-white/5" />
+                  <Skeleton className="h-4 w-32 bg-surface" />
+                  <Skeleton className="h-3 w-24 bg-surface" />
                 </div>
-                <Skeleton className="h-8 w-12 bg-white/5" />
+                <Skeleton className="h-8 w-12 bg-surface" />
               </div>
             </div>
           ))}
@@ -167,7 +167,7 @@ export const RecentQuizzesCard = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: index * 0.1 }}
-                    className="p-4 rounded-2xl bg-white/3 border border-white/5 hover:bg-white/6 transition-all group flex items-center justify-between"
+                    className="p-4 rounded-2xl bg-white/3 border border-white/5 hover:bg-white/6 transition-all group flex-between"
                   >
                     <div className="flex flex-col gap-0.5">
                       <span className="text-sm font-semibold text-white/90 group-hover:text-emerald-400 transition-colors">
@@ -203,7 +203,7 @@ export const RecentQuizzesCard = () => {
                   </motion.div>
                 ))
               ) : (
-                <div className="flex-1 flex flex-col items-center justify-center py-10 text-muted-foreground/30">
+                <div className="flex-1 flex-col flex-center py-10 text-muted-foreground/30">
                   <ClipboardCheck className="w-12 h-12 mb-3 opacity-20" />
                   <p className="text-sm font-medium">Henüz test verisi yok</p>
                 </div>

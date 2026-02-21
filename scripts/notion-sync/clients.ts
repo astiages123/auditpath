@@ -8,7 +8,15 @@ import {
   SUPABASE_URL,
   validateConfig,
 } from './config';
-import type { Database, RichTextItemResponse } from './types';
+import type {
+  Database,
+  RichTextItemResponse,
+  BlockObjectResponse,
+} from './types';
+
+type BlockWithChildren = BlockObjectResponse & {
+  children?: BlockObjectResponse[];
+};
 
 validateConfig();
 
@@ -19,95 +27,88 @@ export const supabase = createClient<Database>(
 );
 export const n2m = new NotionToMarkdown({ notionClient: notion });
 
-export function setupCalloutTransformer(): void {
-  n2m.setCustomTransformer('callout', async (block) => {
-    const { id, has_children } = block as { id: string; has_children: boolean };
-    const { callout } = block as {
-      callout: {
-        icon: {
-          type: string;
-          emoji?: string;
-          external?: { url: string };
-        } | null;
-        rich_text: RichTextItemResponse[];
-      };
-    };
-    if (!callout || !callout.rich_text) return false;
+export async function setupCalloutTransformer(): Promise<void> {
+  n2m.setCustomTransformer(
+    'callout',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async (block: any) => {
+      const callout = block.callout;
+      if (!callout || !callout.rich_text) return false;
 
-    let icon = '';
-    if (callout.icon) {
-      if (callout.icon.type === 'emoji') {
-        icon = callout.icon.emoji || '';
-      }
-    }
-
-    let titleContent = '';
-    try {
-      const tempBlock = {
-        object: 'block',
-        type: 'paragraph',
-        paragraph: { rich_text: callout.rich_text },
-      };
-      const mdResult = await n2m.blockToMarkdown(
-        tempBlock as Parameters<typeof n2m.blockToMarkdown>[0]
-      );
-
-      if (typeof mdResult === 'string') {
-        titleContent = mdResult;
-      } else if (
-        mdResult &&
-        typeof mdResult === 'object' &&
-        'parent' in mdResult
-      ) {
-        titleContent = (mdResult as { parent: string }).parent;
-      } else {
-        const strObj = n2m.toMarkdownString(
-          mdResult as Parameters<typeof n2m.toMarkdownString>[0]
-        );
-        titleContent = typeof strObj === 'string' ? strObj : strObj.parent;
-      }
-    } catch {
-      titleContent = callout.rich_text
-        .map((t: RichTextItemResponse) => t.plain_text)
-        .join('');
-    }
-
-    let childrenContent = '';
-    if (has_children) {
-      let children = (block as { children?: Record<string, unknown>[] })
-        .children;
-      if (!children || children.length === 0) {
-        try {
-          const response = await notion.blocks.children.list({ block_id: id });
-          children = response.results as Record<string, unknown>[];
-        } catch (err) {
-          console.error(`Error fetching children for callout ${id}:`, err);
+      let icon = '';
+      if (callout.icon) {
+        if (callout.icon.type === 'emoji') {
+          icon = callout.icon.emoji || '';
         }
       }
 
-      if (children && children.length > 0) {
-        const mdBlocks = await n2m.blocksToMarkdown(
-          children as Parameters<typeof n2m.blocksToMarkdown>[0]
-        );
-        const mdStringObj = n2m.toMarkdownString(mdBlocks);
-        childrenContent =
-          typeof mdStringObj === 'string' ? mdStringObj : mdStringObj.parent;
+      let titleContent = '';
+      try {
+        const tempBlock = {
+          object: 'block',
+          type: 'paragraph',
+          paragraph: { rich_text: callout.rich_text },
+        };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const mdResult = await n2m.blockToMarkdown(tempBlock as any);
+        titleContent =
+          typeof mdResult === 'string'
+            ? mdResult
+            : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (mdResult as any).parent || '';
+      } catch {
+        titleContent = callout.rich_text
+          .map((t: RichTextItemResponse) => t.plain_text)
+          .join('');
       }
+
+      let childrenContent = '';
+      if (block.has_children) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const children = (block as any).children;
+        if (children && children.length > 0) {
+          const mdBlocks = await n2m.blocksToMarkdown(children);
+          const mdStringObj = n2m.toMarkdownString(mdBlocks);
+          childrenContent =
+            typeof mdStringObj === 'string' ? mdStringObj : mdStringObj.parent;
+        }
+      }
+
+      const trimmedTitle = titleContent.trim();
+      const firstPart = icon ? `${icon} ${trimmedTitle}` : trimmedTitle;
+      let combined = firstPart;
+
+      if (childrenContent) {
+        combined += `\n${childrenContent}`;
+      }
+
+      return combined
+        .split('\n')
+        .map((line) => `> ${line}`)
+        .join('\n');
     }
+  );
+}
 
-    const trimmedTitle = titleContent.trim();
-    const firstPart = icon ? `${icon} ${trimmedTitle}` : trimmedTitle;
-    let combined = firstPart;
+import pLimit from 'p-limit';
+const blockLimit = pLimit(10);
 
-    if (childrenContent) {
-      combined += `\n${childrenContent}`;
+export async function getBlocksWithChildren(
+  blockId: string
+): Promise<BlockObjectResponse[]> {
+  const response = await notion.blocks.children.list({ block_id: blockId });
+  const blocks = response.results as BlockObjectResponse[];
+
+  const childPromises = blocks.map((block) => {
+    const blockWithChildren = block as BlockWithChildren;
+    if (blockWithChildren.has_children) {
+      return blockLimit(async () => {
+        blockWithChildren.children = await getBlocksWithChildren(block.id);
+      });
     }
-
-    const formatted = combined
-      .split('\n')
-      .map((line) => `> ${line}`)
-      .join('\n');
-
-    return formatted;
+    return Promise.resolve();
   });
+
+  await Promise.all(childPromises);
+  return blocks;
 }

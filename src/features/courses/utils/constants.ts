@@ -1,4 +1,7 @@
-export type CourseCategory = 'SKILL_BASED' | 'SCENARIO_BASED' | 'THEORY_BASED';
+export type CourseCategory =
+  | 'SCENARIO_BASED'
+  | 'THEORY_BASED'
+  | 'FULL_PRACTICE';
 
 export const EXAM_STRATEGY: Record<
   string,
@@ -31,11 +34,17 @@ export const EXAM_STRATEGY: Record<
 };
 
 export const CATEGORY_MAPPINGS: Record<string, CourseCategory> = {
-  İngilizce: 'SKILL_BASED',
-  'Sözel Mantık': 'SKILL_BASED',
-  Matematik: 'SKILL_BASED',
-  'Sayısal Mantık': 'SKILL_BASED',
-  İstatistik: 'SKILL_BASED',
+  // FULL_PRACTICE (%100 Uygulama/İşlem)
+  İngilizce: 'FULL_PRACTICE',
+  'Sözel Mantık': 'FULL_PRACTICE',
+  Matematik: 'FULL_PRACTICE',
+  'Sayısal Mantık': 'FULL_PRACTICE',
+  İstatistik: 'FULL_PRACTICE',
+  'Finans Matematiği': 'FULL_PRACTICE',
+  'Genel Muhasebe': 'FULL_PRACTICE',
+  'Finansal Yönetim': 'FULL_PRACTICE',
+
+  // SCENARIO_BASED (%20B - %50U - %30A)
   'Medeni Hukuk': 'SCENARIO_BASED',
   'Borçlar Hukuku': 'SCENARIO_BASED',
   'Ticaret Hukuku': 'SCENARIO_BASED',
@@ -44,10 +53,9 @@ export const CATEGORY_MAPPINGS: Record<string, CourseCategory> = {
   'Türk Ceza Kanunu': 'SCENARIO_BASED',
   'İş Hukuku': 'SCENARIO_BASED',
   'Medeni Usul Hukuku': 'SCENARIO_BASED',
-  'Genel Muhasebe': 'SCENARIO_BASED',
   'Banka Muhasebesi': 'SCENARIO_BASED',
-  'Finans Matematiği': 'SCENARIO_BASED',
-  'Finansal Yönetim': 'SCENARIO_BASED',
+
+  // THEORY_BASED (%30B - %30U - %40A)
   'Mikro İktisat': 'THEORY_BASED',
   'Makro İktisat': 'THEORY_BASED',
   'Para, Banka ve Kredi': 'THEORY_BASED',
@@ -64,18 +72,6 @@ export const CATEGORY_DISTRIBUTIONS: Record<
   CourseCategory,
   ('knowledge' | 'application' | 'analysis')[]
 > = {
-  SKILL_BASED: [
-    'knowledge',
-    'application',
-    'application',
-    'application',
-    'application',
-    'application',
-    'application',
-    'analysis',
-    'analysis',
-    'analysis',
-  ],
   SCENARIO_BASED: [
     'knowledge',
     'knowledge',
@@ -84,20 +80,32 @@ export const CATEGORY_DISTRIBUTIONS: Record<
     'application',
     'application',
     'application',
-    'application',
+    'analysis',
     'analysis',
     'analysis',
   ],
   THEORY_BASED: [
     'knowledge',
     'knowledge',
-    'application',
-    'application',
-    'application',
+    'knowledge',
     'application',
     'application',
     'application',
     'analysis',
     'analysis',
+    'analysis',
+    'analysis',
+  ],
+  FULL_PRACTICE: [
+    'application',
+    'application',
+    'application',
+    'application',
+    'application',
+    'application',
+    'application',
+    'application',
+    'application',
+    'application',
   ],
 };

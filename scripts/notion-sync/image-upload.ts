@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import { DRY_RUN } from './config';
 import { supabase } from './clients';
 
@@ -17,7 +18,6 @@ export async function uploadImageAsWebP(
     if (!response.ok) return null;
 
     const buffer = await response.arrayBuffer();
-    const sharp = (await import('sharp')).default;
     const webpBuffer = await sharp(Buffer.from(buffer))
       .resize({ width: 1200, withoutEnlargement: true })
       .webp({ quality: 80 })

@@ -107,6 +107,18 @@ export const SessionGanttChart = ({
     }
   };
 
+  const ganttTooltipClass = cn(
+    'tooltip-float',
+    '-top-14 left-1/2 -translate-x-1/2 text-white bg-[#1a1c1e]',
+    'flex flex-col items-center gap-0.5 min-w-[130px]',
+    'border-border-subtle shadow-2xl translate-y-2 group-hover:translate-y-0 text-[10px]'
+  );
+
+  const ganttFallbackBlockClass = cn(
+    'absolute h-10 rounded-full bg-primary border border-primary/50',
+    'flex items-center px-2 overflow-hidden whitespace-nowrap text-xs transition-all'
+  );
+
   return (
     <div className="w-full h-full min-h-[150px] relative border-l border-border mt-4">
       {/* Time markers */}
@@ -160,7 +172,7 @@ export const SessionGanttChart = ({
               {/* If no timeline, show simple block */}
               {events.length === 0 ? (
                 <div
-                  className="absolute h-10 rounded-full bg-primary border border-primary/50 flex items-center px-2 overflow-hidden whitespace-nowrap text-xs transition-all"
+                  className={ganttFallbackBlockClass}
                   style={{
                     left: `${sessionLeft}%`,
                     width: `calc(${Math.max(0.5, sessionWidth)}% - 2px)`,
@@ -212,7 +224,7 @@ export const SessionGanttChart = ({
                           </div>
                         )}
                         {/* Tooltip on hover */}
-                        <div className="absolute -top-14 left-1/2 -translate-x-1/2 bg-[#1a1c1e] text-white px-3 py-2 rounded-lg text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all pointer-events-none border border-white/10 z-30 shadow-2xl flex flex-col items-center gap-0.5 min-w-[130px] translate-y-2 group-hover:translate-y-0">
+                        <div className={ganttTooltipClass}>
                           <span className="font-bold text-xs mb-1 tracking-wide">
                             {block.type === 'work'
                               ? 'DERS'
@@ -235,10 +247,10 @@ export const SessionGanttChart = ({
                               })}
                             </span>
                           </div>
-                          <div className="mt-1 px-2 py-0.5 bg-white/10 rounded-full text-[9px] font-bold">
+                          <div className="mt-1 px-2 py-0.5 bg-surface-hover rounded-full text-[9px] font-bold">
                             {Math.round((bEnd - bStart) / 60000)} DK
                           </div>
-                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1a1c1e] border-r border-b border-white/10 rotate-45"></div>
+                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1a1c1e] border-r border-b border-border-subtle rotate-45"></div>
                         </div>
                       </div>
                     );

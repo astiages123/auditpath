@@ -1,16 +1,18 @@
 import type { Database } from '../../src/types/database.types';
 
 import type {
+  BlockObjectResponse,
+  CalloutBlockObjectResponse,
   PageObjectResponse,
   RichTextItemResponse,
 } from '@notionhq/client/build/src/api-endpoints';
 
-export type { PageObjectResponse, RichTextItemResponse };
-
-export interface ChunkData {
-  content: string;
-  displayContent: string;
-}
+export type {
+  BlockObjectResponse,
+  CalloutBlockObjectResponse,
+  PageObjectResponse,
+  RichTextItemResponse,
+};
 
 export interface ProcessedImageResult {
   content: string;
@@ -35,6 +37,9 @@ export interface SyncStatistics {
 
 export type NoteChunksInsert =
   Database['public']['Tables']['note_chunks']['Insert'];
+
+export type NoteChunksSelect =
+  Database['public']['Tables']['note_chunks']['Row'];
 
 export interface ChunkMetadata {
   images: string[];

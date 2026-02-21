@@ -139,7 +139,7 @@ export function QuizModal({
               </ErrorBoundary>
             </div>
           ) : (
-            <div className="grid md:grid-cols-[280px_1fr] h-full min-h-0">
+            <div className="grid md:grid-cols-[280px_1fr] h-full min-h-0 overflow-hidden">
               <TopicSidebar
                 loading={loading}
                 topics={topics}
@@ -199,14 +199,14 @@ export function QuizModal({
                     </div>
                   </div>
                 ) : isGeneratingExam ? (
-                  <div className="flex-1 overflow-y-auto min-h-0">
+                  <div className="flex-1 overflow-hidden min-h-0">
                     <SmartExamView
                       examProgress={examProgress}
                       examLogs={examLogs}
                     />
                   </div>
                 ) : (
-                  <div className="flex-1 overflow-y-auto min-h-0">
+                  <div className="flex-1 overflow-hidden min-h-0">
                     <CourseOverview
                       courseName={courseName}
                       progress={courseProgress}

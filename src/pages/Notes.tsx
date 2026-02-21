@@ -110,14 +110,14 @@ export default function NotesPage() {
     <ErrorBoundary>
       <div className="flex h-screen overflow-hidden bg-background text-foreground font-sans selection:bg-primary/20">
         {/* 1. Left Panel: Global Navigation */}
-        <aside className="w-72 shrink-0 border-r border-border/15 bg-card/10 backdrop-blur-xl hidden lg:block">
+        <aside className="w-72 shrink-0 border-r border-border/15 bg-card/10 backdrop-blur-xl hidden lg:block pt-5">
           <div className="h-20 flex flex-col justify-center px-6 border-b border-border/10 bg-card/5 relative overflow-hidden">
             <Link
               to={ROUTES.HOME}
               className="group inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all duration-300 mb-1.5"
             >
               <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 group-hover:opacity-100">
+              <span className="text-[12px] font-bold uppercase text-foreground group-hover:opacity-100">
                 Kütüphane
               </span>
             </Link>

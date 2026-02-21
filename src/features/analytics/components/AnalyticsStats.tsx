@@ -1,5 +1,12 @@
 import { FC } from 'react';
-import { TrendingUp, Cpu, Zap } from 'lucide-react';
+import {
+  TrendingUp,
+  Cpu,
+  Zap,
+  Activity,
+  HardDrive,
+  Database,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface AnalyticsStatsProps {
@@ -7,6 +14,9 @@ interface AnalyticsStatsProps {
   totalCostUsd: number;
   totalRequests: number;
   cacheHitRate: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCachedTokens: number;
   formatCurrency: (value: number) => string;
 }
 
@@ -15,6 +25,9 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
   totalCostUsd,
   totalRequests,
   cacheHitRate,
+  totalInputTokens,
+  totalOutputTokens,
+  totalCachedTokens,
   formatCurrency,
 }) => {
   return (
@@ -68,6 +81,58 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
           </div>
           <p className="text-xs text-muted-foreground mt-1">
             Önbelleğe alınmış token oranı
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Token Stats Row */}
+      <Card className="bento-card card-hover bg-card/40 border-primary/10">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
+            Toplam Girdi (Prompt)
+          </CardTitle>
+          <Activity className="w-4 h-4 text-emerald-400" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-heading font-black text-white">
+            {totalInputTokens.toLocaleString()}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Tüm analizlerde gönderilen kelime
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="bento-card card-hover bg-card/40 border-primary/10">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
+            Toplam Çıktı (Completion)
+          </CardTitle>
+          <Database className="w-4 h-4 text-purple-400" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-heading font-black text-white">
+            {totalOutputTokens.toLocaleString()}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Yapay zekanın ürettiği kelime
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card className="bento-card card-hover bg-card/40 border-primary/10">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
+            Toplam Cache (Tasarruf)
+          </CardTitle>
+          <HardDrive className="w-4 h-4 text-amber-400" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-3xl font-heading font-black text-white">
+            {totalCachedTokens.toLocaleString()}
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Önbellekten ücretsiz sayılan kelime
           </p>
         </CardContent>
       </Card>

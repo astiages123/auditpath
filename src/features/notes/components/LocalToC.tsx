@@ -53,7 +53,7 @@ export const LocalToC = memo(function LocalToC({
 
                     // Pasif Durum (İnce rehber çizgisi)
                     !isActive &&
-                      'border-border/15 text-muted-foreground/60 hover:text-foreground hover:border-muted-foreground/30',
+                      'border-border/15 border-foreground/20 text-foreground hover:text-foreground hover:border-primary',
 
                     // Aktif Durum (Kalın ve renkli çizgi)
                     isActive &&

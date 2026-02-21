@@ -229,9 +229,12 @@ export const rateLimiter = new RateLimitService();
 // Unified LLM Client (formerly quizClient.ts)
 // ============================================================================
 
+import { type AITask, getTaskConfig } from '@/utils/aiConfig';
+
 export interface LLMClientOptions {
-  provider: LLMProvider;
+  provider?: LLMProvider;
   model?: string;
+  task?: AITask;
   temperature?: number;
   maxTokens?: number;
   usageType?: string;
@@ -240,15 +243,8 @@ export interface LLMClientOptions {
 
 const PROXY_URL = `${env.supabase.url}/functions/v1/ai-proxy`;
 
-const DEFAULT_MODELS: Record<LLMProvider, string> = {
-  cerebras: 'gpt-oss-120b',
-  google: 'gemini-2.5-flash',
-  mimo: 'mimo-v2-flash',
-  deepseek: 'deepseek-chat',
-};
-
 const DEFAULT_CONFIG = {
-  temperature: 0.3,
+  temperature: 0.7,
   maxTokens: 8192,
 };
 
@@ -257,17 +253,23 @@ export class UnifiedLLMClient {
     messages: Message[],
     options: LLMClientOptions
   ): Promise<AIResponse> {
-    const {
-      provider,
-      model,
-      temperature = DEFAULT_CONFIG.temperature,
-      maxTokens = DEFAULT_CONFIG.maxTokens,
-      usageType,
-      onLog,
-    } = options;
+    const { task, usageType, onLog } = options;
 
-    const effectiveModel = model || DEFAULT_MODELS[provider] || 'gpt-oss-120b';
-    this.logStart(provider, effectiveModel, messages, onLog);
+    // Task config override
+    const taskConfig = task ? getTaskConfig(task) : null;
+    const fallbackConfig = getTaskConfig('drafting'); // Global baseline
+
+    const effectiveProvider =
+      options.provider || taskConfig?.provider || fallbackConfig.provider;
+    const effectiveModel =
+      options.model || taskConfig?.model || fallbackConfig.model;
+    const effectiveTemp =
+      options.temperature ??
+      taskConfig?.temperature ??
+      fallbackConfig.temperature;
+    const effectiveMaxTokens = options.maxTokens ?? DEFAULT_CONFIG.maxTokens;
+
+    this.logStart(effectiveProvider, effectiveModel, messages, onLog);
 
     const accessToken = await getCurrentSessionToken();
     if (!accessToken) {
@@ -276,32 +278,32 @@ export class UnifiedLLMClient {
 
     try {
       const response = await this.makeRequest(accessToken, {
-        provider,
+        provider: effectiveProvider,
         model: effectiveModel,
         messages,
-        temperature,
-        max_tokens: maxTokens,
-        usage_type: usageType,
+        temperature: effectiveTemp,
+        max_tokens: effectiveMaxTokens,
+        usage_type: usageType || task || 'general',
       });
 
-      rateLimiter.syncHeaders(response.headers, provider);
+      rateLimiter.syncHeaders(response.headers, effectiveProvider);
 
       if (!response.ok) {
-        await this.handleError(response, provider, onLog);
+        await this.handleError(response, effectiveProvider, onLog);
       }
 
       const data = await response.json();
-      return this.processResponse(data, provider, onLog);
+      return this.processResponse(data, effectiveProvider, onLog);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       if (error instanceof Error && error.name === 'AbortError') {
         const timeoutMsg =
           'Bağlantı zaman aşımına uğradı veya sunucu yanıt vermiyor. Tekrar deneniyor...';
         onLog?.(timeoutMsg);
-        logger.error(`[${provider}] Zaman aşımı`, error);
+        logger.error(`[${effectiveProvider}] Zaman aşımı`, error);
         throw new Error(timeoutMsg);
       }
-      logger.error(`[${provider}] İstek hatası`, new Error(errorMsg));
+      logger.error(`[${effectiveProvider}] İstek hatası`, new Error(errorMsg));
       throw error;
     }
   }

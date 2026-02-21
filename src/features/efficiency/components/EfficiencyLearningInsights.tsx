@@ -133,10 +133,10 @@ export const LearningLoadCard = () => {
       <GlassCard className="h-full flex flex-col p-6">
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-xl bg-white/5" />
+            <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-32 bg-white/5" />
-              <Skeleton className="h-3 w-48 bg-white/5" />
+              <Skeleton className="h-4 w-32 bg-surface" />
+              <Skeleton className="h-3 w-48 bg-surface" />
             </div>
           </div>
         </div>
@@ -144,7 +144,7 @@ export const LearningLoadCard = () => {
           {[...Array(7)].map((_, i) => (
             <Skeleton
               key={i}
-              className="flex-1 rounded-t-lg bg-white/5"
+              className="flex-1 rounded-t-lg bg-surface"
               style={{ height: `${(((i + 1) * 117) % 60) + 20}%` }}
             />
           ))}
@@ -195,12 +195,12 @@ export const MasteryNavigatorCard = () => {
   if (loading)
     return (
       <GlassCard className="h-full flex flex-col p-6">
-        <Skeleton className="h-6 w-48 mb-6 bg-white/5" />
+        <Skeleton className="h-6 w-48 mb-6 bg-surface" />
         <div className="flex-1 space-y-4">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="space-y-2">
-              <Skeleton className="h-4 w-3/4 bg-white/5" />
-              <Skeleton className="h-1.5 w-full bg-white/5" />
+              <Skeleton className="h-4 w-3/4 bg-surface" />
+              <Skeleton className="h-1.5 w-full bg-surface" />
             </div>
           ))}
         </div>
@@ -237,7 +237,7 @@ export const MasteryNavigatorCard = () => {
                       %{node.mastery}
                     </span>
                   </div>
-                  <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-surface rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary transition-all duration-700"
                       style={{ width: `${node.mastery}%` }}
@@ -263,11 +263,11 @@ export const ConsistencyHeatmapCard = () => {
   if (loading)
     return (
       <GlassCard className="h-full flex flex-col p-6">
-        <Skeleton className="h-6 w-48 mb-6 bg-white/5" />
+        <Skeleton className="h-6 w-48 mb-6 bg-surface" />
         <div className="flex-1 w-full flex items-center justify-center">
           <div className="grid grid-cols-7 gap-1.5">
             {[...Array(49)].map((_, i) => (
-              <Skeleton key={i} className="h-3.5 w-3.5 rounded-sm bg-white/5" />
+              <Skeleton key={i} className="h-3.5 w-3.5 rounded-sm bg-surface" />
             ))}
           </div>
         </div>

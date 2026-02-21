@@ -43,7 +43,7 @@ export const EfficiencyChartTab: React.FC<EfficiencyChartTabProps> = ({
   };
 
   return (
-    <div className="space-y-4 bg-white/5 rounded-xl p-4 border border-white/5">
+    <div className="space-y-4 bg-surface rounded-xl p-4 border border-white/5">
       <div className="flex items-center justify-between">
         <div>
           <h4 className="text-sm font-bold text-white uppercase tracking-wider">
@@ -53,13 +53,13 @@ export const EfficiencyChartTab: React.FC<EfficiencyChartTabProps> = ({
             {getLabel()} Performansı
           </span>
         </div>
-        <div className="flex bg-black/20 p-1 rounded-lg border border-white/5">
+        <div className="flex bg-surface p-1 rounded-lg border border-white/5">
           <button
             onClick={() => setRange('week')}
             className={cn(
               'px-3 py-1 text-xs font-medium rounded-md transition-all',
               range === 'week'
-                ? 'bg-white/10 text-white shadow-sm'
+                ? 'bg-surface-hover text-white shadow-sm'
                 : 'text-muted-foreground hover:text-white/80'
             )}
           >
@@ -70,7 +70,7 @@ export const EfficiencyChartTab: React.FC<EfficiencyChartTabProps> = ({
             className={cn(
               'px-3 py-1 text-xs font-medium rounded-md transition-all',
               range === 'month'
-                ? 'bg-white/10 text-white shadow-sm'
+                ? 'bg-surface-hover text-white shadow-sm'
                 : 'text-muted-foreground hover:text-white/80'
             )}
           >
@@ -81,7 +81,7 @@ export const EfficiencyChartTab: React.FC<EfficiencyChartTabProps> = ({
             className={cn(
               'px-3 py-1 text-xs font-medium rounded-md transition-all',
               range === 'all'
-                ? 'bg-white/10 text-white shadow-sm'
+                ? 'bg-surface-hover text-white shadow-sm'
                 : 'text-muted-foreground hover:text-white/80'
             )}
           >

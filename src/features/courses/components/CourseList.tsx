@@ -17,6 +17,7 @@ import { useProgress } from '@/shared/hooks/useProgress';
 import { useCelebration } from '@/shared/hooks/useCelebration';
 import { getCourseIcon } from '../logic/coursesLogic';
 import { type Course } from '@/features/courses/types/courseTypes';
+import { cn } from '@/utils/stringHelpers';
 
 // Lazy load modals to reduce initial bundle size and split CSS (Katex)
 const QuizModal = lazy(() =>
@@ -96,16 +97,44 @@ export function CourseList({
           totalVideos > 0 ? Math.round((completed / totalVideos) * 100) : 0;
         const isCompleted = progress === 100 && totalVideos > 0;
 
+        const courseCardClass = cn(
+          'rounded-xl border overflow-hidden transition-all duration-200 group',
+          isCompleted
+            ? 'border-amber-500/50 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/70 shadow-[0_0_15px_-5px_var(--color-amber-500)]'
+            : 'border-white/5 bg-zinc-900/40 hover:border-white/30 hover:bg-zinc-900/60'
+        );
+
+        const iconContainerClass = cn(
+          'p-3 rounded-xl shrink-0 transition-transform duration-500 group-hover:scale-110',
+          isCompleted
+            ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30'
+            : `${categoryBgColor} ${categoryColor}`
+        );
+
+        const iconClass = cn(
+          'h-6 w-6 sm:h-6 sm:w-6',
+          isCompleted
+            ? 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+            : categoryColor
+        );
+
+        const titleClass = cn(
+          'font-bold text-sm sm:text-base leading-tight transition-colors line-clamp-2',
+          isCompleted ? 'text-amber-200' : 'text-zinc-100'
+        );
+
+        const progressTextClass = cn(
+          'text-sm font-bold ml-auto sm:ml-0 shrink-0',
+          isCompleted ? 'text-amber-400' : categoryColor
+        );
+
+        const completedBadgeClass = cn(
+          'bg-amber-500/20 px-1.5 sm:px-2 py-0.5 rounded text-[10px]',
+          'font-bold text-amber-400 border border-amber-500/30 uppercase tracking-wide shrink-0'
+        );
+
         return (
-          <div
-            key={course.id}
-            className={`rounded-xl border overflow-hidden transition-all duration-200 group
-                ${
-                  isCompleted
-                    ? 'border-amber-500/50 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/70 shadow-[0_0_15px_-5px_var(--color-amber-500)]'
-                    : 'border-white/5 bg-zinc-900/40 hover:border-white/30 hover:bg-zinc-900/60'
-                }`}
-          >
+          <div key={course.id} className={courseCardClass}>
             {/* Course Header */}
             <div className="flex flex-col sm:flex-row p-4 gap-4 w-full">
               {/* Top Row: Icon, Info, Toggle (in mobile row, left flex in desktop) */}
@@ -118,55 +147,42 @@ export function CourseList({
                 }
               >
                 {/* Icon */}
-                <div
-                  className={`p-3 rounded-xl shrink-0 transition-transform duration-500 group-hover:scale-110 ${isCompleted ? 'bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30' : `${categoryBgColor} ${categoryColor}`}`}
-                >
-                  <Icon
-                    className={`h-6 w-6 sm:h-6 sm:w-6 ${isCompleted ? 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]' : categoryColor}`}
-                  />
+                <div className={iconContainerClass}>
+                  <Icon className={iconClass} />
                 </div>
 
                 {/* Info */}
                 <div className="flex flex-col gap-1.5 min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h4
-                      className={`font-bold text-sm sm:text-base leading-tight transition-colors line-clamp-2 ${isCompleted ? 'text-amber-200' : 'text-zinc-100'}`}
-                    >
-                      {displayName}
-                    </h4>
-                    <span
-                      className={`text-sm font-bold ml-auto sm:ml-0 shrink-0 ${isCompleted ? 'text-amber-400' : categoryColor}`}
-                    >
-                      %{progress}
-                    </span>
+                    <h4 className={titleClass}>{displayName}</h4>
+                    <span className={progressTextClass}>%{progress}</span>
                     {isCompleted && (
-                      <div className="bg-amber-500/20 px-1.5 sm:px-2 py-0.5 rounded text-[10px] font-bold text-amber-400 border border-amber-500/30 uppercase tracking-wide shrink-0">
-                        Tamam
-                      </div>
+                      <div className={completedBadgeClass}>Tamam</div>
                     )}
                   </div>
-                  <div className="flex items-center gap-8 text-zinc-100 flex-1">
+                  <div className="flex items-center gap-8 sm:gap-3 text-zinc-100 sm:text-zinc-400 flex-1">
                     {/* Time Stat */}
-                    <div className="flex items-center gap-2 whitespace-nowrap">
-                      <Clock className="h-3.5 w-3.5 text-muted-foreground/40" />
-                      <span className="text-sm font-bold tracking-tight">
+                    <div className="flex items-center gap-2 sm:gap-1 whitespace-nowrap">
+                      <Clock className="h-3.5 w-3.5 sm:h-3 sm:w-3 text-muted-foreground/40" />
+                      <span className="text-sm sm:text-xs font-bold sm:font-medium tracking-tight">
                         {formatDurationShort(totalHours)}
                       </span>
                     </div>
-                    {/* Divider pill */}
-                    <div className="h-6 w-px bg-white/5 mx-1" />
+                    {/* Divider pill - visible only on mobile */}
+                    <div className="h-6 w-px bg-surface mx-1 sm:hidden" />
                     {/* Video Stat */}
-                    <div className="flex items-center gap-2 whitespace-nowrap">
-                      <TvMinimalPlay className="h-3.5 w-3.5 text-muted-foreground/40" />
-                      <span className="text-sm font-bold tracking-tight">
-                        {totalVideos}
+                    <div className="flex items-center gap-2 sm:gap-1 whitespace-nowrap">
+                      <TvMinimalPlay className="h-3.5 w-3.5 sm:h-3 sm:w-3 text-muted-foreground/40" />
+                      <span className="text-sm sm:text-xs font-bold sm:font-medium tracking-tight">
+                        {totalVideos}{' '}
+                        <span className="hidden sm:inline">Video</span>
                       </span>
                     </div>
                   </div>
                 </div>
 
                 {/* Mobile Chevron (visible only on small if we put buttons below) */}
-                <button className="sm:hidden h-10 w-10 flex items-center justify-center rounded-xl bg-zinc-800/50 text-muted-foreground border border-white/5 shrink-0">
+                <button className="sm:hidden h-10 w-10 flex items-center justify-center rounded-xl bg-surface text-muted-foreground border border-white/5 shrink-0">
                   {expandedCourse === course.id ? (
                     <ChevronUp className="h-5 w-5" />
                   ) : (
@@ -184,7 +200,7 @@ export function CourseList({
                       href={course.playlist_url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="h-9 w-9 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg text-red-400 hover:bg-white/10 transition-all"
+                      className="h-9 w-9 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg text-red-400 hover:bg-surface-hover transition-all"
                       title="Youtube Oynatma Listesi"
                     >
                       <Youtube className="h-5 w-5" />
@@ -203,7 +219,7 @@ export function CourseList({
                     to={`/notes/${course.course_slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="h-9 w-9 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg text-blue-400 hover:bg-white/10 transition-all"
+                    className="h-9 w-9 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg text-blue-400 hover:bg-surface-hover transition-all"
                     title="Ders Notu"
                   >
                     <FileText className="h-4 w-4 sm:h-4 sm:w-4" />
@@ -215,7 +231,7 @@ export function CourseList({
                       e.stopPropagation();
                       setSelectedQuizCourse(course);
                     }}
-                    className="h-9 w-9 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg text-purple-400 hover:bg-white/10 transition-all"
+                    className="h-9 w-9 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg text-purple-400 hover:bg-surface-hover transition-all"
                     title="Quiz & Soru Üret"
                   >
                     <Brain className="h-4 w-4 sm:h-4 sm:w-4" />
@@ -227,7 +243,7 @@ export function CourseList({
                       e.stopPropagation();
                       setSelectedStatsCourse(course);
                     }}
-                    className="h-9 w-9 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg text-orange-400 hover:bg-white/10 transition-all"
+                    className="h-9 w-9 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg text-orange-400 hover:bg-surface-hover transition-all"
                     title="İstatistik"
                   >
                     <BarChart2 className="h-4 w-4 sm:h-4 sm:w-4" />
@@ -241,7 +257,7 @@ export function CourseList({
                       expandedCourse === course.id ? null : course.id
                     )
                   }
-                  className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-800/50 text-muted-foreground hover:bg-zinc-800 hover:text-foreground transition-all shrink-0 border border-transparent hover:border-white/5"
+                  className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-surface text-muted-foreground hover:bg-zinc-800 hover:text-foreground transition-all shrink-0 border border-transparent hover:border-white/5"
                 >
                   {expandedCourse === course.id ? (
                     <ChevronUp className="h-5 w-5" />

@@ -137,7 +137,7 @@ export async function getNoteChunkById(chunkId: string) {
 
   const { data, error } = await supabase
     .from('note_chunks')
-    .select('content, metadata, course:courses(course_slug)')
+    .select('content, metadata, ai_logic, course:courses(course_slug)')
     .eq('id', chunkId)
     .single();
 
@@ -169,7 +169,7 @@ export async function getCourseTopics(
   let query = supabase
     .from('note_chunks')
     .select(
-      'id, created_at, course_id, course_name, section_title, chunk_order, content, display_content, status, last_synced_at, metadata, ai_logic'
+      'id, created_at, course_id, course_name, section_title, chunk_order, content, status, last_synced_at, metadata, ai_logic'
     )
     .eq('course_id', courseId)
     .order('chunk_order', { ascending: true });
@@ -190,7 +190,7 @@ export async function getCourseTopics(
   return chunks.map((c) => ({
     ...c,
     questionCount: 0,
-  }));
+  })) as CourseTopic[];
 }
 
 /**
@@ -310,11 +310,11 @@ export async function getTopicQuestions(courseId: string, topic: string) {
 
 export async function fetchCourseChunks(courseId: string) {
   const { data } = await safeQuery<
-    { id: string; metadata: Json; content: string }[]
+    { id: string; metadata: Json; ai_logic: Json; content: string }[]
   >(
     supabase
       .from('note_chunks')
-      .select('id, metadata, content')
+      .select('id, metadata, ai_logic, content')
       .eq('course_id', courseId)
       .eq('status', 'COMPLETED'),
     'fetchCourseChunks error',
@@ -403,6 +403,7 @@ export async function getChunkMastery(
 export async function getChunkMetadata(chunkId: string): Promise<{
   course_id: string;
   metadata: Json;
+  ai_logic: Json;
   status: string;
   content: string;
 } | null> {
@@ -410,12 +411,13 @@ export async function getChunkMetadata(chunkId: string): Promise<{
   const { data } = await safeQuery<{
     course_id: string;
     metadata: Json;
+    ai_logic: Json;
     status: string;
     content: string;
   }>(
     supabase
       .from('note_chunks')
-      .select('course_id, metadata, status, content')
+      .select('course_id, metadata, ai_logic, status, content')
       .eq('id', chunkId)
       .single(),
     'getChunkMetadata error',
@@ -430,7 +432,7 @@ export async function getChunkWithContent(chunkId: string) {
     supabase
       .from('note_chunks')
       .select(
-        'id, course_id, metadata, status, content, display_content, course_name, section_title, ai_logic'
+        'id, course_id, metadata, status, content, course_name, section_title, ai_logic'
       )
       .eq('id', chunkId)
       .single(),

@@ -1,3 +1,4 @@
+import pLimit from 'p-limit';
 import { MAX_CONCURRENT_IMAGES } from './config';
 import { uploadImageAsWebP } from './image-upload';
 import type { ProcessedImageResult } from './types';
@@ -9,27 +10,22 @@ export async function processImagesInMarkdown(
 ): Promise<ProcessedImageResult> {
   const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
   const matches = Array.from(markdown.matchAll(imageRegex));
-  const results: (string | null)[] = [];
 
-  for (let i = 0; i < matches.length; i += MAX_CONCURRENT_IMAGES) {
-    const chunk = matches.slice(i, i + MAX_CONCURRENT_IMAGES);
-    const chunkPromises = chunk.map((match, chunkIndex) => {
-      const originalUrl = match[2];
-      const globalIndex = i + chunkIndex;
+  const limit = pLimit(MAX_CONCURRENT_IMAGES);
+
+  const imagePromises = matches.map((match, index) => {
+    const originalUrl = match[2];
+    return limit(async () => {
       console.log(
-        `Processing image ${globalIndex + 1}/${matches.length} for section "${sectionTitle}"...`
+        `Processing image ${
+          index + 1
+        }/${matches.length} for section "${sectionTitle}"...`
       );
-      return uploadImageAsWebP(
-        originalUrl,
-        courseId,
-        sectionTitle,
-        globalIndex
-      );
+      return uploadImageAsWebP(originalUrl, courseId, sectionTitle, index);
     });
+  });
 
-    const chunkResults = await Promise.all(chunkPromises);
-    results.push(...chunkResults);
-  }
+  const results = await Promise.all(imagePromises);
 
   let processedContent = markdown;
 

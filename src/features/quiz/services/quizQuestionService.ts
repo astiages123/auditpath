@@ -462,19 +462,17 @@ export async function getChunkQuotaStatus(chunkId: string): Promise<{
   conceptCount: number;
 }> {
   const { data: chunkData } = await safeQuery<{
-    metadata: { concept_map?: { length: number } } | null;
+    ai_logic: { concept_map?: { length: number } } | null;
   }>(
-    supabase.from('note_chunks').select('metadata').eq('id', chunkId).single(),
+    supabase.from('note_chunks').select('ai_logic').eq('id', chunkId).single(),
     'getChunkQuotaStatus error',
     { chunkId }
   );
 
   const conceptCount =
-    chunkData?.metadata?.concept_map?.length ||
-    (Array.isArray(chunkData?.metadata?.concept_map)
-      ? chunkData.metadata.concept_map.length
-      : 0) ||
-    5;
+    (Array.isArray(chunkData?.ai_logic?.concept_map)
+      ? chunkData.ai_logic.concept_map.length
+      : 0) || 5;
 
   const { count: existingCount } = await supabase
     .from('questions')

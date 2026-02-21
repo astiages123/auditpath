@@ -217,6 +217,7 @@ export function calculateQuizResult(
   chunkMetadata: {
     content: string | null;
     metadata: Record<string, unknown> | null;
+    ai_logic: Record<string, unknown> | null;
   } | null,
   masteryData: {
     mastery_score: number;
@@ -248,9 +249,9 @@ export function calculateQuizResult(
   let isFast = timeSpentMs < 30000;
   if (questionData && chunkMetadata) {
     const contentLength = chunkMetadata.content?.length || 0;
-    const metadata =
-      (chunkMetadata.metadata as { concept_map?: unknown[] } | null) || {};
-    const conceptCount = metadata.concept_map?.length || 5;
+    const aiLogic =
+      (chunkMetadata.ai_logic as { concept_map?: unknown[] } | null) || {};
+    const conceptCount = aiLogic.concept_map?.length || 5;
 
     const bloomLevel = (questionData.bloom_level as BloomLevel) || 'knowledge';
     const tMaxMs = calculateTMax(contentLength, conceptCount, bloomLevel);

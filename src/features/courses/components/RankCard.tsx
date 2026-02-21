@@ -33,7 +33,7 @@ export function RankCard({
   return (
     <motion.div
       variants={variants}
-      className="lg:col-span-2 lg:row-span-2 relative group overflow-hidden rounded-3xl border border-white/10 bg-linear-to-br from-zinc-900 via-zinc-900 to-zinc-800 p-6 shadow-2xl"
+      className="lg:col-span-2 lg:row-span-2 relative group overflow-hidden rounded-3xl border border-border-subtle bg-linear-to-br from-zinc-900 via-zinc-900 to-zinc-800 p-6 shadow-2xl"
     >
       <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
         <Target className="w-32 h-32" />
@@ -45,7 +45,7 @@ export function RankCard({
             <div className="relative">
               <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
               {showSkeleton ? (
-                <Skeleton className="h-20 w-20 rounded-full bg-zinc-800" />
+                <Skeleton className="h-20 w-20 rounded-full bg-surface-hover" />
               ) : (
                 <img
                   src={currentRankImage}
@@ -59,7 +59,7 @@ export function RankCard({
                 Mevcut Seviye
               </p>
               {showSkeleton ? (
-                <Skeleton className="h-8 w-48 bg-zinc-800" />
+                <Skeleton className="h-8 w-48 bg-surface-hover" />
               ) : (
                 <h3
                   className={cn(
@@ -75,7 +75,7 @@ export function RankCard({
 
           <button
             onClick={onOpenJourney}
-            className="px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold backdrop-blur-md transition-all flex items-center gap-2"
+            className="px-4 py-2 rounded-full bg-surface hover:bg-surface-hover border border-border-subtle text-xs font-semibold backdrop-blur-md transition-all flex items-center gap-2"
           >
             Yolculuğum <ChevronRight className="w-3 h-3" />
           </button>
@@ -88,7 +88,7 @@ export function RankCard({
                 Unvan İlerlemesi
               </span>
               {showSkeleton ? (
-                <Skeleton className="h-4 w-64 bg-zinc-800" />
+                <Skeleton className="h-4 w-64 bg-surface-hover" />
               ) : (
                 <p className="text-xs text-muted-foreground">
                   {nextRank
@@ -98,16 +98,16 @@ export function RankCard({
               )}
             </div>
             {showSkeleton ? (
-              <Skeleton className="h-8 w-16 bg-zinc-800" />
+              <Skeleton className="h-8 w-16 bg-surface-hover" />
             ) : (
               <span className="text-xl font-bold text-white tracking-tighter">
                 {rankProgress}%
               </span>
             )}
           </div>
-          <div className="relative h-3 w-full bg-white/5 rounded-full overflow-hidden">
+          <div className="relative h-3 w-full bg-white/10 rounded-full overflow-hidden">
             {showSkeleton ? (
-              <Skeleton className="h-full w-full bg-zinc-800" />
+              <Skeleton className="h-full w-full bg-surface-hover" />
             ) : (
               <motion.div
                 initial={{ width: 0 }}

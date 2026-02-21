@@ -7,6 +7,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
 const MIMO_API_URL = 'https://api.xiaomimimo.com/v1/chat/completions';
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+const GOOGLE_API_URL =
+  'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 
 interface ProxyRequest {
   provider: 'cerebras' | 'mimo' | 'google' | 'deepseek';
@@ -73,11 +75,60 @@ Deno.serve(async (req: Request) => {
     }
     userId = user.id;
 
+    // 1.5. Check Quota
+    const { data: quotaCheck, error: quotaError } = await adminClient.rpc(
+      'check_and_increment_quota',
+      {
+        p_user_id: userId,
+      }
+    );
+
+    if (quotaError || !quotaCheck?.allowed) {
+      if (userId) {
+        await safeLog(
+          {
+            user_id: userId,
+            provider: 'unknown',
+            model: 'unknown',
+            status: 429,
+            latency_ms: Date.now() - startTime,
+            usage_type: 'quota_exceeded',
+            error_message: quotaError?.message || 'Daily quota reached',
+          },
+          'Quota Error'
+        );
+      }
+      return new Response(
+        JSON.stringify({
+          error: 'Kota Aşıldı',
+          details: 'Günlük maksimum AI isteği sınırına ulaştınız.',
+        }),
+        {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     // 2. Parse Request
     const { provider, messages, model, temperature, max_tokens, usage_type } =
       (await req.json()) as ProxyRequest;
 
     if (!messages) {
+      if (userId) {
+        await safeLog(
+          {
+            user_id: userId,
+            provider: 'unknown',
+            model: 'unknown',
+            status: 400,
+            latency_ms: Date.now() - startTime,
+            usage_type: 'validation_error',
+            error_message: 'messages is required',
+          },
+          'Validation Error'
+        );
+      }
       return new Response(JSON.stringify({ error: 'messages is required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -89,6 +140,20 @@ Deno.serve(async (req: Request) => {
       provider &&
       !['cerebras', 'mimo', 'google', 'deepseek'].includes(provider)
     ) {
+      if (userId) {
+        await safeLog(
+          {
+            user_id: userId,
+            provider: provider,
+            model: 'unknown',
+            status: 400,
+            latency_ms: Date.now() - startTime,
+            usage_type: 'validation_error',
+            error_message: `Invalid provider: ${provider}`,
+          },
+          'Provider Validation'
+        );
+      }
       return new Response(
         JSON.stringify({
           error:
@@ -110,8 +175,7 @@ Deno.serve(async (req: Request) => {
     // Modeli isminden tanı (Otomatik Yönlendirme)
     if (model?.startsWith('gemini')) {
       activeProvider = 'google';
-      apiUrl =
-        'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+      apiUrl = GOOGLE_API_URL;
       apiKey = Deno.env.get('GEMINI_API_KEY');
       targetModel = model;
     } else if (provider === 'mimo') {
@@ -127,6 +191,20 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!apiKey) {
+      if (userId) {
+        await safeLog(
+          {
+            user_id: userId,
+            provider: activeProvider,
+            model: targetModel,
+            status: 500,
+            latency_ms: Date.now() - startTime,
+            usage_type: 'config_error',
+            error_message: `API KEY not configured for ${activeProvider}`,
+          },
+          'Config Error'
+        );
+      }
       return new Response(
         JSON.stringify({
           error: `API KEY not configured for ${activeProvider}`,
@@ -145,6 +223,12 @@ Deno.serve(async (req: Request) => {
       temperature: temperature ?? 0.1,
       max_tokens: max_tokens || 8192,
     };
+
+    // MiMo Thinking modu ve temperature ayarı
+    if (activeProvider === 'mimo') {
+      body.chat_template_kwargs = { enable_thinking: true };
+      body.temperature = 0.3; // Agentic task için
+    }
 
     // DeepSeek JSON Output modu
     if (activeProvider === 'deepseek') {
@@ -208,10 +292,9 @@ Deno.serve(async (req: Request) => {
     }
 
     // 4. Extract Usage & Log
-    // DeepSeek <think> bloğu temizleme
+    // MiMo think temizleme (güvenlik amaçlı)
     let cleanedResponseText = responseText;
-    if (activeProvider === 'deepseek') {
-      // Kapanış etiketi olsun ya da olmasın <think> bloğunu temizle
+    if (activeProvider === 'mimo') {
       cleanedResponseText = responseText
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
         .replace(/<think>[\s\S]*/gi, '')

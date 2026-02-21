@@ -55,6 +55,21 @@ export function useAnalytics() {
   const totalRequests = logs.length;
   const cacheHitRate = useMemo(() => calculateCacheHitRate(logs), [logs]);
 
+  const totalInputTokens = useMemo(
+    () => logs.reduce((acc, log) => acc + (log.prompt_tokens || 0), 0),
+    [logs]
+  );
+
+  const totalOutputTokens = useMemo(
+    () => logs.reduce((acc, log) => acc + (log.completion_tokens || 0), 0),
+    [logs]
+  );
+
+  const totalCachedTokens = useMemo(
+    () => logs.reduce((acc, log) => acc + (log.cached_tokens || 0), 0),
+    [logs]
+  );
+
   const handleLoadMore = () => {
     startTransition(() => {
       setVisibleCount((prev) => prev + 50);
@@ -74,6 +89,9 @@ export function useAnalytics() {
     totalCostTry,
     totalRequests,
     cacheHitRate,
+    totalInputTokens,
+    totalOutputTokens,
+    totalCachedTokens,
     handleLoadMore,
   };
 }

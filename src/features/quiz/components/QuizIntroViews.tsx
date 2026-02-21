@@ -20,6 +20,7 @@ import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { GenerationLog, GenerationStep } from '@/features/quiz/types';
+import { cn } from '@/utils/stringHelpers';
 
 // ============================================================================
 // Course Overview (formerly CourseOverview.tsx)
@@ -53,14 +54,14 @@ export function CourseOverview({ courseName, progress }: CourseOverviewProps) {
   ];
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 h-full space-y-8 animate-in fade-in duration-500">
+    <div className="flex-col flex-center p-8 h-full space-y-8 animate-in fade-in duration-500">
       <div className="text-center space-y-2">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
+          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex-center mb-6">
             <Trophy className="w-8 h-8 text-primary" />
           </div>
           <h2 className="text-3xl font-bold tracking-tight">
@@ -80,7 +81,7 @@ export function CourseOverview({ courseName, progress }: CourseOverviewProps) {
             transition={{ delay: index * 0.1 }}
             className="bg-card border border-border/50 p-4 rounded-2xl flex items-center gap-4 hover:border-border/80 transition-colors"
           >
-            <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
+            <div className={cn('p-3 rounded-xl', stat.bg, stat.color)}>
               <stat.icon className="w-5 h-5" />
             </div>
             <div>
@@ -123,7 +124,7 @@ export const QuotaDisplay: FC<QuotaDisplayProps> = ({
 }) => (
   <div className="space-y-4">
     <div className="space-y-3">
-      <div className="flex items-center justify-between text-sm">
+      <div className="flex-between text-sm">
         <div className="flex items-center gap-2 text-foreground font-medium">
           <Box className="w-4 h-4 text-blue-500" />
           <span>Soru Kotası</span>
@@ -142,9 +143,9 @@ export const QuotaDisplay: FC<QuotaDisplayProps> = ({
       <Progress
         value={loading ? progress : percentage}
         className="h-2"
-        indicatorClassName={
+        indicatorClassName={cn(
           loading ? 'bg-yellow-500 transition-all duration-500' : 'bg-blue-600'
-        }
+        )}
       />
       {loading && currentStep && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -154,7 +155,7 @@ export const QuotaDisplay: FC<QuotaDisplayProps> = ({
       )}
     </div>
     <div className="grid grid-cols-1 gap-4">
-      <div className="rounded-xl bg-muted/50 p-6 flex flex-col items-center justify-center gap-2 border border-border/50">
+      <div className="rounded-xl bg-muted/50 p-6 flex-col flex-center gap-2 border border-border/50">
         <Brain className="w-6 h-6 text-purple-500 mb-1" />
         <span className="text-muted-foreground text-sm font-medium">
           Tespit Edilen Kavram
@@ -177,7 +178,7 @@ interface InitialStateViewProps {
 
 export function InitialStateView({ onGenerate }: InitialStateViewProps) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center w-full min-h-full">
+    <div className="flex-1 flex-col flex-center w-full min-h-full">
       <div className="w-full max-w-md space-y-6 flex flex-col items-center text-center">
         <div className="w-full p-8 bg-amber-500/5 border border-amber-500/20 rounded-2xl space-y-4">
           <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
@@ -260,7 +261,7 @@ export const GenerationLiveStream: FC<GenerationLiveStreamProps> = ({
 
   return (
     <div className="flex-1 overflow-hidden border border-border/50 rounded-lg bg-muted/20">
-      <div className="p-2 border-b border-border/30 bg-muted/30 flex items-center justify-between">
+      <div className="p-2 border-b border-border/30 bg-muted/30 flex-between">
         <span className="text-xs font-medium text-muted-foreground">
           Hazırlık Süreci
         </span>
@@ -275,7 +276,10 @@ export const GenerationLiveStream: FC<GenerationLiveStreamProps> = ({
         {logs.map((log) => (
           <div
             key={log.id}
-            className={`flex items-start gap-2 p-2 rounded-md text-xs ${stepColors[log.step]}`}
+            className={cn(
+              'flex items-start gap-2 p-2 rounded-md text-xs',
+              stepColors[log.step]
+            )}
           >
             <span className="mt-0.5 shrink-0">{stepIcons[log.step]}</span>
             <div className="flex-1 min-w-0">

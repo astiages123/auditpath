@@ -148,7 +148,8 @@ export const AnalyticsTable: FC<AnalyticsTableProps> = ({
                         {log.total_tokens?.toLocaleString()}
                       </span>
                       <span className="text-muted-foreground opacity-60">
-                        P:{log.prompt_tokens} / C:{log.completion_tokens} / CH:
+                        Girdi:{log.prompt_tokens} / Çıktı:
+                        {log.completion_tokens} / Cache:
                         {log.cached_tokens}
                       </span>
                     </div>

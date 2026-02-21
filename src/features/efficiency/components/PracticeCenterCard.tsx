@@ -15,15 +15,15 @@ export const PracticeCenterCard = () => {
       <GlassCard className="h-full flex flex-col p-6">
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-xl bg-white/5" />
+            <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-32 bg-white/5" />
-              <Skeleton className="h-3 w-48 bg-white/5" />
+              <Skeleton className="h-4 w-32 bg-surface" />
+              <Skeleton className="h-3 w-48 bg-surface" />
             </div>
           </div>
         </div>
         <div className="flex-1 w-full flex items-center justify-center">
-          <Skeleton className="h-48 w-48 rounded-full bg-white/5" />
+          <Skeleton className="h-48 w-48 rounded-full bg-surface" />
         </div>
       </GlassCard>
     );

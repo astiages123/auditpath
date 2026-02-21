@@ -2,6 +2,8 @@ import { FC } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Loader2, Brain } from 'lucide-react';
 import { ProgressDots } from './QuizStatus';
+import { cn } from '@/utils/stringHelpers';
+import { Button } from '@/components/ui/button';
 
 // ============================================================================
 // Quiz Footer (Active Answering State)
@@ -39,8 +41,26 @@ export const QuizFooter: FC<QuizFooterProps> = ({
   progressIndex,
   questionResults,
 }) => {
+  const isNextActive = isAnswered || selectedAnswer !== null;
+
+  const footerWrapperClass = cn(
+    'bg-black/30 backdrop-blur-md px-6 md:px-10 py-3 md:py-4 border-t border-white/5',
+    'flex flex-col md:flex-row items-center justify-between gap-4 mt-auto'
+  );
+
+  const prevBtnClass = cn(
+    'flex-1 md:flex-none h-auto py-2 px-2 sm:px-4',
+    'md:w-auto w-full'
+  );
+
+  const nextBtnClass = cn(
+    'flex-1 md:flex-none px-3 sm:px-6 h-auto py-2 font-bold text-xs sm:text-sm',
+    'duration-200 flex font-heading group',
+    isNextActive ? 'shadow-lg shadow-primary/10 hover:bg-primary/90' : ''
+  );
+
   return (
-    <footer className="bg-black/30 backdrop-blur-md px-6 md:px-10 py-3 md:py-4 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4 mt-auto">
+    <footer className={footerWrapperClass}>
       <ProgressDots
         progressQueue={progressQueue}
         progressIndex={progressIndex}
@@ -50,45 +70,48 @@ export const QuizFooter: FC<QuizFooterProps> = ({
 
       <div className="flex items-center gap-2 md:gap-6 w-full md:w-auto">
         {historyLength > 0 && (
-          <button
+          <Button
+            variant="glass-subtle"
             onClick={onPrev}
             disabled={isSubmitting}
-            className="flex-1 md:flex-none px-2 sm:px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/60 hover:bg-white/10 hover:text-white transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-1.5 sm:gap-2"
+            className={prevBtnClass}
           >
             <ArrowLeft className="w-4 h-4" />
             <span className="md:hidden lg:inline text-[10px] sm:text-xs font-bold uppercase tracking-wider whitespace-nowrap">
               Geri
             </span>
-          </button>
+          </Button>
         )}
 
         <AnimatePresence mode="wait">
           {isAnswered && !showExplanation && (
-            <motion.button
+            <motion.div
               initial={{ opacity: 0, scale: 0.9, x: 10 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               exit={{ opacity: 0, scale: 0.9, x: 10 }}
-              onClick={onToggleExplanation}
-              className="flex-1 md:flex-none px-2 sm:px-4 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary hover:bg-primary/20 transition-all active:scale-95 flex items-center justify-center gap-1.5 sm:gap-2"
+              className="flex-1 md:flex-none flex"
             >
-              <Brain className="w-4 h-4" />
-              <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider whitespace-nowrap">
-                Çözümü Gör
-              </span>
-            </motion.button>
+              <Button
+                variant="primary-soft"
+                onClick={onToggleExplanation}
+                className="w-full h-auto py-2 px-2 sm:px-4"
+              >
+                <Brain className="w-4 h-4" />
+                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider whitespace-nowrap">
+                  Çözümü Gör
+                </span>
+              </Button>
+            </motion.div>
           )}
         </AnimatePresence>
 
-        <button
+        <Button
+          variant={isNextActive ? 'default' : 'glass-subtle'}
           onClick={
             isAnswered ? onNext : selectedAnswer !== null ? onConfirm : onBlank
           }
           disabled={isSubmitting}
-          className={`flex-1 md:flex-none px-3 sm:px-6 py-2 rounded-xl font-bold text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-1.5 sm:gap-2 font-heading active:scale-95 disabled:opacity-50 group ${
-            isAnswered || selectedAnswer !== null
-              ? 'bg-primary text-black shadow-lg shadow-primary/10 hover:bg-primary/90'
-              : 'bg-white/5 border border-white/10 text-white/40 hover:bg-white/10 hover:text-white'
-          }`}
+          className={nextBtnClass}
         >
           {isSubmitting ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -102,15 +125,16 @@ export const QuizFooter: FC<QuizFooterProps> = ({
                     : 'Boş Bırak'}
               </span>
               <ArrowRight
-                className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${
-                  isAnswered || selectedAnswer !== null
+                className={cn(
+                  'w-4 h-4 transition-transform group-hover:translate-x-1',
+                  isNextActive
                     ? 'text-black'
-                    : 'text-white/20 group-hover:text-white/60'
-                }`}
+                    : 'text-muted-foreground group-hover:text-foreground'
+                )}
               />
             </>
           )}
-        </button>
+        </Button>
       </div>
     </footer>
   );
@@ -139,18 +163,18 @@ export function QuizActionFooter({
 }: QuizActionFooterProps) {
   if (!isAnswered) return null;
 
+  const btnClass = cn(
+    'flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl',
+    'font-semibold text-lg transition-all shadow-lg hover:shadow-primary/25',
+    isSubmitting
+      ? 'bg-primary/70 cursor-not-allowed'
+      : 'bg-primary hover:bg-primary/90 active:scale-[0.98]'
+  );
+
   return (
     <div className="w-full max-w-3xl mx-auto">
       <div className="flex flex-col sm:flex-row gap-3">
-        <button
-          onClick={onNext}
-          disabled={isSubmitting}
-          className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 text-primary-foreground rounded-xl font-semibold text-lg transition-all shadow-lg hover:shadow-primary/25 ${
-            isSubmitting
-              ? 'bg-primary/70 cursor-not-allowed'
-              : 'bg-primary hover:bg-primary/90 active:scale-[0.98]'
-          }`}
-        >
+        <button onClick={onNext} disabled={isSubmitting} className={btnClass}>
           {isSubmitting ? (
             <Loader2 className="w-5 h-5 animate-spin" />
           ) : (

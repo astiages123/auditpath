@@ -378,9 +378,19 @@ export type QuizAction =
   | { type: 'FINISH_QUIZ' }
   | { type: 'PREV_QUESTION' };
 
-export interface ChunkMetadata {
+export interface ChunkAILogic {
   difficulty_index?: number;
   concept_map?: ConceptMapItem[];
+  suggested_quotas?: {
+    antrenman: number;
+    arsiv: number;
+    deneme: number;
+  };
+  reasoning?: string;
+  [key: string]: unknown;
+}
+
+export interface ChunkMetadata {
   [key: string]: unknown;
 }
 

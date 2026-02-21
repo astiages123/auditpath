@@ -5,10 +5,7 @@ import type {
   TopicWithCounts,
 } from '@/features/courses/types/courseTypes';
 import { getSubjectStrategy } from '@/features/quiz/logic/srsLogic';
-import {
-  ChunkMetadataSchema,
-  type ConceptMapItem,
-} from '@/features/quiz/types';
+import { AILogicSchema, type ConceptMapItem } from '@/features/quiz/types';
 import { isValid, parseOrThrow } from '@/utils/validation';
 
 // --- Internal Helpers (formerly in quizStatusHelper) ---
@@ -61,21 +58,15 @@ function calculateTopicQuota(chunk: ChunkInput | null): TopicQuotaResult {
       importance = strategy.importance as 'high' | 'medium' | 'low';
     }
 
-    const aiLogic = chunk.ai_logic as {
-      suggested_quotas?: {
-        antrenman: number;
-        arsiv: number;
-        deneme: number;
-      };
-    } | null;
-
-    const aiQuotas = aiLogic?.suggested_quotas;
-
-    const metadata = isValid(ChunkMetadataSchema, chunk.metadata)
-      ? parseOrThrow(ChunkMetadataSchema, chunk.metadata)
+    const aiLogic = isValid(AILogicSchema, chunk.ai_logic)
+      ? parseOrThrow(AILogicSchema, chunk.ai_logic)
       : null;
-    concepts = metadata?.concept_map || [];
-    difficultyIndex = metadata?.difficulty_index || null;
+
+    const isInvalidated = !!aiLogic?.invalidated_at;
+    concepts = !isInvalidated ? aiLogic?.concept_map || [] : [];
+    difficultyIndex = !isInvalidated ? aiLogic?.difficulty_index || null : null;
+
+    const aiQuotas = !isInvalidated ? aiLogic?.suggested_quotas : null;
 
     const defaultQuotas = { antrenman: 5, arsiv: 1, deneme: 1 };
     const antrenman = aiQuotas?.antrenman ?? defaultQuotas.antrenman;

@@ -1,7 +1,6 @@
 import { DRY_RUN } from './config';
-import { n2m, supabase } from './clients';
+import { getBlocksWithChildren, n2m, supabase } from './clients';
 import { processImagesInMarkdown } from './image-process';
-import { chunkContent } from './chunk-service';
 import type {
   NoteChunksInsert,
   PageObjectResponse,
@@ -15,7 +14,10 @@ export async function processPage(
   page: PageObjectResponse,
   index: number,
   courseLookupMap: Map<string, string>,
-  existingChunksMap: Map<string, number>,
+  existingChunksMap: Map<
+    string,
+    { timestamp: number; metadata: Record<string, unknown>; aiLogic: unknown }
+  >,
   touchedCourses: Set<string>,
   activeSections: Set<string>
 ): Promise<PageProcessResult> {
@@ -30,34 +32,8 @@ export async function processPage(
     }
   }
 
-  if (status !== 'Tamamlandı') {
-    return { status: 'SKIPPED', details: 'Draft or not ready' };
-  }
-
-  let courseName = '';
-  if ('Ders' in props) {
-    if (props.Ders.type === 'select') {
-      courseName = props.Ders.select?.name || '';
-    } else if (props.Ders.type === 'rich_text') {
-      courseName = props.Ders.rich_text.map((t) => t.plain_text).join('');
-    }
-  }
-
-  courseName = courseName.trim();
-
-  if (!courseName) {
-    console.warn(`Skipping page ${page.id}: 'Ders' name is empty.`);
-    return { status: 'ERROR', details: 'Missing Course Name' };
-  }
-
-  const courseId = courseLookupMap.get(courseName);
-
-  if (!courseId) {
-    console.error(
-      `Error: Course name '${courseName}' not found in courses table. Skipping.`
-    );
-    return { status: 'ERROR', details: 'Course Not Found' };
-  }
+  const lastEditedTimeStr = page.last_edited_time;
+  const lastEditedTime = new Date(lastEditedTimeStr).getTime();
 
   const titleProp = props['Konu'] || props['Name'];
   const sectionTitle =
@@ -66,6 +42,47 @@ export async function processPage(
           .map((t) => t.plain_text)
           .join('')
       : 'Untitled Section';
+
+  // Find courseId to check cache
+  let courseName = '';
+  if ('Ders' in props) {
+    if (props.Ders.type === 'select') {
+      courseName = props.Ders.select?.name || '';
+    } else if (props.Ders.type === 'rich_text') {
+      courseName = props.Ders.rich_text.map((t) => t.plain_text).join('');
+    }
+  }
+  courseName = courseName.trim();
+  const courseId = courseName ? courseLookupMap.get(courseName) : undefined;
+
+  if (courseId) {
+    const uniqueKey = `${courseId}:::${sectionTitle}`;
+    const prevData = existingChunksMap.get(uniqueKey);
+    const prevSyncedTime = prevData?.timestamp;
+    if (prevSyncedTime && lastEditedTime <= prevSyncedTime + TOLERANCE_MS) {
+      // Still need to add to activeSections for cleanup logic
+      activeSections.add(uniqueKey);
+      touchedCourses.add(courseId);
+      console.log(`Skipping "${sectionTitle}": No changes detected.`);
+      return { status: 'SKIPPED', details: 'Up to date' };
+    }
+  }
+
+  if (status !== 'Tamamlandı') {
+    return { status: 'SKIPPED', details: 'Draft or not ready' };
+  }
+
+  if (!courseName) {
+    console.warn(`Skipping page ${page.id}: 'Ders' name is empty.`);
+    return { status: 'ERROR', details: 'Missing Course Name' };
+  }
+
+  if (!courseId) {
+    console.error(
+      `Error: Course name '${courseName}' not found in courses table. Skipping.`
+    );
+    return { status: 'ERROR', details: 'Course Not Found' };
+  }
 
   let chunkOrder = index;
   if (
@@ -84,17 +101,9 @@ export async function processPage(
     `Processing Chunk: [${courseId}] ${sectionTitle} (Order: ${chunkOrder})`
   );
 
-  const lastEditedTimeStr = page.last_edited_time;
-  const lastEditedTime = new Date(lastEditedTimeStr).getTime();
-  const prevSyncedTime = existingChunksMap.get(uniqueKey);
-
-  if (prevSyncedTime && lastEditedTime <= prevSyncedTime + TOLERANCE_MS) {
-    console.log(`Skipping "${sectionTitle}": No changes detected.`);
-    return { status: 'SKIPPED', details: 'Up to date' };
-  }
-
   try {
-    const mdBlocks = await n2m.pageToMarkdown(page.id, null);
+    const blocks = await getBlocksWithChildren(page.id);
+    const mdBlocks = await n2m.blocksToMarkdown(blocks);
     const mdString = n2m.toMarkdownString(mdBlocks);
     let rawContent = typeof mdString === 'string' ? mdString : mdString.parent;
 
@@ -104,40 +113,37 @@ export async function processPage(
       '$1$2\n'
     );
 
-    const { content, imageUrls } = await processImagesInMarkdown(
-      rawContent,
-      courseId,
-      sectionTitle
-    );
-
-    const chunks = chunkContent(content);
+    const { content: processedContent, imageUrls } =
+      await processImagesInMarkdown(rawContent, courseId, sectionTitle);
 
     const baseMetadata = {
+      ...(existingChunksMap.get(uniqueKey)?.metadata || {}),
       images: imageUrls,
       notion_last_edited_time: lastEditedTimeStr,
     };
 
-    for (let i = 0; i < chunks.length; i++) {
-      const chunkObj = chunks[i];
-      const chunkText = chunkObj.content;
-      const displayText = chunkObj.displayContent;
-
-      if (DRY_RUN) {
-        console.log(`[DRY RUN] Would upsert chunk: ${sectionTitle}`);
-        continue;
-      }
-
+    if (DRY_RUN) {
+      console.log(`[DRY RUN] Would upsert section: ${sectionTitle}`);
+    } else {
       const { error: upsertError } = await supabase.from('note_chunks').upsert(
         [
           {
             course_id: courseId,
             course_name: courseName,
             section_title: sectionTitle,
-            content: chunkText,
-            display_content: displayText,
+            content: processedContent,
             chunk_order: chunkOrder,
             status: 'SYNCED',
             metadata: baseMetadata,
+            ai_logic: existingChunksMap.get(uniqueKey)?.aiLogic
+              ? {
+                  ...(existingChunksMap.get(uniqueKey)?.aiLogic as Record<
+                    string,
+                    unknown
+                  >),
+                  invalidated_at: new Date().toISOString(),
+                }
+              : null,
           } as NoteChunksInsert,
         ],
         { onConflict: 'course_id,section_title,chunk_order' }
@@ -145,7 +151,7 @@ export async function processPage(
 
       if (upsertError) {
         console.error(
-          `Upsert error for '${sectionTitle}' (seq: ${i}):`,
+          `Upsert error for '${sectionTitle}':`,
           upsertError.message
         );
         return { status: 'ERROR', details: upsertError.message };

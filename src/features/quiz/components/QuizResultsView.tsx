@@ -18,6 +18,7 @@ import {
 } from '@/features/quiz/types';
 import { calculateTestResults } from '@/features/quiz/logic/quizCoreLogic';
 import { getSubjectStrategy } from '@/features/quiz/logic/srsLogic';
+import { cn } from '@/utils/stringHelpers';
 
 // ============================================================================
 // Internal Sub-components (formerly standalone files)
@@ -35,7 +36,7 @@ const ScoreVisualizer = memo(
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className="bg-card border border-border rounded-2xl p-6 flex flex-col items-center justify-center relative overflow-hidden"
+      className="bg-card border border-border rounded-2xl p-6 flex-col flex-center relative overflow-hidden"
     >
       <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent pointer-events-none" />
       <div className="relative w-48 h-48 mb-4">
@@ -55,10 +56,13 @@ const ScoreVisualizer = memo(
             strokeDasharray={553}
             strokeDashoffset={553 - (553 * animatedPercent) / 100}
             strokeLinecap="round"
-            className={`fill-none transition-all duration-1000 ease-out ${percentage >= 70 ? 'stroke-emerald-500' : 'stroke-amber-500'}`}
+            className={cn(
+              'fill-none transition-all duration-1000 ease-out',
+              percentage >= 70 ? 'stroke-emerald-500' : 'stroke-amber-500'
+            )}
           />
         </svg>
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <div className="absolute inset-0 flex-col flex-center">
           <span className="text-5xl font-bold tracking-tighter">
             {animatedPercent}
           </span>
@@ -114,15 +118,18 @@ const MetricsSummary = memo(
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: item.delay }}
-          className={`bg-card border border-border rounded-xl p-5 flex flex-col justify-between ${item.full ? 'col-span-2' : ''}`}
+          className={cn(
+            'bg-card border border-border rounded-xl p-5 flex flex-col justify-between',
+            item.full && 'col-span-2'
+          )}
         >
           <div className="flex items-center gap-2 text-muted-foreground mb-2">
-            <div className={`p-2 ${item.bg} rounded-lg`}>
-              <item.icon className={`w-5 h-5 ${item.color}`} />
+            <div className={cn('p-2 rounded-lg', item.bg)}>
+              <item.icon className={cn('w-5 h-5', item.color)} />
             </div>
             <span className="text-sm font-medium">{item.label}</span>
           </div>
-          <div className={`text-3xl font-bold ${item.full ? 'font-mono' : ''}`}>
+          <div className={cn('text-3xl font-bold', item.full && 'font-mono')}>
             {item.value}
           </div>
         </motion.div>
@@ -225,7 +232,7 @@ const QuestionReviewList = memo(
       >
         <button
           onClick={() => setShowHistory(!showHistory)}
-          className="w-full p-4 flex items-center justify-between bg-muted/20 hover:bg-muted/30"
+          className="w-full p-4 flex-between bg-muted/20 hover:bg-muted/30"
         >
           <div className="flex items-center gap-2 font-medium">
             <Brain className="w-5 h-5 text-primary" />
@@ -266,7 +273,7 @@ const QuestionReviewList = memo(
                           height: `${v.size}px`,
                           transform: `translateY(${v.start}px)`,
                         }}
-                        className="px-4 border-b border-border/50 flex items-center justify-between gap-4"
+                        className="px-4 border-b border-border/50 flex-between gap-4"
                       >
                         <div className="flex-1 min-w-0 pr-4">
                           <p className="text-xs text-muted-foreground">
@@ -327,6 +334,10 @@ export function QuizResultsView({
   courseName,
   onClose,
 }: QuizResultsViewProps) {
+  const submitBtnClass = cn(
+    'flex-1 py-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground',
+    'font-bold transition-all shadow-lg flex-center gap-2'
+  );
   const [animatedPercent, setAnimatedPercent] = useState(0);
 
   const stats = useMemo(
@@ -386,10 +397,7 @@ export function QuizResultsView({
         transition={{ delay: 0.6 }}
         className="flex gap-4 pt-4"
       >
-        <button
-          onClick={onClose}
-          className="flex-1 py-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-bold transition-all shadow-lg flex items-center justify-center gap-2"
-        >
+        <button onClick={onClose} className={submitBtnClass}>
           <Home className="w-5 h-5" /> Ana Menüye Dön
         </button>
       </motion.div>

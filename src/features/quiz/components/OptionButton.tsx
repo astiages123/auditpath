@@ -59,6 +59,10 @@ const OptionButtonComponent = function OptionButton({
       break;
   }
 
+  const sanitizeOption = (text: string) => {
+    return text.replace(/^[A-Ea-e1-5][\s).:-]+/, '').trim();
+  };
+
   return (
     <motion.button
       onClick={onClick}
@@ -73,14 +77,14 @@ const OptionButtonComponent = function OptionButton({
     >
       <div
         className={cn(
-          'w-8 h-8 min-w-[32px] rounded-lg flex items-center justify-center font-bold text-sm transition-colors',
+          'w-7 h-7 min-w-[35px] rounded-lg flex items-center justify-center font-bold text-sm transition-colors',
           labelStyle
         )}
       >
         {label}
       </div>
-      <div className="flex-1 font-medium text-base text-white/70 group-hover:text-white transition-colors">
-        <MathRenderer content={option} />
+      <div className="flex-1 font-medium text-base text-foreground group-hover:text-white transition-colors">
+        <MathRenderer content={sanitizeOption(option)} />
       </div>
       {iconComponent}
     </motion.button>

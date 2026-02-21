@@ -99,7 +99,7 @@ export function CategoryCard({
           <div className="flex items-center gap-5 flex-1 min-w-0">
             <div
               className={cn(
-                'flex items-center justify-center h-12 w-12 rounded-xl bg-zinc-900 border border-white/5 shadow-md group-hover:scale-105 transition-transform',
+                'flex items-center justify-center h-12 w-12 rounded-xl bg-muted border border-white/5 shadow-md group-hover:scale-105 transition-transform',
                 theme.text
               )}
             >
@@ -110,15 +110,15 @@ export function CategoryCard({
                 {name}
               </h3>
               <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                <span className="flex items-center gap-1.5 whitespace-nowrap bg-white/5 px-2 py-0.5 rounded-full">
+                <span className="flex items-center gap-1.5 whitespace-nowrap bg-surface px-2 py-0.5 rounded-full">
                   <BookOpen className="w-3.5 h-3.5" />
                   {courses.length} Kurs
                 </span>
-                <span className="flex items-center gap-1.5 whitespace-nowrap bg-white/5 px-2 py-0.5 rounded-full">
+                <span className="flex items-center gap-1.5 whitespace-nowrap bg-surface px-2 py-0.5 rounded-full">
                   <TvMinimalPlay className="w-3.5 h-3.5" />
                   {displayCompletedVideos}/{displayTotalVideos}
                 </span>
-                <span className="flex items-center gap-1.5 whitespace-nowrap bg-white/5 px-2 py-0.5 rounded-full">
+                <span className="flex items-center gap-1.5 whitespace-nowrap bg-surface px-2 py-0.5 rounded-full">
                   <Clock className="w-3.5 h-3.5" />
                   {formatDuration(displayCompletedHours)}
                 </span>
@@ -137,7 +137,7 @@ export function CategoryCard({
             </div>
             <motion.div
               animate={{ rotate: isOpen ? 180 : 0 }}
-              className="p-2 rounded-xl bg-white/5 border border-white/5 text-muted-foreground group-hover:text-white transition-colors"
+              className="p-2 rounded-xl bg-surface border border-white/5 text-muted-foreground group-hover:text-white transition-colors"
             >
               <ChevronDown className="w-5 h-5" />
             </motion.div>
@@ -145,7 +145,7 @@ export function CategoryCard({
         </div>
 
         {/* Minimal Progress Bar - assuming progress bar is same color as text but bg-solid */}
-        <div className="mt-8 h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+        <div className="mt-8 h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
@@ -174,7 +174,7 @@ export function CategoryCard({
                   (a, b) => (a.sort_order || 0) - (b.sort_order || 0)
                 )}
                 categoryColor={theme.text}
-                categoryBgColor="bg-white/5"
+                categoryBgColor="bg-surface"
               />
             </div>
           </motion.div>

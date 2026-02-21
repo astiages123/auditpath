@@ -221,6 +221,7 @@ export async function submitQuizAnswer(
       ? {
           content: chunkMetadata.content || null,
           metadata: parseOrThrow(ChunkMetadataSchema, chunkMetadata.metadata),
+          ai_logic: chunkMetadata.ai_logic as Record<string, unknown> | null,
         }
       : null,
     masteryData,

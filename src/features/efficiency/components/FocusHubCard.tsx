@@ -122,23 +122,23 @@ export const FocusHubCard = () => {
       <GlassCard className="h-full flex flex-col p-6">
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-xl bg-white/5" />
+            <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
             <div className="space-y-2">
-              <Skeleton className="h-4 w-32 bg-white/5" />
-              <Skeleton className="h-3 w-48 bg-white/5" />
+              <Skeleton className="h-4 w-32 bg-surface" />
+              <Skeleton className="h-3 w-48 bg-surface" />
             </div>
           </div>
         </div>
         <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-8 mt-6">
-          <Skeleton className="h-40 w-40 rounded-full bg-white/5 shrink-0" />
+          <Skeleton className="h-40 w-40 rounded-full bg-surface shrink-0" />
           <div className="space-y-4 w-full md:w-auto flex flex-col items-center md:items-start">
             <div className="space-y-2">
-              <Skeleton className="h-3 w-24 bg-white/5" />
-              <Skeleton className="h-10 w-48 bg-white/5" />
+              <Skeleton className="h-3 w-24 bg-surface" />
+              <Skeleton className="h-10 w-48 bg-surface" />
             </div>
             <div className="space-y-2 w-full">
-              <Skeleton className="h-16 w-full md:w-48 bg-white/5 rounded-lg" />
-              <Skeleton className="h-16 w-full md:w-48 bg-white/5 rounded-lg" />
+              <Skeleton className="h-16 w-full md:w-48 bg-surface rounded-lg" />
+              <Skeleton className="h-16 w-full md:w-48 bg-surface rounded-lg" />
             </div>
           </div>
         </div>
