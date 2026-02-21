@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
 import { formatDuration } from '@/utils/formatters';
 import { normalizeCategorySlug } from '../utils/categoryHelpers';
-import { CATEGORY_THEMES, COURSE_THEME_CONFIG } from '../utils/coursesConfig';
+import { CATEGORY_THEMES } from '../utils/coursesConfig';
 
 import { type Course } from '@/features/courses/types/courseTypes';
 
@@ -36,8 +36,7 @@ export function CategoryCard({
 }: CategoryCardProps) {
   // Use config for styles
   const categoryConfig = CATEGORY_THEMES[name] || CATEGORY_THEMES['EKONOMİ'];
-  const { Icon, theme: themeKey } = categoryConfig;
-  const theme = COURSE_THEME_CONFIG[themeKey];
+  const { Icon } = categoryConfig;
   const { stats } = useProgress();
   const { triggerCategoryCelebration, revokeCategoryCelebration } =
     useCelebration();
@@ -83,12 +82,11 @@ export function CategoryCard({
       transition={{ duration: 0.4, ease: 'easeInOut' }}
       className={cn(
         'group relative overflow-hidden rounded-3xl border transition-all duration-500',
-        theme.border,
-        theme.gradient,
-        theme.hoverGradient,
+        'border-border',
+        'bg-linear-to-br from-zinc-900/80 via-zinc-900/95 to-zinc-950',
         isOpen
-          ? 'shadow-2xl border-white/20 bg-zinc-900/40 backdrop-blur-md'
-          : 'hover:shadow-lg hover:border-white/20 hover:scale-[1.01]'
+          ? 'shadow-lg border-white/10 bg-zinc-900/60 backdrop-blur-md'
+          : 'hover:shadow-md hover:border-white/10 hover:bg-zinc-900/80'
       )}
     >
       <button
@@ -100,7 +98,7 @@ export function CategoryCard({
             <div
               className={cn(
                 'flex items-center justify-center h-12 w-12 rounded-xl bg-muted border border-white/5 shadow-md group-hover:scale-105 transition-transform',
-                theme.text
+                'text-accent'
               )}
             >
               <Icon className="w-6 h-6" />
@@ -144,16 +142,13 @@ export function CategoryCard({
           </div>
         </div>
 
-        {/* Minimal Progress Bar - assuming progress bar is same color as text but bg-solid */}
+        {/* Minimal Progress Bar - unified accent color */}
         <div className="mt-8 h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
-            className={cn(
-              'h-full rounded-full',
-              theme.text.replace('text-', 'bg-')
-            )}
+            className="h-full rounded-full bg-accent"
           />
         </div>
       </button>
@@ -173,7 +168,7 @@ export function CategoryCard({
                 courses={[...courses].sort(
                   (a, b) => (a.sort_order || 0) - (b.sort_order || 0)
                 )}
-                categoryColor={theme.text}
+                categoryColor="text-accent"
                 categoryBgColor="bg-surface"
               />
             </div>

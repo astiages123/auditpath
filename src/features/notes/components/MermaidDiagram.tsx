@@ -7,6 +7,38 @@ interface MermaidDiagramProps {
   code: string;
 }
 
+// Mermaid'i bir kere başlat, her render'da tekrar başlatma
+let mermaidInitialized = false;
+
+async function getMermaid() {
+  const mermaid = (await import('mermaid')).default;
+
+  if (!mermaidInitialized) {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      themeVariables: {
+        primaryColor: '#f59e0b',
+        primaryTextColor: '#fff',
+        primaryBorderColor: '#555',
+        lineColor: '#888',
+        secondaryColor: '#1a1a1a',
+        tertiaryColor: '#1a1a1a',
+        background: '#ffffff',
+        mainBkg: '#1a1a1a',
+        fontFamily: 'Poppins, system-ui, sans-serif',
+      },
+      flowchart: {
+        htmlLabels: true,
+        curve: 'basis',
+      },
+    });
+    mermaidInitialized = true;
+  }
+
+  return mermaid;
+}
+
 export const MermaidDiagram = memo(({ code }: MermaidDiagramProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svg, setSvg] = useState<string>('');
@@ -21,31 +53,7 @@ export const MermaidDiagram = memo(({ code }: MermaidDiagramProps) => {
         setIsLoading(true);
         setError(null);
 
-        // Dynamically import mermaid
-        const mermaid = (await import('mermaid')).default;
-
-        // Initialize if not already done (mermaid maintains global state, so re-init is safe or check needed?)
-        // Mermaid docs say initialize can be called multiple times but usually once is enough.
-        // We can just call it here.
-        mermaid.initialize({
-          startOnLoad: false,
-          theme: 'dark',
-          themeVariables: {
-            primaryColor: '#f59e0b',
-            primaryTextColor: '#fff',
-            primaryBorderColor: '#555',
-            lineColor: '#888',
-            secondaryColor: '#1a1a1a',
-            tertiaryColor: '#1a1a1a',
-            background: '#ffffff',
-            mainBkg: '#1a1a1a',
-            fontFamily: 'Poppins, system-ui, sans-serif',
-          },
-          flowchart: {
-            htmlLabels: true,
-            curve: 'basis',
-          },
-        });
+        const mermaid = await getMermaid();
 
         const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
         const { svg: renderedSvg } = await mermaid.render(id, code);

@@ -98,7 +98,7 @@ const EfficiencyPage = () => {
               >
                 Performans Analizi
               </h1>
-              <p className="text-muted-foreground text-sm font-medium">
+              <p className="text-muted-foreground text-sm font-medium mt-1">
                 Öğrenme yolculuğunuzun detaylı grafikleri ve gelişim metrikleri.
               </p>
             </div>

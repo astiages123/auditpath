@@ -157,29 +157,29 @@ export const SessionListItem: FC<SessionListItemProps> = ({
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard
               icon={LayoutGrid}
-              iconBg="bg-primary/10"
-              iconColor="text-primary"
+              iconBg="bg-accent/10"
+              iconColor="text-accent"
               label="Durdurma"
               value={`${session.pauseCount} Adet`}
             />
             <StatCard
               icon={Zap}
-              iconBg="bg-emerald-500/10"
-              iconColor="text-emerald-400"
+              iconBg="bg-accent/10"
+              iconColor="text-accent"
               label="Odaklanma"
               value={`${workMins} dk`}
             />
             <StatCard
               icon={Coffee}
-              iconBg="bg-sky-500/10"
-              iconColor="text-sky-400"
+              iconBg="bg-accent/10"
+              iconColor="text-accent"
               label="Mola"
               value={`${breakMins} dk`}
             />
             <StatCard
               icon={PauseIcon}
-              iconBg="bg-zinc-500/10"
-              iconColor="text-zinc-400"
+              iconBg="bg-accent/10"
+              iconColor="text-accent"
               label="Duraklatma"
               value={`${pauseMins} dk`}
             />

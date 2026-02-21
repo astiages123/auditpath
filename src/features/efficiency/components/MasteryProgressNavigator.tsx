@@ -19,10 +19,10 @@ export const MasteryProgressNavigator = ({
   <div className="space-y-6">
     <div className="flex items-center justify-between">
       <h4 className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-        <Target className="w-4 h-4 text-primary" />
+        <Target className="w-4 h-4 text-accent" />
         Kavram Ustalık Haritası
       </h4>
-      <div className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-bold text-primary uppercase">
+      <div className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-full text-[10px] font-bold text-accent uppercase">
         {sessions.length} KAVRAM
       </div>
     </div>

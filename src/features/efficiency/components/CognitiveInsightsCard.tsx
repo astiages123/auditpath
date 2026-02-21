@@ -41,8 +41,8 @@ export const CognitiveInsightsCard = ({
       <GlassCard className="h-full flex flex-col p-6 min-h-[300px]">
         <CardHeader
           icon={Brain}
-          iconColor="text-violet-400"
-          iconBg="bg-violet-500/10"
+          iconColor="text-accent"
+          iconBg="bg-accent/10"
           title="Bilişsel Sağlık"
           subtitle="Öğrenme analizi ve öneriler"
         />
@@ -69,8 +69,8 @@ export const CognitiveInsightsCard = ({
       <div className="flex justify-between items-start mb-6">
         <CardHeader
           icon={Brain}
-          iconColor="text-violet-400"
-          iconBg="bg-violet-500/10"
+          iconColor="text-accent"
+          iconBg="bg-accent/10"
           title="Bilişsel Sağlık & Teşhis"
           subtitle="Kavram yanılgıları ve gelişim alanları"
         />

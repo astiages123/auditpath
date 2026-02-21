@@ -11,7 +11,6 @@ import {
   Crown,
   Award,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { getUnlockedAchievements as getDbUnlocked } from '@/features/achievements/services/achievementService';
 import { type UnlockedAchievement } from '@/features/achievements/types/achievementsTypes';
 import {
@@ -97,76 +96,71 @@ export function AchievementsRoom() {
   const completionRate = Math.round((unlockedCount / totalAchievements) * 100);
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <>
       {/* Page Header */}
-      <div className="mt-5 max-w-6xl mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-col md:flex-row md:items-center justify-between gap-6"
-        >
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-primary/10">
-              <Library className="w-8 h-8 text-primary" />
-            </div>
-            <div>
-              <h1
-                className="text-2xl md:text-3xl font-bold text-foreground"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                Bilgelik Arşivi
-              </h1>
-              <p className="text-muted-foreground text-sm">
-                "Gerçek mühürler kağıda değil, zihne vurulur."
-              </p>
-            </div>
+      <div className="flex items-center gap-5 mb-8">
+        <div className="relative group">
+          <div className="absolute -inset-1 bg-linear-to-r rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
+          <div className="relative p-4 rounded-xl bg-card border border-border/50 leading-none flex items-center">
+            <Library className="w-8 h-8 text-primary" />
           </div>
+        </div>
+        <div>
+          <h1
+            className="text-3xl md:text-4xl font-black text-foreground tracking-tight"
+            style={{ fontFamily: 'var(--font-heading)' }}
+          >
+            Bilgelik Arşivi
+          </h1>
+          <p className="text-muted-foreground text-sm font-medium mt-1">
+            Gerçek mühürler kağıda değil, zihne vurulur.
+          </p>
+        </div>
 
-          <div className="flex flex-col sm:flex-row sm:items-center gap-6 w-full md:w-auto mt-4 md:mt-0">
-            <div className="hidden sm:block text-right">
-              <div className="text-xs text-foreground uppercase tracking-widest mb-1">
-                Genel Aydınlanma
+        {/* Stats on the right */}
+        <div className="flex items-center gap-6 ml-auto">
+          <div className="hidden sm:block text-right">
+            <div className="text-xs text-foreground uppercase tracking-widest mb-1">
+              Genel Aydınlanma
+            </div>
+            <div className="h-2 w-32 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all duration-1000"
+                style={{ width: `${completionRate}%` }}
+              />
+            </div>
+          </div>
+          <div className="flex items-center justify-between sm:justify-start gap-3 px-4 py-3 sm:py-2 rounded-xl bg-card border border-border shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Scroll className="w-5 h-5 text-primary" />
               </div>
-              <div className="h-2 w-32 bg-white/20 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-primary transition-all duration-1000"
-                  style={{ width: `${completionRate}%` }}
-                />
+              <div className="text-left sm:text-right">
+                <div className="text-lg font-bold text-foreground">
+                  {unlockedCount}
+                  <span className="text-muted-foreground text-sm font-normal">
+                    /{totalAchievements}
+                  </span>
+                </div>
+                <div className="text-xs text-muted-foreground uppercase tracking-tighter">
+                  Mühür Çözüldü
+                </div>
               </div>
             </div>
-            <div className="flex items-center justify-between sm:justify-start gap-3 px-4 py-3 sm:py-2 rounded-xl bg-card border border-border w-full sm:w-auto shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="p-2 sm:p-2 rounded-lg bg-primary/10">
-                  <Scroll className="w-5 h-5 sm:w-5 sm:h-5 text-primary" />
-                </div>
-                <div className="text-left sm:text-right">
-                  <div className="text-lg font-bold text-foreground">
-                    {unlockedCount}
-                    <span className="text-muted-foreground text-sm font-normal">
-                      /{totalAchievements}
-                    </span>
-                  </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-tighter">
-                    Mühür Çözüldü
-                  </div>
-                </div>
+            <div className="sm:hidden text-right">
+              <div className="text-lg font-black text-primary">
+                %{completionRate}
               </div>
-              {/* Mobile Only progress bar hint */}
-              <div className="sm:hidden text-right">
-                <div className="text-lg font-black text-primary">
-                  %{completionRate}
-                </div>
-                <div className="text-[10px] text-muted-foreground uppercase">
-                  Aydınlanma
-                </div>
+              <div className="text-[10px] text-muted-foreground uppercase">
+                Aydınlanma
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Lonca Bölümleri */}
-      <div className="max-w-6xl mx-auto px-4 py-12 space-y-16">
+      <div className="max-w-7xl mx-auto space-y-16">
         {GUILD_ORDER.map((guildId) => {
           const guild = GUILDS[guildId];
           const achievements = achievementsByGuild.get(guildId) || [];
@@ -236,6 +230,6 @@ export function AchievementsRoom() {
             : null
         }
       />
-    </div>
+    </>
   );
 }

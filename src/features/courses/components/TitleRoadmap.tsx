@@ -54,42 +54,41 @@ export default function TitleRoadmap({
 
   return (
     <Card className="mx-auto w-full border-none bg-transparent shadow-none overflow-visible relative">
-      {/* Arka Plan Süslemeleri - Daha hafif */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl pointer-events-none" />
-
-      {/* Header: Kompaktlaştırıldı */}
-      <CardHeader className="relative flex flex-row items-center justify-between pt-2 pb-4 px-0 border-b border-border/10">
+      {/* Header: Minimal */}
+      <CardHeader className="relative flex flex-row items-center justify-between pt-2 pb-4 px-0">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-xl ring-1 ring-primary/20">
-            <Sparkles className="w-5 h-5 text-primary" />
+          <div className="p-2 bg-accent/10 rounded-lg">
+            <Sparkles className="w-5 h-5 text-accent" />
           </div>
           <div>
-            <CardTitle className="text-lg sm:text-xl font-bold tracking-tight">
+            <CardTitle className="text-lg sm:text-xl font-bold tracking-tight mb-0">
               Unvan Yolculuğu
             </CardTitle>
             <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
               Seviye:{' '}
-              <span className="text-primary">{currentMilestone.title}</span>
+              <span className="text-accent">{currentMilestone.title}</span>
             </p>
           </div>
         </div>
-        <div className="flex items-baseline gap-1 bg-muted/40 px-3 py-1 rounded-xl border border-border/50">
-          <span className="text-xl sm:text-2xl font-black font-mono text-primary leading-none">
+        <div className="flex items-baseline gap-1 bg-muted px-3 py-1 rounded-lg border border-border/50">
+          <span className="text-xl sm:text-2xl font-bold font-mono text-accent leading-none">
             {progress}
           </span>
-          <span className="text-[9px] font-bold text-muted-foreground">%</span>
+          <span className="text-[9px] font-medium text-muted-foreground">
+            %
+          </span>
         </div>
       </CardHeader>
 
-      <CardContent className="px-0 py-6 space-y-8">
-        {/* İlerleme Çubuğu: Dengeli yükseklik */}
-        <div className="relative mx-4 mb-10 mt-2">
-          <div className="h-2.5 bg-muted/60 rounded-full overflow-hidden ring-1 ring-border/10 shadow-inner">
+      <CardContent className="px-0 py-0 space-y-6">
+        {/* İlerleme Çubuğu: Minimal */}
+        <div className="relative mx-4 mb-10 mt-0">
+          <div className="h-2.5 bg-muted rounded-full overflow-hidden">
             <motion.div
               initial={{ width: 0 }}
               animate={{ width: `${Math.min(progress, 100)}%` }}
               transition={{ duration: 1, ease: 'easeOut' }}
-              className="h-full bg-primary shadow-[0_0_15px_var(--primary)]"
+              className="h-full bg-accent"
             />
           </div>
 
@@ -112,8 +111,8 @@ export default function TitleRoadmap({
                     className={cn(
                       'w-6 h-6 rounded-full border-4 transition-all duration-500 flex items-center justify-center z-10 bg-background',
                       isPassed
-                        ? 'border-primary text-primary'
-                        : 'border-white/20 text-muted-foreground'
+                        ? 'border-accent text-accent'
+                        : 'border-border text-muted-foreground'
                     )}
                   >
                     {isPassed ? (
@@ -122,7 +121,7 @@ export default function TitleRoadmap({
                       <div className="w-1.5 h-1.5 rounded-full bg-current opacity-40" />
                     )}
                   </div>
-                  <span className="absolute top-7 text-[10.5px] font-black font-foreground font-mono">
+                  <span className="absolute top-7 text-[10.5px] font-medium text-muted-foreground font-mono">
                     %{tickValue}
                   </span>
                 </div>
@@ -145,9 +144,9 @@ export default function TitleRoadmap({
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.05 }}
                 className={cn(
-                  'relative flex flex-col items-center p-3 rounded-2xl border transition-all duration-300',
+                  'relative flex flex-col items-center p-4 rounded-xl border transition-all duration-300',
                   isCurrent
-                    ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/20 shadow-lg'
+                    ? 'bg-accent/5 border-accent/30 ring-1 ring-accent/20'
                     : 'bg-card/50 border-border/40'
                 )}
               >
@@ -155,26 +154,23 @@ export default function TitleRoadmap({
                   <Lock className="absolute top-3 right-3 w-3 h-3 text-muted-foreground/40" />
                 )}
 
-                {/* Görsel: Ne devasa ne minik */}
-                <div className="relative w-24 h-24 mb-2 transition-transform duration-500 group-hover:scale-105">
+                {/* Görsel: Minimal */}
+                <div className="relative w-28 h-28 mb-3">
                   <img
                     src={milestone.imagePath}
                     alt={milestone.title}
                     className={cn(
-                      'w-full h-full object-contain ',
-                      isLocked && 'grayscale opacity-60'
+                      'w-full h-full object-contain',
+                      isLocked && 'grayscale opacity-70'
                     )}
                   />
-                  {isCurrent && (
-                    <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full -z-10 animate-pulse" />
-                  )}
                 </div>
 
                 <div className="text-center">
                   <h3
                     className={cn(
-                      'text-sm font-bold truncate px-1',
-                      isCurrent ? 'text-primary' : 'text-foreground'
+                      'text-sm font-semibold truncate px-1',
+                      isCurrent ? 'text-foreground' : 'text-foreground'
                     )}
                   >
                     {milestone.title}
@@ -183,7 +179,7 @@ export default function TitleRoadmap({
                   <p
                     className={cn(
                       'text-[12px] leading-tight mt-1 px-1',
-                      isCurrent ? 'text-foreground' : 'text-muted-foreground'
+                      'text-muted-foreground'
                     )}
                   >
                     "{milestone.motto}"
@@ -194,27 +190,27 @@ export default function TitleRoadmap({
           })}
         </div>
 
-        {/* Footer: Kompakt ve Bilgilendirici */}
+        {/* Footer: Minimal */}
         <div className="pt-2">
           {nextMilestone ? (
-            <div className="bg-muted/30 rounded-xl p-3 flex items-center justify-between border border-border/30">
+            <div className="bg-muted/50 rounded-lg p-3 flex items-center justify-between border border-border">
               <div className="flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-primary/70" />
-                <span className="text-xs font-semibold text-muted-foreground">
+                <Trophy className="w-4 h-4 text-accent/70" />
+                <span className="text-xs font-medium text-muted-foreground">
                   Sıradaki:{' '}
                   <span className="text-foreground">{nextMilestone.title}</span>
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-lg">
+                <span className="text-[10px] font-medium text-accent bg-accent/10 px-2 py-0.5 rounded">
                   %{nextMilestone.threshold} Gerekiyor
                 </span>
-                <ChevronRight className="w-4 h-4 text-primary/40" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground" />
               </div>
             </div>
           ) : (
-            <div className="bg-primary/10 rounded-xl p-3 text-center border border-primary/20">
-              <span className="text-xs font-bold text-primary flex items-center justify-center gap-2">
+            <div className="bg-accent/10 rounded-lg p-3 text-center border border-accent/20">
+              <span className="text-xs font-medium text-accent flex items-center justify-center gap-2">
                 <Sparkles className="w-4 h-4" /> Maksimum Seviyeye Ulaşıldı!
               </span>
             </div>

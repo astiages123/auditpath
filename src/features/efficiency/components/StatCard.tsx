@@ -11,12 +11,12 @@ interface StatCardProps {
 
 export const StatCard = ({
   icon: Icon,
-  iconBg,
-  iconColor,
+  iconBg = 'bg-accent/10',
+  iconColor = 'text-accent',
   label,
   value,
 }: StatCardProps) => (
-  <div className="p-4 rounded-xl bg-white/3 border border-white/5 flex flex-col items-center justify-center text-center">
+  <div className="p-4 rounded-xl bg-zinc-900/80 border border-border flex flex-col items-center justify-center text-center">
     <div className={cn('p-2 rounded-lg mb-2', iconBg)}>
       <Icon className={cn('w-4 h-4', iconColor)} />
     </div>

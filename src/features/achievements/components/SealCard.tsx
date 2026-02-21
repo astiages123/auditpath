@@ -31,9 +31,9 @@ export function SealCard({ achievement, isUnlocked, onClick }: SealCardProps) {
   const sealCardClass = cn(
     'seal-card relative group flex flex-col items-center',
     'p-4 rounded-2xl cursor-pointer',
-    'bg-card/50 border border-border/50',
-    'hover:border-primary/30',
-    'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary'
+    'bg-linear-to-br from-zinc-900/80 via-zinc-900/95 to-zinc-950 border border-border',
+    'hover:border-accent/30',
+    'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
   );
 
   return (

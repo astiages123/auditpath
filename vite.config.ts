@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => ({
     'process.env.NODE_ENV': JSON.stringify(mode),
   },
   build: {
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 2600,
     rollupOptions: {
       output: {
         manualChunks(id) {

@@ -36,8 +36,8 @@ export const PracticeCenterCard = () => {
           <GlassCard className="h-full flex flex-col p-6">
             <CardHeader
               icon={Zap}
-              iconColor="text-amber-400"
-              iconBg="bg-amber-500/10"
+              iconColor="text-accent"
+              iconBg="bg-accent/10"
               title="Pratik Merkezi"
               subtitle="Soru çözümü ve seviye analizi"
               action={

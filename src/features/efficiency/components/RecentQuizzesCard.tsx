@@ -98,8 +98,18 @@ const QuizHistoryContent = ({ quizzes }: { quizzes: RecentQuizSession[] }) => (
         </motion.div>
       ))
     ) : (
-      <div className="text-center py-12 text-muted-foreground/50 italic">
-        Henüz test verisi yok
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="p-4 bg-white/5 rounded-xl mb-4">
+          <ClipboardCheck className="w-6 h-6 text-muted-foreground/50" />
+        </div>
+        <div className="space-y-1.5 text-center">
+          <h3 className="text-base font-medium text-white/80">
+            Henüz Test Yok
+          </h3>
+          <p className="text-sm text-muted-foreground/60">
+            Tamamlanan test bulunamadı.
+          </p>
+        </div>
       </div>
     )}
   </div>
@@ -149,8 +159,8 @@ export const RecentQuizzesCard = () => {
           <GlassCard className="h-full flex flex-col p-6">
             <CardHeader
               icon={ClipboardCheck}
-              iconColor="text-emerald-400"
-              iconBg="bg-emerald-500/10"
+              iconColor="text-accent"
+              iconBg="bg-accent/10"
               title="Son Testler"
               subtitle="Tamamlanan son test oturumları"
               action={
@@ -203,9 +213,18 @@ export const RecentQuizzesCard = () => {
                   </motion.div>
                 ))
               ) : (
-                <div className="flex-1 flex-col flex-center py-10 text-muted-foreground/30">
-                  <ClipboardCheck className="w-12 h-12 mb-3 opacity-20" />
-                  <p className="text-sm font-medium">Henüz test verisi yok</p>
+                <div className="flex-1 flex flex-col items-center justify-center py-10">
+                  <div className="p-4 bg-white/5 rounded-xl mb-4">
+                    <ClipboardCheck className="w-6 h-6 text-muted-foreground/50" />
+                  </div>
+                  <div className="space-y-1.5 text-center">
+                    <h3 className="text-base font-medium text-white/80">
+                      Henüz Test Yok
+                    </h3>
+                    <p className="text-sm text-muted-foreground/60">
+                      Tamamlanan test bulunamadı.
+                    </p>
+                  </div>
                 </div>
               )}
             </div>

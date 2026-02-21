@@ -29,8 +29,8 @@ export const TrendBadge = ({ percentage }: { percentage: number }) => {
 export const CardHeader = memo(
   ({
     icon: Icon,
-    iconColor = 'text-primary',
-    iconBg = 'bg-primary/10',
+    iconColor = 'text-accent',
+    iconBg = 'bg-accent/10',
     title,
     subtitle,
     badge,
@@ -91,7 +91,7 @@ export const StatCard = ({
     return (
       <div
         className={cn(
-          'p-4 rounded-2xl bg-[#1a1c1e] border border-white/5',
+          'p-4 rounded-2xl bg-zinc-900/80 border-border',
           className
         )}
       >
@@ -108,7 +108,7 @@ export const StatCard = ({
   return (
     <div
       className={cn(
-        'p-4 rounded-2xl bg-[#1a1c1e] border border-white/5 hover:border-white/10 transition-colors',
+        'p-4 rounded-2xl bg-zinc-900/80 border-border hover:border-white/10 transition-colors',
         className
       )}
     >

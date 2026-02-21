@@ -160,8 +160,8 @@ export function ProgressHeader({
         label="Günlük Seri"
         value={isHydrated ? contextStreak : 0}
         suffix="Gün"
-        subText="İstikrarını koruyorsun! 🔥"
-        colorClass="text-orange-500"
+        subText="İstikrarını koruyorsun!"
+        colorClass="text-accent"
         showSkeleton={showSkeleton}
         variants={itemVariants}
       />
@@ -172,7 +172,7 @@ export function ProgressHeader({
         label="Genel İlerleme"
         value={`%${displayPercentage}`}
         subText="Müfredat tamamlanma oranı"
-        colorClass="text-emerald-500"
+        colorClass="text-accent"
         showSkeleton={showSkeleton}
         variants={itemVariants}
       />
@@ -183,7 +183,7 @@ export function ProgressHeader({
         label="Günün Odağı"
         value={todaysSubject}
         subText="Sınav takvimine göre bugün"
-        colorClass="text-blue-400"
+        colorClass="text-accent"
         showSkeleton={showSkeleton}
         variants={itemVariants}
       />
@@ -193,7 +193,7 @@ export function ProgressHeader({
         bgIcon={Clock}
         label="Zaman ve Video"
         value=""
-        colorClass="text-purple-400"
+        colorClass="text-accent"
         showSkeleton={showSkeleton}
         variants={itemVariants}
       >

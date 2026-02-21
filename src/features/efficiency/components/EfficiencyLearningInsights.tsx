@@ -160,8 +160,8 @@ export const LearningLoadCard = () => {
           <GlassCard className="h-full flex flex-col p-6">
             <CardHeader
               icon={BookOpen}
-              iconColor="text-sky-400"
-              iconBg="bg-sky-500/10"
+              iconColor="text-accent"
+              iconBg="bg-accent/10"
               title="Odaklanma Trendi"
               subtitle="Son 7 günlük çalışma aktivitesi"
               action={
@@ -217,8 +217,8 @@ export const MasteryNavigatorCard = () => {
           <GlassCard className="h-full flex flex-col p-6 overflow-hidden relative group">
             <CardHeader
               icon={Target}
-              iconColor="text-primary"
-              iconBg="bg-primary/10"
+              iconColor="text-accent"
+              iconBg="bg-accent/10"
               title="Müfredat Navigatörü"
               subtitle="Kavram bazlı ustalık seviyeleri"
               action={
@@ -233,13 +233,13 @@ export const MasteryNavigatorCard = () => {
                     <span className="font-bold text-white/70 truncate mr-2">
                       {node.title}
                     </span>
-                    <span className="font-black text-primary">
+                    <span className="font-black text-accent">
                       %{node.mastery}
                     </span>
                   </div>
                   <div className="h-1.5 w-full bg-surface rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-primary transition-all duration-700"
+                      className="h-full bg-accent transition-all duration-700"
                       style={{ width: `${node.mastery}%` }}
                     />
                   </div>
@@ -278,8 +278,8 @@ export const ConsistencyHeatmapCard = () => {
     <GlassCard className="h-full flex flex-col p-6">
       <CardHeader
         icon={Activity}
-        iconColor="text-emerald-400"
-        iconBg="bg-emerald-500/10"
+        iconColor="text-accent"
+        iconBg="bg-accent/10"
         title="Süreklilik Haritası"
         subtitle="Son 6 aylık çalışma yoğunluğu"
       />

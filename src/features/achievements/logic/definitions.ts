@@ -359,7 +359,7 @@ export const HYBRID_ACHIEVEMENTS: Achievement[] = [
 export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'special-01',
-    title: 'Gece Nöbetçisi',
+    title: 'Odak Uzmanı',
     motto: 'Tek bir tefekkür oturumunda tam 5 parşömen bitirdin.',
     imagePath: '/badges/special-01.webp',
     guild: 'SPECIAL',
@@ -389,44 +389,64 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
   },
   {
     id: 'special-04',
-    title: 'Kutsal Adanmışlık',
-    motto: 'Bilgelik yolunda tam bir ay boyunca her gün yürüdün.',
+    title: 'Kıdemli Gezgin',
+    motto: 'Bilgelik yolunda kararlı adımlarla ilerleyen kıdemli yolcu.',
     imagePath: '/badges/special-04.webp',
     guild: 'SPECIAL',
-    requirement: { type: 'streak', days: 30 },
+    requirement: { type: 'total_active_days', days: 15 },
     order: 25,
     isPermanent: true,
   },
   {
     id: 'special-05',
-    title: 'Zamanın Yolcusu',
-    motto:
-      'Bilgelik koridorlarında toplam 60 gün geçirdin; artık burası senin evin.',
+    title: 'Kutsal Adanmışlık',
+    motto: 'Bilgelik yolunda tam bir ay boyunca her gün yürüdün.',
     imagePath: '/badges/special-05.webp',
     guild: 'SPECIAL',
-    requirement: { type: 'total_active_days', days: 60 },
+    requirement: { type: 'streak', days: 30 },
     order: 26,
     isPermanent: true,
   },
   {
     id: 'special-06',
-    title: 'Uyanmış Ruh',
+    title: 'Zamanın Yolcusu',
     motto:
-      'Yolun yarısını aştın; artık tüm disiplinler senin varlığınla uyumlu.',
+      'Bilgelik koridorlarında toplam 60 gün geçirdin; artık burası senin evin.',
     imagePath: '/badges/special-06.webp',
     guild: 'SPECIAL',
-    requirement: { type: 'all_progress', percentage: 50 },
+    requirement: { type: 'total_active_days', days: 60 },
     order: 27,
+    isPermanent: true,
   },
   {
     id: 'special-07',
+    title: 'Zamanın Efendisi',
+    motto: 'Zamanın kendisini büküp bilgelyiğe dönüştüren mutlak üstad.',
+    imagePath: '/badges/special-07.webp',
+    guild: 'SPECIAL',
+    requirement: { type: 'total_active_days', days: 90 },
+    order: 28,
+    isPermanent: true,
+  },
+  {
+    id: 'special-08',
+    title: 'Uyanmış Ruh',
+    motto:
+      'Yolun yarısını aştın; artık tüm disiplinler senin varlığınla uyumlu.',
+    imagePath: '/badges/special-08.webp',
+    guild: 'SPECIAL',
+    requirement: { type: 'all_progress', percentage: 50 },
+    order: 29,
+  },
+  {
+    id: 'special-09',
     title: 'Yüce Üstad',
     motto:
       'Tüm mühürler toplandı, tüm isimler öğrenildi. Sen artık yaşayan bir efsanesin.',
-    imagePath: '/badges/special-07.webp',
+    imagePath: '/badges/special-09.webp',
     guild: 'SPECIAL',
     requirement: { type: 'all_progress', percentage: 100 },
-    order: 28,
+    order: 30,
   },
 ];
 
@@ -438,7 +458,7 @@ export const TITLE_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/ranks/rank1.webp',
     guild: 'TITLES',
     requirement: { type: 'minimum_videos', count: 1 },
-    order: 29,
+    order: 31,
     isPermanent: true,
   },
   {
@@ -448,7 +468,7 @@ export const TITLE_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/ranks/rank2.webp',
     guild: 'TITLES',
     requirement: { type: 'all_progress', percentage: 25 },
-    order: 30,
+    order: 32,
     isPermanent: true,
   },
   {
@@ -459,7 +479,7 @@ export const TITLE_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/ranks/rank3.webp',
     guild: 'TITLES',
     requirement: { type: 'all_progress', percentage: 50 },
-    order: 31,
+    order: 33,
     isPermanent: true,
   },
   {
@@ -470,7 +490,7 @@ export const TITLE_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/ranks/rank4.webp',
     guild: 'TITLES',
     requirement: { type: 'all_progress', percentage: 75 },
-    order: 32,
+    order: 34,
     isPermanent: true,
   },
 ];

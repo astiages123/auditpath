@@ -153,8 +153,8 @@ export const FocusHubCard = () => {
           <GlassCard className="h-full flex flex-col p-6">
             <CardHeader
               icon={Target}
-              iconColor="text-emerald-400"
-              iconBg="bg-emerald-500/10"
+              iconColor="text-accent"
+              iconBg="bg-accent/10"
               title="Öğrenme Akışı"
               subtitle="Video hızı ve çalışma süresi oranı. İdeal: 1.0x"
               action={

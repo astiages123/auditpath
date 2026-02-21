@@ -26,7 +26,7 @@ export function JourneyModal({ open, onOpenChange }: JourneyModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl bg-background/95 backdrop-blur-md border-border/50 p-4 sm:p-6">
+      <DialogContent className="sm:max-w-5xl max-h-[90vh] bg-background/95 backdrop-blur-md border-border/50 p-4 sm:p-6 overflow-y-auto">
         <DialogHeader className="mb-2">
           <div className="flex items-center justify-between">
             <div>
