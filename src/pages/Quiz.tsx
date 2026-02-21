@@ -1,6 +1,6 @@
 import { useEffect, FC } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { QuizView } from '@/features/quiz/components';
+import { QuizContainer } from '@/features/quiz/components';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/utils/routes';
@@ -30,7 +30,7 @@ export const QuizPage: FC = () => {
   return (
     <div className="container py-8">
       <ErrorBoundary>
-        <QuizView courseId={courseId} />
+        <QuizContainer courseId={courseId} />
       </ErrorBoundary>
     </div>
   );

@@ -1,12 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 import { validateBatch } from '../logic/quizParser';
-import { StructuredGenerator } from '../logic/structuredGenerator';
 import type { GeneratedQuestion } from '../types';
 
-vi.mock('../logic/structuredGenerator', () => ({
-  StructuredGenerator: {
+vi.mock('../services/quizInfoService', () => ({
+  rateLimiter: {
+    schedule: vi.fn((task) => task()),
+  },
+  UnifiedLLMClient: {
     generate: vi.fn(),
   },
+  getTaskConfig: vi.fn(() => ({
+    provider: 'openai',
+    model: 'gpt-4',
+  })),
 }));
 
 describe('validateBatch', () => {
@@ -58,16 +64,24 @@ describe('validateBatch', () => {
       ],
     };
 
-    vi.mocked(StructuredGenerator.generate).mockResolvedValueOnce(mockResponse);
+    const { UnifiedLLMClient } = await import('../services/quizInfoService');
+    vi.mocked(UnifiedLLMClient.generate).mockResolvedValueOnce({
+      content: JSON.stringify(mockResponse),
+      usage: {
+        prompt_tokens: 100,
+        completion_tokens: 50,
+        total_tokens: 150,
+      },
+    });
 
     const result = await validateBatch(mockQuestions, mockContent);
 
     expect(result).toEqual(mockResponse);
-    expect(StructuredGenerator.generate).toHaveBeenCalledTimes(1);
+    expect(UnifiedLLMClient.generate).toHaveBeenCalledTimes(1);
 
     // Assert that the first argument to generate matches our expectations
     // It should be an array of messages
-    const callArgs = vi.mocked(StructuredGenerator.generate).mock.calls[0][0];
+    const callArgs = vi.mocked(UnifiedLLMClient.generate).mock.calls[0][0];
     expect(Array.isArray(callArgs)).toBe(true);
     expect(callArgs.length).toBeGreaterThan(0);
     expect(callArgs[0].content).toContain(
@@ -84,5 +98,50 @@ describe('validateBatch', () => {
         )
     );
     expect(hasTaskPrompt).toBe(true);
+  });
+
+  it('should normalize inconsistent AI responses during batch validation', async () => {
+    const mockQuestions = [
+      {
+        q: 'Test sorusu',
+        o: ['A', 'B', 'C', 'D', 'E'],
+        a: 0,
+        exp: 'Test açıklama',
+        evidence: 'Test kanıt',
+      } as GeneratedQuestion,
+    ];
+
+    const mockContent = 'Test içeriği';
+
+    // AI returns 'score' instead of 'total_score' and 'ONAY' instead of 'APPROVED'
+    const inconsistentContent = JSON.stringify({
+      results: [
+        {
+          index: 0,
+          score: 95,
+          decision: 'ONAY',
+          critical_faults: [],
+          improvement_suggestion: '',
+        },
+      ],
+    });
+
+    const { UnifiedLLMClient } = await import('../services/quizInfoService');
+    vi.mocked(UnifiedLLMClient.generate).mockResolvedValueOnce({
+      content: inconsistentContent,
+      usage: {
+        prompt_tokens: 100,
+        completion_tokens: 50,
+        total_tokens: 150,
+      },
+    });
+
+    const result = await validateBatch(mockQuestions, mockContent);
+
+    // Should be normalized to standard schema
+    expect(result?.results[0]).toMatchObject({
+      total_score: 95,
+      decision: 'APPROVED',
+    });
   });
 });

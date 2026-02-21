@@ -75,18 +75,19 @@ export const QuestionStatusSchema = z.enum([
 // ============================================================================
 
 export const AILogicSchema = z.object({
-  difficulty_index: z.number().optional(),
-  concept_map: z.array(ConceptMapItemSchema).optional(),
+  difficulty_index: z.number().nullable().optional(),
+  concept_map: z.array(ConceptMapItemSchema).nullable().optional(),
   suggested_quotas: z
     .object({
       antrenman: z.number(),
       arsiv: z.number(),
       deneme: z.number(),
     })
+    .nullable()
     .optional(),
-  reasoning: z.string().optional(),
-  generated_at: z.string().optional(), // ISO date of analysis
-  invalidated_at: z.string().optional(), // ISO date if manually or automatically invalidated
+  reasoning: z.string().nullable().optional(),
+  generated_at: z.string().nullable().optional(), // ISO date of analysis
+  invalidated_at: z.string().nullable().optional(), // ISO date if manually or automatically invalidated
 });
 
 export type ValidatedAILogic = z.infer<typeof AILogicSchema>;
@@ -248,55 +249,58 @@ export type BatchGeneratedQuestion = z.infer<
   typeof BatchGeneratedQuestionSchema
 >;
 
-export const ValidationResultSchema = z.preprocess(
-  (data: unknown) => {
-    const item = data as Record<string, unknown>;
-    if (item && typeof item === 'object') {
-      // total_score alanı yoksa alternatif isimlere bak
-      if (item.total_score === undefined) {
-        item.total_score = item.score ?? item.puan ?? item.point;
-      }
-      // decision alanı metnine göre eşle
-      if (item.decision && typeof item.decision === 'string') {
-        const d = item.decision.toUpperCase();
-        if (
-          d.includes('APPROV') ||
-          d.includes('ONAY') ||
-          d.includes('KABUL') ||
-          d.includes('OK') ||
-          d.includes('TRUE')
-        ) {
-          item.decision = 'APPROVED';
-        } else if (
-          d.includes('RED') ||
-          d.includes('REJECT') ||
-          d.includes('HATA')
-        ) {
-          item.decision = 'REJECTED';
-        }
+const BaseValidationResultSchema = z.object({
+  total_score: z.coerce.number().min(0).max(100),
+  decision: z.enum(['APPROVED', 'REJECTED']),
+  critical_faults: z.array(z.string()).default([]),
+  improvement_suggestion: z.string().default(''),
+});
+
+const validationResultPreprocessor = (data: unknown) => {
+  const item = data as Record<string, unknown>;
+  if (item && typeof item === 'object') {
+    // total_score alanı yoksa alternatif isimlere bak
+    if (item.total_score === undefined) {
+      item.total_score = item.score ?? item.puan ?? item.point;
+    }
+    // decision alanı metnine göre eşle
+    if (item.decision && typeof item.decision === 'string') {
+      const d = item.decision.toUpperCase();
+      if (
+        d.includes('APPROV') ||
+        d.includes('ONAY') ||
+        d.includes('KABUL') ||
+        d.includes('OK') ||
+        d.includes('TRUE')
+      ) {
+        item.decision = 'APPROVED';
+      } else if (
+        d.includes('RED') ||
+        d.includes('REJECT') ||
+        d.includes('HATA')
+      ) {
+        item.decision = 'REJECTED';
       }
     }
-    return item;
-  },
-  z.object({
-    total_score: z.coerce.number().min(0).max(100),
-    decision: z.enum(['APPROVED', 'REJECTED']),
-    critical_faults: z.array(z.string()).default([]),
-    improvement_suggestion: z.string().default(''),
-  })
+  }
+  return item;
+};
+
+export const ValidationResultSchema = z.preprocess(
+  validationResultPreprocessor,
+  BaseValidationResultSchema
 );
 
 export type ValidationResult = z.infer<typeof ValidationResultSchema>;
 
 export const BatchValidationResultSchema = z.object({
   results: z.array(
-    z.object({
-      index: z.number(),
-      total_score: z.coerce.number().min(0).max(100),
-      decision: z.enum(['APPROVED', 'REJECTED']),
-      critical_faults: z.array(z.string()).default([]),
-      improvement_suggestion: z.string().default(''),
-    })
+    z.preprocess(
+      validationResultPreprocessor,
+      BaseValidationResultSchema.extend({
+        index: z.number(),
+      })
+    )
   ),
 });
 

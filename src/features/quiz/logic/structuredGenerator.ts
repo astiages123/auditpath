@@ -19,6 +19,7 @@ export interface StructuredOptions<T> {
   model?: string;
   usageType?: string;
   onLog?: (msg: string, details?: Record<string, unknown>) => void;
+  throwOnValidationError?: boolean;
 }
 
 const DEFAULT_RETRY_PROMPT = `BİR ÖNCEKİ CEVABIN JSON ŞEMASINA UYMUYORDU.\nLütfen geçerli bir JSON döndür.\nSadece JSON verisi gerekli.`;
@@ -82,19 +83,31 @@ export class StructuredGenerator {
         if (validation.success) {
           return validation.data;
         } else {
+          const errorMsg = validation.error.issues
+            .map((i) => `${i.path.join('.')}: ${i.message}`)
+            .join(', ');
+
           logger.error('!!! ZOD ERROR in field:', {
             error: validation.error.format(),
             context: 'Zod Validation',
           });
-          const errorMsg = validation.error.issues
-            .map((i) => `${i.path.join('.')}: ${i.message}`)
-            .join(', ');
+
           onLog?.(`Validasyon hatası (Deneme ${attempt + 1})`, {
             error: errorMsg,
             raw_content: response.content,
           });
+
+          if (options.throwOnValidationError && attempt === maxRetries) {
+            throw new Error(`Zod validation failed: ${errorMsg}`);
+          }
         }
       } catch (error) {
+        if (
+          options.throwOnValidationError &&
+          String(error).includes('Zod validation failed')
+        ) {
+          throw error;
+        }
         onLog?.(`Generation hatası (Deneme ${attempt + 1})`, {
           error: String(error),
           raw_content: lastResponse?.content,

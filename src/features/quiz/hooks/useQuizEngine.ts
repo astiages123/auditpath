@@ -25,7 +25,6 @@ import { MASTERY_THRESHOLD } from '@/features/quiz/utils/constants';
 import { usePomodoroSessionStore } from '@/features/pomodoro/store';
 import { useCelebrationStore } from '@/features/achievements/store';
 import { useQuotaStore } from '@/features/quiz/store';
-import { MOCK_QUESTIONS } from '@/__tests__/features/quiz/utils/mockQuestions';
 import { createTimer } from '../logic/quizCoreLogic';
 
 const INITIAL_QUIZ_STATE: QuizState = {
@@ -109,18 +108,6 @@ export function useQuizEngine(): UseQuizEngineReturn {
   const startQuiz = useCallback(
     async (userId: string, courseId: string, chunkId?: string) => {
       updateState({ isLoading: true, error: null });
-
-      if (chunkId === 'MOCK_QUIZ') {
-        setSessionContext({
-          userId,
-          courseId,
-          courseName: 'Örnek Sorular (Mock)',
-          sessionNumber: 0,
-          isNewSession: false,
-        });
-        loadQuestionsIntoState(MOCK_QUESTIONS);
-        return;
-      }
 
       try {
         const session = await startQuizSession(userId, courseId);

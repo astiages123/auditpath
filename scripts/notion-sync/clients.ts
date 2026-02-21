@@ -9,9 +9,9 @@ import {
   validateConfig,
 } from './config';
 import type {
+  BlockObjectResponse,
   Database,
   RichTextItemResponse,
-  BlockObjectResponse,
 } from './types';
 
 type BlockWithChildren = BlockObjectResponse & {
@@ -90,8 +90,7 @@ export async function setupCalloutTransformer(): Promise<void> {
   );
 }
 
-import pLimit from 'p-limit';
-const blockLimit = pLimit(10);
+// blockLimit removed to prevent recursive deadlocks in deep pages
 
 export async function getBlocksWithChildren(
   blockId: string
@@ -102,9 +101,9 @@ export async function getBlocksWithChildren(
   const childPromises = blocks.map((block) => {
     const blockWithChildren = block as BlockWithChildren;
     if (blockWithChildren.has_children) {
-      return blockLimit(async () => {
+      return (async () => {
         blockWithChildren.children = await getBlocksWithChildren(block.id);
-      });
+      })();
     }
     return Promise.resolve();
   });

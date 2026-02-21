@@ -166,11 +166,7 @@ Yanlış seçenekler rastgele üretilmemeli, şu üç kategoriden en az birine d
 1. **Kavram Karmaşası:** Doğru cevaba benzeyen ancak farklı bir bağlamda kullanılan terimler.
 2. **İşlem/Mantık Hatası:** Doğru muhakeme sürecindeki yaygın bir hatanın sonucu.
 3. **Yarım Doğru:** Doğru başlayan ancak yanlış biten (veya tam tersi) ifadeler.
-*Rastgele veya saçma yanlışlar üretme.*
-
-LATEX FORMAT ZORUNLULUĞU:
-- Tüm sayısal verileri, matematiksel formülleri, değişkenleri ($x, y, P, Q$) ve teknik sembolleri ($IS-LM, \\sigma^2, \\alpha$ vb.) **hem soru metninde (q) hem de açıklamada (exp)** KESİNLİKLE LaTeX formatında yaz.
-- Örn: "faiz oranı %5" yerine "$r = 5\\%$" veya "$P = 100$" şeklinde.`);
+*Rastgele veya saçma yanlışlar üretme.*`);
 
   const conceptsText = concepts
     .map((concept, index) => {
@@ -258,80 +254,20 @@ Soruyu 100 tam puan üzerinden değerlendir. Aşağıdaki her bir hata için bel
 - Soru teknik olarak doğru ve çözülebilir ise, "daha iyi olabilirdi" diye reddetme, ONAYLA.
 
 ## ÇIKTI FORMATI (ZORUNLU):
-SADECE aşağıdaki JSON yapısını döndür:
-{
-  "total_score": 0-100 arası sayı,
-  "decision": "APPROVED" veya "REJECTED",
-  "critical_faults": ["hata1", "hata2"],
-  "improvement_suggestion": "öneri"
-}`;
-
-export const BATCH_VALIDATION_SYSTEM_PROMPT = `## ROL
-Sen AuditPath için "Güvenlik ve Doğruluk Kontrolü Uzmanısın".
-Görevin: Üretilen KPSS sorularının teknik ve bilimsel doğruluğunu kontrol etmektir. "HATA YOKLUĞU"na odaklanmalısın.
-
-## DEĞERLENDİRME KRİTERLERİ VE PUAN KIRMA TABLOSU
-Soruyu 100 tam puan üzerinden değerlendir. Aşağıdaki her bir hata için belirtilen puanı KESİNTİSİZ düş:
-
-| Hata Türü | Kesilecek Puan | Açıklama |
-| :--- | :--- | :--- |
-| **Bilimsel/Teknik Hata** | **-100 Puan** | Bilgi hatası, yanlış çözüm veya metne aykırılık (Anında REJECTED). |
-| **Çeldirici Zayıflığı** | **-40 Puan** | Mantıksız, bariz yanlış veya soruyla ilgisiz şıklar. |
-| **LaTeX Yazım Hatası** | **-30 Puan** | Ters eğik çizgi hataları ($ veya \\\\ eksikliği) ve JSON kaçış hataları. |
-| **Açıklama/Kanıt Uyumsuzluğu** | **-30 Puan** | exp veya evidence alanının soruyla veya metinle çelişmesi. |
-| **Akademik Dil Uyumsuzluğu** | **-20 Puan** | KPSS formatına uymayan laubali veya basit anlatım. |
-
-## KARAR MEKANİZMASI
-- **Total Score >= 70 ise:** "APPROVED"
-- **Total Score < 70 ise:** "REJECTED" (Yukarıdaki tablodan en az bir ciddi hata yapılmış demektir)
-
-**ÖNEMLİ:**
-- Her bir soruyu diğerlerinden bağımsız olarak değerlendir.
-- Eğer karar "APPROVED" ise: \`critical_faults\` dizisini BOŞ bırak ([]), \`improvement_suggestion\` alanını BOŞ string ("") bırak.
-- Eğer karar "REJECTED" ise: Hataları ve düzeltme önerisini yaz.
-
-## GÜVENLİK KONTROLÜ (SAFETY CHECK) İLKESİ
-- Sadece bariz hataları, halüsinasyonları ve teknik yanlışları reddet.
-- Soru teknik olarak doğru ve çözülebilir ise, "daha iyi olabilirdi" diye reddetme, ONAYLA.
-
-## ÇIKTI FORMATI (ZORUNLU):
-Birden fazla soruyu tek seferde değerlendireceksin. Her soru için girdiğinde verilen 'index' değerini koruyarak SADECE aşağıdaki JSON yapısını döndür:
+Birden fazla soruyu tek seferde değerlendireceksin. Her soru için girdiğinde verilen 'index' değerini koruyarak SADECE aşağıdaki JSON yapısını döndür. Alan isimleri KESİNLİKLE İngilizce olmalıdır.
 {
   "results": [
     {
-      "index": 0,
-      "total_score": 0-100 arası sayı,
-      "decision": "APPROVED" veya "REJECTED",
-      "critical_faults": ["hata1", "hata2"],
-      "improvement_suggestion": "öneri"
+      "index": 0, // Girdiyle aynı index
+      "total_score": 0-100, // Sayısal değer
+      "decision": "APPROVED", // Sadece "APPROVED" veya "REJECTED"
+      "critical_faults": [], 
+      "improvement_suggestion": ""
     }
   ]
 }`;
 
 import { type GeneratedQuestion } from '@/features/quiz/types';
-
-export function buildValidationPrompt(question: GeneratedQuestion): string {
-  const optionsText = question.o
-    .map(
-      (opt: string, index: number) =>
-        `${String.fromCharCode(65 + index)}) ${opt}`
-    )
-    .join('\\n');
-  const correctAnswer = String.fromCharCode(65 + question.a);
-
-  return `Aşağıdaki soruyu kaynak metne göre değerlendir:
-
-**Soru:** ${question.q}
-
-**Şıklar:**
-${optionsText}
-
-**Doğru Cevap:** ${correctAnswer}
-
-**Açıklama/Kanıt:** ${question.exp}
-
-Lütfen sadece belirtilen formatta geçerli bir JSON döndür.`;
-}
 
 export function buildBatchValidationPrompt(
   questions: GeneratedQuestion[]

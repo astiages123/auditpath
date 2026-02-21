@@ -4,7 +4,6 @@ import {
   FileText,
   CheckCircle,
   Sparkles,
-  ChevronRight,
 } from 'lucide-react';
 import { TopicWithCounts } from '@/features/courses/types/courseTypes';
 import { cn } from '@/utils/stringHelpers';
@@ -20,7 +19,6 @@ interface TopicSidebarProps {
   selectedTopic: TopicWithCounts | null;
   onSelectTopic: (topic: TopicWithCounts) => void;
   onStartSmartExam: () => void;
-  onStartMockQuiz?: () => void;
   isGeneratingExam: boolean;
 }
 
@@ -30,7 +28,6 @@ export function TopicSidebar({
   selectedTopic,
   onSelectTopic,
   onStartSmartExam,
-  onStartMockQuiz,
   isGeneratingExam,
 }: TopicSidebarProps) {
   return (
@@ -113,24 +110,6 @@ export function TopicSidebar({
           ))
         )}
       </div>
-
-      {onStartMockQuiz && (
-        <div className="mt-4 pt-4 border-t border-border/20">
-          <Button
-            variant="primary-soft"
-            onClick={onStartMockQuiz}
-            className="w-full flex items-center justify-between p-3 h-auto rounded-lg group"
-          >
-            <div className="flex items-center gap-2.5">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span className="text-xs font-semibold text-primary">
-                Mock Soruları Yükle
-              </span>
-            </div>
-            <ChevronRight className="w-4 h-4 text-primary/50 group-hover:translate-x-0.5 transition-transform" />
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

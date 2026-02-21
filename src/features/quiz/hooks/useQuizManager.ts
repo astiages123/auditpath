@@ -66,6 +66,7 @@ export interface UseQuizManagerReturn {
   handleStartQuiz: () => void;
   handleGenerate: (mappingOnly?: boolean) => Promise<void>;
   handleBackToTopics: () => void;
+  handleFinishQuiz: () => Promise<void>;
   handleStartSmartExam: () => Promise<void>;
   resetState: () => void;
 }
@@ -155,8 +156,9 @@ export function useQuizManager({
   const quizPhase = (() => {
     if (isQuizActive) return QUIZ_PHASE.ACTIVE;
     if (generation.isGenerating) return QUIZ_PHASE.MAPPING;
-    if (completionStatus?.aiLogic && completionStatus?.concepts?.length)
+    if (completionStatus?.aiLogic && completionStatus?.concepts?.length) {
       return QUIZ_PHASE.BRIEFING;
+    }
     return QUIZ_PHASE.NOT_ANALYZED;
   })();
 
@@ -277,11 +279,12 @@ export function useQuizManager({
         const questionsData = await QuizService.fetchQuestionsByIds(
           result.questionIds
         );
-        if (questionsData)
+        if (questionsData) {
           return questionsData.map((q) => ({
             ...parseOrThrow(QuizQuestionSchema, q.question_data),
             id: q.id,
           })) as QuizQuestion[];
+        }
       }
     } catch (error) {
       logger.error('Failed to generate smart exam:', error as Error);
@@ -310,6 +313,54 @@ export function useQuizManager({
     setExistingQuestions([]);
     loadTopics();
   }, [loadTopics]);
+
+  const handleFinishQuiz = useCallback(async () => {
+    setIsQuizActive(false);
+    setExistingQuestions([]);
+
+    if (selectedTopic && user && courseId) {
+      // Refresh status to show updated progress/mastery in matrix
+      const status = await getTopicCompletionStatus(
+        user.id,
+        courseId,
+        selectedTopic.name
+      );
+      setCompletionStatus(status);
+
+      // Trigger background generation for arsiv and deneme if quotas not met
+      if (targetChunkId) {
+        const needsArsiv = status.arsiv.existing < status.arsiv.quota;
+        const needsDeneme = status.deneme.existing < status.deneme.quota;
+
+        if (needsArsiv || needsDeneme) {
+          logger.info('Triggering background generation for Arsiv/Deneme', {
+            topic: selectedTopic.name,
+          });
+
+          generateForChunk(
+            targetChunkId,
+            {
+              onLog: () => {}, // silent
+              onTotalTargetCalculated: () => {},
+              onQuestionSaved: () => {},
+              onComplete: async () => {
+                const finalStatus = await getTopicCompletionStatus(
+                  user.id,
+                  courseId,
+                  selectedTopic.name
+                );
+                setCompletionStatus(finalStatus);
+              },
+              onError: (err) => {
+                logger.error('Background generation error:', { message: err });
+              },
+            },
+            { userId: user.id }
+          );
+        }
+      }
+    }
+  }, [selectedTopic, user, courseId, targetChunkId]);
 
   const handleStartSmartExam = useCallback(async () => {
     if (!user || !courseId || !courseName) return;
@@ -370,6 +421,7 @@ export function useQuizManager({
     handleStartQuiz,
     handleGenerate,
     handleBackToTopics,
+    handleFinishQuiz,
     handleStartSmartExam,
     resetState,
   };

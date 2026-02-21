@@ -32,32 +32,32 @@ export const getTaskConfig = (task: AITask): AIConfig => {
       };
     case 'drafting':
       return {
-        provider: 'cerebras',
-        model: 'gpt-oss-120b',
+        provider: 'deepseek',
+        model: 'deepseek-chat',
         temperature: 0.7,
       };
     case 'revision':
       return {
-        provider: 'cerebras',
-        model: 'gpt-oss-120b',
+        provider: 'deepseek',
+        model: 'deepseek-chat',
         temperature: 0.5,
       };
     case 'diagnosis':
       return {
-        provider: 'cerebras',
-        model: 'gpt-oss-120b',
+        provider: 'deepseek',
+        model: 'deepseek-chat',
         temperature: 0.3,
       };
     case 'followup':
       return {
-        provider: 'cerebras',
-        model: 'gpt-oss-120b',
+        provider: 'deepseek',
+        model: 'deepseek-chat',
         temperature: 0.6,
       };
     default:
       return {
-        provider: 'cerebras',
-        model: 'gpt-oss-120b',
+        provider: 'deepseek',
+        model: 'deepseek-chat',
         temperature: 0.7,
       };
   }

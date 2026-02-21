@@ -73,7 +73,9 @@ export function processDailyData(logs: AiGenerationCost[], rate: number) {
 
     // precise integer addition
     const currentTotal = dailyCostsMap.get(dateKey) || 0;
+
     const logCost = log.cost_usd || 0;
+
     // Math.round to ensure we land on an integer after scaling
     const scaledCost = Math.round(logCost * CURRENCY_SCALING_FACTOR);
 
@@ -125,9 +127,22 @@ export function calculateTotalCostUsd(logs: AiGenerationCost[]): number {
  * Calculates cache hit rate percentage.
  */
 export function calculateCacheHitRate(logs: AiGenerationCost[]): number {
-  const totalRequests = logs.length;
-  if (totalRequests === 0) return 0;
+  // Sadece önbellek mekanizması olan modelleri hesaplamaya dahil et
+  const eligibleLogs = logs.filter(
+    (l) =>
+      l.provider?.toLowerCase() === 'mimo' ||
+      l.provider?.toLowerCase() === 'deepseek'
+  );
 
-  const cachedRequests = logs.filter((l) => (l.cached_tokens || 0) > 0).length;
-  return (cachedRequests / totalRequests) * 100;
+  const totalPromptTokens = eligibleLogs.reduce(
+    (acc, l) => acc + (l.prompt_tokens || 0),
+    0
+  );
+  if (totalPromptTokens === 0) return 0;
+
+  const totalCachedTokens = eligibleLogs.reduce(
+    (acc, l) => acc + (l.cached_tokens || 0),
+    0
+  );
+  return (totalCachedTokens / totalPromptTokens) * 100;
 }

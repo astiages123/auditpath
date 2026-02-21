@@ -64,10 +64,10 @@ export function CourseOverview({ courseName, progress }: CourseOverviewProps) {
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex-center mb-6">
             <Trophy className="w-8 h-8 text-primary" />
           </div>
-          <h2 className="text-3xl font-bold tracking-tight">
+          <h2 className="text-2xl font-bold tracking-tight">
             Başlamaya Hazır Mısın?
           </h2>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-base">
             {courseName} dersindeki durumunu incele ve bir konu seçerek başla.
           </p>
         </motion.div>

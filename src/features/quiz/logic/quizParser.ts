@@ -10,13 +10,11 @@ import {
   GeneratedQuestionSchema,
   type GeneratorCallbacks,
   type ValidationResult,
-  ValidationResultSchema,
 } from '@/features/quiz/types';
 import {
   buildAnalysisPrompt,
   buildBatchValidationPrompt,
   buildDraftingPrompt,
-  buildValidationPrompt,
   GLOBAL_AI_SYSTEM_PROMPT,
   PromptArchitect,
   VALIDATION_SYSTEM_PROMPT,
@@ -27,6 +25,7 @@ import { isValid, parseOrThrow } from '@/utils/validation';
 import { logger } from '@/utils/logger';
 import { getSubjectGuidelines } from '@/features/quiz/services/quizInfoService';
 import * as Repository from '@/features/quiz/services/quizService';
+import { updateChunkAILogic } from '@/features/quiz/services/quizSubmissionService';
 import { determineNodeStrategy, getSubjectStrategy } from './srsLogic';
 import { calculateQuotas } from './quizCoreLogic';
 import { shuffle } from '../utils/mathUtils';
@@ -149,6 +148,7 @@ export async function runChunkAnalysis(input: {
   return await StructuredGenerator.generate(messages, {
     schema: ConceptMapResponseSchema,
     task: 'analysis',
+    throwOnValidationError: true,
   });
 }
 
@@ -227,6 +227,7 @@ export async function draftBatch(input: {
   const result = await StructuredGenerator.generate(messages, {
     schema: BatchGeneratedQuestionSchema,
     task: 'drafting',
+    throwOnValidationError: true,
   });
 
   if (!result) return null;
@@ -246,40 +247,6 @@ export async function draftBatch(input: {
       concept: inputConcept.concept.baslik,
     } as GeneratedQuestion;
   });
-}
-
-export async function validateQuestion(
-  question: GeneratedQuestion,
-  content: string
-): Promise<ValidationResult | null> {
-  const contextPrompt = PromptArchitect.buildContext(
-    PromptArchitect.cleanReferenceImages(content)
-  );
-  const taskPrompt = buildValidationPrompt(question);
-  const aiConfig = getTaskConfig('validation');
-
-  const messages = PromptArchitect.assemble(
-    aiConfig.systemPromptPrefix
-      ? aiConfig.systemPromptPrefix + '\n' + VALIDATION_SYSTEM_PROMPT
-      : VALIDATION_SYSTEM_PROMPT,
-    contextPrompt,
-    taskPrompt
-  );
-
-  const result = await StructuredGenerator.generate(messages, {
-    schema: ValidationResultSchema,
-    task: 'validation',
-  });
-
-  if (result) {
-    if (result.total_score >= 70 && result.decision === 'REJECTED') {
-      result.decision = 'APPROVED';
-    } else if (result.total_score < 70 && result.decision === 'APPROVED') {
-      result.decision = 'REJECTED';
-    }
-    return result;
-  }
-  return null;
 }
 
 export async function validateBatch(
@@ -423,23 +390,56 @@ export async function generateForChunk(
       concepts = analysisResult.concepts;
       difficultyIndex = analysisResult.difficulty_index;
 
-      await Repository.updateChunkAILogic(chunkId, {
+      const updatedAILogic = {
         ...((chunk.ai_logic || {}) as Record<string, unknown>),
         concept_map: concepts as Json,
         difficulty_index: difficultyIndex,
         generated_at: new Date().toISOString(),
         invalidated_at: null, // Reset invalidation
-      } as Record<string, Json>);
+      } as Record<string, Json>;
+
+      log('SAVING', 'Kavram haritası kaydediliyor...');
+      const { error: analysisUpdateError } = await updateChunkAILogic(
+        chunkId,
+        updatedAILogic
+      );
+      if (analysisUpdateError) {
+        parserLogger.error('Failed to update ai_logic with concepts', {
+          error: analysisUpdateError,
+        });
+        log('ERROR', 'Kavram haritası kaydedilemedi, işleme devam ediliyor...');
+      }
+
+      // PREVENT OVERWRITE: Update local chunk.ai_logic so next update has full data
+      chunk.ai_logic = updatedAILogic as Json;
     } else {
       log('MAPPING', 'Önceden oluşturulmuş kavram haritası yükleniyor...');
     }
 
     const quotas = calculateQuotas(concepts);
-    await Repository.updateChunkAILogic(chunkId, {
-      ...((chunk.ai_logic || {}) as Record<string, unknown>),
+    const existingAILogic = (chunk.ai_logic || {}) as Record<string, Json>;
+    const existingReasoning = existingAILogic.reasoning;
+    const isValidReasoning =
+      typeof existingReasoning === 'string' || existingReasoning === null;
+    const quotaAILogic: Record<string, Json> = {
+      ...existingAILogic,
       suggested_quotas: quotas,
-      reasoning: 'Otomatik pedagojik kotalar.',
-    } as Record<string, Json>);
+      reasoning: isValidReasoning
+        ? existingReasoning
+        : 'Otomatik pedagojik kotalar.',
+    };
+
+    log('SAVING', 'Pedagojik kotalar güncelleniyor...');
+    const { error: quotaUpdateError } = await updateChunkAILogic(
+      chunkId,
+      quotaAILogic
+    );
+    if (quotaUpdateError) {
+      parserLogger.error('Failed to update ai_logic with quotas', {
+        error: quotaUpdateError,
+      });
+    }
+    chunk.ai_logic = quotaAILogic as Json;
 
     const usageTypes: ('antrenman' | 'deneme' | 'arsiv')[] = options.usageType
       ? [options.usageType]
@@ -536,9 +536,11 @@ export async function generateForChunk(
               if (!bufferItem) continue; // Safety check if LLM returned more questions than concepts
 
               let question = draftedBatchResult[j];
-              const validation = validationResponse?.results.find(
-                (r: BatchValidationResult['results'][number]) => r.index === j
-              );
+              const validation =
+                validationResponse?.results[j] ??
+                validationResponse?.results.find(
+                  (r: BatchValidationResult['results'][number]) => r.index === j
+                );
 
               if (!validation || validation.decision === 'REJECTED') {
                 log(

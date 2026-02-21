@@ -745,7 +745,7 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: 'Video_courseId_fkey';
-            columns: ['video_id'];
+            columns: ['course_id'];
             isOneToOne: false;
             referencedRelation: 'courses';
             referencedColumns: ['id'];

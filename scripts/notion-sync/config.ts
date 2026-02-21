@@ -12,7 +12,7 @@ export const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 export const DRY_RUN =
   process.env.DRY_RUN === 'true' || process.argv.includes('--dry-run');
 export const MAX_CONCURRENT_IMAGES = 5;
-export const MAX_CONCURRENT_PAGES = 5;
+export const MAX_CONCURRENT_PAGES = 3;
 
 export function validateConfig(): void {
   if (

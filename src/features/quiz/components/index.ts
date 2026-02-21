@@ -12,7 +12,8 @@ export * from './MappingProgressView';
 export * from './QuizModal';
 
 // Quiz Views
-export { QuizContainer as QuizView } from './QuizContainer';
+export * from './QuizContainer';
+export * from './QuizView';
 export * from './QuizResultsView';
 export * from './QuizIntroViews';
 

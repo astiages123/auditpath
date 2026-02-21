@@ -3,6 +3,7 @@ import { z } from 'zod';
 export const AiGenerationCostSchema = z.object({
   id: z.string(),
   created_at: z.string(),
+  provider: z.string().nullable().optional(),
   cost_usd: z.number().nullable(),
   model: z.string().nullable(),
   usage_type: z.string().nullable(),

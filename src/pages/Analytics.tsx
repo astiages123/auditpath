@@ -15,6 +15,9 @@ import { AnalyticsTable } from '@/features/analytics/components/AnalyticsTable';
 export default function AnalyticsPage() {
   const {
     logs,
+    selectedModel,
+    setSelectedModel,
+    uniqueModels,
     rate,
     loading,
     visibleCount,
@@ -56,7 +59,12 @@ export default function AnalyticsPage() {
 
   return (
     <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 animate-fade-in">
-      <AnalyticsHeader rate={rate} logs={logs} />
+      <AnalyticsHeader
+        rate={rate}
+        selectedModel={selectedModel}
+        onModelChange={setSelectedModel}
+        availableModels={uniqueModels}
+      />
 
       <AnalyticsStats
         totalCostTry={totalCostTry}

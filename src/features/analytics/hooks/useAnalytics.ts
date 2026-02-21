@@ -17,7 +17,8 @@ import { AiGenerationCost } from '../types/analyticsTypes';
 import { handleSupabaseError } from '@/lib/supabaseHelpers';
 
 export function useAnalytics() {
-  const [logs, setLogs] = useState<AiGenerationCost[]>([]);
+  const [rawLogs, setRawLogs] = useState<AiGenerationCost[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>('all');
   const [rate, setRate] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [visibleCount, setVisibleCount] = useState(50);
@@ -39,7 +40,7 @@ export function useAnalytics() {
 
         const data = await AnalyticsService.fetchGenerationCosts();
         const validatedData = validateLogs(data || []);
-        setLogs(validatedData);
+        setRawLogs(validatedData);
       } catch (error) {
         handleSupabaseError(error, 'useAnalytics.fetchData');
       } finally {
@@ -49,25 +50,45 @@ export function useAnalytics() {
     fetchData();
   }, []);
 
-  const dailyData = useMemo(() => processDailyData(logs, rate), [logs, rate]);
-  const totalCostUsd = useMemo(() => calculateTotalCostUsd(logs), [logs]);
+  const uniqueModels = useMemo(() => {
+    const models = rawLogs.map((l) => l.model).filter(Boolean) as string[];
+    return Array.from(new Set(models)).sort();
+  }, [rawLogs]);
+
+  const filteredLogs = useMemo(() => {
+    if (selectedModel === 'all') return rawLogs;
+    return rawLogs.filter((l) => l.model === selectedModel);
+  }, [rawLogs, selectedModel]);
+
+  const dailyData = useMemo(
+    () => processDailyData(filteredLogs, rate),
+    [filteredLogs, rate]
+  );
+  const totalCostUsd = useMemo(
+    () => calculateTotalCostUsd(filteredLogs),
+    [filteredLogs]
+  );
   const totalCostTry = totalCostUsd * rate;
-  const totalRequests = logs.length;
-  const cacheHitRate = useMemo(() => calculateCacheHitRate(logs), [logs]);
+  const totalRequests = filteredLogs.length;
+  const cacheHitRate = useMemo(
+    () => calculateCacheHitRate(filteredLogs),
+    [filteredLogs]
+  );
 
   const totalInputTokens = useMemo(
-    () => logs.reduce((acc, log) => acc + (log.prompt_tokens || 0), 0),
-    [logs]
+    () => filteredLogs.reduce((acc, log) => acc + (log.prompt_tokens || 0), 0),
+    [filteredLogs]
   );
 
   const totalOutputTokens = useMemo(
-    () => logs.reduce((acc, log) => acc + (log.completion_tokens || 0), 0),
-    [logs]
+    () =>
+      filteredLogs.reduce((acc, log) => acc + (log.completion_tokens || 0), 0),
+    [filteredLogs]
   );
 
   const totalCachedTokens = useMemo(
-    () => logs.reduce((acc, log) => acc + (log.cached_tokens || 0), 0),
-    [logs]
+    () => filteredLogs.reduce((acc, log) => acc + (log.cached_tokens || 0), 0),
+    [filteredLogs]
   );
 
   const handleLoadMore = () => {
@@ -77,7 +98,10 @@ export function useAnalytics() {
   };
 
   return {
-    logs,
+    logs: filteredLogs,
+    selectedModel,
+    setSelectedModel,
+    uniqueModels,
     rate,
     loading,
     visibleCount,

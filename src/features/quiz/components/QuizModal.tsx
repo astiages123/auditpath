@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -47,28 +46,24 @@ export function QuizModal({
     handleStartQuiz,
     handleGenerate,
     handleBackToTopics,
+    handleFinishQuiz,
     handleStartSmartExam,
     resetState,
     courseProgress,
   } = useQuizManager({ isOpen, courseId, courseName });
 
-  const [isMockMode, setIsMockMode] = useState(false);
-
   const handleClose = (open: boolean) => {
     if (!open) {
       resetState();
-      setIsMockMode(false);
     }
     onOpenChange(open);
   };
 
-  const startMockQuiz = () => {
-    setIsMockMode(true);
-    handleStartQuiz();
+  const handleBack = () => {
+    handleFinishQuiz();
   };
 
-  const handleBack = () => {
-    setIsMockMode(false);
+  const handleBackToTopicsList = () => {
     handleBackToTopics();
   };
 
@@ -98,15 +93,14 @@ export function QuizModal({
                   {isQuizActive ? (
                     <>
                       <button
-                        onClick={handleBack}
+                        onClick={handleBackToTopicsList}
                         className="hover:text-primary transition-colors"
                       >
                         Konular
                       </button>
                       <span className="opacity-20">/</span>
                       <span className="text-foreground/60">
-                        {selectedTopic?.name ||
-                          (isMockMode ? 'Mock Sorular' : '')}
+                        {selectedTopic?.name || ''}
                       </span>
                     </>
                   ) : (
@@ -126,13 +120,11 @@ export function QuizModal({
             Burada min-h-0 olmazsa içindeki grid modalı aşağı doğru genişletmeye devam eder.
         */}
         <div className="flex-1 min-h-0 overflow-hidden relative">
-          {isQuizActive && (selectedTopic || isMockMode) ? (
+          {isQuizActive && selectedTopic ? (
             <div className="h-full">
               <ErrorBoundary>
                 <QuizContainer
-                  chunkId={
-                    isMockMode ? 'MOCK_QUIZ' : targetChunkId || undefined
-                  }
+                  chunkId={targetChunkId || undefined}
                   courseId={courseId}
                   onClose={handleBack}
                 />
@@ -146,7 +138,6 @@ export function QuizModal({
                 selectedTopic={selectedTopic}
                 onSelectTopic={setSelectedTopic}
                 onStartSmartExam={handleStartSmartExam}
-                onStartMockQuiz={startMockQuiz}
                 isGeneratingExam={isGeneratingExam}
               />
 
