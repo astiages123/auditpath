@@ -85,7 +85,8 @@ export function CourseList({
   return (
     <div className="space-y-3">
       {courses.map((course) => {
-        const Icon = getCourseIcon(course.name) || GraduationCap;
+        const Icon =
+          getCourseIcon(course.name, course.course_slug) || GraduationCap;
         const displayName = cleanCourseName(course.name);
 
         const totalVideos = course.total_videos || 0;
@@ -101,7 +102,7 @@ export function CourseList({
           'rounded-xl border overflow-hidden transition-all duration-200 group',
           isCompleted
             ? 'border-amber-500/50 bg-amber-500/5 hover:bg-amber-500/10 hover:border-amber-500/70 shadow-[0_0_15px_-5px_var(--color-amber-500)]'
-            : 'border-white/5 bg-zinc-900/40 hover:border-white/30 hover:bg-zinc-900/60'
+            : 'border-white/5 bg-card/40 hover:border-white/30 hover:bg-card/60'
         );
 
         const iconContainerClass = cn(
@@ -112,7 +113,7 @@ export function CourseList({
         );
 
         const iconClass = cn(
-          'h-6 w-6 sm:h-6 sm:w-6',
+          'size-6',
           isCompleted
             ? 'text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
             : categoryColor
@@ -182,11 +183,11 @@ export function CourseList({
                 </div>
 
                 {/* Mobile Chevron (visible only on small if we put buttons below) */}
-                <button className="sm:hidden h-10 w-10 flex items-center justify-center rounded-xl bg-surface text-muted-foreground border border-white/5 shrink-0">
+                <button className="sm:hidden size-10 flex items-center justify-center rounded-xl bg-surface text-muted-foreground border border-white/5 shrink-0">
                   {expandedCourse === course.id ? (
-                    <ChevronUp className="h-5 w-5" />
+                    <ChevronUp className="size-5" />
                   ) : (
-                    <ChevronDown className="h-5 w-5" />
+                    <ChevronDown className="size-5" />
                   )}
                 </button>
               </div>
@@ -257,7 +258,7 @@ export function CourseList({
                       expandedCourse === course.id ? null : course.id
                     )
                   }
-                  className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-surface text-muted-foreground hover:bg-zinc-800 hover:text-foreground transition-all shrink-0 border border-transparent hover:border-white/5"
+                  className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-surface text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-all shrink-0 border border-transparent hover:border-white/5"
                 >
                   {expandedCourse === course.id ? (
                     <ChevronUp className="h-5 w-5" />

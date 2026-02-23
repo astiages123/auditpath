@@ -83,10 +83,10 @@ export function CategoryCard({
       className={cn(
         'group relative overflow-hidden rounded-3xl border transition-all duration-500',
         'border-border',
-        'bg-linear-to-br from-zinc-900/80 via-zinc-900/95 to-zinc-950',
+        'bg-card/40',
         isOpen
           ? 'shadow-lg border-white/10 bg-zinc-900/60 backdrop-blur-md'
-          : 'hover:shadow-md hover:border-white/10 hover:bg-zinc-900/80'
+          : 'hover:shadow-md hover:border-white/10 hover:bg-card/80'
       )}
     >
       <button

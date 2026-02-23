@@ -17,6 +17,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/utils/routes';
+import { SyncButton } from '@/features/notes/components/SyncButton';
 
 export const MobileSidebar: FC = () => {
   const { user, signOut } = useAuth();
@@ -68,12 +69,12 @@ export const MobileSidebar: FC = () => {
           onClick={() => setMobileMenuOpen(false)}
           className="absolute top-6 right-6 p-2 rounded-full bg-white/5 text-white/40 hover:text-white transition-colors"
         >
-          <X className="h-6 w-6" />
+          <X className="size-6" />
         </button>
 
         {/* Profile Section */}
         <div className="flex flex-col items-start gap-4 mb-12">
-          <Avatar className="h-16 w-16 ring-4 ring-primary/10 border-2 border-primary/20 shadow-2xl">
+          <Avatar className="size-16 ring-4 ring-primary/10 border-2 border-primary/20 shadow-2xl">
             <AvatarImage
               src={user?.user_metadata?.avatar_url}
               alt="Avatar"
@@ -109,7 +110,7 @@ export const MobileSidebar: FC = () => {
                     : 'text-white/60 hover:text-white hover:bg-white/5'
                 )}
               >
-                <Icon className="h-5 w-5 shrink-0" />
+                <Icon className="size-5 shrink-0" />
                 <span className="font-bold text-base tracking-tight">
                   {item.label}
                 </span>
@@ -151,17 +152,23 @@ export const MobileSidebar: FC = () => {
         {/* Bottom Section */}
         <div className="mt-8">
           {user ? (
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-4 h-14 rounded-2xl text-white/50 hover:text-destructive hover:bg-destructive/5 font-bold"
-              onClick={() => {
-                signOut();
-                setMobileMenuOpen(false);
-              }}
-            >
-              <LogOut className="h-5 w-5" />
-              Çıkış Yap
-            </Button>
+            <>
+              <SyncButton
+                onSyncComplete={() => setMobileMenuOpen(false)}
+                className="text-white/50 hover:bg-white/5"
+              />
+              <Button
+                variant="ghost"
+                className="w-full justify-start gap-4 h-14 rounded-2xl text-white/50 hover:text-destructive hover:bg-destructive/5 font-bold"
+                onClick={() => {
+                  signOut();
+                  setMobileMenuOpen(false);
+                }}
+              >
+                <LogOut className="size-5" />
+                Çıkış Yap
+              </Button>
+            </>
           ) : (
             <Button
               variant="outline"

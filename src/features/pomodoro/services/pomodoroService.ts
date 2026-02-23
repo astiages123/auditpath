@@ -247,12 +247,13 @@ export async function getRecentSessions(
       }
     }
 
-    const validatedTimeline = timeline
-      .map((e) =>
-        isValid(TimelineEventSchema, e)
-          ? parseOrThrow(TimelineEventSchema, e)
-          : null
-      )
+    const validatedTimeline = (timeline as Json[])
+      .map((e) => {
+        if (isValid(TimelineEventSchema, e)) {
+          return parseOrThrow(TimelineEventSchema, e);
+        }
+        return null;
+      })
       .filter((e): e is ValidatedTimelineEvent => e !== null);
 
     // Calculate true start/end from timeline if possible to avoid scaling issues in Gantt Chart

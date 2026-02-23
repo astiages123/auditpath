@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { supabase } from '@/lib/supabase';
-import { type Json } from '@/types/database.types';
 import { logger } from '@/utils/logger';
+import { z } from 'zod';
 
 interface QuotaStore {
   quota: {
@@ -32,13 +32,17 @@ export const useQuotaStore = create<QuotaStore>()((set) => ({
 
       if (error) throw error;
 
-      const quotaData = data as Json;
-      if (quotaData && typeof quotaData === 'object') {
+      const QuotaSchema = z.object({
+        daily_limit: z.number().optional().default(50),
+        remaining: z.number().optional().default(50),
+      });
+
+      const parsedQuota = QuotaSchema.safeParse(data);
+      if (parsedQuota.success) {
         set({
           quota: {
-            dailyLimit:
-              (quotaData as { daily_limit?: number }).daily_limit ?? 50,
-            remaining: (quotaData as { remaining?: number }).remaining ?? 50,
+            dailyLimit: parsedQuota.data.daily_limit,
+            remaining: parsedQuota.data.remaining,
             isLoading: false,
             error: null,
           },

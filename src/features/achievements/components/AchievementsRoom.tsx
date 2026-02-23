@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 // Yeni ikonlar eklendi: Scale (Hukuk), Coins (Ekonomi), Landmark (Muhasebe), Globe (Genel)
 import {
-  Library,
   Scroll,
   Sparkles,
   Scale,
@@ -10,6 +9,7 @@ import {
   Globe,
   Crown,
   Award,
+  LibraryBig,
 } from 'lucide-react';
 import { getUnlockedAchievements as getDbUnlocked } from '@/features/achievements/services/achievementService';
 import { type UnlockedAchievement } from '@/features/achievements/types/achievementsTypes';
@@ -102,7 +102,7 @@ export function AchievementsRoom() {
         <div className="relative group">
           <div className="absolute -inset-1 bg-linear-to-r rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
           <div className="relative p-4 rounded-xl bg-card border border-border/50 leading-none flex items-center">
-            <Library className="w-8 h-8 text-primary" />
+            <LibraryBig className="w-8 h-8 text-primary" />
           </div>
         </div>
         <div>

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   MultipleChoiceQuestion,
   QuizQuestion,
@@ -71,6 +71,13 @@ export function useQuizEngine(): UseQuizEngineReturn {
   );
 
   const timerRef = useRef(createTimer());
+
+  useEffect(() => {
+    const timer = timerRef.current;
+    return () => {
+      timer.clear();
+    };
+  }, []);
 
   const updateState = useCallback((patch: Partial<QuizState>) => {
     setState((prev) => ({ ...prev, ...patch }));

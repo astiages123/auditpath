@@ -71,7 +71,7 @@ export function CourseSelector({
             <X size={20} />
           </button>
           <div className="flex items-center gap-4">
-            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+            <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
               <Target size={24} />
             </div>
             <div>

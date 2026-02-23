@@ -22,14 +22,12 @@ export const MarkdownSection = memo(
         id={sectionId}
         className="chunk-container scroll-mt-24 mb-24 last:mb-0 relative"
       >
-        {chunk.section_title && (
-          <div className="section-header mb-8 pb-4 border-b border-border/40">
-            <h1 className="text-3xl font-bold tracking-tight text-center text-foreground">
-              {chunk.section_title}
-            </h1>
-          </div>
-        )}
-        <article className="prose prose-lg prose-slate prose-invert max-w-none">
+        <article className="prose prose-lg prose-invert max-w-none bg-background/90 backdrop-blur-sm pt-5 md:pt-5 lg:pt-5 pb-20 px-12 md:px-16 lg:px-20">
+          {chunk.section_title && (
+            <div className="section-header border-b border-primary">
+              <h1>{chunk.section_title}</h1>
+            </div>
+          )}
           <ReactMarkdown
             remarkPlugins={[remarkMath, remarkGfm]}
             rehypePlugins={[

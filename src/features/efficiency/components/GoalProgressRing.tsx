@@ -17,10 +17,10 @@ export const GoalProgressRing = ({
 
   // Softer color palette
   const getStrokeColor = () => {
-    if (progress >= 100) return '#22c55e'; // emerald-500
-    if (progress >= 50) return '#22c55e'; // emerald-500
-    if (progress >= 25) return '#eab308'; // yellow-500
-    return '#64748b'; // slate-500
+    if (progress >= 100) return 'oklch(85.54% 0.1969 158.6115)'; // primary
+    if (progress >= 50) return 'oklch(85.54% 0.1969 158.6115)'; // primary
+    if (progress >= 25) return 'oklch(77.596% 0.14766 79.996)'; // accent
+    return 'oklch(82.968% 0.0001 271.152)'; // muted-foreground
   };
 
   return (
@@ -47,7 +47,9 @@ export const GoalProgressRing = ({
           cx={size / 2}
           cy={size / 2}
           className="transition-all duration-1000 ease-out"
-          style={{ filter: 'drop-shadow(0 0 4px rgba(34, 197, 94, 0.3))' }}
+          style={{
+            filter: 'drop-shadow(0 0 4px oklch(85.54% 0.1969 158.6115 / 0.3))',
+          }}
         />
       </svg>
       <div className="absolute flex flex-col items-center">

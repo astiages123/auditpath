@@ -132,7 +132,7 @@ export function CourseCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 hover:bg-amber-500/10 hover:text-amber-500 transition-colors"
+                    className="h-8 w-8 hover:bg-accent/10 hover:text-accent transition-colors"
                     onClick={handleStatsClick}
                   >
                     <BarChart2 className="h-4 w-4" />

@@ -34,6 +34,8 @@ export function useEfficiencyTrends() {
   const [focusTrend, setFocusTrend] = useState<FocusTrend[]>([]);
 
   useEffect(() => {
+    let mounted = true;
+
     async function fetchTrends() {
       if (!user?.id) return;
       setLoading(true);
@@ -62,6 +64,8 @@ export function useEfficiencyTrends() {
           getConsistencyData({ userId: user.id, days: 30 }),
         ]);
 
+        if (!mounted) return;
+
         setEfficiencyTrend(effTrend || []);
         setFocusTrend(fTrend || []);
         setLoadWeek(loadWeekData || []);
@@ -73,13 +77,21 @@ export function useEfficiencyTrends() {
         setFocusPowerAll(focusPowerAllData || []);
         setConsistencyData(consistency || []);
       } catch (error) {
-        logger.error('Failed to fetch efficiency trends', error as Error);
+        if (mounted) {
+          logger.error('Failed to fetch efficiency trends', error as Error);
+        }
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     }
 
     fetchTrends();
+
+    return () => {
+      mounted = false;
+    };
   }, [user?.id]);
 
   return {

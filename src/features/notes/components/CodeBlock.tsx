@@ -89,13 +89,13 @@ export const CodeBlock = ({
   }
 
   return (
-    <div className="relative my-8 rounded-xl overflow-hidden border border-border/50 shadow-lg bg-[#0d1117] group not-prose">
+    <div className="relative my-8 rounded-xl overflow-hidden border border-border/50 shadow-lg bg-card group not-prose">
       <div className="flex items-center justify-between px-4 py-2 border-b border-white/10 bg-white/5">
         <div className="flex items-center gap-2">
           <span className="flex gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80" />
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500/80" />
+            <span className="w-2 h-2 rounded-full bg-red-400/60" />
+            <span className="w-2 h-2 rounded-full bg-yellow-400/60" />
+            <span className="w-2 h-2 rounded-full bg-green-400/60" />
           </span>
           <span className="ml-2 text-xs text-white/90 font-mono opacity-70">
             {match[1]}

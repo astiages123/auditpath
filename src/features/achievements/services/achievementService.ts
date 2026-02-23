@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database.types';
 import type { UnlockedAchievement } from '@/features/achievements/types/achievementsTypes';
-import { logger } from '@/utils/logger';
+import { safeQuery } from '@/lib/supabaseHelpers';
 
 /**
  * Get all unlocked achievements for a user.
@@ -12,23 +12,15 @@ import { logger } from '@/utils/logger';
 export async function getUnlockedAchievements(
   userId: string
 ): Promise<UnlockedAchievement[]> {
-  const { data, error } = await supabase
-    .from('user_achievements')
-    .select('*')
-    .eq('user_id', userId);
+  const { data } = await safeQuery<
+    Database['public']['Tables']['user_achievements']['Row'][]
+  >(
+    supabase.from('user_achievements').select('*').eq('user_id', userId),
+    'getUnlockedAchievements error',
+    { userId }
+  );
 
-  if (error) {
-    const isAbort =
-      error.message?.includes('AbortError') || error.code === 'ABORT_ERROR';
-    if (!isAbort) {
-      // Log to tracking service
-    }
-    return [];
-  }
-
-  return (
-    data as Database['public']['Tables']['user_achievements']['Row'][]
-  ).map((a) => ({
+  return (data || []).map((a) => ({
     id: a.achievement_id,
     unlockedAt: a.unlocked_at,
   }));
@@ -47,17 +39,16 @@ export async function unlockAchievement(
   achievedAt?: string
 ) {
   // Check if achievement is already unlocked
-  const { data: existing, error: checkError } = await supabase
-    .from('user_achievements')
-    .select('achievement_id')
-    .eq('user_id', userId)
-    .eq('achievement_id', achievementId)
-    .maybeSingle();
-
-  if (checkError) {
-    logger.error('Error checking achievement existence:', checkError);
-    return;
-  }
+  const { data: existing } = await safeQuery(
+    supabase
+      .from('user_achievements')
+      .select('achievement_id')
+      .eq('user_id', userId)
+      .eq('achievement_id', achievementId)
+      .maybeSingle(),
+    'unlockAchievement check error',
+    { userId, achievementId }
+  );
 
   if (existing) {
     // Already unlocked, do nothing
@@ -69,12 +60,14 @@ export async function unlockAchievement(
     ? new Date(achievedAt).toISOString()
     : new Date().toISOString();
 
-  const { error } = await supabase.from('user_achievements').upsert({
-    user_id: userId,
-    achievement_id: achievementId,
-    unlocked_at: unlockDate,
-    is_celebrated: false,
-  });
-
-  if (error) logger.error('Error unlocking achievement:', error);
+  await safeQuery(
+    supabase.from('user_achievements').upsert({
+      user_id: userId,
+      achievement_id: achievementId,
+      unlocked_at: unlockDate,
+      is_celebrated: false,
+    }),
+    'unlockAchievement upsert error',
+    { userId, achievementId }
+  );
 }

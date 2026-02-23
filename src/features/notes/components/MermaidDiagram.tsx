@@ -18,14 +18,14 @@ async function getMermaid() {
       startOnLoad: false,
       theme: 'dark',
       themeVariables: {
-        primaryColor: '#f59e0b',
-        primaryTextColor: '#fff',
-        primaryBorderColor: '#555',
-        lineColor: '#888',
-        secondaryColor: '#1a1a1a',
-        tertiaryColor: '#1a1a1a',
-        background: '#ffffff',
-        mainBkg: '#1a1a1a',
+        primaryColor: 'oklch(77.596% 0.14766 79.996)',
+        primaryTextColor: 'oklch(92.19% 0 0deg)',
+        primaryBorderColor: 'oklch(37.15% 0 0deg)',
+        lineColor: 'oklch(82.968% 0.0001 271.152)',
+        secondaryColor: 'oklch(26.86% 0 0deg)',
+        tertiaryColor: 'oklch(26.86% 0 0deg)',
+        background: 'oklch(92.19% 0 0deg)',
+        mainBkg: 'oklch(20.46% 0 0deg)',
         fontFamily: 'Poppins, system-ui, sans-serif',
       },
       flowchart: {
@@ -72,9 +72,9 @@ export const MermaidDiagram = memo(({ code }: MermaidDiagramProps) => {
 
   if (isLoading) {
     return (
-      <div className="my-8 rounded-xl border border-border/50 bg-[#0d1117] p-8 flex items-center justify-center">
+      <div className="my-8 rounded-xl border border-border/50 bg-card p-8 flex items-center justify-center">
         <Loader2 className="w-6 h-6 text-primary animate-spin" />
-        <span className="ml-3 text-white/90">Diyagram yükleniyor...</span>
+        <span className="ml-3 text-foreground/90">Diyagram yükleniyor...</span>
       </div>
     );
   }

@@ -1,15 +1,38 @@
 import {
-  BarChart3,
+  BadgePercent,
+  BadgeTurkishLira,
+  Banknote,
   BookOpen,
   Brain,
   Briefcase,
+  BriefcaseConveyorBelt,
   Calculator,
+  ChartColumnStacked,
+  ChartNoAxesCombined,
+  ClipboardList,
+  Coins,
+  Container,
+  Earth,
   Gavel,
   Globe,
+  Hammer,
+  Handshake,
+  HardHat,
+  Landmark,
+  Languages,
   LucideIcon,
+  Megaphone,
   PiggyBank,
+  Presentation,
+  Puzzle,
+  Receipt,
   Scale,
+  ShieldUser,
+  Sigma,
   TrendingUp,
+  Users,
+  Vault,
+  Wallet,
 } from 'lucide-react';
 
 // --- Types ---
@@ -282,7 +305,34 @@ export const COURSE_KEYWORD_MAPPINGS: Array<{
   },
 ];
 
-// Special case overrides for icons if the keyword limits were too broad above
+// Special case overrides for icons - specific course to icon mapping
 export const ICON_OVERRIDES: Array<{ keyword: string; icon: LucideIcon }> = [
-  { keyword: 'makro', icon: BarChart3 },
+  // EKONOMİ
+  { keyword: 'mikro-iktisat', icon: ChartNoAxesCombined },
+  { keyword: 'makro-iktisat', icon: Earth },
+  { keyword: 'para-banka-ve-kredi', icon: Banknote },
+  { keyword: 'uluslararasi-ticaret', icon: Container },
+  { keyword: 'turkiye-ekonomisi', icon: BadgeTurkishLira },
+  // HUKUK
+  { keyword: 'medeni-hukuk', icon: Users },
+  { keyword: 'borclar-hukuku', icon: Handshake },
+  { keyword: 'ticaret-hukuku', icon: BriefcaseConveyorBelt },
+  { keyword: 'bankacilik-hukuku', icon: Landmark },
+  { keyword: 'icra-ve-iflas-hukuku', icon: Hammer },
+  { keyword: 'turk-ceza-kanunu', icon: ShieldUser },
+  { keyword: 'is-hukuku', icon: HardHat },
+  { keyword: 'medeni-usul-hukuku', icon: ClipboardList },
+  // MUHASEBE VE MALİYE
+  { keyword: 'muhasebe', icon: Receipt },
+  { keyword: 'maliye', icon: Coins },
+  { keyword: 'banka-muhasebesi', icon: Vault },
+  { keyword: 'isletme-yonetimi', icon: Presentation },
+  { keyword: 'pazarlama-yonetimi', icon: Megaphone },
+  { keyword: 'finansal-yonetim', icon: Wallet },
+  // GENEL YETENEK VE İNGİLİZCE
+  { keyword: 'finans-matematigi', icon: BadgePercent },
+  { keyword: 'matematik', icon: Sigma },
+  { keyword: 'istatistik', icon: ChartColumnStacked },
+  { keyword: 'sozel-mantik', icon: Puzzle },
+  { keyword: 'ingilizce', icon: Languages },
 ];

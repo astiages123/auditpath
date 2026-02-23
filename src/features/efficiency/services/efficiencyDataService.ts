@@ -1,23 +1,62 @@
 import { supabase } from '@/lib/supabase';
 import { calculateFocusPower } from '@/features/efficiency/logic/metricsCalc';
 import { getCycleCount } from '@/features/pomodoro/logic/sessionMath';
-import { getVirtualDateKey, getVirtualDayStart } from '@/utils/dateHelpers';
+import {
+  formatDisplayDate,
+  getVirtualDateKey,
+  getVirtualDayStart,
+} from '@/utils/dateHelpers';
 import { isValid, parseOrThrow } from '@/utils/validation';
-import { handleSupabaseError } from '@/lib/supabaseHelpers';
+import { handleSupabaseError, safeQuery } from '@/lib/supabaseHelpers';
 import { TimelineEventSchema } from '../types/efficiencyTypes';
 import { z } from 'zod';
 
 import type {
-  DayActivity,
-  LearningLoad,
-  FocusPowerPoint,
-  EfficiencyTrend,
-  FocusTrend,
   DailyEfficiencySummary,
+  DayActivity,
   DetailedSession,
+  EfficiencyTrend,
+  FocusPowerPoint,
+  FocusTrend,
+  LearningLoad,
 } from '@/features/efficiency/types/efficiencyTypes';
 
 // ============== HELPER FUNCTIONS ==============
+
+/**
+ * Common helper to fetch pomodoro sessions with a 6-month history.
+ */
+async function fetchSessionHistory<T = Record<string, unknown>>(
+  userId: string,
+  select: string,
+  errorContext: string,
+  options: { months?: number; days?: number } = { months: 6 }
+): Promise<T[]> {
+  const queryStartDate = new Date();
+  if (options.days) {
+    queryStartDate.setDate(queryStartDate.getDate() - options.days);
+  } else {
+    queryStartDate.setMonth(queryStartDate.getMonth() - (options.months || 6));
+  }
+  const queryStartDateStr = queryStartDate.toISOString();
+
+  const response = await supabase
+    .from('pomodoro_sessions')
+    .select(select)
+    .eq('user_id', userId)
+    .gte('started_at', queryStartDateStr);
+
+  const { data } = await safeQuery<T[]>(
+    Promise.resolve({
+      data: response.data as T[] | null,
+      error: response.error,
+      count: response.count,
+    }),
+    errorContext,
+    { userId }
+  );
+  return data || [];
+}
 
 /**
  * Generates an array of date strings for the last N days.
@@ -32,7 +71,7 @@ function generateDateRange(days: number): string[] {
   return dates;
 }
 
-// ============== CHART DATA FUNCTIONS (from efficiencyChartService.ts) ==============
+// === SECTION === Chart Data Functions
 
 export interface LearningLoadParams {
   userId: string;
@@ -43,15 +82,10 @@ export async function getLearningLoadData({
   userId,
   days,
 }: LearningLoadParams): Promise<LearningLoad[]> {
-  const queryStartDate = new Date();
-  queryStartDate.setMonth(queryStartDate.getMonth() - 6); // Fetch enough history
-  const queryStartDateStr = queryStartDate.toISOString();
-
-  const { data: sessionsData } = await supabase
-    .from('pomodoro_sessions')
-    .select('started_at, total_work_time')
-    .eq('user_id', userId)
-    .gte('started_at', queryStartDateStr);
+  const sessionsData = await fetchSessionHistory<{
+    started_at: string;
+    total_work_time: number | null;
+  }>(userId, 'started_at, total_work_time', 'getLearningLoadData error');
 
   const dailyMap = new Map<string, number>();
 
@@ -74,13 +108,7 @@ export async function getLearningLoadData({
     d.setDate(d.getDate() - i);
 
     const dateKey = getVirtualDateKey(d);
-    const dayName =
-      i === 0
-        ? 'Bugün'
-        : d.toLocaleDateString('tr-TR', {
-            day: 'numeric',
-            month: 'short',
-          });
+    const dayName = i === 0 ? 'Bugün' : formatDisplayDate(d);
 
     rawData.push({
       day: dayName,
@@ -116,13 +144,17 @@ export async function getFocusPowerData({
 }): Promise<FocusPowerPoint[]> {
   const queryStartDate = new Date();
   queryStartDate.setMonth(queryStartDate.getMonth() - 6);
-  const queryStartDateStr = queryStartDate.toISOString();
 
-  const { data: sessionsData } = await supabase
-    .from('pomodoro_sessions')
-    .select('started_at, total_work_time, total_break_time, total_pause_time')
-    .eq('user_id', userId)
-    .gte('started_at', queryStartDateStr);
+  const sessionsData = await fetchSessionHistory<{
+    started_at: string;
+    total_work_time: number | null;
+    total_break_time: number | null;
+    total_pause_time: number | null;
+  }>(
+    userId,
+    'started_at, total_work_time, total_break_time, total_pause_time',
+    'getFocusPowerData error'
+  );
 
   const focusPowerAggMap = new Map<
     string,
@@ -162,10 +194,7 @@ export async function getFocusPowerData({
       };
       const score = calculateFocusPower(agg.work, agg.breakTime, agg.pause);
 
-      const dayName = d.toLocaleDateString('tr-TR', {
-        day: 'numeric',
-        month: 'short',
-      });
+      const dayName = formatDisplayDate(d);
 
       // Filter out empty days if range is large, or keep all if range is small (week/month)
       // User requested filling gaps, so we default to fill, unless for 'all' time specialized logic
@@ -209,7 +238,7 @@ export async function getFocusPowerData({
     }
 
     const score = calculateFocusPower(mWork, mBreak, mPause);
-    const monthName = d.toLocaleDateString('tr-TR', { month: 'long' });
+    const monthName = formatDisplayDate(d, { month: 'long' });
 
     allTimeFocus.push({
       date: monthName,
@@ -233,13 +262,11 @@ export async function getConsistencyData({
 }): Promise<DayActivity[]> {
   const queryStartDate = new Date();
   queryStartDate.setMonth(queryStartDate.getMonth() - 6);
-  const queryStartDateStr = queryStartDate.toISOString();
 
-  const { data: sessionsData } = await supabase
-    .from('pomodoro_sessions')
-    .select('started_at, total_work_time')
-    .eq('user_id', userId)
-    .gte('started_at', queryStartDateStr);
+  const sessionsData = await fetchSessionHistory<{
+    started_at: string;
+    total_work_time: number | null;
+  }>(userId, 'started_at, total_work_time', 'getConsistencyData error');
 
   const dailyMap = new Map<string, number>();
 
@@ -299,7 +326,7 @@ export async function getConsistencyData({
   }));
 }
 
-// ============== TREND FUNCTIONS (from efficiencyTrendService.ts) ==============
+// === SECTION === Trend Functions
 
 /**
  * Get focus trend (work time) over the last 30 days.
@@ -309,28 +336,19 @@ export async function getConsistencyData({
  */
 export async function getFocusTrend(userId: string): Promise<FocusTrend[]> {
   const daysToCheck = 30;
-  const thirtyDaysAgo = getVirtualDayStart();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - daysToCheck);
-  const dateStr = thirtyDaysAgo.toISOString();
+  const data = await fetchSessionHistory<{
+    started_at: string;
+    total_work_time: number | null;
+  }>(userId, 'started_at, total_work_time', 'getFocusTrend error', {
+    days: daysToCheck,
+  });
 
-  const { data, error } = await supabase
-    .from('pomodoro_sessions')
-    .select('started_at, total_work_time')
-    .eq('user_id', userId)
-    .gte('started_at', dateStr);
-
-  if (error || !data) return [];
-
-  // O(N) Aggregation
   const dailyMap = new Map<string, number>();
-
-  // Pre-fill dates to ensure no gaps (User Request: fill gaps)
   const dateRange = generateDateRange(daysToCheck);
   dateRange.forEach((date: string) => dailyMap.set(date, 0));
 
   data.forEach((s) => {
     const day = getVirtualDateKey(new Date(s.started_at));
-    // Verify day is within range before adding (it should be due to query, but safe check)
     if (dailyMap.has(day)) {
       dailyMap.set(day, (dailyMap.get(day) || 0) + (s.total_work_time || 0));
     }
@@ -346,24 +364,25 @@ export async function getFocusTrend(userId: string): Promise<FocusTrend[]> {
 
 /**
  * Get efficiency trend over the last 30 days.
- *
- * @param userId User ID
- * @returns Array of efficiency trend data
  */
 export async function getEfficiencyTrend(
   userId: string
 ): Promise<EfficiencyTrend[]> {
   const daysToCheck = 30;
-  const thirtyDaysAgo = getVirtualDayStart();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - daysToCheck);
-  const dateStr = thirtyDaysAgo.toISOString();
+  const queryStartDate = new Date();
+  queryStartDate.setDate(queryStartDate.getDate() - daysToCheck);
+  const dateStr = queryStartDate.toISOString();
 
-  const [{ data: sessions }, { data: videoProgress }] = await Promise.all([
-    supabase
-      .from('pomodoro_sessions')
-      .select('started_at, total_work_time')
-      .eq('user_id', userId)
-      .gte('started_at', dateStr),
+  const [sessions, { data: videoProgress }] = await Promise.all([
+    fetchSessionHistory<{
+      started_at: string;
+      total_work_time: number | null;
+    }>(
+      userId,
+      'started_at, total_work_time',
+      'getEfficiencyTrend sessions error',
+      { days: daysToCheck }
+    ),
     supabase
       .from('video_progress')
       .select('completed_at, video:videos(duration_minutes)')
@@ -372,19 +391,17 @@ export async function getEfficiencyTrend(
       .gte('completed_at', dateStr),
   ]);
 
-  // Map for O(1) access
   const dailyMap = new Map<
     string,
     { workSeconds: number; videoMinutes: number }
   >();
 
-  // Fill gaps
   const dateRange = generateDateRange(daysToCheck);
   dateRange.forEach((date: string) =>
     dailyMap.set(date, { workSeconds: 0, videoMinutes: 0 })
   );
 
-  sessions?.forEach((s) => {
+  sessions.forEach((s) => {
     const day = getVirtualDateKey(new Date(s.started_at));
     if (dailyMap.has(day)) {
       const entry = dailyMap.get(day)!;
@@ -396,11 +413,17 @@ export async function getEfficiencyTrend(
     if (!vp.completed_at) return;
     const day = getVirtualDateKey(new Date(vp.completed_at));
 
-    // Handle array or single object for joined video data
-    const video = (Array.isArray(vp.video) ? vp.video[0] : vp.video) as {
-      duration_minutes?: number;
-    } | null;
-    const duration = video?.duration_minutes || 0;
+    const videoData = vp.video;
+    const videoObj = Array.isArray(videoData) ? videoData[0] : videoData;
+
+    const durationSchema = z
+      .object({
+        duration_minutes: z.number().nullable(),
+      })
+      .nullable();
+
+    const parsed = durationSchema.safeParse(videoObj);
+    const duration = parsed.success ? (parsed.data?.duration_minutes ?? 0) : 0;
 
     if (dailyMap.has(day)) {
       const entry = dailyMap.get(day)!;
@@ -429,7 +452,7 @@ export async function getEfficiencyTrend(
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-// ============== SUMMARY FUNCTIONS (from efficiencySummaryService.ts) ==============
+// === SECTION === Summary Functions
 
 /**
  * Get daily efficiency summary for the master card.

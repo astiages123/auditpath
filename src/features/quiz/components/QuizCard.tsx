@@ -190,7 +190,7 @@ function QuizCardComponent({
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: 'spring', damping: 32, stiffness: 160 }}
-          className={`w-full flex-shrink-0 flex flex-col transition-all duration-500 ${
+          className={`w-full shrink-0 flex flex-col transition-all duration-500 ${
             isAnswered && showExplanation
               ? 'h-auto lg:h-full lg:w-[64%]'
               : 'h-full w-full'

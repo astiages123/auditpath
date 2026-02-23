@@ -42,14 +42,14 @@ export function ProgressStatCard({
           : 'border-white/10';
 
   const gradientClass = colorClass.includes('orange')
-    ? 'from-orange-500/10 via-zinc-900 to-zinc-900'
+    ? 'from-orange-500/10 via-card/40 to-card/40'
     : colorClass.includes('emerald')
-      ? 'from-emerald-500/10 via-zinc-900 to-zinc-900'
+      ? 'from-emerald-500/10 via-card/40 to-card/40'
       : colorClass.includes('blue')
-        ? 'from-blue-500/10 via-zinc-900 to-zinc-900'
+        ? 'from-blue-500/10 via-card/40 to-card/40'
         : colorClass.includes('purple')
-          ? 'from-purple-500/10 via-zinc-900 to-zinc-900'
-          : 'from-zinc-900 via-zinc-900 to-zinc-800';
+          ? 'from-purple-500/10 via-card/40 to-card/40'
+          : 'bg-card/40';
 
   const iconBgClass = colorClass.includes('orange')
     ? 'bg-orange-500/10 border-orange-500/20 text-orange-500'

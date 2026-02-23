@@ -26,17 +26,7 @@
   --chart-2: oklch(66.58% 0.1574 58.3183deg);
   --chart-3: oklch(47.32% 0.1247 46.2007deg);
   --chart-4: oklch(55.53% 0.1455 48.9975deg);
-  --chart-5: oklch(47.32% 0.1247 46.2007deg);
-  --sidebar: oklch(16.84% 0 0deg);
-  --sidebar-foreground: oklch(92.19% 0 0deg);
-  --sidebar-primary: oklch(76.86% 0.1647 70.0804deg);
-  --sidebar-primary-foreground: oklch(100% 0 0deg);
-  --sidebar-accent: oklch(47.32% 0.1247 46.2007deg);
-  --sidebar-accent-foreground: oklch(92.43% 0.1151 95.7459deg);
-  --sidebar-border: oklch(37.15% 0 0deg);
-  --sidebar-ring: oklch(76.86% 0.1647 70.0804deg);
   --font-sans: poppins, sans-serif;
-  --font-serif: lora, serif;
   --font-mono: 'Roboto Mono', monospace;
   --font-heading: outfit, sans-serif;
   --radius: 0.75rem;
@@ -45,17 +35,7 @@
   --border-subtle: color-mix(in oklch, var(--border) 50%, transparent);
   --primary-soft: color-mix(in oklch, var(--primary) 10%, transparent);
   --primary-soft-border: color-mix(in oklch, var(--primary) 20%, transparent);
-  --shadow-x: 0px;
-  --shadow-y: 4px;
-  --shadow-blur: 8px;
-  --shadow-spread: -1px;
-  --shadow-opacity: 0.1;
-  --shadow-color: hsl(0deg 0% 0%);
-  --shadow-2xs: 0px 4px 8px -1px hsl(0deg 0% 0% / 5%);
   --shadow-xs: 0px 4px 8px -1px hsl(0deg 0% 0% / 5%);
-  --shadow-sm:
-    0px 4px 8px -1px hsl(0deg 0% 0% / 10%),
-    0px 1px 2px -2px hsl(0deg 0% 0% / 10%);
   --shadow:
     0px 4px 8px -1px hsl(0deg 0% 0% / 10%),
     0px 1px 2px -2px hsl(0deg 0% 0% / 10%);
@@ -69,6 +49,9 @@
     0px 4px 8px -1px hsl(0deg 0% 0% / 10%),
     0px 8px 10px -2px hsl(0deg 0% 0% / 10%);
   --shadow-2xl: 0px 4px 8px -1px hsl(0deg 0% 0% / 25%);
+  --shadow-glow-primary: 0 0 15px oklch(85.54% 0.1969 158.6115deg / 30%);
+  --shadow-glow-accent: 0 0 15px oklch(77.596% 0.1477 79.996deg / 30%);
+  --shadow-glow-destructive: 0 0 8px oklch(63.68% 0.2078 25.3313deg / 40%);
 }
 
 @theme inline {
@@ -95,15 +78,6 @@
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
   --color-surface: var(--surface);
   --color-surface-hover: var(--surface-hover);
   --color-border-subtle: var(--border-subtle);
@@ -111,20 +85,20 @@
   --color-primary-soft-border: var(--primary-soft-border);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
-  --font-serif: var(--font-serif);
   --font-heading: var(--font-heading);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --shadow-2xs: var(--shadow-2xs);
   --shadow-xs: var(--shadow-xs);
-  --shadow-sm: var(--shadow-sm);
   --shadow: var(--shadow);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
+  --shadow-glow-primary: var(--shadow-glow-primary);
+  --shadow-glow-accent: var(--shadow-glow-accent);
+  --shadow-glow-destructive: var(--shadow-glow-destructive);
 }
 
 @layer base {
@@ -161,24 +135,6 @@
   input.input-white-autofill:-webkit-autofill:focus {
     -webkit-text-fill-color: white !important;
     color: white !important;
-  }
-
-  /* Custom Layout Utilities */
-  .perspective-container {
-    perspective: 1000px;
-    overflow: hidden;
-    position: relative;
-    width: 100%;
-    height: 100vh;
-  }
-
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
   }
 }
 
@@ -246,11 +202,6 @@
 }
 
 /* Note Viewer Styles have been moved to notes.css */
-
-/* Title Roadmap - Milestone Glow Effect */
-.milestone-glow {
-  filter: drop-shadow(0 0 8px var(--primary));
-}
 
 /* Achievement Seal Styles */
 .seal-unlocked {
@@ -338,168 +289,60 @@
   filter: drop-shadow(0 0 20px var(--primary));
 }
 
-/* Guild Header Gradient */
-.guild-header {
-  background: linear-gradient(
-    90deg,
-    transparent,
-    var(--guild-color, var(--accent)) 20%,
-    var(--guild-color, var(--accent)) 80%,
-    transparent
-  );
-  opacity: 0.15;
-}
-
 /* Statistics Page - Bento Grid Cards */
 .bento-card {
   backdrop-filter: blur(12px);
 }
 
-/* Progress Ring Animation */
-@keyframes progress-ring-fill {
-  from {
-    stroke-dashoffset: var(--circumference, 565);
-  }
-
-  to {
-    stroke-dashoffset: var(--target-offset, 0);
-  }
-}
-
-.progress-ring-animated {
-  animation: progress-ring-fill 1.5s ease-out forwards;
-}
-
-/* Heatmap Square Hover */
-.heatmap-square {
-  transition: all 0.15s ease-out;
-}
-
-.heatmap-square:hover {
-  transform: scale(1.2);
-  z-index: 10;
-}
-
-/* Timeline Block Animation */
-@keyframes timeline-appear {
-  from {
-    opacity: 0;
-    transform: scaleX(0);
-  }
-
-  to {
-    opacity: 1;
-    transform: scaleX(1);
-  }
-}
-
-.timeline-block {
-  transform-origin: left;
-  animation: timeline-appear 0.5s ease-out forwards;
-}
-
-/* Efficiency Alarm Pulse */
-@keyframes alarm-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgb(239 68 68 / 40%);
-  }
-
-  50% {
-    box-shadow: 0 0 0 8px rgb(239 68 68 / 0%);
-  }
-}
-
-.efficiency-alarm {
-  animation: alarm-pulse 2s ease-in-out infinite;
-}
-
 /* KaTeX Formula Styling & Container */
+
+/* KaTeX genel boyut */
 .katex {
-  font-size: 1em !important;
-  font-family: var(--font-sans) !important;
-  font-weight: 500 !important;
-  line-height: 1.65 !important;
+  font-size: 1.1em !important;
+  font-weight: 400 !important;
+  line-height: 1.7 !important;
 }
 
+/* Kesirli formüller için özel düzeltme */
 .katex .mfrac {
-  font-size: 1.2em !important;
-  line-height: 1.65 !important;
-  font-family: var(--font-sans) !important;
-  font-weight: 500 !important;
+  font-size: 1em !important;
 }
 
-/* Add spacing between fraction line and numerator/denominator */
-.katex .mfrac .vlist-r {
-  padding: 0.15em 0 !important;
+.katex .mfrac .frac-line {
+  border-bottom-width: 0.06em !important;
 }
 
-.katex .mfrac .reset-size6,
-.katex .mfrac .size6 {
-  font-size: 0.85em !important;
+/* Payda ve pay için minimum okunabilir boyut */
+.katex .mfrac .mfrac-num,
+.katex .mfrac .mfrac-den {
+  font-size: 0.92em !important;
+  padding: 0.1em 0.2em !important;
 }
 
-.formula-block {
-  @apply my-8 p-6 bg-accent/3 rounded-lg relative overflow-hidden;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  transition: all 0.3s ease;
-}
-
-@media (width <= 768px) {
-  .formula-block {
-    max-width: 100vw;
-    padding: 1rem;
-    overflow-x: auto;
-  }
-}
-
-/* Force center alignment ONLY for katex-display (block math) */
+/* Display (blok) math — büyük formüller */
 .katex-display {
   display: block !important;
   text-align: center !important;
-  margin: 0 !important;
+  margin: 2rem 0 !important;
   width: 100% !important;
   max-width: 100%;
   overflow: auto hidden;
-  margin-bottom: 15px !important;
+  padding: 2.5rem 2rem !important;
+  border-radius: var(--radius-xl) !important;
+  background: color-mix(in oklch, var(--primary) 6%, transparent);
+  border: 1px solid color-mix(in oklch, var(--border) 50%, transparent) !important;
+  box-shadow: 0 1px 3px oklch(0% 0 0deg / 15%) !important;
+  font-size: 1.2em !important;
 }
 
-.formula-block .katex-display {
-  margin: 0 auto !important;
-}
-
-/* Keep inline math as-is (no centering) */
+/* Inline math */
 p > .katex,
 td > .katex,
 li > p > .katex {
   display: inline !important;
   text-align: left !important;
   margin: 0 !important;
-}
-
-/* Evidence Highlight Animation (Quiz -> Notes) */
-@keyframes evidence-pulse {
-  0%,
-  100% {
-    background-color: oklch(70% 0.15 85deg / 20%);
-    box-shadow: 0 0 0 0 oklch(70% 0.15 85deg / 40%);
-  }
-
-  50% {
-    background-color: oklch(70% 0.15 85deg / 40%);
-    box-shadow: 0 0 20px 5px oklch(70% 0.15 85deg / 20%);
-  }
-}
-
-.evidence-highlight {
-  animation: evidence-pulse 1s ease-in-out 3;
-  border-radius: 4px;
-  padding: 2px 4px;
-  margin: -2px -4px;
+  font-size: 1em !important;
 }
 
 /* Notes Page & Markdown Styling */
@@ -517,11 +360,14 @@ li > p > .katex {
   text-align: left;
 }
 
-/* Section Main Title (H2 in code, but used as section header) */
-.section-header h2 {
-  @apply text-4xl font-heading font-black tracking-tight text-foreground/90 selection:bg-primary/30;
+/* Section Header (Ana sayfa başlığı) */
+.section-header h1 {
+  @apply font-heading font-bold tracking-tight text-foreground text-center;
 
-  filter: drop-shadow(0 2px 8px oklch(0% 0 0deg / 15%));
+  font-size: 2.25rem; /* 36px */
+  line-height: 1.2;
+  margin-bottom: 1rem;
+  filter: drop-shadow(0 4px 12px oklch(0% 0 0deg / 15%));
 }
 
 /* Base Headings Style for Prose */
@@ -535,36 +381,57 @@ li > p > .katex {
 .prose h3 strong,
 .prose h4 strong,
 .prose h5 strong {
-  color: oklch(85% 0.14 158deg);
+  @apply font-heading;
 }
 
-/* Markdown H1 (Article h3) - Major Section */
+/* Markdown H1 → h3 — Ana Bölüm Başlığı */
 .prose h3 {
-  @apply scroll-mt-32 mt-12 mb-4 text-3xl font-semibold tracking-tight;
+  @apply font-heading font-bold tracking-tight text-foreground;
+
+  font-size: 1.75rem; /* 28px */
+  margin-top: 3rem;
+  margin-bottom: 3rem;
+  scroll-margin-top: 8rem;
+  line-height: 1.3;
 }
 
-/* Markdown H2 (Article h4) - Sub Section */
+/* Markdown H2 → h4 — Alt Bölüm */
 .prose h4 {
-  @apply scroll-mt-32 mt-10 mb-3 text-2xl font-semibold;
+  @apply font-heading font-semibold text-foreground;
+
+  font-size: 1.375rem; /* 22px */
+  margin-top: 2.75rem;
+  margin-bottom: 0.75rem;
+  scroll-margin-top: 8rem;
+  line-height: 1.35;
 }
 
-/* Markdown H3 (Article h5) - Minor Section */
+/* Markdown H3 → h5 — Küçük Başlık */
 .prose h5 {
-  @apply scroll-mt-32 mt-8 mb-2 text-xl font-semibold;
+  @apply font-heading font-medium text-foreground;
+
+  font-size: 1.125rem; /* 18px */
+  margin-top: 2rem;
+  margin-bottom: 0.5rem;
+  scroll-margin-top: 8rem;
+  line-height: 1.4;
 }
 
 .prose p {
-  @apply leading-relaxed mb-4 text-foreground/90 text-[16px] font-sans font-normal;
+  @apply font-sans font-normal text-foreground;
+
+  font-size: 1.0625rem; /* 17px */
+  line-height: 1.85;
+  margin-bottom: 1.25rem;
 }
 
 .prose ul {
-  @apply list-disc list-outside ml-8 mb-4 space-y-2;
+  @apply list-disc list-outside mb-4 space-y-2;
 }
 
 .prose ul::marker,
 .prose ul li::marker {
-  color: oklch(70% 0.12 158deg); /* Softer forest-mint */
-  font-size: 1.1em;
+  @apply text-primary;
 }
 
 .prose ul ul,
@@ -576,6 +443,14 @@ li > p > .katex {
 
 .prose ul ul {
   list-style-type: circle;
+
+  @apply ml-4;
+}
+
+.prose h3 + ul,
+.prose h4 + ul,
+.prose h5 + ul {
+  margin-top: 0.25rem;
 }
 
 .prose ul ul ul {
@@ -587,13 +462,35 @@ li > p > .katex {
 }
 
 .prose ol::marker {
-  color: oklch(70% 0.12 158deg);
-
-  @apply font-bold;
+  @apply text-primary;
 }
 
 .prose li {
-  @apply pl-1 leading-relaxed text-foreground/90 text-[16px];
+  @apply text-foreground/85 font-sans;
+
+  font-size: 1.0625rem;
+  line-height: 1.8;
+  padding-left: 0.25rem;
+  margin-bottom: 0.35rem;
+}
+
+/* İlk h3 üst margin'ı sıfırla */
+.prose h3:first-child {
+  margin-top: 1.5rem;
+}
+
+/* Başlık altındaki ilk paragraf — üst boşluk yok */
+.prose h3 + p,
+.prose h4 + p,
+.prose h5 + p {
+  margin-top: 0;
+}
+
+/* Başlık altındaki liste */
+.prose h3 + ol,
+.prose h4 + ol,
+.prose h5 + ol {
+  margin-top: 0.25rem;
 }
 
 .prose blockquote {
@@ -606,15 +503,31 @@ li > p > .katex {
 
 /* Custom Callout Box Styling */
 .callout-box {
-  @apply my-8 rounded-xl shadow-sm bg-primary/5 border border-primary/20 flex items-start gap-4 p-5;
+  @apply my-8 rounded-2xl flex items-stretch gap-4 p-5;
+
+  background: color-mix(in oklch, var(--primary) 6%, transparent);
+  border: 1px solid color-mix(in oklch, var(--primary) 15%, transparent);
+  box-shadow: 0 1px 4px oklch(0% 0 0deg / 10%);
+}
+
+.callout-icon-wrapper {
+  @apply shrink-0 rounded-lg p-2 flex items-center justify-center;
+
+  background: color-mix(in oklch, var(--primary) 12%, transparent);
 }
 
 .callout-label {
-  @apply font-heading text-[11px] font-bold uppercase tracking-widest text-primary/80 mb-2;
+  @apply text-[15px] font-bold font-heading uppercase tracking-normal mb-1.5 leading-none pt-2;
+
+  color: color-mix(in oklch, var(--primary) 90%, transparent);
 }
 
 .callout-content {
-  @apply font-sans text-foreground/90 leading-relaxed text-base [&>p:last-child]:mb-0;
+  @apply font-sans leading-relaxed text-[16px] text-foreground/85;
+}
+
+.callout-content > p:last-child {
+  @apply mb-0;
 }
 
 /* Table Styling within Prose */
@@ -623,15 +536,15 @@ li > p > .katex {
 }
 
 .prose thead {
-  @apply bg-accent/3 border-b border-primary/20;
-}
-
-.prose th {
-  @apply px-6 py-4 font-heading text-[12px] font-bold uppercase tracking-wider text-foreground/90 align-middle;
+  @apply bg-primary/5 border-b border-border/50;
 }
 
 .prose tr {
-  @apply border-b border-primary/5 even:bg-accent/3 hover:bg-primary/5 transition-colors duration-200 last:border-0;
+  @apply border-b border-border/30 even:bg-white/2 hover:bg-muted/30 transition-colors duration-200 last:border-0;
+}
+
+.prose th {
+  @apply px-6 py-4 font-heading text-[12px] font-bold uppercase tracking-wider text-foreground/70 align-middle;
 }
 
 .prose td {
@@ -656,25 +569,6 @@ li > p > .katex {
   border: 1px solid var(--border);
 }
 
-/* KaTeX variables should not be italic */
-.katex .mord.mathnormal,
-.upright-math .katex .mord.mathnormal,
-.upright-math .katex .mord,
-.upright-math .katex .msupsub,
-.upright-math .katex .mbin,
-.upright-math .katex .mrel,
-.upright-math .katex .minner,
-.upright-math .katex .mop,
-.upright-math .katex .mi,
-.upright-math .katex .mo,
-.upright-math .katex .mn,
-.upright-math .katex .ms,
-.upright-math .katex .mtext,
-.upright-math .katex .mspace {
-  font-style: normal !important;
-  font-family: var(--font-sans) !important;
-}
-
 @layer components {
   .flex-center {
     @apply flex items-center justify-center;
@@ -688,5 +582,24 @@ li > p > .katex {
     @apply absolute bg-popover border border-border shadow-lg rounded-lg
            px-3 py-2 text-xs pointer-events-none z-10
            opacity-0 group-hover:opacity-100 transition-opacity duration-200;
+  }
+}
+
+@layer utilities {
+  .perspective-container {
+    perspective: 1000px;
+    overflow: hidden;
+    position: relative;
+    width: 100%;
+    height: 100vh;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

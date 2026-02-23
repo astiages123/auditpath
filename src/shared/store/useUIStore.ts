@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { createBaseStore } from '@/shared/store/baseStore';
 
 interface UIStore {
   isMobileMenuOpen: boolean;
@@ -10,7 +10,7 @@ interface UIStore {
   setJourneyOpen: (open: boolean) => void;
 }
 
-export const useUIStore = create<UIStore>((set) => ({
+export const useUIStore = createBaseStore<UIStore>((set) => ({
   isMobileMenuOpen: false,
   setMobileMenuOpen: (open) => set({ isMobileMenuOpen: open }),
   toggleMobileMenu: () =>

@@ -92,7 +92,7 @@ export function useVideoActions(courseId: string, dbCourseId: string) {
     const userId = user?.id;
     try {
       if (!userId) {
-        toast.error('İlerleme durumu kaydedilmesi için giriş yapmalısınız.');
+        toast.error('İlerleme durumunun kaydedilmesi için giriş yapmalısınız.');
         // Don't throw if just offline/anon, but here we require strict auth for saving
         // If we want offline support later, we'd save to local storage here.
         throw new Error('User not logged in');

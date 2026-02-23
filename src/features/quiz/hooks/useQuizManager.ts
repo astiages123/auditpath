@@ -99,36 +99,51 @@ export function useQuizManager({
   );
   const [isQuizActive, setIsQuizActive] = useState(false);
 
-  const loadTopics = useCallback(async () => {
-    if (!courseId) return;
-    setLoading(true);
-    try {
-      const data = await getCourseTopicsWithCounts(courseId);
-      setTopics(data);
-      if (user) {
-        const progress = await getCourseProgress(user.id, courseId);
-        setCourseProgress(progress);
+  const loadTopics = useCallback(
+    async (isMounted: () => boolean) => {
+      if (!courseId) return;
+      setLoading(true);
+      try {
+        const data = await getCourseTopicsWithCounts(courseId);
+        if (!isMounted()) return;
+        setTopics(data);
+        if (user) {
+          const progress = await getCourseProgress(user.id, courseId);
+          if (!isMounted()) return;
+          setCourseProgress(progress);
+        }
+      } catch (error) {
+        if (isMounted()) {
+          logger.error('Error loading topics', error as Error);
+        }
+      } finally {
+        if (isMounted()) {
+          setLoading(false);
+        }
       }
-    } catch (error) {
-      logger.error('Error loading topics', error as Error);
-    } finally {
-      setLoading(false);
-    }
-  }, [courseId, user]);
+    },
+    [courseId, user]
+  );
 
   useEffect(() => {
-    if (isOpen) loadTopics();
+    let mounted = true;
+    if (isOpen) {
+      loadTopics(() => mounted);
+    }
+    return () => {
+      mounted = false;
+    };
   }, [isOpen, loadTopics]);
 
   useEffect(() => {
     let mounted = true;
-    if (!selectedTopic || !courseId || !user) {
-      setTargetChunkId(null);
-      setCompletionStatus(null);
-      return;
-    }
+
     async function loadTopicData() {
-      if (!selectedTopic || !courseId || !user) return;
+      if (!selectedTopic || !courseId || !user) {
+        setTargetChunkId(null);
+        setCompletionStatus(null);
+        return;
+      }
       try {
         const chunkRes = await getFirstChunkIdForTopic(
           courseId,
@@ -144,10 +159,14 @@ export function useQuizManager({
           setCompletionStatus(status);
         }
       } catch (error) {
-        logger.error('Error loading topic data', error as Error);
+        if (mounted) {
+          logger.error('Error loading topic data', error as Error);
+        }
       }
     }
+
     loadTopicData();
+
     return () => {
       mounted = false;
     };
@@ -311,7 +330,7 @@ export function useQuizManager({
     setIsQuizActive(false);
     setGeneration(INITIAL_GENERATION_STATE);
     setExistingQuestions([]);
-    loadTopics();
+    loadTopics(() => true); // It's okay here as it's a callback response
   }, [loadTopics]);
 
   const handleFinishQuiz = useCallback(async () => {

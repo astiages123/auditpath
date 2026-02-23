@@ -18,6 +18,7 @@ import 'react-medium-image-zoom/dist/styles.css';
 import 'katex/dist/katex.min.css';
 import { cn, slugify } from '@/utils/stringHelpers';
 import { CodeBlock } from './CodeBlock';
+import { Lightbulb } from 'lucide-react';
 
 // --- Helpers ---
 
@@ -127,7 +128,7 @@ export const markdownComponents = {
       <Zoom classDialog="custom-zoom-modal">
         <img
           {...props}
-          className="rounded-xl border border-border/50 py-5 shadow-lg w-full max-h-[600px] object-contain bg-accent/10 hover:scale-[1.01] transition-transform duration-500 cursor-zoom-in"
+          className="rounded-xl border border-border/50 py-5 shadow-lg w-full max-h-[600px] object-contain bg-muted/50 hover:scale-[1.01] transition-transform duration-500 cursor-zoom-in"
           loading="lazy"
           alt={props.alt || 'Görsel'}
         />
@@ -150,11 +151,17 @@ export const markdownComponents = {
       return (
         <div className="not-prose my-6">
           <div className="callout-box">
-            <div className="shrink-0 bg-primary/10 rounded-lg p-2 flex items-center justify-center">
-              <span className="text-xl leading-none">💡</span>
+            {/* Sol kolon: ikon + dikey çizgi */}
+            <div className="flex flex-col items-center gap-2 shrink-0">
+              <div className="callout-icon-wrapper">
+                <Lightbulb className="size-4 text-primary" />
+              </div>
+              <div className="w-px flex-1 bg-primary/20" />
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="callout-label">İNCELEME / ÖRNEK</div>
+
+            {/* Sağ kolon: label + içerik */}
+            <div className="flex-1 min-w-0 flex flex-col gap-2">
+              <div className="callout-label">ÖRNEK / SORU</div>
               <div className="callout-content">{cleanChildren}</div>
             </div>
           </div>
@@ -196,7 +203,7 @@ export const markdownComponents = {
   ),
   tr: ({ ...props }: HTMLAttributes<HTMLTableRowElement>) => (
     <tr
-      className="border-b border-white/5 hover:bg-white/5 transition-colors"
+      className="border-b border-white/5 hover:bg-muted/30 transition-colors"
       {...props}
     />
   ),
@@ -206,12 +213,7 @@ export const markdownComponents = {
   // KaTeX Display Fix
   div: ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => {
     if (className?.includes('katex-display')) {
-      return (
-        <div
-          className={cn(className, 'my-8 text-lg overflow-x-auto')}
-          {...props}
-        />
-      );
+      return <div className={className} {...props} />;
     }
     return <div className={className} {...props} />;
   },

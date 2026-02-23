@@ -2,6 +2,7 @@ import { cn, slugify } from '@/utils/stringHelpers';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { memo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { ROUTES } from '@/utils/routes';
 import { ToCTitleRenderer } from './ToCTitleRenderer';
 
@@ -33,27 +34,13 @@ export const GlobalNavigation = memo(function GlobalNavigation({
     }
   }, [activeChunkId]);
 
-  // Filter only main topics (chunks) that should appear in global nav
-  // Typically sequence_order === 0 or undefined for top-level chunks if implied
-  // Adjust logic based on how `chunks` are structured. The prompt says:
-  // "Sol paneldeki konu listesi, Notion'dan gelen sequence_order === 0 olan chunk'lardan türetilmeli."
-  // Note: The prompt implies `chunks` contains everything. We need to identify unique "Topics".
-  // However, looking at existing code, `chunks` seem to be flat list of CourseTopic.
-  // We'll rely on the existing logic or strict filtering.
-  // Let's filter chunks where sequence_order === 0 or just list all chunks if they represent "Topics".
-  // For now, I will list ALL chunks in the global nav if they have a title, as usually in this app
-  // each chunk is a "section". The prompt says "Notion'dan gelen sequence_order === 0" which implies
-  // possibly sub-chunks exist. I'll stick to the prompt: filter sequence_order === 0.
-  // Wait, if I filter only sequence_order === 0, then middle panel should probably show ALL content?
-  // Yes, NotesPage usually renders all chunks. Global Nav navigates between them.
-
   const navItems = chunks;
 
   return (
     <nav className="h-full flex flex-col">
-      <div className="p-4 border-b border-border/40 bg-background/50 backdrop-blur-sm sticky top-0 z-10">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-          Konular
+      <div className="p-4 border-b border-border/30">
+        <h2 className="text-sm font-bold tracking-widest text-center text-foreground">
+          İÇİNDEKİLER
         </h2>
       </div>
       <div
@@ -61,11 +48,6 @@ export const GlobalNavigation = memo(function GlobalNavigation({
         className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1"
       >
         {navItems.map((chunk, index) => {
-          // DEBUG: Verify raw chunk data
-
-          // Use chunk.id if available, fallback to slugified title or index
-          // In `NotesPage`, we use `slugify(chunk.section_title)` for IDs.
-
           const chunkId = slugify(chunk.section_title);
           const isActive = activeChunkId === chunkId;
           const url = `${ROUTES.NOTES}/${courseSlug}/${chunkId}`;
@@ -76,29 +58,46 @@ export const GlobalNavigation = memo(function GlobalNavigation({
               id={`nav-item-${chunkId}`}
               to={url}
               className={cn(
-                'w-full text-left px-3 py-2 rounded-md text-sm transition-all duration-200',
-                'hover:bg-accent/50 group flex items-center gap-3',
+                'group relative flex items-start gap-3 px-3 py-3 mx-1 rounded-xl transition-all duration-300',
                 isActive
-                  ? 'bg-primary/10 text-primary font-medium'
-                  : 'text-muted-foreground hover:text-foreground'
+                  ? 'bg-primary/10 border border-primary/20'
+                  : 'border border-transparent hover:bg-white/5 hover:border-white/5'
               )}
             >
-              <div
+              {/* Numara badge */}
+              <span
                 className={cn(
-                  'w-1 h-1 rounded-full bg-current transition-all',
+                  'shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-bold font-mono mt-0.5 transition-all',
                   isActive
-                    ? 'scale-125 opacity-100'
-                    : 'opacity-0 group-hover:opacity-50'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-muted text-muted-foreground group-hover:bg-white/10'
                 )}
-              />
+              >
+                {index + 1}
+              </span>
+
               <ToCTitleRenderer
                 title={
                   chunk.section_title.match(/^\d/)
-                    ? chunk.section_title
-                    : `${index + 1}. ${chunk.section_title}`
+                    ? chunk.section_title.replace(/^\d+\.\s*/, '')
+                    : chunk.section_title
                 }
-                className="whitespace-normal wrap-break-word leading-tight py-1"
+                className={cn(
+                  'leading-snug text-[13px] relative z-10 transition-all font-sans',
+                  isActive
+                    ? 'font-semibold text-foreground'
+                    : 'font-normal text-muted-foreground group-hover:text-foreground'
+                )}
               />
+
+              {/* Active glow line — sol kenar yerine sağ üst köşe dot */}
+              {isActive && (
+                <motion.div
+                  layoutId="activeNavDot"
+                  className="absolute top-3 right-3 w-1.5 h-1.5 rounded-full bg-primary"
+                  transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+                />
+              )}
             </Link>
           );
         })}

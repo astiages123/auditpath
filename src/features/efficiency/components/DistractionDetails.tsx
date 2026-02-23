@@ -146,10 +146,10 @@ export const DistractionDetails = ({ sessions }: DistractionDetailsProps) => {
             {allPauses.map((pause, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-between p-3.5 bg-white/3 border border-white/5 rounded-xl hover:bg-white/6 transition-all"
+                className="flex items-center justify-between p-3.5 bg-white/3 border border-white/5 rounded-xl hover:bg-white/5 transition-all"
               >
                 <div className="flex items-center gap-4">
-                  <div className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-destructive shadow-[0_0_8px_oklch(63.68%_0.2078_25.3313/0.4)]" />
                   <div className="flex flex-col">
                     <span className="text-xs font-bold text-white/90">
                       {pause.lessonName}

@@ -9,7 +9,7 @@ export const BrandSection: FC = () => {
       to={ROUTES.HOME}
       className="group flex items-center gap-4 transition-all duration-200 active:scale-95 px-2 py-1 rounded-2xl hover:bg-white/5"
     >
-      <div className="relative flex h-14 w-14 items-center justify-center transition-all">
+      <div className="relative flex size-14 items-center justify-center transition-all">
         <img
           src={logo}
           alt="AuditPath Logo"

@@ -1,12 +1,8 @@
 import { useEffect, useState, useTransition } from 'react';
-import {
-  getCourseIdBySlug,
-  getCourseTopics,
-} from '@/features/quiz/services/quizCoreService';
+import { fetchCourseNotes } from '../services/noteService';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { storage } from '@/shared/services/storageService';
 import { logger } from '@/utils/logger';
-import { processTopicContent } from '../logic/contentProcessor';
 
 interface UseNotesDataProps {
   courseSlug: string;
@@ -43,17 +39,8 @@ export function useNotesData({
 
       try {
         setLoading(true);
-        const targetId = await getCourseIdBySlug(courseSlug, signal);
-
-        if (signal.aborted) return;
-
-        if (!targetId) {
-          setError('Ders bulunamadı.');
-          setLoading(false);
-          return;
-        }
-
-        const cacheKey = `cached_notes_v6_${targetId}`;
+        // Standardize cache key
+        const cacheKey = `cached_notes_v6_${courseSlug}`;
         const cached = storage.get<{ data: CourseTopic[]; timestamp: number }>(
           cacheKey
         );
@@ -64,27 +51,19 @@ export function useNotesData({
           setLoading(false);
         }
 
-        const data = await getCourseTopics(userId, targetId, signal);
+        const result = await fetchCourseNotes(userId, courseSlug, signal);
 
-        if (signal.aborted) return;
+        if (signal.aborted || !result) return;
 
-        const processedData = data.map((chunk) => {
-          const metadata = chunk.metadata as { images?: string[] } | null;
-          return {
-            ...chunk,
-            content: processTopicContent(chunk.content, metadata),
-          };
-        });
-
-        if (processedData.length > 0) {
+        if (result.chunks.length > 0) {
           startTransition(() => {
-            setChunks(processedData);
-            setCourseName(processedData[0].course_name);
+            setChunks(result.chunks);
+            setCourseName(result.courseName);
           });
 
           storage.set(cacheKey, {
             timestamp: Date.now(),
-            data: processedData,
+            data: result.chunks,
           });
         } else if (!cached) {
           setError('Bu ders için henüz içerik bulunmuyor.');

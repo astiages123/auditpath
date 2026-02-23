@@ -33,7 +33,7 @@ export function RankCard({
   return (
     <motion.div
       variants={variants}
-      className="lg:col-span-2 lg:row-span-2 relative group overflow-hidden rounded-3xl border border-border-subtle bg-linear-to-br from-zinc-900 via-zinc-900 to-zinc-800 p-6 shadow-2xl"
+      className="lg:col-span-2 lg:row-span-2 relative group overflow-hidden rounded-3xl border border-border-subtle bg-card/40 p-6 shadow-2xl"
     >
       <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
         <Target className="w-32 h-32" />
@@ -43,14 +43,14 @@ export function RankCard({
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full" />
+              <div className="absolute inset-0 bg-primary/20 rounded-full" />
               {showSkeleton ? (
-                <Skeleton className="h-20 w-20 rounded-full bg-surface-hover" />
+                <Skeleton className="size-20 rounded-full bg-surface-hover" />
               ) : (
                 <img
                   src={currentRankImage}
                   alt={currentRank?.name}
-                  className="relative h-20 w-20 object-contain drop-shadow-[0_0_15px_rgba(var(--primary),0.3)] transition-transform group-hover:scale-110 duration-500"
+                  className="relative size-20 object-contain drop-shadow-[0_0_15px_rgba(var(--primary),0.3)] transition-transform group-hover:scale-110 duration-500"
                 />
               )}
             </div>
@@ -77,7 +77,7 @@ export function RankCard({
             onClick={onOpenJourney}
             className="px-4 py-2 rounded-full bg-surface hover:bg-surface-hover border border-border-subtle text-xs font-semibold backdrop-blur-md transition-all flex items-center gap-2"
           >
-            Yolculuğum <ChevronRight className="w-3 h-3" />
+            Yolculuğum <ChevronRight className="size-3" />
           </button>
         </div>
 
@@ -122,7 +122,7 @@ export function RankCard({
         {!showSkeleton && nextRank && (
           <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
-              <Calendar className="w-3.5 h-3.5" />
+              <Calendar className="size-3.5" />
               <span>
                 Tahmini Varış:{' '}
                 <span className="text-white font-medium">

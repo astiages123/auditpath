@@ -1,4 +1,4 @@
-import { TrendingUp } from 'lucide-react';
+import { ChartLine } from 'lucide-react';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import {
   RecentQuizzesCard,
@@ -88,7 +88,7 @@ const EfficiencyPage = () => {
             <div className="relative group">
               <div className="absolute -inset-1 bg-linear-to-r rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
               <div className="relative p-4 rounded-xl bg-card border border-border/50 leading-none flex items-center">
-                <TrendingUp className="w-8 h-8 text-primary" />
+                <ChartLine className="w-8 h-8 text-primary" />
               </div>
             </div>
             <div>

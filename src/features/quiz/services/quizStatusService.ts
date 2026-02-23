@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { handleSupabaseError } from '@/lib/supabaseHelpers';
+import { safeQuery } from '@/lib/supabaseHelpers';
 import type {
   TopicCompletionStats,
   TopicWithCounts,
@@ -7,6 +7,7 @@ import type {
 import { getSubjectStrategy } from '@/features/quiz/logic/srsLogic';
 import { AILogicSchema, type ConceptMapItem } from '@/features/quiz/types';
 import { isValid, parseOrThrow } from '@/utils/validation';
+import { QUIZ_CONFIG } from '../utils/constants';
 
 // --- Internal Helpers (formerly in quizStatusHelper) ---
 
@@ -31,18 +32,18 @@ interface TopicQuotaResult {
 }
 
 async function fetchTopicChunkInfo(courseId: string, topic: string) {
-  const { data: chunk, error } = await supabase
-    .from('note_chunks')
-    .select('id, course_name, metadata, ai_logic')
-    .eq('course_id', courseId)
-    .eq('section_title', topic)
-    .limit(1)
-    .maybeSingle();
+  const { data: chunk } = await safeQuery<ChunkInput>(
+    supabase
+      .from('note_chunks')
+      .select('id, course_name, metadata, ai_logic')
+      .eq('course_id', courseId)
+      .eq('section_title', topic)
+      .limit(1)
+      .maybeSingle(),
+    'fetchTopicChunkInfo error',
+    { courseId, topic }
+  );
 
-  if (error) {
-    await handleSupabaseError(error, 'fetchTopicChunkInfo');
-    return null;
-  }
   return chunk;
 }
 
@@ -54,8 +55,13 @@ function calculateTopicQuota(chunk: ChunkInput | null): TopicQuotaResult {
 
   if (chunk) {
     const strategy = getSubjectStrategy(chunk.course_name || '');
-    if (strategy) {
-      importance = strategy.importance as 'high' | 'medium' | 'low';
+    const strategyImportance = strategy?.importance;
+    if (
+      strategyImportance === 'high' ||
+      strategyImportance === 'medium' ||
+      strategyImportance === 'low'
+    ) {
+      importance = strategyImportance;
     }
 
     const aiLogic = isValid(AILogicSchema, chunk.ai_logic)
@@ -68,7 +74,7 @@ function calculateTopicQuota(chunk: ChunkInput | null): TopicQuotaResult {
 
     const aiQuotas = !isInvalidated ? aiLogic?.suggested_quotas : null;
 
-    const defaultQuotas = { antrenman: 5, arsiv: 1, deneme: 1 };
+    const defaultQuotas = QUIZ_CONFIG.DEFAULT_QUOTAS;
     const antrenman = aiQuotas?.antrenman ?? defaultQuotas.antrenman;
     const arsiv = aiQuotas?.arsiv ?? defaultQuotas.arsiv;
     const deneme = aiQuotas?.deneme ?? defaultQuotas.deneme;
@@ -100,16 +106,22 @@ function calculateTopicQuota(chunk: ChunkInput | null): TopicQuotaResult {
 }
 
 async function fetchTopicQuestions(courseId: string, topic: string) {
-  const { data: questions, error } = await supabase
-    .from('questions')
-    .select('id, usage_type, parent_question_id')
-    .eq('course_id', courseId)
-    .eq('section_title', topic);
+  const { data: questions } = await safeQuery<
+    {
+      id: string;
+      usage_type: string | null;
+      parent_question_id: string | null;
+    }[]
+  >(
+    supabase
+      .from('questions')
+      .select('id, usage_type, parent_question_id')
+      .eq('course_id', courseId)
+      .eq('section_title', topic),
+    'fetchTopicQuestions error',
+    { courseId, topic }
+  );
 
-  if (error) {
-    await handleSupabaseError(error, 'fetchTopicQuestions');
-    return [];
-  }
   return questions || [];
 }
 
@@ -120,18 +132,18 @@ async function calculateSrsDueCount(
 ) {
   if (questionIds.length === 0) return 0;
 
-  const { data: dueStatus, error } = await supabase
-    .from('user_question_status')
-    .select('question_id')
-    .eq('user_id', userId)
-    .eq('status', 'archived')
-    .in('question_id', questionIds)
-    .lte('next_review_session', currentSession);
+  const { data: dueStatus } = await safeQuery<{ question_id: string }[]>(
+    supabase
+      .from('user_question_status')
+      .select('question_id')
+      .eq('user_id', userId)
+      .eq('status', 'archived')
+      .in('question_id', questionIds)
+      .lte('next_review_session', currentSession),
+    'calculateSrsDueCount error',
+    { userId, count: questionIds.length, currentSession }
+  );
 
-  if (error) {
-    await handleSupabaseError(error, 'calculateSrsDueCount');
-    return 0;
-  }
   return dueStatus?.length || 0;
 }
 
@@ -145,17 +157,17 @@ async function calculateSrsDueCount(
  * @returns Question count
  */
 export async function getTopicQuestionCount(courseId: string, topic: string) {
-  const { count, error } = await supabase
-    .from('questions')
-    .select('*', { count: 'exact', head: true })
-    .eq('course_id', courseId)
-    .eq('section_title', topic)
-    .eq('usage_type', 'antrenman');
+  const { count } = await safeQuery<unknown>(
+    supabase
+      .from('questions')
+      .select('*', { count: 'exact', head: true })
+      .eq('course_id', courseId)
+      .eq('section_title', topic)
+      .eq('usage_type', 'antrenman'),
+    'getTopicQuestionCount error',
+    { courseId, topic }
+  );
 
-  if (error) {
-    await handleSupabaseError(error, 'getTopicQuestionCount');
-    return 0;
-  }
   return count || 0;
 }
 
@@ -170,16 +182,16 @@ export async function getCoursePoolCount(
   courseId: string,
   usageType: 'antrenman' | 'deneme' | 'arsiv'
 ) {
-  const { count, error } = await supabase
-    .from('questions')
-    .select('*', { count: 'exact', head: true })
-    .eq('course_id', courseId)
-    .eq('usage_type', usageType);
+  const { count } = await safeQuery<unknown>(
+    supabase
+      .from('questions')
+      .select('*', { count: 'exact', head: true })
+      .eq('course_id', courseId)
+      .eq('usage_type', usageType),
+    'getCoursePoolCount error',
+    { courseId, usageType }
+  );
 
-  if (error) {
-    await handleSupabaseError(error, 'getCoursePoolCount');
-    return 0;
-  }
   return count || 0;
 }
 
@@ -327,16 +339,19 @@ export async function getCourseTopicsWithCounts(
   const userId = user.user?.id;
 
   // 1. Get topics from note_chunks sorted by chunk_order
-  const { data: chunks, error: chunksError } = await supabase
-    .from('note_chunks')
-    .select('section_title, chunk_order')
-    .eq('course_id', courseId)
-    .order('chunk_order', { ascending: true });
+  const { data: chunks } = await safeQuery<
+    { section_title: string | null; chunk_order: number | null }[]
+  >(
+    supabase
+      .from('note_chunks')
+      .select('section_title, chunk_order')
+      .eq('course_id', courseId)
+      .order('chunk_order', { ascending: true }),
+    'getCourseTopicsWithCounts/chunks error',
+    { courseId }
+  );
 
-  if (chunksError) {
-    await handleSupabaseError(chunksError, 'getCourseTopicsWithCounts/chunks');
-    return [];
-  }
+  if (!chunks) return [];
 
   // Dedup maintaining order
   const seen = new Set<string>();
@@ -351,16 +366,23 @@ export async function getCourseTopicsWithCounts(
   if (orderedTopics.length === 0) return [];
 
   // 2. Fetch all questions for this course to aggregate counts
-  const { data: questions, error: questionsError } = await supabase
-    .from('questions')
-    .select('id, section_title, usage_type, parent_question_id')
-    .eq('course_id', courseId);
+  const { data: questions } = await safeQuery<
+    {
+      id: string;
+      section_title: string | null;
+      usage_type: string | null;
+      parent_question_id: string | null;
+    }[]
+  >(
+    supabase
+      .from('questions')
+      .select('id, section_title, usage_type, parent_question_id')
+      .eq('course_id', courseId),
+    'getCourseTopicsWithCounts/questions error',
+    { courseId }
+  );
 
-  if (questionsError) {
-    await handleSupabaseError(
-      questionsError,
-      'getCourseTopicsWithCounts/questions'
-    );
+  if (!questions) {
     return orderedTopics.map((t) => ({
       name: t,
       isCompleted: false,
@@ -371,11 +393,15 @@ export async function getCourseTopicsWithCounts(
   // 2.1 Fetch Solved Questions to determine isCompleted
   const solvedIds = new Set<string>();
   if (userId) {
-    const { data: solved } = await supabase
-      .from('user_quiz_progress')
-      .select('question_id')
-      .eq('user_id', userId)
-      .eq('course_id', courseId);
+    const { data: solved } = await safeQuery<{ question_id: string }[]>(
+      supabase
+        .from('user_quiz_progress')
+        .select('question_id')
+        .eq('user_id', userId)
+        .eq('course_id', courseId),
+      'getCourseTopicsWithCounts/solved error',
+      { userId, courseId }
+    );
 
     solved?.forEach((s) => solvedIds.add(s.question_id));
   }
@@ -451,27 +477,33 @@ export async function getCourseTopicsWithCounts(
 export async function getCourseProgress(userId: string, courseId: string) {
   // 1. Get total questions in course (Antrenman + Deneme + Arsiv)
   // excluding mistake copies (parent_question_id is null)
-  const { count: totalQuestions, error: totalError } = await supabase
-    .from('questions')
-    .select('*', { count: 'exact', head: true })
-    .eq('course_id', courseId)
-    .is('parent_question_id', null);
+  const { count: totalQuestions } = await safeQuery<unknown>(
+    supabase
+      .from('questions')
+      .select('*', { count: 'exact', head: true })
+      .eq('course_id', courseId)
+      .is('parent_question_id', null),
+    'getCourseProgress/total error',
+    { courseId }
+  );
 
-  if (totalError) {
-    await handleSupabaseError(totalError, 'getCourseProgress/total');
+  if (totalQuestions === null) {
     return { total: 0, solved: 0, percentage: 0 };
   }
 
   // 2. Get unique solved questions for this course
-  const { data: solvedData, error: solvedError } = await supabase
-    .from('user_quiz_progress')
-    .select('question_id')
-    .eq('user_id', userId)
-    .eq('course_id', courseId);
+  const { data: solvedData } = await safeQuery<{ question_id: string }[]>(
+    supabase
+      .from('user_quiz_progress')
+      .select('question_id')
+      .eq('user_id', userId)
+      .eq('course_id', courseId),
+    'getCourseProgress/solved error',
+    { userId, courseId }
+  );
 
-  if (solvedError) {
-    await handleSupabaseError(solvedError, 'getCourseProgress/solved');
-    return { total: totalQuestions || 0, solved: 0, percentage: 0 };
+  if (!solvedData) {
+    return { total: totalQuestions, solved: 0, percentage: 0 };
   }
 
   const solvedIds = new Set(solvedData?.map((s) => s.question_id));

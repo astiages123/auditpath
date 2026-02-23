@@ -201,7 +201,7 @@ export function ProgressHeader({
           <div className="space-y-0.5">
             <p className="text-sm text-muted-foreground">Süre</p>
             {showSkeleton ? (
-              <Skeleton className="h-5 w-16 bg-zinc-800" />
+              <Skeleton className="size-5 bg-zinc-800" />
             ) : (
               <div className="flex items-baseline gap-1">
                 <span className="text-sm font-bold text-white">
@@ -216,7 +216,7 @@ export function ProgressHeader({
           <div className="space-y-0.5 border-l border-white/5 pl-2">
             <p className="text-sm text-muted-foreground">Video</p>
             {showSkeleton ? (
-              <Skeleton className="h-5 w-16 bg-zinc-800" />
+              <Skeleton className="size-5 bg-zinc-800" />
             ) : (
               <div className="flex items-baseline gap-1">
                 <span className="text-sm font-bold text-white">

@@ -56,3 +56,23 @@ export function getVirtualDateKey(date?: Date): string {
   const virtualDate = getVirtualDate(date);
   return formatDateKey(virtualDate);
 }
+/**
+ * Tarihi kullanıcıya dost bir formatta döner.
+ * Varsayılan: "28 Jan" veya "28 Ocak" (tr-TR).
+ * @param date - Formatlanacak tarih (Date veya ISO string)
+ * @param options - Intl.DateTimeFormatOptions seçenekleri
+ * @returns Formatlı tarih string'i
+ */
+export function formatDisplayDate(
+  date: Date | string | number,
+  options: Intl.DateTimeFormatOptions = {
+    day: 'numeric',
+    month: 'short',
+  }
+): string {
+  const d =
+    typeof date === 'string' || typeof date === 'number'
+      ? new Date(date)
+      : date;
+  return d.toLocaleDateString('tr-TR', options);
+}

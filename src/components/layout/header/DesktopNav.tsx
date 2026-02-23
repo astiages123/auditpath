@@ -11,9 +11,10 @@ import {
   DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronDown, LogOut, Sparkles, ChartScatter } from 'lucide-react';
+import { ChevronDown, LogOut, HandCoins } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 import { ROUTES } from '@/utils/routes';
+import { SyncButton } from '@/features/notes/components/SyncButton';
 
 interface DesktopNavProps {
   user: {
@@ -43,10 +44,10 @@ export const DesktopNav: FC<DesktopNavProps> = ({
   mounted,
 }) => {
   return (
-    <div className="hidden lg:flex items-center gap-2">
-      {user && (
-        <>
-          <nav className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-secondary/30 border border-border/20 backdrop-blur-sm">
+    <div className="hidden lg:flex items-center w-full justify-between gap-2">
+      {user ? (
+        <div className="flex items-center gap-2 ml-auto mr-1">
+          <nav className="flex items-center gap-1.5 px-5 py-1.5 rounded-full bg-secondary/30 border border-border/20 backdrop-blur-sm">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               const Icon = item.icon;
@@ -60,7 +61,7 @@ export const DesktopNav: FC<DesktopNavProps> = ({
                     onClick={item.action}
                     className="h-9 gap-2 rounded-full hover:bg-background/50 hover:text-foreground text-muted-foreground transition-all"
                   >
-                    <Icon className={cn('h-4 w-4', item.color)} />
+                    <Icon className={cn('size-4', item.color)} />
                     <span className="text-sm font-medium">{item.label}</span>
                   </Button>
                 );
@@ -80,7 +81,7 @@ export const DesktopNav: FC<DesktopNavProps> = ({
                   >
                     <Icon
                       className={cn(
-                        'h-4 w-4',
+                        'size-4',
                         isActive ? 'text-primary transition-colors' : item.color
                       )}
                     />
@@ -104,8 +105,24 @@ export const DesktopNav: FC<DesktopNavProps> = ({
             })}
           </nav>
 
-          <div className="h-6 w-px bg-border/40 mx-2" />
-        </>
+          <div className="h-8 w-px bg-border/40 mx-2" />
+
+          <div className="flex items-center -space-x-2">
+            <Link to={ROUTES.ANALYTICS}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-10 rounded-full hover:bg-transparent hover:scale-110 transition-transform"
+                title="Harcama Analizi"
+              >
+                <HandCoins className="size-5 text-emerald-300" />
+              </Button>
+            </Link>
+            <SyncButton showLabel={false} />
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1" />
       )}
 
       {mounted && (
@@ -115,9 +132,9 @@ export const DesktopNav: FC<DesktopNavProps> = ({
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="h-10 pl-1 pr-2 py-1 gap-2.5 rounded-full hover:bg-accent/50 border border-transparent hover:border-border/40 transition-all"
+                  className="h-10 pl-1 pr-2 py-1 gap-2 rounded-full hover:bg-accent/50 border border-transparent hover:border-border/40 transition-all"
                 >
-                  <Avatar className="h-8 w-8 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+                  <Avatar className="size-8 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
                     <AvatarImage
                       src={user.user_metadata?.avatar_url}
                       alt={user.user_metadata?.full_name || 'User'}
@@ -135,14 +152,8 @@ export const DesktopNav: FC<DesktopNavProps> = ({
                       {user.user_metadata?.full_name?.split(' ')[0] ||
                         'Öğrenci'}
                     </span>
-                    <div className="flex items-center gap-1">
-                      <Sparkles className="h-2.5 w-2.5 text-amber-500 fill-amber-500" />
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
-                        PRO
-                      </span>
-                    </div>
                   </div>
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  <ChevronDown className="size-4 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -150,7 +161,7 @@ export const DesktopNav: FC<DesktopNavProps> = ({
                 className="w-80 p-2 rounded-2xl shadow-xl border-border/40 backdrop-blur-xl"
               >
                 <DropdownMenuLabel className="px-3 py-2 flex items-center gap-3">
-                  <Avatar className="h-10 w-10 ring-1 ring-border">
+                  <Avatar className="size-10 ring-1 ring-border">
                     <AvatarImage
                       src={user.user_metadata?.avatar_url}
                       alt="Avatar"
@@ -172,22 +183,13 @@ export const DesktopNav: FC<DesktopNavProps> = ({
                     </span>
                   </div>
                 </DropdownMenuLabel>
-                <DropdownMenuItem
-                  asChild
-                  className="rounded-xl px-3 py-2.5 gap-3 cursor-pointer focus:bg-accent/50"
-                >
-                  <Link to={ROUTES.ANALYTICS}>
-                    <ChartScatter className="h-4 w-4 text-blue-500" />
-                    <span className="font-medium">Harcama Analizi</span>
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator className="my-1 opacity-50" />
                 <DropdownMenuItem
                   onClick={() => signOut()}
                   className="rounded-xl px-3 py-2.5 gap-3 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
                 >
-                  <LogOut className="h-4 w-4" />
-                  <span className="font-medium">Güvenli Çıkış</span>
+                  <LogOut className="size-4" />
+                  <span className="font-medium text-white">Güvenli Çıkış</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

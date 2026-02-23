@@ -139,7 +139,7 @@ export function VideoList({
                 key={i}
                 className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-zinc-900/20"
               >
-                <Skeleton className="w-6 h-6 rounded-full" />
+                <Skeleton className="size-6 rounded-full" />
                 <Skeleton className="h-4 w-[20px]" />
                 <div className="flex-1">
                   <Skeleton className="h-4 w-3/4" />

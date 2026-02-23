@@ -51,7 +51,9 @@ export function useAnalytics() {
   }, []);
 
   const uniqueModels = useMemo(() => {
-    const models = rawLogs.map((l) => l.model).filter(Boolean) as string[];
+    const models = rawLogs
+      .map((l) => l.model)
+      .filter((m): m is string => typeof m === 'string' && m.length > 0);
     return Array.from(new Set(models)).sort();
   }, [rawLogs]);
 

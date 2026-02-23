@@ -11,11 +11,11 @@ export const MobileNav: FC = () => {
       <Button
         variant="ghost"
         size="icon"
-        className="rounded-xl bg-secondary/20 hover:bg-secondary/40 text-foreground h-11 w-11"
+        className="rounded-xl bg-secondary/20 hover:bg-secondary/40 text-foreground size-11"
         onClick={() => setMobileMenuOpen(true)}
         aria-label="Menüyü Aç"
       >
-        <PanelsTopLeft className="h-6 w-6" />
+        <PanelsTopLeft className="size-6" />
       </Button>
     </div>
   );

@@ -60,7 +60,7 @@ export function JourneyModal({ open, onOpenChange }: JourneyModalProps) {
           )}
           {isLoading && (
             <div className="h-[400px] flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <div className="animate-spin rounded-full size-8 border-b-2 border-primary"></div>
             </div>
           )}
         </div>

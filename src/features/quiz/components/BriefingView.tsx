@@ -47,7 +47,7 @@ export function BriefingView({
       <motion.div variants={itemVariants} className="shrink-0">
         <button
           onClick={onStartQuiz}
-          className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-3 shadow-sm active:scale-[0.98] border border-emerald-500/20"
+          className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold transition-all flex items-center justify-center gap-3 shadow-sm active:scale-[0.98] border border-primary/20"
         >
           <Play className="w-5 h-5 fill-current" />
           <span className="text-lg">

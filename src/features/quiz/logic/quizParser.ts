@@ -1,13 +1,16 @@
+import { z } from 'zod';
 import { type Json } from '@/types/database.types';
 import {
   AILogicSchema,
   BatchGeneratedQuestionSchema,
   BatchValidationResult,
   BatchValidationResultSchema,
+  ChunkWithContentSchema,
   type ConceptMapItem,
   ConceptMapResponseSchema,
   type GeneratedQuestion,
   GeneratedQuestionSchema,
+  type GenerationStep,
   type GeneratorCallbacks,
   type ValidationResult,
 } from '@/features/quiz/types';
@@ -35,7 +38,7 @@ const parserLogger = logger.withPrefix('[ParserLogic]');
 // FALLBACK_QUESTION removed based on audit recommendation.
 // Revision failures will now return null and be skipped.
 
-// --- LLM Response Parsing Utilities (formerly in parserUtils) ---
+// === SECTION === Parsing Utilities
 
 /**
  * Parse JSON from LLM response (simple extraction)
@@ -119,7 +122,7 @@ export function parseJsonResponse(
   }
 }
 
-// --- Content Analysis & Generation Logic (formerly in parserLogic) ---
+// === SECTION === Analysis & Question Generation
 
 export async function runChunkAnalysis(input: {
   content: string;
@@ -192,7 +195,8 @@ export async function draftQuestion(input: {
     bloomLevel: strategy.bloomLevel,
     img: result.img ?? null,
     concept: input.concept.baslik,
-  } as GeneratedQuestion;
+    insight: result.insight ?? undefined,
+  } satisfies GeneratedQuestion;
 }
 
 export async function draftBatch(input: {
@@ -245,7 +249,8 @@ export async function draftBatch(input: {
       bloomLevel: itemStrategy.bloomLevel,
       img: q.img ?? null,
       concept: inputConcept.concept.baslik,
-    } as GeneratedQuestion;
+      insight: q.insight ?? undefined,
+    } satisfies GeneratedQuestion;
   });
 }
 
@@ -291,7 +296,12 @@ export async function reviseQuestion(
   sharedContextPrompt: string
 ): Promise<GeneratedQuestion | null> {
   const revisionTask = `Aşağıdaki soru REDDEDİLMİŞTİR. Lütfen revize et.\n\n## REDDEDİLEN SORU:\n${JSON.stringify(
-    originalQuestion,
+    {
+      q: originalQuestion.q,
+      o: originalQuestion.o,
+      a: originalQuestion.a,
+      exp: originalQuestion.exp,
+    },
     null,
     2
   )}\n\n## KRİTİK HATALAR:\n${validationResult.critical_faults.join(
@@ -318,10 +328,124 @@ export async function reviseQuestion(
       bloomLevel: originalQuestion.bloomLevel,
       img: originalQuestion.img,
       concept: originalQuestion.concept,
-    } as GeneratedQuestion;
+      insight: (result.insight ?? undefined) as string | undefined, // Explicit cast to satisfy strict type if needed
+    } satisfies GeneratedQuestion;
   }
 
   return null;
+}
+
+// === SECTION === Orchestration
+
+// --- Sub-steps for Orchestration ---
+
+async function ensureConcepts(
+  chunkId: string,
+  chunk: z.infer<typeof ChunkWithContentSchema>,
+  log: (
+    step: GenerationStep,
+    msg: string,
+    details?: Record<string, unknown>
+  ) => void
+): Promise<{ concepts: ConceptMapItem[]; difficultyIndex: number }> {
+  const aiLogic = isValid(AILogicSchema, chunk.ai_logic)
+    ? parseOrThrow(AILogicSchema, chunk.ai_logic)
+    : {};
+
+  const existingConcepts: ConceptMapItem[] =
+    (aiLogic.concept_map as ConceptMapItem[]) || [];
+  const isCacheValid = existingConcepts.length > 0 && !aiLogic.invalidated_at;
+
+  if (isCacheValid) {
+    log('MAPPING', 'Önceden oluşturulmuş kavram haritası yükleniyor...');
+    return {
+      concepts: existingConcepts,
+      difficultyIndex: aiLogic.difficulty_index || 3,
+    };
+  }
+
+  log('MAPPING', 'Konunun kritik noktaları belirleniyor...');
+  const strategy = getSubjectStrategy(chunk.course_name || '');
+  const analysisResult = await runChunkAnalysis({
+    content: chunk.content,
+    courseName: chunk.course_name || '',
+    sectionTitle: chunk.section_title || '',
+    importance: strategy?.importance || 'medium',
+  });
+
+  if (!analysisResult) {
+    throw new Error(
+      'Kavram haritası oluşturulamadı. Sistem yoğun olabilir, lütfen tekrar deneyin.'
+    );
+  }
+
+  const updatedAILogic = {
+    ...(typeof chunk.ai_logic === 'object'
+      ? (chunk.ai_logic as Record<string, Json>)
+      : {}),
+    concept_map: analysisResult.concepts as Json,
+    difficulty_index: analysisResult.difficulty_index,
+    generated_at: new Date().toISOString(),
+    invalidated_at: null,
+  };
+
+  log('SAVING', 'Kavram haritası kaydediliyor...');
+  const { error: analysisUpdateError } = await updateChunkAILogic(
+    chunkId,
+    updatedAILogic
+  );
+
+  if (analysisUpdateError) {
+    parserLogger.error('Failed to update ai_logic with concepts', {
+      error: analysisUpdateError,
+    });
+  }
+
+  return {
+    concepts: analysisResult.concepts,
+    difficultyIndex: analysisResult.difficulty_index,
+  };
+}
+
+async function ensureQuotas(
+  chunkId: string,
+  chunk: z.infer<typeof ChunkWithContentSchema>,
+  concepts: ConceptMapItem[],
+  log: (
+    step: GenerationStep,
+    msg: string,
+    details?: Record<string, unknown>
+  ) => void
+) {
+  const quotas = calculateQuotas(concepts);
+  const existingAILogic = (
+    typeof chunk.ai_logic === 'object'
+      ? (chunk.ai_logic as Record<string, Json>)
+      : {}
+  ) as Record<string, Json>;
+
+  const quotaAILogic: Record<string, Json> = {
+    ...existingAILogic,
+    suggested_quotas: quotas,
+    reasoning:
+      typeof existingAILogic.reasoning === 'string'
+        ? existingAILogic.reasoning
+        : 'Otomatik pedagojik kotalar.',
+  };
+
+  log('SAVING', 'Pedagojik kotalar güncelleniyor...');
+  const { error: quotaUpdateError } = await updateChunkAILogic(
+    chunkId,
+    quotaAILogic
+  );
+
+  if (quotaUpdateError) {
+    parserLogger.error('Failed to update ai_logic with quotas', {
+      error: quotaUpdateError,
+    });
+  }
+
+  return quotas;
 }
 
 export async function generateForChunk(
@@ -334,15 +458,7 @@ export async function generateForChunk(
   } = {}
 ) {
   const log = (
-    step:
-      | 'INIT'
-      | 'MAPPING'
-      | 'GENERATING'
-      | 'VALIDATING'
-      | 'REVISION'
-      | 'SAVING'
-      | 'COMPLETED'
-      | 'ERROR',
+    step: GenerationStep,
     message: string,
     details: Record<string, unknown> = {}
   ) => {
@@ -358,92 +474,18 @@ export async function generateForChunk(
   try {
     log('INIT', 'Ders materyalleri kütüphaneden alınıyor...');
     await Repository.updateChunkStatus(chunkId, 'PROCESSING');
-    const chunk = await Repository.getChunkWithContent(chunkId);
-    if (!chunk) throw new Error('Chunk not found');
+    const rawChunk = await Repository.getChunkWithContent(chunkId);
+    if (!rawChunk) throw new Error(`Chunk (ID: ${chunkId}) bulunamadı.`);
 
-    const aiLogic = isValid(AILogicSchema, chunk.ai_logic)
-      ? parseOrThrow(AILogicSchema, chunk.ai_logic)
-      : {};
+    const chunk = parseOrThrow(ChunkWithContentSchema, rawChunk);
 
-    const existingConcepts: ConceptMapItem[] =
-      (aiLogic.concept_map as ConceptMapItem[]) || [];
-
-    // CACHE CONTROL: Skip analysis if we have valid concepts and it's not invalidated
-    const isCacheValid = existingConcepts.length > 0 && !aiLogic.invalidated_at;
-
-    let concepts: ConceptMapItem[] = existingConcepts;
-    let difficultyIndex = aiLogic.difficulty_index || 3;
-
-    if (!isCacheValid) {
-      log('MAPPING', 'Konunun kritik noktaları belirleniyor...');
-      const strategy = getSubjectStrategy((chunk.course_name as string) || '');
-      const analysisResult = await runChunkAnalysis({
-        content: chunk.content as string,
-        courseName: (chunk.course_name as string) || '',
-        sectionTitle: (chunk.section_title as string) || '',
-        importance: strategy?.importance || 'medium',
-      });
-
-      if (!analysisResult) {
-        throw new Error('Sistem yoğun, lütfen biraz sonra tekrar deneyin.');
-      }
-      concepts = analysisResult.concepts;
-      difficultyIndex = analysisResult.difficulty_index;
-
-      const updatedAILogic = {
-        ...((chunk.ai_logic || {}) as Record<string, unknown>),
-        concept_map: concepts as Json,
-        difficulty_index: difficultyIndex,
-        generated_at: new Date().toISOString(),
-        invalidated_at: null, // Reset invalidation
-      } as Record<string, Json>;
-
-      log('SAVING', 'Kavram haritası kaydediliyor...');
-      const { error: analysisUpdateError } = await updateChunkAILogic(
-        chunkId,
-        updatedAILogic
-      );
-      if (analysisUpdateError) {
-        parserLogger.error('Failed to update ai_logic with concepts', {
-          error: analysisUpdateError,
-        });
-        log('ERROR', 'Kavram haritası kaydedilemedi, işleme devam ediliyor...');
-      }
-
-      // PREVENT OVERWRITE: Update local chunk.ai_logic so next update has full data
-      chunk.ai_logic = updatedAILogic as Json;
-    } else {
-      log('MAPPING', 'Önceden oluşturulmuş kavram haritası yükleniyor...');
-    }
-
-    const quotas = calculateQuotas(concepts);
-    const existingAILogic = (chunk.ai_logic || {}) as Record<string, Json>;
-    const existingReasoning = existingAILogic.reasoning;
-    const isValidReasoning =
-      typeof existingReasoning === 'string' || existingReasoning === null;
-    const quotaAILogic: Record<string, Json> = {
-      ...existingAILogic,
-      suggested_quotas: quotas,
-      reasoning: isValidReasoning
-        ? existingReasoning
-        : 'Otomatik pedagojik kotalar.',
-    };
-
-    log('SAVING', 'Pedagojik kotalar güncelleniyor...');
-    const { error: quotaUpdateError } = await updateChunkAILogic(
-      chunkId,
-      quotaAILogic
-    );
-    if (quotaUpdateError) {
-      parserLogger.error('Failed to update ai_logic with quotas', {
-        error: quotaUpdateError,
-      });
-    }
-    chunk.ai_logic = quotaAILogic as Json;
+    const { concepts } = await ensureConcepts(chunkId, chunk, log);
+    const quotas = await ensureQuotas(chunkId, chunk, concepts, log);
 
     const usageTypes: ('antrenman' | 'deneme' | 'arsiv')[] = options.usageType
       ? [options.usageType]
       : ['antrenman', 'deneme', 'arsiv'];
+
     const totalTarget =
       options.targetCount ||
       usageTypes.reduce(
@@ -452,16 +494,12 @@ export async function generateForChunk(
       );
     callbacks.onTotalTargetCalculated(totalTarget);
 
-    const guidelines = await getSubjectGuidelines(
-      (chunk.course_name as string) || ''
-    );
-    const cleanContent = PromptArchitect.cleanReferenceImages(
-      chunk.content as string
-    );
+    const guidelines = await getSubjectGuidelines(chunk.course_name || '');
+    const cleanContent = PromptArchitect.cleanReferenceImages(chunk.content);
     const sharedContext = PromptArchitect.buildContext(
       cleanContent,
-      (chunk.course_name as string) || '',
-      (chunk.section_title as string) || '',
+      chunk.course_name || '',
+      chunk.section_title || '',
       guidelines
     );
 
@@ -474,11 +512,7 @@ export async function generateForChunk(
           ? concepts
           : shuffle([...concepts]).slice(0, typeQuotas);
 
-      // --- NEW BATCHING LOGIC START ---
-      let draftingBuffer: {
-        index: number;
-        concept: ConceptMapItem;
-      }[] = [];
+      let draftingBuffer: { index: number; concept: ConceptMapItem }[] = [];
       const BATCH_SIZE = 3;
 
       for (
@@ -487,12 +521,12 @@ export async function generateForChunk(
         i++
       ) {
         const concept = targetConcepts[i];
-
         const cached = await Repository.fetchCachedQuestion(
-          chunk.id as string,
+          chunk.id,
           type,
           concept.baslik
         );
+
         if (cached) {
           totalGeneratedCount++;
           callbacks.onQuestionSaved(totalGeneratedCount);
@@ -516,7 +550,7 @@ export async function generateForChunk(
 
           const draftedBatchResult = await draftBatch({
             concepts: draftingBuffer,
-            courseName: (chunk.course_name as string) || '',
+            courseName: chunk.course_name || '',
             usageType: type,
             sharedContextPrompt: sharedContext,
           });
@@ -533,21 +567,18 @@ export async function generateForChunk(
 
             for (let j = 0; j < draftedBatchResult.length; j++) {
               const bufferItem = draftingBuffer[j];
-              if (!bufferItem) continue; // Safety check if LLM returned more questions than concepts
+              if (!bufferItem) continue;
 
               let question = draftedBatchResult[j];
               const validation =
                 validationResponse?.results[j] ??
-                validationResponse?.results.find(
-                  (r: BatchValidationResult['results'][number]) => r.index === j
-                );
+                validationResponse?.results.find((r) => r.index === j);
 
               if (!validation || validation.decision === 'REJECTED') {
                 log(
                   'REVISION',
                   `${bufferItem.concept.baslik} sorusu için revizyon yapılıyor...`
                 );
-                // Max retries for batches will be implicitly 1 via individual reviseQuestion call
                 const revised = await reviseQuestion(
                   question,
                   validation || {
@@ -555,8 +586,7 @@ export async function generateForChunk(
                     total_score: 0,
                     decision: 'REJECTED',
                     critical_faults: ['Batch validation error'],
-                    improvement_suggestion:
-                      'Soru formatı tamamen hatalı, lütfen yönergelere uyarak tekrar yazın',
+                    improvement_suggestion: 'Soru formatı tamamen hatalı.',
                   },
                   sharedContext
                 );
@@ -576,16 +606,15 @@ export async function generateForChunk(
                 `${bufferItem.concept.baslik} kütüphaneye ekleniyor...`
               );
               const { error: saveErr } = await Repository.createQuestion({
-                chunk_id: chunk.id as string,
-                course_id: chunk.course_id as string,
-                section_title: chunk.section_title as string,
+                chunk_id: chunk.id,
+                course_id: chunk.course_id,
+                section_title: chunk.section_title || 'Genel',
                 usage_type: type,
                 bloom_level: (question.bloomLevel || 'knowledge') as
                   | 'knowledge'
                   | 'analysis'
                   | 'application'
-                  | null
-                  | undefined,
+                  | null,
                 created_by: options.userId,
                 question_data: {
                   q: question.q,
@@ -606,7 +635,6 @@ export async function generateForChunk(
               }
             }
           }
-
           draftingBuffer = [];
         }
       }

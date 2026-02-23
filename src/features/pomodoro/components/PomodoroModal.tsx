@@ -157,8 +157,8 @@ export function PomodoroModal() {
                 ? 'rounded-[40px] w-[340px]'
                 : 'rounded-[28px] w-[220px]',
               isWorking
-                ? 'bg-card/90 border-primary/20 shadow-primary/5'
-                : 'bg-card/90 border-emerald-500/20 shadow-emerald-500/5'
+                ? 'bg-card/90 border-primary/20 shadow-[var(--shadow-glow-primary)]'
+                : 'bg-card/90 border-primary/20 shadow-[var(--shadow-glow-primary)]'
             )}
           >
             <div

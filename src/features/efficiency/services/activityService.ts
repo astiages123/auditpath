@@ -19,6 +19,7 @@ import {
   getVirtualDate,
   getVirtualDayStart,
 } from '@/utils/dateHelpers';
+import { EFFICIENCY_CONFIG } from '../utils/constants';
 
 // ============== TYPES ==============
 
@@ -59,7 +60,7 @@ type ActivityData = PomodoroInsert | VideoUpsert | QuizProgressData;
 const getVirtualToday = getVirtualDayStart;
 const adjustToVirtualDay = getVirtualDate;
 
-// ============== LOGGING FUNCTIONS (from activityLoggingService.ts) ==============
+// === SECTION === Logging Functions
 
 /**
  * Log a new activity (pomodoro, video, or quiz).
@@ -128,7 +129,7 @@ export async function logActivity(
   }
 }
 
-// ============== STATS FUNCTIONS (from activityStatsService.ts) ==============
+// === SECTION === Stats Functions
 
 /**
  * Get daily statistics with virtual day logic (day starts at 04:00).
@@ -244,7 +245,7 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     );
   }
 
-  const goalMinutes = 200;
+  const goalMinutes = EFFICIENCY_CONFIG.DAILY_GOAL_MINUTES;
   const progress = Math.min(
     100,
     Math.round((totalWorkMinutes / goalMinutes) * 100)
@@ -402,7 +403,7 @@ export async function getHistoryStats(
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-// ============== HISTORY FUNCTIONS (from activityHistoryService.ts) ==============
+// === SECTION === History Functions
 
 /**
  * Get recent activities across all types.
@@ -469,7 +470,7 @@ export async function getRecentActivities(
   }
 }
 
-// ============== VISUALIZATION FUNCTIONS (from activityVisualService.ts) ==============
+// === SECTION === Visualization Functions
 
 /**
  * Get last 30 days activity heatmap.

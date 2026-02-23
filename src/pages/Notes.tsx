@@ -1,6 +1,12 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Loader2, AlertCircle, ChevronUp } from 'lucide-react';
+import {
+  Loader2,
+  AlertCircle,
+  ChevronUp,
+  BookText,
+  ArrowLeft,
+} from 'lucide-react';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -64,6 +70,16 @@ export default function NotesPage() {
       isProgrammaticScroll,
     });
 
+  // chunks filter'ından sonra aktif chunk'ı bul
+  const activeChunk = chunks.find(
+    (c) => slugify(c.section_title) === activeChunkId
+  );
+
+  // Kelime sayısından dakika hesapla (ortalama 200 kelime/dk)
+  const readingTimeMinutes = activeChunk?.content
+    ? Math.max(1, Math.ceil(activeChunk.content.split(/\s+/).length / 200))
+    : undefined;
+
   // Update URL if no topicSlug is present but we have chunks
   useEffect(() => {
     if (!loading && chunks.length > 0 && !topicSlug && courseSlug) {
@@ -110,22 +126,22 @@ export default function NotesPage() {
     <ErrorBoundary>
       <div className="flex h-screen overflow-hidden bg-background text-foreground font-sans selection:bg-primary/20">
         {/* 1. Left Panel: Global Navigation */}
-        <aside className="w-72 shrink-0 border-r border-border/15 bg-card/10 backdrop-blur-xl hidden lg:block pt-5">
-          <div className="h-20 flex flex-col justify-center px-6 border-b border-border/10 bg-card/5 relative overflow-hidden">
+        <aside className="w-60 shrink-0 bg-muted/20 backdrop-blur-xl hidden lg:block pt-5 shadow-[1px_0_10px_0_rgba(0,0,0,0.02)]">
+          <div className="h-20 flex flex-col justify-center px-6 relative overflow-hidden mb-4">
             <Link
               to={ROUTES.HOME}
-              className="group inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-all duration-300 mb-1.5"
+              className="group inline-flex items-center gap-2 text-foreground hover:text-primary transition-all duration-300"
             >
-              <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" />
-              <span className="text-[12px] font-bold uppercase text-foreground group-hover:opacity-100">
-                Kütüphane
+              <ArrowLeft className="size-3.5 group-hover:-translate-x-1 transition-transform" />
+              <span className="text-[12px] font-medium group-hover:opacity-100">
+                Ana Sayfa
               </span>
             </Link>
 
-            <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-1 h-3.5 rounded-full bg-primary/40 shrink-0" />
-              <h1 className="text-[13px] font-bold text-foreground/90 truncate tracking-tight uppercase">
-                {courseName}
+            <div className="mt-2 flex items-center gap-2 min-w-0">
+              <BookText className="size-4 text-foreground" />
+              <h1 className="text-sm font-bold text-foreground truncate tracking-tight">
+                {courseName?.toLocaleUpperCase('tr-TR')}
               </h1>
             </div>
           </div>
@@ -138,7 +154,6 @@ export default function NotesPage() {
           </div>
         </aside>
 
-        {/* 2. Middle Panel: Main Content */}
         <main
           ref={mainContentRef}
           className="flex-1 overflow-y-auto bg-background/50 relative scroll-smooth"
@@ -147,7 +162,7 @@ export default function NotesPage() {
             transition: 'opacity 200ms ease-in-out',
           }}
         >
-          <div className="max-w-6xl mx-auto px-8 py-12 min-h-screen">
+          <div className="max-w-6xl mx-auto min-h-screen px-8 py-12">
             {chunks
               .filter((chunk) => slugify(chunk.section_title) === activeChunkId)
               .map((chunk) => (
@@ -179,7 +194,7 @@ export default function NotesPage() {
 
         {/* 3. Right Panel: Local ToC */}
         <aside
-          className="w-64 shrink-0 border-l border-border/15 bg-card/10 backdrop-blur-xl hidden xl:flex flex-col h-full"
+          className="w-64 shrink-0 bg-muted/20 backdrop-blur-xl hidden xl:flex flex-col h-full shadow-[-1px_0_10px_0_rgba(0,0,0,0.02)]"
           style={{
             opacity: isPending ? 0.7 : 1,
             transition: 'opacity 200ms ease-in-out',
@@ -190,6 +205,7 @@ export default function NotesPage() {
               <LocalToC
                 items={currentChunkToC}
                 activeId={activeSection}
+                readingTimeMinutes={readingTimeMinutes}
                 onItemClick={(id, e) => {
                   e.preventDefault();
                   handleScrollToId(id, setActiveSection);

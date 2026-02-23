@@ -37,7 +37,7 @@ export function TimerControls({
                 ? 'bg-secondary text-foreground hover:bg-secondary/80 border border-border'
                 : isWorking
                   ? 'bg-primary text-primary-foreground hover:bg-primary/95'
-                  : 'bg-emerald-500 text-white hover:bg-emerald-600'
+                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
             )}
           >
             {isRunning ? (
@@ -70,8 +70,8 @@ export function TimerControls({
                 className={cn(
                   'h-12 flex-1 rounded-xl gap-2 text-sm font-black',
                   isWorking
-                    ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
-                    : 'bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20'
+                    ? 'bg-chart-1/10 text-chart-1 hover:bg-chart-1/20'
+                    : 'bg-primary/10 text-primary hover:bg-primary/20'
                 )}
               >
                 {isWorking ? <Coffee size={18} /> : <Briefcase size={18} />}

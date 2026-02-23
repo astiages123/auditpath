@@ -29,16 +29,16 @@ export const VideoItem = memo(function VideoItem({
     >
       {/* Status Checkbox */}
       <div
-        className={`shrink-0 flex items-center justify-center w-6 h-6 rounded-full border transition-all duration-300 ${
+        className={`shrink-0 flex items-center justify-center size-6 rounded-full border transition-all duration-300 ${
           completed
             ? `bg-emerald-500 text-white border-emerald-500 shadow-[0_0_10px_-3px_rgba(16,185,129,0.5)]`
             : 'border-zinc-600 bg-black/20 group-hover:border-zinc-400'
         }`}
       >
         {completed ? (
-          <Check className="h-3.5 w-3.5" />
+          <Check className="size-3.5" />
         ) : (
-          <Circle className="h-3.5 w-3.5 text-transparent" />
+          <Circle className="size-3.5 text-transparent" />
         )}
       </div>
 
@@ -71,8 +71,8 @@ export const VideoItem = memo(function VideoItem({
         <span
           className={`text-xs font-medium px-2.5 py-1 rounded-md border transition-colors ${
             completed
-              ? 'bg-emerald-500/10 border-emerald-500/10 text-emerald-200'
-              : 'bg-zinc-800/50 border-white/5 text-zinc-400 group-hover:bg-zinc-700/50 group-hover:text-zinc-300'
+              ? 'bg-primary/10 border-primary/10 text-primary'
+              : 'bg-zinc-800/50 border-white/5 text-zinc-400 group-hover:bg-muted/40 group-hover:text-zinc-300'
           }`}
         >
           {duration}

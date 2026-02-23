@@ -7,6 +7,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { GUILDS, getRequirementDescription } from '../logic/achievementsData';
+import { formatDisplayDate } from '@/utils/dateHelpers';
 import type { Achievement } from '../types/achievementsTypes';
 
 interface SealDetailModalProps {
@@ -18,16 +19,11 @@ interface SealDetailModalProps {
 }
 
 const formatDate = (dateStr: string) => {
-  try {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('tr-TR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  } catch {
-    return dateStr;
-  }
+  return formatDisplayDate(dateStr, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 };
 
 export function SealDetailModal({

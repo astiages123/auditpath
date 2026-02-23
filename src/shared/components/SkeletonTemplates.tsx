@@ -34,7 +34,7 @@ export function CardSkeleton({ className = '' }: { className?: string }) {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <Skeleton className="h-6 w-32" />
-          <Skeleton className="h-6 w-6 rounded-full" />
+          <Skeleton className="size-6 rounded-full" />
         </div>
         <Skeleton className="h-32 w-full" />
         <div className="space-y-2">
@@ -55,7 +55,7 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
       </div>
       {[...Array(rows)].map((_, i) => (
         <div key={i} className="flex gap-4 items-center">
-          <Skeleton className="h-12 w-12 rounded-lg" />
+          <Skeleton className="size-12 rounded-lg" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-3 w-1/2" />

@@ -22,12 +22,16 @@ export async function handleSupabaseError(
 }
 
 export async function safeQuery<T = unknown>(
-  queryPromise: PromiseLike<{ data: T | null; error: unknown }>,
+  queryPromise: PromiseLike<{
+    data: T | null;
+    error: unknown;
+    count?: number | null;
+  }>,
   errorMessage: string,
   context?: Record<string, unknown>
-): Promise<{ data: T | null; error: Error | null }> {
+): Promise<{ data: T | null; error: Error | null; count: number | null }> {
   try {
-    const { data, error } = await queryPromise;
+    const { data, error, count } = await queryPromise;
 
     if (error) {
       safeQueryLogger.error(errorMessage, { ...context, error });
@@ -36,16 +40,17 @@ export async function safeQuery<T = unknown>(
         error: new Error(
           (error as { message?: string })?.message || 'Query error'
         ),
+        count: count ?? null,
       };
     }
 
-    return { data, error: null };
+    return { data, error: null, count: count ?? null };
   } catch (err) {
     const error = err instanceof Error ? err : new Error('Unknown error');
     safeQueryLogger.error(`Unexpected error: ${errorMessage}`, {
       ...context,
       error,
     });
-    return { data: null, error };
+    return { data: null, error, count: null };
   }
 }

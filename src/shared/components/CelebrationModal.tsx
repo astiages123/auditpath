@@ -105,13 +105,13 @@ export function CelebrationModal({
                 variant === 'rank'
                   ? 'bg-linear-to-b from-amber-500/50 via-amber-600/30 to-amber-900/50'
                   : variant === 'achievement'
-                    ? 'bg-linear-to-b from-purple-500/50 via-fuchsia-600/30 to-zinc-900/50'
-                    : 'bg-linear-to-b from-blue-500/50 via-indigo-600/30 to-zinc-900/50'
+                    ? 'bg-linear-to-b from-purple-500/50 via-fuchsia-600/30 to-zinc-950'
+                    : 'bg-linear-to-b from-blue-500/50 via-indigo-600/30 to-zinc-950'
               )}
             >
               <div
                 className={cn(
-                  'relative bg-zinc-950/90 backdrop-blur-3xl rounded-[1.9rem] p-8 text-center flex flex-col items-center gap-6 border border-white/5 shadow-2xl',
+                  'relative bg-card/40 backdrop-blur-3xl rounded-[1.9rem] p-8 text-center flex flex-col items-center gap-6 border border-white/5 shadow-2xl',
                   variant === 'rank' && 'border-amber-500/20'
                 )}
               >
@@ -181,8 +181,8 @@ export function CelebrationModal({
                           className={cn(
                             'relative p-8 rounded-full border-4 shadow-2xl transition-transform duration-500 group-hover:scale-110',
                             variant === 'rank'
-                              ? 'bg-zinc-900 border-amber-500/50 shadow-amber-500/20'
-                              : 'bg-zinc-900 border-blue-500/50 shadow-blue-500/20'
+                              ? 'bg-card/40 border-amber-500/50 shadow-amber-500/20'
+                              : 'bg-card/40 border-blue-500/50 shadow-blue-500/20'
                           )}
                         >
                           <Icon className="w-16 h-16 stroke-[1.5px]" />

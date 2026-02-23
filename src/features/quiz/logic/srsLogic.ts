@@ -18,9 +18,11 @@ import {
   calculateTMax,
 } from './quizCoreLogic';
 import { BLOOM_INSTRUCTIONS } from './prompts';
+import { QUIZ_CONFIG } from '../utils/constants';
 
 // --- Constants ---
-const SESSION_GAPS = [1, 3, 7, 14, 30];
+const SESSION_GAPS = QUIZ_CONFIG.SESSION_GAPS;
+const REFRESH_THRESHOLD = 0.8;
 const SLOW_SUCCESS_INCREMENT = 0.5;
 
 export function getSubjectStrategy(
@@ -282,7 +284,8 @@ export function calculateQuizResult(
   const scoreDelta = newMastery - previousMastery;
 
   const isTopicRefreshed =
-    totalChunkQuestions > 0 && uniqueSolvedCount / totalChunkQuestions >= 0.8;
+    totalChunkQuestions > 0 &&
+    uniqueSolvedCount / totalChunkQuestions >= REFRESH_THRESHOLD;
 
   const newFailsCount = isCorrect
     ? 0

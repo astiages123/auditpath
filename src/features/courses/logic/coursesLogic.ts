@@ -15,21 +15,26 @@ const themeCache = new Map<string, CourseTheme>();
 const iconCache = new Map<string, LucideIcon>();
 
 /**
- * Returns the appropriate icon for a course based on its name
+ * Returns the appropriate icon for a course based on its name and/or slug
  * Optimized with caching
  */
-export function getCourseIcon(courseName: string | null): LucideIcon {
+export function getCourseIcon(
+  courseName: string | null,
+  courseSlug?: string | null
+): LucideIcon {
   if (!courseName) return BookOpen;
 
   const name = courseName.toLowerCase();
+  const slug = courseSlug?.toLowerCase() || '';
+  const searchText = name + ' ' + slug;
 
   if (iconCache.has(name)) {
     return iconCache.get(name)!;
   }
 
-  // Check strict overrides first
+  // Check strict overrides first (against both name and slug)
   for (const override of ICON_OVERRIDES) {
-    if (name.includes(override.keyword)) {
+    if (searchText.includes(override.keyword)) {
       iconCache.set(name, override.icon);
       return override.icon;
     }
@@ -37,7 +42,7 @@ export function getCourseIcon(courseName: string | null): LucideIcon {
 
   // Check general mappings
   for (const mapping of COURSE_KEYWORD_MAPPINGS) {
-    if (mapping.keywords.some((k) => name.includes(k))) {
+    if (mapping.keywords.some((k) => searchText.includes(k))) {
       iconCache.set(name, mapping.icon);
       return mapping.icon;
     }

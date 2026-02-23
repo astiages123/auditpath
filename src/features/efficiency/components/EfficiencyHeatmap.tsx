@@ -1,5 +1,6 @@
 import { DayActivity } from '@/features/efficiency/types/efficiencyTypes';
 import { cn } from '@/utils/stringHelpers';
+import { formatDisplayDate } from '@/utils/dateHelpers';
 import {
   Tooltip,
   TooltipContent,
@@ -42,16 +43,11 @@ export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
   };
 
   const formatDate = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('tr-TR', {
-        day: 'numeric',
-        month: 'long',
-        weekday: 'long',
-      });
-    } catch {
-      return dateStr;
-    }
+    return formatDisplayDate(dateStr, {
+      day: 'numeric',
+      month: 'long',
+      weekday: 'long',
+    });
   };
 
   return (

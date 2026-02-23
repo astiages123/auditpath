@@ -8,9 +8,10 @@ import { cn } from '@/utils/stringHelpers';
 import { useCognitiveInsights } from '../hooks/useCognitiveInsights';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RecentQuizSession } from '@/features/quiz/types';
+import { formatDisplayDate } from '@/utils/dateHelpers';
 
 const formatDate = (dateStr: string) => {
-  return new Date(dateStr).toLocaleDateString('tr-TR', {
+  return formatDisplayDate(dateStr, {
     day: 'numeric',
     month: 'long',
   });
@@ -67,7 +68,7 @@ const QuizHistoryContent = ({ quizzes }: { quizzes: RecentQuizSession[] }) => (
           className="p-4 rounded-2xl bg-white/3 border border-white/5 hover:bg-white/6 transition-all group flex-between"
         >
           <div className="flex flex-col gap-1">
-            <h4 className="font-semibold text-white/90 group-hover:text-emerald-400 transition-colors">
+            <h4 className="font-semibold text-white/90 group-hover:text-primary transition-colors">
               {quiz.courseName}
             </h4>
             <p className="text-xs text-muted-foreground">
@@ -177,10 +178,10 @@ export const RecentQuizzesCard = () => {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: index * 0.1 }}
-                    className="p-4 rounded-2xl bg-white/3 border border-white/5 hover:bg-white/6 transition-all group flex-between"
+                    className="p-4 rounded-2xl bg-white/3 border border-white/5 hover:bg-white/5 transition-all group flex-between"
                   >
                     <div className="flex flex-col gap-0.5">
-                      <span className="text-sm font-semibold text-white/90 group-hover:text-emerald-400 transition-colors">
+                      <span className="text-sm font-semibold text-white/90 group-hover:text-primary transition-colors">
                         {session.courseName}
                       </span>
                       <span className="text-[10px] text-muted-foreground uppercase tracking-wider">

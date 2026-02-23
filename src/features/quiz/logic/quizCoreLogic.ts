@@ -7,6 +7,7 @@ import {
   type QuizResults,
   type TestResultSummary,
 } from '../types';
+import { QUIZ_CONFIG } from '../utils/constants';
 
 // ============================================================================
 // Quiz Timer (formerly quizTimer.ts)
@@ -16,6 +17,7 @@ export function createTimer() {
   let startTime: number | null = null;
   let accumulatedTime = 0;
   let isRunning = false;
+  let isListenerAttached = false;
 
   const handleVisibilityChange = () => {
     if (
@@ -36,12 +38,23 @@ export function createTimer() {
     }
   };
 
-  if (typeof document !== 'undefined') {
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-  }
+  const attachListener = () => {
+    if (typeof document !== 'undefined' && !isListenerAttached) {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      isListenerAttached = true;
+    }
+  };
+
+  const detachListener = () => {
+    if (typeof document !== 'undefined' && isListenerAttached) {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      isListenerAttached = false;
+    }
+  };
 
   return {
     start: () => {
+      attachListener();
       if (startTime === null) {
         startTime = Date.now();
         isRunning = true;
@@ -56,20 +69,16 @@ export function createTimer() {
       return accumulatedTime;
     },
     reset: () => {
+      attachListener();
       startTime = Date.now();
       accumulatedTime = 0;
       isRunning = true;
     },
     clear: () => {
+      detachListener();
       startTime = null;
       accumulatedTime = 0;
       isRunning = false;
-      if (typeof document !== 'undefined') {
-        document.removeEventListener(
-          'visibilitychange',
-          handleVisibilityChange
-        );
-      }
     },
     getTime: () => {
       if (startTime !== null) {
@@ -248,8 +257,10 @@ export function calculateMasteryChains(
   const nodes: MasteryNode[] = concepts.map((concept, index) => {
     const score = conceptScoreMap[concept.baslik] || 0;
     let status: MasteryNode['status'] = 'weak';
-    if (score >= 80) status = 'mastered';
-    else if (score >= 50) status = 'in-progress';
+    if (score >= QUIZ_CONFIG.MASTERY_THRESHOLDS.EXCELLENT) status = 'mastered';
+    else if (score >= QUIZ_CONFIG.MASTERY_THRESHOLDS.GOOD) {
+      status = 'in-progress';
+    }
 
     return {
       id: `node-${index}`,
@@ -257,11 +268,15 @@ export function calculateMasteryChains(
       mastery: score,
       status,
       prerequisites: concept.prerequisites || [],
-      isChainComplete: score >= 80,
+      isChainComplete: score >= QUIZ_CONFIG.MASTERY_THRESHOLDS.EXCELLENT,
       depth: 0,
       data: { focus: concept.odak, aiInsight: undefined },
     };
   });
+
+  // Optimize lookup: Map label to MasteryNode
+  const nodeMap = new Map<string, MasteryNode>();
+  nodes.forEach((n) => nodeMap.set(n.label, n));
 
   const calculateDepth = (
     node: MasteryNode,
@@ -270,8 +285,9 @@ export function calculateMasteryChains(
     if (visited.has(node.id)) return 0;
     visited.add(node.id);
     if (!node.prerequisites || node.prerequisites.length === 0) return 0;
+
     const prereqDepths = node.prerequisites.map((prereqLabel) => {
-      const prereqNode = nodes.find((n) => n.label === prereqLabel);
+      const prereqNode = nodeMap.get(prereqLabel);
       return prereqNode ? calculateDepth(prereqNode, new Set(visited)) + 1 : 0;
     });
     return Math.max(...prereqDepths, 0);
@@ -290,14 +306,19 @@ export function processGraphForAtlas(nodes: MasteryNode[]): {
   edges: { source: string; target: string; isStrong: boolean }[];
 } {
   const edges: { source: string; target: string; isStrong: boolean }[] = [];
+  const nodeMap = new Map<string, MasteryNode>();
+  nodes.forEach((n) => nodeMap.set(n.label, n));
+
   nodes.forEach((node) => {
     node.prerequisites.forEach((prereqLabel) => {
-      const prereqNode = nodes.find((n) => n.label === prereqLabel);
+      const prereqNode = nodeMap.get(prereqLabel);
       if (prereqNode) {
         edges.push({
           source: prereqNode.id,
           target: node.id,
-          isStrong: prereqNode.mastery >= 80 && node.mastery >= 80,
+          isStrong:
+            prereqNode.mastery >= QUIZ_CONFIG.MASTERY_THRESHOLDS.EXCELLENT &&
+            node.mastery >= QUIZ_CONFIG.MASTERY_THRESHOLDS.EXCELLENT,
         });
       }
     });

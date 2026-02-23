@@ -19,19 +19,27 @@ export async function getTotalQuestionsInCourse(
   courseId: string
 ): Promise<number> {
   if (!isValidUuid(courseId)) return 0;
-  const { count } = await supabase
-    .from('questions')
-    .select('*', { count: 'exact', head: true })
-    .eq('course_id', courseId);
+  const { count } = await safeQuery(
+    supabase
+      .from('questions')
+      .select('*', { count: 'exact', head: true })
+      .eq('course_id', courseId),
+    'getTotalQuestionsInCourse error',
+    { courseId }
+  );
   return count || 0;
 }
 
 export async function getChunkQuestionCount(chunkId: string): Promise<number> {
   if (!isValidUuid(chunkId)) return 10;
-  const { count } = await supabase
-    .from('questions')
-    .select('*', { count: 'exact', head: true })
-    .eq('chunk_id', chunkId);
+  const { count } = await safeQuery(
+    supabase
+      .from('questions')
+      .select('*', { count: 'exact', head: true })
+      .eq('chunk_id', chunkId),
+    'getChunkQuestionCount error',
+    { chunkId }
+  );
   return count || 10;
 }
 
@@ -39,15 +47,19 @@ export async function getArchivedQuestionsCount(
   userId: string,
   courseId: string
 ): Promise<number> {
-  const { count } = await supabase
-    .from('user_question_status')
-    .select('id, questions!inner(course_id)', {
-      count: 'exact',
-      head: true,
-    })
-    .eq('user_id', userId)
-    .eq('status', 'archived')
-    .eq('questions.course_id', courseId);
+  const { count } = await safeQuery(
+    supabase
+      .from('user_question_status')
+      .select('id, questions!inner(course_id)', {
+        count: 'exact',
+        head: true,
+      })
+      .eq('user_id', userId)
+      .eq('status', 'archived')
+      .eq('questions.course_id', courseId),
+    'getArchivedQuestionsCount error',
+    { userId, courseId }
+  );
   return count || 0;
 }
 
@@ -74,15 +86,19 @@ export async function getUniqueSolvedCountInChunk(
   chunkId: string
 ): Promise<number> {
   if (!isValidUuid(chunkId)) return 0;
-  const { count } = await supabase
-    .from('user_question_status')
-    .select('question_id, questions!inner(chunk_id)', {
-      count: 'exact',
-      head: true,
-    })
-    .eq('user_id', userId)
-    .eq('questions.chunk_id', chunkId)
-    .in('status', ['archived', 'pending_followup']);
+  const { count } = await safeQuery(
+    supabase
+      .from('user_question_status')
+      .select('question_id, questions!inner(chunk_id)', {
+        count: 'exact',
+        head: true,
+      })
+      .eq('user_id', userId)
+      .eq('questions.chunk_id', chunkId)
+      .in('status', ['archived', 'pending_followup']),
+    'getUniqueSolvedCountInChunk error',
+    { userId, chunkId }
+  );
   return count || 0;
 }
 
@@ -273,11 +289,15 @@ export async function fetchCachedQuestion(
 export async function getAntrenmanQuestionCount(
   chunkId: string
 ): Promise<number> {
-  const { count } = await supabase
-    .from('questions')
-    .select('*', { count: 'exact', head: true })
-    .eq('chunk_id', chunkId)
-    .eq('usage_type', 'antrenman');
+  const { count } = await safeQuery(
+    supabase
+      .from('questions')
+      .select('*', { count: 'exact', head: true })
+      .eq('chunk_id', chunkId)
+      .eq('usage_type', 'antrenman'),
+    'getAntrenmanQuestionCount error',
+    { chunkId }
+  );
   return count || 0;
 }
 
@@ -474,10 +494,14 @@ export async function getChunkQuotaStatus(chunkId: string): Promise<{
       ? chunkData.ai_logic.concept_map.length
       : 0) || 5;
 
-  const { count: existingCount } = await supabase
-    .from('questions')
-    .select('*', { count: 'exact', head: true })
-    .eq('chunk_id', chunkId);
+  const { count: existingCount } = await safeQuery(
+    supabase
+      .from('questions')
+      .select('*', { count: 'exact', head: true })
+      .eq('chunk_id', chunkId),
+    'getChunkQuotaStatus count error',
+    { chunkId }
+  );
 
   const total = conceptCount * 3; // Default: 3 questions per concept
   const used = existingCount || 0;

@@ -15,7 +15,6 @@
     "format:fix": "prettier --write .",
     "preview": "vite preview",
     "db:seed": "tsx scripts/db/seed-db.ts",
-    "sync": "tsx scripts/notion-sync/index.ts",
     "update-types": "dotenv -e .env.local -- sh -c 'npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types/database.types.ts'",
     "check-all": "npm run format && npm run style && npm run lint && npm run type-check",
     "prepare": "husky"

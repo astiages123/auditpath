@@ -61,7 +61,7 @@ export function getCelebrationAsset(id: string): CelebrationAsset {
       );
       if (c) {
         courseName = c.name || courseName;
-        CourseIcon = getCourseIcon(courseName) || GraduationCap;
+        CourseIcon = getCourseIcon(courseName, courseId) || GraduationCap;
         break;
       }
     }

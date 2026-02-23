@@ -106,10 +106,10 @@ export function TimerDisplay({
             r="100"
             stroke={
               isOvertime
-                ? '#f97316'
+                ? 'oklch(77.596% 0.14766 79.996)'
                 : isWorking
-                  ? 'var(--color-primary)'
-                  : '#10b981'
+                  ? 'oklch(85.54% 0.1969 158.6115)'
+                  : 'oklch(85.54% 0.1969 158.6115)'
             }
             strokeWidth={isExpanded ? '6' : '8'}
             strokeDasharray={2 * Math.PI * 100}

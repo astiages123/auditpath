@@ -41,6 +41,9 @@ export const ToCTitleRenderer = memo(function ToCTitleRenderer({
               />
             );
           },
+          // Bold işaretini yok say — ToC'de tüm başlıklar aynı weight olmalı
+          strong: ({ ...props }) => <span {...props} />,
+          em: ({ ...props }) => <span {...props} />,
         }}
         allowedElements={['p', 'span', 'strong', 'em', 'code', 'br']}
         // We limit elements to avoid inserting huge blocks like H1 or Images in a ToC link

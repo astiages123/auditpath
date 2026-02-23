@@ -127,7 +127,7 @@ export const AnalyticsTable: FC<AnalyticsTableProps> = ({
               {logs.slice(0, visibleCount).map((log) => (
                 <TableRow
                   key={log.id}
-                  className="border-b border-border/20 hover:bg-primary/5 transition-colors group"
+                  className="border-b border-border/20 hover:bg-muted/50 transition-colors group"
                 >
                   <TableCell className="pl-6 font-mono text-[14px] text-muted-foreground">
                     {log.created_at
@@ -182,7 +182,7 @@ export const AnalyticsTable: FC<AnalyticsTableProps> = ({
               onClick={onLoadMore}
               className="group flex items-center gap-2 hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-full px-8"
             >
-              <ChevronDown className="h-4 w-4 group-hover:translate-y-1 transition-transform" />
+              <ChevronDown className="size-4 group-hover:translate-y-1 transition-transform" />
               <span className="font-heading font-bold uppercase tracking-widest text-[11px]">
                 Daha Fazla Yükle ({logs.length - visibleCount})
               </span>

@@ -14,6 +14,7 @@ import { Session } from '../types/efficiencyTypes';
 import { EfficiencyModal } from './EfficiencyModal';
 import { SessionGanttChart } from './SessionGanttChart';
 import { StatCard } from './StatCard';
+import { formatDisplayDate } from '@/utils/dateHelpers';
 
 const convertToSession = (rs: RecentSession): Session => {
   const start = new Date(rs.date);
@@ -64,7 +65,7 @@ export const SessionListItem: FC<SessionListItemProps> = ({
   disableModal = false,
 }) => {
   const dateObj = new Date(session.date);
-  const formattedDate = dateObj.toLocaleDateString('tr-TR', {
+  const formattedDate = formatDisplayDate(dateObj, {
     day: 'numeric',
     month: 'long',
   });
