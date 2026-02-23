@@ -1,5 +1,5 @@
 import { logger } from '../../utils/logger';
-import { ContentType, deepSanitize } from '@/utils/sanitizers';
+import { ContentType, deepSanitize } from '@/shared/utils/sanitizers';
 import { DEFAULT_STORAGE_TTL_MS } from '@/utils/constants';
 
 const storageLogger = logger.withPrefix('[StorageService]');

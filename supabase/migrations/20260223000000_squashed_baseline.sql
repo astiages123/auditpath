@@ -137,6 +137,79 @@ CREATE TYPE "public"."validation_status" AS ENUM (
 ALTER TYPE "public"."validation_status" OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."check_and_increment_quota"("p_user_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+    v_today date := current_date;
+    v_quota record;
+    v_result jsonb;
+BEGIN
+    -- Get or create quota tracking row with lock
+    SELECT * INTO v_quota
+    FROM user_quotas
+    WHERE user_id = p_user_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        -- Create initial row for user if it doesn't exist
+        INSERT INTO user_quotas (user_id, daily_limit, used_today, last_reset_date)
+        VALUES (p_user_id, 50, 1, v_today)
+        RETURNING * INTO v_quota;
+        
+        v_result := jsonb_build_object(
+            'allowed', true,
+            'remaining', v_quota.daily_limit - v_quota.used_today,
+            'daily_limit', v_quota.daily_limit
+        );
+        RETURN v_result;
+    END IF;
+
+    -- Reset if new day
+    IF v_quota.last_reset_date < v_today THEN
+        v_quota.used_today := 0;
+        v_quota.last_reset_date := v_today;
+    END IF;
+
+    -- Check if limit exceeded
+    IF v_quota.used_today >= v_quota.daily_limit THEN
+        v_result := jsonb_build_object(
+            'allowed', false,
+            'remaining', 0,
+            'daily_limit', v_quota.daily_limit
+        );
+        
+        -- Update the reset date just in case
+        UPDATE user_quotas
+        SET last_reset_date = v_quota.last_reset_date,
+            updated_at = now()
+        WHERE user_id = p_user_id;
+
+        RETURN v_result;
+    END IF;
+
+    -- Increment usage
+    UPDATE user_quotas
+    SET used_today = v_quota.used_today + 1,
+        last_reset_date = v_quota.last_reset_date,
+        updated_at = now()
+    WHERE user_id = p_user_id;
+
+    v_result := jsonb_build_object(
+        'allowed', true,
+        'remaining', v_quota.daily_limit - (v_quota.used_today + 1),
+        'daily_limit', v_quota.daily_limit
+    );
+
+    RETURN v_result;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."check_and_increment_quota"("p_user_id" "uuid") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."get_course_content_version"("p_course_id" "uuid") RETURNS timestamp with time zone
     LANGUAGE "sql" SECURITY DEFINER
     SET "search_path" TO 'public', 'extensions'
@@ -169,6 +242,52 @@ $$;
 ALTER FUNCTION "public"."get_email_by_username"("username_input" "text") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."get_user_quota_info"() RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+DECLARE
+    v_user_id uuid := auth.uid();
+    v_today date := current_date;
+    v_quota record;
+    v_result jsonb;
+BEGIN
+    IF v_user_id IS NULL THEN
+        RETURN jsonb_build_object('error', 'Not authenticated');
+    END IF;
+
+    SELECT * INTO v_quota
+    FROM user_quotas
+    WHERE user_id = v_user_id;
+
+    IF NOT FOUND THEN
+        -- Auto-create on fetch
+        INSERT INTO user_quotas (user_id, daily_limit, used_today, last_reset_date)
+        VALUES (v_user_id, 50, 0, v_today)
+        RETURNING * INTO v_quota;
+    ELSIF v_quota.last_reset_date < v_today THEN
+        -- Reset if previous day
+        UPDATE user_quotas
+        SET used_today = 0,
+            last_reset_date = v_today,
+            updated_at = now()
+        WHERE user_id = v_user_id
+        RETURNING * INTO v_quota;
+    END IF;
+
+    v_result := jsonb_build_object(
+        'remaining', GREATEST(0, v_quota.daily_limit - v_quota.used_today),
+        'daily_limit', v_quota.daily_limit
+    );
+
+    RETURN v_result;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_user_quota_info"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public', 'extensions'
@@ -194,52 +313,82 @@ CREATE OR REPLACE FUNCTION "public"."increment_course_session"("p_user_id" "uuid
     AS $$
 DECLARE
   v_today date := current_date;
-  v_existing_record record;
-  v_new_session int;
-  v_is_new boolean;
+  v_row record;
 BEGIN
-  -- Kaydı kilitleyerek al (FOR UPDATE)
-  SELECT * INTO v_existing_record
-  FROM course_session_counters
-  WHERE user_id = p_user_id AND course_id = p_course_id
-  FOR UPDATE;
+  -- Use INSERT ON CONFLICT to ensure row exists and lock it
+  -- We don't increment yet, just ensure existence and touch updated_at
+  INSERT INTO course_session_counters (user_id, course_id, current_session, last_session_date, updated_at)
+  VALUES (p_user_id, p_course_id, 1, v_today, now())
+  ON CONFLICT (user_id, course_id) DO UPDATE
+  SET updated_at = now()
+  RETURNING * INTO v_row;
 
-  IF FOUND THEN
-    IF v_existing_record.last_session_date < v_today THEN
-      -- Yeni gün, session artır
-      v_new_session := v_existing_record.current_session + 1;
-      v_is_new := true;
-      
-      UPDATE course_session_counters
-      SET current_session = v_new_session,
-          last_session_date = v_today,
-          updated_at = now()
-      WHERE id = v_existing_record.id;
-    ELSE
-      -- Aynı gün, session koru
-      v_new_session := v_existing_record.current_session;
-      v_is_new := false;
-      
-      -- Metadata güncelle
-      UPDATE course_session_counters
-      SET updated_at = now()
-      WHERE id = v_existing_record.id;
-    END IF;
-  ELSE
-    -- Kayıt yok, oluştur (Session 1)
-    v_new_session := 1;
-    v_is_new := true;
+  IF v_row.last_session_date < v_today THEN
+    -- New day, increment session
+    UPDATE course_session_counters
+    SET current_session = v_row.current_session + 1,
+        last_session_date = v_today,
+        updated_at = now()
+    WHERE id = v_row.id
+    RETURNING * INTO v_row;
     
-    INSERT INTO course_session_counters (user_id, course_id, current_session, last_session_date)
-    VALUES (p_user_id, p_course_id, v_new_session, v_today);
+    RETURN QUERY SELECT v_row.current_session, true;
+  ELSE
+    -- Same day, return current session
+    -- Note: If it was just inserted, current_session is 1 and last_session_date is today.
+    -- If it was already today, we just return the existing value.
+    -- If it was just inserted (first time EVER), is_new_session should be true?
+    -- Actually, the original logic had 'v_is_new := true' for fresh records.
+    -- Let's check if it was truly a new insert.
+    -- We can check if created_at is very recent, but better yet:
+    IF v_row.current_session = 1 AND v_row.created_at >= now() - interval '1 second' THEN
+       RETURN QUERY SELECT v_row.current_session, true;
+    ELSE
+       RETURN QUERY SELECT v_row.current_session, false;
+    END IF;
   END IF;
-
-  RETURN QUERY SELECT v_new_session, v_is_new;
 END;
 $$;
 
 
 ALTER FUNCTION "public"."increment_course_session"("p_user_id" "uuid", "p_course_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."trigger_quiz_generator"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'vault'
+    AS $$
+DECLARE
+  v_service_role_key TEXT;
+  v_url TEXT;
+BEGIN
+  SELECT decrypted_secret INTO v_service_role_key
+  FROM vault.decrypted_secrets
+  WHERE name = 'service_role_key'
+  LIMIT 1;
+
+  IF v_service_role_key IS NULL THEN
+    RAISE WARNING 'Vault secret "service_role_key" not found!';
+    RETURN NEW;
+  END IF;
+
+  v_url := 'https://ccnvhimlbkkydpcqtraw.supabase.co/functions/v1/quiz-generator';
+
+  PERFORM net.http_post(
+    url := v_url,
+    headers := jsonb_build_object(
+      'Content-Type', 'application/json',
+      'Authorization', 'Bearer ' || v_service_role_key
+    ),
+    body := jsonb_build_object('record', row_to_json(NEW))
+  );
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."trigger_quiz_generator"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."update_last_synced_at"() RETURNS "trigger"
@@ -320,8 +469,9 @@ CREATE OR REPLACE VIEW "public"."ai_generation_costs" WITH ("security_invoker"='
     "total_tokens",
     "created_at",
         CASE
-            WHEN (("model" ~~* 'gemini-2.5-flash%'::"text") OR ("model" ~~* 'gemini-2.0-flash%'::"text") OR ("model" ~~* 'gpt-oss-120b%'::"text")) THEN (0)::numeric
-            ELSE (((((COALESCE("cached_tokens", 0))::numeric * 0.028) + (((COALESCE("prompt_tokens", 0) - COALESCE("cached_tokens", 0)))::numeric * 0.28)) + ((COALESCE("completion_tokens", 0))::numeric * 0.42)) / 1000000.0)
+            WHEN ("provider" ~~* 'deepseek'::"text") THEN (((((COALESCE("cached_tokens", 0))::numeric * 0.028) + (((COALESCE("prompt_tokens", 0) - COALESCE("cached_tokens", 0)))::numeric * 0.28)) + ((COALESCE("completion_tokens", 0))::numeric * 0.42)) / 1000000.0)
+            WHEN ("provider" ~~* 'mimo'::"text") THEN (((((COALESCE("cached_tokens", 0))::numeric * 0.01) + (((COALESCE("prompt_tokens", 0) - COALESCE("cached_tokens", 0)))::numeric * 0.1)) + ((COALESCE("completion_tokens", 0))::numeric * 0.3)) / 1000000.0)
+            ELSE (0)::numeric
         END AS "cost_usd"
    FROM "public"."ai_generation_logs";
 
@@ -412,7 +562,6 @@ CREATE TABLE IF NOT EXISTS "public"."note_chunks" (
     "created_at" timestamp with time zone DEFAULT "now"(),
     "metadata" "jsonb" DEFAULT '{}'::"jsonb",
     "status" "public"."chunk_generation_status" DEFAULT 'DRAFT'::"public"."chunk_generation_status",
-    "display_content" "text",
     "last_synced_at" timestamp with time zone DEFAULT "now"(),
     "ai_logic" "jsonb" DEFAULT '{"reasoning": "", "suggested_quotas": {"arsiv": 0, "deneme": 0, "antrenman": 0}}'::"jsonb"
 );
@@ -429,7 +578,7 @@ COMMENT ON COLUMN "public"."note_chunks"."ai_logic" IS 'Bilişsel kotalar ve AI 
 
 CREATE TABLE IF NOT EXISTS "public"."pomodoro_sessions" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
-    "user_id" "uuid",
+    "user_id" "uuid" NOT NULL,
     "course_id" "uuid",
     "total_work_time" integer DEFAULT 0,
     "total_break_time" integer DEFAULT 0,
@@ -563,6 +712,19 @@ CREATE TABLE IF NOT EXISTS "public"."user_quiz_progress" (
 ALTER TABLE "public"."user_quiz_progress" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."user_quotas" (
+    "user_id" "uuid" NOT NULL,
+    "daily_limit" integer DEFAULT 50,
+    "used_today" integer DEFAULT 0,
+    "last_reset_date" "date" DEFAULT CURRENT_DATE,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."user_quotas" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."users" (
     "id" "uuid" NOT NULL,
     "email" "text" NOT NULL,
@@ -577,7 +739,7 @@ ALTER TABLE "public"."users" OWNER TO "postgres";
 
 CREATE TABLE IF NOT EXISTS "public"."video_progress" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
-    "user_id" "uuid",
+    "user_id" "uuid" NOT NULL,
     "video_id" "uuid",
     "completed" boolean DEFAULT false,
     "updated_at" timestamp with time zone DEFAULT "now"(),
@@ -652,11 +814,6 @@ ALTER TABLE ONLY "public"."chunk_mastery"
 
 
 
-ALTER TABLE ONLY "public"."chunk_mastery"
-    ADD CONSTRAINT "chunk_mastery_user_id_chunk_id_key" UNIQUE ("user_id", "chunk_id");
-
-
-
 ALTER TABLE ONLY "public"."course_session_counters"
     ADD CONSTRAINT "course_session_counters_pkey" PRIMARY KEY ("id");
 
@@ -717,12 +874,37 @@ ALTER TABLE ONLY "public"."user_quiz_progress"
 
 
 
+ALTER TABLE ONLY "public"."user_quotas"
+    ADD CONSTRAINT "user_quotas_pkey" PRIMARY KEY ("user_id");
+
+
+
 ALTER TABLE ONLY "public"."users"
     ADD CONSTRAINT "users_username_key" UNIQUE ("username");
 
 
 
-CREATE INDEX "idx_mastery_user_course" ON "public"."chunk_mastery" USING "btree" ("user_id", "course_id");
+CREATE INDEX "idx_ai_generation_logs_user_id" ON "public"."ai_generation_logs" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_chunk_mastery_chunk_id" ON "public"."chunk_mastery" USING "btree" ("chunk_id");
+
+
+
+CREATE INDEX "idx_chunk_mastery_course_id" ON "public"."chunk_mastery" USING "btree" ("course_id");
+
+
+
+CREATE INDEX "idx_course_session_counters_course_id" ON "public"."course_session_counters" USING "btree" ("course_id");
+
+
+
+CREATE INDEX "idx_courses_category_id" ON "public"."courses" USING "btree" ("category_id");
+
+
+
+CREATE INDEX "idx_note_chunks_course_id" ON "public"."note_chunks" USING "btree" ("course_id");
 
 
 
@@ -730,31 +912,11 @@ CREATE INDEX "idx_note_chunks_course_section" ON "public"."note_chunks" USING "b
 
 
 
-CREATE INDEX "idx_pomodoro_sessions_last_active_at" ON "public"."pomodoro_sessions" USING "btree" ("last_active_at") WHERE ("is_completed" = false);
-
-
-
-CREATE INDEX "idx_pomodoro_sessions_user_id" ON "public"."pomodoro_sessions" USING "btree" ("user_id");
+CREATE INDEX "idx_pomodoro_sessions_course_id" ON "public"."pomodoro_sessions" USING "btree" ("course_id");
 
 
 
 CREATE INDEX "idx_pomodoro_sessions_user_started" ON "public"."pomodoro_sessions" USING "btree" ("user_id", "started_at");
-
-
-
-CREATE INDEX "idx_progress_chunk_response" ON "public"."user_quiz_progress" USING "btree" ("chunk_id", "response_type");
-
-
-
-CREATE INDEX "idx_progress_question" ON "public"."user_quiz_progress" USING "btree" ("question_id");
-
-
-
-CREATE INDEX "idx_progress_session" ON "public"."user_quiz_progress" USING "btree" ("user_id", "course_id", "session_number");
-
-
-
-CREATE INDEX "idx_progress_user_course" ON "public"."user_quiz_progress" USING "btree" ("user_id", "course_id");
 
 
 
@@ -766,11 +928,7 @@ CREATE INDEX "idx_questions_chunk_id" ON "public"."questions" USING "btree" ("ch
 
 
 
-CREATE INDEX "idx_questions_concept_title" ON "public"."questions" USING "btree" ("concept_title");
-
-
-
-CREATE INDEX "idx_questions_course_section" ON "public"."questions" USING "btree" ("course_id", "section_title");
+CREATE INDEX "idx_questions_course_id" ON "public"."questions" USING "btree" ("course_id");
 
 
 
@@ -778,23 +936,27 @@ CREATE INDEX "idx_questions_course_usage" ON "public"."questions" USING "btree" 
 
 
 
+CREATE INDEX "idx_questions_created_by" ON "public"."questions" USING "btree" ("created_by");
+
+
+
 CREATE INDEX "idx_questions_parent" ON "public"."questions" USING "btree" ("parent_question_id") WHERE ("parent_question_id" IS NOT NULL);
 
 
 
-CREATE INDEX "idx_session_counters_user" ON "public"."course_session_counters" USING "btree" ("user_id");
+CREATE INDEX "idx_user_question_status_question_id" ON "public"."user_question_status" USING "btree" ("question_id");
 
 
 
-CREATE INDEX "idx_user_question_status_session" ON "public"."user_question_status" USING "btree" ("user_id", "next_review_session");
+CREATE INDEX "idx_user_quiz_progress_chunk_id" ON "public"."user_quiz_progress" USING "btree" ("chunk_id");
 
 
 
-CREATE INDEX "idx_user_question_status_user_status" ON "public"."user_question_status" USING "btree" ("user_id", "status");
+CREATE INDEX "idx_user_quiz_progress_course_id" ON "public"."user_quiz_progress" USING "btree" ("course_id");
 
 
 
-CREATE INDEX "idx_user_quiz_progress_user_course" ON "public"."user_quiz_progress" USING "btree" ("user_id", "course_id");
+CREATE INDEX "idx_user_quiz_progress_user_id" ON "public"."user_quiz_progress" USING "btree" ("user_id");
 
 
 
@@ -810,11 +972,15 @@ CREATE INDEX "idx_video_progress_user_video" ON "public"."video_progress" USING 
 
 
 
+CREATE INDEX "idx_video_progress_video_id" ON "public"."video_progress" USING "btree" ("video_id");
+
+
+
+CREATE INDEX "idx_videos_course_id" ON "public"."videos" USING "btree" ("course_id");
+
+
+
 CREATE UNIQUE INDEX "subject_guidelines_subject_code_key" ON "public"."subject_guidelines" USING "btree" ("subject_code");
-
-
-
-CREATE INDEX "user_question_status_next_review_idx" ON "public"."user_question_status" USING "btree" ("next_review_at");
 
 
 
@@ -822,45 +988,7 @@ CREATE OR REPLACE TRIGGER "courses_updated_at" BEFORE UPDATE ON "public"."course
 
 
 
--- Drop the old trigger that used a hardcoded key
-DROP TRIGGER IF EXISTS "quiz-generator-instant" ON "public"."note_chunks";
-
--- Create a generic function to call the quiz generator securely using pg_net and vault
-CREATE OR REPLACE FUNCTION "public"."trigger_quiz_generator"()
-RETURNS trigger AS $$
-DECLARE
-  v_service_role_key TEXT;
-  v_url TEXT;
-BEGIN
-  -- 1. Vault'dan secret'ı al (Supabase Dashboard > Vault kısmından eklenmeli)
-  -- select vault.create_secret('senin-secret-key-in', 'service_role_key', 'Service Role Key for Edge Functions');
-  SELECT decrypted_secret INTO v_service_role_key FROM vault.decrypted_secrets WHERE name = 'service_role_key' LIMIT 1;
-  
-  IF v_service_role_key IS NULL THEN
-    RAISE WARNING 'Vault secret "service_role_key" not found!';
-    RETURN NEW;
-  END IF;
-
-  v_url := 'https://ccnvhimlbkkydpcqtraw.supabase.co/functions/v1/quiz-generator';
-
-  -- 2. HTTP İsteği yap (pg_net kullanarak, asenkron)
-  PERFORM net.http_post(
-      url := v_url,
-      headers := jsonb_build_object(
-          'Content-Type', 'application/json',
-          'Authorization', 'Bearer ' || v_service_role_key
-      ),
-      body := jsonb_build_object('record', row_to_json(NEW))
-  );
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 3. Yeni, güvenli trigger'ı oluştur
-CREATE TRIGGER "quiz-generator-instant"
-  AFTER INSERT OR UPDATE ON "public"."note_chunks"
-  FOR EACH ROW EXECUTE FUNCTION "public"."trigger_quiz_generator"();
+CREATE OR REPLACE TRIGGER "quiz-generator-instant" AFTER INSERT OR UPDATE ON "public"."note_chunks" FOR EACH ROW EXECUTE FUNCTION "public"."trigger_quiz_generator"();
 
 
 
@@ -899,7 +1027,7 @@ ALTER TABLE ONLY "public"."videos"
 
 
 ALTER TABLE ONLY "public"."ai_generation_logs"
-    ADD CONSTRAINT "ai_generation_logs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
+    ADD CONSTRAINT "ai_generation_logs_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -934,7 +1062,7 @@ ALTER TABLE ONLY "public"."note_chunks"
 
 
 ALTER TABLE ONLY "public"."pomodoro_sessions"
-    ADD CONSTRAINT "pomodoro_sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+    ADD CONSTRAINT "pomodoro_sessions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -958,13 +1086,18 @@ ALTER TABLE ONLY "public"."questions"
 
 
 
+ALTER TABLE ONLY "public"."user_achievements"
+    ADD CONSTRAINT "user_achievements_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."user_question_status"
     ADD CONSTRAINT "user_question_status_question_id_fkey" FOREIGN KEY ("question_id") REFERENCES "public"."questions"("id") ON DELETE CASCADE;
 
 
 
 ALTER TABLE ONLY "public"."user_question_status"
-    ADD CONSTRAINT "user_question_status_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+    ADD CONSTRAINT "user_question_status_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -988,8 +1121,13 @@ ALTER TABLE ONLY "public"."user_quiz_progress"
 
 
 
+ALTER TABLE ONLY "public"."user_quotas"
+    ADD CONSTRAINT "user_quotas_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."video_progress"
-    ADD CONSTRAINT "video_progress_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+    ADD CONSTRAINT "video_progress_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -1021,59 +1159,79 @@ CREATE POLICY "Allow authenticated read access" ON "public"."videos" FOR SELECT 
 
 
 
-CREATE POLICY "Allow read access to all users" ON "public"."ai_generation_logs" FOR SELECT USING (("auth"."role"() = 'authenticated'::"text"));
+CREATE POLICY "Allow creator to insert questions" ON "public"."questions" FOR INSERT TO "authenticated" WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
 
 
 
-CREATE POLICY "Allow update for service role" ON "public"."note_chunks" FOR UPDATE TO "service_role" USING (true) WITH CHECK (true);
+CREATE POLICY "Anyone can read categories" ON "public"."categories" FOR SELECT USING (true);
 
 
 
-CREATE POLICY "Service Role Full Access" ON "public"."ai_generation_logs" TO "service_role" USING (true) WITH CHECK (true);
+CREATE POLICY "Anyone can read courses" ON "public"."courses" FOR SELECT USING (true);
 
 
 
-CREATE POLICY "Service role can insert logging" ON "public"."ai_generation_logs" FOR INSERT TO "service_role" WITH CHECK (true);
+CREATE POLICY "Anyone can read subject_guidelines" ON "public"."subject_guidelines" FOR SELECT USING (true);
 
 
 
-CREATE POLICY "Users can delete their own questions" ON "public"."questions" FOR DELETE USING (("auth"."uid"() = "created_by"));
+CREATE POLICY "Anyone can read videos" ON "public"."videos" FOR SELECT USING (true);
 
 
 
-CREATE POLICY "Users can delete their own video progress" ON "public"."video_progress" FOR DELETE USING (("auth"."uid"() = "user_id"));
+CREATE POLICY "Anyone can view questions" ON "public"."questions" FOR SELECT USING (true);
 
 
 
-CREATE POLICY "Users can insert own profile" ON "public"."users" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "id"));
+CREATE POLICY "Enable insert for authenticated users" ON "public"."questions" FOR INSERT TO "authenticated" WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
 
 
 
-CREATE POLICY "Users can insert own questions" ON "public"."questions" FOR INSERT WITH CHECK (("auth"."uid"() = "created_by"));
+CREATE POLICY "Enable read access for all authenticated users" ON "public"."questions" FOR SELECT TO "authenticated" USING (true);
 
 
 
-CREATE POLICY "Users can insert their own counters" ON "public"."course_session_counters" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+CREATE POLICY "Service role can manage user_quotas" ON "public"."user_quotas" TO "service_role" USING (true) WITH CHECK (true);
 
 
 
-CREATE POLICY "Users can insert their own mastery" ON "public"."chunk_mastery" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can delete their own questions" ON "public"."questions" FOR DELETE USING ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
 
 
 
-CREATE POLICY "Users can insert their own progress" ON "public"."user_quiz_progress" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can insert own profile" ON "public"."users" FOR INSERT TO "authenticated" WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "id"));
 
 
 
-CREATE POLICY "Users can insert their own video progress" ON "public"."video_progress" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can insert own progress" ON "public"."user_quiz_progress" FOR INSERT WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
-CREATE POLICY "Users can manage own mastery" ON "public"."chunk_mastery" USING (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can insert own questions" ON "public"."questions" FOR INSERT WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
 
 
 
-CREATE POLICY "Users can manage their own achievements" ON "public"."user_achievements" USING (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can insert questions" ON "public"."questions" FOR INSERT WITH CHECK (("auth"."role"() = 'authenticated'::"text"));
+
+
+
+CREATE POLICY "Users can insert their own counters" ON "public"."course_session_counters" FOR INSERT WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+
+
+
+CREATE POLICY "Users can manage their own achievements" ON "public"."user_achievements" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+
+
+
+CREATE POLICY "Users can manage their own chunk mastery" ON "public"."chunk_mastery" TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+
+
+
+CREATE POLICY "Users can manage their own counters" ON "public"."course_session_counters" TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
+
+
+
+CREATE POLICY "Users can manage their own pomodoro sessions" ON "public"."pomodoro_sessions" TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
@@ -1081,19 +1239,19 @@ CREATE POLICY "Users can manage their own question status" ON "public"."user_que
 
 
 
-CREATE POLICY "Users can only access their own data" ON "public"."ai_generation_logs" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can manage their own video progress" ON "public"."video_progress" TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
-CREATE POLICY "Users can only access their own data" ON "public"."course_session_counters" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can only access their own data" ON "public"."course_session_counters" TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
-CREATE POLICY "Users can only access their own data" ON "public"."pomodoro_sessions" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can only access their own data" ON "public"."pomodoro_sessions" TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
-CREATE POLICY "Users can only access their own data" ON "public"."user_achievements" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can only access their own data" ON "public"."user_achievements" TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
@@ -1101,70 +1259,58 @@ CREATE POLICY "Users can only access their own data" ON "public"."user_question_
 
 
 
-CREATE POLICY "Users can only access their own data" ON "public"."video_progress" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can update own profile" ON "public"."users" FOR UPDATE TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
 
 
 
-CREATE POLICY "Users can update own profile" ON "public"."users" FOR UPDATE TO "authenticated" USING (("auth"."uid"() = "id"));
+CREATE POLICY "Users can update own questions" ON "public"."questions" FOR UPDATE USING ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
 
 
 
-CREATE POLICY "Users can update own questions" ON "public"."questions" FOR UPDATE USING (("auth"."uid"() = "created_by"));
+CREATE POLICY "Users can update their own counters" ON "public"."course_session_counters" FOR UPDATE USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
-CREATE POLICY "Users can update their own counters" ON "public"."course_session_counters" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can update their own profile" ON "public"."users" FOR UPDATE TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
 
 
 
-CREATE POLICY "Users can update their own progress" ON "public"."user_quiz_progress" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can update their own questions" ON "public"."questions" FOR UPDATE USING ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
 
 
 
-CREATE POLICY "Users can update their own questions" ON "public"."questions" FOR UPDATE USING (("auth"."uid"() = "created_by"));
+CREATE POLICY "Users can view their own chunk mastery" ON "public"."chunk_mastery" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
-CREATE POLICY "Users can update their own video progress" ON "public"."video_progress" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can view their own counters" ON "public"."course_session_counters" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
-CREATE POLICY "Users can view own mastery" ON "public"."chunk_mastery" FOR SELECT USING (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can view their own generation logs" ON "public"."ai_generation_logs" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
-CREATE POLICY "Users can view their own counters" ON "public"."course_session_counters" FOR SELECT USING (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can view their own profile" ON "public"."users" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
 
 
 
-CREATE POLICY "Users can view their own logs" ON "public"."ai_generation_logs" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users can view their own quota" ON "public"."user_quotas" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "user_id"));
 
 
 
-CREATE POLICY "Users can view their own profile" ON "public"."users" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "id"));
-
-
-
-CREATE POLICY "Users can view their own progress" ON "public"."user_quiz_progress" FOR SELECT USING (("auth"."uid"() = "user_id"));
-
-
-
-CREATE POLICY "Users can view their own video progress" ON "public"."video_progress" FOR SELECT USING (("auth"."uid"() = "user_id"));
-
-
-
-CREATE POLICY "Users manage own sessions" ON "public"."pomodoro_sessions" USING (("auth"."uid"() = "user_id"));
+CREATE POLICY "Users manage own sessions" ON "public"."pomodoro_sessions" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
 ALTER TABLE "public"."ai_generation_logs" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "anon_read_rates" ON "public"."exchange_rates" FOR SELECT TO "anon" USING (true);
+CREATE POLICY "ai_generation_logs_service_role" ON "public"."ai_generation_logs" TO "service_role" USING (true) WITH CHECK (true);
 
 
 
-CREATE POLICY "authenticated_manage_rates" ON "public"."exchange_rates" TO "authenticated" USING (true) WITH CHECK (true);
+CREATE POLICY "ai_generation_logs_user_all" ON "public"."ai_generation_logs" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
 
 
 
@@ -1174,7 +1320,19 @@ ALTER TABLE "public"."categories" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."chunk_mastery" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "chunk_mastery_service_role" ON "public"."chunk_mastery" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "chunk_mastery_user_access" ON "public"."chunk_mastery" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
 ALTER TABLE "public"."course_session_counters" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "course_session_counters_user_access" ON "public"."course_session_counters" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
 
 
 ALTER TABLE "public"."courses" ENABLE ROW LEVEL SECURITY;
@@ -1183,16 +1341,40 @@ ALTER TABLE "public"."courses" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."exchange_rates" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "exchange_rates_auth_read" ON "public"."exchange_rates" FOR SELECT TO "authenticated" USING (true);
+
+
+
+CREATE POLICY "exchange_rates_service_role" ON "public"."exchange_rates" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "exchange_rates_service_role_all" ON "public"."exchange_rates" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
 ALTER TABLE "public"."note_chunks" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "note_chunks_read_all" ON "public"."note_chunks" FOR SELECT TO "authenticated" USING (true);
+
+
+
+CREATE POLICY "note_chunks_service_role" ON "public"."note_chunks" TO "service_role" USING (true) WITH CHECK (true);
+
 
 
 ALTER TABLE "public"."pomodoro_sessions" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "pomodoro_sessions_user_access" ON "public"."pomodoro_sessions" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
 ALTER TABLE "public"."questions" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "service_role_unrestricted" ON "public"."note_chunks" TO "service_role" USING (true) WITH CHECK (true);
+CREATE POLICY "questions_user_access" ON "public"."questions" TO "authenticated" USING (("auth"."uid"() = "created_by")) WITH CHECK (("auth"."uid"() = "created_by"));
 
 
 
@@ -1202,16 +1384,39 @@ ALTER TABLE "public"."subject_guidelines" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."user_achievements" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "user_achievements_user_access" ON "public"."user_achievements" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
 ALTER TABLE "public"."user_question_status" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."user_quiz_progress" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "user_quiz_progress_service_role" ON "public"."user_quiz_progress" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "user_quiz_progress_user_access" ON "public"."user_quiz_progress" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+ALTER TABLE "public"."user_quotas" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."users" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."video_progress" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "video_progress_service_role" ON "public"."video_progress" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "video_progress_user_access" ON "public"."video_progress" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
 
 
 ALTER TABLE "public"."videos" ENABLE ROW LEVEL SECURITY;
@@ -1729,190 +1934,6 @@ GRANT ALL ON TABLE "public"."videos" TO "service_role";
 
 
 
-
-
-
-revoke delete on table "public"."ai_generation_logs" from "anon";
-
-revoke insert on table "public"."ai_generation_logs" from "anon";
-
-revoke references on table "public"."ai_generation_logs" from "anon";
-
-revoke select on table "public"."ai_generation_logs" from "anon";
-
-revoke trigger on table "public"."ai_generation_logs" from "anon";
-
-revoke truncate on table "public"."ai_generation_logs" from "anon";
-
-revoke update on table "public"."ai_generation_logs" from "anon";
-
-revoke delete on table "public"."ai_generation_logs" from "authenticated";
-
-revoke insert on table "public"."ai_generation_logs" from "authenticated";
-
-revoke references on table "public"."ai_generation_logs" from "authenticated";
-
-revoke trigger on table "public"."ai_generation_logs" from "authenticated";
-
-revoke truncate on table "public"."ai_generation_logs" from "authenticated";
-
-revoke update on table "public"."ai_generation_logs" from "authenticated";
-
-revoke delete on table "public"."chunk_mastery" from "anon";
-
-revoke insert on table "public"."chunk_mastery" from "anon";
-
-revoke references on table "public"."chunk_mastery" from "anon";
-
-revoke select on table "public"."chunk_mastery" from "anon";
-
-revoke trigger on table "public"."chunk_mastery" from "anon";
-
-revoke truncate on table "public"."chunk_mastery" from "anon";
-
-revoke update on table "public"."chunk_mastery" from "anon";
-
-revoke delete on table "public"."course_session_counters" from "anon";
-
-revoke insert on table "public"."course_session_counters" from "anon";
-
-revoke references on table "public"."course_session_counters" from "anon";
-
-revoke select on table "public"."course_session_counters" from "anon";
-
-revoke trigger on table "public"."course_session_counters" from "anon";
-
-revoke truncate on table "public"."course_session_counters" from "anon";
-
-revoke update on table "public"."course_session_counters" from "anon";
-
-revoke delete on table "public"."exchange_rates" from "anon";
-
-revoke insert on table "public"."exchange_rates" from "anon";
-
-revoke references on table "public"."exchange_rates" from "anon";
-
-revoke trigger on table "public"."exchange_rates" from "anon";
-
-revoke truncate on table "public"."exchange_rates" from "anon";
-
-revoke update on table "public"."exchange_rates" from "anon";
-
-revoke references on table "public"."questions" from "anon";
-
-revoke trigger on table "public"."questions" from "anon";
-
-revoke truncate on table "public"."questions" from "anon";
-
-revoke delete on table "public"."subject_guidelines" from "anon";
-
-revoke insert on table "public"."subject_guidelines" from "anon";
-
-revoke references on table "public"."subject_guidelines" from "anon";
-
-revoke trigger on table "public"."subject_guidelines" from "anon";
-
-revoke truncate on table "public"."subject_guidelines" from "anon";
-
-revoke update on table "public"."subject_guidelines" from "anon";
-
-revoke delete on table "public"."subject_guidelines" from "authenticated";
-
-revoke insert on table "public"."subject_guidelines" from "authenticated";
-
-revoke references on table "public"."subject_guidelines" from "authenticated";
-
-revoke trigger on table "public"."subject_guidelines" from "authenticated";
-
-revoke truncate on table "public"."subject_guidelines" from "authenticated";
-
-revoke update on table "public"."subject_guidelines" from "authenticated";
-
-revoke delete on table "public"."subject_guidelines" from "service_role";
-
-revoke insert on table "public"."subject_guidelines" from "service_role";
-
-revoke references on table "public"."subject_guidelines" from "service_role";
-
-revoke trigger on table "public"."subject_guidelines" from "service_role";
-
-revoke truncate on table "public"."subject_guidelines" from "service_role";
-
-revoke update on table "public"."subject_guidelines" from "service_role";
-
-revoke delete on table "public"."user_question_status" from "anon";
-
-revoke insert on table "public"."user_question_status" from "anon";
-
-revoke references on table "public"."user_question_status" from "anon";
-
-revoke select on table "public"."user_question_status" from "anon";
-
-revoke trigger on table "public"."user_question_status" from "anon";
-
-revoke truncate on table "public"."user_question_status" from "anon";
-
-revoke update on table "public"."user_question_status" from "anon";
-
-revoke delete on table "public"."user_quiz_progress" from "anon";
-
-revoke insert on table "public"."user_quiz_progress" from "anon";
-
-revoke references on table "public"."user_quiz_progress" from "anon";
-
-revoke select on table "public"."user_quiz_progress" from "anon";
-
-revoke trigger on table "public"."user_quiz_progress" from "anon";
-
-revoke truncate on table "public"."user_quiz_progress" from "anon";
-
-revoke update on table "public"."user_quiz_progress" from "anon";
-
-revoke delete on table "public"."users" from "anon";
-
-revoke insert on table "public"."users" from "anon";
-
-revoke references on table "public"."users" from "anon";
-
-revoke trigger on table "public"."users" from "anon";
-
-revoke truncate on table "public"."users" from "anon";
-
-revoke update on table "public"."users" from "anon";
-
-revoke references on table "public"."users" from "authenticated";
-
-revoke trigger on table "public"."users" from "authenticated";
-
-revoke truncate on table "public"."users" from "authenticated";
-
-CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
-
-  create policy "Public read access for lessons"
-  on "storage"."objects"
-  as permissive
-  for select
-  to public
-using ((bucket_id = 'lessons'::text));
-
-
-
-  create policy "Service role update access for lessons"
-  on "storage"."objects"
-  as permissive
-  for update
-  to public
-using ((bucket_id = 'lessons'::text));
-
-
-
-  create policy "Service role write access for lessons"
-  on "storage"."objects"
-  as permissive
-  for insert
-  to public
-with check ((bucket_id = 'lessons'::text));
 
 
 

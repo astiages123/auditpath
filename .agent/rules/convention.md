@@ -22,6 +22,7 @@ trigger: always_on
 - **Task (Pipeline aşaması):** `camelCaseTask.ts` (Örn: `analysisTask.ts`)
 - **Tip dosyası:** `types.ts` veya `schemas.ts`
 - **Index (barrel):** `index.ts` — her `types/` ve `store/` klasöründe olmalı.
+- **Migration (SQL):** `YYYYMMDDHHMMSS_<ne_yaptigini_anlatan_isim>.sql` (Örn: `20260225120000_add_notifications_table.sql`)
 - **Stil ve Konfigürasyon:** `kebab-case` (Örn: `tailwind-config.js`, `index.css`)
 
 > **Kural:** Yalnızca React bileşen dosyaları (`.tsx`) ve sayfa dosyaları PascalCase olur. Geri kalan tüm `.ts` dosyaları camelCase olmalıdır.
@@ -31,7 +32,7 @@ trigger: always_on
 - `any` tipi kullanılmamalıdır. Her şeyin tipi `src/types/` veya özellik altındaki `types/` klasöründe tanımlanmalıdır.
 - Veri tabanı dönüşleri için `database.types.ts` referans alınmalıdır.
 - **Dosya Boyutu:**
-  - **Servis ve Logic dosyaları (`.ts`):** Fonksiyonlar birbirinden bağımsız ve `// === SECTION ===` yorumlarıyla ayrılmış olduğu sürece **600 satıra kadar** kabul edilebilir. Bu dosyalarda AI yalnızca ilgili fonksiyonu okur, tüm dosyayı kavramak gerekmez. Bölmek ortak import/tip tekrarına yol açacağı için tercih edilmez.
+  - **Servis ve Logic dosyaları (`.ts`):** Fonksiyonlar birbirinden bağımsız ve `// === SECTION ===` yorumlarıyla ayrılmış olduğu sürece **1000 satıra kadar** kabul edilebilir. Bu dosyalarda AI yalnızca ilgili fonksiyonu okur, tüm dosyayı kavramak gerekmez. Bölmek ortak import/tip tekrarına yol açacağı için tercih edilmez.
   - **Component dosyaları (`.tsx`):** İçinde **birbirinden bağımsız** component'lar varsa (ortak state veya helper paylaşmıyorlarsa) her component kendi dosyasına ayrılmalıdır. Ortak state veya helper paylaşan component'lar aynı dosyada kalabilir.
   - **Veri dosyaları:** Sabit veri listeleri (`definitions.ts`, `config.ts` gibi) satır sınırına tabi değildir.
 
