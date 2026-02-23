@@ -1,16 +1,15 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2 } from 'lucide-react';
-import { getSupabase } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { logger } from '@/utils/logger';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Zod şeması tanımı
 const authSchema = z.object({
   identifier: z
     .string()
@@ -34,8 +33,29 @@ interface FormErrors {
   password?: string;
 }
 
+const SUPABASE_ERROR_MESSAGES: Record<string, string> = {
+  invalid_credentials: 'E-posta veya şifre hatalı.',
+  user_not_found: 'Kullanıcı bulunamadı.',
+  email_not_confirmed: 'Lütfen e-postanızı doğrulayın.',
+  rate_limit_exceeded:
+    'Çok fazla deneme yaptınız. Lütfen birkaç dakika bekleyin.',
+  invalid_email: 'Geçersiz e-posta adresi.',
+  user_disabled: 'Bu hesap devre dışı bırakılmış.',
+  weak_password: 'Şifreniz yeterince güçlü değil.',
+  email_taken: 'Bu e-posta adresi zaten kullanılıyor.',
+  default: 'Bir hata oluştu. Lütfen tekrar deneyin.',
+};
+
+const getSupabaseErrorMessage = (error: unknown): string => {
+  const err = error as { code?: string; message?: string };
+  const code = err?.code || '';
+  return SUPABASE_ERROR_MESSAGES[code] || SUPABASE_ERROR_MESSAGES.default;
+};
+
+let lastRequestTime = 0;
+const RATE_LIMIT_MS = 2000;
+
 export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
-  const supabase = getSupabase();
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,66 +63,81 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
-    // Clear error when user changes input
     if (errors[id as keyof FormErrors]) {
       setErrors((prev) => ({ ...prev, [id]: undefined }));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    setErrors({});
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
 
-    try {
-      // Zod validation
-      const validation = authSchema.safeParse(formData);
-      if (!validation.success) {
-        const fieldErrors: FormErrors = {};
-        validation.error.issues.forEach((err) => {
-          if (err.path[0]) {
-            fieldErrors[err.path[0] as keyof FormErrors] = err.message;
-          }
-        });
-        setErrors(fieldErrors);
-        setIsSubmitting(false);
+      const now = Date.now();
+      if (now - lastRequestTime < RATE_LIMIT_MS) {
+        toast.error('Çok hızlı deneme yapıyorsunuz. Lütfen bekleyin.');
         return;
       }
+      lastRequestTime = now;
 
-      const data = validation.data;
-      let loginEmail = data.identifier;
-      const isEmail = EMAIL_REGEX.test(data.identifier);
+      setIsSubmitting(true);
+      setErrors({});
 
-      if (!isEmail) {
-        const rpcResult = await supabase.rpc('get_email_by_username', {
-          username_input: data.identifier,
-        });
-        const { data: emailData, error: emailError } = rpcResult || {};
-
-        if (emailError || !emailData) {
-          throw new Error('Kullanıcı bulunamadı.');
+      try {
+        const validation = authSchema.safeParse(formData);
+        if (!validation.success) {
+          const fieldErrors: FormErrors = {};
+          validation.error.issues.forEach((err) => {
+            if (err.path[0]) {
+              fieldErrors[err.path[0] as keyof FormErrors] = err.message;
+            }
+          });
+          setErrors(fieldErrors);
+          setIsSubmitting(false);
+          return;
         }
-        loginEmail = emailData as string;
+
+        const data = validation.data;
+        let loginEmail = data.identifier;
+        const isEmail = EMAIL_REGEX.test(data.identifier);
+
+        if (!isEmail) {
+          const { data: emailData, error: emailError } = await supabase.rpc(
+            'get_email_by_username',
+            { username_input: data.identifier }
+          );
+
+          if (emailError || !emailData) {
+            throw new Error('Kullanıcı bulunamadı.');
+          }
+          loginEmail = emailData as string;
+        }
+
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: loginEmail,
+          password: data.password,
+        });
+
+        if (signInError) throw signInError;
+
+        toast.success('Giriş başarılı!');
+        onSuccess?.();
+      } catch (error: unknown) {
+        logger.error('Auth form submission error', error as Error);
+        const err = error as { code?: string; message?: string };
+
+        if (err.code) {
+          const message = getSupabaseErrorMessage(error);
+          toast.error(message);
+        } else {
+          const message = err.message || 'Bir hata oluştu.';
+          toast.error(message);
+        }
+      } finally {
+        setIsSubmitting(false);
       }
-
-      const signInResult = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: data.password,
-      });
-      const { error } = signInResult || {};
-
-      if (error) throw error;
-      toast.success('Giriş başarılı!');
-      onSuccess?.();
-    } catch (error: unknown) {
-      logger.error('Auth form submission error', error as Error);
-      const message =
-        (error as { message?: string }).message || 'Bir hata oluştu.';
-      toast.error(message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    },
+    [formData, onSuccess]
+  );
 
   return (
     <div className="grid gap-6">

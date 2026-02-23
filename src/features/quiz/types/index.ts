@@ -26,6 +26,7 @@ export {
   QuestionStatusSchema,
   QuestionWithStatusRowSchema,
   QuizQuestionSchema,
+  SubmitQuizAnswerSchema,
   TrueFalseQuestionSchema,
   // Types from schemas
   type ValidatedAILogic,
@@ -34,6 +35,7 @@ export {
   type ValidatedExchangeRate,
   type ValidatedFollowUpQuestion,
   type ValidatedQuizQuestion,
+  type ValidatedSubmitQuizAnswer,
   type ValidationResult,
   ValidationResultSchema,
 } from './schemas';

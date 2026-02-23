@@ -186,7 +186,7 @@ export const LearningLoadCard = () => {
   );
 };
 
-// --- Mastery Navigator Card ---
+// --- Mastery Ustalığı Card ---
 
 export const MasteryNavigatorCard = () => {
   const { lessonMastery } = useMasteryChains();
@@ -196,22 +196,26 @@ export const MasteryNavigatorCard = () => {
     return (
       <GlassCard className="h-full flex flex-col p-6">
         <Skeleton className="h-6 w-48 mb-6 bg-surface" />
-        <div className="flex-1 space-y-4">
-          {[...Array(3)].map((_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="h-4 w-3/4 bg-surface" />
-              <Skeleton className="h-1.5 w-full bg-surface" />
-            </div>
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <Skeleton key={i} className="h-32 rounded-2xl bg-surface" />
           ))}
         </div>
       </GlassCard>
     );
 
-  const displayNodes: MasteryItem[] = lessonMastery?.slice(0, 3) || [];
+  // Sort by mastery score (DESC) and then by title (ASC), exclude 100%
+  const displayNodes: MasteryItem[] = [...(lessonMastery || [])]
+    .filter((item) => item.mastery < 100)
+    .sort((a, b) => {
+      if (b.mastery !== a.mastery) return b.mastery - a.mastery;
+      return a.title.localeCompare(b.title);
+    })
+    .slice(0, 6);
 
   return (
     <EfficiencyModal
-      title="Akıllı Müfredat Navigatörü"
+      title="Akıllı Müfredat Ustalığı"
       trigger={
         <div className="h-full w-full cursor-pointer">
           <GlassCard className="h-full flex flex-col p-6 overflow-hidden relative group">
@@ -219,29 +223,71 @@ export const MasteryNavigatorCard = () => {
               icon={Target}
               iconColor="text-accent"
               iconBg="bg-accent/10"
-              title="Müfredat Navigatörü"
-              subtitle="Kavram bazlı ustalık seviyeleri"
+              title="Müfredat Ustalığı"
+              subtitle="Ders bazlı ustalık seviyeleri"
               action={
                 <Maximize2 className="w-5 h-5 text-muted-foreground/30 hover:text-white transition-colors" />
               }
             />
 
-            <div className="flex-1 space-y-4 mt-6">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
               {displayNodes.map((node) => (
-                <div key={node.lessonId} className="space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="font-bold text-white/70 truncate mr-2">
-                      {node.title}
-                    </span>
-                    <span className="font-black text-accent">
-                      %{node.mastery}
-                    </span>
+                <div
+                  key={node.lessonId}
+                  className="p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all flex flex-col justify-between gap-4 group/item"
+                >
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-start">
+                      <span className="text-[11px] font-bold text-white/70 line-clamp-2 leading-relaxed">
+                        {node.title}
+                      </span>
+                      <span className="text-sm font-black text-accent ml-2">
+                        %{node.mastery}
+                      </span>
+                    </div>
                   </div>
-                  <div className="h-1.5 w-full bg-surface rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-accent transition-all duration-700"
-                      style={{ width: `${node.mastery}%` }}
-                    />
+
+                  <div className="space-y-3">
+                    {/* Mastery Main Bar */}
+                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-accent transition-all duration-1000 ease-out"
+                        style={{ width: `${node.mastery}%` }}
+                      />
+                    </div>
+
+                    {/* 60/40 Weights Indicators */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex justify-between text-[9px] uppercase tracking-wider font-bold">
+                          <span className="text-white/40">Video (%60)</span>
+                          <span className="text-emerald-400">
+                            %{node.videoProgress}
+                          </span>
+                        </div>
+                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-emerald-500/60"
+                            style={{ width: `${node.videoProgress}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1">
+                        <div className="flex justify-between text-[9px] uppercase tracking-wider font-bold">
+                          <span className="text-white/40">Quiz (%40)</span>
+                          <span className="text-amber-400">
+                            %{node.questionProgress}
+                          </span>
+                        </div>
+                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-amber-500/60"
+                            style={{ width: `${node.questionProgress}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -281,7 +327,7 @@ export const ConsistencyHeatmapCard = () => {
         iconColor="text-accent"
         iconBg="bg-accent/10"
         title="Süreklilik Haritası"
-        subtitle="Son 6 aylık çalışma yoğunluğu"
+        subtitle="Son 1 aylık çalışma yoğunluğu"
       />
       <div className="flex-1 w-full flex items-center justify-center min-h-0 mt-4">
         <EfficiencyHeatmap data={consistencyData} />

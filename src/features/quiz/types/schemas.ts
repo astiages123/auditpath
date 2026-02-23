@@ -331,3 +331,13 @@ export interface GeneratorCallbacks {
   onComplete: (result: { success: boolean; generated: number }) => void;
   onError: (error: string) => void;
 }
+
+export const SubmitQuizAnswerSchema = z.object({
+  questionId: z.string().uuid(),
+  chunkId: z.string().uuid().nullable(),
+  responseType: z.enum(['correct', 'incorrect', 'blank']),
+  timeSpentMs: z.number().min(0).max(600000), // Max 10 minutes
+  selectedAnswer: z.number().int().min(0).max(4).nullable(),
+});
+
+export type ValidatedSubmitQuizAnswer = z.infer<typeof SubmitQuizAnswerSchema>;

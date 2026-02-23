@@ -378,7 +378,7 @@ export async function getHistoryStats(
     const d = adjustToVirtualDay(new Date(s.started_at));
     const dateKey = formatDateKey(d);
     if (statsMap[dateKey]) {
-      statsMap[dateKey].pomodoro += s.total_work_time || 0;
+      statsMap[dateKey].pomodoro += s.total_work_time ?? 0;
     }
   });
 
@@ -388,8 +388,10 @@ export async function getHistoryStats(
     const dateKey = formatDateKey(d);
 
     if (statsMap[dateKey]) {
+      const videoData = vp.video;
+      const videoObj = Array.isArray(videoData) ? videoData[0] : videoData;
       const duration =
-        (vp.video as { duration_minutes?: number })?.duration_minutes || 0;
+        (videoObj as { duration_minutes?: number })?.duration_minutes ?? 0;
       statsMap[dateKey].video += duration;
     }
   });

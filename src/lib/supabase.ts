@@ -2,6 +2,9 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database.types';
 import { env } from '@/utils/env';
 
+export type { Database };
+export type { SupabaseClient };
+
 // Singleton instance
 let _supabase: SupabaseClient<Database> | null = null;
 

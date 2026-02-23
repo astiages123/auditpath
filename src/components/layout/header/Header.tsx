@@ -11,11 +11,12 @@ import { DesktopNav } from './DesktopNav';
 import { MobileNav } from './MobileNav';
 import { getNavItems } from './nav-config';
 
+const MOUNTED = true;
+
 export function Header() {
   const { user, signOut } = useAuth();
   const { setProgramOpen, setJourneyOpen } = useUIStore();
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [mounted] = useState(true);
   const location = useLocation();
   const pathname = location.pathname;
   const { setOpen: setPomodoroOpen } = usePomodoro();
@@ -40,7 +41,7 @@ export function Header() {
           navItems={filteredNavItems}
           signOut={signOut}
           setAuthModalOpen={setAuthModalOpen}
-          mounted={mounted}
+          mounted={MOUNTED}
         />
 
         {/* MobileNav is already rendered without props, so no change needed here for its usage. */}

@@ -263,7 +263,7 @@ export async function getQuestionData(
     'getQuestionData error',
     { questionId }
   );
-  return data;
+  return data ?? null;
 }
 
 export async function fetchCachedQuestion(
@@ -277,13 +277,15 @@ export async function fetchCachedQuestion(
       .select('id, chunk_id, question_data, bloom_level, concept_title')
       .eq('chunk_id', chunkId)
       .ilike('concept_title', conceptTitle.trim())
-      // @ts-expect-error - Supabase type inference issue
-      .eq('usage_type', usageType)
+      .eq(
+        'usage_type',
+        usageType as Database['public']['Enums']['question_usage_type']
+      )
       .maybeSingle(),
     'fetchCachedQuestion error',
     { chunkId, usageType, conceptTitle }
   );
-  return data;
+  return data ?? null;
 }
 
 export async function getAntrenmanQuestionCount(

@@ -133,4 +133,22 @@ export const storage = {
       storageLogger.error('Failed to cleanup localStorage', { error });
     }
   },
+
+  batchSet<T>(items: Array<{ key: string; value: T; version?: string }>): void {
+    items.forEach((item) => {
+      this.set(item.key, item.value, { version: item.version });
+    });
+  },
+
+  batchRemove(keys: string[]): void {
+    keys.forEach((key) => this.remove(key));
+  },
+
+  getMany<T>(keys: string[]): Record<string, T | null> {
+    const result: Record<string, T | null> = {};
+    keys.forEach((key) => {
+      result[key] = this.get<T>(key);
+    });
+    return result;
+  },
 };

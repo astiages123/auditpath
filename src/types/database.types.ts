@@ -60,7 +60,15 @@ export type Database = {
           usage_type?: string | null;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'ai_generation_logs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       categories: {
         Row: {
@@ -333,7 +341,7 @@ export type Database = {
           total_break_time: number | null;
           total_pause_time: number | null;
           total_work_time: number | null;
-          user_id: string | null;
+          user_id: string;
         };
         Insert: {
           course_id?: string | null;
@@ -350,7 +358,7 @@ export type Database = {
           total_break_time?: number | null;
           total_pause_time?: number | null;
           total_work_time?: number | null;
-          user_id?: string | null;
+          user_id: string;
         };
         Update: {
           course_id?: string | null;
@@ -367,9 +375,16 @@ export type Database = {
           total_break_time?: number | null;
           total_pause_time?: number | null;
           total_work_time?: number | null;
-          user_id?: string | null;
+          user_id?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: 'pomodoro_sessions_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'PomodoroSession_courseId_fkey';
             columns: ['course_id'];
@@ -505,7 +520,15 @@ export type Database = {
           updated_at?: string | null;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'user_achievements_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       user_question_status: {
         Row: {
@@ -547,6 +570,13 @@ export type Database = {
             columns: ['question_id'];
             isOneToOne: false;
             referencedRelation: 'questions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'user_question_status_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
@@ -653,7 +683,15 @@ export type Database = {
           used_today?: number | null;
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'user_quotas_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: true;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       users: {
         Row: {
@@ -685,7 +723,7 @@ export type Database = {
           completed_at: string | null;
           id: string;
           updated_at: string | null;
-          user_id: string | null;
+          user_id: string;
           video_id: string | null;
         };
         Insert: {
@@ -693,7 +731,7 @@ export type Database = {
           completed_at?: string | null;
           id?: string;
           updated_at?: string | null;
-          user_id?: string | null;
+          user_id: string;
           video_id?: string | null;
         };
         Update: {
@@ -701,10 +739,17 @@ export type Database = {
           completed_at?: string | null;
           id?: string;
           updated_at?: string | null;
-          user_id?: string | null;
+          user_id?: string;
           video_id?: string | null;
         };
         Relationships: [
+          {
+            foreignKeyName: 'video_progress_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
           {
             foreignKeyName: 'VideoProgress_videoId_fkey';
             columns: ['video_id'];
@@ -794,7 +839,15 @@ export type Database = {
           usage_type?: string | null;
           user_id?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'ai_generation_logs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Functions: {

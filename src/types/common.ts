@@ -48,6 +48,21 @@ export interface AIResponseMetadata {
 }
 
 /**
+ * Log levels for consistency across the application
+ */
+export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
+
+/**
+ * Standard Log Message interface
+ */
+export interface LogMessage {
+  level: LogLevel;
+  message: string;
+  details?: Record<string, unknown> | Error;
+  timestamp: string;
+}
+
+/**
  * General purpose logging callback
  */
 export type LogCallback = (

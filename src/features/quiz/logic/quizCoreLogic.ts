@@ -232,17 +232,42 @@ export function calculateQuotas(concepts: { length: number }): {
   };
 }
 
-export function calculateTMax(
-  charCount: number,
-  conceptCount: number,
-  bloomLevel: BloomLevel,
-  bufferSeconds: number = 10
-): number {
+export interface TMaxParams {
+  charCount: number;
+  conceptCount: number;
+  bloomLevel: BloomLevel;
+  bufferSeconds?: number;
+}
+
+/**
+ * Calculates the maximum allowed time for a question response.
+ * Improved to use a parameter object for better readability.
+ */
+export function calculateTMax({
+  charCount,
+  conceptCount,
+  bloomLevel,
+  bufferSeconds = 10,
+}: TMaxParams): number {
   const difficultyMultiplier =
     DIFFICULTY_MULTIPLIERS[bloomLevel || 'knowledge'] || 1.0;
-  const readingTimeSeconds = (charCount / 780) * 60;
-  const complexitySeconds = (15 + conceptCount * 2) * difficultyMultiplier;
+
+  // Constants for readability
+  const CHARS_PER_MINUTE = 780;
+  const BASE_COMPLEXITY_SECONDS = 15;
+  const SECONDS_PER_CONCEPT = 2;
+
+  // Handle edge cases
+  const safeCharCount = Math.max(0, charCount);
+  const safeConceptCount = Math.max(0, conceptCount);
+
+  const readingTimeSeconds = (safeCharCount / CHARS_PER_MINUTE) * 60;
+  const complexitySeconds =
+    (BASE_COMPLEXITY_SECONDS + safeConceptCount * SECONDS_PER_CONCEPT) *
+    difficultyMultiplier;
+
   const tMaxSeconds = readingTimeSeconds + complexitySeconds + bufferSeconds;
+
   return Math.round(tMaxSeconds * 1000);
 }
 

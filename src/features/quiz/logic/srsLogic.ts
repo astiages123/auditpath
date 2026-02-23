@@ -231,19 +231,85 @@ export function calculateQuizResult(
   const isCorrect = responseType === 'correct';
 
   if (questionData?.usage_type === 'deneme') {
-    // Deneme soruları SRS ve puanlama sisteminden bağımsızdır, hiçbir veriyi etkilemez.
-    return {
-      isCorrect,
-      scoreDelta: 0,
-      newMastery: masteryData?.mastery_score || 0,
-      newStatus: 'active', // Deneme soruları durumu değiştirmez, varsayılan 'active' döner
-      nextReviewSession: null,
-      isTopicRefreshed: false,
-      newSuccessCount: currentStatus?.consecutive_success || 0,
-      newFailsCount: currentStatus?.consecutive_fails || 0,
-    };
+    return processDenemeResult(isCorrect, masteryData, currentStatus);
   }
 
+  return processPracticeResult({
+    isCorrect,
+    responseType,
+    timeSpentMs,
+    questionData,
+    chunkMetadata,
+    masteryData,
+    uniqueSolvedCount,
+    totalChunkQuestions,
+    sessionNumber,
+    currentStatus,
+  });
+}
+
+/**
+ * Handles logic for trial exams (deneme), which don't affect mastery.
+ */
+function processDenemeResult(
+  isCorrect: boolean,
+  masteryData: { mastery_score: number } | null,
+  currentStatus: {
+    consecutive_success: number;
+    consecutive_fails: number;
+  } | null
+): SubmissionResult {
+  return {
+    isCorrect,
+    scoreDelta: 0,
+    newMastery: masteryData?.mastery_score || 0,
+    newStatus: 'active',
+    nextReviewSession: null,
+    isTopicRefreshed: false,
+    newSuccessCount: currentStatus?.consecutive_success || 0,
+    newFailsCount: currentStatus?.consecutive_fails || 0,
+  };
+}
+
+interface PracticeParams {
+  isCorrect: boolean;
+  responseType: QuizResponseType;
+  timeSpentMs: number;
+  questionData: {
+    bloom_level: string | null;
+    chunk_id: string | null;
+    usage_type?: string | null;
+  } | null;
+  chunkMetadata: {
+    content: string | null;
+    metadata: Record<string, unknown> | null;
+    ai_logic: Record<string, unknown> | null;
+  } | null;
+  masteryData: { mastery_score: number } | null;
+  uniqueSolvedCount: number;
+  totalChunkQuestions: number;
+  sessionNumber: number;
+  currentStatus: {
+    consecutive_success: number;
+    consecutive_fails: number;
+  } | null;
+}
+
+/**
+ * Handles logic for standard practice sessions.
+ */
+function processPracticeResult({
+  isCorrect,
+  responseType,
+  timeSpentMs,
+  questionData,
+  chunkMetadata,
+  masteryData,
+  uniqueSolvedCount,
+  totalChunkQuestions,
+  sessionNumber,
+  currentStatus,
+}: PracticeParams): SubmissionResult {
   const isRepeated =
     (currentStatus?.consecutive_fails || 0) > 0 ||
     (currentStatus?.consecutive_success || 0) > 0;
@@ -254,9 +320,13 @@ export function calculateQuizResult(
     const aiLogic =
       (chunkMetadata.ai_logic as { concept_map?: unknown[] } | null) || {};
     const conceptCount = aiLogic.concept_map?.length || 5;
-
     const bloomLevel = (questionData.bloom_level as BloomLevel) || 'knowledge';
-    const tMaxMs = calculateTMax(contentLength, conceptCount, bloomLevel);
+
+    const tMaxMs = calculateTMax({
+      charCount: contentLength,
+      conceptCount,
+      bloomLevel,
+    });
 
     isFast = timeSpentMs <= tMaxMs;
   }

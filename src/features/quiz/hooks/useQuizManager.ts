@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  getCourseProgress,
-  getCourseTopicsWithCounts,
-  getTopicCompletionStatus,
-} from '@/features/quiz/services/quizStatusService';
+import { useQuizTopics } from './useQuizTopics';
+import { useQuizGeneration } from './useQuizGeneration';
+import { getTopicCompletionStatus } from '@/features/quiz/services/quizStatusService';
 import { getFirstChunkIdForTopic } from '@/features/quiz/services/quizService';
 import * as QuizService from '@/features/quiz/services/quizService';
 import { generateForChunk } from '@/features/quiz/logic/quizParser';
@@ -19,7 +17,6 @@ import {
 import { logger } from '@/utils/logger';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { parseOrThrow } from '@/utils/validation';
-import { MAX_LOG_ENTRIES } from '../utils/constants';
 
 export const QUIZ_PHASE = {
   NOT_ANALYZED: 'NOT_ANALYZED',
@@ -35,12 +32,6 @@ export interface GenerationState {
   logs: GenerationLog[];
   progress: { current: number; total: number };
 }
-
-const INITIAL_GENERATION_STATE: GenerationState = {
-  isGenerating: false,
-  logs: [],
-  progress: { current: 0, total: 0 },
-};
 
 interface UseQuizManagerProps {
   isOpen: boolean;
@@ -77,63 +68,34 @@ export function useQuizManager({
   courseName,
 }: UseQuizManagerProps): UseQuizManagerReturn {
   const { user } = useAuth();
+  const {
+    topics,
+    loading: topicsLoading,
+    courseProgress,
+    refreshTopics,
+  } = useQuizTopics({
+    isOpen,
+    courseId,
+    userId: user?.id,
+  });
 
-  const [topics, setTopics] = useState<TopicWithCounts[]>([]);
+  const {
+    generation,
+    startGeneration,
+    resetGeneration,
+    createGenerationCallbacks,
+  } = useQuizGeneration();
+
   const [selectedTopic, setSelectedTopic] = useState<TopicWithCounts | null>(
     null
   );
   const [targetChunkId, setTargetChunkId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [completionStatus, setCompletionStatus] =
     useState<TopicCompletionStats | null>(null);
-  const [courseProgress, setCourseProgress] = useState<{
-    total: number;
-    solved: number;
-    percentage: number;
-  } | null>(null);
-  const [generation, setGeneration] = useState<GenerationState>(
-    INITIAL_GENERATION_STATE
-  );
   const [existingQuestions, setExistingQuestions] = useState<QuizQuestion[]>(
     []
   );
   const [isQuizActive, setIsQuizActive] = useState(false);
-
-  const loadTopics = useCallback(
-    async (isMounted: () => boolean) => {
-      if (!courseId) return;
-      setLoading(true);
-      try {
-        const data = await getCourseTopicsWithCounts(courseId);
-        if (!isMounted()) return;
-        setTopics(data);
-        if (user) {
-          const progress = await getCourseProgress(user.id, courseId);
-          if (!isMounted()) return;
-          setCourseProgress(progress);
-        }
-      } catch (error) {
-        if (isMounted()) {
-          logger.error('Error loading topics', error as Error);
-        }
-      } finally {
-        if (isMounted()) {
-          setLoading(false);
-        }
-      }
-    },
-    [courseId, user]
-  );
-
-  useEffect(() => {
-    let mounted = true;
-    if (isOpen) {
-      loadTopics(() => mounted);
-    }
-    return () => {
-      mounted = false;
-    };
-  }, [isOpen, loadTopics]);
 
   useEffect(() => {
     let mounted = true;
@@ -181,73 +143,25 @@ export function useQuizManager({
     return QUIZ_PHASE.NOT_ANALYZED;
   })();
 
-  const createGenerationCallbacks = useCallback(
-    (onCompleteExtra?: () => void | Promise<void>) => ({
-      onLog: (log: GenerationLog) =>
-        setGeneration((prev) => ({
-          ...prev,
-          logs: [log, ...prev.logs].slice(0, MAX_LOG_ENTRIES),
-        })),
-      onTotalTargetCalculated: (total: number) =>
-        setGeneration((prev) => ({
-          ...prev,
-          progress: { ...prev.progress, total },
-        })),
-      onQuestionSaved: (count: number) =>
-        setGeneration((prev) => ({
-          ...prev,
-          progress: { ...prev.progress, current: count },
-        })),
-      onComplete: async () => {
-        if (onCompleteExtra) await onCompleteExtra();
-        setGeneration((prev) => ({ ...prev, isGenerating: false }));
-      },
-      onError: (err: string) => {
-        logger.error('Generation error:', { message: err });
-        setGeneration((prev) => ({ ...prev, isGenerating: false }));
-      },
-    }),
-    []
-  );
-
   const handleGenerate = useCallback(
     async (_mappingOnly = true) => {
       if (!targetChunkId) return;
-      const initialLogs: GenerationLog[] = [
-        {
-          id: 'ai-warning-' + Date.now(),
-          message: 'İçerik analiz ediliyor...',
-          step: 'INIT',
-          details: {},
-          timestamp: new Date(),
+      await startGeneration(
+        targetChunkId,
+        async () => {
+          if (selectedTopic && user) {
+            const newStatus = await getTopicCompletionStatus(
+              user.id,
+              courseId,
+              selectedTopic.name
+            );
+            setCompletionStatus(newStatus);
+          }
         },
-      ];
-      setGeneration({
-        isGenerating: true,
-        logs: initialLogs,
-        progress: { current: 0, total: 0 },
-      });
-      try {
-        await generateForChunk(
-          targetChunkId,
-          createGenerationCallbacks(async () => {
-            if (selectedTopic && user) {
-              const newStatus = await getTopicCompletionStatus(
-                user.id,
-                courseId,
-                selectedTopic.name
-              );
-              setCompletionStatus(newStatus);
-            }
-          }),
-          { userId: user?.id }
-        );
-      } catch (error) {
-        logger.error('Failed to generate:', error as Error);
-        setGeneration((prev) => ({ ...prev, isGenerating: false }));
-      }
+        user?.id
+      );
     },
-    [targetChunkId, user, selectedTopic, courseId, createGenerationCallbacks]
+    [targetChunkId, user, selectedTopic, courseId, startGeneration]
   );
 
   const startExamFromPool = useCallback(
@@ -274,20 +188,6 @@ export function useQuizManager({
 
   const generateAndFetchExam = useCallback(async () => {
     if (!user) return null;
-    const initialLogs: GenerationLog[] = [
-      {
-        id: 'ai-warning-' + Date.now(),
-        message: 'İçerik analiz ediliyor...',
-        step: 'INIT' as const,
-        details: {},
-        timestamp: new Date(),
-      },
-    ];
-    setGeneration({
-      isGenerating: true,
-      logs: initialLogs,
-      progress: { current: 0, total: 0 },
-    });
     try {
       const result = await QuizService.generateSmartExam(
         courseId,
@@ -307,8 +207,6 @@ export function useQuizManager({
       }
     } catch (error) {
       logger.error('Failed to generate smart exam:', error as Error);
-    } finally {
-      setGeneration((prev) => ({ ...prev, isGenerating: false }));
     }
     return null;
   }, [user, courseId, createGenerationCallbacks]);
@@ -328,17 +226,16 @@ export function useQuizManager({
   const handleBackToTopics = useCallback(() => {
     setSelectedTopic(null);
     setIsQuizActive(false);
-    setGeneration(INITIAL_GENERATION_STATE);
+    resetGeneration();
     setExistingQuestions([]);
-    loadTopics(() => true); // It's okay here as it's a callback response
-  }, [loadTopics]);
+    refreshTopics();
+  }, [resetGeneration, refreshTopics]);
 
   const handleFinishQuiz = useCallback(async () => {
     setIsQuizActive(false);
     setExistingQuestions([]);
 
     if (selectedTopic && user && courseId) {
-      // Refresh status to show updated progress/mastery in matrix
       const status = await getTopicCompletionStatus(
         user.id,
         courseId,
@@ -346,7 +243,6 @@ export function useQuizManager({
       );
       setCompletionStatus(status);
 
-      // Trigger background generation for arsiv and deneme if quotas not met
       if (targetChunkId) {
         const needsArsiv = status.arsiv.existing < status.arsiv.quota;
         const needsDeneme = status.deneme.existing < status.deneme.quota;
@@ -359,7 +255,7 @@ export function useQuizManager({
           generateForChunk(
             targetChunkId,
             {
-              onLog: () => {}, // silent
+              onLog: () => {},
               onTotalTargetCalculated: () => {},
               onQuestionSaved: () => {},
               onComplete: async () => {
@@ -428,7 +324,7 @@ export function useQuizManager({
     selectedTopic,
     setSelectedTopic,
     targetChunkId,
-    loading,
+    loading: topicsLoading,
     completionStatus,
     existingQuestions,
     isQuizActive,

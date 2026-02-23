@@ -9,6 +9,7 @@ import {
 import { isValid, parseOrThrow } from '@/utils/validation';
 import { handleSupabaseError, safeQuery } from '@/lib/supabaseHelpers';
 import { TimelineEventSchema } from '../types/efficiencyTypes';
+import { generateDateRange } from '../logic/efficiencyHelpers';
 import { z } from 'zod';
 
 import type {
@@ -24,20 +25,29 @@ import type {
 // ============== HELPER FUNCTIONS ==============
 
 /**
- * Common helper to fetch pomodoro sessions with a 6-month history.
+ * Common helper to fetch pomodoro sessions with a dynamic history.
  */
 async function fetchSessionHistory<T = Record<string, unknown>>(
   userId: string,
   select: string,
   errorContext: string,
-  options: { months?: number; days?: number } = { months: 6 }
+  options: { months?: number; days?: number; startDate?: Date } = { months: 6 }
 ): Promise<T[]> {
-  const queryStartDate = new Date();
-  if (options.days) {
-    queryStartDate.setDate(queryStartDate.getDate() - options.days);
+  let queryStartDate: Date;
+
+  if (options.startDate) {
+    queryStartDate = options.startDate;
   } else {
-    queryStartDate.setMonth(queryStartDate.getMonth() - (options.months || 6));
+    queryStartDate = new Date();
+    if (options.days) {
+      queryStartDate.setDate(queryStartDate.getDate() - options.days);
+    } else {
+      queryStartDate.setMonth(
+        queryStartDate.getMonth() - (options.months || 6)
+      );
+    }
   }
+
   const queryStartDateStr = queryStartDate.toISOString();
 
   const response = await supabase
@@ -58,18 +68,7 @@ async function fetchSessionHistory<T = Record<string, unknown>>(
   return data || [];
 }
 
-/**
- * Generates an array of date strings for the last N days.
- */
-function generateDateRange(days: number): string[] {
-  const dates: string[] = [];
-  for (let i = 0; i < days; i++) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    dates.push(getVirtualDateKey(d));
-  }
-  return dates;
-}
+// generateDateRange removed - using the one from efficiencyHelpers.ts
 
 // === SECTION === Chart Data Functions
 
@@ -85,7 +84,9 @@ export async function getLearningLoadData({
   const sessionsData = await fetchSessionHistory<{
     started_at: string;
     total_work_time: number | null;
-  }>(userId, 'started_at, total_work_time', 'getLearningLoadData error');
+  }>(userId, 'started_at, total_work_time', 'getLearningLoadData error', {
+    days,
+  });
 
   const dailyMap = new Map<string, number>();
 
@@ -118,21 +119,20 @@ export async function getLearningLoadData({
     });
   }
 
-  // If showing many days (like 180), we might filter empty weekends to reduce noise
-  if (days > 30) {
-    return rawData.filter((item) => {
-      const d = item.rawDate;
-      const dayOfWeek = d.getDay(); // 0 is Sunday
-      const totalMins = item.extraStudyMinutes;
-      // Skip empty weekends
-      if (totalMins === 0 && (dayOfWeek === 0 || dayOfWeek === 6)) {
-        return false;
-      }
-      return true;
-    });
-  }
+  // Filter out graduate study days (Tue, Wed, Thu) and empty weekend days
+  return rawData.filter((item) => {
+    const d = item.rawDate;
+    const dayOfWeek = d.getDay(); // 0=Pazar, 1=Pazartesi, ..., 6=Cumartesi
+    const totalMins = item.extraStudyMinutes + item.videoMinutes;
 
-  return rawData;
+    // Yüksek Lisans Günleri (Salı, Çarşamba, Perşembe) - Gösterme
+    if ([2, 3, 4].includes(dayOfWeek)) return false;
+
+    // Hafta sonu (Cumartesi veya Pazar) - Eğer veri yoksa gösterme (Tatil günü kuralı)
+    if (totalMins === 0 && (dayOfWeek === 0 || dayOfWeek === 6)) return false;
+
+    return true;
+  });
 }
 
 export async function getFocusPowerData({
@@ -153,7 +153,8 @@ export async function getFocusPowerData({
   }>(
     userId,
     'started_at, total_work_time, total_break_time, total_pause_time',
-    'getFocusPowerData error'
+    'getFocusPowerData error',
+    { days: range === 'week' ? 7 : 30 }
   );
 
   const focusPowerAggMap = new Map<
@@ -210,47 +211,19 @@ export async function getFocusPowerData({
     return result;
   };
 
-  if (range === 'week') return assembleData(7);
-  if (range === 'month') return assembleData(30);
+  const result = range === 'week' ? assembleData(7) : assembleData(30);
 
-  // For "all" time, we aggregate by month
-  const allTimeFocus: FocusPowerPoint[] = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date();
-    d.setMonth(d.getMonth() - i);
-    d.setDate(1); // First day of the month
+  // Filter out graduate study days (Tue, Wed, Thu) and empty weekend days
+  return result.filter((item) => {
+    const d = new Date(item.originalDate);
+    const dayOfWeek = d.getDay();
+    const hasActivity = item.workMinutes > 0;
 
-    let mWork = 0,
-      mBreak = 0,
-      mPause = 0;
+    if ([2, 3, 4].includes(dayOfWeek)) return false;
+    if (!hasActivity && (dayOfWeek === 0 || dayOfWeek === 6)) return false;
 
-    // Iterate map to sum up for this month
-    for (const [key, val] of focusPowerAggMap.entries()) {
-      const keyDate = new Date(key);
-      if (
-        keyDate.getMonth() === d.getMonth() &&
-        keyDate.getFullYear() === d.getFullYear()
-      ) {
-        mWork += val.work;
-        mBreak += val.breakTime;
-        mPause += val.pause;
-      }
-    }
-
-    const score = calculateFocusPower(mWork, mBreak, mPause);
-    const monthName = formatDisplayDate(d, { month: 'long' });
-
-    allTimeFocus.push({
-      date: monthName,
-      originalDate: d.toISOString(),
-      score: score,
-      workMinutes: Math.round(mWork / 60),
-      breakMinutes: Math.round(mBreak / 60),
-      pauseMinutes: Math.round(mPause / 60),
-    });
-  }
-
-  return allTimeFocus;
+    return true;
+  });
 }
 
 export async function getConsistencyData({
@@ -266,21 +239,19 @@ export async function getConsistencyData({
   const sessionsData = await fetchSessionHistory<{
     started_at: string;
     total_work_time: number | null;
-  }>(userId, 'started_at, total_work_time', 'getConsistencyData error');
+  }>(userId, 'started_at, total_work_time', 'getConsistencyData error', {
+    days,
+  });
 
   const dailyMap = new Map<string, number>();
-
   sessionsData?.forEach((s) => {
     const dateKey = getVirtualDateKey(new Date(s.started_at));
     const mins = Math.round((s.total_work_time || 0) / 60);
     dailyMap.set(dateKey, (dailyMap.get(dateKey) || 0) + mins);
   });
 
-  const rawHeatmap: DayActivity[] = [];
-  // Generate slightly more than needed to detect streaks/breaks at edges if needed
-  const loopDays = days + 14;
-
-  for (let i = loopDays; i >= 0; i--) {
+  const heatmap: DayActivity[] = [];
+  for (let i = days - 1; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     d.setHours(12, 0, 0, 0);
@@ -288,7 +259,7 @@ export async function getConsistencyData({
     const dateKey = getVirtualDateKey(d);
     const mins = dailyMap.get(dateKey) || 0;
 
-    rawHeatmap.push({
+    heatmap.push({
       date: dateKey,
       totalMinutes: mins,
       count: mins > 0 ? 1 : 0,
@@ -297,33 +268,7 @@ export async function getConsistencyData({
     });
   }
 
-  // Filter Logic: "Empty days" on weekends might be ignored if adjacent days have work (Optional logic from original code preserved)
-  const filteredHeatmap = rawHeatmap.filter((day, idx, arr) => {
-    const [y, m, dt] = day.date.split('-').map(Number);
-    const d = new Date(y, m - 1, dt);
-    const dayOfWeek = d.getDay();
-    const mins = day.totalMinutes || 0;
-
-    if (mins === 0) {
-      if (dayOfWeek === 6) {
-        // Saturday
-        const nextDay = arr[idx + 1];
-        if (nextDay && (nextDay.totalMinutes || 0) > 0) return false;
-      }
-      if (dayOfWeek === 0) {
-        // Sunday
-        const prevDay = arr[idx - 1];
-        if (prevDay && (prevDay.totalMinutes || 0) > 0) return false;
-      }
-    }
-    return true;
-  });
-
-  return filteredHeatmap.slice(-days).map((item) => ({
-    ...item,
-    level: 0,
-    intensity: 0,
-  }));
+  return heatmap;
 }
 
 // === SECTION === Trend Functions
@@ -359,6 +304,16 @@ export async function getFocusTrend(userId: string): Promise<FocusTrend[]> {
       date,
       minutes: Math.round(seconds / 60),
     }))
+    .filter((item) => {
+      const d = new Date(item.date);
+      const dayOfWeek = d.getDay();
+      const hasActivity = item.minutes > 0;
+
+      if ([2, 3, 4].includes(dayOfWeek)) return false;
+      if (!hasActivity && (dayOfWeek === 0 || dayOfWeek === 6)) return false;
+
+      return true;
+    })
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
@@ -373,7 +328,7 @@ export async function getEfficiencyTrend(
   queryStartDate.setDate(queryStartDate.getDate() - daysToCheck);
   const dateStr = queryStartDate.toISOString();
 
-  const [sessions, { data: videoProgress }] = await Promise.all([
+  const [sessions, videoProgressResponse] = await Promise.all([
     fetchSessionHistory<{
       started_at: string;
       total_work_time: number | null;
@@ -390,6 +345,8 @@ export async function getEfficiencyTrend(
       .eq('completed', true)
       .gte('completed_at', dateStr),
   ]);
+
+  const videoProgress = videoProgressResponse.data;
 
   const dailyMap = new Map<
     string,
@@ -448,6 +405,16 @@ export async function getEfficiencyTrend(
         workMinutes: Math.round(workMinutes),
         videoMinutes: Math.round(videoMinutes),
       };
+    })
+    .filter((item) => {
+      const d = new Date(item.date);
+      const dayOfWeek = d.getDay();
+      const hasActivity = item.workMinutes > 0 || item.videoMinutes > 0;
+
+      if ([2, 3, 4].includes(dayOfWeek)) return false;
+      if (!hasActivity && (dayOfWeek === 0 || dayOfWeek === 6)) return false;
+
+      return true;
     })
     .sort((a, b) => a.date.localeCompare(b.date));
 }

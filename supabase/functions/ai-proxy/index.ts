@@ -1,17 +1,33 @@
 // Deno types
-// EdgeRuntime removed as unused
-
 import { corsHeaders } from '../_shared/cors.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const CEREBRAS_API_URL = 'https://api.cerebras.ai/v1/chat/completions';
-const MIMO_API_URL = 'https://api.xiaomimimo.com/v1/chat/completions';
-const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
-const GOOGLE_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
+// --- CONFIGURATION ---
+const PROVIDERS = {
+  cerebras: {
+    url: 'https://api.cerebras.ai/v1/chat/completions',
+    envKey: 'CEREBRAS_API_KEY',
+    defaultModel: 'zai-glm-4.7',
+  },
+  mimo: {
+    url: 'https://api.xiaomimimo.com/v1/chat/completions',
+    envKey: 'MIMO_API_KEY',
+    defaultModel: 'mimo-v2-flash',
+  },
+  deepseek: {
+    url: 'https://api.deepseek.com/v1/chat/completions',
+    envKey: 'DEEPSEEK_API_KEY',
+    defaultModel: 'deepseek-chat',
+  },
+  google: {
+    url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+    envKey: 'GEMINI_API_KEY',
+    defaultModel: 'gemini-1.5-flash',
+  },
+};
 
 interface ProxyRequest {
-  provider: 'cerebras' | 'mimo' | 'google' | 'deepseek';
+  provider?: keyof typeof PROVIDERS;
   messages: { role: string; content: string }[];
   model?: string;
   temperature?: number;
@@ -36,25 +52,21 @@ interface LogPayload {
 const sbUrl = Deno.env.get('SUPABASE_URL') ?? '';
 const sbKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
 
-// Singleton admin client for logging to avoid repeated connections
+// Singleton admin client for logging
 const adminClient = createClient(sbUrl, sbKey);
 
 Deno.serve(async (req: Request) => {
-  // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
 
   const startTime = Date.now();
   let userId: string | null = null;
-  let status = 200;
 
   try {
     // 1. Authenticate User
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
-      throw new Error('Missing Authorization header');
-    }
+    if (!authHeader) throw new Error('Missing Authorization header');
 
     const supabaseClient = createClient(sbUrl, sbKey, {
       global: { headers: { Authorization: authHeader } },
@@ -75,7 +87,7 @@ Deno.serve(async (req: Request) => {
     }
     userId = user.id;
 
-    // 1.5. Check Quota
+    // 2. Check Quota
     const { data: quotaCheck, error: quotaError } = await adminClient.rpc(
       'check_and_increment_quota',
       {
@@ -84,24 +96,19 @@ Deno.serve(async (req: Request) => {
     );
 
     if (quotaError || !quotaCheck?.allowed) {
-      if (userId) {
-        await safeLog(
-          {
-            user_id: userId,
-            provider: 'unknown',
-            model: 'unknown',
-            status: 429,
-            latency_ms: Date.now() - startTime,
-            usage_type: 'quota_exceeded',
-            error_message: quotaError?.message || 'Daily quota reached',
-          },
-          'Quota Error'
-        );
-      }
+      await safeLog({
+        user_id: userId,
+        provider: 'quota',
+        model: 'quota',
+        status: 429,
+        latency_ms: Date.now() - startTime,
+        usage_type: 'quota_exceeded',
+        error_message: quotaError?.message || 'Daily quota reached',
+      });
       return new Response(
         JSON.stringify({
           error: 'Kota Aşıldı',
-          details: 'Günlük maksimum AI isteği sınırına ulaştınız.',
+          details: 'Günlük limit doldu.',
         }),
         {
           status: 429,
@@ -110,178 +117,65 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // 2. Parse Request
+    // 3. Parse and Resolve Provider
     const { provider, messages, model, temperature, max_tokens, usage_type } =
       (await req.json()) as ProxyRequest;
+    if (!messages) throw new Error('messages is required');
 
-    if (!messages) {
-      if (userId) {
-        await safeLog(
-          {
-            user_id: userId,
-            provider: 'unknown',
-            model: 'unknown',
-            status: 400,
-            latency_ms: Date.now() - startTime,
-            usage_type: 'validation_error',
-            error_message: 'messages is required',
-          },
-          'Validation Error'
-        );
-      }
-      return new Response(JSON.stringify({ error: 'messages is required' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    let resolvedProvider: keyof typeof PROVIDERS = provider || 'cerebras';
+    if (model?.startsWith('gemini')) resolvedProvider = 'google';
 
-    // Validate provider
-    if (
-      provider &&
-      !['cerebras', 'mimo', 'google', 'deepseek'].includes(provider)
-    ) {
-      if (userId) {
-        await safeLog(
-          {
-            user_id: userId,
-            provider: provider,
-            model: 'unknown',
-            status: 400,
-            latency_ms: Date.now() - startTime,
-            usage_type: 'validation_error',
-            error_message: `Invalid provider: ${provider}`,
-          },
-          'Provider Validation'
-        );
-      }
-      return new Response(
-        JSON.stringify({
-          error:
-            "Invalid provider. Supported: 'cerebras', 'mimo', 'google', 'deepseek'",
-        }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
-    }
+    const config = PROVIDERS[resolvedProvider];
+    if (!config) throw new Error(`Invalid provider: ${resolvedProvider}`);
 
-    // Provider Configuration
-    let apiUrl = CEREBRAS_API_URL;
-    let apiKey = Deno.env.get('CEREBRAS_API_KEY');
-    let targetModel = model || 'zai-glm-4.7';
-    let activeProvider = provider || 'cerebras';
-
-    // Modeli isminden tanı (Otomatik Yönlendirme)
-    if (model?.startsWith('gemini')) {
-      activeProvider = 'google';
-      apiUrl = GOOGLE_API_URL;
-      apiKey = Deno.env.get('GEMINI_API_KEY');
-      targetModel = model;
-    } else if (provider === 'mimo') {
-      activeProvider = 'mimo';
-      apiUrl = MIMO_API_URL;
-      apiKey = Deno.env.get('MIMO_API_KEY');
-      targetModel = model || 'mimo-v2-flash';
-    } else if (provider === 'deepseek') {
-      activeProvider = 'deepseek';
-      apiUrl = DEEPSEEK_API_URL;
-      apiKey = Deno.env.get('DEEPSEEK_API_KEY');
-      targetModel = model || 'deepseek-chat';
-    }
-
+    const apiKey = Deno.env.get(config.envKey);
     if (!apiKey) {
-      if (userId) {
-        await safeLog(
-          {
-            user_id: userId,
-            provider: activeProvider,
-            model: targetModel,
-            status: 500,
-            latency_ms: Date.now() - startTime,
-            usage_type: 'config_error',
-            error_message: `API KEY not configured for ${activeProvider}`,
-          },
-          'Config Error'
-        );
-      }
-      return new Response(
-        JSON.stringify({
-          error: `API KEY not configured for ${activeProvider}`,
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      throw new Error(`API KEY not configured for ${resolvedProvider}`);
     }
 
-    // 3. Call AI Provider
+    const targetModel = model || config.defaultModel;
+
+    // 4. Prepare and Call AI API
     const body: Record<string, unknown> = {
       model: targetModel,
       messages,
-      temperature: temperature ?? 0.1,
+      temperature: temperature ?? (resolvedProvider === 'mimo' ? 0.3 : 0.1),
       max_tokens: max_tokens || 8192,
     };
 
-    // MiMo Thinking modu ve temperature ayarı
-    if (activeProvider === 'mimo') {
+    if (resolvedProvider === 'mimo') {
       body.chat_template_kwargs = { enable_thinking: true };
-      body.temperature = 0.3; // Agentic task için
     }
-
-    // DeepSeek JSON Output modu
-    if (activeProvider === 'deepseek') {
+    if (resolvedProvider === 'deepseek') {
       body.response_format = { type: 'json_object' };
     }
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
+    if (resolvedProvider === 'mimo') headers['api-key'] = apiKey;
+    else headers['Authorization'] = `Bearer ${apiKey}`;
 
-    if (activeProvider === 'mimo') {
-      headers['api-key'] = apiKey; // Mimo specific header
-    } else {
-      headers['Authorization'] = `Bearer ${apiKey}`; // Standard OpenAI/Cerebras/Google
-    }
-
-    const response = await fetch(apiUrl, {
+    const response = await fetch(config.url, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
     });
 
-    status = response.status;
     const responseText = await response.text();
-
     if (!response.ok) {
-      // Log error status
-      if (userId) {
-        await safeLog(
-          {
-            user_id: userId,
-            provider: activeProvider,
-            model: targetModel,
-            status,
-            latency_ms: Date.now() - startTime,
-            usage_type: usage_type || 'unknown_error',
-            error_message: `API Error ${response.status}: ${responseText.substring(
-              0,
-              500
-            )}`,
-          },
-          'Error Response'
-        );
-      }
-
-      console.error(
-        `[AI Proxy] ${activeProvider} API Error:`,
-        response.status,
-        responseText
-      );
+      await safeLog({
+        user_id: userId,
+        provider: resolvedProvider,
+        model: targetModel,
+        status: response.status,
+        latency_ms: Date.now() - startTime,
+        usage_type: usage_type || 'error',
+        error_message: `API Error: ${responseText.substring(0, 500)}`,
+      });
       return new Response(
         JSON.stringify({
-          error: `${activeProvider} API Error: ${response.status}`,
+          error: `API Error: ${response.status}`,
           details: responseText,
         }),
         {
@@ -291,140 +185,80 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // 4. Extract Usage & Log
-    // MiMo think temizleme (güvenlik amaçlı)
-    let cleanedResponseText = responseText;
-    if (activeProvider === 'mimo') {
-      cleanedResponseText = responseText
+    // 5. Clean and Parse Response
+    let cleanedText = responseText;
+    if (resolvedProvider === 'mimo') {
+      cleanedText = responseText
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
         .replace(/<think>[\s\S]*/gi, '')
         .trim();
     }
 
-    let data;
+    let resultData;
     try {
-      data = JSON.parse(cleanedResponseText);
-    } catch (parseError) {
-      console.error(
-        'JSON Parse Error:',
-        parseError,
-        'Response:',
-        responseText.substring(0, 200)
-      );
-
-      // Log the parse error to DB synchronously
-      if (userId) {
-        await safeLog(
-          {
-            user_id: userId,
-            provider: activeProvider,
-            model: targetModel,
-            status: 200, // Provider returned 200, but content was invalid
-            latency_ms: Date.now() - startTime,
-            usage_type: usage_type || 'json_parse_error',
-            error_message: `JSON Parse Error: ${
-              parseError instanceof Error
-                ? parseError.message
-                : String(parseError)
-            }. Response: ${responseText.substring(0, 200)}`,
-          },
-          'JSON Parse'
-        );
-      }
-
-      // Return raw text or error response
-      return new Response(
-        JSON.stringify({
-          error: 'Invalid JSON response from AI provider',
-          details: responseText.substring(0, 500),
-        }),
-        {
-          status: 502, // Bad Gateway (sort of), or just return the text?
-          // User asked to log it, but didn't strictly say fail.
-          // But if we can't parse, we can't return JSON structure.
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      resultData = JSON.parse(cleanedText);
+    } catch (e: unknown) {
+      await safeLog({
+        user_id: userId,
+        provider: resolvedProvider,
+        model: targetModel,
+        status: 200,
+        latency_ms: Date.now() - startTime,
+        usage_type: 'parse_error',
+        error_message: `JSON Parse Error: ${
+          e instanceof Error ? e.message : String(e)
+        }`,
+      });
+      return new Response(JSON.stringify({ error: 'Invalid JSON response' }), {
+        status: 502,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    const usage = data.usage || {};
-    const promptTokens = usage.prompt_tokens || 0;
-    const completionTokens = usage.completion_tokens || 0;
-    const totalTokens = usage.total_tokens || 0;
-    const cachedTokens = usage.prompt_tokens_details?.cached_tokens || 0;
+    // 6. Final Log and Return
+    const usage = resultData.usage || {};
+    await safeLog({
+      user_id: userId,
+      provider: resolvedProvider,
+      model: targetModel,
+      status: 200,
+      latency_ms: Date.now() - startTime,
+      prompt_tokens: usage.prompt_tokens || 0,
+      completion_tokens: usage.completion_tokens || 0,
+      total_tokens: usage.total_tokens || 0,
+      cached_tokens: usage.prompt_tokens_details?.cached_tokens || 0,
+      usage_type: usage_type || 'generation',
+    });
 
-    if (userId) {
-      await safeLog(
-        {
-          user_id: userId,
-          provider: activeProvider,
-          model: targetModel,
-          status: 200,
-          latency_ms: Date.now() - startTime,
-          prompt_tokens: promptTokens,
-          completion_tokens: completionTokens,
-          total_tokens: totalTokens,
-          cached_tokens: cachedTokens,
-          usage_type: usage_type || 'generation',
-        },
-        'Success'
-      );
-    }
-
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify(resultData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'Unknown error';
-    console.error('[AI Proxy] Error:', errorMessage);
-
+    const msg = error instanceof Error ? error.message : 'Unknown error';
     if (userId) {
-      await safeLog(
-        {
-          user_id: userId,
-          provider: 'unknown',
-          model: 'unknown',
-          status: 500,
-          latency_ms: Date.now() - startTime,
-          usage_type: 'proxy_error',
-          error_message: errorMessage,
-        },
-        'Exception'
-      );
+      await safeLog({
+        user_id: userId,
+        provider: 'proxy',
+        model: 'proxy',
+        status: 500,
+        latency_ms: Date.now() - startTime,
+        usage_type: 'exception',
+        error_message: msg,
+      });
     }
-
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    return new Response(JSON.stringify({ error: msg }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
 
-async function safeLog(payload: LogPayload, context: string): Promise<void> {
-  try {
-    await logToDB(payload);
-  } catch (logError) {
-    console.error(`[Proxy Log Error - ${context}]`, logError);
-  }
-}
-
-async function logToDB(payload: LogPayload) {
-  if (!sbUrl || !sbKey) {
-    console.error(
-      'CRITICAL: Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY env vars'
-    );
-    return;
-  }
-
+async function safeLog(payload: LogPayload): Promise<void> {
   try {
     const { error } = await adminClient
       .from('ai_generation_logs')
       .insert(payload);
-
-    if (error) {
-      console.error('DATABASE INSERT ERROR:', JSON.stringify(error, null, 2));
-    }
+    if (error) console.error('LOGGING ERROR:', error);
   } catch (err) {
     console.error('CRITICAL LOGGING EXCEPTION:', err);
   }

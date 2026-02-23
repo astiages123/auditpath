@@ -6,6 +6,7 @@ import {
   ChunkMetadataSchema,
   type QuizResponseType,
   type SubmissionResult,
+  SubmitQuizAnswerSchema,
 } from '@/features/quiz/types';
 import { calculateQuizResult } from '../logic/srsLogic';
 import {
@@ -23,39 +24,39 @@ export async function updateChunkMetadata(
   chunkId: string,
   metadata: Json
 ): Promise<{ success: boolean; error?: Error }> {
-  const { error } = await safeQuery<null>(
+  const { success, error } = await safeQuery<null>(
     supabase.from('note_chunks').update({ metadata }).eq('id', chunkId),
     'updateChunkMetadata error',
     { chunkId }
   );
 
-  if (error) return { success: false, error };
+  if (!success) return { success: false, error: new Error(error) };
   return { success: true };
 }
 
 export async function createQuestion(
   payload: Database['public']['Tables']['questions']['Insert']
 ): Promise<{ success: boolean; id?: string; error?: Error }> {
-  const { data, error } = await safeQuery<{ id: string }>(
+  const { success, data, error } = await safeQuery<{ id: string }>(
     supabase.from('questions').insert(payload).select('id').single(),
     'createQuestion error',
     { chunkId: payload.chunk_id, ...payload }
   );
 
-  if (error) return { success: false, error };
+  if (!success) return { success: false, error: new Error(error) };
   return { success: true, id: data?.id };
 }
 
 export async function createQuestions(
   payloads: Database['public']['Tables']['questions']['Insert'][]
 ): Promise<{ success: boolean; ids?: string[]; error?: Error }> {
-  const { data, error } = await safeQuery<{ id: string }[]>(
+  const { success, data, error } = await safeQuery<{ id: string }[]>(
     supabase.from('questions').insert(payloads).select('id'),
     'createQuestions error',
     { count: payloads.length, payloads, _type: 'bulk_create_questions' }
   );
 
-  if (error) return { success: false, error };
+  if (!success) return { success: false, error: new Error(error) };
   return { success: true, ids: data?.map((d) => d.id) || [] };
 }
 
@@ -68,8 +69,8 @@ export async function incrementCourseSession(userId: string, courseId: string) {
     }),
     'incrementCourseSession error',
     { userId, courseId }
-  ).then(({ data, error }) => {
-    if (error) return { data: null, error };
+  ).then(({ success, data, error }) => {
+    if (!success) return { data: null, error: new Error(error) };
     if (Array.isArray(data) && data.length > 0) {
       return { data: data[0], error: null };
     }
@@ -84,7 +85,7 @@ export async function finishQuizSession(stats: {
   userId: string;
   courseId: string;
 }): Promise<{ success: boolean; sessionComplete?: boolean; error?: Error }> {
-  const { error } = await safeQuery<null>(
+  const { success, error } = await safeQuery<null>(
     supabase.from('course_session_counters').upsert(
       {
         course_id: stats.courseId,
@@ -100,7 +101,7 @@ export async function finishQuizSession(stats: {
     { userId: stats.userId, courseId: stats.courseId }
   );
 
-  if (error) return { success: false, error };
+  if (!success) return { success: false, error: new Error(error) };
   return { success: true, sessionComplete: true };
 }
 
@@ -109,13 +110,13 @@ export async function recordQuizProgress(
 ): Promise<{ success: boolean; error?: Error }> {
   if (!isValidUuid(payload.question_id)) return { success: true };
 
-  const { error } = await safeQuery(
+  const { success, error } = await safeQuery(
     supabase.from('user_quiz_progress').insert(payload),
     'recordQuizProgress error',
     { questionId: payload.question_id, ...payload }
   );
 
-  if (error) return { success: false, error };
+  if (!success) return { success: false, error: new Error(error) };
   return { success: true };
 }
 
@@ -124,7 +125,7 @@ export async function upsertUserQuestionStatus(
 ): Promise<{ success: boolean; error?: Error }> {
   if (!isValidUuid(payload.question_id)) return { success: true };
 
-  const { error } = await safeQuery(
+  const { success, error } = await safeQuery(
     supabase
       .from('user_question_status')
       .upsert(payload, { onConflict: 'user_id,question_id' }),
@@ -132,14 +133,14 @@ export async function upsertUserQuestionStatus(
     { questionId: payload.question_id, ...payload, _type: 'upsert_status' }
   );
 
-  if (error) return { success: false, error };
+  if (!success) return { success: false, error: new Error(error) };
   return { success: true };
 }
 
 export async function upsertChunkMastery(
   payload: Database['public']['Tables']['chunk_mastery']['Insert']
 ): Promise<{ success: boolean; error?: Error }> {
-  const { error } = await safeQuery(
+  const { success, error } = await safeQuery(
     supabase
       .from('chunk_mastery')
       .upsert(payload, { onConflict: 'user_id,chunk_id' }),
@@ -147,7 +148,7 @@ export async function upsertChunkMastery(
     { chunkId: payload.chunk_id, ...payload, _type: 'upsert_mastery' }
   );
 
-  if (error) return { success: false, error };
+  if (!success) return { success: false, error: new Error(error) };
   return { success: true };
 }
 
@@ -155,13 +156,13 @@ export async function updateChunkStatus(
   chunkId: string,
   status: Database['public']['Enums']['chunk_generation_status']
 ): Promise<{ success: boolean; error?: Error }> {
-  const { error } = await safeQuery<null>(
+  const { success, error } = await safeQuery<null>(
     supabase.from('note_chunks').update({ status }).eq('id', chunkId),
     'updateChunkStatus error',
     { chunkId, status }
   );
 
-  if (error) return { success: false, error };
+  if (!success) return { success: false, error: new Error(error) };
   return { success: true };
 }
 
@@ -169,7 +170,7 @@ export async function updateChunkAILogic(
   chunkId: string,
   aiLogic: Json
 ): Promise<{ success: boolean; error?: Error }> {
-  const { error } = await safeQuery<null>(
+  const { success, error } = await safeQuery<null>(
     supabase
       .from('note_chunks')
       .update({ ai_logic: aiLogic })
@@ -178,7 +179,7 @@ export async function updateChunkAILogic(
     { chunkId }
   );
 
-  if (error) return { success: false, error };
+  if (!success) return { success: false, error: new Error(error) };
   return { success: true };
 }
 
@@ -190,12 +191,21 @@ export async function submitQuizAnswer(
   timeSpentMs: number,
   selectedAnswer: number | null
 ): Promise<SubmissionResult> {
+  // Validate inputs for security and correctness
+  const validated = parseOrThrow(SubmitQuizAnswerSchema, {
+    questionId,
+    chunkId,
+    responseType,
+    timeSpentMs,
+    selectedAnswer,
+  });
+
   const [currentStatus, questionData] = await Promise.all([
-    getUserQuestionStatus(ctx.userId, questionId),
-    getQuestionData(questionId),
+    getUserQuestionStatus(ctx.userId, validated.questionId),
+    getQuestionData(validated.questionId),
   ]);
 
-  const targetChunkId = chunkId || questionData?.chunk_id || null;
+  const targetChunkId = validated.chunkId || questionData?.chunk_id || null;
   const [chunkMetadata, masteryData, uniqueSolvedCount, totalChunkQuestions] =
     targetChunkId
       ? await Promise.all([
@@ -208,8 +218,8 @@ export async function submitQuizAnswer(
 
   const result = calculateQuizResult(
     currentStatus,
-    responseType,
-    timeSpentMs,
+    validated.responseType,
+    validated.timeSpentMs,
     questionData
       ? {
           bloom_level: questionData.bloom_level,
@@ -233,7 +243,7 @@ export async function submitQuizAnswer(
   const updates: Promise<unknown>[] = [
     upsertUserQuestionStatus({
       user_id: ctx.userId,
-      question_id: questionId,
+      question_id: validated.questionId,
       status: result.newStatus,
       consecutive_success: result.newSuccessCount,
       consecutive_fails: result.newFailsCount,
@@ -241,14 +251,14 @@ export async function submitQuizAnswer(
     }),
     recordQuizProgress({
       user_id: ctx.userId,
-      question_id: questionId,
+      question_id: validated.questionId,
       chunk_id: targetChunkId,
       course_id: ctx.courseId,
-      response_type: responseType,
-      selected_answer: selectedAnswer,
+      response_type: validated.responseType,
+      selected_answer: validated.selectedAnswer,
       session_number: ctx.sessionNumber,
       is_review_question: false,
-      time_spent_ms: timeSpentMs,
+      time_spent_ms: validated.timeSpentMs,
     }),
   ];
 

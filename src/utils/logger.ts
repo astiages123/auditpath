@@ -1,4 +1,5 @@
 import { env } from '@/utils/env';
+import { LogMessage } from '@/types/common';
 
 /**
  * Professional Logger Utility
@@ -6,15 +7,6 @@ import { env } from '@/utils/env';
  * Only logs in development environment to prevent sensitive data leakage in production.
  * All logs are prefixed with [AuditPath] for easy identification in console.
  */
-
-export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
-
-export interface LogMessage {
-  level: LogLevel;
-  message: string;
-  details?: Record<string, unknown>;
-  timestamp: string;
-}
 
 /**
  * Core logger object with environment-aware logging
@@ -68,23 +60,48 @@ export const logger = {
   },
 
   /**
+   * Internal method to create a log entry and handle reporting
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _log(log: LogMessage): void {
+    // TODO: Integrate with error tracking service (e.g., Sentry, LogRocket)
+    // Example implementation:
+    // if (log.level === 'error') {
+    //   Sentry.captureException(log.details, { extra: { message: log.message } });
+    // }
+  },
+
+  /**
    * Create a namespaced logger for specific modules/components
-   * Usage: const log = logger.withPrefix('[QuizAPI]');
    */
   withPrefix(prefix: string) {
+    const wrap =
+      (level: 'info' | 'warn' | 'error' | 'debug') =>
+      (message: string, details?: Record<string, unknown> | Error) => {
+        const fullMessage = `${prefix} ${message}`;
+
+        if (level === 'error') {
+          logger.error(fullMessage, details);
+        } else {
+          logger[level](fullMessage, details as Record<string, unknown>);
+        }
+
+        logger._log({
+          level,
+          message: fullMessage,
+          details:
+            details instanceof Error
+              ? { message: details.message, stack: details.stack }
+              : details,
+          timestamp: new Date().toISOString(),
+        });
+      };
+
     return {
-      info: (message: string, details?: Record<string, unknown>) => {
-        logger.info(`${prefix} ${message}`, details);
-      },
-      warn: (message: string, details?: Record<string, unknown>) => {
-        logger.warn(`${prefix} ${message}`, details);
-      },
-      error: (message: string, details?: Record<string, unknown> | Error) => {
-        logger.error(`${prefix} ${message}`, details);
-      },
-      debug: (message: string, details?: Record<string, unknown>) => {
-        logger.debug(`${prefix} ${message}`, details);
-      },
+      info: wrap('info'),
+      warn: wrap('warn'),
+      error: wrap('error'),
+      debug: wrap('debug'),
     };
   },
 };

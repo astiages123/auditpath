@@ -31,22 +31,6 @@ interface TopicQuotaResult {
   } | null;
 }
 
-async function fetchTopicChunkInfo(courseId: string, topic: string) {
-  const { data: chunk } = await safeQuery<ChunkInput>(
-    supabase
-      .from('note_chunks')
-      .select('id, course_name, metadata, ai_logic')
-      .eq('course_id', courseId)
-      .eq('section_title', topic)
-      .limit(1)
-      .maybeSingle(),
-    'fetchTopicChunkInfo error',
-    { courseId, topic }
-  );
-
-  return chunk;
-}
-
 function calculateTopicQuota(chunk: ChunkInput | null): TopicQuotaResult {
   let quota = { total: 0, antrenman: 0, arsiv: 0, deneme: 0 };
   let importance: 'high' | 'medium' | 'low' = 'medium';
@@ -209,9 +193,20 @@ export async function getTopicCompletionStatus(
   topic: string
 ): Promise<TopicCompletionStats> {
   // 1. Get Chunk Info & Quotas
-  const chunk = await fetchTopicChunkInfo(courseId, topic);
+  const { data: chunk } = await safeQuery<ChunkInput>(
+    supabase
+      .from('note_chunks')
+      .select('id, course_name, metadata, ai_logic')
+      .eq('course_id', courseId)
+      .eq('section_title', topic)
+      .limit(1)
+      .maybeSingle(),
+    'fetchTopicChunkInfo error',
+    { courseId, topic }
+  );
+
   const { quota, importance, concepts, difficultyIndex, aiLogic } =
-    calculateTopicQuota(chunk);
+    calculateTopicQuota(chunk ?? null);
 
   // 2. Get Questions
   const questions = await fetchTopicQuestions(courseId, topic);

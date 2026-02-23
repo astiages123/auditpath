@@ -30,3 +30,9 @@ trigger: always_on
 - `src/utils/`: Gerçekten global yardımcılar (`routes.ts`, `constants.ts`, `env.ts`, `logger.ts`).
 - `src/components/ui/`: Shadcn UI bileşenleri. Yeni görsel bileşen eklenecekse önce burası kontrol edilmeli.
 - `src/components/layout/`: Sayfa düzeni bileşenleri.
+- `src/__tests__/`: Tüm test dosyalarının bulunduğu merkezi dizin.
+
+## Test Yapısı
+
+- **Organizasyon:** Testler `src/__tests__/` altında özellik (feature) bazlı klasörlenmelidir.
+- **Düz Yapı:** Özellik klasörleri altında `logic/`, `utils/` gibi ek alt klasörler **kullanılmamalıdır**. Test dosyaları doğrudan özellik klasörünün içinde yer almalıdır. (Örn: `src/__tests__/quiz/quizCoreLogic.test.ts`)

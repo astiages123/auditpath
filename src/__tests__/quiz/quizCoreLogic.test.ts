@@ -1,9 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  calculateScoreChange,
-  calculateTMax,
   calculateMastery,
+  calculateScoreChange,
   calculateTestResults,
+  calculateTMax,
 } from '@/features/quiz/logic/quizCoreLogic';
 
 describe('quizCoreLogic - calculateScoreChange', () => {
@@ -50,27 +50,100 @@ describe('quizCoreLogic - calculateScoreChange', () => {
 
 describe('quizCoreLogic - calculateTMax', () => {
   it('sıfır içerik için bufferSeconds dahil minimum süre döner', () => {
-    const result = calculateTMax(0, 0, 'knowledge', 10);
+    const result = calculateTMax({
+      charCount: 0,
+      conceptCount: 0,
+      bloomLevel: 'knowledge',
+      bufferSeconds: 10,
+    });
     expect(result).toBeGreaterThan(10000);
   });
 
   it('çok kısa içerik için bile buffer sayesinde makul süre döner', () => {
-    const result = calculateTMax(100, 1, 'knowledge', 10);
+    const result = calculateTMax({
+      charCount: 100,
+      conceptCount: 1,
+      bloomLevel: 'knowledge',
+      bufferSeconds: 10,
+    });
     expect(result).toBeGreaterThan(10000);
   });
 
   it('karmaşık içerik için daha uzun süre döner', () => {
-    const short = calculateTMax(100, 1, 'knowledge', 10);
-    const long = calculateTMax(10000, 10, 'analysis', 10);
+    const short = calculateTMax({
+      charCount: 100,
+      conceptCount: 1,
+      bloomLevel: 'knowledge',
+      bufferSeconds: 10,
+    });
+    const long = calculateTMax({
+      charCount: 10000,
+      conceptCount: 10,
+      bloomLevel: 'analysis',
+      bufferSeconds: 10,
+    });
     expect(long).toBeGreaterThan(short);
   });
 
   it('farklı bloom seviyeleri için farklı süreler döner', () => {
-    const knowledge = calculateTMax(1000, 5, 'knowledge', 10);
-    const application = calculateTMax(1000, 5, 'application', 10);
-    const analysis = calculateTMax(1000, 5, 'analysis', 10);
+    const knowledge = calculateTMax({
+      charCount: 1000,
+      conceptCount: 5,
+      bloomLevel: 'knowledge',
+      bufferSeconds: 10,
+    });
+    const application = calculateTMax({
+      charCount: 1000,
+      conceptCount: 5,
+      bloomLevel: 'application',
+      bufferSeconds: 10,
+    });
+    const analysis = calculateTMax({
+      charCount: 1000,
+      conceptCount: 5,
+      bloomLevel: 'analysis',
+      bufferSeconds: 10,
+    });
     expect(application).toBeGreaterThan(knowledge);
     expect(analysis).toBeGreaterThan(application);
+  });
+
+  it('10 karakterlik metin ile 5000 karakterlik metin süre farkı (isFast eşiği)', () => {
+    const short = calculateTMax({
+      charCount: 10,
+      conceptCount: 1,
+      bloomLevel: 'knowledge',
+      bufferSeconds: 10,
+    }); // Çok kısa
+    const long = calculateTMax({
+      charCount: 5000,
+      conceptCount: 1,
+      bloomLevel: 'knowledge',
+      bufferSeconds: 10,
+    }); // Çok uzun
+    // 10 karakter için okuma süresi çok az olmalı, 5000 karakter için ciddi bir süre eklenmeli
+    expect(long).toBeGreaterThan(short + 30000); // En az 30 saniye fark bekliyoruz
+  });
+
+  it('Bloom seviyesi çarpanlarının uç durumlardaki etkisi', () => {
+    const conceptCount = 10;
+    const knowledge = calculateTMax({
+      charCount: 5000,
+      conceptCount,
+      bloomLevel: 'knowledge',
+      bufferSeconds: 0,
+    });
+    const analysis = calculateTMax({
+      charCount: 5000,
+      conceptCount,
+      bloomLevel: 'analysis',
+      bufferSeconds: 0,
+    });
+
+    // Knowledge: (Reading + (15 + 10*2)*1.0) * 1000
+    // Analysis: (Reading + (15 + 10*2)*1.5) * 1000
+    // Fark: (35 * 0.5) * 1000 = 17500 ms olmalı
+    expect(analysis - knowledge).toBe(17500);
   });
 });
 

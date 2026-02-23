@@ -1,8 +1,8 @@
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
-  calculateShelfStatus,
-  calculateQuestionWeights,
   calculateNextReviewSession,
+  calculateQuestionWeights,
+  calculateShelfStatus,
 } from '@/features/quiz/logic/srsLogic';
 import type { ExamDistributionInput } from '@/features/quiz/types';
 
@@ -31,9 +31,29 @@ describe('srsLogic - calculateShelfStatus', () => {
     expect(result.newSuccessCount).toBe(0.5);
   });
 
-  it('başlangıçta active durumda olur', () => {
-    const result = calculateShelfStatus(0, true, false);
-    expect(result.newStatus).toBe('pending_followup');
+  it('kümülatif etki: 3 hızlı doğru üst üste archived yapar', () => {
+    let successCount = 0;
+    // 1. Doğru
+    let res = calculateShelfStatus(successCount, true, true);
+    successCount = res.newSuccessCount;
+    expect(res.newStatus).toBe('pending_followup');
+
+    // 2. Doğru
+    res = calculateShelfStatus(successCount, true, true);
+    successCount = res.newSuccessCount;
+    expect(res.newStatus).toBe('pending_followup');
+
+    // 3. Doğru
+    res = calculateShelfStatus(successCount, true, true);
+    expect(res.newStatus).toBe('archived');
+    expect(res.newSuccessCount).toBe(3.0);
+  });
+
+  it('sıfırlama mantığı: herhangi bir yanlış süreci tamamen sıfırlar', () => {
+    // 2.5 success varken yanlış yaparsa
+    const res = calculateShelfStatus(2.5, false, true);
+    expect(res.newStatus).toBe('pending_followup');
+    expect(res.newSuccessCount).toBe(0);
   });
 });
 
@@ -94,6 +114,24 @@ describe('srsLogic - calculateQuestionWeights', () => {
     };
     const result = calculateQuestionWeights(input);
     expect(result.size).toBe(2);
+  });
+
+  it('kalan soru (remainder) dağıtımı: 10 soru 3 chunk (3-3-4 olmalı)', () => {
+    const input: ExamDistributionInput = {
+      examTotal: 10,
+      importance: 'medium',
+      chunks: [
+        { id: 'c1', mastery_score: 50, concept_count: 1, difficulty_index: 3 },
+        { id: 'c2', mastery_score: 50, concept_count: 1, difficulty_index: 3 },
+        { id: 'c3', mastery_score: 50, concept_count: 1, difficulty_index: 3 },
+      ],
+    };
+    const result = calculateQuestionWeights(input);
+    const sum = Array.from(result.values()).reduce((a, b) => a + b, 0);
+    expect(sum).toBe(10);
+    // En az bir tanesi 4 almalı (remainder dağıtımı)
+    const counts = Array.from(result.values()).sort();
+    expect(counts).toEqual([3, 3, 4]);
   });
 });
 

@@ -1,5 +1,4 @@
-import { useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import {
   Loader2,
   AlertCircle,
@@ -14,7 +13,6 @@ import { cn, slugify } from '@/utils/stringHelpers';
 import { ROUTES } from '@/utils/routes';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 
-// New Components
 import {
   MarkdownSection,
   markdownComponents,
@@ -22,79 +20,38 @@ import {
   LocalToC,
 } from '@/features/notes/components';
 
-// New Hooks
-import { useNotesNavigation } from '@/features/notes/hooks/useNotesNavigation';
-import { useTableOfContents } from '@/features/notes/hooks/useTableOfContents';
 import { useNotesData } from '@/features/notes/hooks/useNotesData';
+import { useNotesPage } from '@/features/notes/hooks/useNotesPage';
 
 export default function NotesPage() {
   const { courseSlug, topicSlug } = useParams<{
     courseSlug: string;
     topicSlug?: string;
   }>();
-  const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Use Centralized Data Hook
   const { chunks, loading, error, courseName, isPending } = useNotesData({
     courseSlug: courseSlug || '',
     userId: user?.id,
   });
 
-  const activeChunkId = topicSlug
-    ? topicSlug
-    : chunks.length > 0
-      ? slugify(chunks[0].section_title)
-      : '';
-
-  // Use Custom Hooks
   const {
+    activeChunkId,
+    readingTimeMinutes,
     mainContentRef,
     scrollProgress,
-    isProgrammaticScroll,
     handleScrollToId,
     scrollToTop,
-  } = useNotesNavigation({
+    activeSection,
+    setActiveSection,
+    currentChunkToC,
+    handleGlobalClick,
+  } = useNotesPage({
     courseSlug,
-    loading,
+    topicSlug,
     chunks,
-    activeChunkId,
+    loading,
   });
-
-  const { activeSection, setActiveSection, currentChunkToC } =
-    useTableOfContents({
-      chunks,
-      loading,
-      activeChunkId,
-      mainContentRef,
-      isProgrammaticScroll,
-    });
-
-  // chunks filter'ından sonra aktif chunk'ı bul
-  const activeChunk = chunks.find(
-    (c) => slugify(c.section_title) === activeChunkId
-  );
-
-  // Kelime sayısından dakika hesapla (ortalama 200 kelime/dk)
-  const readingTimeMinutes = activeChunk?.content
-    ? Math.max(1, Math.ceil(activeChunk.content.split(/\s+/).length / 200))
-    : undefined;
-
-  // Update URL if no topicSlug is present but we have chunks
-  useEffect(() => {
-    if (!loading && chunks.length > 0 && !topicSlug && courseSlug) {
-      const firstChunkId = slugify(chunks[0].section_title);
-      navigate(`${ROUTES.NOTES}/${courseSlug}/${firstChunkId}`, {
-        replace: true,
-      });
-    }
-  }, [loading, chunks, topicSlug, courseSlug, navigate]);
-
-  const handleGlobalClick = (chunkId: string) => {
-    if (courseSlug) {
-      navigate(`${ROUTES.NOTES}/${courseSlug}/${chunkId}`);
-    }
-  };
 
   if (loading) {
     return (
@@ -125,7 +82,6 @@ export default function NotesPage() {
   return (
     <ErrorBoundary>
       <div className="flex h-screen overflow-hidden bg-background text-foreground font-sans selection:bg-primary/20">
-        {/* 1. Left Panel: Global Navigation */}
         <aside className="w-60 shrink-0 bg-muted/20 backdrop-blur-xl hidden lg:block pt-5 shadow-[1px_0_10px_0_rgba(0,0,0,0.02)]">
           <div className="h-20 flex flex-col justify-center px-6 relative overflow-hidden mb-4">
             <Link
@@ -192,7 +148,6 @@ export default function NotesPage() {
           </div>
         </main>
 
-        {/* 3. Right Panel: Local ToC */}
         <aside
           className="w-64 shrink-0 bg-muted/20 backdrop-blur-xl hidden xl:flex flex-col h-full shadow-[-1px_0_10px_0_rgba(0,0,0,0.02)]"
           style={{
@@ -215,7 +170,6 @@ export default function NotesPage() {
           </div>
         </aside>
 
-        {/* Scroll to Top Button */}
         <button
           onClick={scrollToTop}
           className={cn(

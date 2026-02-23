@@ -423,7 +423,7 @@ export async function getChunkMetadata(chunkId: string): Promise<{
     'getChunkMetadata error',
     { chunkId }
   );
-  return data;
+  return data ?? null;
 }
 
 export async function getChunkWithContent(chunkId: string) {

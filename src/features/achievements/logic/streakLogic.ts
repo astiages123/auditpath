@@ -30,13 +30,40 @@ export function calculateStreak(
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
       const dayOfWeek = checkDate.getDay();
-      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
 
-      if (isWeekend) {
-        // Hafta sonu (Cumartesi veya Pazar) aktif değilse streak bozulmaz
-        // Sadece bir gün geri gideriz
+      // Yüksek Lisans Günleri (Salı, Çarşamba, Perşembe) tamamen muaf
+      if ([2, 3, 4].includes(dayOfWeek)) {
         checkDate.setDate(checkDate.getDate() - 1);
         continue;
+      }
+
+      // Hafta sonu kontrolü
+      if (dayOfWeek === 0 || dayOfWeek === 6) {
+        // İki hafta sonu gününün de boş olup olmadığını kontrol et
+        const otherWeekendDay = new Date(checkDate);
+        if (dayOfWeek === 0) {
+          otherWeekendDay.setDate(checkDate.getDate() - 1); // Cumartesi'ye bak
+        } else {
+          otherWeekendDay.setDate(checkDate.getDate() + 1); // Pazar'a bak
+        }
+
+        const otherWeekendDayStr = formatDateKey(otherWeekendDay);
+        if (activeDays.has(otherWeekendDayStr)) {
+          // Hafta sonundan biri dolu, seri bozulmaz
+          checkDate.setDate(checkDate.getDate() - 1);
+          continue;
+        } else {
+          // İki gün de boş!
+          // Eğer bugün (ilk bakışta) boşluk veriyorsak ve hala ilk gündeysek (gapCount)
+          // hemen kırmayız, ama seri içindeysek kırılır.
+          if (consecutiveDays === 0 && gapCount === 0) {
+            gapCount++;
+            checkDate.setDate(checkDate.getDate() - 1);
+            continue;
+          } else {
+            break;
+          }
+        }
       }
 
       // Hafta içi ve aktif değil
@@ -99,25 +126,35 @@ export function calculateStreakMilestones(activeDays: string[]): {
       if (diffDays === 1) {
         // Ardışık gün
         currentStreak++;
-      } else if (diffDays <= 3) {
-        // Hafta sonu izni kontrolü (1 veya 2 gün boşluk)
-        let hasOnlyWeekendGaps = true;
+        let hasBothWeekendGaps = false;
+        let skippedSaturday = false;
+        let skippedSunday = false;
+
         for (let j = 1; j < diffDays; j++) {
           const skippedDate = new Date(
             lastActiveDate.getTime() + j * 24 * 60 * 60 * 1000
           );
-          const skippedDay = skippedDate.getDay(); // 0=Pazar, 6=Cumartesi
-          if (skippedDay !== 0 && skippedDay !== 6) {
-            hasOnlyWeekendGaps = false;
+          const skippedDay = skippedDate.getDay(); // 0=Pazar, 6=Cumartesi, 2=Salı, 3=Çarşamba, 4=Perşembe
+
+          if (skippedDay === 6) skippedSaturday = true;
+          if (skippedDay === 0) skippedSunday = true;
+
+          // Eğer çalışma olmayan gün Hafta sonu veya Yüksek Lisans günü DEĞİLSE, streak kırılır
+          if (![0, 6, 2, 3, 4].includes(skippedDay)) {
+            hasBothWeekendGaps = true; // Kırılmış kabul et (hafta içi boşluk)
             break;
           }
         }
 
-        if (hasOnlyWeekendGaps) {
-          // Sadece hafta sonu boşlukları var - streak devam
+        if (skippedSaturday && skippedSunday) {
+          hasBothWeekendGaps = true;
+        }
+
+        if (!hasBothWeekendGaps) {
+          // Sadece izinli günler veya TEK HAFTA SONU boşluğu var - streak devam
           currentStreak++;
         } else {
-          // Hafta içi boşluk - streak kırıldı
+          // Hafta içi boşluk veya İKİ HAFTA SONU günü boşluğu - streak kırıldı
           currentStreak = 1;
         }
       } else {

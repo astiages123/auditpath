@@ -97,12 +97,32 @@ export function useCelebration() {
     }
   }, [user, stats, syncAchievements]);
 
+  const triggerCourseCelebration = useCallback(() => {
+    triggerManualSync();
+  }, [triggerManualSync]);
+
+  const triggerCategoryCelebration = useCallback(() => {
+    triggerManualSync();
+  }, [triggerManualSync]);
+
+  const revokeCourseCelebration = useCallback(() => {
+    triggerManualSync();
+  }, [triggerManualSync]);
+
+  const revokeCategoryCelebration = useCallback(() => {
+    triggerManualSync();
+  }, [triggerManualSync]);
+
+  const revokeRankCelebration = useCallback(() => {
+    triggerManualSync();
+  }, [triggerManualSync]);
+
   return {
-    checkCelebrations: () => {}, // Deprecated/No-op as query handles it
-    triggerCourseCelebration: triggerManualSync,
-    triggerCategoryCelebration: triggerManualSync,
-    revokeCourseCelebration: triggerManualSync,
-    revokeCategoryCelebration: triggerManualSync,
-    revokeRankCelebration: triggerManualSync,
+    checkCelebrations: useCallback(() => {}, []),
+    triggerCourseCelebration,
+    triggerCategoryCelebration,
+    revokeCourseCelebration,
+    revokeCategoryCelebration,
+    revokeRankCelebration,
   };
 }

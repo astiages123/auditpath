@@ -19,6 +19,7 @@ import 'katex/dist/katex.min.css';
 import { cn, slugify } from '@/utils/stringHelpers';
 import { CodeBlock } from './CodeBlock';
 import { Lightbulb } from 'lucide-react';
+import React, { useMemo } from 'react';
 
 // --- Helpers ---
 
@@ -79,33 +80,39 @@ export const removeFirstBulb = (node: ReactNode): ReactNode => {
 // --- Custom Components ---
 
 export const markdownComponents = {
-  h1: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
-    const text = getText(children);
-    const subId = slugify(text);
-    return (
-      <h3 id={subId} className="scroll-mt-28" {...props}>
-        {children}
-      </h3>
-    );
-  },
-  h2: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
-    const text = getText(children);
-    const subId = slugify(text);
-    return (
-      <h4 id={subId} className="scroll-mt-28" {...props}>
-        {children}
-      </h4>
-    );
-  },
-  h3: ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
-    const text = getText(children);
-    const subId = slugify(text);
-    return (
-      <h5 id={subId} className="scroll-mt-28" {...props}>
-        {children}
-      </h5>
-    );
-  },
+  h1: React.memo(
+    ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
+      const text = useMemo(() => getText(children), [children]);
+      const subId = useMemo(() => slugify(text), [text]);
+      return (
+        <h3 id={subId} className="scroll-mt-28" {...props}>
+          {children}
+        </h3>
+      );
+    }
+  ),
+  h2: React.memo(
+    ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
+      const text = useMemo(() => getText(children), [children]);
+      const subId = useMemo(() => slugify(text), [text]);
+      return (
+        <h4 id={subId} className="scroll-mt-28" {...props}>
+          {children}
+        </h4>
+      );
+    }
+  ),
+  h3: React.memo(
+    ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
+      const text = useMemo(() => getText(children), [children]);
+      const subId = useMemo(() => slugify(text), [text]);
+      return (
+        <h5 id={subId} className="scroll-mt-28" {...props}>
+          {children}
+        </h5>
+      );
+    }
+  ),
   p: ({
     node,
     ...props
@@ -123,7 +130,7 @@ export const markdownComponents = {
       />
     );
   },
-  img: ({ ...props }: ImgHTMLAttributes<HTMLImageElement>) => (
+  img: React.memo(({ ...props }: ImgHTMLAttributes<HTMLImageElement>) => (
     <span className="block my-1 mb-6 w-full text-center">
       <Zoom classDialog="custom-zoom-modal">
         <img
@@ -137,47 +144,48 @@ export const markdownComponents = {
         <span className="image-caption">{props.alt}</span>
       )}
     </span>
-  ),
-  blockquote: ({
-    children,
-    ...props
-  }: BlockquoteHTMLAttributes<HTMLQuoteElement>) => {
-    const text = getText(children);
-    const isCallout = text.trim().startsWith('💡');
+  )),
+  blockquote: React.memo(
+    ({ children, ...props }: BlockquoteHTMLAttributes<HTMLQuoteElement>) => {
+      const text = useMemo(() => getText(children), [children]);
+      const isCallout = useMemo(() => text.trim().startsWith('💡'), [text]);
+      const cleanChildren = useMemo(
+        () => removeFirstBulb(children),
+        [children]
+      );
 
-    if (isCallout) {
-      const cleanChildren = removeFirstBulb(children);
-
-      return (
-        <div className="not-prose my-6">
-          <div className="callout-box">
-            {/* Sol kolon: ikon + dikey çizgi */}
-            <div className="flex flex-col items-center gap-2 shrink-0">
-              <div className="callout-icon-wrapper">
-                <Lightbulb className="size-4 text-primary" />
+      if (isCallout) {
+        return (
+          <div className="not-prose my-6">
+            <div className="callout-box">
+              {/* Sol kolon: ikon + dikey çizgi */}
+              <div className="flex flex-col items-center gap-2 shrink-0">
+                <div className="callout-icon-wrapper">
+                  <Lightbulb className="size-4 text-primary" />
+                </div>
+                <div className="w-px flex-1 bg-primary/20" />
               </div>
-              <div className="w-px flex-1 bg-primary/20" />
-            </div>
 
-            {/* Sağ kolon: label + içerik */}
-            <div className="flex-1 min-w-0 flex flex-col gap-2">
-              <div className="callout-label">ÖRNEK / SORU</div>
-              <div className="callout-content">{cleanChildren}</div>
+              {/* Sağ kolon: label + içerik */}
+              <div className="flex-1 min-w-0 flex flex-col gap-2">
+                <div className="callout-label">ÖRNEK / SORU</div>
+                <div className="callout-content">{cleanChildren}</div>
+              </div>
             </div>
           </div>
-        </div>
+        );
+      }
+
+      return (
+        <blockquote
+          className="not-prose border-l-4 border-primary/40 pl-4 py-1 italic text-muted-foreground my-6"
+          {...props}
+        >
+          {children}
+        </blockquote>
       );
     }
-
-    return (
-      <blockquote
-        className="not-prose border-l-4 border-primary/40 pl-4 py-1 italic text-muted-foreground my-6"
-        {...props}
-      >
-        {children}
-      </blockquote>
-    );
-  },
+  ),
   ul: ({ ...props }: HTMLAttributes<HTMLUListElement>) => <ul {...props} />,
   ol: ({ ...props }: OlHTMLAttributes<HTMLOListElement>) => <ol {...props} />,
   li: ({ children, ...props }: LiHTMLAttributes<HTMLLIElement>) => (
@@ -187,11 +195,11 @@ export const markdownComponents = {
     <strong {...props}>{children}</strong>
   ),
   code: CodeBlock,
-  table: ({ ...props }: TableHTMLAttributes<HTMLTableElement>) => (
+  table: React.memo(({ ...props }: TableHTMLAttributes<HTMLTableElement>) => (
     <div className="not-prose overflow-x-auto my-10 border border-primary/10 rounded-2xl shadow-xl shadow-primary/5 overflow-hidden bg-card/30 backdrop-blur-sm">
       <table className="w-full text-sm text-left" {...props} />
     </div>
-  ),
+  )),
   thead: ({ ...props }: HTMLAttributes<HTMLTableSectionElement>) => (
     <thead
       className="bg-primary/5 text-xs uppercase text-muted-foreground"

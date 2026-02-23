@@ -6,15 +6,24 @@
 /**
  * Sanal gün mantığı: Gece 04:00'dan önce ise bir önceki güne ait sayılır.
  * Bu, gece geç saatlere kadar çalışan kullanıcıların aynı "gün" içinde kalmasını sağlar.
- * @param date - İşlenecek tarih (default: şimdi)
+ * @param date - İşlenecek tarih
  * @returns Sanal gün olarak ayarlanmış Date nesnesi (mutate edilmez, yeni Date döner)
  */
-export function getVirtualDate(date?: Date): Date {
-  const d = date ? new Date(date) : new Date();
+export function getVirtualDate(date: Date = new Date()): Date {
+  const d = new Date(date);
   if (d.getHours() < 4) {
     d.setDate(d.getDate() - 1);
   }
   return d;
+}
+
+function getVirtualDayStartInternal(date?: Date): Date {
+  const now = date ? new Date(date) : new Date();
+  if (now.getHours() < 4) {
+    now.setDate(now.getDate() - 1);
+  }
+  now.setHours(4, 0, 0, 0);
+  return now;
 }
 
 /**
@@ -23,15 +32,7 @@ export function getVirtualDate(date?: Date): Date {
  * @returns Bugünün 04:00'ındaki Date nesnesi
  */
 export function getVirtualDayStart(date?: Date): Date {
-  const now = date ? new Date(date) : new Date();
-  const today = new Date(now);
-
-  // 00:00 - 04:00 arası ise bir önceki güne ait
-  if (now.getHours() < 4) {
-    today.setDate(today.getDate() - 1);
-  }
-  today.setHours(4, 0, 0, 0);
-  return today;
+  return getVirtualDayStartInternal(date);
 }
 
 /**

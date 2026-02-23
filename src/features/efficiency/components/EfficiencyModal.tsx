@@ -18,7 +18,7 @@ export const EfficiencyModal = ({ title, trigger, children }: ModalProps) => {
   return (
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-card/40 border-border scrollbar-hide">
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-card border-border scrollbar-hide">
         <DialogHeader>
           <DialogTitle className="text-2xl font-heading">{title}</DialogTitle>
           <DialogDescription className="sr-only">

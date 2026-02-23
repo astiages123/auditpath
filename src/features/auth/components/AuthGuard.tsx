@@ -14,9 +14,7 @@ export function AuthGuard() {
   //     }
   // }, [user, loading]);
 
-  if (loading) {
-    return <GlobalPageSkeleton />;
-  }
+  if (loading) return <GlobalPageSkeleton />;
 
   if (!user) {
     return (
@@ -34,6 +32,8 @@ export function AuthGuard() {
                   src={logo}
                   alt="AuditPath Logo"
                   className="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
+                  loading="lazy"
+                  decoding="async"
                 />
               </div>
               <div className="text-center space-y-2">
