@@ -9,3 +9,5 @@ export { GlobalNavigation } from './GlobalNavigation';
 export { LocalToC } from './LocalToC';
 export { ToCTitleRenderer } from './ToCTitleRenderer';
 export { ScrollToTopButton } from './ScrollToTopButton';
+export { NotesCourseOverview } from './NotesCourseOverview';
+export { SyncButton } from './SyncButton';

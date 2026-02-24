@@ -64,16 +64,16 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
   }
 
   return (
-    <div className="flex-1 flex overflow-hidden">
+    <div className="flex-1 flex min-h-full">
       {/* Table of Contents / Sidebar */}
       {!isLoading && categories.length > 0 && (
-        <aside className="hidden lg:flex w-72 flex-col border-r border-border/10 bg-card/20 py-10 px-6 overflow-hidden">
+        <aside className="hidden lg:flex w-72 flex-col border-r border-border/10 bg-card/20 py-10 px-6 overflow-hidden sticky top-0 h-screen">
           <div className="flex flex-col space-y-8">
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-primary">
-                <Brain className="w-5 h-5" />
-                <h3 className="text-sm font-black uppercase tracking-widest">
-                  Kategori Gezgini
+                <Brain className="size-5" />
+                <h3 className="text-sm font-black uppercase tracking-widest text-primary">
+                  Konu Başlıkları
                 </h3>
               </div>
               <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider pl-7">
@@ -100,7 +100,7 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                       className="group flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-primary/5 border border-transparent hover:border-primary/10 active:bg-primary/10"
                     >
                       <div className="relative flex items-center justify-center shrink-0">
-                        <CatIcon className="w-5 h-5 text-muted-foreground/40" />
+                        <CatIcon className="size-5 text-muted-foreground/40 group-hover:text-primary transition-colors" />
                       </div>
                       <span className="text-sm font-black uppercase tracking-wider text-muted-foreground group-hover:text-foreground">
                         {category.name}
@@ -114,7 +114,7 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar p-6 lg:p-10 space-y-12 scroll-smooth">
+      <div className="flex-1 flex flex-col p-6 lg:p-10 pt-0 space-y-12 scroll-smooth">
         {/* Categorized Course Strips - Netflix Style */}
         {[...categories]
           .sort(
@@ -126,7 +126,7 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
             <section
               key={category.id}
               id={`category-${catIdx}`}
-              className="space-y-6 pt-2 first:pt-0"
+              className="space-y-8 pt-4 first:pt-0"
             >
               <div className="flex items-center justify-between group">
                 <div className="flex items-center gap-3">
@@ -135,8 +135,8 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                       CATEGORY_THEMES[category.name.toUpperCase()];
                     const CatIcon = categoryTheme?.Icon || Brain;
                     return (
-                      <div className="w-10 h-10 rounded-xl bg-secondary/50 flex items-center justify-center text-primary/80">
-                        <CatIcon className="w-5 h-5" />
+                      <div className="w-12 h-12 rounded-2xl bg-secondary/50 flex items-center justify-center text-primary/80">
+                        <CatIcon className="size-5" />
                       </div>
                     );
                   })()}
@@ -144,7 +144,7 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                     {category.name}
                   </h2>
                 </div>
-                <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground bg-secondary/50 px-3 py-1 rounded-full border">
+                <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground bg-secondary/50 px-4 py-1.5 rounded-full border">
                   {category.courses?.length || 0} Ders
                 </div>
               </div>
@@ -180,7 +180,7 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                         <div className="p-8 space-y-6">
                           <div className="flex items-start justify-between">
                             <div className="w-14 h-14 rounded-2xl bg-secondary/80 flex items-center justify-center text-foreground/70 shadow-inner">
-                              <Icon className="w-7 h-7" />
+                              <Icon className="size-5" />
                             </div>
                             <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
                               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -197,7 +197,7 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                           <div className="space-y-3 pt-2">
                             <div className="flex justify-between items-end text-[10px] font-black uppercase tracking-widest text-muted-foreground">
                               <span className="flex items-center gap-1.5">
-                                <Brain className="w-3 h-3 text-primary/60" />
+                                <Brain className="size-5 text-primary/60" />
                                 İlerleme
                               </span>
                               <span className="text-foreground text-sm tracking-tight">
@@ -218,12 +218,12 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                           <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground">
                               <div className="flex items-center gap-2">
-                                <Calendar className="w-3.5 h-3.5 text-primary/40" />
+                                <Calendar className="size-5 text-primary/40" />
                                 <span>Son: {lastStudy}</span>
                               </div>
                               {stats?.difficultSubject && (
                                 <div className="flex items-center gap-2 text-orange-500/80">
-                                  <AlertTriangle className="w-3.5 h-3.5" />
+                                  <AlertTriangle className="size-5" />
                                   <span className="truncate max-w-[120px]">
                                     {stats.difficultSubject}
                                   </span>
@@ -232,7 +232,7 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                             </div>
                             <div className="flex items-center gap-1 text-[11px] font-black text-primary uppercase tracking-wider">
                               Sınava Başla
-                              <ArrowRight className="w-4 h-4" />
+                              <ArrowRight className="size-5 translate-x-0 group-hover:translate-x-1 transition-transform" />
                             </div>
                           </div>
                         </div>

@@ -26,12 +26,12 @@ import { supabase } from '@/lib/supabase';
 import { slugify } from '@/utils/stringHelpers';
 
 const ROUTE_LABELS: Record<string, string> = {
-  achievements: 'Başarımlar',
-  efficiency: 'İstatistikler',
-  analytics: 'Analiz',
+  achievements: 'Başarılar',
+  statistics: 'İstatistikler',
+  costs: 'Maliyet Analizi',
   notes: 'Notlar',
-  quiz: 'Sınav Merkezi',
-  roadmap: 'Yol Haritası',
+  quiz: 'Sorular',
+  roadmap: 'Yolculuk',
 };
 
 export function GlobalBreadcrumb() {
@@ -104,7 +104,7 @@ export function GlobalBreadcrumb() {
   });
 
   return (
-    <div className="mb-7">
+    <div className="">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -131,9 +131,9 @@ export function GlobalBreadcrumb() {
                         return <LineSquiggle className="size-4" />;
                       if (pathValue === 'achievements')
                         return <Trophy className="size-4" />;
-                      if (pathValue === 'efficiency')
+                      if (pathValue === 'statistics')
                         return <ChartScatter className="size-4" />;
-                      if (pathValue === 'analytics')
+                      if (pathValue === 'costs')
                         return <HandCoins className="size-4" />;
                       if (pathValue === 'notes' && crumb.originalIdx === 0)
                         return <BookCheck className="size-4" />;
@@ -158,9 +158,9 @@ export function GlobalBreadcrumb() {
                           return <LineSquiggle className="size-4" />;
                         if (pathValue === 'achievements')
                           return <Trophy className="size-4" />;
-                        if (pathValue === 'efficiency')
+                        if (pathValue === 'statistics')
                           return <ChartScatter className="size-4" />;
-                        if (pathValue === 'analytics')
+                        if (pathValue === 'costs')
                           return <HandCoins className="size-4" />;
                         if (pathValue === 'notes' && crumb.originalIdx === 0)
                           return <BookCheck className="size-4" />;

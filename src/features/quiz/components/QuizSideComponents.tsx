@@ -70,44 +70,50 @@ export function TopicSidebar({
             <p className="text-sm">Konu bulunamadı</p>
           </div>
         ) : (
-          topics.map((topic, index) => (
-            <button
-              key={index}
-              onClick={() => onSelectTopic(topic)}
-              className={cn(
-                'w-full text-left p-3 rounded-lg transition-all duration-150',
-                selectedTopic?.name === topic.name
-                  ? 'bg-primary-soft border border-primary-soft-border'
-                  : 'hover:bg-muted/40 border border-transparent'
-              )}
-            >
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                  <FileText
-                    className={cn(
-                      'w-4 h-4 shrink-0',
-                      selectedTopic?.name === topic.name
-                        ? 'text-primary'
-                        : 'text-muted-foreground/60'
-                    )}
-                  />
+          topics.map((topic, index) => {
+            const isActive = selectedTopic?.name === topic.name;
+            return (
+              <button
+                key={index}
+                onClick={() => onSelectTopic(topic)}
+                className={cn(
+                  'group relative w-full text-left flex items-center gap-3 px-3 py-3 mx-1 rounded-xl transition-all duration-300',
+                  isActive
+                    ? 'bg-primary/10 border border-primary/20'
+                    : 'border border-transparent hover:bg-white/5 hover:border-white/5'
+                )}
+              >
+                {/* İkon badge */}
+                <div
+                  className={cn(
+                    'shrink-0 w-6 h-6 rounded-lg flex items-center justify-center transition-all',
+                    isActive
+                      ? 'bg-primary text-primary-foreground border border-primary/20 shadow-lg shadow-primary/20'
+                      : 'bg-foreground/10 text-muted-foreground group-hover:bg-foreground/20 group-hover:text-foreground'
+                  )}
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                </div>
+
+                <div className="flex-1 min-w-0 flex flex-col">
                   <span
                     className={cn(
-                      'text-sm truncate',
-                      selectedTopic?.name === topic.name
-                        ? 'text-foreground font-medium'
-                        : 'text-muted-foreground'
+                      'text-[13px] leading-snug transition-all',
+                      isActive
+                        ? 'text-foreground font-semibold'
+                        : 'text-muted-foreground group-hover:text-foreground font-normal'
                     )}
                   >
                     {topic.name}
                   </span>
                 </div>
+
                 {topic.isCompleted && (
-                  <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
                 )}
-              </div>
-            </button>
-          ))
+              </button>
+            );
+          })
         )}
       </div>
     </div>
@@ -131,19 +137,19 @@ export function TopicList({
         <button
           key={index}
           onClick={() => onSelectTopic(topic)}
-          className="w-full text-left p-3 rounded-lg hover:bg-muted/40 border border-transparent"
+          className="group relative w-full text-left flex items-center gap-3 px-3 py-3 mx-1 rounded-xl transition-all duration-300 border border-transparent hover:bg-white/5 hover:border-white/5"
         >
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5 flex-1 min-w-0">
-              <FileText className="w-4 h-4 text-muted-foreground/60" />
-              <span className="text-sm truncate text-muted-foreground">
-                {topic.name}
-              </span>
-            </div>
-            {topic.isCompleted && (
-              <CheckCircle className="w-4 h-4 text-emerald-500" />
-            )}
+          <div className="shrink-0 w-6 h-6 rounded-lg flex items-center justify-center bg-foreground/10 text-muted-foreground group-hover:bg-foreground/20 group-hover:text-foreground">
+            <FileText className="w-3.5 h-3.5" />
           </div>
+          <div className="flex-1 min-w-0">
+            <span className="text-[13px] leading-snug font-normal text-muted-foreground group-hover:text-foreground">
+              {topic.name}
+            </span>
+          </div>
+          {topic.isCompleted && (
+            <CheckCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+          )}
         </button>
       ))}
     </div>

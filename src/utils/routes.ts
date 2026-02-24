@@ -1,8 +1,8 @@
 export const ROUTES = {
   HOME: '/',
   ACHIEVEMENTS: '/achievements',
-  EFFICIENCY: '/efficiency',
-  ANALYTICS: '/analytics',
+  STATISTICS: '/statistics',
+  COSTS: '/costs',
   NOTES: '/notes',
   QUIZ: '/quiz',
   ROADMAP: '/roadmap',

@@ -58,7 +58,7 @@ export const GlobalNavigation = memo(function GlobalNavigation({
               id={`nav-item-${chunkId}`}
               to={url}
               className={cn(
-                'group relative flex items-start gap-3 px-3 py-3 mx-1 rounded-xl transition-all duration-300',
+                'group relative flex items-center gap-3 px-3 py-3 mx-1 rounded-xl transition-all duration-300',
                 isActive
                   ? 'bg-primary/10 border border-primary/20'
                   : 'border border-transparent hover:bg-white/5 hover:border-white/5'
@@ -67,10 +67,10 @@ export const GlobalNavigation = memo(function GlobalNavigation({
               {/* Numara badge */}
               <span
                 className={cn(
-                  'shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-bold font-mono mt-0.5 transition-all',
+                  'shrink-0 w-6 h-6 rounded-lg flex items-center justify-center text-[11px] font-bold font-mono transition-all',
                   isActive
                     ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground group-hover:bg-white/10'
+                    : 'bg-foreground/10 text-muted-foreground group-hover:bg-foreground/20 group-hover:text-foreground'
                 )}
               >
                 {index + 1}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RefreshCcwDot, Loader2 } from 'lucide-react';
+import { CloudSync, Loader2 } from 'lucide-react';
 import { invokeNotionSync } from '../services/noteService';
 import { toast } from 'sonner';
 import { cn } from '@/utils/stringHelpers';
@@ -76,7 +76,7 @@ export function SyncButton({
       {isSyncing ? (
         <Loader2 className="size-9 animate-spin text-primary shrink-0" />
       ) : (
-        <RefreshCcwDot className="size-5 text-emerald-300 shrink-0" />
+        <CloudSync className="size-5 text-emerald-300 shrink-0" />
       )}
       {showLabel && <span>Not Senkronizasyonu</span>}
     </Button>

@@ -1,4 +1,5 @@
 import { GlassCard } from '@/shared/components/GlassCard';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Brain, AlertTriangle, Lightbulb, Zap } from 'lucide-react';
 import { CardHeader } from './CardElements';
 import { cn } from '@/utils/stringHelpers';
@@ -22,12 +23,29 @@ export const CognitiveInsightsCard = ({
 }: CognitiveInsightsCardProps) => {
   if (loading) {
     return (
-      <GlassCard className="h-full flex items-center justify-center p-6 min-h-[300px]">
-        <div className="animate-pulse flex flex-col items-center gap-2">
-          <Brain className="w-8 h-8 text-white/20" />
-          <span className="text-sm text-muted-foreground/50">
-            Analizler yükleniyor...
-          </span>
+      <GlassCard className="h-full flex flex-col p-6 min-h-[300px] animate-pulse">
+        <div className="flex justify-between items-start mb-6">
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-10 rounded-xl" />
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+          </div>
+          <Skeleton className="h-8 w-12" />
+        </div>
+        <div className="flex-1 space-y-6">
+          <div className="space-y-3">
+            <Skeleton className="h-3 w-32" />
+            <Skeleton className="h-16 w-full rounded-lg" />
+          </div>
+          <div className="space-y-3">
+            <Skeleton className="h-3 w-32" />
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full rounded-lg" />
+              <Skeleton className="h-10 w-full rounded-lg" />
+            </div>
+          </div>
         </div>
       </GlassCard>
     );

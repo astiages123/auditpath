@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
-import RootLayout from '@/components/layout/RootLayout';
+import DashboardLayout from '@/components/layout/dashboard/DashboardLayout';
 import { AuthGuard } from '@/features/auth/components/AuthGuard';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { GlobalPageSkeleton } from '@/shared/components/SkeletonTemplates';
@@ -12,10 +12,12 @@ import { Outlet } from 'react-router-dom';
 const Home = lazy(() => import('@/pages/Home'));
 const Achievements = lazy(() => import('@/pages/Achievements'));
 
-const EfficiencyPage = lazy(() => import('@/pages/Efficiency'));
+const StatisticsPage = lazy(() => import('@/pages/Statistics'));
 const NotesPage = lazy(() => import('@/pages/Notes'));
-const AnalyticsPage = lazy(() => import('@/pages/Analytics'));
+const NotesLibrary = lazy(() => import('@/pages/NotesLibrary'));
+const CostsPage = lazy(() => import('@/pages/Costs'));
 const QuizPage = lazy(() => import('@/pages/Quiz'));
+const QuizLibrary = lazy(() => import('@/pages/QuizLibrary'));
 const RoadmapPage = lazy(() => import('@/pages/Roadmap'));
 
 // Loading fallback component
@@ -34,15 +36,16 @@ function App() {
           <Route element={<AuthGuard />}>
             <Route
               element={
-                <RootLayout>
+                <DashboardLayout>
                   <Outlet />
-                </RootLayout>
+                </DashboardLayout>
               }
             >
               <Route path={ROUTES.HOME} element={<Home />} />
               <Route path={ROUTES.ACHIEVEMENTS} element={<Achievements />} />
-              <Route path={ROUTES.EFFICIENCY} element={<EfficiencyPage />} />
+              <Route path={ROUTES.STATISTICS} element={<StatisticsPage />} />
 
+              <Route path={ROUTES.NOTES} element={<NotesLibrary />} />
               <Route
                 path={`${ROUTES.NOTES}/:courseSlug`}
                 element={<NotesPage />}
@@ -51,8 +54,8 @@ function App() {
                 path={`${ROUTES.NOTES}/:courseSlug/:topicSlug`}
                 element={<NotesPage />}
               />
-              <Route path={ROUTES.ANALYTICS} element={<AnalyticsPage />} />
-              <Route path={ROUTES.QUIZ} element={<QuizPage />} />
+              <Route path={ROUTES.COSTS} element={<CostsPage />} />
+              <Route path={ROUTES.QUIZ} element={<QuizLibrary />} />
               <Route
                 path={`${ROUTES.QUIZ}/:courseSlug`}
                 element={<QuizPage />}

@@ -6,6 +6,9 @@ interface UIStore {
   toggleMobileMenu: () => void;
   isProgramOpen: boolean;
   setProgramOpen: (open: boolean) => void;
+  isSidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSidebar: () => void;
 }
 
 export const useUIStore = createBaseStore<UIStore>((set) => ({
@@ -15,4 +18,8 @@ export const useUIStore = createBaseStore<UIStore>((set) => ({
     set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
   isProgramOpen: false,
   setProgramOpen: (open) => set({ isProgramOpen: open }),
+  isSidebarCollapsed: false,
+  setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
+  toggleSidebar: () =>
+    set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
 }));

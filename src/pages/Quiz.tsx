@@ -16,26 +16,17 @@ import {
   InitialStateView,
   CourseOverview,
 } from '@/features/quiz/components/QuizIntroViews';
-import { QuizLandingView } from '@/features/quiz/components/QuizLandingView';
-import {
-  getLandingDashboardData,
-  type LandingCourseStats,
-} from '@/features/quiz/services/quizLandingService';
+
 import { MappingProgressView } from '@/features/quiz/components/MappingProgressView';
 import { BriefingView } from '@/features/quiz/components/BriefingView';
 import { SmartExamView } from '@/features/quiz/components/SmartExamView';
 import { QuizContainer } from '@/features/quiz/components/QuizContainer';
 import { cn, slugify } from '@/utils/stringHelpers';
-import {
-  getCourseBySlug,
-  getCategories,
-} from '@/features/courses/services/courseService';
+import { getCourseBySlug } from '@/features/courses/services/courseService';
 import {
   type Course,
-  type Category,
   type TopicWithCounts,
 } from '@/features/courses/types/courseTypes';
-import { supabase } from '@/lib/supabase';
 
 export const QuizPage: FC = () => {
   const { courseSlug, topicSlug } = useParams<{
@@ -44,34 +35,13 @@ export const QuizPage: FC = () => {
   }>();
   const navigate = useNavigate();
   const [courseData, setCourseData] = useState<Course | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [dashboardStats, setDashboardStats] = useState<
-    Record<string, LandingCourseStats>
-  >({});
   const [isResolvingCourse, setIsResolvingCourse] = useState(true);
-  const [isFetchingCourses, setIsFetchingCourses] = useState(false);
 
   // Fetch course data by slug
   useEffect(() => {
     async function resolveCourse() {
-      const { data: userData } = await supabase.auth.getUser();
-      const userId = userData.user?.id;
-
       if (!courseSlug) {
         setIsResolvingCourse(false);
-        setIsFetchingCourses(true);
-        try {
-          const [allCategories, stats] = await Promise.all([
-            getCategories(),
-            userId ? getLandingDashboardData(userId) : Promise.resolve({}),
-          ]);
-          setCategories(allCategories);
-          setDashboardStats(stats);
-        } catch (err) {
-          logger.error('Failed to fetch dashboard data:', err as Error);
-        } finally {
-          setIsFetchingCourses(false);
-        }
         return;
       }
 
@@ -160,21 +130,6 @@ export const QuizPage: FC = () => {
     );
   }
 
-  if (!courseSlug) {
-    return (
-      <div className="flex flex-col h-[calc(100vh-12rem)]">
-        <QuizLandingView
-          categories={categories}
-          dashboardStats={dashboardStats}
-          isLoading={isFetchingCourses}
-          onCourseSelect={(course) =>
-            navigate(`${ROUTES.QUIZ}/${course.course_slug}`)
-          }
-        />
-      </div>
-    );
-  }
-
   if (!courseData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
@@ -185,7 +140,7 @@ export const QuizPage: FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-12rem)] overflow-hidden">
+    <div className="flex flex-col h-full">
       <div
         className={cn(
           'flex-1 min-h-0 flex overflow-hidden',
@@ -207,7 +162,7 @@ export const QuizPage: FC = () => {
         )}
 
         {/* Work Area */}
-        <div className="flex flex-col min-h-0 flex-1 bg-card/40 rounded-xl border overflow-hidden">
+        <div className="flex flex-col min-h-0 flex-1 bg-card/40 rounded-xl border overflow-hidden h-full">
           <ErrorBoundary>
             {isQuizActive && selectedTopic ? (
               <QuizContainer
@@ -234,7 +189,7 @@ export const QuizPage: FC = () => {
                   </div>
                 </div>
                 <div className="flex-1 min-h-0 p-6 flex flex-col">
-                  <div className="max-w-4xl mx-auto w-full flex-1 flex flex-col min-h-0">
+                  <div className="max-w-6xl mx-auto w-full flex-1 flex flex-col min-h-0">
                     {quizPhase === QUIZ_PHASE.NOT_ANALYZED && (
                       <InitialStateView onGenerate={handleGenerate} />
                     )}

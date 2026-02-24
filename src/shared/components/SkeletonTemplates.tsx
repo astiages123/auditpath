@@ -3,12 +3,9 @@ import { GlassCard } from '@/shared/components/GlassCard';
 
 export function PageHeaderSkeleton() {
   return (
-    <div className="flex items-center gap-5 mb-8">
-      <Skeleton className="w-16 h-16 rounded-xl" />
-      <div className="space-y-2">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-4 w-96" />
-      </div>
+    <div className="flex flex-col gap-2 mb-8 animate-pulse">
+      <Skeleton className="h-10 w-64 md:w-96" />
+      <Skeleton className="h-4 w-48 md:w-64" />
     </div>
   );
 }
@@ -69,50 +66,116 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
 
 export function HomeProgressSkeleton() {
   return (
-    <GlassCard className="p-8 mb-8 overflow-hidden relative">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
-        <div className="flex flex-col items-center lg:items-start text-center lg:text-left space-y-4">
-          <Skeleton className="w-48 h-48 rounded-2xl" />
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-40" />
-            <Skeleton className="h-4 w-64" />
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-pulse">
+      <GlassCard className="p-6 h-[180px]">
+        <div className="flex gap-4 h-full">
+          <Skeleton className="w-24 h-full rounded-2xl" />
+          <div className="flex-1 space-y-3 py-2">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-2 w-full rounded-full" />
           </div>
         </div>
-
-        <div className="lg:col-span-2 space-y-6 w-full">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-8 w-24" />
-              </div>
-            ))}
-          </div>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <Skeleton className="h-4 w-32" />
-              <Skeleton className="h-4 w-12" />
+      </GlassCard>
+      {[1, 2, 3].map((i) => (
+        <GlassCard
+          key={i}
+          className="p-6 h-[180px] flex flex-col justify-between"
+        >
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="size-10 rounded-xl" />
+              <Skeleton className="h-4 w-20" />
             </div>
-            <Skeleton className="h-4 w-full rounded-full" />
+            <Skeleton className="h-8 w-32" />
           </div>
-        </div>
-      </div>
-    </GlassCard>
+          <Skeleton className="h-4 w-full" />
+        </GlassCard>
+      ))}
+    </div>
   );
 }
 
 export function CategoryGridSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {[1, 2, 3, 4, 5, 6].map((i) => (
-        <GlassCard key={i} className="h-48 p-6 flex flex-col justify-between">
-          <div className="space-y-3">
-            <Skeleton className="h-6 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start animate-pulse">
+      {[1, 2, 3, 4].map((i) => (
+        <GlassCard key={i} className="p-6 min-h-[160px]">
+          <div className="flex flex-col gap-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-4">
+                <Skeleton className="size-12 rounded-2xl" />
+                <div className="space-y-2">
+                  <Skeleton className="h-6 w-32" />
+                  <Skeleton className="h-4 w-48" />
+                </div>
+              </div>
+              <Skeleton className="size-6 rounded-full" />
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-3 w-12" />
+              </div>
+              <Skeleton className="h-2 w-full rounded-full" />
+            </div>
           </div>
-          <Skeleton className="h-10 w-full" />
         </GlassCard>
       ))}
+    </div>
+  );
+}
+
+export function LibraryCardSkeleton() {
+  return (
+    <GlassCard className="rounded-[2.5rem] overflow-hidden animate-pulse">
+      <div className="p-8 space-y-6">
+        <div className="flex items-start justify-between">
+          <Skeleton className="size-14 rounded-2xl" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-20 rounded-full" />
+            <Skeleton className="h-8 w-20 rounded-full" />
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-3/4" />
+          <Skeleton className="h-8 w-1/2" />
+        </div>
+        <div className="space-y-3 pt-2">
+          <div className="flex justify-between">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-4 w-12" />
+          </div>
+          <Skeleton className="h-3 w-full rounded-full" />
+        </div>
+      </div>
+      <div className="px-8 py-5 border-t border-border/30 flex justify-between items-center">
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-5 w-24" />
+      </div>
+    </GlassCard>
+  );
+}
+
+export function EfficiencyPageSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Skeleton className="h-[320px] rounded-[2.5rem]" />
+        <Skeleton className="h-[320px] rounded-[2.5rem]" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Skeleton className="h-[280px] rounded-[2.5rem]" />
+        <Skeleton className="h-[280px] rounded-[2.5rem]" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Skeleton className="h-[350px] rounded-[2.5rem]" />
+        <Skeleton className="h-[350px] rounded-[2.5rem]" />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Skeleton className="h-[250px] rounded-[2.5rem]" />
+        <Skeleton className="h-[400px] rounded-[2.5rem]" />
+      </div>
     </div>
   );
 }

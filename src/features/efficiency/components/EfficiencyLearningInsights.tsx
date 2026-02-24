@@ -196,8 +196,8 @@ export const MasteryNavigatorCard = () => {
     return (
       <GlassCard className="h-full flex flex-col p-6">
         <Skeleton className="h-6 w-48 mb-6 bg-surface" />
-        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
+        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-32 rounded-2xl bg-surface" />
           ))}
         </div>
@@ -211,7 +211,7 @@ export const MasteryNavigatorCard = () => {
       if (b.mastery !== a.mastery) return b.mastery - a.mastery;
       return a.title.localeCompare(b.title);
     })
-    .slice(0, 6);
+    .slice(0, 4);
 
   return (
     <EfficiencyModal
@@ -230,26 +230,26 @@ export const MasteryNavigatorCard = () => {
               }
             />
 
-            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+            <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               {displayNodes.map((node) => (
                 <div
                   key={node.lessonId}
-                  className="p-4 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all flex flex-col justify-between gap-4 group/item"
+                  className="p-6 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all flex flex-col justify-between gap-6 group/item"
                 >
-                  <div className="space-y-1">
+                  <div className="space-y-1.5">
                     <div className="flex justify-between items-start">
-                      <span className="text-[11px] font-bold text-white/70 line-clamp-2 leading-relaxed">
+                      <span className="text-sm font-bold text-white/70 line-clamp-2 leading-relaxed">
                         {node.title}
                       </span>
-                      <span className="text-sm font-black text-accent ml-2">
+                      <span className="text-lg font-black text-accent ml-2">
                         %{node.mastery}
                       </span>
                     </div>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {/* Mastery Main Bar */}
-                    <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-accent transition-all duration-1000 ease-out"
                         style={{ width: `${node.mastery}%` }}
@@ -257,15 +257,15 @@ export const MasteryNavigatorCard = () => {
                     </div>
 
                     {/* 60/40 Weights Indicators */}
-                    <div className="space-y-1.5 pt-1">
-                      <div className="flex flex-col gap-1">
-                        <div className="flex justify-between text-[9px] uppercase tracking-wider font-bold">
+                    <div className="space-y-2 pt-1">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex justify-between text-[11px] uppercase tracking-wider font-bold">
                           <span className="text-white/40">Video (%60)</span>
                           <span className="text-emerald-400">
                             %{node.videoProgress}
                           </span>
                         </div>
-                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-emerald-500/60"
                             style={{ width: `${node.videoProgress}%` }}
@@ -273,14 +273,14 @@ export const MasteryNavigatorCard = () => {
                         </div>
                       </div>
 
-                      <div className="flex flex-col gap-1">
-                        <div className="flex justify-between text-[9px] uppercase tracking-wider font-bold">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex justify-between text-[11px] uppercase tracking-wider font-bold">
                           <span className="text-white/40">Quiz (%40)</span>
                           <span className="text-amber-400">
                             %{node.questionProgress}
                           </span>
                         </div>
-                        <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-amber-500/60"
                             style={{ width: `${node.questionProgress}%` }}

@@ -39,7 +39,7 @@ export const MobileSidebar: FC = () => {
       icon: LineSquiggle,
     },
     { label: 'Başarımlar', href: ROUTES.ACHIEVEMENTS, icon: Trophy },
-    { label: 'İstatistikler', href: ROUTES.EFFICIENCY, icon: TrendingUp },
+    { label: 'İstatistikler', href: ROUTES.STATISTICS, icon: TrendingUp },
     {
       label: 'Kronometre',
       action: () => {

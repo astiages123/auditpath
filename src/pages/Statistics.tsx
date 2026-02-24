@@ -1,4 +1,5 @@
 import { ErrorBoundary } from '@/components/ui/error-boundary';
+import { PageHeader } from '@/shared/components/PageHeader';
 import {
   RecentQuizzesCard,
   CognitiveInsightsCard,
@@ -9,10 +10,15 @@ import {
   PracticeCenterCard,
   RecentActivitiesContainer,
 } from '@/features/efficiency/components';
+import { EfficiencyPageSkeleton } from '@/shared/components/SkeletonTemplates';
 import { useCognitiveInsights } from '@/features/efficiency/hooks/useCognitiveInsights';
 
 const EfficiencyDashboard = () => {
   const { loading, cognitiveAnalysis } = useCognitiveInsights();
+
+  if (loading && !cognitiveAnalysis) {
+    return <EfficiencyPageSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
@@ -80,11 +86,12 @@ const EfficiencyDashboard = () => {
 const EfficiencyPage = () => {
   return (
     <ErrorBoundary>
-      <div className="bg-background text-foreground pb-20">
-        {/* Central Dashboard Engine */}
-        <div>
-          <EfficiencyDashboard />
-        </div>
+      <div className="bg-background text-foreground">
+        <PageHeader
+          title="İstatistikler"
+          subtitle="Çalışma performansını ve bilişsel yükünü analiz et."
+        />
+        <EfficiencyDashboard />
       </div>
     </ErrorBoundary>
   );

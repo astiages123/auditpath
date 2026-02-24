@@ -27,7 +27,7 @@ export function ProgramModal({ open, onOpenChange }: ProgramModalProps) {
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <CalendarIcon className="h-5 w-5 text-primary" />
-              Haftalık Çalışma Programı
+              Program
             </DialogTitle>
             <DialogDescription className="sr-only">
               Haftalık çalışma takvimi ve ders programı detayları.

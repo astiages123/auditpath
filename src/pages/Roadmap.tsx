@@ -1,5 +1,6 @@
 import { useProgress } from '@/shared/hooks/useProgress';
 import TitleRoadmap from '@/features/courses/components/TitleRoadmap';
+import { PageHeader } from '@/shared/components/PageHeader';
 import { Loader2 } from 'lucide-react';
 
 export default function RoadmapPage() {
@@ -10,6 +11,10 @@ export default function RoadmapPage() {
 
   return (
     <div className="bg-background">
+      <PageHeader
+        title="Yolculuk"
+        subtitle="Hedeflerine giden süreci planla."
+      />
       <div className="relative">
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[400px]">

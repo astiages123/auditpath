@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { slugify } from '@/utils/stringHelpers';
@@ -41,12 +41,14 @@ export function useNotesPage({
 
   const activeChunkId = useMemo(() => {
     if (topicSlug) return topicSlug;
-    if (chunks.length > 0) return slugify(chunks[0].section_title);
     return '';
-  }, [topicSlug, chunks]);
+  }, [topicSlug]);
 
   const activeChunk = useMemo(
-    () => chunks.find((c) => slugify(c.section_title) === activeChunkId),
+    () =>
+      activeChunkId
+        ? chunks.find((c) => slugify(c.section_title) === activeChunkId)
+        : undefined,
     [chunks, activeChunkId]
   );
 
@@ -78,15 +80,6 @@ export function useNotesPage({
       mainContentRef,
       isProgrammaticScroll,
     });
-
-  useEffect(() => {
-    if (!loading && chunks.length > 0 && !topicSlug && courseSlug) {
-      const firstChunkId = slugify(chunks[0].section_title);
-      navigate(`${ROUTES.NOTES}/${courseSlug}/${firstChunkId}`, {
-        replace: true,
-      });
-    }
-  }, [loading, chunks, topicSlug, courseSlug, navigate]);
 
   const handleGlobalClick = (chunkId: string) => {
     if (courseSlug) {

@@ -22,7 +22,7 @@ export default function HomePage() {
 
   if (loading && categories.length === 0) {
     return (
-      <div className="container mx-auto px-4 py-8 md:py-12">
+      <div className="py-8 md:py-12">
         <HomeProgressSkeleton />
         <CategoryGridSkeleton />
       </div>
@@ -30,7 +30,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="space-y-8 md:space-y-12">
+    <div className="bg-background text-foreground pb-20">
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 mb-8">
           <h3 className="font-semibold text-destructive mb-2">
@@ -55,7 +55,7 @@ export default function HomePage() {
       )}
 
       {categories.length > 0 && (
-        <div className="space-y-4">
+        <div className="flex-1 mt-auto">
           <CategoryGrid
             categories={categories}
             categoryProgress={stats.categoryProgress}

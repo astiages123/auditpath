@@ -11,6 +11,7 @@ import { AnalyticsHeader } from '@/features/analytics/components/AnalyticsHeader
 import { AnalyticsStats } from '@/features/analytics/components/AnalyticsStats';
 import { AnalyticsChart } from '@/features/analytics/components/AnalyticsChart';
 import { AnalyticsTable } from '@/features/analytics/components/AnalyticsTable';
+import { PageHeader } from '@/shared/components/PageHeader';
 
 export default function AnalyticsPage() {
   const {
@@ -59,6 +60,10 @@ export default function AnalyticsPage() {
 
   return (
     <div className="space-y-8 animate-fade-in">
+      <PageHeader
+        title="Maliyet Analizi"
+        subtitle="AI model kullanım ve maliyet analizlerini takip et."
+      />
       <AnalyticsHeader
         rate={rate}
         selectedModel={selectedModel}
