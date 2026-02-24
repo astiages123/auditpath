@@ -15,10 +15,8 @@ export default function AchievementsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground pb-20 m-5">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <AchievementsRoom />
-      </div>
+    <div className="bg-background text-foreground pb-20">
+      <AchievementsRoom />
     </div>
   );
 }

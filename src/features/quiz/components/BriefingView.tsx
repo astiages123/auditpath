@@ -56,10 +56,10 @@ export function BriefingView({
         </button>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[1.0fr_1.0fr] gap-4 flex-1 min-h-0">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0 md:min-h-0 overflow-hidden">
         <motion.div
           variants={itemVariants}
-          className="bg-card/40 backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden flex flex-col min-h-0 shadow-sm"
+          className="bg-card/40 backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden flex flex-col min-h-[200px] md:h-full md:min-h-0 shadow-sm"
         >
           <div className="px-4 py-3 border-b border-border/30 bg-muted/30 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
@@ -76,7 +76,7 @@ export function BriefingView({
             </Badge>
           </div>
 
-          <div className="flex-1 overflow-y-auto min-h-0 scrollbar-thin scrollbar-thumb-border/50">
+          <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
             <table className="w-full text-sm border-collapse">
               <thead className="sticky top-0 bg-muted/80 backdrop-blur-md z-10">
                 <tr className="border-b border-border/50">
@@ -128,7 +128,7 @@ export function BriefingView({
           </div>
         </motion.div>
 
-        <div className="flex flex-col gap-4 min-h-0">
+        <div className="flex flex-col gap-4 min-h-0 md:h-full overflow-y-auto custom-scrollbar pr-1">
           <motion.div
             variants={itemVariants}
             className="flex-1 p-5 bg-card/40 backdrop-blur-sm rounded-xl border border-border/50 flex flex-col justify-center gap-3 shadow-sm relative overflow-hidden group"

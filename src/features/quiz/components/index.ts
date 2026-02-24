@@ -9,7 +9,6 @@ export * from './SmartExamView';
 export * from './MappingProgressView';
 
 // Quiz Modals
-export * from './QuizModal';
 
 // Quiz Views
 export * from './QuizContainer';

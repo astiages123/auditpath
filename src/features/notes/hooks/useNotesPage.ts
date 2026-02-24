@@ -20,7 +20,6 @@ interface UseNotesPageReturn {
   activeChunk: CourseTopic | undefined;
   readingTimeMinutes: number | undefined;
   mainContentRef: React.RefObject<HTMLDivElement | null>;
-  scrollProgress: number;
   handleScrollToId: (
     id: string,
     setActiveSection: (id: string) => void
@@ -61,7 +60,6 @@ export function useNotesPage({
 
   const {
     mainContentRef,
-    scrollProgress,
     isProgrammaticScroll,
     handleScrollToId,
     scrollToTop,
@@ -101,7 +99,6 @@ export function useNotesPage({
     activeChunk,
     readingTimeMinutes,
     mainContentRef,
-    scrollProgress,
     handleScrollToId,
     scrollToTop,
     activeSection,

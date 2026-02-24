@@ -1,7 +1,7 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { Header } from '@/components/layout/header/Header';
 import { PomodoroModal, TimerController } from '@/features/pomodoro/components';
-import { ProgramModal, JourneyModal } from '@/features/courses/components';
+import { ProgramModal } from '@/features/courses/components';
 import { Toaster } from '@/components/ui/sonner';
 import { useCelebration } from '@/shared/hooks/useCelebration';
 import { useCelebrationStore } from '@/features/achievements/store/useCelebrationStore';
@@ -33,14 +33,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     }
     closeCelebration();
   };
-  const {
-    isMobileMenuOpen,
-    setMobileMenuOpen,
-    isProgramOpen,
-    setProgramOpen,
-    isJourneyOpen,
-    setJourneyOpen,
-  } = useUIStore();
+  const { isMobileMenuOpen, setMobileMenuOpen, isProgramOpen, setProgramOpen } =
+    useUIStore();
   usePomodoro();
 
   return (
@@ -77,8 +71,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <TimerController />
       <PomodoroModal />
       <ProgramModal open={isProgramOpen} onOpenChange={setProgramOpen} />
-      <JourneyModal open={isJourneyOpen} onOpenChange={setJourneyOpen} />
-
       <Toaster position="top-center" richColors />
 
       {user && current && isOpen && (

@@ -9,7 +9,6 @@ import {
 import { ROUTES } from '@/utils/routes';
 
 export const getNavItems = (
-  setJourneyOpen: (open: boolean) => void,
   setPomodoroOpen: (open: boolean) => void,
   setProgramOpen: (open: boolean) => void
 ) => [
@@ -29,7 +28,7 @@ export const getNavItems = (
   },
   {
     label: 'Yolculuk',
-    action: () => setJourneyOpen(true),
+    href: ROUTES.ROADMAP,
     icon: LineSquiggle,
     color: 'text-emerald-500',
     auth: true,

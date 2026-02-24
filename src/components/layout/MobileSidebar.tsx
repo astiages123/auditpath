@@ -21,7 +21,7 @@ import { SyncButton } from '@/features/notes/components/SyncButton';
 
 export const MobileSidebar: FC = () => {
   const { user, signOut } = useAuth();
-  const { setMobileMenuOpen, setProgramOpen, setJourneyOpen } = useUIStore();
+  const { setMobileMenuOpen, setProgramOpen } = useUIStore();
   const { setOpen: setPomodoroOpen } = usePomodoro();
   const location = useLocation();
   const pathname = location.pathname;
@@ -35,10 +35,7 @@ export const MobileSidebar: FC = () => {
     { label: 'Ana Sayfa', href: ROUTES.HOME, icon: Home },
     {
       label: 'Yolculuk',
-      action: () => {
-        setMobileMenuOpen(false);
-        setTimeout(() => setJourneyOpen(true), 500);
-      },
+      href: ROUTES.ROADMAP,
       icon: LineSquiggle,
     },
     { label: 'Başarımlar', href: ROUTES.ACHIEVEMENTS, icon: Trophy },

@@ -15,7 +15,7 @@ const MOUNTED = true;
 
 export function Header() {
   const { user, signOut } = useAuth();
-  const { setProgramOpen, setJourneyOpen } = useUIStore();
+  const { setProgramOpen } = useUIStore();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const location = useLocation();
   const pathname = location.pathname;
@@ -25,12 +25,12 @@ export function Header() {
     return null;
   }
 
-  const navItems = getNavItems(setJourneyOpen, setPomodoroOpen, setProgramOpen);
+  const navItems = getNavItems(setPomodoroOpen, setProgramOpen);
   const filteredNavItems = navItems.filter((item) => !item.auth || user);
 
   return (
-    <header className="relative w-full h-24 border-b border-border/10 bg-transparent shrink-0">
-      <div className="container mx-auto h-full px-4 md:px-6 flex items-center justify-between lg:pt-10 gap-4">
+    <header className="relative w-full h-24 mb-10 border-b border-border/10 bg-transparent shrink-0">
+      <div className="container mx-auto h-full px-2 md:px-0 flex items-center justify-between lg:pt-10 gap-4">
         <div className="shrink-0 flex items-center h-full">
           <BrandSection />
         </div>

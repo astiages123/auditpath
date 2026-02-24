@@ -30,7 +30,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12">
+    <div className="space-y-8 md:space-y-12">
       {error && (
         <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 mb-8">
           <h3 className="font-semibold text-destructive mb-2">

@@ -18,13 +18,9 @@ import { useCelebration } from '@/shared/hooks/useCelebration';
 import { getCourseIcon } from '../logic/coursesLogic';
 import { type Course } from '@/features/courses/types/courseTypes';
 import { cn } from '@/utils/stringHelpers';
+import { ROUTES } from '@/utils/routes';
 
-// Lazy load modals to reduce initial bundle size and split CSS (Katex)
-const QuizModal = lazy(() =>
-  import('@/features/quiz/components').then((module) => ({
-    default: module.QuizModal,
-  }))
-);
+// Lazy load CourseStatsModal
 const CourseStatsModal = lazy(() =>
   import('./CourseStatsModal').then((module) => ({
     default: module.CourseStatsModal,
@@ -50,9 +46,6 @@ export function CourseList({
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
   const { stats } = useProgress();
   const [selectedStatsCourse, setSelectedStatsCourse] = useState<Course | null>(
-    null
-  );
-  const [selectedQuizCourse, setSelectedQuizCourse] = useState<Course | null>(
     null
   );
 
@@ -226,17 +219,13 @@ export function CourseList({
                     <FileText className="h-4 w-4 sm:h-4 sm:w-4" />
                   </Link>
 
-                  {/* Quiz Button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedQuizCourse(course);
-                    }}
+                  <Link
+                    to={`${ROUTES.QUIZ}/${course.course_slug}`}
                     className="h-9 w-9 sm:h-8 sm:w-8 flex items-center justify-center rounded-lg text-purple-400 hover:bg-surface-hover transition-all"
                     title="Quiz & Soru Üret"
                   >
                     <Brain className="h-4 w-4 sm:h-4 sm:w-4" />
-                  </button>
+                  </Link>
 
                   {/* Stats Button */}
                   <button
@@ -298,18 +287,6 @@ export function CourseList({
             completedVideos={0}
             totalHours={selectedStatsCourse.total_hours || 0}
             spentHours={0}
-          />
-        )}
-
-        {/* Quiz Modal */}
-        {selectedQuizCourse && (
-          <QuizModal
-            isOpen={!!selectedQuizCourse}
-            onOpenChange={(open: boolean) =>
-              !open && setSelectedQuizCourse(null)
-            }
-            courseId={selectedQuizCourse.id}
-            courseName={selectedQuizCourse.name}
           />
         )}
       </Suspense>

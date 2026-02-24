@@ -1,6 +1,7 @@
 import {
   type MutableRefObject,
   type RefObject,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -25,84 +26,113 @@ export const useTableOfContents = ({
   isProgrammaticScroll,
 }: UseTableOfContentsProps) => {
   const [activeSection, setActiveSection] = useState<string>('');
-  const observerRef = useRef<IntersectionObserver | null>(null);
-  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+  const lastActiveRef = useRef<string>('');
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const headingsRef = useRef<HTMLElement[]>([]);
+  const rafRef = useRef<number | null>(null);
 
-  // 1. Active Section via IntersectionObserver
+  const calculateActiveHeading = useCallback(() => {
+    const container = containerRef.current;
+    const headings = headingsRef.current;
+    if (!container || headings.length === 0) return;
+
+    const scrollTop = container.scrollTop;
+
+    let activeHeadingId = '';
+
+    for (let i = 0; i < headings.length; i++) {
+      const heading = headings[i];
+      const headingTop = heading.offsetTop;
+
+      const threshold = scrollTop + 60;
+
+      if (headingTop <= threshold) {
+        activeHeadingId = heading.id;
+      } else {
+        break;
+      }
+    }
+
+    if (activeHeadingId && activeHeadingId !== lastActiveRef.current) {
+      lastActiveRef.current = activeHeadingId;
+      setActiveSection(activeHeadingId);
+    }
+  }, []);
+
   useEffect(() => {
     if (loading || chunks.length === 0) return;
 
-    // Disconnect previous observer
-    if (observerRef.current) {
-      observerRef.current.disconnect();
-    }
+    containerRef.current = document.getElementById(
+      'notes-scroll-container'
+    ) as HTMLDivElement | null;
 
-    const options = {
-      root: mainContentRef.current,
-      // Adjusted rootMargin to better detect headers at the top of the viewport
-      // "0px 0px -40% 0px" means we only care about the top 60% of the viewport
-      rootMargin: '0px 0px -40% 0px',
-      threshold: [0, 1.0],
-    };
+    if (!containerRef.current) return;
 
-    const handleIntersect = (entries: IntersectionObserverEntry[]) => {
-      if (isProgrammaticScroll.current) return;
+    const init = () => {
+      headingsRef.current = Array.from(
+        mainContentRef.current?.querySelectorAll('h1, h2, h3, h4, h5') || []
+      ) as HTMLElement[];
 
-      // Debounce updates to prevent flickering
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
+      if (headingsRef.current.length > 0) {
+        const firstHeading = headingsRef.current[0];
+        if (firstHeading.id) {
+          lastActiveRef.current = firstHeading.id;
+          setActiveSection(firstHeading.id);
+        }
       }
 
-      debounceTimeout.current = setTimeout(() => {
-        const intersecting = entries.filter((entry) => entry.isIntersecting);
-        if (intersecting.length > 0) {
-          // Find the topmost intersecting element
-          // We prioritize elements closer to the top of the viewport
-          const topMost = intersecting.reduce((prev, curr) =>
-            curr.boundingClientRect.top < prev.boundingClientRect.top
-              ? curr
-              : prev
-          );
-
-          setActiveSection((prev) => {
-            if (topMost.target.id && topMost.target.id !== prev) {
-              return topMost.target.id;
-            }
-            return prev;
-          });
-        }
-      }, 50); // Small delay to stabilize
+      calculateActiveHeading();
     };
 
-    observerRef.current = new IntersectionObserver(handleIntersect, options);
+    const timer = setTimeout(init, 150);
 
-    // Observe all elements with an ID inside the scroll container
-    // Using a timeout to ensure DOM is ready
-    const timer = setTimeout(() => {
-      const sections = mainContentRef.current?.querySelectorAll('[id]');
-      sections?.forEach((section) => observerRef.current?.observe(section));
-    }, 100);
+    const handleScroll = () => {
+      if (isProgrammaticScroll.current) return;
+
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+
+      rafRef.current = requestAnimationFrame(calculateActiveHeading);
+    };
+
+    containerRef.current.addEventListener('scroll', handleScroll, {
+      passive: true,
+    });
 
     return () => {
       clearTimeout(timer);
-      if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-      if (observerRef.current) observerRef.current.disconnect();
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+      }
+      containerRef.current?.removeEventListener('scroll', handleScroll);
     };
   }, [
     chunks,
     loading,
     activeChunkId,
-    // activeSection, // Removed to prevent re-creation of observer on state change
     mainContentRef,
     isProgrammaticScroll,
+    calculateActiveHeading,
   ]);
 
-  // 2. Build Table of Contents (Using extracted pure function)
+  useEffect(() => {
+    if (loading || chunks.length === 0) return;
+
+    headingsRef.current = Array.from(
+      mainContentRef.current?.querySelectorAll('h1, h2, h3, h4, h5') || []
+    ) as HTMLElement[];
+  }, [activeChunkId, loading, chunks.length, mainContentRef]);
+
+  const forceActiveSection = useCallback((sectionId: string) => {
+    lastActiveRef.current = sectionId;
+    setActiveSection(sectionId);
+  }, []);
+
   const toc = useMemo(() => {
     return generateTOCFromContent(chunks);
   }, [chunks]);
 
-  // 3. Derived filtered ToC for Right Panel
   const currentChunkToC = activeChunkId
     ? toc.filter((item) => item.chunkId === activeChunkId && item.level > 1)
     : [];
@@ -110,7 +140,7 @@ export const useTableOfContents = ({
   return {
     toc,
     activeSection,
-    setActiveSection,
+    setActiveSection: forceActiveSection,
     currentChunkToC,
   };
 };

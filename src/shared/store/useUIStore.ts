@@ -6,8 +6,6 @@ interface UIStore {
   toggleMobileMenu: () => void;
   isProgramOpen: boolean;
   setProgramOpen: (open: boolean) => void;
-  isJourneyOpen: boolean;
-  setJourneyOpen: (open: boolean) => void;
 }
 
 export const useUIStore = createBaseStore<UIStore>((set) => ({
@@ -17,6 +15,4 @@ export const useUIStore = createBaseStore<UIStore>((set) => ({
     set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
   isProgramOpen: false,
   setProgramOpen: (open) => set({ isProgramOpen: open }),
-  isJourneyOpen: false,
-  setJourneyOpen: (open) => set({ isJourneyOpen: open }),
 }));

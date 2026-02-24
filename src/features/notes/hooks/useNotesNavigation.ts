@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { useNotesStore } from '@/features/notes/store';
 
@@ -15,7 +15,6 @@ export const useNotesNavigation = ({
   chunks,
   activeChunkId,
 }: UseNotesNavigationProps) => {
-  const [scrollProgress, setScrollProgress] = useState(0);
   const mainContentRef = useRef<HTMLDivElement | null>(null);
   const isProgrammaticScroll = useRef<boolean>(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -32,74 +31,57 @@ export const useNotesNavigation = ({
     };
   }, []);
 
-  // 1. Scroll Progress
-  useEffect(() => {
-    const mainContent = mainContentRef.current;
-    if (!mainContent) return;
-
-    const handleScroll = () => {
-      const scrollTop = mainContent.scrollTop;
-      const scrollHeight = mainContent.scrollHeight;
-      const clientHeight = mainContent.clientHeight;
-      const progress = (scrollTop / (scrollHeight - clientHeight)) * 100;
-      setScrollProgress(progress);
-    };
-
-    mainContent.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll();
-    return () => mainContent.removeEventListener('scroll', handleScroll);
-  }, [chunks, loading]);
+  const getScrollContainer = () =>
+    document.getElementById('notes-scroll-container') || mainContentRef.current;
 
   // 2. Scroll to top when topic changes
   useEffect(() => {
     if (!isProgrammaticScroll.current) {
-      mainContentRef.current?.scrollTo({ top: 0, behavior: 'instant' });
+      getScrollContainer()?.scrollTo({ top: 0, behavior: 'instant' });
     }
   }, [activeChunkId]);
 
   // 3. Save scroll position
   useEffect(() => {
-    const mainContent = mainContentRef.current;
-    if (!mainContent || !courseSlug || !activeChunkId) return;
+    const scrollContainer = getScrollContainer();
+    if (!scrollContainer || !courseSlug || !activeChunkId) return;
 
     const saveScroll = () => {
       if (isProgrammaticScroll.current) return;
 
-      // Debounce saving to store
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
 
       scrollTimeout.current = setTimeout(() => {
-        setLastReadTopic(courseSlug, activeChunkId, mainContent.scrollTop);
+        setLastReadTopic(courseSlug, activeChunkId, scrollContainer.scrollTop);
       }, 500);
     };
 
-    mainContent.addEventListener('scroll', saveScroll, { passive: true });
+    scrollContainer.addEventListener('scroll', saveScroll, { passive: true });
     return () => {
-      mainContent.removeEventListener('scroll', saveScroll);
+      scrollContainer.removeEventListener('scroll', saveScroll);
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     };
   }, [courseSlug, activeChunkId, setLastReadTopic]);
 
   // 4. Restore scroll position
   useEffect(() => {
-    if (!loading && chunks.length > 0 && courseSlug && mainContentRef.current) {
+    const scrollContainer = getScrollContainer();
+    if (!loading && chunks.length > 0 && courseSlug && scrollContainer) {
       const savedState = lastRead[courseSlug];
 
       if (savedState && savedState.topicId === activeChunkId) {
         const scrollValue = savedState.scrollPos;
 
         if (!isNaN(scrollValue) && scrollValue > 0) {
-          // Use a slight delay to ensure content is rendered
-          // Using requestAnimationFrame for better timing
           requestAnimationFrame(() => {
-            if (mainContentRef.current) {
+            const container = getScrollContainer();
+            if (container) {
               isProgrammaticScroll.current = true;
-              mainContentRef.current.scrollTo({
+              container.scrollTo({
                 top: scrollValue,
                 behavior: 'instant' as ScrollBehavior,
               });
 
-              // Reset programmatic scroll flag after a short delay
               setTimeout(() => {
                 isProgrammaticScroll.current = false;
               }, 100);
@@ -114,27 +96,27 @@ export const useNotesNavigation = ({
     id: string,
     setActiveSection?: (id: string) => void
   ) => {
+    const scrollContainer = getScrollContainer();
     isProgrammaticScroll.current = true;
     if (setActiveSection) setActiveSection(id);
 
     const element = document.getElementById(id);
-    if (element && mainContentRef.current) {
+    if (element && scrollContainer) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     scrollTimeout.current = setTimeout(() => {
       isProgrammaticScroll.current = false;
-    }, 1000);
+    }, 1500);
   };
 
   const scrollToTop = () => {
-    mainContentRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    getScrollContainer()?.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return {
     mainContentRef,
-    scrollProgress,
     isProgrammaticScroll,
     handleScrollToId,
     scrollToTop,

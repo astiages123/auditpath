@@ -1,5 +1,5 @@
 import { cn } from '@/utils/stringHelpers';
-import { memo, useRef } from 'react';
+import { memo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ToCTitleRenderer } from './ToCTitleRenderer';
 import { Clock } from 'lucide-react';
@@ -25,8 +25,18 @@ export const LocalToC = memo(function LocalToC({
 }: LocalToCProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    if (!activeId || !containerRef.current) return;
+    const activeEl = containerRef.current.querySelector(
+      `a[href="#${activeId}"]`
+    );
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [activeId]);
+
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col overflow-y-auto scrollbar-hide">
       {/* Header */}
       <div className="p-10 border-b border-border/30">
         <h2 className="text-sm font-bold uppercase tracking-normal text-center text-foreground">

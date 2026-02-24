@@ -23,15 +23,6 @@ export const AnalyticsHeader: FC<AnalyticsHeaderProps> = ({
 }) => {
   return (
     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border/40 pb-6">
-      <div className="space-y-1">
-        <h1 className="text-4xl font-heading font-black tracking-tight text-white">
-          AI Harcama Analizi
-        </h1>
-        <p className="text-muted-foreground font-sans">
-          Yapay zeka modellerinin kullanım maliyetleri ve verimlilik raporu
-        </p>
-      </div>
-
       <div className="flex flex-wrap items-center gap-3">
         {/* Sistem İstikrarı / API Health */}
         <div className="flex items-center gap-2 bg-emerald-500/10 px-4 py-2 rounded-lg border border-emerald-500/20 shadow-sm">

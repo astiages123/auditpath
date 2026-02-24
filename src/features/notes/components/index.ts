@@ -8,3 +8,4 @@ export { MermaidDiagram } from './MermaidDiagram';
 export { GlobalNavigation } from './GlobalNavigation';
 export { LocalToC } from './LocalToC';
 export { ToCTitleRenderer } from './ToCTitleRenderer';
+export { ScrollToTopButton } from './ScrollToTopButton';

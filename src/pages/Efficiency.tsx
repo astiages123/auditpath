@@ -1,4 +1,3 @@
-import { ChartLine } from 'lucide-react';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import {
   RecentQuizzesCard,
@@ -81,33 +80,10 @@ const EfficiencyDashboard = () => {
 const EfficiencyPage = () => {
   return (
     <ErrorBoundary>
-      <div className="min-h-screen bg-background text-foreground pb-20 m-5">
-        <div className="container mx-auto px-4 py-8 max-w-7xl">
-          {/* Page Header Wrapper */}
-          <div className="flex items-center gap-5 mb-8">
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-linear-to-r rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-              <div className="relative p-4 rounded-xl bg-card border border-border/50 leading-none flex items-center">
-                <ChartLine className="w-8 h-8 text-primary" />
-              </div>
-            </div>
-            <div>
-              <h1
-                className="text-3xl md:text-4xl font-black text-foreground tracking-tight"
-                style={{ fontFamily: 'var(--font-heading)' }}
-              >
-                Performans Analizi
-              </h1>
-              <p className="text-muted-foreground text-sm font-medium mt-1">
-                Öğrenme yolculuğunuzun detaylı grafikleri ve gelişim metrikleri.
-              </p>
-            </div>
-          </div>
-
-          {/* Central Dashboard Engine */}
-          <div>
-            <EfficiencyDashboard />
-          </div>
+      <div className="bg-background text-foreground pb-20">
+        {/* Central Dashboard Engine */}
+        <div>
+          <EfficiencyDashboard />
         </div>
       </div>
     </ErrorBoundary>

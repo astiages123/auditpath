@@ -45,7 +45,7 @@ export const GlobalNavigation = memo(function GlobalNavigation({
       </div>
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1"
+        className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1 scrollbar-hide"
       >
         {navItems.map((chunk, index) => {
           const chunkId = slugify(chunk.section_title);

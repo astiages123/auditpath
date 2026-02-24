@@ -4,16 +4,17 @@ import {
   calculateRankProgress,
   calculateEstimatedDaysToNextRank,
 } from '../logic/coursesLogic';
-import { useState, useSyncExternalStore } from 'react';
+import { useSyncExternalStore } from 'react';
 import { RANKS } from '@/features/achievements/utils/constants';
 import type { Rank } from '@/types/auth';
-import { JourneyModal } from './JourneyModal';
 import { motion } from 'framer-motion';
 import { formatDurationShort } from '@/utils/formatters';
 import { WEEKLY_SCHEDULE } from '@/features/courses/utils/coursesConfig';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RankCard } from './RankCard';
 import { ProgressStatCard } from './ProgressStatCard';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/utils/routes';
 
 // Local helper for legacy props, but prefer importing shared type
 interface RankInfo extends Rank {
@@ -50,7 +51,7 @@ export function ProgressHeader({
     () => true,
     () => false
   );
-  const [journeyOpen, setJourneyOpen] = useState(false);
+  const navigate = useNavigate();
 
   // Use context stats if hydrated, otherwise use props
   const displayCompletedVideos =
@@ -150,7 +151,7 @@ export function ProgressHeader({
         currentRankImage={currentRankImage}
         displayEstimatedDays={displayEstimatedDays}
         showSkeleton={showSkeleton}
-        onOpenJourney={() => setJourneyOpen(true)}
+        onOpenJourney={() => navigate(ROUTES.ROADMAP)}
         variants={itemVariants}
       />
 
@@ -230,8 +231,6 @@ export function ProgressHeader({
           </div>
         </div>
       </ProgressStatCard>
-
-      <JourneyModal open={journeyOpen} onOpenChange={setJourneyOpen} />
     </motion.div>
   );
 }

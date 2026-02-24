@@ -41,3 +41,22 @@ export async function getAllCourses(): Promise<Course[]> {
   }
   return data || [];
 }
+/**
+ * Fetches a single course by its slug.
+ */
+export async function getCourseBySlug(slug: string): Promise<Course | null> {
+  const { data, error } = await supabase
+    .from('courses')
+    .select('*')
+    .eq('course_slug', slug)
+    .single();
+
+  if (error) {
+    if (error.code !== 'PGRST116') {
+      // PGRST116 is "no rows returned"
+      logger.error('Error fetching course by slug:', error);
+    }
+    return null;
+  }
+  return data;
+}

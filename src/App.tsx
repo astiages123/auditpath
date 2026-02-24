@@ -16,6 +16,7 @@ const EfficiencyPage = lazy(() => import('@/pages/Efficiency'));
 const NotesPage = lazy(() => import('@/pages/Notes'));
 const AnalyticsPage = lazy(() => import('@/pages/Analytics'));
 const QuizPage = lazy(() => import('@/pages/Quiz'));
+const RoadmapPage = lazy(() => import('@/pages/Roadmap'));
 
 // Loading fallback component
 function PageLoader() {
@@ -51,7 +52,16 @@ function App() {
                 element={<NotesPage />}
               />
               <Route path={ROUTES.ANALYTICS} element={<AnalyticsPage />} />
-              <Route path={`${ROUTES.QUIZ}/:courseId`} element={<QuizPage />} />
+              <Route path={ROUTES.QUIZ} element={<QuizPage />} />
+              <Route
+                path={`${ROUTES.QUIZ}/:courseSlug`}
+                element={<QuizPage />}
+              />
+              <Route
+                path={`${ROUTES.QUIZ}/:courseSlug/:topicSlug`}
+                element={<QuizPage />}
+              />
+              <Route path={ROUTES.ROADMAP} element={<RoadmapPage />} />
             </Route>
           </Route>
 

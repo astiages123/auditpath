@@ -31,7 +31,7 @@ export function TopicSidebar({
   isGeneratingExam,
 }: TopicSidebarProps) {
   return (
-    <div className="border-r border-border/30 overflow-y-auto p-3 flex flex-col gap-1">
+    <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-1">
       <div className="mb-4">
         <Button
           variant="primary-soft"

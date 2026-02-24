@@ -166,7 +166,9 @@ export function CategoryCard({
             <div className="p-4 lg:p-5">
               <CourseList
                 courses={[...courses].sort(
-                  (a, b) => (a.sort_order || 0) - (b.sort_order || 0)
+                  (a, b) =>
+                    (a.sort_order || 0) - (b.sort_order || 0) ||
+                    a.name.localeCompare(b.name)
                 )}
                 categoryColor="text-accent"
                 categoryBgColor="bg-surface"
