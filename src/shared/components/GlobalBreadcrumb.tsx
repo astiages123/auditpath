@@ -109,7 +109,7 @@ export function GlobalBreadcrumb() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to={ROUTES.HOME} className="flex items-center gap-2">
+              <Link to={ROUTES.HOME} className="flex items-center gap-1.5">
                 <Home className="size-4" />
                 <span>Anasayfa</span>
               </Link>
@@ -121,7 +121,7 @@ export function GlobalBreadcrumb() {
               <BreadcrumbSeparator />
               <BreadcrumbItem>
                 {crumb.last ? (
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     {(() => {
                       const pathValue = pathnames[crumb.originalIdx];
 
@@ -148,7 +148,7 @@ export function GlobalBreadcrumb() {
                   </div>
                 ) : (
                   <BreadcrumbLink asChild>
-                    <Link to={crumb.to} className="flex items-center gap-2">
+                    <Link to={crumb.to} className="flex items-center gap-1.5">
                       {(() => {
                         const pathValue = pathnames[crumb.originalIdx];
 
