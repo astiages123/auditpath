@@ -1,4 +1,4 @@
-import { createBaseStore } from '@/shared/store/baseStore';
+import { create } from 'zustand';
 
 interface UIStore {
   isMobileMenuOpen: boolean;
@@ -11,7 +11,7 @@ interface UIStore {
   toggleSidebar: () => void;
 }
 
-export const useUIStore = createBaseStore<UIStore>((set) => ({
+export const useUIStore = create<UIStore>((set) => ({
   isMobileMenuOpen: false,
   setMobileMenuOpen: (open) => set({ isMobileMenuOpen: open }),
   toggleMobileMenu: () =>

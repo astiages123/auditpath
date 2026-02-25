@@ -1,4 +1,4 @@
-import { formatDateKey, getVirtualDate } from '@/utils/dateHelpers';
+import { formatDateKey, getVirtualDate } from '@/utils/dateUtils';
 
 /**
  * Calculate current streak with weekend allowance logic.

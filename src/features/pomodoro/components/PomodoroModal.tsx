@@ -154,8 +154,8 @@ export function PomodoroModal() {
             className={cn(
               'pointer-events-auto relative overflow-hidden backdrop-blur-3xl border shadow-2xl transition-all duration-300',
               isExpanded
-                ? 'rounded-[40px] w-[340px]'
-                : 'rounded-[28px] w-[220px]',
+                ? 'rounded-[40px] w-[340px] max-w-[calc(100vw-2rem)]'
+                : 'rounded-[28px] w-[220px] max-w-[calc(100vw-2rem)]',
               isWorking
                 ? 'bg-card/90 border-primary/20 shadow-[var(--shadow-glow-primary)]'
                 : 'bg-card/90 border-primary/20 shadow-[var(--shadow-glow-primary)]'

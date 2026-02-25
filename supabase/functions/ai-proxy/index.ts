@@ -235,17 +235,15 @@ Deno.serve(async (req: Request) => {
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
-    if (userId) {
-      await safeLog({
-        user_id: userId,
-        provider: 'proxy',
-        model: 'proxy',
-        status: 500,
-        latency_ms: Date.now() - startTime,
-        usage_type: 'exception',
-        error_message: msg,
-      });
-    }
+    await safeLog({
+      user_id: userId || '00000000-0000-0000-0000-000000000000', // Use a zero UUID or special string if preferred, but schema usually requires UUID.
+      provider: 'proxy',
+      model: 'proxy',
+      status: 500,
+      latency_ms: Date.now() - startTime,
+      usage_type: 'exception',
+      error_message: msg,
+    });
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

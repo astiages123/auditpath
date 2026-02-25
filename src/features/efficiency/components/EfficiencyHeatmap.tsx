@@ -1,6 +1,6 @@
 import { DayActivity } from '@/features/efficiency/types/efficiencyTypes';
 import { cn } from '@/utils/stringHelpers';
-import { formatDisplayDate } from '@/utils/dateHelpers';
+import { formatDisplayDate } from '@/utils/dateUtils';
 import {
   Tooltip,
   TooltipContent,

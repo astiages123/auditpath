@@ -18,7 +18,7 @@ import {
   formatDateKey,
   getVirtualDate,
   getVirtualDayStart,
-} from '@/utils/dateHelpers';
+} from '@/utils/dateUtils';
 import { EFFICIENCY_CONFIG } from '../utils/constants';
 
 // ============== TYPES ==============

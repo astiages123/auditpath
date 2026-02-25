@@ -23,6 +23,17 @@ export function Sidebar() {
 
   const groupedItems = getNavItemsByGroup();
 
+  // Desktop'ta sadece mobileOnly olmayanları göster
+  const filteredGroupedItems = Object.keys(groupedItems).reduce(
+    (acc, key) => {
+      acc[key as NavItem['group']] = groupedItems[
+        key as NavItem['group']
+      ].filter((item) => !item.mobileOnly);
+      return acc;
+    },
+    {} as Record<NavItem['group'], NavItem[]>
+  );
+
   const handleAction = (action: string) => {
     if (action === 'pomodoro') {
       setPomodoroOpen(true);
@@ -42,21 +53,24 @@ export function Sidebar() {
       <Link
         to={ROUTES.HOME}
         className={cn(
-          'h-[80px] flex items-center gap-3 shrink-0 px-4 border-b border-accent/15 transition-all duration-200 hover:bg-white/5 group',
-          isCollapsed && 'justify-center px-2'
+          'h-[80px] flex items-center justify-center gap-3 shrink-0 px-4 border-b border-accent/15 transition-all duration-200 hover:bg-white/5 group',
+          isCollapsed && 'px-2'
         )}
       >
         <img
           src={logo}
           alt="AuditPath Logo"
-          className="size-8 object-contain shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300"
+          className={cn(
+            'object-contain shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300',
+            isCollapsed ? 'size-8' : 'size-10'
+          )}
         />
         {!isCollapsed && (
-          <div className="flex flex-col min-w-0">
-            <span className="text-base font-heading font-bold tracking-tight bg-linear-to-br from-foreground to-foreground/70 bg-clip-text text-transparent truncate">
+          <div className="flex flex-col min-w-0 mr-8">
+            <span className="text-lg font-heading font-bold tracking-tight bg-linear-to-br from-foreground to-foreground/70 bg-clip-text text-transparent truncate">
               Audit Path
             </span>
-            <span className="text-[9px] uppercase tracking-normal font-bold text-primary/80 leading-none">
+            <span className="text-[10px] uppercase tracking-normal font-bold text-primary/80 leading-none">
               BİLGELİK AKADEMİSİ
             </span>
           </div>
@@ -80,7 +94,7 @@ export function Sidebar() {
                     {NAV_GROUP_LABELS[groupKey]}
                   </p>
                 )}
-                {items.map((item) => (
+                {filteredGroupedItems[groupKey].map((item) => (
                   <SidebarItem
                     key={item.label}
                     item={item}

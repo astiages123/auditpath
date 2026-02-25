@@ -5,7 +5,7 @@ import {
   formatDisplayDate,
   getVirtualDateKey,
   getVirtualDayStart,
-} from '@/utils/dateHelpers';
+} from '@/utils/dateUtils';
 import { isValid, parseOrThrow } from '@/utils/validation';
 import { handleSupabaseError, safeQuery } from '@/lib/supabaseHelpers';
 import { TimelineEventSchema } from '../types/efficiencyTypes';

@@ -15,7 +15,8 @@ export function SyncButton({
   className,
   onSyncComplete,
   showLabel = true,
-}: SyncButtonProps) {
+  iconClassName,
+}: SyncButtonProps & { iconClassName?: string }) {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const handleSync = async (e: React.MouseEvent) => {
@@ -74,9 +75,16 @@ export function SyncButton({
       )}
     >
       {isSyncing ? (
-        <Loader2 className="size-9 animate-spin text-primary shrink-0" />
+        <Loader2
+          className={cn(
+            'size-9 animate-spin shrink-0',
+            iconClassName || 'text-primary'
+          )}
+        />
       ) : (
-        <CloudSync className="size-5 text-emerald-300 shrink-0" />
+        <CloudSync
+          className={cn('size-5 shrink-0', iconClassName || 'text-primary')}
+        />
       )}
       {showLabel && <span>Not Senkronizasyonu</span>}
     </Button>

@@ -135,8 +135,8 @@ function QuizCardComponent({
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-card border border-border/50 rounded-xl p-12 flex flex-col items-center justify-center gap-4">
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="bg-card border border-border/50 rounded-xl p-8 md:p-12 flex flex-col items-center justify-center gap-4">
           <Loader2 className="w-10 h-10 text-primary animate-spin" />
           <p className="text-muted-foreground">Soru hazırlanıyor...</p>
         </div>
@@ -146,8 +146,8 @@ function QuizCardComponent({
 
   if (error) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-card border border-destructive/20 rounded-xl p-8 flex flex-col items-center justify-center gap-4">
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="bg-card border border-destructive/20 rounded-xl p-5 md:p-8 flex flex-col items-center justify-center gap-4">
           <div className="w-14 h-14 rounded-full bg-destructive/10 flex items-center justify-center">
             <X className="w-7 h-7 text-destructive" />
           </div>
@@ -166,8 +166,8 @@ function QuizCardComponent({
 
   if (!question) {
     return (
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-card border border-border/50 rounded-xl p-12 flex flex-col items-center justify-center gap-4 text-muted-foreground">
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="bg-card border border-border/50 rounded-xl p-8 md:p-12 flex flex-col items-center justify-center gap-4 text-muted-foreground">
           <Loader2 className="w-10 h-10 animate-spin" />
           <p>Soru bekleniyor...</p>
         </div>
@@ -198,14 +198,14 @@ function QuizCardComponent({
         >
           <div className="bg-transparent flex flex-col h-full min-h-0 group">
             <div
-              className={`p-2 md:p-3 space-y-3 md:space-y-4 flex-1 min-h-0 ${isAnswered && showExplanation ? 'lg:overflow-y-auto' : 'overflow-y-auto'} custom-scrollbar`}
+              className={`p-2 md:p-3 space-y-2 md:space-y-4 flex-1 min-h-0 ${isAnswered && showExplanation ? 'lg:overflow-y-auto' : 'overflow-y-auto'} custom-scrollbar`}
             >
               <div className="space-y-3">
                 {question.insight && (
                   <motion.div
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20"
+                    className="p-2.5 md:p-3 rounded-xl bg-amber-500/10 border border-amber-500/20"
                   >
                     <div className="flex items-center gap-2 text-amber-500 text-[10px] font-bold uppercase tracking-widest mb-1.5 font-heading">
                       <Lightbulb className="w-3.5 h-3.5" />
@@ -237,12 +237,12 @@ function QuizCardComponent({
                   </div>
                 )}
 
-                <div className="text-lg md:text-xl font-medium text-white/90 leading-relaxed font-sans">
+                <div className="text-base md:text-lg font-medium text-white/90 leading-snug md:leading-relaxed font-sans">
                   <MathRenderer content={question.q} />
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 md:gap-3">
+              <div className="flex flex-col gap-1.5 md:gap-3">
                 {question.o.map((option, index) => {
                   const isSelected = selectedAnswer === index;
                   const isCorrectOption = question.a === index;

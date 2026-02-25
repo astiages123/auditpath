@@ -8,7 +8,7 @@ import { cn } from '@/utils/stringHelpers';
 import { useCognitiveInsights } from '../hooks/useCognitiveInsights';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RecentQuizSession } from '@/features/quiz/types';
-import { formatDisplayDate } from '@/utils/dateHelpers';
+import { formatDisplayDate } from '@/utils/dateUtils';
 
 const formatDate = (dateStr: string) => {
   return formatDisplayDate(dateStr, {
@@ -57,7 +57,7 @@ const ScoreBoard = ({
 };
 
 const QuizHistoryContent = ({ quizzes }: { quizzes: RecentQuizSession[] }) => (
-  <div className="space-y-3 p-2">
+  <div className="space-y-2 md:space-y-3 p-2">
     {quizzes.length > 0 ? (
       quizzes.map((quiz, index) => (
         <motion.div
@@ -65,7 +65,7 @@ const QuizHistoryContent = ({ quizzes }: { quizzes: RecentQuizSession[] }) => (
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
-          className="p-4 rounded-2xl bg-white/3 border border-white/5 hover:bg-white/6 transition-all group flex-between"
+          className="p-3 md:p-4 rounded-2xl bg-white/3 border border-white/5 hover:bg-white/6 transition-all group flex-between"
         >
           <div className="flex flex-col gap-1">
             <h4 className="font-semibold text-white/90 group-hover:text-primary transition-colors">
@@ -76,7 +76,7 @@ const QuizHistoryContent = ({ quizzes }: { quizzes: RecentQuizSession[] }) => (
             </p>
           </div>
 
-          <div className="hidden md:block">
+          <div className="block">
             <ScoreBoard
               correct={quiz.correct}
               incorrect={quiz.incorrect}
@@ -91,7 +91,7 @@ const QuizHistoryContent = ({ quizzes }: { quizzes: RecentQuizSession[] }) => (
                 ? 'text-emerald-400'
                 : quiz.successRate < 50
                   ? 'text-rose-400'
-                  : 'text-amber-400'
+                  : 'text-primary'
             )}
           >
             %{quiz.successRate}
@@ -205,7 +205,7 @@ export const RecentQuizzesCard = () => {
                             ? 'text-emerald-400'
                             : session.successRate < 50
                               ? 'text-rose-400'
-                              : 'text-amber-400'
+                              : 'text-primary'
                         )}
                       >
                         %{session.successRate}

@@ -14,7 +14,7 @@ import { Session } from '../types/efficiencyTypes';
 import { EfficiencyModal } from './EfficiencyModal';
 import { SessionGanttChart } from './SessionGanttChart';
 import { StatCard } from './StatCard';
-import { formatDisplayDate } from '@/utils/dateHelpers';
+import { formatDisplayDate } from '@/utils/dateUtils';
 
 const convertToSession = (rs: RecentSession): Session => {
   const start = new Date(rs.date);
@@ -76,7 +76,7 @@ export const SessionListItem: FC<SessionListItemProps> = ({
 
   const getEfficiencyColor = (score: number) => {
     if (score >= 100) return 'text-emerald-400';
-    if (score >= 70) return 'text-amber-400';
+    if (score >= 70) return 'text-primary';
     if (score > 0) return 'text-rose-400';
     return 'text-muted-foreground';
   };
@@ -210,7 +210,7 @@ export const SessionListItem: FC<SessionListItemProps> = ({
                   focusPower >= 100
                     ? 'bg-emerald-500'
                     : focusPower >= 70
-                      ? 'bg-amber-500'
+                      ? 'bg-primary'
                       : 'bg-rose-500'
                 )}
                 style={{ width: `${Math.min(100, focusPower)}%` }}

@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { cn } from '@/utils/stringHelpers';
 import { EfficiencyTrend } from '@/features/efficiency/types/efficiencyTypes';
-import { formatDisplayDate } from '@/utils/dateHelpers';
+import { formatDisplayDate } from '@/utils/dateUtils';
 
 // --- Efficiency Trend Chart ---
 export interface EfficiencyTrendProps {

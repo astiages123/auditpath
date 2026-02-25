@@ -42,16 +42,18 @@ export function RankCard({
       <div className="relative h-full flex flex-col justify-between space-y-6">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-primary/20 rounded-full" />
+            <div className="relative aspect-square shrink-0">
+              <div className="absolute inset-0 bg-primary/20 rounded-full hidden lg:block" />
               {showSkeleton ? (
                 <Skeleton className="size-20 rounded-full bg-surface-hover" />
               ) : (
-                <img
-                  src={currentRankImage}
-                  alt={currentRank?.name}
-                  className="relative size-20 object-contain drop-shadow-[0_0_15px_rgba(var(--primary),0.3)] transition-transform group-hover:scale-110 duration-500"
-                />
+                <div className="relative size-20 rounded-full overflow-hidden border-0 bg-transparent flex items-center justify-center">
+                  <img
+                    src={currentRankImage}
+                    alt={currentRank?.name}
+                    className="size-full object-cover transition-transform group-hover:scale-110 duration-500"
+                  />
+                </div>
               )}
             </div>
             <div className="space-y-2">
@@ -105,7 +107,7 @@ export function RankCard({
               </span>
             )}
           </div>
-          <div className="relative h-3 w-full bg-white/10 rounded-full overflow-hidden">
+          <div className="relative h-2 w-full bg-white/10 rounded-full overflow-hidden">
             {showSkeleton ? (
               <Skeleton className="h-full w-full bg-surface-hover" />
             ) : (
@@ -113,7 +115,7 @@ export function RankCard({
                 initial={{ width: 0 }}
                 animate={{ width: `${rankProgress}%` }}
                 transition={{ duration: 1, ease: 'easeOut' }}
-                className="absolute h-full bg-linear-to-r from-primary via-primary/80 to-primary rounded-full"
+                className="absolute h-full bg-primary rounded-full"
               />
             )}
           </div>

@@ -30,9 +30,9 @@ export default function HomePage() {
   }
 
   return (
-    <div className="bg-background text-foreground pb-20">
+    <div className="bg-background text-foreground pb-8 md:pb-16">
       {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 mb-8">
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 mb-6 md:p-6 md:mb-8">
           <h3 className="font-semibold text-destructive mb-2">
             Veritabanı Hatası
           </h3>

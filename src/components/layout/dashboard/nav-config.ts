@@ -1,4 +1,5 @@
 import {
+  Banknote,
   Brain,
   CalendarDays,
   ChartColumnStacked,
@@ -17,6 +18,7 @@ export interface NavItem {
   action?: 'pomodoro' | 'program';
   icon: LucideIcon;
   group: 'navigation' | 'action' | 'meta';
+  mobileOnly?: boolean;
 }
 
 export const NAV_GROUP_LABELS: Record<NavItem['group'], string> = {
@@ -67,6 +69,13 @@ export const navItems: NavItem[] = [
     href: ROUTES.ACHIEVEMENTS,
     icon: Medal,
     group: 'meta',
+  },
+  {
+    label: 'Harcama Analizi',
+    href: ROUTES.COSTS,
+    icon: Banknote,
+    group: 'meta',
+    mobileOnly: true,
   },
   {
     label: 'İstatistikler',

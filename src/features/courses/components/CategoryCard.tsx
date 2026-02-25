@@ -5,7 +5,7 @@ import { useCelebration } from '@/shared/hooks/useCelebration';
 import { useProgress } from '@/shared/hooks/useProgress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
-import { formatDuration } from '@/utils/formatters';
+import { formatDuration, formatDurationShort } from '@/utils/dateUtils';
 import { normalizeCategorySlug } from '../utils/categoryHelpers';
 import { CATEGORY_THEMES } from '../utils/coursesConfig';
 
@@ -93,6 +93,26 @@ export function CategoryCard({
         onClick={onToggle}
         className="w-full p-6 lg:p-8 text-left relative z-10 focus:outline-hidden"
       >
+        {/* Mobile-only Stats Grid (At the top) */}
+        <div className="grid grid-cols-3 gap-2 mb-6 sm:hidden">
+          <div className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-2xl bg-surface/40 border border-white/5 text-[10px] font-black text-muted-foreground uppercase tracking-tight shadow-sm">
+            <BookOpen className="size-3.5 text-muted-foreground/40" />
+            <span className="truncate">{courses.length} Kurs</span>
+          </div>
+          <div className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-2xl bg-surface/40 border border-white/5 text-[10px] font-black text-muted-foreground uppercase tracking-tight shadow-sm">
+            <TvMinimalPlay className="size-3.5 text-muted-foreground/40" />
+            <span className="truncate">
+              {displayCompletedVideos}/{displayTotalVideos}
+            </span>
+          </div>
+          <div className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-2xl bg-surface/40 border border-white/5 text-[10px] font-black text-muted-foreground uppercase tracking-tight shadow-sm">
+            <Clock className="size-3.5 text-muted-foreground/40" />
+            <span className="truncate">
+              {formatDurationShort(displayCompletedHours)}
+            </span>
+          </div>
+        </div>
+
         <div className="flex items-center justify-between gap-6">
           <div className="flex items-center gap-5 flex-1 min-w-0">
             <div
@@ -107,17 +127,17 @@ export function CategoryCard({
               <h3 className="text-xl font-bold text-white tracking-tight">
                 {name}
               </h3>
-              <div className="flex flex-wrap items-center gap-2 mt-1.5 text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                <span className="flex items-center gap-1.5 whitespace-nowrap bg-surface px-2 py-0.5 rounded-full">
-                  <BookOpen className="w-3.5 h-3.5" />
+              <div className="hidden sm:flex items-center gap-2 mt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider overflow-x-auto scrollbar-hide no-scrollbar">
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface/50 border border-white/5 whitespace-nowrap">
+                  <BookOpen className="size-3 text-muted-foreground/60" />
                   {courses.length} Kurs
                 </span>
-                <span className="flex items-center gap-1.5 whitespace-nowrap bg-surface px-2 py-0.5 rounded-full">
-                  <TvMinimalPlay className="w-3.5 h-3.5" />
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface/50 border border-white/5 whitespace-nowrap">
+                  <TvMinimalPlay className="size-3 text-muted-foreground/60" />
                   {displayCompletedVideos}/{displayTotalVideos}
                 </span>
-                <span className="flex items-center gap-1.5 whitespace-nowrap bg-surface px-2 py-0.5 rounded-full">
-                  <Clock className="w-3.5 h-3.5" />
+                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface/50 border border-white/5 whitespace-nowrap">
+                  <Clock className="size-3 text-muted-foreground/60" />
                   {formatDuration(displayCompletedHours)}
                 </span>
               </div>
@@ -125,11 +145,11 @@ export function CategoryCard({
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="text-right hidden sm:block">
-              <span className="text-xl font-black text-white leading-none">
+            <div className="text-right">
+              <span className="text-lg sm:text-xl font-black text-white leading-none">
                 %{progress}
               </span>
-              <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-tighter mt-1">
+              <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground/60 uppercase tracking-tighter mt-0.5 sm:mt-1">
                 İlerleme
               </p>
             </div>
@@ -143,12 +163,12 @@ export function CategoryCard({
         </div>
 
         {/* Minimal Progress Bar - unified accent color */}
-        <div className="mt-8 h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
+        <div className="mt-8 h-2 w-full bg-white/10 rounded-full overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${progress}%` }}
             transition={{ duration: 0.8, ease: 'easeOut' }}
-            className="h-full rounded-full bg-accent"
+            className="h-full rounded-full bg-primary"
           />
         </div>
       </button>

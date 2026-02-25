@@ -8,7 +8,7 @@ import { useSyncExternalStore } from 'react';
 import { RANKS } from '@/features/achievements/utils/constants';
 import type { Rank } from '@/types/auth';
 import { motion } from 'framer-motion';
-import { formatDurationShort } from '@/utils/formatters';
+import { formatDurationShort } from '@/utils/dateUtils';
 import { WEEKLY_SCHEDULE } from '@/features/courses/utils/coursesConfig';
 import { Skeleton } from '@/components/ui/skeleton';
 import { RankCard } from './RankCard';
@@ -142,7 +142,7 @@ export function ProgressHeader({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
+      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
     >
       <RankCard
         currentRank={currentRank}

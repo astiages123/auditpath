@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { getNextRank, getRankForPercentage } from '../utils/rankHelpers';
 import { normalizeCategorySlug } from '@/features/courses/utils/categoryHelpers';
-import { getVirtualDateKey } from '@/utils/dateHelpers';
+import { getVirtualDateKey } from '@/utils/dateUtils';
 
 import { calculateStreak } from '@/features/achievements/logic/streakLogic';
 import coursesData from '@/features/courses/services/courses.json';

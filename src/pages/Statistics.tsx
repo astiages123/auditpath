@@ -23,38 +23,38 @@ const EfficiencyDashboard = () => {
   return (
     <div className="space-y-6">
       {/* Row 1: Focus Hub + Learning Load */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="min-h-[320px]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
           <FocusHubCard />
         </div>
-        <div className="min-h-[320px]">
+        <div>
           <LearningLoadCard />
         </div>
       </div>
 
       {/* Row 2: Practice Center + Mastery Navigator */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="min-h-[280px]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
           <PracticeCenterCard />
         </div>
-        <div className="min-h-[280px]">
+        <div>
           <MasteryNavigatorCard />
         </div>
       </div>
 
       {/* Row 3: Recent Quizzes + Consistency Heatmap */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="min-h-[350px]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
           <RecentQuizzesCard />
         </div>
-        <div className="min-h-[350px]">
+        <div>
           <ConsistencyHeatmapCard />
         </div>
       </div>
 
       {/* Row 4: Cognitive Insights + Recent Activities */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="min-h-[250px]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div>
           <CognitiveInsightsCard
             loading={loading}
             cognitiveAnalysis={
@@ -75,7 +75,7 @@ const EfficiencyDashboard = () => {
             }
           />
         </div>
-        <div className="min-h-[400px]">
+        <div>
           <RecentActivitiesContainer />
         </div>
       </div>

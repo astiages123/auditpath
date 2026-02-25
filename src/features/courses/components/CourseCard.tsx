@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CourseStatsModal } from './CourseStatsModal';
 import { ROUTES } from '@/utils/routes';
-import { formatDuration } from '@/utils/formatters';
+import { formatDuration } from '@/utils/dateUtils';
 import {
   Tooltip,
   TooltipContent,

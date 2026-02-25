@@ -119,7 +119,7 @@ export const FocusHubCard = () => {
 
   if (loading)
     return (
-      <GlassCard className="h-full flex flex-col p-6">
+      <GlassCard className="h-full flex flex-col p-4 md:p-6">
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
             <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
@@ -150,7 +150,7 @@ export const FocusHubCard = () => {
       title="Öğrenme Akışı Analizi"
       trigger={
         <div className="h-full w-full cursor-pointer">
-          <GlassCard className="h-full flex flex-col p-6">
+          <GlassCard className="h-full flex flex-col p-4 md:p-6">
             <CardHeader
               icon={Target}
               iconColor="text-accent"
@@ -162,7 +162,7 @@ export const FocusHubCard = () => {
               }
             />
 
-            <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-8 mt-6">
+            <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-5 mt-4 md:gap-8 md:mt-6">
               <GoalProgressRing
                 progress={goalProgress}
                 size={160}
@@ -177,7 +177,7 @@ export const FocusHubCard = () => {
                   <div className="flex flex-col md:flex-row md:items-baseline gap-x-3 gap-y-1 justify-center md:justify-start">
                     <p
                       className={cn(
-                        'text-4xl font-bold font-heading',
+                        'text-3xl md:text-4xl font-bold font-heading',
                         getFlowColor(flowState)
                       )}
                     >
@@ -195,7 +195,7 @@ export const FocusHubCard = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-3 md:gap-6">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 justify-center md:justify-start">
                       <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">

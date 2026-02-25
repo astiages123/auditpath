@@ -89,14 +89,14 @@ export const LearningLoadChart = ({
         {targetMinutes && (
           <ReferenceLine
             y={targetMinutes}
-            stroke="#f59e0b"
+            stroke="#10b981"
             strokeWidth={2.5}
             strokeDasharray="5 5"
             ifOverflow="extendDomain"
             label={{
               position: 'insideTopRight',
               value: `Hedef: ${targetMinutes} dk`,
-              fill: '#f59e0b',
+              fill: '#10b981',
               fontSize: 11,
               fontWeight: 'bold',
               dy: -30,
@@ -276,13 +276,13 @@ export const MasteryNavigatorCard = () => {
                       <div className="flex flex-col gap-1.5">
                         <div className="flex justify-between text-[11px] uppercase tracking-wider font-bold">
                           <span className="text-white/40">Quiz (%40)</span>
-                          <span className="text-amber-400">
+                          <span className="text-primary">
                             %{node.questionProgress}
                           </span>
                         </div>
                         <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                           <div
-                            className="h-full bg-amber-500/60"
+                            className="h-full bg-primary/60"
                             style={{ width: `${node.questionProgress}%` }}
                           />
                         </div>

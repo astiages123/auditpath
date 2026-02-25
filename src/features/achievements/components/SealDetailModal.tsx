@@ -7,7 +7,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { GUILDS, getRequirementDescription } from '../logic/achievementsData';
-import { formatDisplayDate } from '@/utils/dateHelpers';
+import { formatDisplayDate } from '@/utils/dateUtils';
 import type { Achievement } from '../types/achievementsTypes';
 
 interface SealDetailModalProps {

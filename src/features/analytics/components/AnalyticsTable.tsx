@@ -94,84 +94,136 @@ export const AnalyticsTable: FC<AnalyticsTableProps> = ({
         </Badge>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/30 border-b border-border/40 hover:bg-muted/30">
-                <TableHead className="font-heading font-bold text-xs uppercase tracking-widest pl-6">
-                  Tarih
-                </TableHead>
-                <TableHead className="font-heading font-bold text-xs uppercase tracking-widest text-center">
-                  Tür
-                </TableHead>
-                <TableHead className="font-heading font-bold text-xs uppercase tracking-widest pl-10">
-                  Model
-                </TableHead>
-                <TableHead className="font-heading font-bold text-xs uppercase tracking-widest text-right">
-                  Token Detayı
-                </TableHead>
-                <TableHead className="font-heading font-bold text-xs uppercase tracking-widest text-right">
-                  Süre
-                </TableHead>
-                <TableHead className="font-heading font-bold text-xs uppercase tracking-widest text-right pr-6">
-                  Maliyet
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody
-              style={{
-                opacity: isPending ? 0.7 : 1,
-                transition: 'opacity 200ms ease-in-out',
-              }}
+        {/* Desktop Table */}
+        <div className="hidden md:block">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30 border-b border-border/40 hover:bg-muted/30">
+                  <TableHead className="font-heading font-bold text-xs uppercase tracking-widest pl-6">
+                    Tarih
+                  </TableHead>
+                  <TableHead className="font-heading font-bold text-xs uppercase tracking-widest text-center">
+                    Tür
+                  </TableHead>
+                  <TableHead className="font-heading font-bold text-xs uppercase tracking-widest pl-10">
+                    Model
+                  </TableHead>
+                  <TableHead className="font-heading font-bold text-xs uppercase tracking-widest text-right">
+                    Token Detayı
+                  </TableHead>
+                  <TableHead className="font-heading font-bold text-xs uppercase tracking-widest text-right">
+                    Süre
+                  </TableHead>
+                  <TableHead className="font-heading font-bold text-xs uppercase tracking-widest text-right pr-6">
+                    Maliyet
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody
+                style={{
+                  opacity: isPending ? 0.7 : 1,
+                  transition: 'opacity 200ms ease-in-out',
+                }}
+              >
+                {logs.slice(0, visibleCount).map((log) => (
+                  <TableRow
+                    key={log.id}
+                    className="border-b border-border/20 hover:bg-muted/50 transition-colors group"
+                  >
+                    <TableCell className="pl-6 font-mono text-[14px] text-muted-foreground">
+                      {log.created_at
+                        ? format(new Date(log.created_at), 'dd MMM HH:mm', {
+                            locale: tr,
+                          })
+                        : '-'}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {getUsageTypeBadge(log.usage_type)}
+                    </TableCell>
+                    <TableCell className="font-medium text-white text-sm pl-10">
+                      {log.model}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex flex-col text-[11px] font-mono">
+                        <span className="text-white font-bold">
+                          {log.total_tokens?.toLocaleString()}
+                        </span>
+                        <span className="text-muted-foreground opacity-60">
+                          Girdi:{log.prompt_tokens} / Çıktı:
+                          {log.completion_tokens} / Cache:
+                          {log.cached_tokens}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right text-xs font-mono text-muted-foreground">
+                      {log.latency_ms
+                        ? `${(log.latency_ms / 1000).toFixed(2)}s`
+                        : '-'}
+                    </TableCell>
+                    <TableCell className="text-right pr-6">
+                      <span
+                        className={`text-sm font-bold ${log.cost_usd === 0 ? 'text-emerald-400/50 ' : 'text-primary'}`}
+                      >
+                        {log.cost_usd === 0
+                          ? 'Ücretsiz'
+                          : formatCurrency((log.cost_usd || 0) * rate)}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+
+        {/* Mobile Card List */}
+        <div className="md:hidden divide-y divide-border/20">
+          {logs.slice(0, visibleCount).map((log) => (
+            <div
+              key={log.id}
+              className="p-4 space-y-3 hover:bg-muted/30 transition-colors"
             >
-              {logs.slice(0, visibleCount).map((log) => (
-                <TableRow
-                  key={log.id}
-                  className="border-b border-border/20 hover:bg-muted/50 transition-colors group"
+              <div className="flex items-center justify-between">
+                <span className="text-[12px] font-mono text-muted-foreground">
+                  {log.created_at
+                    ? format(new Date(log.created_at), 'dd MMM HH:mm', {
+                        locale: tr,
+                      })
+                    : '-'}
+                </span>
+                {getUsageTypeBadge(log.usage_type)}
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-white text-sm">
+                  {log.model}
+                </span>
+                <span
+                  className={`text-sm font-bold ${log.cost_usd === 0 ? 'text-emerald-400/50 ' : 'text-primary'}`}
                 >
-                  <TableCell className="pl-6 font-mono text-[14px] text-muted-foreground">
-                    {log.created_at
-                      ? format(new Date(log.created_at), 'dd MMM HH:mm', {
-                          locale: tr,
-                        })
-                      : '-'}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {getUsageTypeBadge(log.usage_type)}
-                  </TableCell>
-                  <TableCell className="font-medium text-white text-sm pl-10">
-                    {log.model}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex flex-col text-[11px] font-mono">
-                      <span className="text-white font-bold">
-                        {log.total_tokens?.toLocaleString()}
-                      </span>
-                      <span className="text-muted-foreground opacity-60">
-                        Girdi:{log.prompt_tokens} / Çıktı:
-                        {log.completion_tokens} / Cache:
-                        {log.cached_tokens}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right text-xs font-mono text-muted-foreground">
+                  {log.cost_usd === 0
+                    ? 'Ücretsiz'
+                    : formatCurrency((log.cost_usd || 0) * rate)}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground bg-black/10 p-2 rounded-lg border border-border/10">
+                <div className="flex flex-col">
+                  <span className="text-white/40">Token</span>
+                  <span className="text-white">
+                    {log.total_tokens?.toLocaleString()}
+                  </span>
+                </div>
+                <div className="flex flex-col text-right">
+                  <span className="text-white/40">Süre</span>
+                  <span className="text-white">
                     {log.latency_ms
                       ? `${(log.latency_ms / 1000).toFixed(2)}s`
                       : '-'}
-                  </TableCell>
-                  <TableCell className="text-right pr-6">
-                    <span
-                      className={`text-sm font-bold ${log.cost_usd === 0 ? 'text-emerald-400/50 ' : 'text-primary'}`}
-                    >
-                      {log.cost_usd === 0
-                        ? 'Ücretsiz'
-                        : formatCurrency((log.cost_usd || 0) * rate)}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
 
         {logs.length > deferredVisibleCount && (

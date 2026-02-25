@@ -1,6 +1,6 @@
 import { eachDayOfInterval, format, startOfWeek } from 'date-fns';
 import { tr } from 'date-fns/locale';
-import { formatDateKey } from '@/utils/dateHelpers';
+import { formatDateKey } from '@/utils/dateUtils';
 import { logger } from '@/utils/logger';
 
 // --- Constants ---

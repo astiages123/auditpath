@@ -52,7 +52,7 @@ export function NotesCourseOverview({
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 w-full max-w-lg">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
         {stats.map((stat, index) => (
           <motion.div
             key={stat.label}

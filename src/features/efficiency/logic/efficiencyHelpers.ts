@@ -1,5 +1,5 @@
 import { EFFICIENCY_THRESHOLDS } from '../utils/constants';
-import { getVirtualDateKey } from '@/utils/dateHelpers';
+import { getVirtualDateKey } from '@/utils/dateUtils';
 import { flowState } from '../types/efficiencyTypes';
 
 /**

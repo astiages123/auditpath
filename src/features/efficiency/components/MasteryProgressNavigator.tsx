@@ -46,7 +46,7 @@ export const MasteryProgressNavigator = ({
                   lesson.mastery >= 80
                     ? 'text-emerald-400'
                     : lesson.mastery >= 50
-                      ? 'text-amber-400'
+                      ? 'text-primary'
                       : 'text-rose-400'
                 )}
               >
@@ -60,7 +60,7 @@ export const MasteryProgressNavigator = ({
                   lesson.mastery >= 80
                     ? 'bg-emerald-500'
                     : lesson.mastery >= 50
-                      ? 'bg-amber-500'
+                      ? 'bg-primary'
                       : 'bg-rose-500'
                 )}
                 style={{ width: `${lesson.mastery}%` }}
@@ -70,7 +70,7 @@ export const MasteryProgressNavigator = ({
               <span className="text-emerald-400">
                 Video %{lesson.videoProgress}
               </span>
-              <span className="text-amber-400">
+              <span className="text-primary font-bold">
                 Quiz %{lesson.questionProgress}
               </span>
             </div>

@@ -178,11 +178,11 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                         className="group relative bg-card/40 backdrop-blur-sm border border-border/40 rounded-[2.5rem] overflow-hidden cursor-pointer shadow-sm hover:border-primary/30"
                       >
                         <div className="p-8 space-y-6">
-                          <div className="flex items-start justify-between">
+                          <div className="flex items-center justify-between">
                             <div className="w-14 h-14 rounded-2xl bg-secondary/80 flex items-center justify-center text-foreground/70 shadow-inner">
                               <Icon className="size-5" />
                             </div>
-                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
+                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 whitespace-nowrap">
                               <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                               Aktif
                             </div>

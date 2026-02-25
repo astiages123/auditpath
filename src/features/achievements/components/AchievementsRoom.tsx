@@ -83,7 +83,7 @@ export function AchievementsRoom() {
 
   return (
     <>
-      <div className="max-w-7xl mx-auto space-y-16">
+      <div className="max-w-7xl mx-auto space-y-10 md:space-y-16">
         {GUILD_ORDER.map((guildId) => {
           const guild = GUILDS[guildId];
           const achievements = achievementsByGuild.get(guildId) || [];
@@ -93,7 +93,7 @@ export function AchievementsRoom() {
           return (
             <section key={guildId} className="relative">
               {/* Lonca Başlığı */}
-              <div className="flex items-center gap-4 mb-8">
+              <div className="flex items-center gap-4 mb-5 md:mb-8">
                 <div
                   className="w-1.5 h-10 rounded-full"
                   style={{
@@ -113,7 +113,7 @@ export function AchievementsRoom() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-6">
                 {achievements.map((achievement) => (
                   <SealCard
                     key={achievement.id}

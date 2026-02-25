@@ -75,36 +75,38 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <div
         style={{
           transform: isMobileMenuOpen
-            ? 'translateX(-70vw) scale(0.85) translateZ(0)'
-            : 'translateX(0) scale(1) translateZ(0)',
-          borderRadius: isMobileMenuOpen ? '40px' : '0px',
+            ? 'translateX(-75vw) translateZ(0)'
+            : 'translateX(0) translateZ(0)',
           transformOrigin: 'right center',
         }}
         className={cn(
-          'relative min-h-screen bg-background z-10 transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] shadow-2xl',
+          'relative min-h-screen bg-background z-10 transition-all duration-500 ease-[cubic-bezier(0.4,0,0,0.2,1)] shadow-2xl',
           isMobileMenuOpen && 'pointer-events-none select-none overflow-hidden'
         )}
       >
         {/* L-Shape Grid Layout */}
         <div
-          className="h-screen grid"
-          style={{
-            gridTemplateColumns: `${sidebarWidth} 1fr`,
-            gridTemplateRows: '80px 1fr',
-            transition: 'grid-template-columns 300ms ease-in-out',
-          }}
+          className={cn(
+            'h-screen grid grid-cols-1 grid-rows-[64px_1fr] lg:grid-rows-[80px_1fr] transition-all duration-300 ease-in-out',
+            'lg:grid-cols-[var(--sidebar-width)_1fr]'
+          )}
+          style={
+            {
+              ['--sidebar-width' as string]: sidebarWidth,
+            } as React.CSSProperties
+          }
         >
-          {/* Sidebar: col-1, row-span-2 */}
+          {/* Sidebar: col-1, row-span-2 (Hidden on mobile via its own className) */}
           <Sidebar />
 
-          {/* Header: col-2, row-1 */}
+          {/* Header: col-2, row-1 (In mobile it fills row 1) */}
           <DashHeader />
 
-          {/* Main Content: col-2, row-2 */}
-          <main className="overflow-y-auto overflow-x-hidden min-h-0">
+          {/* Main Content: col-2, row-2 (In mobile it fills row 2) */}
+          <main className="overflow-y-auto overflow-x-hidden min-h-0 lg:col-start-2">
             <div
               className={cn(
-                'min-h-full flex flex-col mx-auto w-full px-6 lg:px-8 py-4 md:py-6',
+                'min-h-full flex flex-col mx-auto w-full px-4 lg:px-8 py-4 md:py-6',
                 isFullWidthPage ? 'max-w-[1800px]' : 'max-w-[1400px]'
               )}
             >

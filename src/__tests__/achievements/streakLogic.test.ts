@@ -4,7 +4,7 @@ import {
   calculateStreakMilestones,
 } from '@/features/achievements/logic/streakLogic';
 
-vi.mock('@/utils/dateHelpers', () => ({
+vi.mock('@/utils/dateUtils', () => ({
   formatDateKey: (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -20,7 +20,7 @@ vi.mock('@/utils/dateHelpers', () => ({
   }),
 }));
 
-import { getVirtualDate } from '@/utils/dateHelpers';
+import { getVirtualDate } from '@/utils/dateUtils';
 const mockedGetVirtualDate = getVirtualDate as ReturnType<typeof vi.fn>;
 
 describe('streakLogic - calculateStreak', () => {

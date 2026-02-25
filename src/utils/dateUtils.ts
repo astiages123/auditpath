@@ -1,7 +1,9 @@
 /**
- * Tarih işlemleri için yardımcı fonksiyonlar.
- * Virtual Day Logic ve Date Formatting burada merkezi olarak yönetilir.
+ * Tarih ve zaman işlemleri için merkezi yardımcı fonksiyonlar.
+ * Virtual Day Logic, Date Formatting ve Duration Formatting burada yönetilir.
  */
+
+// === DATE HELPERS ===
 
 /**
  * Sanal gün mantığı: Gece 04:00'dan önce ise bir önceki güne ait sayılır.
@@ -57,6 +59,7 @@ export function getVirtualDateKey(date?: Date): string {
   const virtualDate = getVirtualDate(date);
   return formatDateKey(virtualDate);
 }
+
 /**
  * Tarihi kullanıcıya dost bir formatta döner.
  * Varsayılan: "28 Jan" veya "28 Ocak" (tr-TR).
@@ -76,4 +79,45 @@ export function formatDisplayDate(
       ? new Date(date)
       : date;
   return d.toLocaleDateString('tr-TR', options);
+}
+
+// === FORMATTERS (TIME & DURATION) ===
+
+/**
+ * Saniye cinsinden süreyi "Xsa Ydk" formatına çevirir.
+ * 0 dakika ise sadece "0dk" döner.
+ * @example formatTimeFromSeconds(3665) → "1sa 1dk"
+ */
+export function formatTimeFromSeconds(seconds: number): string {
+  if (seconds < 0) return '0dk';
+  const totalMinutes = Math.round(seconds / 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h > 0) return `${h}sa ${m}dk`;
+  return `${m}dk`;
+}
+
+/**
+ * Ondalık saat cinsinden süreyi "X sa Y dk" formatına çevirir.
+ * @example formatDuration(1.5) → "1 sa 30 dk"
+ */
+export function formatDuration(decimalHours: number): string {
+  if (decimalHours < 0) return '0 sa 0 dk';
+  const hours = Math.floor(decimalHours);
+  const minutes = Math.round((decimalHours - hours) * 60);
+  return `${hours} sa ${minutes} dk`;
+}
+
+export { formatDuration as formatDurationFromHours };
+
+/**
+ * Kısa format: "Xs Yd" (ProgressHeader vb. için).
+ * @example formatDurationShort(1.5) → "1s 30d"
+ */
+export function formatDurationShort(decimalHours: number): string {
+  if (decimalHours < 0) return '0s 0d';
+  const totalMinutes = Math.round(decimalHours * 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${hours}s ${minutes}d`;
 }

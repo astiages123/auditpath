@@ -102,7 +102,7 @@ export const CognitiveInsightsCard = ({
               (focusScore || 0) >= 80
                 ? 'text-emerald-400'
                 : (focusScore || 0) >= 60
-                  ? 'text-amber-400'
+                  ? 'text-primary'
                   : 'text-rose-400'
             )}
           >
@@ -144,7 +144,7 @@ export const CognitiveInsightsCard = ({
         {/* 2. Confusion Tracker */}
         {topConfused && topConfused.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-xs font-semibold text-primary uppercase tracking-widest">
               <Zap className="w-3.5 h-3.5" />
               KAVRAM YANILGILARI
             </div>

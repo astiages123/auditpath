@@ -62,7 +62,7 @@ export const DistractionDetails = ({ sessions }: DistractionDetailsProps) => {
 
   const getStabilityColor = (score: number) => {
     if (score >= 100) return 'text-emerald-400';
-    if (score >= 70) return 'text-amber-400';
+    if (score >= 70) return 'text-primary';
     return 'text-rose-400';
   };
 
@@ -103,8 +103,8 @@ export const DistractionDetails = ({ sessions }: DistractionDetailsProps) => {
         </div>
 
         <div className="bg-surface border border-border-subtle p-5 rounded-2xl flex flex-col items-center">
-          <div className="p-3 bg-amber-500/10 rounded-xl mb-3">
-            <ZapOff className="w-5 h-5 text-amber-400" />
+          <div className="p-3 bg-primary/10 rounded-xl mb-3">
+            <ZapOff className="w-5 h-5 text-primary" />
           </div>
           <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mb-1">
             Toplam Duraklatma
