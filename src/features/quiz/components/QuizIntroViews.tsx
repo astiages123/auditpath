@@ -54,21 +54,22 @@ export function CourseOverview({ courseName, progress }: CourseOverviewProps) {
   ];
 
   return (
-    <div className="flex-col flex-center p-8 h-full space-y-8 animate-in fade-in duration-500">
+    <div className="flex-col flex items-center justify-center p-8 h-full space-y-8 animate-in fade-in duration-500">
       <div className="text-center space-y-2">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex-center mb-6">
+          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
             <Trophy className="w-8 h-8 text-primary" />
           </div>
           <h2 className="text-2xl font-bold tracking-tight">
             Başlamaya Hazır Mısın?
           </h2>
           <p className="text-muted-foreground text-base">
-            {courseName} dersindeki durumunu incele ve bir konu seçerek başla.
+            <span className="font-semibold text-foreground">{courseName}</span>{' '}
+            dersindeki durumunu incele ve bir konu seçerek başla.
           </p>
         </motion.div>
       </div>
@@ -88,11 +89,17 @@ export function CourseOverview({ courseName, progress }: CourseOverviewProps) {
               <div className="text-sm text-muted-foreground font-medium">
                 {stat.label}
               </div>
-              <div className="text-xl font-bold">{stat.value}</div>
+              <div className="text-base font-bold">{stat.value}</div>
             </div>
           </motion.div>
         ))}
       </div>
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        className="w-full max-w-lg"
+      />
     </div>
   );
 }

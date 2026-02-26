@@ -1,18 +1,15 @@
-import { Trophy, Target, BookOpen, ArrowRight } from 'lucide-react';
+import { Trophy, Target, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/stringHelpers';
 
 interface NotesCourseOverviewProps {
   courseName: string;
-  onStartReading: () => void;
   totalProgress?: number;
   totalTopics?: number;
 }
 
 export function NotesCourseOverview({
   courseName,
-  onStartReading,
   totalProgress = 0,
   totalTopics = 0,
 }: NotesCourseOverviewProps) {
@@ -81,16 +78,7 @@ export function NotesCourseOverview({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
         className="w-full max-w-lg"
-      >
-        <Button
-          size="lg"
-          className="w-full h-14 text-lg font-bold gap-2 shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]"
-          onClick={onStartReading}
-        >
-          {totalProgress > 0 ? 'Okumaya Devam Et' : 'Okumaya Başla'}
-          <ArrowRight className="w-5 h-5" />
-        </Button>
-      </motion.div>
+      ></motion.div>
     </div>
   );
 }

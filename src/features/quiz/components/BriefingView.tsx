@@ -41,7 +41,7 @@ export function BriefingView({
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="w-full h-full flex flex-col gap-4 py-2 min-h-0"
+      className="w-full h-full flex flex-col gap-3 py-2 min-h-0"
     >
       <motion.div variants={itemVariants} className="shrink-0">
         <button
@@ -55,10 +55,10 @@ export function BriefingView({
         </button>
       </motion.div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 min-h-0 md:min-h-0 overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 min-h-0 md:min-h-0 overflow-hidden">
         <motion.div
           variants={itemVariants}
-          className="bg-card/40 backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden flex flex-col min-h-[200px] md:h-full md:min-h-0 shadow-sm"
+          className="bg-card/40 backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden flex flex-col min-h-0 md:h-full shadow-sm"
         >
           <div className="px-4 py-3 border-b border-border/30 bg-muted/30 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
@@ -127,10 +127,10 @@ export function BriefingView({
           </div>
         </motion.div>
 
-        <div className="flex flex-col gap-4 min-h-0 md:h-full overflow-y-auto custom-scrollbar pr-1">
+        <div className="flex flex-col gap-3 min-h-0 md:h-full overflow-y-auto custom-scrollbar pr-1">
           <motion.div
             variants={itemVariants}
-            className="flex-1 p-5 bg-card/40 backdrop-blur-sm rounded-xl border border-border/50 flex flex-col justify-center gap-3 shadow-sm relative overflow-hidden group"
+            className="flex-1 p-4 bg-card/40 backdrop-blur-sm rounded-xl border border-border/50 flex flex-col justify-center gap-2.5 shadow-sm relative overflow-hidden group"
           >
             <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
               <TrendingUp className="w-12 h-12" />
@@ -152,15 +152,15 @@ export function BriefingView({
                 ))}
               </div>
             </div>
-            <div className="flex items-baseline gap-2 relative z-10">
-              <span className="text-5xl font-black leading-none tracking-tighter bg-linear-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
+            <div className="flex items-baseline gap-1 relative z-10">
+              <span className="text-4xl font-black leading-none tracking-tighter bg-linear-to-br from-foreground to-foreground/60 bg-clip-text text-transparent">
                 {completionStatus.difficultyIndex || '3.5'}
               </span>
               <span className="text-sm font-bold text-muted-foreground">
                 / 5
               </span>
             </div>
-            <div className="space-y-1.5 relative z-10">
+            <div className="space-y-1 relative z-10">
               <div className="h-2 w-full bg-muted/50 rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
@@ -176,12 +176,12 @@ export function BriefingView({
 
           <motion.div
             variants={itemVariants}
-            className="flex-1 p-5 bg-card/40 backdrop-blur-sm rounded-xl border border-border/50 flex flex-col justify-center shadow-sm relative overflow-hidden group"
+            className="flex-1 p-4 bg-card/40 backdrop-blur-sm rounded-xl border border-border/50 flex flex-col justify-center shadow-sm relative overflow-hidden group"
           >
             <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
               <BarChart3 className="w-12 h-12" />
             </div>
-            <div className="flex items-center gap-2 mb-6 relative z-10">
+            <div className="flex items-center gap-2 mb-4 relative z-10">
               <span className="text-xs font-black uppercase text-muted-foreground tracking-[0.15em]">
                 Soru Dağılımı
               </span>

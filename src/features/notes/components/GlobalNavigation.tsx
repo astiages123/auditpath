@@ -37,7 +37,7 @@ export const GlobalNavigation = memo(function GlobalNavigation({
     <nav className="h-full flex flex-col">
       <div className="p-4 border-b border-border/30">
         <h2 className="text-sm font-bold tracking-widest text-center text-foreground">
-          İÇİNDEKİLER
+          KONULAR
         </h2>
       </div>
       <div
@@ -55,10 +55,10 @@ export const GlobalNavigation = memo(function GlobalNavigation({
               id={`nav-item-${chunkId}`}
               to={url}
               className={cn(
-                'group relative flex items-center gap-3 px-3 py-3 mx-1 my-1 rounded-xl transition-all duration-300',
+                'group relative flex items-center gap-3 px-3 py-3 mx-1 mb-2 rounded-xl transition-all duration-300',
                 isActive
                   ? 'bg-primary/10 border border-primary/20 shadow-sm'
-                  : 'bg-card/40 border border-transparent hover:bg-white/5 hover:border-white/5'
+                  : 'bg-card border border-transparent hover:bg-white/5 hover:border-white/5'
               )}
             >
               {/* Numara badge */}

@@ -38,15 +38,19 @@ export const useTableOfContents = ({
 
     const scrollTop = container.scrollTop;
 
-    let activeHeadingId = '';
+    // The user wants the previous section to be COMPLETELY gone.
+    // This means we only activate a heading when it reaches the very top of the viewport (or slightly past it).
+    // We'll use a 10px buffer to ensure smooth activation.
+
+    let activeHeadingId = headings[0].id;
 
     for (let i = 0; i < headings.length; i++) {
       const heading = headings[i];
       const headingTop = heading.offsetTop;
 
-      const threshold = scrollTop + 60;
-
-      if (headingTop <= threshold) {
+      // Threshold: Scroll position has crossed the heading offset
+      // We subtract a few pixels (like 10) to make it feel responsive but strict
+      if (scrollTop >= headingTop - 10) {
         activeHeadingId = heading.id;
       } else {
         break;

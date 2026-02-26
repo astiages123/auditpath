@@ -1,6 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Loader2, BookOpen, Clock } from 'lucide-react';
+import {
+  Loader2,
+  BookOpen,
+  Clock,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -13,11 +21,11 @@ import {
   MarkdownSection,
   GlobalNavigation,
   NotesCourseOverview,
+  LocalToC,
 } from '@/features/notes/components';
 
 import { useNotesData } from '@/features/notes/hooks/useNotesData';
 import { useNotesPage } from '@/features/notes/hooks/useNotesPage';
-import { useNotesProgress } from '@/features/notes/hooks/useNotesProgress';
 
 export default function NotesPage() {
   const { courseSlug, topicSlug } = useParams<{
@@ -32,7 +40,15 @@ export default function NotesPage() {
     userId: user?.id,
   });
 
-  const { activeChunkId, mainContentRef, handleGlobalClick } = useNotesPage({
+  const {
+    activeChunkId,
+    mainContentRef,
+    handleGlobalClick,
+    currentChunkToC,
+    activeSection,
+    setActiveSection,
+    handleScrollToId,
+  } = useNotesPage({
     courseSlug,
     topicSlug,
     chunks,
@@ -43,11 +59,9 @@ export default function NotesPage() {
     (c) => slugify(c.section_title) === activeChunkId
   );
 
-  // saved reading progress from DB/hook
-  const { readingProgress, updateProgress } = useNotesProgress(
-    user?.id,
-    chunks[0]?.course_id
-  );
+  // Panel visibility states
+  const [isLeftPanelVisible, setIsLeftPanelVisible] = useState(true);
+  const [isRightPanelVisible, setIsRightPanelVisible] = useState(true);
 
   // Local state for smooth UI updates during scroll
   const [localProgress, setLocalProgress] = useState(0);
@@ -55,19 +69,14 @@ export default function NotesPage() {
   // Overall course progress for the overview page
   const totalProgress = useMemo(() => {
     if (!chunks.length) return 0;
-    const progressValues = chunks.map((c) => readingProgress[c.id] || 0);
-    const sum = progressValues.reduce((acc, val) => acc + val, 0);
-    return Math.round(sum / chunks.length);
-  }, [chunks, readingProgress]);
+    return Math.round(localProgress);
+  }, [chunks.length, localProgress]);
 
-  // Display progress - use synced value from readingProgress when chunk changes, otherwise use local
-  const displayProgress = currentChunk
-    ? (readingProgress[currentChunk.id] ?? localProgress)
-    : localProgress;
+  const displayProgress = currentChunk ? localProgress : 0;
 
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
-    if (!container || !currentChunk) return;
+    if (!container) return;
 
     const scrollHeight = container.scrollHeight - container.clientHeight;
     if (scrollHeight <= 0) return;
@@ -77,13 +86,7 @@ export default function NotesPage() {
       Math.round((container.scrollTop / scrollHeight) * 100)
     );
 
-    // Update local state instantly (bidirectional)
     setLocalProgress(progress);
-
-    // Persist only if increased
-    if (progress > (readingProgress[currentChunk.id] || 0)) {
-      updateProgress(currentChunk.id, progress);
-    }
   };
 
   if (loading) {
@@ -91,7 +94,7 @@ export default function NotesPage() {
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <Loader2 className="animate-spin size-8 text-primary" />
         <p className="mt-4 text-muted-foreground animate-pulse">
-          Ders içeriği hazırlanıyor...
+          Ders içeriği hazırlıyor...
         </p>
       </div>
     );
@@ -106,12 +109,6 @@ export default function NotesPage() {
     );
   }
 
-  const excludedRoutes = [
-    '/notes/finans-matematigi',
-    '/notes/finans-matematigi/tek-odemeli-islemler',
-  ];
-  const isExcluded = excludedRoutes.includes(location.pathname);
-
   return (
     <ErrorBoundary>
       <div
@@ -121,16 +118,32 @@ export default function NotesPage() {
       >
         <div
           className={cn(
-            'flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden',
-            'lg:grid lg:grid-cols-[280px_1fr] gap-6 px-4 lg:px-6 h-full'
+            'flex-1 min-h-0 flex flex-col lg:grid gap-4 px-2 lg:px-4 h-full transition-all duration-300 ease-in-out overflow-hidden',
+            activeChunkId !== ''
+              ? 'lg:grid-cols-[var(--left-panel-width)_1fr_var(--right-panel-width)]'
+              : 'lg:grid-cols-[var(--left-panel-width)_1fr]'
           )}
+          style={
+            {
+              '--left-panel-width': isLeftPanelVisible ? '240px' : '0px',
+              '--right-panel-width': isRightPanelVisible ? '220px' : '0px',
+            } as React.CSSProperties
+          }
         >
-          <aside className="flex flex-col shrink-0 border rounded-xl bg-card/40 h-[400px] lg:h-full z-20 overflow-hidden">
-            <GlobalNavigation
-              chunks={chunks}
-              activeChunkId={activeChunkId}
-              courseSlug={courseSlug || ''}
-            />
+          <aside
+            className={cn(
+              'flex flex-col shrink-0 border rounded-xl bg-card/40 h-[400px] lg:h-full z-20 overflow-hidden transition-all duration-300 ease-in-out',
+              !isLeftPanelVisible &&
+                'lg:w-0 lg:opacity-0 lg:border-none lg:pointer-events-none'
+            )}
+          >
+            <div className="min-w-[240px] h-full flex flex-col">
+              <GlobalNavigation
+                chunks={chunks}
+                activeChunkId={activeChunkId}
+                courseSlug={courseSlug || ''}
+              />
+            </div>
           </aside>
 
           <main className="flex flex-col min-h-0 flex-1 bg-card/40 rounded-xl border h-full overflow-hidden">
@@ -139,6 +152,19 @@ export default function NotesPage() {
               className="group flex flex-col border-b border-border/10 shrink-0 bg-card/80 backdrop-blur-md z-10 transition-all duration-300"
             >
               <div className="flex items-center gap-3 px-6 py-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
+                  onClick={() => setIsLeftPanelVisible(!isLeftPanelVisible)}
+                >
+                  {isLeftPanelVisible ? (
+                    <PanelLeftClose className="w-5 h-5" />
+                  ) : (
+                    <PanelLeftOpen className="w-5 h-5" />
+                  )}
+                </Button>
+
                 <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                   <BookOpen className="w-4 h-4" />
                 </div>
@@ -174,13 +200,32 @@ export default function NotesPage() {
                   </div>
                 </div>
 
-                {currentChunk && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono font-bold text-muted-foreground">
-                      %{displayProgress}
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center gap-3">
+                  {currentChunk && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-mono font-bold text-muted-foreground line-clamp-1">
+                        %{displayProgress}
+                      </span>
+                    </div>
+                  )}
+
+                  {activeChunkId !== '' && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="shrink-0 text-muted-foreground hover:text-primary transition-colors"
+                      onClick={() =>
+                        setIsRightPanelVisible(!isRightPanelVisible)
+                      }
+                    >
+                      {isRightPanelVisible ? (
+                        <PanelRightClose className="w-5 h-5" />
+                      ) : (
+                        <PanelRightOpen className="w-5 h-5" />
+                      )}
+                    </Button>
+                  )}
+                </div>
               </div>
 
               {/* Progress Bar Component */}
@@ -207,14 +252,16 @@ export default function NotesPage() {
               id="notes-scroll-container"
               onScroll={handleScroll}
               className={cn(
-                'flex-1 min-h-0 p-6 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar',
+                'flex-1 min-h-0 p-4 lg:p-6 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar',
                 'mx-auto w-full'
               )}
             >
               <div
                 className={cn(
-                  'w-full flex-1 flex flex-col min-h-0 mx-auto',
-                  isExcluded ? 'max-w-4xl' : 'max-w-6xl'
+                  'w-full flex-1 flex flex-col min-h-0 mx-auto transition-all duration-300',
+                  !isLeftPanelVisible && !isRightPanelVisible
+                    ? 'max-w-full lg:px-8'
+                    : 'max-w-6xl'
                 )}
               >
                 {activeChunkId === '' ? (
@@ -222,9 +269,6 @@ export default function NotesPage() {
                     courseName={chunks[0]?.course_name || 'Ders'}
                     totalProgress={totalProgress}
                     totalTopics={chunks.length}
-                    onStartReading={() =>
-                      handleGlobalClick(slugify(chunks[0].section_title))
-                    }
                   />
                 ) : (
                   chunks
@@ -256,6 +300,26 @@ export default function NotesPage() {
               </div>
             </div>
           </main>
+
+          {activeChunkId !== '' && (
+            <aside
+              className={cn(
+                'hidden lg:flex flex-col shrink-0 border rounded-xl bg-card/40 h-full overflow-hidden transition-all duration-300 ease-in-out',
+                !isRightPanelVisible &&
+                  'lg:w-0 lg:opacity-0 lg:border-none lg:pointer-events-none'
+              )}
+            >
+              <div className="min-w-[220px] h-full flex flex-col">
+                <LocalToC
+                  items={currentChunkToC}
+                  activeId={activeSection}
+                  onItemClick={(id: string) =>
+                    handleScrollToId(id, setActiveSection)
+                  }
+                />
+              </div>
+            </aside>
+          )}
         </div>
       </div>
     </ErrorBoundary>

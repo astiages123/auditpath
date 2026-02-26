@@ -530,35 +530,6 @@ export type Database = {
           },
         ];
       };
-      user_notes_progress: {
-        Row: {
-          chunk_id: string;
-          progress: number;
-          updated_at: string;
-          user_id: string;
-        };
-        Insert: {
-          chunk_id: string;
-          progress?: number;
-          updated_at?: string;
-          user_id: string;
-        };
-        Update: {
-          chunk_id?: string;
-          progress?: number;
-          updated_at?: string;
-          user_id?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: 'user_notes_progress_chunk_id_fkey';
-            columns: ['chunk_id'];
-            isOneToOne: false;
-            referencedRelation: 'note_chunks';
-            referencedColumns: ['id'];
-          },
-        ];
-      };
       user_question_status: {
         Row: {
           consecutive_fails: number | null;

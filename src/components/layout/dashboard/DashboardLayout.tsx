@@ -103,11 +103,20 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <DashHeader />
 
           {/* Main Content: col-2, row-2 (In mobile it fills row 2) */}
-          <main className="overflow-y-auto overflow-x-hidden min-h-0 lg:col-start-2">
+          <main
+            className={cn(
+              'min-h-0 lg:col-start-2',
+              isFullWidthPage
+                ? 'h-full overflow-hidden'
+                : 'overflow-y-auto overflow-x-hidden'
+            )}
+          >
             <div
               className={cn(
-                'min-h-full flex flex-col mx-auto w-full px-4 lg:px-8 py-4 md:py-6',
-                isFullWidthPage ? 'max-w-[1800px]' : 'max-w-[1400px]'
+                'flex flex-col mx-auto w-full px-4 lg:px-8 py-4 md:py-6',
+                isFullWidthPage
+                  ? 'max-w-[1800px] h-full'
+                  : 'max-w-[1400px] min-h-full'
               )}
             >
               {children}
