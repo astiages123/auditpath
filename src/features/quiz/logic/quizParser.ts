@@ -15,6 +15,7 @@ import {
   type ValidationResult,
 } from '@/features/quiz/types';
 import {
+  BLOOM_INSTRUCTIONS,
   buildAnalysisPrompt,
   buildBatchValidationPrompt,
   buildDraftingPrompt,
@@ -29,11 +30,86 @@ import { logger } from '@/utils/logger';
 import { getSubjectGuidelines } from '@/features/quiz/services/quizInfoService';
 import * as Repository from '@/features/quiz/services/quizService';
 import { updateChunkAILogic } from '@/features/quiz/services/quizSubmissionService';
-import { determineNodeStrategy, getSubjectStrategy } from './srsLogic';
-import { calculateQuotas } from './quizCoreLogic';
+import { type BloomLevel, calculateQuotas } from './quizCoreLogic';
+import {
+  CATEGORY_DISTRIBUTIONS,
+  CATEGORY_MAPPINGS,
+  type CourseCategory,
+  DEFAULT_CATEGORY,
+  EXAM_STRATEGY,
+} from '@/features/courses/utils/constants';
+import type { ExamSubjectWeight } from '@/features/quiz/types';
 import { shuffle } from '../utils/mathUtils';
 
 const parserLogger = logger.withPrefix('[ParserLogic]');
+
+// === SECTION === Subject Strategy Helpers (formerly in srsLogic)
+
+export function getSubjectStrategy(
+  courseName: string
+): ExamSubjectWeight | undefined {
+  const normalizedName = courseName
+    .trim()
+    .toLowerCase()
+    .replace(/,/g, '')
+    .replace(/ /g, '-')
+    .replace(/ı/g, 'i')
+    .replace(/i̇/g, 'i')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c');
+
+  return (
+    EXAM_STRATEGY[normalizedName] || EXAM_STRATEGY[courseName] || undefined
+  );
+}
+
+function getCourseCategory(courseName: string): CourseCategory {
+  return CATEGORY_MAPPINGS[courseName] || DEFAULT_CATEGORY;
+}
+
+export function determineNodeStrategy(
+  index: number,
+  concept?: ConceptMapItem,
+  courseName: string = ''
+): {
+  bloomLevel: BloomLevel;
+  instruction: string;
+} {
+  if (concept?.seviye) {
+    if (concept.seviye === 'Analiz') {
+      return {
+        bloomLevel: 'analysis',
+        instruction: BLOOM_INSTRUCTIONS.analysis,
+      };
+    }
+    if (concept.seviye === 'Uygulama') {
+      return {
+        bloomLevel: 'application',
+        instruction: BLOOM_INSTRUCTIONS.application,
+      };
+    }
+    if (concept.seviye === 'Bilgi') {
+      return {
+        bloomLevel: 'knowledge',
+        instruction: BLOOM_INSTRUCTIONS.knowledge,
+      };
+    }
+  }
+
+  const category = getCourseCategory(courseName);
+  const distribution = CATEGORY_DISTRIBUTIONS[category];
+  const cycleIndex = index % 10;
+  const targetBloomLevel = (distribution[cycleIndex] ||
+    'knowledge') as BloomLevel;
+
+  return {
+    bloomLevel: targetBloomLevel,
+    instruction: BLOOM_INSTRUCTIONS[targetBloomLevel],
+  };
+}
 
 // FALLBACK_QUESTION removed based on audit recommendation.
 // Revision failures will now return null and be skipped.
@@ -159,7 +235,7 @@ export async function draftQuestion(input: {
   concept: ConceptMapItem;
   index: number;
   courseName: string;
-  usageType: 'antrenman' | 'deneme' | 'arsiv';
+  usageType: 'antrenman' | 'deneme';
   sharedContextPrompt: string;
 }) {
   const strategy = determineNodeStrategy(
@@ -202,7 +278,7 @@ export async function draftQuestion(input: {
 export async function draftBatch(input: {
   concepts: { concept: ConceptMapItem; index: number }[];
   courseName: string;
-  usageType: 'antrenman' | 'deneme' | 'arsiv';
+  usageType: 'antrenman' | 'deneme';
   sharedContextPrompt: string;
 }): Promise<GeneratedQuestion[] | null> {
   if (input.concepts.length === 0) return [];
@@ -453,7 +529,7 @@ export async function generateForChunk(
   callbacks: GeneratorCallbacks,
   options: {
     targetCount?: number;
-    usageType?: 'antrenman' | 'arsiv' | 'deneme';
+    usageType?: 'antrenman' | 'deneme';
     userId?: string;
   } = {}
 ) {
@@ -482,9 +558,9 @@ export async function generateForChunk(
     const { concepts } = await ensureConcepts(chunkId, chunk, log);
     const quotas = await ensureQuotas(chunkId, chunk, concepts, log);
 
-    const usageTypes: ('antrenman' | 'deneme' | 'arsiv')[] = options.usageType
+    const usageTypes: ('antrenman' | 'deneme')[] = options.usageType
       ? [options.usageType]
-      : ['antrenman', 'deneme', 'arsiv'];
+      : ['antrenman', 'deneme'];
 
     const totalTarget =
       options.targetCount ||

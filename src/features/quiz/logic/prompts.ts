@@ -146,7 +146,7 @@ export const GLOBAL_AI_SYSTEM_PROMPT =
 export function buildDraftingPrompt(
   concepts: ConceptMapItem[],
   strategy: { bloomLevel: string; instruction: string },
-  usageType: 'antrenman' | 'deneme' | 'arsiv' = 'antrenman',
+  usageType: 'antrenman' | 'deneme' = 'antrenman',
   previousDiagnoses?: string[]
 ): string {
   const parts = [

@@ -53,14 +53,8 @@ export interface QuizStats {
 export interface SRSStats {
   totalCards: number;
   dueCards: number;
-  newCards: number;
   reviewCards: number;
   retentionRate: number;
-  // Legacy fields for backwards compatibility
-  new?: number;
-  learning?: number;
-  review?: number;
-  mastered?: number;
 }
 
 export interface SubjectCompetency {
@@ -202,7 +196,7 @@ export interface ChunkMetric {
 
 export interface QuestionWithStatus {
   question_id: string;
-  status: 'active' | 'pending_followup' | 'archived' | 'learning';
+  status: 'active' | 'reviewing' | 'mastered';
   next_review_session: number | null;
   questions: {
     id: string;
@@ -226,9 +220,8 @@ export interface RepositoryQuestion {
 
 export interface UserQuestionStatusRow {
   question_id: string;
-  status: 'active' | 'pending_followup' | 'archived' | 'learning';
-  consecutive_success: number;
-  consecutive_fails: number;
+  status: 'active' | 'reviewing' | 'mastered';
+  rep_count: number;
   next_review_session: number | null;
 }
 
@@ -236,11 +229,9 @@ export interface SubmissionResult {
   isCorrect: boolean;
   scoreDelta: number;
   newMastery: number;
-  newStatus: 'active' | 'pending_followup' | 'archived';
-  isTopicRefreshed: boolean;
-  nextReviewSession: number | null;
-  newSuccessCount: number;
-  newFailsCount: number;
+  newStatus: 'active' | 'reviewing' | 'mastered';
+  nextReviewSession: number;
+  newRepCount: number;
 }
 
 export interface QuizState {
@@ -279,7 +270,7 @@ export interface QuizResults {
 
 export interface ReviewItem {
   questionId: string;
-  status: 'active' | 'pending_followup' | 'archived';
+  status: 'active' | 'reviewing' | 'mastered';
   nextReview?: number | null;
   priority?: number;
   chunkId?: string;
@@ -383,7 +374,6 @@ export interface ChunkAILogic {
   concept_map?: ConceptMapItem[];
   suggested_quotas?: {
     antrenman: number;
-    arsiv: number;
     deneme: number;
   };
   reasoning?: string;

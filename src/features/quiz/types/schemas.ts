@@ -63,12 +63,7 @@ export const QuizQuestionSchema = z.discriminatedUnion('type', [
 
 export type ValidatedQuizQuestion = z.infer<typeof QuizQuestionSchema>;
 
-export const QuestionStatusSchema = z.enum([
-  'active',
-  'pending_followup',
-  'archived',
-  'learning',
-]);
+export const QuestionStatusSchema = z.enum(['active', 'reviewing', 'mastered']);
 
 // ============================================================================
 // Chunk Metadata Schemas
@@ -80,7 +75,6 @@ export const AILogicSchema = z.object({
   suggested_quotas: z
     .object({
       antrenman: z.number(),
-      arsiv: z.number(),
       deneme: z.number(),
     })
     .nullable()

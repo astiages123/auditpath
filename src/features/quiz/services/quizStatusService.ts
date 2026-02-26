@@ -4,7 +4,7 @@ import type {
   TopicCompletionStats,
   TopicWithCounts,
 } from '@/features/courses/types/courseTypes';
-import { getSubjectStrategy } from '@/features/quiz/logic/srsLogic';
+import { getSubjectStrategy } from '@/features/quiz/logic/quizParser';
 import { AILogicSchema, type ConceptMapItem } from '@/features/quiz/types';
 import { isValid, parseOrThrow } from '@/utils/validation';
 import { QUIZ_CONFIG } from '../utils/constants';
@@ -18,21 +18,20 @@ interface ChunkInput {
 }
 
 interface TopicQuotaResult {
-  quota: { total: number; antrenman: number; arsiv: number; deneme: number };
+  quota: { total: number; antrenman: number; deneme: number };
   importance: 'high' | 'medium' | 'low';
   concepts: ConceptMapItem[];
   difficultyIndex: number | null;
   aiLogic: {
     suggested_quotas?: {
       antrenman: number;
-      arsiv: number;
       deneme: number;
     };
   } | null;
 }
 
 function calculateTopicQuota(chunk: ChunkInput | null): TopicQuotaResult {
-  let quota = { total: 0, antrenman: 0, arsiv: 0, deneme: 0 };
+  let quota = { total: 0, antrenman: 0, deneme: 0 };
   let importance: 'high' | 'medium' | 'low' = 'medium';
   let concepts: ConceptMapItem[] = [];
   let difficultyIndex: number | null = null;
@@ -60,13 +59,11 @@ function calculateTopicQuota(chunk: ChunkInput | null): TopicQuotaResult {
 
     const defaultQuotas = QUIZ_CONFIG.DEFAULT_QUOTAS;
     const antrenman = aiQuotas?.antrenman ?? defaultQuotas.antrenman;
-    const arsiv = aiQuotas?.arsiv ?? defaultQuotas.arsiv;
     const deneme = aiQuotas?.deneme ?? defaultQuotas.deneme;
 
     quota = {
-      total: antrenman + arsiv + deneme,
+      total: antrenman + deneme,
       antrenman,
-      arsiv,
       deneme,
     };
   }
@@ -77,11 +74,10 @@ function calculateTopicQuota(chunk: ChunkInput | null): TopicQuotaResult {
     concepts,
     difficultyIndex,
     aiLogic:
-      quota.antrenman !== 0 || quota.arsiv !== 0 || quota.deneme !== 0
+      quota.antrenman !== 0 || quota.deneme !== 0
         ? {
             suggested_quotas: {
               antrenman: quota.antrenman,
-              arsiv: quota.arsiv,
               deneme: quota.deneme,
             },
           }
@@ -107,28 +103,6 @@ async function fetchTopicQuestions(courseId: string, topic: string) {
   );
 
   return questions || [];
-}
-
-async function calculateSrsDueCount(
-  userId: string,
-  questionIds: string[],
-  currentSession: number
-) {
-  if (questionIds.length === 0) return 0;
-
-  const { data: dueStatus } = await safeQuery<{ question_id: string }[]>(
-    supabase
-      .from('user_question_status')
-      .select('question_id')
-      .eq('user_id', userId)
-      .eq('status', 'archived')
-      .in('question_id', questionIds)
-      .lte('next_review_session', currentSession),
-    'calculateSrsDueCount error',
-    { userId, count: questionIds.length, currentSession }
-  );
-
-  return dueStatus?.length || 0;
 }
 
 // --- Public Service Functions ---
@@ -164,7 +138,7 @@ export async function getTopicQuestionCount(courseId: string, topic: string) {
  */
 export async function getCoursePoolCount(
   courseId: string,
-  usageType: 'antrenman' | 'deneme' | 'arsiv'
+  usageType: 'antrenman' | 'deneme'
 ) {
   const { count } = await safeQuery<unknown>(
     supabase
@@ -225,40 +199,21 @@ export async function getTopicCompletionStatus(
         quota: quota.deneme,
         existing: 0,
       },
-      arsiv: {
-        solved: 0,
-        total: quota.arsiv,
-        quota: quota.arsiv,
-        existing: 0,
-        srsDueCount: 0,
-      },
       mistakes: { solved: 0, total: 0, existing: 0 },
       importance,
     };
   }
 
-  // 3. SRS Status
-  const { data: sessionCounter } = await supabase
-    .from('course_session_counters')
-    .select('current_session')
-    .eq('course_id', courseId)
-    .eq('user_id', userId)
-    .maybeSingle();
-
-  const currentSession = sessionCounter?.current_session || 1;
-  const srsDueCount = await calculateSrsDueCount(
-    userId,
-    questions.map((q) => q.id),
-    currentSession
-  );
+  // 3. SRS Status (session tracking for future use)
+  // const currentSession = sessionCounter?.current_session || 1;
 
   // 4. Calculate Existings
-  const existingCounts = { antrenman: 0, deneme: 0, arsiv: 0, mistakes: 0 };
+  const existingCounts = { antrenman: 0, deneme: 0, mistakes: 0 };
   const idToTypeMap = new Map<string, string>();
 
   questions.forEach((q) => {
     let type = q.parent_question_id ? 'mistakes' : q.usage_type || 'antrenman';
-    if (!['antrenman', 'deneme', 'arsiv', 'mistakes'].includes(type)) {
+    if (!['antrenman', 'deneme', 'mistakes'].includes(type)) {
       type = 'antrenman';
     }
 
@@ -277,7 +232,7 @@ export async function getTopicCompletionStatus(
       questions.map((q) => q.id)
     );
 
-  const solvedCounts = { antrenman: 0, deneme: 0, arsiv: 0, mistakes: 0 };
+  const solvedCounts = { antrenman: 0, deneme: 0, mistakes: 0 };
   const uniqueSolved = new Set(solvedData?.map((d) => d.question_id));
   uniqueSolved.forEach((id) => {
     const type = idToTypeMap.get(id);
@@ -301,13 +256,6 @@ export async function getTopicCompletionStatus(
       total: Math.max(quota.deneme, existingCounts.deneme),
       quota: quota.deneme,
       existing: existingCounts.deneme,
-    },
-    arsiv: {
-      solved: solvedCounts.arsiv,
-      total: Math.max(quota.arsiv, existingCounts.arsiv),
-      quota: quota.arsiv,
-      existing: existingCounts.arsiv,
-      srsDueCount,
     },
     mistakes: {
       solved: solvedCounts.mistakes,
@@ -381,7 +329,7 @@ export async function getCourseTopicsWithCounts(
     return orderedTopics.map((t) => ({
       name: t,
       isCompleted: false,
-      counts: { antrenman: 0, arsiv: 0, deneme: 0, total: 0 },
+      counts: { antrenman: 0, deneme: 0, total: 0 },
     }));
   }
 
@@ -407,10 +355,9 @@ export async function getCourseTopicsWithCounts(
     string,
     {
       antrenman: number;
-      arsiv: number;
       deneme: number;
       total: number;
-      antrenmanSolved: number; // To check completion
+      antrenmanSolved: number;
     }
   > = {};
 
@@ -418,7 +365,6 @@ export async function getCourseTopicsWithCounts(
   orderedTopics.forEach((t) => {
     topicStats[t] = {
       antrenman: 0,
-      arsiv: 0,
       deneme: 0,
       total: 0,
       antrenmanSolved: 0,
@@ -432,15 +378,14 @@ export async function getCourseTopicsWithCounts(
       const type = q.usage_type as string;
 
       if (q.parent_question_id) {
-        // Mistake question - doesn't count towards 'Antrenman' total for badge
+        // Mistake question
       } else {
         if (type === 'antrenman') {
           topicStats[t].antrenman += 1;
           if (solvedIds.has(q.id)) {
             topicStats[t].antrenmanSolved += 1;
           }
-        } else if (type === 'arsiv') topicStats[t].arsiv += 1;
-        else if (type === 'deneme') topicStats[t].deneme += 1;
+        } else if (type === 'deneme') topicStats[t].deneme += 1;
       }
     }
   });
@@ -454,7 +399,6 @@ export async function getCourseTopicsWithCounts(
       isCompleted,
       counts: {
         antrenman: s.antrenman,
-        arsiv: s.arsiv,
         deneme: s.deneme,
         total: s.total,
       },

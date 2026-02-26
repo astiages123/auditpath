@@ -244,11 +244,10 @@ export function useQuizManager({
       setCompletionStatus(status);
 
       if (targetChunkId) {
-        const needsArsiv = status.arsiv.existing < status.arsiv.quota;
         const needsDeneme = status.deneme.existing < status.deneme.quota;
 
-        if (needsArsiv || needsDeneme) {
-          logger.info('Triggering background generation for Arsiv/Deneme', {
+        if (needsDeneme) {
+          logger.info('Triggering background generation for Deneme', {
             topic: selectedTopic.name,
           });
 
@@ -270,7 +269,7 @@ export function useQuizManager({
                 logger.error('Background generation error:', { message: err });
               },
             },
-            { userId: user.id }
+            { usageType: 'deneme', userId: user.id }
           );
         }
       }
@@ -287,7 +286,6 @@ export function useQuizManager({
         isCompleted: false,
         counts: {
           antrenman: 0,
-          arsiv: 0,
           deneme: pooledQuestions.length,
           total: pooledQuestions.length,
         },
@@ -303,7 +301,6 @@ export function useQuizManager({
         isCompleted: false,
         counts: {
           antrenman: 0,
-          arsiv: 0,
           deneme: generatedQuestions.length,
           total: generatedQuestions.length,
         },

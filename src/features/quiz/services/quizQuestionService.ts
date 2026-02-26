@@ -43,7 +43,7 @@ export async function getChunkQuestionCount(chunkId: string): Promise<number> {
   return count || 10;
 }
 
-export async function getArchivedQuestionsCount(
+export async function getMasteredQuestionsCount(
   userId: string,
   courseId: string
 ): Promise<number> {
@@ -55,9 +55,9 @@ export async function getArchivedQuestionsCount(
         head: true,
       })
       .eq('user_id', userId)
-      .eq('status', 'archived')
+      .eq('status', 'mastered')
       .eq('questions.course_id', courseId),
-    'getArchivedQuestionsCount error',
+    'getMasteredQuestionsCount error',
     { userId, courseId }
   );
   return count || 0;
@@ -79,27 +79,6 @@ export async function getSolvedQuestionIds(
   );
 
   return new Set(data?.map((s) => s.question_id) || []);
-}
-
-export async function getUniqueSolvedCountInChunk(
-  userId: string,
-  chunkId: string
-): Promise<number> {
-  if (!isValidUuid(chunkId)) return 0;
-  const { count } = await safeQuery(
-    supabase
-      .from('user_question_status')
-      .select('question_id, questions!inner(chunk_id)', {
-        count: 'exact',
-        head: true,
-      })
-      .eq('user_id', userId)
-      .eq('questions.chunk_id', chunkId)
-      .in('status', ['archived', 'pending_followup']),
-    'getUniqueSolvedCountInChunk error',
-    { userId, chunkId }
-  );
-  return count || 0;
 }
 
 export async function fetchPrerequisiteQuestions(
@@ -179,7 +158,7 @@ export async function fetchQuestionsByChunk(
 export async function fetchQuestionsByStatus(
   userId: string,
   courseId: string,
-  status: 'pending_followup' | 'active' | 'archived',
+  status: 'reviewing' | 'active' | 'mastered',
   maxSession: number | null,
   limit: number
 ): Promise<QuestionWithStatus[]> {

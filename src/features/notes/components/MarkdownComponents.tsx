@@ -115,6 +115,7 @@ export const markdownComponents = {
   ),
   p: ({
     node,
+    children,
     ...props
   }: {
     node?: { children?: { type: string; tagName?: string }[] };
@@ -123,11 +124,14 @@ export const markdownComponents = {
       (child) => child.type === 'element' && child.tagName === 'img'
     );
     const Component = hasImage ? 'div' : 'p';
+
     return (
       <Component
         {...props}
         className={cn(hasImage && 'flex flex-col items-center my-1')}
-      />
+      >
+        {children}
+      </Component>
     );
   },
   img: React.memo(({ ...props }: ImgHTMLAttributes<HTMLImageElement>) => (
@@ -155,8 +159,16 @@ export const markdownComponents = {
       );
 
       if (isCallout) {
+        // Only pass through data-attributes to the div for indexing/scrolling
+        const dataProps = Object.keys(props)
+          .filter((key) => key.startsWith('data-'))
+          .reduce<Record<string, unknown>>((acc, key) => {
+            acc[key] = props[key as keyof typeof props];
+            return acc;
+          }, {});
+
         return (
-          <div className="not-prose my-6">
+          <div className="not-prose my-6" {...dataProps}>
             <div className="callout-box">
               {/* Sol kolon: ikon + dikey çizgi */}
               <div className="flex flex-col items-center gap-2 shrink-0">
@@ -195,11 +207,24 @@ export const markdownComponents = {
     <strong {...props}>{children}</strong>
   ),
   code: CodeBlock,
-  table: React.memo(({ ...props }: TableHTMLAttributes<HTMLTableElement>) => (
-    <div className="not-prose overflow-x-auto my-10 border border-primary/10 rounded-2xl shadow-xl shadow-primary/5 overflow-hidden bg-card/30 backdrop-blur-sm">
-      <table className="w-full text-sm text-left" {...props} />
-    </div>
-  )),
+  table: React.memo(({ ...props }: TableHTMLAttributes<HTMLTableElement>) => {
+    const propsRecord = props as Record<string, unknown>;
+    const dataBlockIndex = propsRecord['data-block-index'];
+    const dataHighlightIndex = propsRecord['data-highlight-index'];
+    return (
+      <div
+        className="not-prose overflow-x-auto my-10 border border-primary/10 rounded-2xl shadow-xl shadow-primary/5 overflow-hidden bg-card/30 backdrop-blur-sm"
+        {...(dataBlockIndex !== undefined
+          ? { 'data-block-index': dataBlockIndex }
+          : {})}
+        {...(dataHighlightIndex !== undefined
+          ? { 'data-highlight-index': dataHighlightIndex }
+          : {})}
+      >
+        <table className="w-full text-sm text-left" {...props} />
+      </div>
+    );
+  }),
   thead: ({ ...props }: HTMLAttributes<HTMLTableSectionElement>) => (
     <thead
       className="bg-primary/5 text-xs uppercase text-muted-foreground"
@@ -225,4 +250,5 @@ export const markdownComponents = {
     }
     return <div className={className} {...props} />;
   },
+  pre: ({ ...props }: HTMLAttributes<HTMLPreElement>) => <pre {...props} />,
 };

@@ -6,25 +6,27 @@ import { cn } from '@/utils/stringHelpers';
 interface NotesCourseOverviewProps {
   courseName: string;
   onStartReading: () => void;
-  videoProgress?: number;
+  totalProgress?: number;
+  totalTopics?: number;
 }
 
 export function NotesCourseOverview({
   courseName,
   onStartReading,
-  videoProgress = 0,
+  totalProgress = 0,
+  totalTopics = 0,
 }: NotesCourseOverviewProps) {
   const stats = [
     {
-      label: 'Video İlerlemesi',
-      value: `%${videoProgress}`,
+      label: 'Genel İlerleme',
+      value: `%${totalProgress}`,
       icon: Target,
       color: 'text-primary',
       bg: 'bg-primary/10',
     },
     {
-      label: 'Okuma Durumu',
-      value: 'Hazır',
+      label: 'İçerik Sayısı',
+      value: `${totalTopics} Konu Başlığı`,
       icon: BookOpen,
       color: 'text-blue-500',
       bg: 'bg-blue-500/10',
@@ -68,7 +70,7 @@ export function NotesCourseOverview({
               <div className="text-sm text-muted-foreground font-medium">
                 {stat.label}
               </div>
-              <div className="text-xl font-bold">{stat.value}</div>
+              <div className="text-base font-bold">{stat.value}</div>
             </div>
           </motion.div>
         ))}
@@ -85,7 +87,7 @@ export function NotesCourseOverview({
           className="w-full h-14 text-lg font-bold gap-2 shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]"
           onClick={onStartReading}
         >
-          {videoProgress > 0 ? 'Okumaya Devam Et' : 'Okumaya Başla'}
+          {totalProgress > 0 ? 'Okumaya Devam Et' : 'Okumaya Başla'}
           <ArrowRight className="w-5 h-5" />
         </Button>
       </motion.div>

@@ -4,7 +4,6 @@ import {
   Sparkles,
   Zap,
   Target,
-  History,
   TrendingUp,
   BarChart3,
   Play,
@@ -202,13 +201,6 @@ export function BriefingView({
                   icon: Target,
                   color: 'text-purple-500',
                   bg: 'bg-purple-500/10',
-                },
-                {
-                  label: 'Arşiv',
-                  value: completionStatus.arsiv.quota,
-                  icon: History,
-                  color: 'text-emerald-500',
-                  bg: 'bg-emerald-500/10',
                 },
               ].map((d, i) => (
                 <div

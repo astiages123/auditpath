@@ -171,27 +171,21 @@ export async function getSRSStats(userId: string): Promise<SRSStats> {
     .select('mastery_score')
     .eq('user_id', userId);
 
-  if (error || !data)
+  if (error || !data) {
     return {
       totalCards: 0,
       dueCards: 0,
-      newCards: 0,
       reviewCards: 0,
       retentionRate: 0,
-      new: 0,
-      learning: 0,
-      review: 0,
-      mastered: 0,
     };
+  }
 
-  const stats = { new: 0, learning: 0, review: 0, mastered: 0 };
+  const stats = { mastered: 0, reviewing: 0, active: 0 };
 
   data.forEach((row) => {
-    // Proxy SRS levels from mastery_score (0-100)
     const score = row.mastery_score || 0;
-    if (score === 0) stats.new++;
-    else if (score < 40) stats.learning++;
-    else if (score < 80) stats.review++;
+    if (score === 0) stats.active++;
+    else if (score < 80) stats.reviewing++;
     else stats.mastered++;
   });
 
@@ -201,10 +195,8 @@ export async function getSRSStats(userId: string): Promise<SRSStats> {
 
   return {
     totalCards,
-    dueCards: stats.review,
-    newCards: stats.new,
-    reviewCards: stats.learning,
+    dueCards: stats.reviewing,
+    reviewCards: stats.reviewing,
     retentionRate,
-    ...stats,
   };
 }

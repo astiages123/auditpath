@@ -3,22 +3,13 @@ import { type Database, type Json } from '@/types/database.types';
 import { safeQuery } from '@/lib/supabaseHelpers';
 import { isValidUuid, parseOrThrow } from '@/utils/validation';
 import {
-  ChunkMetadataSchema,
   type QuizResponseType,
   type SubmissionResult,
   SubmitQuizAnswerSchema,
 } from '@/features/quiz/types';
 import { calculateQuizResult } from '../logic/srsLogic';
-import {
-  getChunkMastery,
-  getChunkMetadata,
-  getUserQuestionStatus,
-} from './quizCoreService';
-import {
-  getChunkQuestionCount,
-  getQuestionData,
-  getUniqueSolvedCountInChunk,
-} from './quizQuestionService';
+import { getChunkMastery, getUserQuestionStatus } from './quizCoreService';
+import { getQuestionData } from './quizQuestionService';
 
 export async function updateChunkMetadata(
   chunkId: string,
@@ -183,6 +174,39 @@ export async function updateChunkAILogic(
   return { success: true };
 }
 
+// === SECTION === Mastery Helpers
+
+/**
+ * Calculates chunk mastery score from all questions' rep_count.
+ * rep=0 → 0, rep=1 → 33, rep=2 → 66, rep=3+ → 100
+ */
+async function calculateChunkMasteryFromReps(
+  userId: string,
+  chunkId: string
+): Promise<number> {
+  const { data } = await safeQuery<{ rep_count: number | null }[]>(
+    supabase
+      .from('user_question_status')
+      .select('rep_count, questions!inner(chunk_id)')
+      .eq('user_id', userId)
+      .eq('questions.chunk_id', chunkId),
+    'calculateChunkMasteryFromReps error',
+    { userId, chunkId }
+  );
+
+  if (!data || data.length === 0) return 0;
+
+  const REP_TO_SCORE: Record<number, number> = { 0: 0, 1: 33, 2: 66, 3: 100 };
+  const total = data.reduce((sum, row) => {
+    const rep = Math.min(row.rep_count ?? 0, 3);
+    return sum + (REP_TO_SCORE[rep] ?? 100);
+  }, 0);
+
+  return Math.round(total / data.length);
+}
+
+// === SECTION === Quiz Submission
+
 export async function submitQuizAnswer(
   ctx: { userId: string; courseId: string; sessionNumber: number },
   questionId: string,
@@ -191,7 +215,6 @@ export async function submitQuizAnswer(
   timeSpentMs: number,
   selectedAnswer: number | null
 ): Promise<SubmissionResult> {
-  // Validate inputs for security and correctness
   const validated = parseOrThrow(SubmitQuizAnswerSchema, {
     questionId,
     chunkId,
@@ -206,37 +229,14 @@ export async function submitQuizAnswer(
   ]);
 
   const targetChunkId = validated.chunkId || questionData?.chunk_id || null;
-  const [chunkMetadata, masteryData, uniqueSolvedCount, totalChunkQuestions] =
-    targetChunkId
-      ? await Promise.all([
-          getChunkMetadata(targetChunkId),
-          getChunkMastery(ctx.userId, targetChunkId),
-          getUniqueSolvedCountInChunk(ctx.userId, targetChunkId),
-          getChunkQuestionCount(targetChunkId),
-        ])
-      : [null, null, 0, 0];
+  const masteryData = targetChunkId
+    ? await getChunkMastery(ctx.userId, targetChunkId)
+    : null;
 
   const result = calculateQuizResult(
     currentStatus,
     validated.responseType,
-    validated.timeSpentMs,
-    questionData
-      ? {
-          bloom_level: questionData.bloom_level,
-          chunk_id: questionData.chunk_id,
-          usage_type: questionData.usage_type,
-        }
-      : null,
-    chunkMetadata
-      ? {
-          content: chunkMetadata.content || null,
-          metadata: parseOrThrow(ChunkMetadataSchema, chunkMetadata.metadata),
-          ai_logic: chunkMetadata.ai_logic as Record<string, unknown> | null,
-        }
-      : null,
-    masteryData,
-    uniqueSolvedCount,
-    totalChunkQuestions,
+    masteryData?.mastery_score ?? 0,
     ctx.sessionNumber
   );
 
@@ -245,8 +245,7 @@ export async function submitQuizAnswer(
       user_id: ctx.userId,
       question_id: validated.questionId,
       status: result.newStatus,
-      consecutive_success: result.newSuccessCount,
-      consecutive_fails: result.newFailsCount,
+      rep_count: result.newRepCount,
       next_review_session: result.nextReviewSession,
     }),
     recordQuizProgress({
@@ -263,12 +262,16 @@ export async function submitQuizAnswer(
   ];
 
   if (targetChunkId) {
+    const newMastery = await calculateChunkMasteryFromReps(
+      ctx.userId,
+      targetChunkId
+    );
     updates.push(
       upsertChunkMastery({
         user_id: ctx.userId,
         chunk_id: targetChunkId,
         course_id: ctx.courseId,
-        mastery_score: result.newMastery,
+        mastery_score: newMastery,
         last_reviewed_session: ctx.sessionNumber,
         updated_at: new Date().toISOString(),
       })

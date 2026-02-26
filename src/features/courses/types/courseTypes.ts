@@ -20,19 +20,11 @@ export interface TopicCompletionStats {
     existing: number;
   };
   deneme: { solved: number; total: number; quota: number; existing: number };
-  arsiv: {
-    solved: number;
-    total: number;
-    quota: number;
-    existing: number;
-    srsDueCount: number;
-  };
   mistakes: { solved: number; total: number; existing: number };
   importance?: 'high' | 'medium' | 'low';
   aiLogic?: {
     suggested_quotas?: {
       antrenman: number;
-      arsiv: number;
       deneme: number;
     };
   } | null;
@@ -42,10 +34,9 @@ export interface TopicCompletionStats {
 
 export interface TopicWithCounts {
   name: string;
-  isCompleted: boolean; // Computed on client side or simplified fetch?
+  isCompleted: boolean;
   counts: {
     antrenman: number;
-    arsiv: number;
     deneme: number;
     total: number;
   };

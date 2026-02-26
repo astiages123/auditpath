@@ -17,7 +17,7 @@ import {
   type ExamSubjectWeight,
 } from '@/features/quiz/types';
 import { calculateTestResults } from '@/features/quiz/logic/quizCoreLogic';
-import { getSubjectStrategy } from '@/features/quiz/logic/srsLogic';
+import { getSubjectStrategy } from '@/features/quiz/logic/quizParser';
 import { cn } from '@/utils/stringHelpers';
 
 // ============================================================================

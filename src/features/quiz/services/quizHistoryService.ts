@@ -1,7 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { safeQuery } from '@/lib/supabaseHelpers';
 import {
-  type ChunkMetric,
   type CognitiveInsight,
   type GeneratorCallbacks,
   type QuestionWithStatus,
@@ -12,7 +11,6 @@ import {
 import { DAILY_QUOTA } from '@/features/quiz/utils/constants';
 import {
   fetchCourseChunks,
-  fetchCourseMastery,
   getCourseName,
   getCourseStatsAggregate,
   getFrontierChunkId,
@@ -24,7 +22,6 @@ import {
   fetchWaterfallTrainingQuestions,
 } from './quizQuestionService';
 import { incrementCourseSession } from './quizSubmissionService';
-import { calculateQuestionWeights } from '@/features/quiz/logic/srsLogic';
 import { generateForChunk } from '../logic/quizParser';
 
 export async function getRecentQuizSessions(
@@ -136,24 +133,22 @@ export async function getRecentCognitiveInsights(
 
   type StatusRow = {
     question_id: string;
-    consecutive_fails: number | null;
+    rep_count: number | null;
   };
 
   const { data: statusData } = await safeQuery<StatusRow[]>(
     supabase
       .from('user_question_status')
-      .select('question_id, consecutive_fails')
+      .select('question_id, rep_count')
       .eq('user_id', userId)
       .in('question_id', questionIds),
     'getRecentCognitiveInsights statusData error',
     { userId }
   );
 
-  const failsMap = new Map<string, number>();
+  const repMap = new Map<string, number>();
   if (statusData) {
-    statusData.forEach((s) =>
-      failsMap.set(s.question_id, s.consecutive_fails || 0)
-    );
+    statusData.forEach((s) => repMap.set(s.question_id, s.rep_count || 0));
   }
 
   return progressData.map((p) => ({
@@ -162,7 +157,7 @@ export async function getRecentCognitiveInsights(
     questionId: p.question_id,
     diagnosis: p.ai_diagnosis,
     insight: p.ai_insight,
-    consecutiveFails: failsMap.get(p.question_id) || 0,
+    consecutiveFails: repMap.get(p.question_id) || 0,
     responseType: p.response_type,
     date: p.answered_at || new Date().toISOString(),
   }));
@@ -207,7 +202,7 @@ export async function getQuotaInfo(userId: string, courseId: string) {
     })
     .eq('user_id', userId)
     .eq('questions.course_id', courseId)
-    .eq('status', 'pending_followup');
+    .eq('status', 'reviewing');
 
   return {
     dailyQuota: DAILY_QUOTA,
@@ -271,7 +266,7 @@ export async function getReviewQueue(
 
   const addItems = (
     qs: QuestionWithStatus[],
-    stat: 'active' | 'pending_followup' | 'archived',
+    stat: 'active' | 'reviewing' | 'mastered',
     priority: number
   ) => {
     qs.forEach((q) => {
@@ -292,11 +287,11 @@ export async function getReviewQueue(
   const followups = await fetchQuestionsByStatus(
     ctx.userId,
     ctx.courseId,
-    'pending_followup',
+    'reviewing',
     ctx.sessionNumber,
     targetChunkId ? 100 : Math.ceil(limit * 0.2)
   );
-  addItems(followups, 'pending_followup', 1);
+  addItems(followups, 'reviewing', 1);
 
   const remainingFollowupQuota = targetChunkId
     ? 50
@@ -316,7 +311,7 @@ export async function getReviewQueue(
       };
       return {
         question_id: raw.id,
-        status: 'pending_followup',
+        status: 'active' as const,
         next_review_session: null,
         questions: {
           id: raw.id,
@@ -328,7 +323,7 @@ export async function getReviewQueue(
         },
       };
     });
-    addItems(newFollowups, 'pending_followup', 1);
+    addItems(newFollowups, 'active', 1);
   }
 
   const effectiveChunkId =
@@ -348,11 +343,11 @@ export async function getReviewQueue(
   const archiveQs = await fetchQuestionsByStatus(
     ctx.userId,
     ctx.courseId,
-    'archived',
+    'mastered',
     ctx.sessionNumber,
     targetChunkId ? 100 : Math.ceil(limit * 0.1)
   );
-  addItems(archiveQs, 'archived', 3);
+  addItems(archiveQs, 'mastered', 3);
 
   return targetChunkId ? queue : queue.slice(0, limit);
 }
@@ -367,37 +362,20 @@ export async function generateSmartExam(
 
   try {
     const chunks = await fetchCourseChunks(courseId);
-    const masteryRows = await fetchCourseMastery(courseId, userId);
-    type MasteryRow = { chunk_id: string; mastery_score: number };
-    const masteryMap = new Map<string, number>(
-      masteryRows.map((m: MasteryRow) => [m.chunk_id, Number(m.mastery_score)])
-    );
-
-    const metrics: ChunkMetric[] = chunks.map((c) => ({
-      id: c.id,
-      concept_count:
-        (c.ai_logic as { concept_map?: unknown[] })?.concept_map?.length || 5,
-      difficulty_index:
-        (c.ai_logic as { difficulty_index?: number })?.difficulty_index || 3,
-      mastery_score: masteryMap.get(c.id) || 0,
-    }));
-
-    const weights = calculateQuestionWeights({
-      examTotal: EXAM_TOTAL,
-      importance: 'medium',
-      chunks: metrics,
-    });
-
     const questionIds: string[] = [];
     let totalSaved = 0;
+    const perChunk = Math.max(
+      1,
+      Math.floor(EXAM_TOTAL / Math.max(chunks.length, 1))
+    );
 
-    for (const [chunkId, count] of weights.entries()) {
-      if (count <= 0) continue;
-      const existing = await fetchGeneratedQuestions(chunkId, 'deneme', count);
+    for (const chunk of chunks) {
+      const count = perChunk;
+      const existing = await fetchGeneratedQuestions(chunk.id, 'deneme', count);
 
       if (existing.length < count) {
         await generateForChunk(
-          chunkId,
+          chunk.id,
           {
             ...callbacks,
             onQuestionSaved: (_count: number) => {
@@ -413,7 +391,7 @@ export async function generateSmartExam(
         );
       }
 
-      const finalQs = await fetchGeneratedQuestions(chunkId, 'deneme', count);
+      const finalQs = await fetchGeneratedQuestions(chunk.id, 'deneme', count);
       finalQs.forEach((q) => questionIds.push(q.id));
     }
 

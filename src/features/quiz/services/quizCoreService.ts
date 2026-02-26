@@ -329,8 +329,7 @@ export async function getUserQuestionStatus(
 ): Promise<{
   question_id: string;
   status: string;
-  consecutive_success: number;
-  consecutive_fails: number;
+  rep_count: number;
   next_review_session: number | null;
 } | null> {
   if (!isValidUuid(questionId)) return null;
@@ -338,15 +337,12 @@ export async function getUserQuestionStatus(
   const { data } = await safeQuery<{
     question_id: string;
     status: string;
-    consecutive_success: number | null;
-    consecutive_fails: number | null;
+    rep_count: number | null;
     next_review_session: number | null;
   }>(
     supabase
       .from('user_question_status')
-      .select(
-        'question_id, status, consecutive_success, consecutive_fails, next_review_session'
-      )
+      .select('question_id, status, rep_count, next_review_session')
       .eq('user_id', userId)
       .eq('question_id', questionId)
       .maybeSingle(),
@@ -359,8 +355,7 @@ export async function getUserQuestionStatus(
   return {
     question_id: data.question_id,
     status: data.status,
-    consecutive_success: data.consecutive_success ?? 0,
-    consecutive_fails: data.consecutive_fails ?? 0,
+    rep_count: data.rep_count ?? 0,
     next_review_session: data.next_review_session,
   };
 }

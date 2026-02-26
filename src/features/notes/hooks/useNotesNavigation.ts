@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { useNotesStore } from '@/features/notes/store';
 
+// --- Constants & Types ---
 interface UseNotesNavigationProps {
   courseSlug?: string;
   loading: boolean;
@@ -18,30 +19,80 @@ export const useNotesNavigation = ({
   const mainContentRef = useRef<HTMLDivElement | null>(null);
   const isProgrammaticScroll = useRef<boolean>(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  const saveScrollTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const lastRead = useNotesStore((state) => state.lastRead);
   const setLastReadTopic = useNotesStore((state) => state.setLastReadTopic);
 
-  // Cleanup scroll timeout on unmount
+  // Latest values ref to avoid re-triggering the effect on every save
+  const latestParams = useRef({ lastRead, courseSlug, chunks });
+
+  useLayoutEffect(() => {
+    latestParams.current = { lastRead, courseSlug, chunks };
+  }, [lastRead, courseSlug, chunks]);
+
+  // Helper to get scroll container
+  const getScrollContainer = () => {
+    const main = document.querySelector('main');
+    if (main) return main;
+    return (
+      document.getElementById('notes-scroll-container') ||
+      mainContentRef.current
+    );
+  };
+
+  // === SCROLL ORCHESTRATOR ===
+  // Priority: Saved Position > Reset to Top
   useEffect(() => {
-    return () => {
-      if (scrollTimeout.current) {
-        clearTimeout(scrollTimeout.current);
+    const {
+      chunks: currentChunks,
+      courseSlug: currentSlug,
+      lastRead: currentLastRead,
+    } = latestParams.current;
+
+    if (loading || currentChunks.length === 0 || !activeChunkId) return;
+
+    let cancelled = false;
+
+    const tryScroll = () => {
+      if (cancelled) return;
+
+      const scrollContainer = getScrollContainer();
+
+      if (!scrollContainer) {
+        scrollTimeout.current = setTimeout(tryScroll, 100);
+        return;
       }
+
+      isProgrammaticScroll.current = true;
+
+      // PRIORITY 1: Restore saved position; PRIORITY 2: Reset to top
+      const savedPos =
+        currentSlug && currentLastRead[currentSlug]?.topicId === activeChunkId
+          ? currentLastRead[currentSlug].scrollPos
+          : 0;
+
+      scrollContainer.scrollTo({
+        top: !isNaN(savedPos) && savedPos > 0 ? savedPos : 0,
+        behavior: 'instant',
+      });
+
+      // Release flag after transitions settle
+      setTimeout(() => {
+        isProgrammaticScroll.current = false;
+      }, 1000);
     };
-  }, []);
 
-  const getScrollContainer = () =>
-    document.getElementById('notes-scroll-container') || mainContentRef.current;
+    scrollTimeout.current = setTimeout(tryScroll, 150);
 
-  // 2. Scroll to top when topic changes
-  useEffect(() => {
-    if (!isProgrammaticScroll.current) {
-      getScrollContainer()?.scrollTo({ top: 0, behavior: 'instant' });
-    }
-  }, [activeChunkId]);
+    return () => {
+      cancelled = true;
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    };
+    // NOTE: lastRead, chunks, and courseSlug are accessed via latestParams ref to avoid re-triggering
+  }, [loading, activeChunkId]);
 
-  // 3. Save scroll position
+  // 2. Save scroll position listener
   useEffect(() => {
     const scrollContainer = getScrollContainer();
     if (!scrollContainer || !courseSlug || !activeChunkId) return;
@@ -49,9 +100,8 @@ export const useNotesNavigation = ({
     const saveScroll = () => {
       if (isProgrammaticScroll.current) return;
 
-      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-
-      scrollTimeout.current = setTimeout(() => {
+      if (saveScrollTimeout.current) clearTimeout(saveScrollTimeout.current);
+      saveScrollTimeout.current = setTimeout(() => {
         setLastReadTopic(courseSlug, activeChunkId, scrollContainer.scrollTop);
       }, 500);
     };
@@ -59,38 +109,9 @@ export const useNotesNavigation = ({
     scrollContainer.addEventListener('scroll', saveScroll, { passive: true });
     return () => {
       scrollContainer.removeEventListener('scroll', saveScroll);
-      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+      if (saveScrollTimeout.current) clearTimeout(saveScrollTimeout.current);
     };
   }, [courseSlug, activeChunkId, setLastReadTopic]);
-
-  // 4. Restore scroll position
-  useEffect(() => {
-    const scrollContainer = getScrollContainer();
-    if (!loading && chunks.length > 0 && courseSlug && scrollContainer) {
-      const savedState = lastRead[courseSlug];
-
-      if (savedState && savedState.topicId === activeChunkId) {
-        const scrollValue = savedState.scrollPos;
-
-        if (!isNaN(scrollValue) && scrollValue > 0) {
-          requestAnimationFrame(() => {
-            const container = getScrollContainer();
-            if (container) {
-              isProgrammaticScroll.current = true;
-              container.scrollTo({
-                top: scrollValue,
-                behavior: 'instant' as ScrollBehavior,
-              });
-
-              setTimeout(() => {
-                isProgrammaticScroll.current = false;
-              }, 100);
-            }
-          });
-        }
-      }
-    }
-  }, [loading, chunks.length, courseSlug, activeChunkId, lastRead]);
 
   const handleScrollToId = (
     id: string,

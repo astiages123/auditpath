@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { env } from '@/utils/env';
 import { LogMessage } from '@/types/common';
 
@@ -17,7 +18,6 @@ export const logger = {
    */
   info(message: string, details?: Record<string, unknown>): void {
     if (!env.app.isDev) return;
-    // eslint-disable-next-line no-console
     console.log(`[AuditPath] ${message}`, details || '');
   },
 
@@ -26,7 +26,6 @@ export const logger = {
    */
   warn(message: string, details?: Record<string, unknown>): void {
     if (!env.app.isDev) return;
-    // eslint-disable-next-line no-console
     console.warn(`[AuditPath] ⚠️ ${message}`, details || '');
   },
 
@@ -38,13 +37,11 @@ export const logger = {
     if (!env.app.isDev) return;
 
     if (details instanceof Error) {
-      // eslint-disable-next-line no-console
       console.error(`[AuditPath] ❌ ${message}`, {
         message: details.message,
         stack: details.stack,
       });
     } else {
-      // eslint-disable-next-line no-console
       console.error(`[AuditPath] ❌ ${message}`, details || '');
     }
   },
@@ -55,15 +52,13 @@ export const logger = {
    */
   debug(message: string, details?: Record<string, unknown>): void {
     if (!env.app.isDev) return;
-    // eslint-disable-next-line no-console
     console.debug(`[AuditPath] 🔍 ${message}`, details || '');
   },
 
   /**
    * Internal method to create a log entry and handle reporting
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _log(log: LogMessage): void {
+  _log(_logMessage: LogMessage): void {
     // TODO: Integrate with error tracking service (e.g., Sentry, LogRocket)
     // Example implementation:
     // if (log.level === 'error') {

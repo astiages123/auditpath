@@ -530,36 +530,65 @@ export type Database = {
           },
         ];
       };
+      user_notes_progress: {
+        Row: {
+          chunk_id: string;
+          progress: number;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          chunk_id: string;
+          progress?: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          chunk_id?: string;
+          progress?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_notes_progress_chunk_id_fkey';
+            columns: ['chunk_id'];
+            isOneToOne: false;
+            referencedRelation: 'note_chunks';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       user_question_status: {
         Row: {
           consecutive_fails: number | null;
-          consecutive_success: number | null;
           id: string;
           next_review_at: string | null;
           next_review_session: number | null;
           question_id: string;
+          rep_count: number;
           status: Database['public']['Enums']['question_status'];
           updated_at: string | null;
           user_id: string;
         };
         Insert: {
           consecutive_fails?: number | null;
-          consecutive_success?: number | null;
           id?: string;
           next_review_at?: string | null;
           next_review_session?: number | null;
           question_id: string;
+          rep_count?: number;
           status?: Database['public']['Enums']['question_status'];
           updated_at?: string | null;
           user_id: string;
         };
         Update: {
           consecutive_fails?: number | null;
-          consecutive_success?: number | null;
           id?: string;
           next_review_at?: string | null;
           next_review_session?: number | null;
           question_id?: string;
+          rep_count?: number;
           status?: Database['public']['Enums']['question_status'];
           updated_at?: string | null;
           user_id?: string;
@@ -878,8 +907,8 @@ export type Database = {
         | 'COMPLETED'
         | 'FAILED'
         | 'SYNCED';
-      question_status: 'active' | 'archived' | 'pending_followup';
-      question_usage_type: 'antrenman' | 'arsiv' | 'deneme';
+      question_status: 'active' | 'reviewing' | 'mastered';
+      question_usage_type: 'antrenman' | 'deneme';
       quiz_response_type: 'correct' | 'incorrect' | 'blank';
       validation_status: 'PENDING' | 'APPROVED' | 'REJECTED';
     };
@@ -1021,8 +1050,8 @@ export const Constants = {
         'FAILED',
         'SYNCED',
       ],
-      question_status: ['active', 'archived', 'pending_followup'],
-      question_usage_type: ['antrenman', 'arsiv', 'deneme'],
+      question_status: ['active', 'reviewing', 'mastered'],
+      question_usage_type: ['antrenman', 'deneme'],
       quiz_response_type: ['correct', 'incorrect', 'blank'],
       validation_status: ['PENDING', 'APPROVED', 'REJECTED'],
     },
