@@ -51,7 +51,7 @@ export function DashHeader() {
           <>
             {/* Desktop Aksiyon Butonları */}
             <div className="hidden lg:flex items-center gap-0.5">
-              <SyncButton showLabel={false} iconClassName="text-amber-400" />
+              <SyncButton showLabel={false} iconClassName="text-primary/80" />
 
               <Link to={ROUTES.COSTS}>
                 <Button
@@ -60,7 +60,7 @@ export function DashHeader() {
                   className="size-10 rounded-full hover:bg-transparent hover:scale-110 transition-transform"
                   title="Harcama Analizi"
                 >
-                  <Banknote className="size-6 text-amber-400" />
+                  <Banknote className="size-6 text-primary/80" />
                 </Button>
               </Link>
             </div>

@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/breadcrumb';
 import { ROUTES } from '@/utils/routes';
 import {
-  FlaskRound,
   Home,
   Brain,
   BookOpen,
@@ -18,6 +17,8 @@ import {
   LineSquiggle,
   HandCoins,
   BookCheck,
+  BookMarked,
+  PanelLeft,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getCourseBySlug } from '@/features/courses/services/courseService';
@@ -139,10 +140,10 @@ export function GlobalBreadcrumb() {
                         return <BookCheck className="size-4" />;
 
                       if (crumb.originalIdx === 1)
-                        return <BookOpen className="size-4" />;
+                        return <BookMarked className="size-4" />;
                       if (crumb.originalIdx > 1)
-                        return <FlaskRound className="size-4" />;
-                      return <Brain className="size-4" />;
+                        return <BookOpen className="size-4" />;
+                      return <PanelLeft className="size-4" />;
                     })()}
                     <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                   </div>
@@ -166,10 +167,10 @@ export function GlobalBreadcrumb() {
                           return <BookCheck className="size-4" />;
 
                         if (crumb.originalIdx === 1)
-                          return <BookOpen className="size-4" />;
+                          return <BookMarked className="size-4" />;
                         if (crumb.originalIdx > 1)
-                          return <FlaskRound className="size-4" />;
-                        return <Brain className="size-4" />;
+                          return <BookOpen className="size-4" />;
+                        return <PanelLeft className="size-4" />;
                       })()}
                       <span>{crumb.label}</span>
                     </Link>
