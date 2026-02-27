@@ -4,11 +4,12 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/utils/stringHelpers';
 
 const cardVariants = cva(
-  'text-card-foreground flex flex-col gap-6 border py-6 shadow-sm',
+  'text-card-foreground flex flex-col border py-2 shadow-sm relative overflow-hidden transition-all duration-300',
   {
     variants: {
       variant: {
-        default: 'bg-card rounded-xl',
+        default:
+          'bg-card rounded-xl hover:bg-card/50 hover:border-white/10 hover:shadow-lg hover:shadow-black/10',
         glass: 'bg-surface border-border-subtle rounded-2xl',
       },
     },

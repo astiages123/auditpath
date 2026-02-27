@@ -58,7 +58,7 @@ export function BriefingView({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 min-h-0 md:min-h-0 overflow-hidden">
         <motion.div
           variants={itemVariants}
-          className="bg-card/40 backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden flex flex-col min-h-0 md:h-full shadow-sm"
+          className="bg-card backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden flex flex-col min-h-0 md:h-full shadow-sm"
         >
           <div className="px-4 py-3 border-b border-border/30 bg-muted/30 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2">
@@ -130,7 +130,7 @@ export function BriefingView({
         <div className="flex flex-col gap-3 min-h-0 md:h-full overflow-y-auto custom-scrollbar pr-1">
           <motion.div
             variants={itemVariants}
-            className="flex-1 p-4 bg-card/40 backdrop-blur-sm rounded-xl border border-border/50 flex flex-col justify-center gap-2.5 shadow-sm relative overflow-hidden group"
+            className="flex-1 p-4 bg-card backdrop-blur-sm rounded-xl border border-border/50 flex flex-col justify-center gap-2.5 shadow-sm relative overflow-hidden group"
           >
             <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
               <TrendingUp className="w-12 h-12" />
@@ -176,7 +176,7 @@ export function BriefingView({
 
           <motion.div
             variants={itemVariants}
-            className="flex-1 p-4 bg-card/40 backdrop-blur-sm rounded-xl border border-border/50 flex flex-col justify-center shadow-sm relative overflow-hidden group"
+            className="flex-1 p-4 bg-card backdrop-blur-sm rounded-xl border border-border/50 flex flex-col justify-center shadow-sm relative overflow-hidden group"
           >
             <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
               <BarChart3 className="w-12 h-12" />

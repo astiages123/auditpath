@@ -95,7 +95,7 @@ export function CourseList({
           'rounded-xl border overflow-hidden transition-all duration-200 group',
           isCompleted
             ? 'border-primary/50 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 shadow-[0_0_15px_-5px_rgba(var(--primary),0.5)]'
-            : 'border-white/5 bg-card/40 hover:border-white/30 hover:bg-card/60'
+            : 'border-white/5 bg-card hover:border-white/30 hover:bg-card/60'
         );
 
         const iconContainerClass = cn(

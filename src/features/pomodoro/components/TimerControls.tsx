@@ -1,18 +1,19 @@
-import { Play, Pause, Coffee, Briefcase, CheckCircle2 } from 'lucide-react';
+import { Play, Pause, Coffee, Target, CheckCircle2, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
-import { Button } from '@/components/ui/button';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
 interface TimerControlsProps {
   isExpanded: boolean;
   onSwitchMode: () => void;
   onFinishDay: () => void;
+  onDiscard: () => void;
 }
 
 export function TimerControls({
-  isExpanded,
   onSwitchMode,
   onFinishDay,
+  onDiscard,
 }: TimerControlsProps) {
   const { mode, status, start, pause, sessionCount } = usePomodoro();
 
@@ -20,82 +21,84 @@ export function TimerControls({
   const isRunning = status === 'running';
 
   return (
-    <div className="relative z-10 flex flex-col items-center w-full">
-      <div
-        className={cn(
-          'w-full flex flex-col gap-3 px-6 pb-6 pt-2',
-          !isExpanded && 'px-4 pb-4 pt-1'
-        )}
-      >
-        <div className="flex flex-col gap-3 w-full">
-          <button
+    <>
+      {/* Divider */}
+      <div className="h-8 w-px bg-white/10 shrink-0" />
+
+      {/* === RIGHT BLOCK: Actions === */}
+      <div className="flex items-center gap-5 shrink-0">
+        {/* Session Counter */}
+        <div className="flex flex-col items-center justify-center w-12 text-center">
+          <span className="text-xs font-black text-foreground/90 uppercase leading-none mb-1.5">
+            OTURUM
+          </span>
+          <span className="text-base font-black text-foreground/90 leading-none tabular-nums">
+            {sessionCount}
+          </span>
+        </div>
+
+        <div className="h-8 w-px bg-white/5" />
+
+        {/* Buttons */}
+        <div className="flex items-center gap-2">
+          {/* Play / Pause */}
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
             onClick={isRunning ? pause : start}
             className={cn(
-              'flex items-center justify-center rounded-2xl shadow-xl group w-full',
-              isExpanded ? 'h-14' : 'h-11',
+              'size-10 flex items-center justify-center rounded-xl transition-all duration-200',
               isRunning
-                ? 'bg-secondary text-foreground hover:bg-secondary/80 border border-border'
-                : isWorking
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/95'
-                  : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                ? 'bg-white/10 text-white border border-white/10 hover:bg-white/15'
+                : 'bg-primary/70 text-muted'
             )}
           >
             {isRunning ? (
-              <Pause
-                size={isExpanded ? 20 : 16}
-                fill="currentColor"
-                className="mr-2"
-              />
+              <Pause size={17} fill="currentColor" />
             ) : (
-              <Play
-                size={isExpanded ? 20 : 16}
-                fill="currentColor"
-                className="mr-2"
-              />
+              <Play size={17} fill="currentColor" className="ml-0.5" />
             )}
-            <span
-              className={cn(
-                'font-black tracking-tight',
-                isExpanded ? 'text-base' : 'text-xs'
-              )}
-            >
-              {isRunning ? 'DURAKLAT' : 'BAŞLAT'}
-            </span>
-          </button>
-          {isExpanded && (
-            <div className="flex gap-2 w-full">
-              <Button
-                variant="ghost"
-                onClick={onSwitchMode}
-                className={cn(
-                  'h-12 flex-1 rounded-xl gap-2 text-sm font-black',
-                  isWorking
-                    ? 'bg-chart-1/10 text-chart-1 hover:bg-chart-1/20'
-                    : 'bg-primary/10 text-primary hover:bg-primary/20'
-                )}
-              >
-                {isWorking ? <Coffee size={18} /> : <Briefcase size={18} />}
-                <span>{isWorking ? 'Mola' : 'Çalış'}</span>
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={onFinishDay}
-                className="h-12 flex-1 rounded-xl gap-2 text-sm font-black bg-destructive/10 text-destructive hover:bg-destructive/20"
-              >
-                <CheckCircle2 size={18} />
-                <span>Günü Bitir</span>
-              </Button>
-            </div>
-          )}
+          </motion.button>
+
+          {/* Break / Work Mode */}
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={onSwitchMode}
+            title={isWorking ? 'Mola Ver' : 'Çalışmaya Dön'}
+            className="size-10 flex items-center justify-center rounded-xl bg-white/5 text-white/60 border border-white/5 hover:bg-white/10 hover:text-white transition-all duration-200"
+          >
+            {isWorking ? <Coffee size={17} /> : <Target size={17} />}
+          </motion.button>
+
+          {/* Finish Day */}
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={onFinishDay}
+            title="Günü Bitir"
+            className="size-10 flex items-center justify-center rounded-xl bg-destructive/10 text-destructive border border-destructive/10 hover:bg-destructive/20 transition-all duration-200"
+          >
+            <CheckCircle2 size={17} />
+          </motion.button>
+
+          {/* Direct Close (No Save) */}
+          <div className="h-6 w-px bg-foreground/50 mx-1" />
+          <motion.button
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={onDiscard}
+            title="Kaydetmeden Kapat"
+            className="size-10 flex items-center justify-center rounded-xl text-white hover:bg-destructive/15 hover:text-destructive transition-all duration-200"
+          >
+            <X
+              size={18}
+              strokeWidth={2.5}
+              className="transition-colors duration-200"
+            />
+          </motion.button>
         </div>
       </div>
-      {isExpanded && (
-        <div className="w-full px-5 pb-4 flex items-center justify-center text-[10px] font-black text-primary uppercase tracking-[0.3em] border-t border-primary/10 pt-4">
-          <span className="bg-primary/10 px-3 py-1 rounded-full">
-            OTURUM {sessionCount}
-          </span>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

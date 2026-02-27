@@ -1,34 +1,39 @@
+import { useEffect } from 'react';
 import { useProgress } from '@/shared/hooks/useProgress';
 import TitleRoadmap from '@/features/courses/components/TitleRoadmap';
-import { PageHeader } from '@/shared/components/PageHeader';
 import { Loader2 } from 'lucide-react';
 
 export default function RoadmapPage() {
   const { stats, isLoading } = useProgress();
 
+  useEffect(() => {
+    document.title = 'Yolculuk | AuditPath';
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute(
+        'content',
+        "Müfettişlik unvan yolculuğunu takip et. Sürgünden Yüce Bilgin'e uzanan efsanevi yolculuğuna bak."
+      );
+    }
+  }, []);
+
   const completedVideos = stats?.completedVideos ?? 0;
   const totalVideos = stats?.totalVideos ?? 0;
 
   return (
-    <div className="bg-background">
-      <PageHeader
-        title="Yolculuk"
-        subtitle="Hedeflerine giden süreci planla."
-      />
-      <div className="relative">
-        {isLoading ? (
-          <div className="flex items-center justify-center min-h-[400px]">
-            <Loader2 className="animate-spin size-8 text-primary" />
-          </div>
-        ) : (
-          stats && (
-            <TitleRoadmap
-              watchedVideos={completedVideos}
-              requiredVideos={totalVideos}
-            />
-          )
-        )}
-      </div>
+    <div className="bg-background text-foreground pb-20">
+      {isLoading ? (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="animate-spin size-8 text-primary" />
+        </div>
+      ) : (
+        stats && (
+          <TitleRoadmap
+            watchedVideos={completedVideos}
+            requiredVideos={totalVideos}
+          />
+        )
+      )}
     </div>
   );
 }

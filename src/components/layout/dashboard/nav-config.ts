@@ -1,13 +1,12 @@
 import {
   Banknote,
-  Brain,
   CalendarDays,
   ChartColumnStacked,
   Home,
   Hourglass,
+  LibraryBig,
   type LucideIcon,
   Medal,
-  NotebookPen,
   Route,
 } from 'lucide-react';
 import { ROUTES } from '@/utils/routes';
@@ -45,15 +44,9 @@ export const navItems: NavItem[] = [
 
   // === DERİN ÇALIŞMA (Action Zone) ===
   {
-    label: 'Notlar',
-    href: ROUTES.NOTES,
-    icon: NotebookPen,
-    group: 'action',
-  },
-  {
-    label: 'Sorular',
-    href: ROUTES.QUIZ,
-    icon: Brain,
+    label: 'Çalışma Merkezi',
+    href: ROUTES.LIBRARY,
+    icon: LibraryBig,
     group: 'action',
   },
   {

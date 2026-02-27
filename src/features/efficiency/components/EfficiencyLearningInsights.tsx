@@ -9,7 +9,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { BookOpen, Maximize2, Activity, Target } from 'lucide-react';
-import { GlassCard } from '@/shared/components/GlassCard';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EfficiencyModal } from './EfficiencyModal';
 import { LearningLoadAnalysis as LearningLoadContent } from './LearningLoadAnalysis';
@@ -19,6 +19,7 @@ import { EfficiencyHeatmap } from './EfficiencyHeatmap';
 import { useEfficiencyTrends } from '../hooks/useEfficiencyTrends';
 import { useDailyMetrics } from '../hooks/useDailyMetrics';
 import { useMasteryChains } from '../hooks/useMasteryChains';
+import { DAILY_GOAL_MINUTES as DEFAULT_DAILY_GOAL_MINUTES } from '../utils/constants';
 
 // --- Sub-components (formerly separate files) ---
 
@@ -117,8 +118,6 @@ interface MasteryItem {
   questionProgress: number;
 }
 
-const DEFAULT_DAILY_GOAL_MINUTES = 200;
-
 // --- Learning Load Card ---
 
 export const LearningLoadCard = () => {
@@ -130,7 +129,7 @@ export const LearningLoadCard = () => {
 
   if (loading)
     return (
-      <GlassCard className="h-full flex flex-col p-6">
+      <Card className="h-full flex flex-col p-6">
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
             <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
@@ -149,7 +148,7 @@ export const LearningLoadCard = () => {
             />
           ))}
         </div>
-      </GlassCard>
+      </Card>
     );
 
   return (
@@ -157,7 +156,7 @@ export const LearningLoadCard = () => {
       title="Odaklanma Trendi"
       trigger={
         <div className="h-full w-full cursor-pointer">
-          <GlassCard className="h-full flex flex-col p-6">
+          <Card className="h-full flex flex-col p-6">
             <CardHeader
               icon={BookOpen}
               iconColor="text-accent"
@@ -171,7 +170,7 @@ export const LearningLoadCard = () => {
             <div className="flex-1 w-full min-h-0 mt-4">
               <LearningLoadChart data={loadWeek} targetMinutes={dailyGoal} />
             </div>
-          </GlassCard>
+          </Card>
         </div>
       }
     >
@@ -194,14 +193,14 @@ export const MasteryNavigatorCard = () => {
 
   if (loading)
     return (
-      <GlassCard className="h-full flex flex-col p-6">
+      <Card className="h-full flex flex-col p-6">
         <Skeleton className="h-6 w-48 mb-6 bg-surface" />
         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
           {[...Array(4)].map((_, i) => (
             <Skeleton key={i} className="h-32 rounded-2xl bg-surface" />
           ))}
         </div>
-      </GlassCard>
+      </Card>
     );
 
   // Sort by mastery score (DESC) and then by title (ASC), exclude 100%
@@ -218,7 +217,7 @@ export const MasteryNavigatorCard = () => {
       title="Akıllı Müfredat Ustalığı"
       trigger={
         <div className="h-full w-full cursor-pointer">
-          <GlassCard className="h-full flex flex-col p-6 overflow-hidden relative group">
+          <Card className="h-full flex flex-col p-6 overflow-hidden relative group">
             <CardHeader
               icon={Target}
               iconColor="text-accent"
@@ -234,7 +233,7 @@ export const MasteryNavigatorCard = () => {
               {displayNodes.map((node) => (
                 <div
                   key={node.lessonId}
-                  className="p-6 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/10 transition-all flex flex-col justify-between gap-6 group/item"
+                  className="p-6 bg-card/90 border border-accent/20 rounded-2xl hover:bg-card/50 transition-all flex flex-col justify-between gap-6 group/item"
                 >
                   <div className="space-y-1.5">
                     <div className="flex justify-between items-start">
@@ -249,7 +248,7 @@ export const MasteryNavigatorCard = () => {
 
                   <div className="space-y-4">
                     {/* Mastery Main Bar */}
-                    <div className="h-3 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-foreground/10 rounded-full overflow-hidden">
                       <div
                         className="h-full bg-accent transition-all duration-1000 ease-out"
                         style={{ width: `${node.mastery}%` }}
@@ -260,12 +259,12 @@ export const MasteryNavigatorCard = () => {
                     <div className="space-y-2 pt-1">
                       <div className="flex flex-col gap-1.5">
                         <div className="flex justify-between text-[11px] uppercase tracking-wider font-bold">
-                          <span className="text-white/40">Video (%60)</span>
+                          <span className="text-white/80">Video (%60)</span>
                           <span className="text-emerald-400">
                             %{node.videoProgress}
                           </span>
                         </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-foreground/10 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-emerald-500/60"
                             style={{ width: `${node.videoProgress}%` }}
@@ -275,12 +274,12 @@ export const MasteryNavigatorCard = () => {
 
                       <div className="flex flex-col gap-1.5">
                         <div className="flex justify-between text-[11px] uppercase tracking-wider font-bold">
-                          <span className="text-white/40">Quiz (%40)</span>
+                          <span className="text-white/80">Quiz (%40)</span>
                           <span className="text-primary">
                             %{node.questionProgress}
                           </span>
                         </div>
-                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-1.5 w-full bg-foreground/10 rounded-full overflow-hidden">
                           <div
                             className="h-full bg-primary/60"
                             style={{ width: `${node.questionProgress}%` }}
@@ -292,7 +291,7 @@ export const MasteryNavigatorCard = () => {
                 </div>
               ))}
             </div>
-          </GlassCard>
+          </Card>
         </div>
       }
     >
@@ -308,7 +307,7 @@ export const ConsistencyHeatmapCard = () => {
 
   if (loading)
     return (
-      <GlassCard className="h-full flex flex-col p-6">
+      <Card className="h-full flex flex-col p-6">
         <Skeleton className="h-6 w-48 mb-6 bg-surface" />
         <div className="flex-1 w-full flex items-center justify-center">
           <div className="grid grid-cols-7 gap-1.5">
@@ -317,11 +316,11 @@ export const ConsistencyHeatmapCard = () => {
             ))}
           </div>
         </div>
-      </GlassCard>
+      </Card>
     );
 
   return (
-    <GlassCard className="h-full flex flex-col p-6">
+    <Card className="h-full flex flex-col p-6">
       <CardHeader
         icon={Activity}
         iconColor="text-accent"
@@ -332,6 +331,6 @@ export const ConsistencyHeatmapCard = () => {
       <div className="flex-1 w-full flex items-center justify-center min-h-0 mt-4">
         <EfficiencyHeatmap data={consistencyData} />
       </div>
-    </GlassCard>
+    </Card>
   );
 };

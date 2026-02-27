@@ -26,7 +26,7 @@ export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
   const getLevelStyles = (level: number) => {
     switch (level) {
       case 0:
-        return 'bg-white/[0.02] border-white/[0.04]';
+        return 'bg-foreground/5 border-white/20';
       case 1:
         return 'bg-green-400/10 border-green-400/5';
       case 2:
@@ -38,7 +38,7 @@ export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
       case 5:
         return 'bg-green-500/85 border-green-500/40';
       default:
-        return 'bg-white/[0.02] border-white/[0.04]';
+        return 'bg-foreground/5 border-white/20';
     }
   };
 

@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { upsertPomodoroSession } from '@/features/pomodoro/services/pomodoroService';
-import { logger } from '@/utils/logger';
 import { Json } from '@/types/database.types';
 
 // Sub-components
@@ -16,6 +16,7 @@ import { PomodoroAlerts } from './PomodoroAlerts';
 export function PomodoroModal() {
   const {
     mode,
+    status,
     startTime,
     timeline,
     isOpen,
@@ -60,7 +61,7 @@ export function PomodoroModal() {
 
   const isWorking = mode === 'work';
 
-  const performSave = async () => {
+  /* const performSave = async () => {
     if (!selectedCourse || !startTime) return;
     const closedTimeline = timeline.map(
       (e: { start: number; end?: number; type: string }) => ({
@@ -83,16 +84,16 @@ export function PomodoroModal() {
     } catch (error) {
       logger.error('Pomodoro save error:', error as Error);
     }
-  };
+  }; */
 
   const handleSwitchMode = async () => {
-    await performSave();
     switchMode();
   };
 
   const confirmClose = async () => {
     setShowCloseAlert(false);
     await resetAndClose();
+    setOpen(false);
   };
 
   const confirmFinish = async () => {
@@ -142,55 +143,60 @@ export function PomodoroModal() {
 
   return createPortal(
     <div className="fixed inset-0 z-50 pointer-events-none">
-      {!selectedCourse ? (
-        <CourseSelector
-          onClose={() => setOpen(false)}
-          modalRef={modalRef}
-          onBackdropClick={handleBackdropClick}
-        />
-      ) : (
-        <div className="fixed inset-0 flex items-end justify-start p-4 sm:p-6 pointer-events-none">
-          <div
-            className={cn(
-              'pointer-events-auto relative overflow-hidden backdrop-blur-3xl border shadow-2xl transition-all duration-300',
-              isExpanded
-                ? 'rounded-[40px] w-[340px] max-w-[calc(100vw-2rem)]'
-                : 'rounded-[28px] w-[220px] max-w-[calc(100vw-2rem)]',
-              isWorking
-                ? 'bg-card/90 border-primary/20 shadow-[var(--shadow-glow-primary)]'
-                : 'bg-card/90 border-primary/20 shadow-[var(--shadow-glow-primary)]'
-            )}
+      <AnimatePresence>
+        {!selectedCourse ? (
+          <CourseSelector
+            onClose={() => setOpen(false)}
+            modalRef={modalRef}
+            onBackdropClick={handleBackdropClick}
+          />
+        ) : (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed inset-x-0 bottom-8 flex justify-center px-4 pointer-events-none"
           >
-            <div
+            <motion.div
+              layout
+              ref={modalRef}
               className={cn(
-                'absolute inset-0 opacity-20 pointer-events-none',
-                isWorking
-                  ? 'bg-linear-to-br from-primary/30 via-primary/5 to-transparent'
-                  : 'bg-linear-to-br from-emerald-500/30 via-emerald-500/5 to-transparent'
+                'pointer-events-auto relative overflow-hidden',
+                'rounded-2xl flex items-center h-20 px-8 gap-6 min-w-[640px] shadow-2xl shadow-black/80',
+                'transition-colors duration-700 ease-in-out',
+                status === 'paused'
+                  ? 'bg-gray-800'
+                  : isWorking
+                    ? 'bg-emerald-950'
+                    : 'bg-amber-950'
               )}
-            />
-            <div
-              className={cn(
-                'absolute -top-24 -left-24 w-48 h-48 blur-[80px] rounded-full',
-                isWorking ? 'bg-primary/40' : 'bg-emerald-500/40'
-              )}
-            />
+            >
+              {/* Progress Line */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-white/5">
+                <motion.div
+                  className={cn(
+                    'h-full',
+                    isWorking ? 'bg-primary' : 'bg-emerald-500'
+                  )}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progress}%` }}
+                  transition={{ duration: 0.5 }}
+                />
+              </div>
 
-            <TimerDisplay
-              isExpanded={isExpanded}
-              setIsExpanded={setIsExpanded}
-              onClose={() => setShowCloseAlert(true)}
-              progress={progress}
-            />
+              {/* 3-column layout: Left | Center | Right rendered by sub-components */}
+              <TimerDisplay />
 
-            <TimerControls
-              isExpanded={isExpanded}
-              onSwitchMode={handleSwitchMode}
-              onFinishDay={() => setShowFinishAlert(true)}
-            />
-          </div>
-        </div>
-      )}
+              <TimerControls
+                isExpanded={isExpanded}
+                onSwitchMode={handleSwitchMode}
+                onFinishDay={() => setShowFinishAlert(true)}
+                onDiscard={() => setShowCloseAlert(true)}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <PomodoroAlerts
         showCloseAlert={showCloseAlert}

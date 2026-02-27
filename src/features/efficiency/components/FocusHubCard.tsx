@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Target, Maximize2 } from 'lucide-react';
 
-import { GlassCard } from '@/shared/components/GlassCard';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EfficiencyModal } from './EfficiencyModal';
 import { FocusStreamHub as FocusHubContent } from './FocusStreamHub';
@@ -13,8 +13,7 @@ import { cn } from '@/utils/stringHelpers';
 import { useDailyMetrics } from '../hooks/useDailyMetrics';
 import { useEfficiencyTrends } from '../hooks/useEfficiencyTrends';
 import { useEfficiencyLogic } from '../hooks/useEfficiency';
-
-const DEFAULT_DAILY_GOAL_MINUTES = 200;
+import { DAILY_GOAL_MINUTES as DEFAULT_DAILY_GOAL_MINUTES } from '../utils/constants';
 
 export const FocusHubCard = () => {
   const {
@@ -119,7 +118,7 @@ export const FocusHubCard = () => {
 
   if (loading)
     return (
-      <GlassCard className="h-full flex flex-col p-4 md:p-6">
+      <Card className="h-full flex flex-col p-4 md:p-6">
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
             <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
@@ -142,7 +141,7 @@ export const FocusHubCard = () => {
             </div>
           </div>
         </div>
-      </GlassCard>
+      </Card>
     );
 
   return (
@@ -150,7 +149,7 @@ export const FocusHubCard = () => {
       title="Öğrenme Akışı Analizi"
       trigger={
         <div className="h-full w-full cursor-pointer">
-          <GlassCard className="h-full flex flex-col p-4 md:p-6">
+          <Card className="h-full flex flex-col p-4 md:p-6">
             <CardHeader
               icon={Target}
               iconColor="text-accent"
@@ -233,7 +232,7 @@ export const FocusHubCard = () => {
                 </div>
               </div>
             </div>
-          </GlassCard>
+          </Card>
         </div>
       }
     >

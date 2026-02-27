@@ -53,6 +53,10 @@ export const BloomKeyChart = ({ data }: { data: BloomStats[] }) => {
             fill: 'oklch(92.19% 0 0deg)',
             fontSize: '10px',
             fontWeight: 'bold',
+            // Açık renkli barlarda beyaz rakamların kaybolmaması için ince bir dış kontur ekliyoruz
+            stroke: 'oklch(20% 0 0deg / 0.4)',
+            strokeWidth: 2,
+            paintOrder: 'stroke',
           }}
         />
         <Legend

@@ -1,6 +1,6 @@
 import { useEffect, FC, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Loader2, BookOpen, PanelLeftClose } from 'lucide-react';
+import { BookOpen } from 'lucide-react';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/utils/routes';
@@ -22,6 +22,7 @@ import { BriefingView } from '@/features/quiz/components/BriefingView';
 import { SmartExamView } from '@/features/quiz/components/SmartExamView';
 import { QuizContainer } from '@/features/quiz/components/QuizContainer';
 import { cn, slugify } from '@/utils/stringHelpers';
+import { SplitLayoutSkeleton } from '@/shared/components/SkeletonTemplates';
 import { getCourseBySlug } from '@/features/courses/services/courseService';
 import {
   type Course,
@@ -120,21 +121,16 @@ export const QuizPage: FC = () => {
   };
 
   if (isResolvingCourse) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Loader2 className="animate-spin size-8 text-primary" />
-        <p className="mt-4 text-muted-foreground animate-pulse">
-          Ders bilgileri alınıyor...
-        </p>
-      </div>
-    );
+    return <SplitLayoutSkeleton />;
   }
 
   if (!courseData) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <p className="text-muted-foreground">Kurs bulunamadı.</p>
-        <Button onClick={() => navigate(ROUTES.HOME)}>Ana Sayfaya Dön</Button>
+        <Button onClick={() => navigate(ROUTES.LIBRARY)}>
+          Çalışma Merkezi'ne Dön
+        </Button>
       </div>
     );
   }
@@ -149,7 +145,7 @@ export const QuizPage: FC = () => {
       >
         {/* Sidebar */}
         {!isQuizActive && (
-          <aside className="flex flex-col shrink-0 border rounded-xl bg-card/40 h-[400px] lg:h-full overflow-hidden transition-all duration-300 ease-in-out z-20">
+          <aside className="flex flex-col shrink-0 border rounded-xl bg-card h-[400px] lg:h-full overflow-hidden transition-all duration-300 ease-in-out z-20">
             <div className="min-w-[240px] h-full flex flex-col">
               <TopicSidebar
                 loading={loading}
@@ -164,7 +160,7 @@ export const QuizPage: FC = () => {
         )}
 
         {/* Work Area */}
-        <div className="flex flex-col min-h-0 flex-1 bg-card/40 rounded-xl border overflow-hidden h-full">
+        <div className="flex flex-col min-h-0 flex-1 bg-card rounded-xl border overflow-hidden h-full">
           <ErrorBoundary>
             {isQuizActive && selectedTopic ? (
               <QuizContainer
@@ -180,14 +176,6 @@ export const QuizPage: FC = () => {
                   className="group flex flex-col border-b border-border/10 shrink-0 bg-card/80 backdrop-blur-md z-10 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3 px-6 py-4">
-                    <button
-                      data-slot="button"
-                      data-variant="ghost"
-                      data-size="icon"
-                      className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-accent/50 size-9 shrink-0 text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      <PanelLeftClose className="w-5 h-5" />
-                    </button>
                     <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                       <BookOpen className="w-4 h-4" />
                     </div>

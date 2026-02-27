@@ -94,58 +94,58 @@ export const SessionGanttChart = ({
     }
   }
 
-  const getBlockColor = (type: string) => {
+  const getBlockStyles = (type: string) => {
     switch (type) {
       case 'work':
-        return 'bg-emerald-900 border-emerald-600 text-white';
+        return 'bg-emerald-900 border-emerald-800/50 text-emerald-200';
       case 'break':
-        return 'bg-sky-900 border-sky-600 text-white';
+        return 'bg-sky-900 border-sky-800/50 text-sky-200';
       case 'pause':
-        return 'bg-zinc-700 border-zinc-500 text-white';
+        return 'bg-zinc-900 border-zinc-800/50 text-zinc-200';
       default:
-        return 'bg-primary border-primary/50 text-white';
+        return 'bg-primary/20 border-primary/40 text-primary';
     }
   };
 
   const ganttTooltipClass = cn(
     'tooltip-float',
-    '-top-14 left-1/2 -translate-x-1/2 text-white bg-[#1a1c1e]',
-    'flex flex-col items-center gap-0.5 min-w-[130px]',
-    'border-border-subtle shadow-2xl translate-y-2 group-hover:translate-y-0 text-[10px]'
-  );
-
-  const ganttFallbackBlockClass = cn(
-    'absolute h-10 rounded-full bg-primary border border-primary/50',
-    'flex items-center px-2 overflow-hidden whitespace-nowrap text-xs transition-all'
+    '-top-16 left-1/2 -translate-x-1/2 bg-surface border border-white/10 rounded-xl p-2.5 shadow-2xl z-50 pointer-events-none',
+    'flex flex-col items-center gap-1 min-w-[140px] translate-y-1 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-200'
   );
 
   return (
-    <div className="w-full h-full min-h-[150px] relative border-l border-border mt-4">
+    <div className="w-full h-full min-h-[160px] relative mt-2 select-none">
       {/* Time markers */}
-      <div className="absolute top-0 bottom-0 left-0 right-0 flex justify-between text-[10px] text-muted-foreground pointer-events-none">
-        {/* Render manually positioned markers */}
+      <div className="absolute top-0 bottom-0 left-0 right-0 flex justify-between pointer-events-none z-0">
         {markers.map((time) => {
           const pos = getPos(time);
-          if (pos < -1 || pos > 101) return null;
-          const timeLabel = new Date(time).toLocaleTimeString('tr-TR', {
+          if (pos < 0 || pos > 100) return null;
+
+          const dateObj = new Date(time);
+          if (isNaN(dateObj.getTime())) return null;
+
+          const timeLabel = dateObj.toLocaleTimeString('tr-TR', {
             hour: '2-digit',
             minute: '2-digit',
           });
+
           return (
             <div
               key={time}
-              className="absolute inset-y-0 w-px border-r border-dashed border-border/30 flex flex-col justify-end pb-1 items-center"
+              className="absolute inset-y-0 w-px border-r border-white/5 flex flex-col justify-end"
               style={{ left: `${pos}%` }}
             >
-              <span>{timeLabel}</span>
+              <span className="absolute bottom-0 -translate-x-1/2 text-[10px] font-medium text-foreground whitespace-nowrap pb-1">
+                {timeLabel}
+              </span>
             </div>
           );
         })}
       </div>
 
-      <div className="pt-14 space-y-4 relative">
+      <div className="pt-10 pb-8 space-y-4 relative z-10">
         {sessions.map((session) => {
-          let start = globalMin; // Default safely
+          let start = globalMin;
           let end = globalMax;
 
           const events = getEvents(session);
@@ -156,7 +156,6 @@ export const SessionGanttChart = ({
               ...events.map((e: TimelineEvent) => e.end || e.start)
             );
           } else {
-            // Fallback
             const d = new Date(session.date);
             const [h, m] = session.startTime.split(':').map(Number);
             d.setHours(h, m, 0, 0);
@@ -168,89 +167,103 @@ export const SessionGanttChart = ({
           const sessionWidth = getPos(end) - sessionLeft;
 
           return (
-            <div key={session.id} className="relative h-14 w-full">
-              {/* If no timeline, show simple block */}
+            <div key={session.id} className="relative h-10 w-full group/row">
+              {/* Row Background Trace */}
+              <div className="absolute inset-x-0 h-full bg-white/[0.02] rounded-lg -mx-2 group-hover/row:bg-white/[0.04] transition-colors" />
+
+              {/* Blocks */}
               {events.length === 0 ? (
                 <div
-                  className={ganttFallbackBlockClass}
+                  className="absolute h-full rounded-lg bg-primary/20 border border-primary/40 flex items-center px-3"
                   style={{
                     left: `${sessionLeft}%`,
                     width: `calc(${Math.max(0.5, sessionWidth)}% - 2px)`,
                   }}
                 >
-                  <span className="font-medium truncate text-white">
+                  <span className="text-[10px] font-bold text-primary truncate">
                     {session.lessonName}
                   </span>
                 </div>
               ) : (
-                /* Render timeline blocks */
                 events.map(
                   (block: TimelineEvent, idx: number, arr: TimelineEvent[]) => {
-                    const nextEvent = arr[idx + 1];
-                    // Ensure we don't overlap strangely
                     const bStart = Math.max(start, block.start);
                     const bEnd = Math.min(
                       end,
-                      block.end || (nextEvent ? nextEvent.start : end)
+                      block.end || (arr[idx + 1]?.start ?? end)
                     );
 
                     if (bStart >= bEnd) return null;
 
                     const bLeft = getPos(bStart);
-                    const bRight = getPos(bEnd);
-                    const bWidth = bRight - bLeft;
+                    const bWidth = getPos(bEnd) - bLeft;
 
                     return (
                       <div
                         key={idx}
                         className={cn(
-                          'absolute h-10 rounded-lg border flex items-center justify-center px-1 transition-all group hover:z-10 hover:brightness-110 cursor-default',
-                          getBlockColor(block.type)
+                          'absolute h-full rounded-md border flex items-center justify-center transition-all group hover:z-20 hover:scale-[1.02] hover:brightness-125 cursor-default',
+                          getBlockStyles(block.type)
                         )}
                         style={{
                           left: `${bLeft}%`,
-                          width: `calc(${Math.max(0.2, bWidth)}% - 2px)`,
+                          width: `calc(${Math.max(0.4, bWidth)}% - 1px)`,
                         }}
                       >
-                        {bWidth > 2 && (
-                          <div className="flex items-center justify-center w-full h-full overflow-hidden">
+                        {/* Discrete Indicator Icons - Only if wide enough */}
+                        {bWidth > 1 && (
+                          <div className="group-hover:scale-110 transition-transform">
                             {block.type === 'work' ? (
-                              <Play className="w-3.5 h-3.5" />
+                              <Play className="w-3 h-3 fill-current" />
                             ) : block.type === 'break' ? (
-                              <Coffee className="w-3.5 h-3.5" />
+                              <Coffee className="w-3 h-3" />
                             ) : (
-                              <Pause className="w-3.5 h-3.5" />
+                              <Pause className="w-3 h-3 fill-current" />
                             )}
                           </div>
                         )}
-                        {/* Tooltip on hover */}
+
+                        {/* Premium Tooltip */}
                         <div className={ganttTooltipClass}>
-                          <span className="font-bold text-xs mb-1 tracking-wide">
-                            {block.type === 'work'
-                              ? 'DERS'
-                              : block.type === 'break'
-                                ? 'MOLA'
-                                : 'DURAKLATMA'}
-                          </span>
-                          <div className="flex items-center gap-2 text-white/60 font-medium">
-                            <span>
+                          <div className="flex items-center gap-2 w-full">
+                            <div
+                              className={cn(
+                                'w-1.5 h-1.5 rounded-full',
+                                block.type === 'work'
+                                  ? 'bg-emerald-200'
+                                  : block.type === 'break'
+                                    ? 'bg-sky-200'
+                                    : 'bg-zinc-200'
+                              )}
+                            />
+                            <span className="font-bold text-[10px] tracking-widest uppercase opacity-80">
+                              {block.type === 'work'
+                                ? 'Odak'
+                                : block.type === 'break'
+                                  ? 'Mola'
+                                  : 'Duraklatma'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between w-full border-t border-white/5 pt-1 mt-0.5">
+                            <span className="text-[10px] text-muted-foreground">
                               {new Date(bStart).toLocaleTimeString([], {
                                 hour: '2-digit',
                                 minute: '2-digit',
-                              })}
-                            </span>
-                            <span className="text-white/20">-</span>
-                            <span>
+                              })}{' '}
+                              -{' '}
                               {new Date(bEnd).toLocaleTimeString([], {
                                 hour: '2-digit',
                                 minute: '2-digit',
                               })}
                             </span>
+                            <span className="text-[10px] font-bold text-white ml-2">
+                              {Math.round((bEnd - bStart) / 60000)} dk
+                            </span>
                           </div>
-                          <div className="mt-1 px-2 py-0.5 bg-surface-hover rounded-full text-[9px] font-bold">
-                            {Math.round((bEnd - bStart) / 60000)} DK
-                          </div>
-                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1a1c1e] border-r border-b border-border-subtle rotate-45"></div>
+
+                          {/* Tooltip Arrow */}
+                          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-surface border-r border-b border-white/10 rotate-45" />
                         </div>
                       </div>
                     );

@@ -1,15 +1,5 @@
 import { SessionTotals } from '@/features/pomodoro/logic/sessionMath';
 
-export function calculateLearningFlow(
-  workMinutes: number,
-  videoMinutes: number
-): number {
-  if (workMinutes <= 0) return 0;
-
-  const ratio = videoMinutes / workMinutes;
-  return Number(ratio.toFixed(2));
-}
-
 /**
  * Calculates the Focus Power score based on the formula: (Work / [Break + Pause]) * 20
  *

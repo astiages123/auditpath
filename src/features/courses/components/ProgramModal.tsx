@@ -47,13 +47,13 @@ export function ProgramModal({ open, onOpenChange }: ProgramModalProps) {
                   'relative flex flex-col overflow-hidden transition-all duration-300',
                   isToday
                     ? 'ring-1 ring-primary ring-offset-1 ring-offset-background shadow-md bg-card z-10'
-                    : 'bg-card/40 hover:bg-card/80 border-border/40 hover:border-border/80'
+                    : 'bg-card hover:bg-card/80 border-border/40 hover:border-border/80'
                 )}
               >
                 <div
                   className={cn(
                     'absolute top-0 right-0 w-16 h-16 rounded-full blur-2xl opacity-10 -mr-8 -mt-8 pointer-events-none',
-                    theme.bg.replace('/20', '') // Adjust opacity if needed, or just use bg class directly if it fits
+                    theme.bg.replace(/\/\d+/, '') // Adjust opacity if needed, or just use bg class directly if it fits
                   )}
                 />
 
@@ -97,7 +97,7 @@ export function ProgramModal({ open, onOpenChange }: ProgramModalProps) {
                 <div
                   className={cn(
                     'h-0.5 w-full opacity-50',
-                    theme.bg.replace('/20', '/50')
+                    theme.bg.replace(/\/\d+/, '/50')
                   )}
                 />
               </Card>

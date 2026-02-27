@@ -91,7 +91,11 @@ export const EfficiencyChartTab: React.FC<EfficiencyChartTabProps> = ({
       </div>
 
       <div className="h-[350px] w-full bg-black/10 rounded-lg border border-white/5 p-2">
-        <FocusPowerTrendChart data={getData()} rangeLabel={range} />
+        <FocusPowerTrendChart
+          key={`${range}-chart`}
+          data={getData()}
+          rangeLabel={range}
+        />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import { ClipboardCheck, Maximize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { GlassCard } from '@/shared/components/GlassCard';
+import { Card } from '@/components/ui/card';
 import { CardHeader } from './CardElements';
 
 import { EfficiencyModal } from './EfficiencyModal';
@@ -122,7 +122,7 @@ export const RecentQuizzesCard = () => {
 
   if (loading) {
     return (
-      <GlassCard className="h-full flex flex-col p-6">
+      <Card className="h-full flex flex-col p-6">
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
             <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
@@ -148,7 +148,7 @@ export const RecentQuizzesCard = () => {
             </div>
           ))}
         </div>
-      </GlassCard>
+      </Card>
     );
   }
 
@@ -157,7 +157,7 @@ export const RecentQuizzesCard = () => {
       title="Quiz Geçmişi"
       trigger={
         <div className="h-full w-full cursor-pointer">
-          <GlassCard className="h-full flex flex-col p-6">
+          <Card className="h-full flex flex-col p-6">
             <CardHeader
               icon={ClipboardCheck}
               iconColor="text-accent"
@@ -229,7 +229,7 @@ export const RecentQuizzesCard = () => {
                 </div>
               )}
             </div>
-          </GlassCard>
+          </Card>
         </div>
       }
     >

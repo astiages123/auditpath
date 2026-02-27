@@ -31,7 +31,7 @@ export function useCognitiveInsights() {
       try {
         const [bloom, recent, quizzes, cognitive] = await Promise.all([
           getBloomStats(user.id),
-          getRecentActivitySessions(user.id, 100),
+          getRecentActivitySessions(user.id, 20),
           getRecentQuizSessions(user.id, 50),
           getRecentCognitiveInsights(user.id, 30),
         ]);

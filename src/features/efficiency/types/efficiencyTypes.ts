@@ -4,7 +4,7 @@ import {
 } from '@/features/pomodoro/types/pomodoroTypes';
 import { BloomStats } from '@/features/quiz/types';
 
-export type { DetailedSession, RecentSession, BloomStats };
+export type { BloomStats, DetailedSession, RecentSession };
 
 export interface DailyStats {
   totalWorkMinutes: number;
@@ -31,7 +31,6 @@ export type DayActivity = {
 };
 
 export interface EfficiencyData {
-  ratio: number;
   efficiencyScore: number;
   trend: 'up' | 'down' | 'stable';
   isAlarm: boolean;
@@ -102,6 +101,7 @@ export type LearningLoad = {
   day: string;
   videoMinutes: number;
   extraStudyMinutes: number; // Test solving, reading etc.
+  rawDate?: Date;
 };
 
 export type FocusPowerPoint = {

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, type ReactNode } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PomodoroModal, TimerController } from '@/features/pomodoro/components';
 import { ProgramModal } from '@/features/courses/components';
@@ -13,6 +13,7 @@ import { Sidebar } from './Sidebar';
 import { DashHeader } from './Header';
 import { cn } from '@/utils/stringHelpers';
 import { ROUTES } from '@/utils/routes';
+import { ContentSkeleton } from '@/shared/components/SkeletonTemplates';
 
 const CelebrationModal = lazy(() =>
   import('@/shared/components/CelebrationModal').then((module) => ({
@@ -43,7 +44,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     isProgramOpen,
     setProgramOpen,
     isSidebarCollapsed,
-    setSidebarCollapsed,
   } = useUIStore();
   usePomodoro();
 
@@ -53,18 +53,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     location.pathname.startsWith(ROUTES.NOTES) ||
     location.pathname.startsWith(ROUTES.QUIZ);
 
-  const rootRoute = location.pathname.split('/')[1];
-
-  useEffect(() => {
-    const isSpecialPage = rootRoute === 'notes' || rootRoute === 'quiz';
-
-    if (isSpecialPage) {
-      setSidebarCollapsed(true);
-    }
-  }, [rootRoute, setSidebarCollapsed]);
-
-  const effectiveCollapsed = isSidebarCollapsed;
-  const sidebarWidth = effectiveCollapsed ? '64px' : '260px';
+  const sidebarWidth = isSidebarCollapsed ? '64px' : '260px';
 
   return (
     <div className="relative min-h-screen bg-[#0a0a0b] overflow-hidden">
@@ -119,7 +108,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                   : 'max-w-[1400px] min-h-full'
               )}
             >
-              {children}
+              <Suspense fallback={<ContentSkeleton />}>{children}</Suspense>
             </div>
           </main>
         </div>

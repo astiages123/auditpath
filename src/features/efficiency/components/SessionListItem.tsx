@@ -8,7 +8,6 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
-import { calculateFocusPower } from '@/features/efficiency/logic/metricsCalc';
 import { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
 import { Session } from '../types/efficiencyTypes';
 import { EfficiencyModal } from './EfficiencyModal';
@@ -20,22 +19,43 @@ const convertToSession = (rs: RecentSession): Session => {
   const start = new Date(rs.date);
   const end = new Date(start.getTime() + rs.durationMinutes * 60000);
 
-  const timeline = (
-    rs.timeline as {
-      type: string;
-      start: string | number;
-      end: string | number;
-    }[]
-  ).map((t) => {
-    const bStart = new Date(t.start).getTime();
-    const bEnd = new Date(t.end).getTime();
-    return {
-      type: t.type || 'work',
-      start: bStart,
-      end: bEnd,
-      duration: Math.round((bEnd - bStart) / 1000 / 60),
-    };
-  });
+  const timeline = ((rs.timeline as Record<string, unknown>[]) || [])
+    .map((t) => {
+      const bStart = t.start
+        ? new Date(t.start as string | number | Date).getTime()
+        : null;
+      let bEnd = t.end
+        ? new Date(t.end as string | number | Date).getTime()
+        : null;
+
+      if (!bStart || isNaN(bStart)) return null;
+
+      // If end is missing or invalid, default to start + 1 min or current time if it's the last event
+      if (!bEnd || isNaN(bEnd)) {
+        bEnd = bStart + 60000;
+      }
+
+      return {
+        type: (t.type as string)?.toLowerCase() || 'work',
+        start: bStart,
+        end: bEnd,
+        duration: Math.round((bEnd - bStart) / 1000 / 60),
+      };
+    })
+    .filter((t): t is NonNullable<typeof t> => t !== null);
+
+  const pauseIntervals = timeline
+    .filter((t) => t.type === 'pause')
+    .map((t) => ({
+      start: new Date(t.start).toLocaleTimeString('tr-TR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      end: new Date(t.end).toLocaleTimeString('tr-TR', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    }));
 
   return {
     id: rs.id,
@@ -51,7 +71,7 @@ const convertToSession = (rs: RecentSession): Session => {
     }),
     duration: rs.durationMinutes,
     timeline: timeline,
-    pauseIntervals: [],
+    pauseIntervals,
   };
 };
 
@@ -81,11 +101,7 @@ export const SessionListItem: FC<SessionListItemProps> = ({
     return 'text-muted-foreground';
   };
 
-  const focusPower = calculateFocusPower(
-    session.totalWorkTime,
-    session.totalBreakTime,
-    session.totalPauseTime
-  );
+  const focusPower = session.efficiencyScore;
 
   const TriggerContent = (
     <div className="p-4 flex items-center justify-between bg-white/2 border border-white/5 hover:bg-white/5 hover:border-white/10 rounded-xl transition-all cursor-pointer group">

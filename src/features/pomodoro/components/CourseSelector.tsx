@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Search, Play, Target, X } from 'lucide-react';
+import { motion } from 'framer-motion';
 import coursesData from '@/features/courses/services/courses.json';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
@@ -55,43 +56,49 @@ export function CourseSelector({
   };
 
   return (
-    <div
-      className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-sm pointer-events-auto"
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md pointer-events-auto z-50"
       onClick={onBackdropClick}
     >
-      <div
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
         ref={modalRef}
-        className="w-full max-w-lg bg-card border border-border rounded-3xl shadow-2xl overflow-hidden pointer-events-auto"
+        className="w-full max-w-lg bg-[#1a1a1c] border border-white/10 rounded-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-auto"
       >
-        <div className="p-5 border-b border-border bg-muted/20 relative">
+        <div className="p-7 border-b border-white/5 bg-white/5 relative">
           <button
             onClick={onClose}
-            className="absolute right-4 top-4 p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground"
+            className="absolute right-6 top-7 p-2 rounded-full hover:bg-white/5 text-muted-foreground hover:text-white transition-colors"
           >
             <X size={20} />
           </button>
-          <div className="flex items-center gap-4">
-            <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-              <Target size={24} />
+          <div className="flex items-center gap-5">
+            <div className="size-14 rounded-2xl bg-white/5 flex items-center justify-center text-primary border border-white/10">
+              <Target size={28} />
             </div>
             <div>
-              <h2 className="text-xl font-heading font-bold text-foreground">
+              <h2 className="text-2xl font-bold text-white tracking-tight">
                 Hedef Belirle
               </h2>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground font-medium">
                 Bugünkü odağın ne olacak?
               </p>
             </div>
           </div>
         </div>
-        <div className="p-3 bg-card">
+        <div className="p-4">
           <div className="relative group">
             <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground"
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within:text-primary transition-colors"
               size={18}
             />
             <input
-              className="w-full bg-secondary/50 border border-transparent rounded-xl py-3 pl-12 pr-4 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 font-medium"
+              className="w-full bg-white/5 border border-white/5 rounded-xl py-4 pl-12 pr-4 text-white placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 font-bold transition-all"
               placeholder="Ders veya konu ara..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -99,7 +106,7 @@ export function CourseSelector({
             />
           </div>
         </div>
-        <div className="max-h-[320px] overflow-y-auto px-4 pb-4 custom-scrollbar space-y-4 bg-card">
+        <div className="max-h-[360px] overflow-y-auto px-4 pb-6 custom-scrollbar space-y-6">
           {filteredCategories.length > 0 ? (
             (
               filteredCategories as {
@@ -107,36 +114,35 @@ export function CourseSelector({
                 courses: { id: string; name: string }[];
               }[]
             ).map((cat, idx) => (
-              <div key={idx}>
-                <h3 className="text-xs font-bold text-primary/80 uppercase tracking-wider mb-2 px-2">
+              <div key={idx} className="space-y-3">
+                <h3 className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] px-3">
                   {cat.category.replace(/\(.*\)/, '')}
                 </h3>
                 <div className="space-y-1">
                   {cat.courses.map((course) => (
-                    <button
+                    <motion.button
                       key={course.id}
                       onClick={() => handleCourseSelect(course.id)}
-                      className="w-full text-left px-4 py-3 rounded-xl hover:bg-secondary/80 active:bg-secondary transition-colors flex items-center justify-between group"
+                      className="w-full text-left px-5 py-4 rounded-xl hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between group"
                     >
-                      <span className="text-foreground/80 group-hover:text-foreground font-medium">
+                      <span className="text-white/60 group-hover:text-white font-bold text-sm tracking-tight transition-colors">
                         {course.name}
                       </span>
-                      <Play
-                        size={16}
-                        className="text-primary opacity-0 group-hover:opacity-100"
-                      />
-                    </button>
+                      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100 text-primary">
+                        <Play size={14} fill="currentColor" />
+                      </div>
+                    </motion.button>
                   ))}
                 </div>
               </div>
             ))
           ) : (
-            <div className="py-10 text-center text-muted-foreground">
+            <div className="py-12 text-center text-muted-foreground font-medium">
               Sonuç bulunamadı.
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

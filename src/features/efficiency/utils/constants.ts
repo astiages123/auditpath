@@ -5,6 +5,7 @@ export const EFFICIENCY_THRESHOLDS = {
   DEEP: 0.7,
   OPTIMAL_MAX: 1.3,
   SPEED: 1.7,
+  ALARM_THRESHOLD: 2.5,
 } as const;
 
 export const EFFICIENCY_CONFIG = {

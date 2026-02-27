@@ -1,5 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton';
-import { GlassCard } from '@/shared/components/GlassCard';
+import { Card } from '@/components/ui/card';
 import { useCognitiveInsights } from '../hooks/useCognitiveInsights';
 import { useEfficiencyTrends } from '../hooks/useEfficiencyTrends';
 import { RecentActivitiesCard } from './RecentActivitiesCard';
@@ -17,7 +17,7 @@ export const RecentActivitiesContainer = () => {
 
   if (loading)
     return (
-      <GlassCard className="h-full flex flex-col p-6">
+      <Card className="h-full flex flex-col p-6">
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
             <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
@@ -42,7 +42,7 @@ export const RecentActivitiesContainer = () => {
             </div>
           ))}
         </div>
-      </GlassCard>
+      </Card>
     );
 
   return (

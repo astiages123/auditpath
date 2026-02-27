@@ -1,4 +1,4 @@
-import { GlassCard } from '@/shared/components/GlassCard';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Brain, AlertTriangle, Lightbulb, Zap } from 'lucide-react';
 import { CardHeader } from './CardElements';
@@ -23,7 +23,7 @@ export const CognitiveInsightsCard = ({
 }: CognitiveInsightsCardProps) => {
   if (loading) {
     return (
-      <GlassCard className="h-full flex flex-col p-6 min-h-[300px] animate-pulse">
+      <Card className="h-full flex flex-col p-6 min-h-[300px] animate-pulse">
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-3">
             <Skeleton className="size-10 rounded-xl" />
@@ -47,7 +47,7 @@ export const CognitiveInsightsCard = ({
             </div>
           </div>
         </div>
-      </GlassCard>
+      </Card>
     );
   }
 
@@ -56,7 +56,7 @@ export const CognitiveInsightsCard = ({
 
   if (!hasData || (!topConfused?.length && !recentInsights?.length)) {
     return (
-      <GlassCard className="h-full flex flex-col p-6 min-h-[300px]">
+      <Card className="h-full flex flex-col p-6 min-h-[300px]">
         <CardHeader
           icon={Brain}
           iconColor="text-accent"
@@ -78,12 +78,12 @@ export const CognitiveInsightsCard = ({
             </p>
           </div>
         </div>
-      </GlassCard>
+      </Card>
     );
   }
 
   return (
-    <GlassCard className="h-full flex flex-col p-6 min-h-[300px]">
+    <Card className="h-full flex flex-col p-6 min-h-[300px]">
       <div className="flex justify-between items-start mb-6">
         <CardHeader
           icon={Brain}
@@ -188,6 +188,6 @@ export const CognitiveInsightsCard = ({
           </div>
         )}
       </div>
-    </GlassCard>
+    </Card>
   );
 };

@@ -16,7 +16,7 @@ export const StatCard = ({
   label,
   value,
 }: StatCardProps) => (
-  <div className="p-4 rounded-xl bg-card/40 border border-border flex flex-col items-center justify-center text-center">
+  <div className="p-4 rounded-xl bg-card border border-border flex flex-col items-center justify-center text-center">
     <div className={cn('p-2 rounded-lg mb-2', iconBg)}>
       <Icon className={cn('w-4 h-4', iconColor)} />
     </div>

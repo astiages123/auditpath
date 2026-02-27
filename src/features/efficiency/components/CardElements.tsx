@@ -89,9 +89,7 @@ export const StatCard = ({
 }: StatCardProps) => {
   if (loading) {
     return (
-      <div
-        className={cn('p-4 rounded-2xl bg-card/40 border-border', className)}
-      >
+      <div className={cn('p-4 rounded-2xl bg-card border-border', className)}>
         <div className="flex justify-between items-start mb-2">
           <Skeleton className="h-4 w-24 bg-surface" />
           {icon && <Skeleton className="h-8 w-8 rounded-full bg-surface" />}

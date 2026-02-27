@@ -111,7 +111,7 @@ export function CelebrationModal({
             >
               <div
                 className={cn(
-                  'relative bg-card/40 backdrop-blur-3xl rounded-[1.9rem] p-8 text-center flex flex-col items-center gap-6 border border-white/5 shadow-2xl',
+                  'relative bg-card backdrop-blur-3xl rounded-[1.9rem] p-8 text-center flex flex-col items-center gap-6 border border-white/5 shadow-2xl',
                   variant === 'rank' && 'border-amber-500/20'
                 )}
               >
@@ -181,8 +181,8 @@ export function CelebrationModal({
                           className={cn(
                             'relative p-8 rounded-full border-4 shadow-2xl transition-transform duration-500 group-hover:scale-110',
                             variant === 'rank'
-                              ? 'bg-card/40 border-amber-500/50 shadow-amber-500/20'
-                              : 'bg-card/40 border-blue-500/50 shadow-blue-500/20'
+                              ? 'bg-card border-amber-500/50 shadow-amber-500/20'
+                              : 'bg-card border-blue-500/50 shadow-blue-500/20'
                           )}
                         >
                           <Icon className="w-16 h-16 stroke-[1.5px]" />

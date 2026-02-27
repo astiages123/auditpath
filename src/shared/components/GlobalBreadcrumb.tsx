@@ -12,6 +12,7 @@ import {
   Home,
   Brain,
   BookOpen,
+  LibraryBig,
   Trophy,
   ChartScatter,
   LineSquiggle,
@@ -30,8 +31,9 @@ const ROUTE_LABELS: Record<string, string> = {
   achievements: 'Başarılar',
   statistics: 'İstatistikler',
   costs: 'Maliyet Analizi',
-  notes: 'Notlar',
-  quiz: 'Sorular',
+  notes: 'Çalışma Merkezi',
+  quiz: 'Çalışma Merkezi',
+  library: 'Çalışma Merkezi',
   roadmap: 'Yolculuk',
 };
 
@@ -93,6 +95,25 @@ export function GlobalBreadcrumb() {
 
     let label = ROUTE_LABELS[value] || value;
 
+    // notes / quiz kök segmentleri artık /library'e işaret eder
+    if ((value === 'notes' || value === 'quiz') && originalIdx === 0) {
+      return {
+        label: 'Çalışma Merkezi',
+        to: ROUTES.LIBRARY,
+        last,
+        originalIdx,
+      };
+    }
+
+    if (value === 'library') {
+      return {
+        label: 'Çalışma Merkezi',
+        to: ROUTES.LIBRARY,
+        last,
+        originalIdx,
+      };
+    }
+
     if (value === courseSlug && course) {
       label = course.name;
     }
@@ -126,6 +147,12 @@ export function GlobalBreadcrumb() {
                     {(() => {
                       const pathValue = pathnames[crumb.originalIdx];
 
+                      if (
+                        pathValue === 'library' ||
+                        ((pathValue === 'notes' || pathValue === 'quiz') &&
+                          crumb.originalIdx === 0)
+                      )
+                        return <LibraryBig className="size-4" />;
                       if (pathValue === 'quiz')
                         return <Brain className="size-4" />;
                       if (pathValue === 'roadmap')
@@ -153,6 +180,12 @@ export function GlobalBreadcrumb() {
                       {(() => {
                         const pathValue = pathnames[crumb.originalIdx];
 
+                        if (
+                          pathValue === 'library' ||
+                          ((pathValue === 'notes' || pathValue === 'quiz') &&
+                            crumb.originalIdx === 0)
+                        )
+                          return <LibraryBig className="size-4" />;
                         if (pathValue === 'quiz')
                           return <Brain className="size-4" />;
                         if (pathValue === 'roadmap')

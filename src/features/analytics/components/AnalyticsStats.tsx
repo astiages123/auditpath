@@ -44,7 +44,7 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
 
   return (
     <div className="grid gap-6 md:grid-cols-3">
-      <Card className="bento-card card-hover bg-card/40 border-primary/20">
+      <Card className="bento-card card-hover bg-card border-primary/20">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
             Toplam Harcama
@@ -63,7 +63,7 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
         </CardContent>
       </Card>
 
-      <Card className="bento-card card-hover bg-card/40 border-primary/10">
+      <Card className="bento-card card-hover bg-card border-primary/10">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
             Toplam İstek
@@ -82,7 +82,7 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
 
       <Card
         className={cn(
-          'bento-card card-hover bg-card/40 border-primary/10 relative overflow-hidden',
+          'bento-card card-hover bg-card border-primary/10 relative overflow-hidden',
           isHighSavings && 'border-emerald-500/30'
         )}
       >
@@ -145,7 +145,7 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
       </Card>
 
       {/* Token Stats Row */}
-      <Card className="bento-card card-hover bg-card/40 border-primary/10">
+      <Card className="bento-card card-hover bg-card border-primary/10">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
             Toplam Girdi (Prompt)
@@ -162,7 +162,7 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
         </CardContent>
       </Card>
 
-      <Card className="bento-card card-hover bg-card/40 border-primary/10">
+      <Card className="bento-card card-hover bg-card border-primary/10">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
             Toplam Çıktı (Completion)
@@ -179,7 +179,7 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
         </CardContent>
       </Card>
 
-      <Card className="bento-card card-hover bg-card/40 border-primary/10">
+      <Card className="bento-card card-hover bg-card border-primary/10">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
             Toplam Cache (Tasarruf)

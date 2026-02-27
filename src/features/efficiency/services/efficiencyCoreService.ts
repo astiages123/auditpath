@@ -3,7 +3,7 @@ import { calculateEfficiencyScore } from '../logic/efficiencyHelpers';
 import { getVirtualDayStart } from '@/utils/dateUtils';
 import { logger } from '@/utils/logger';
 import type { EfficiencyData } from '@/features/efficiency/types/efficiencyTypes';
-
+import { EFFICIENCY_THRESHOLDS } from '../utils/constants';
 /**
  * Get efficiency ratio (video time vs pomodoro time).
  *
@@ -113,21 +113,15 @@ export async function getEfficiencyRatio(
     totalWorkMinutes - quizSessionMinutes
   );
 
-  const ratio =
-    effectiveWorkMinutes > 0
-      ? Math.round((totalVideoMinutes / effectiveWorkMinutes) * 10) / 10
-      : 0.0;
-
   const efficiencyScore = calculateEfficiencyScore(
     totalVideoMinutes,
     effectiveWorkMinutes
   );
 
   return {
-    ratio,
     efficiencyScore,
     trend: 'stable',
-    isAlarm: ratio > 2.5,
+    isAlarm: efficiencyScore > EFFICIENCY_THRESHOLDS.ALARM_THRESHOLD,
     videoMinutes: Math.round(totalVideoMinutes),
     pomodoroMinutes: totalWorkMinutes,
     quizMinutes: quizSessionMinutes,

@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { AuthForms } from '@/features/auth/components/AuthForms';
-import { GlobalPageSkeleton } from '@/shared/components/SkeletonTemplates';
+import { Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.svg';
 
 export function AuthGuard() {
@@ -14,7 +14,13 @@ export function AuthGuard() {
   //     }
   // }, [user, loading]);
 
-  if (loading) return <GlobalPageSkeleton />;
+  if (loading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-background">
+        <Loader2 className="size-8 animate-spin text-primary/50" />
+      </div>
+    );
+  }
 
   if (!user) {
     return (
@@ -24,7 +30,7 @@ export function AuthGuard() {
         <div className="absolute inset-0 w-full h-full bg-[radial-gradient(circle_at_bottom_right,var(--tw-gradient-stops))] from-accent/20 via-background to-background opacity-60 z-0" />
 
         <div className="w-full max-w-md p-8 relative z-10">
-          <div className="backdrop-blur-xl bg-card/40 border border-white/10 shadow-2xl rounded-3xl p-8 md:p-10 relative overflow-hidden">
+          <div className="backdrop-blur-xl bg-card border border-white/10 shadow-2xl rounded-3xl p-8 md:p-10 relative overflow-hidden">
             <div className="absolute inset-0 bg-linear-to-br from-white/5 to-transparent pointer-events-none" />
             <div className="relative z-10 flex flex-col items-center space-y-6">
               <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mb-2 shadow-inner ring-1 ring-white/10">

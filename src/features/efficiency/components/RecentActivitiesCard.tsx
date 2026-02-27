@@ -1,7 +1,7 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { BookOpen, Clock, Maximize2 } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { GlassCard } from '@/shared/components/GlassCard';
+import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
 import { FocusPowerPoint } from '../types/efficiencyTypes';
@@ -18,12 +18,13 @@ interface RecentActivitiesCardProps {
 
 export const RecentActivitiesCard = (props: RecentActivitiesCardProps) => {
   const { sessions } = props;
-  const parentRef = useRef<HTMLDivElement>(null);
+  const [scrollElement, setScrollElement] =
+    React.useState<HTMLDivElement | null>(null);
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: sessions.length,
-    getScrollElement: () => parentRef.current,
+    getScrollElement: () => scrollElement,
     estimateSize: () => 76,
     overscan: 5,
   });
@@ -32,7 +33,7 @@ export const RecentActivitiesCard = (props: RecentActivitiesCardProps) => {
 
   if (sessions.length === 0) {
     return (
-      <GlassCard className="p-8 flex flex-col items-center justify-center text-center space-y-4">
+      <Card className="p-8 flex flex-col items-center justify-center text-center space-y-4">
         <div className="p-4 bg-white/5 rounded-xl">
           <BookOpen className="w-6 h-6 text-muted-foreground/50" />
         </div>
@@ -44,7 +45,7 @@ export const RecentActivitiesCard = (props: RecentActivitiesCardProps) => {
             Son zamanlarda tamamlanan bir çalışma bulunamadı.
           </p>
         </div>
-      </GlassCard>
+      </Card>
     );
   }
 
@@ -53,7 +54,7 @@ export const RecentActivitiesCard = (props: RecentActivitiesCardProps) => {
       title="Tüm Çalışma Geçmişi ve Analizler"
       trigger={
         <div className="h-full w-full">
-          <GlassCard className="flex flex-col overflow-hidden relative group h-full cursor-pointer">
+          <Card className="flex flex-col overflow-hidden relative group h-full cursor-pointer">
             <div className="p-5 px-6 border-b border-white/5 flex justify-between items-start">
               <div className="flex items-center gap-4">
                 <div className="p-2.5 rounded-xl bg-sky-500/10">
@@ -80,7 +81,7 @@ export const RecentActivitiesCard = (props: RecentActivitiesCardProps) => {
                 />
               ))}
             </div>
-          </GlassCard>
+          </Card>
         </div>
       }
     >
@@ -93,7 +94,7 @@ export const RecentActivitiesCard = (props: RecentActivitiesCardProps) => {
         <TabsContent
           value="list"
           className="max-h-[70vh] overflow-y-auto custom-scrollbar p-1"
-          ref={parentRef}
+          ref={setScrollElement}
         >
           <div
             style={{

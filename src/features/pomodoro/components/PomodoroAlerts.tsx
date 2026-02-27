@@ -30,7 +30,7 @@ export function PomodoroAlerts({
     <>
       {/* Close Alert */}
       <AlertDialog open={showCloseAlert} onOpenChange={setShowCloseAlert}>
-        <AlertDialogContent className="bg-card border-border text-foreground rounded-3xl">
+        <AlertDialogContent className="bg-card/80 border-border text-foreground rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Oturumu Kapat</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
@@ -38,12 +38,12 @@ export function PomodoroAlerts({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-border bg-secondary text-foreground">
+            <AlertDialogCancel className="rounded-xl border-border bg-secondary text-foreground hover:bg-secondary/80 transition-colors">
               İptal
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={onConfirmClose}
-              className="rounded-xl bg-destructive text-destructive-foreground"
+              className="rounded-xl bg-destructive/50 text-destructive-foreground hover:bg-destructive/80 transition-colors"
             >
               Kapat
             </AlertDialogAction>
@@ -53,7 +53,7 @@ export function PomodoroAlerts({
 
       {/* Finish Alert */}
       <AlertDialog open={showFinishAlert} onOpenChange={setShowFinishAlert}>
-        <AlertDialogContent className="bg-card border-border text-foreground rounded-3xl">
+        <AlertDialogContent className="bg-card/80 border-border text-foreground rounded-3xl">
           <AlertDialogHeader>
             <AlertDialogTitle>Günü Tamamla</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground">
@@ -61,12 +61,12 @@ export function PomodoroAlerts({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-xl border-border bg-secondary text-foreground">
+            <AlertDialogCancel className="rounded-xl border-border bg-secondary text-foreground hover:bg-secondary/80 transition-colors">
               Devam Et
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={onConfirmFinish}
-              className="rounded-xl bg-emerald-600 text-white"
+              className="rounded-xl bg-emerald-600 text-white hover:bg-emerald-600/80 transition-colors"
             >
               Bitir ve Kaydet
             </AlertDialogAction>

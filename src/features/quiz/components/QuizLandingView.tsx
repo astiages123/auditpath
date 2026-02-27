@@ -175,7 +175,7 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                       <div
                         key={course.id}
                         onClick={() => onCourseSelect(course)}
-                        className="group relative bg-card/40 backdrop-blur-sm border border-border/40 rounded-[2.5rem] overflow-hidden cursor-pointer shadow-sm hover:border-primary/30"
+                        className="group relative bg-card backdrop-blur-sm border border-border/40 rounded-[2.5rem] overflow-hidden cursor-pointer shadow-sm hover:border-primary/30"
                       >
                         <div className="p-8 space-y-6">
                           <div className="flex items-center justify-between">

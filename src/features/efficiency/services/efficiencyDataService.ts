@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { calculateFocusPower } from '@/features/efficiency/logic/metricsCalc';
+import { calculateEfficiencyScore } from '@/features/efficiency/logic/efficiencyHelpers';
 import { getCycleCount } from '@/features/pomodoro/logic/sessionMath';
 import {
   formatDisplayDate,
@@ -103,10 +104,12 @@ export async function getLearningLoadData({
   const rawData: (LearningLoad & { rawDate: Date })[] = [];
 
   // Create range for requested days
+  const anchorDate = getVirtualDayStart();
+
   for (let i = days - 1; i >= 0; i--) {
-    const d = new Date();
-    d.setHours(12, 0, 0, 0); // Noon to avoid timezone shifts
+    const d = new Date(anchorDate);
     d.setDate(d.getDate() - i);
+    d.setHours(12, 0, 0, 0); // Noon for display/key generation
 
     const dateKey = getVirtualDateKey(d);
     const dayName = i === 0 ? 'Bugün' : formatDisplayDate(d);
@@ -119,6 +122,17 @@ export async function getLearningLoadData({
     });
   }
 
+  // Pre-calculate which weekend days have 0 minutes in the dataset
+  const weekendNoActivityStrDates = new Set<string>();
+  rawData.forEach((item) => {
+    const d = item.rawDate;
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    const totalMins = item.extraStudyMinutes + item.videoMinutes;
+    if (isWeekend && totalMins === 0) {
+      weekendNoActivityStrDates.add(d.toISOString().split('T')[0]);
+    }
+  });
+
   // Filter out graduate study days (Tue, Wed, Thu) and empty weekend days
   return rawData.filter((item) => {
     const d = item.rawDate;
@@ -128,8 +142,38 @@ export async function getLearningLoadData({
     // Yüksek Lisans Günleri (Salı, Çarşamba, Perşembe) - Gösterme
     if ([2, 3, 4].includes(dayOfWeek)) return false;
 
-    // Hafta sonu (Cumartesi veya Pazar) - Eğer veri yoksa gösterme (Tatil günü kuralı)
-    if (totalMins === 0 && (dayOfWeek === 0 || dayOfWeek === 6)) return false;
+    // Hafta sonu mantığı:
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      // Eğer veri varsa göster
+      if (totalMins > 0) return true;
+
+      // Veri yoksa (0 ise) kontrol et:
+      // Acaba bu haftanın diğer hafta sonu gününde de veri yok mu?
+      // İkisi de 0 ise, Pazar gününü tutarak disiplin cezasını (streak kırılmasını) gösterelim, Cumartesi'yi silelim.
+      const msInDay = 24 * 60 * 60 * 1000;
+
+      let otherWeekendDayStr = '';
+      if (dayOfWeek === 6) {
+        // Cumartesi ise, Pazar'a (yarın) bak
+        const sundayDate = new Date(d.getTime() + msInDay);
+        otherWeekendDayStr = sundayDate.toISOString().split('T')[0];
+      } else if (dayOfWeek === 0) {
+        // Pazar ise, Cumartesi'ye (dün) bak
+        const saturdayDate = new Date(d.getTime() - msInDay);
+        otherWeekendDayStr = saturdayDate.toISOString().split('T')[0];
+      }
+
+      const otherDayAlsoZero =
+        weekendNoActivityStrDates.has(otherWeekendDayStr);
+
+      if (otherDayAlsoZero) {
+        // İkisi de 0 ise, biz Pazar'ı cezai gün olarak listede tutalım (Pazar is true, Cumartesi is false)
+        return dayOfWeek === 0;
+      } else {
+        // Sadece bu gün 0 ise, adayın 1 günlük tatil hakkı vardır, listeden çıkar.
+        return false;
+      }
+    }
 
     return true;
   });
@@ -154,7 +198,7 @@ export async function getFocusPowerData({
     userId,
     'started_at, total_work_time, total_break_time, total_pause_time',
     'getFocusPowerData error',
-    { days: range === 'week' ? 7 : 30 }
+    { days: range === 'week' ? 7 : range === 'month' ? 30 : 180 }
   );
 
   const focusPowerAggMap = new Map<
@@ -182,10 +226,12 @@ export async function getFocusPowerData({
     const result: FocusPowerPoint[] = [];
     const loopCount = targetCount;
 
+    const anchorDate = getVirtualDayStart();
+
     for (let i = loopCount - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setHours(12, 0, 0, 0);
+      const d = new Date(anchorDate);
       d.setDate(d.getDate() - i);
+      d.setHours(12, 0, 0, 0);
       const dateKey = getVirtualDateKey(d);
 
       const agg = focusPowerAggMap.get(dateKey) || {
@@ -211,7 +257,18 @@ export async function getFocusPowerData({
     return result;
   };
 
-  const result = range === 'week' ? assembleData(7) : assembleData(30);
+  const daysToAssemble = range === 'week' ? 7 : range === 'month' ? 30 : 180;
+  const result = assembleData(daysToAssemble);
+
+  // Pre-calculate which weekend days have 0 minutes in the dataset
+  const weekendNoActivityStrDates = new Set<string>();
+  result.forEach((item) => {
+    const d = new Date(item.originalDate);
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    if (isWeekend && item.workMinutes === 0) {
+      weekendNoActivityStrDates.add(d.toISOString().split('T')[0]);
+    }
+  });
 
   // Filter out graduate study days (Tue, Wed, Thu) and empty weekend days
   return result.filter((item) => {
@@ -220,7 +277,32 @@ export async function getFocusPowerData({
     const hasActivity = item.workMinutes > 0;
 
     if ([2, 3, 4].includes(dayOfWeek)) return false;
-    if (!hasActivity && (dayOfWeek === 0 || dayOfWeek === 6)) return false;
+
+    // Hafta sonu mantığı:
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      if (hasActivity) return true;
+
+      const msInDay = 24 * 60 * 60 * 1000;
+      let otherWeekendDayStr = '';
+      if (dayOfWeek === 6) {
+        const sundayDate = new Date(d.getTime() + msInDay);
+        otherWeekendDayStr = sundayDate.toISOString().split('T')[0];
+      } else if (dayOfWeek === 0) {
+        const saturdayDate = new Date(d.getTime() - msInDay);
+        otherWeekendDayStr = saturdayDate.toISOString().split('T')[0];
+      }
+
+      const otherDayAlsoZero =
+        weekendNoActivityStrDates.has(otherWeekendDayStr);
+
+      if (otherDayAlsoZero) {
+        // İkisi de 0 ise, Pazar gününü tutarak disiplin cezasını gösterelim
+        return dayOfWeek === 0;
+      } else {
+        // Sadece bu gün 0 ise, tatil hakkı uygulanır
+        return false;
+      }
+    }
 
     return true;
   });
@@ -251,8 +333,9 @@ export async function getConsistencyData({
   });
 
   const heatmap: DayActivity[] = [];
+  const anchorDate = getVirtualDayStart();
   for (let i = days - 1; i >= 0; i--) {
-    const d = new Date();
+    const d = new Date(anchorDate);
     d.setDate(d.getDate() - i);
     d.setHours(12, 0, 0, 0);
 
@@ -390,18 +473,14 @@ export async function getEfficiencyTrend(
 
   return Array.from(dailyMap.entries())
     .map(([date, stats]) => {
-      const workSeconds = stats.workSeconds;
+      const workMinutes = stats.workSeconds / 60;
       const videoMinutes = stats.videoMinutes;
-      const workMinutes = workSeconds / 60;
 
-      let multiplier = 0;
-      if (workSeconds > 0) {
-        multiplier = videoMinutes / workMinutes;
-      }
+      const score = calculateEfficiencyScore(videoMinutes, workMinutes);
 
       return {
         date,
-        score: Number(multiplier.toFixed(2)),
+        score,
         workMinutes: Math.round(workMinutes),
         videoMinutes: Math.round(videoMinutes),
       };
@@ -498,11 +577,14 @@ export async function getDailyEfficiencySummary(
     };
   });
 
-  const dailyFocusPower = calculateFocusPower(
-    totalWork,
-    totalBreak,
-    totalPause
-  );
+  const dailyFocusPower =
+    sessionsData.length > 0 &&
+    sessionsData.every((s) => s.efficiency_score && s.efficiency_score > 0)
+      ? Math.round(
+          sessionsData.reduce((acc, s) => acc + (s.efficiency_score || 0), 0) /
+            sessionsData.length
+        )
+      : calculateFocusPower(totalWork, totalBreak, totalPause);
 
   return {
     efficiencyScore: dailyFocusPower,

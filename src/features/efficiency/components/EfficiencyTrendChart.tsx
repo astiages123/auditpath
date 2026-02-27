@@ -13,6 +13,7 @@ import {
 import { cn } from '@/utils/stringHelpers';
 import { EfficiencyTrend } from '@/features/efficiency/types/efficiencyTypes';
 import { formatDisplayDate } from '@/utils/dateUtils';
+import { EFFICIENCY_THRESHOLDS } from '../utils/constants';
 
 // --- Efficiency Trend Chart ---
 export interface EfficiencyTrendProps {
@@ -21,10 +22,10 @@ export interface EfficiencyTrendProps {
 
 export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
   // 1. Veri Hazırlığı (Diverging Logic)
-  // Deviation from 1.30 (Golden Ratio)
+  // Deviation from 1.00 (Center of Ideal Range)
   const chartData = data.map((item: EfficiencyTrend) => ({
     ...item,
-    deviation: item.score - 1.3,
+    deviation: item.score - 1.0,
   }));
 
   return (
@@ -43,49 +44,49 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
           />
 
           {/* 2. Zemin Bölgeleri (Background Zones) */}
-          {/* Maps to ranges shifted by -1.30 */}
+          {/* Maps to ranges shifted by -1.00 */}
 
-          {/* Critical High: > 2.20 (Deviation > 0.90) */}
+          {/* Critical High: > SPEED */}
           <ReferenceArea
-            y1={0.9}
-            y2={2.7}
+            y1={EFFICIENCY_THRESHOLDS.SPEED - 1.0}
+            y2={2.0}
             fill="oklch(63.68% 0.2078 25.3313)"
             fillOpacity={0.12}
           />
 
-          {/* Warning High: 1.60 - 2.20 (Deviation 0.30 - 0.90) */}
+          {/* Warning High: OPTIMAL_MAX - SPEED */}
           <ReferenceArea
-            y1={0.3}
-            y2={0.9}
+            y1={EFFICIENCY_THRESHOLDS.OPTIMAL_MAX - 1.0}
+            y2={EFFICIENCY_THRESHOLDS.SPEED - 1.0}
             fill="oklch(77.596% 0.14766 79.996)"
             fillOpacity={0.12}
           />
 
-          {/* Optimal: 1.00 - 1.60 (Deviation -0.30 - 0.30) */}
+          {/* Optimal: DEEP - OPTIMAL_MAX */}
           <ReferenceArea
-            y1={-0.3}
-            y2={0.3}
+            y1={EFFICIENCY_THRESHOLDS.DEEP - 1.0}
+            y2={EFFICIENCY_THRESHOLDS.OPTIMAL_MAX - 1.0}
             fill="oklch(85.54% 0.1969 158.6115)"
             fillOpacity={0.12}
           />
 
-          {/* Warning Low: 0.65 - 1.00 (Deviation -0.65 - -0.30) */}
+          {/* Warning Low: STUCK - DEEP */}
           <ReferenceArea
-            y1={-0.65}
-            y2={-0.3}
+            y1={EFFICIENCY_THRESHOLDS.STUCK - 1.0}
+            y2={EFFICIENCY_THRESHOLDS.DEEP - 1.0}
             fill="oklch(77.596% 0.14766 79.996)"
             fillOpacity={0.12}
           />
 
-          {/* Critical Low: < 0.65 (Deviation < -0.65) */}
+          {/* Critical Low: < STUCK */}
           <ReferenceArea
-            y1={-1.3}
-            y2={-0.65}
+            y1={-1.0}
+            y2={EFFICIENCY_THRESHOLDS.STUCK - 1.0}
             fill="oklch(63.68% 0.2078 25.3313)"
             fillOpacity={0.12}
           />
 
-          {/* Merkez Hattı: Sıfır Hata / Tam Akış (1.30x) */}
+          {/* Merkez Hattı: 1.00x */}
           <ReferenceLine
             y={0}
             stroke="oklch(85.54% 0.1969 158.6115)"
@@ -93,7 +94,7 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
             strokeDasharray="4 4"
             label={{
               position: 'right',
-              value: 'İdeal',
+              value: 'Normal Merkezi',
               fill: 'oklch(85.54% 0.1969 158.6115)',
               fontSize: 10,
               fontWeight: 'bold',
@@ -113,8 +114,16 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
 
           <YAxis
             dataKey="deviation"
-            domain={[-1.3, 2.7]}
-            ticks={[-1.3, -0.65, -0.3, 0, 0.3, 0.9, 1.7, 2.7]} // Significant markers
+            domain={[-1.0, 2.0]}
+            ticks={[
+              -1.0,
+              EFFICIENCY_THRESHOLDS.STUCK - 1.0,
+              EFFICIENCY_THRESHOLDS.DEEP - 1.0,
+              0,
+              EFFICIENCY_THRESHOLDS.OPTIMAL_MAX - 1.0,
+              EFFICIENCY_THRESHOLDS.SPEED - 1.0,
+              2.0,
+            ]}
             interval={0}
             allowDecimals={true}
             tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
@@ -141,9 +150,15 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
                 const dScore = dPayload.score;
 
                 const getStatusInfo = (val: number) => {
-                  if (val < 0.65 || val > 2.2)
+                  if (
+                    val < EFFICIENCY_THRESHOLDS.STUCK ||
+                    val >= EFFICIENCY_THRESHOLDS.SPEED
+                  )
                     return { label: 'Kritik', color: 'text-destructive' };
-                  if (val >= 1.0 && val <= 1.6)
+                  if (
+                    val >= EFFICIENCY_THRESHOLDS.DEEP &&
+                    val <= EFFICIENCY_THRESHOLDS.OPTIMAL_MAX
+                  )
                     return { label: 'İdeal', color: 'text-primary' };
                   return { label: 'Ayarlama', color: 'text-accent' };
                 };
@@ -221,11 +236,16 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
               const val = entry.score;
               let color = 'oklch(77.596% 0.14766 79.996)'; // Default accent
 
-              if (val >= 1.0 && val <= 1.6) {
+              if (
+                val >= EFFICIENCY_THRESHOLDS.DEEP &&
+                val <= EFFICIENCY_THRESHOLDS.OPTIMAL_MAX
+              ) {
                 color = 'oklch(85.54% 0.1969 158.6115)'; // primary
               } else if (
-                (val >= 0.65 && val < 1.0) ||
-                (val > 1.6 && val <= 2.2)
+                (val >= EFFICIENCY_THRESHOLDS.STUCK &&
+                  val < EFFICIENCY_THRESHOLDS.DEEP) ||
+                (val > EFFICIENCY_THRESHOLDS.OPTIMAL_MAX &&
+                  val < EFFICIENCY_THRESHOLDS.SPEED)
               ) {
                 color = 'oklch(77.596% 0.14766 79.996)'; // accent
               } else {

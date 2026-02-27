@@ -37,11 +37,13 @@ export function usePomodoro() {
     setHasRestored,
     originalStartTime,
     getPauseDuration,
+    addTimelineEvent,
+    closeLastTimelineEvent,
     resetSession,
   } = usePomodoroSessionStore();
 
   // UI state
-  const { selectedCourse, setCourse, isWidgetOpen, setWidgetOpen } =
+  const { selectedCourse, setCourse, isWidgetOpen, setWidgetOpen, resetUI } =
     usePomodoroUIStore();
 
   const { user } = useAuth();
@@ -69,6 +71,12 @@ export function usePomodoro() {
     unlockAudio();
 
     // 4. Timer Controls
+    const lastEvent = timeline[timeline.length - 1];
+    if (lastEvent && lastEvent.type === 'pause') {
+      closeLastTimelineEvent();
+      addTimelineEvent({ type: isBreak ? 'break' : 'work', start: Date.now() });
+    }
+
     worker.start();
     startTimer();
   };
@@ -106,6 +114,11 @@ export function usePomodoro() {
 
   const switchMode = useCallback(() => {
     const newMode = isBreak ? 'work' : 'break';
+
+    // Close current event and start new mode event
+    closeLastTimelineEvent();
+    addTimelineEvent({ type: newMode, start: Date.now() });
+
     setMode(newMode);
 
     if (newMode === 'work' && isBreak) {
@@ -115,7 +128,15 @@ export function usePomodoro() {
     // Reset worker for new cycle
     worker.start();
     startTimer();
-  }, [isBreak, setMode, incrementSession, startTimer, worker]);
+  }, [
+    isBreak,
+    setMode,
+    incrementSession,
+    startTimer,
+    worker,
+    addTimelineEvent,
+    closeLastTimelineEvent,
+  ]);
 
   const resetAndClose = async () => {
     if (userId && sessionId) {
@@ -124,6 +145,7 @@ export function usePomodoro() {
     worker.reset();
     resetTimer();
     resetSession();
+    resetUI();
     setHasRestored(true);
   };
 
@@ -139,6 +161,8 @@ export function usePomodoro() {
     sessionCount,
     start: handleStart,
     pause: () => {
+      closeLastTimelineEvent();
+      addTimelineEvent({ type: 'pause', start: Date.now() });
       worker.pause();
       pauseTimer();
     },
@@ -160,6 +184,7 @@ export function usePomodoro() {
       worker.reset();
       resetTimer();
       resetSession();
+      resetUI();
     },
     duration,
     timeLeft,

@@ -8,6 +8,8 @@ import {
 import { TopicWithCounts } from '@/features/courses/types/courseTypes';
 import { cn } from '@/utils/stringHelpers';
 import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { ROUTES } from '@/utils/routes';
 
 // ============================================================================
 // Topic Sidebar (formerly TopicSidebar.tsx)
@@ -65,9 +67,25 @@ export function TopicSidebar({
             <span className="text-sm">Yükleniyor...</span>
           </div>
         ) : topics.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-32 text-muted-foreground text-center p-4">
-            <AlertCircle className="w-7 h-7 mb-2 opacity-40" />
-            <p className="text-sm">Konu bulunamadı</p>
+          <div className="flex flex-col items-center justify-center min-h-[200px] text-muted-foreground text-center p-4 gap-4">
+            <div className="flex flex-col items-center">
+              <AlertCircle className="w-8 h-8 mb-2 opacity-40 text-rose-500" />
+              <p className="text-sm font-semibold text-foreground">
+                Konu bulunamadı
+              </p>
+              <p className="text-xs mt-1 max-w-[160px] leading-tight">
+                Bu ders için henüz içerik girilmemiş olabilir.
+              </p>
+            </div>
+
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="w-full text-xs font-bold uppercase tracking-wider"
+            >
+              <Link to={ROUTES.LIBRARY}>Çalışma Merkezi'ne Dön</Link>
+            </Button>
           </div>
         ) : (
           topics.map((topic, index) => {

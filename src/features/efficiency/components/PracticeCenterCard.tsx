@@ -1,5 +1,5 @@
 import { Zap, Maximize2 } from 'lucide-react';
-import { GlassCard } from '@/shared/components/GlassCard';
+import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EfficiencyModal } from './EfficiencyModal';
 import { PracticePerformanceRadar as PracticeCenterContent } from './PracticePerformanceRadar';
@@ -12,7 +12,7 @@ export const PracticeCenterCard = () => {
 
   if (loading)
     return (
-      <GlassCard className="h-full flex flex-col p-6">
+      <Card className="h-full flex flex-col p-6">
         <div className="flex justify-between items-start mb-6">
           <div className="flex items-center gap-4">
             <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
@@ -25,7 +25,7 @@ export const PracticeCenterCard = () => {
         <div className="flex-1 w-full flex items-center justify-center">
           <Skeleton className="h-48 w-48 rounded-full bg-surface" />
         </div>
-      </GlassCard>
+      </Card>
     );
 
   return (
@@ -33,7 +33,7 @@ export const PracticeCenterCard = () => {
       title="Pratik Merkezi İstatistikleri"
       trigger={
         <div className="h-full w-full cursor-pointer">
-          <GlassCard className="h-full flex flex-col p-6">
+          <Card className="h-full flex flex-col p-6">
             <CardHeader
               icon={Zap}
               iconColor="text-accent"
@@ -50,7 +50,7 @@ export const PracticeCenterCard = () => {
                 <BloomKeyChart data={bloomStats} />
               </div>
             </div>
-          </GlassCard>
+          </Card>
         </div>
       }
     >

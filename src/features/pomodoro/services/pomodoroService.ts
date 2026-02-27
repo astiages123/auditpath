@@ -309,6 +309,7 @@ export async function getRecentActivitySessions(
       'id, course_name, started_at, total_work_time, total_break_time, total_pause_time, pause_count, efficiency_score, timeline'
     )
     .eq('user_id', userId)
+    .or('total_work_time.gte.60,total_break_time.gte.60')
     .order('started_at', { ascending: false })
     .limit(limit);
 
@@ -317,16 +318,28 @@ export async function getRecentActivitySessions(
     return [];
   }
 
-  return (data || []).map((s) => ({
-    id: s.id,
-    courseName: s.course_name || 'Bilinmeyen Ders',
-    date: s.started_at,
-    durationMinutes: Math.round((s.total_work_time || 0) / 60),
-    efficiencyScore: s.efficiency_score || 0,
-    timeline: Array.isArray(s.timeline) ? (s.timeline as Json[]) : [],
-    totalWorkTime: s.total_work_time || 0,
-    totalBreakTime: s.total_break_time || 0,
-    totalPauseTime: s.total_pause_time || 0,
-    pauseCount: s.pause_count || 0,
-  }));
+  return (data || []).map((s) => {
+    const work = s.total_work_time || 0;
+    const brk = s.total_break_time || 0;
+    const pause = s.total_pause_time || 0;
+
+    // Use DB score if exists (> 0), otherwise calculate it on the fly
+    const eScore =
+      s.efficiency_score && s.efficiency_score > 0
+        ? s.efficiency_score
+        : calculateFocusPower(work, brk, pause);
+
+    return {
+      id: s.id,
+      courseName: s.course_name || 'Bilinmeyen Ders',
+      date: s.started_at,
+      durationMinutes: Math.round(work / 60),
+      efficiencyScore: eScore,
+      timeline: Array.isArray(s.timeline) ? (s.timeline as Json[]) : [],
+      totalWorkTime: work,
+      totalBreakTime: brk,
+      totalPauseTime: pause,
+      pauseCount: s.pause_count || 0,
+    };
+  });
 }

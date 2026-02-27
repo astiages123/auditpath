@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface UIStore {
   isMobileMenuOpen: boolean;
@@ -11,15 +12,24 @@ interface UIStore {
   toggleSidebar: () => void;
 }
 
-export const useUIStore = create<UIStore>((set) => ({
-  isMobileMenuOpen: false,
-  setMobileMenuOpen: (open) => set({ isMobileMenuOpen: open }),
-  toggleMobileMenu: () =>
-    set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
-  isProgramOpen: false,
-  setProgramOpen: (open) => set({ isProgramOpen: open }),
-  isSidebarCollapsed: false,
-  setSidebarCollapsed: (collapsed) => set({ isSidebarCollapsed: collapsed }),
-  toggleSidebar: () =>
-    set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
-}));
+export const useUIStore = create<UIStore>()(
+  persist(
+    (set) => ({
+      isMobileMenuOpen: false,
+      setMobileMenuOpen: (open) => set({ isMobileMenuOpen: open }),
+      toggleMobileMenu: () =>
+        set((state) => ({ isMobileMenuOpen: !state.isMobileMenuOpen })),
+      isProgramOpen: false,
+      setProgramOpen: (open) => set({ isProgramOpen: open }),
+      isSidebarCollapsed: false,
+      setSidebarCollapsed: (collapsed) =>
+        set({ isSidebarCollapsed: collapsed }),
+      toggleSidebar: () =>
+        set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
+    }),
+    {
+      name: 'auditpath-ui-storage',
+      partialize: (state) => ({ isSidebarCollapsed: state.isSidebarCollapsed }),
+    }
+  )
+);
