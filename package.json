@@ -13,6 +13,8 @@
     "style:fix": "stylelint \"**/*.css\" --fix",
     "format": "prettier --check .",
     "format:fix": "prettier --write .",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
     "preview": "vite preview",
     "update-types": "dotenv -e .env.local -- sh -c 'npx supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types/database.types.ts'",
     "check-all": "npm run format && npm run style && npm run lint && npm run type-check",

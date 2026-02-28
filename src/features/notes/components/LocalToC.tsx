@@ -1,5 +1,7 @@
+import { PanelRightClose } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 import { memo, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import { ToCTitleRenderer } from './ToCTitleRenderer';
 
 export interface LocalToCItem {
@@ -12,12 +14,14 @@ export interface LocalToCProps {
   items: LocalToCItem[];
   activeId: string;
   onItemClick: (id: string, e: React.MouseEvent) => void;
+  onToggle?: () => void;
 }
 
 export const LocalToC = memo(function LocalToC({
   items,
   activeId,
   onItemClick,
+  onToggle,
 }: LocalToCProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -34,10 +38,20 @@ export const LocalToC = memo(function LocalToC({
   return (
     <div className="flex flex-col h-full overflow-hidden select-none">
       {/* Header */}
-      <div className="p-4 border-b border-border/30">
-        <h2 className="text-sm font-bold tracking-widest text-center text-foreground">
+      <div className="p-4 border-b border-border/30 flex items-center justify-between">
+        <h2 className="text-[11px] font-black tracking-[0.2em] text-muted-foreground uppercase">
           BU SAYFADA
         </h2>
+        {onToggle && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+            onClick={onToggle}
+          >
+            <PanelRightClose className="w-4 h-4" />
+          </Button>
+        )}
       </div>
 
       {/* List */}

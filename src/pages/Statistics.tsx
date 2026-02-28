@@ -10,15 +10,10 @@ import {
   PracticeCenterCard,
   RecentActivitiesContainer,
 } from '@/features/efficiency/components';
-import { EfficiencyPageSkeleton } from '@/shared/components/SkeletonTemplates';
 import { useCognitiveInsights } from '@/features/efficiency/hooks/useCognitiveInsights';
 
 const EfficiencyDashboard = () => {
-  const { loading, cognitiveAnalysis } = useCognitiveInsights();
-
-  if (loading && !cognitiveAnalysis) {
-    return <EfficiencyPageSkeleton />;
-  }
+  const { loadingCognitive, cognitiveAnalysis } = useCognitiveInsights();
 
   return (
     <div className="space-y-6">
@@ -56,7 +51,7 @@ const EfficiencyDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
           <CognitiveInsightsCard
-            loading={loading}
+            loading={loadingCognitive}
             cognitiveAnalysis={
               cognitiveAnalysis
                 ? {

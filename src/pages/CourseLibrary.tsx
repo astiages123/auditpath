@@ -25,6 +25,7 @@ import {
 } from '@/features/quiz/services/quizLandingService';
 import { supabase } from '@/lib/supabase';
 import { cn } from '@/utils/stringHelpers';
+import { PageContainer } from '@/components/layout/PageContainer';
 
 // === HELPERS ===
 
@@ -293,8 +294,6 @@ export default function CourseLibrary() {
     };
   }, []);
 
-  if (loading) return <PageSkeleton />;
-
   const activeCategory = categories[activeCategoryIndex];
   const activeTheme = CATEGORY_THEMES[activeCategory?.name.toUpperCase()];
   const activeThemeConfig = activeTheme
@@ -307,126 +306,130 @@ export default function CourseLibrary() {
   );
 
   return (
-    <div className="flex flex-col min-h-full overflow-y-auto custom-scrollbar px-4 lg:px-6">
-      {/* Header */}
-      <div className="shrink-0">
-        <PageHeader
-          title="Çalışma Merkezi"
-          subtitle="Notlar ve sınavlar, tek ekranda."
-        />
-      </div>
-
-      {/* === KATEGORİ TAB BAR === */}
-      <div
-        className="grid gap-3 mb-8 shrink-0"
-        style={{ gridTemplateColumns: `repeat(${categories.length}, 1fr)` }}
-      >
-        {categories.map((category, idx) => {
-          const theme = CATEGORY_THEMES[category.name.toUpperCase()];
-          const CatIcon = theme?.Icon ?? Brain;
-          const tc = theme
-            ? COURSE_THEME_CONFIG[theme.theme]
-            : COURSE_THEME_CONFIG['primary'];
-          const isActive = idx === activeCategoryIndex;
-
-          return (
-            <button
-              key={category.id}
-              onClick={() => setActiveCategoryIndex(idx)}
-              className={cn(
-                'flex flex-col items-center justify-center gap-2 shrink-0',
-                'px-4 py-4 rounded-2xl border transition-all duration-300',
-                'text-center group',
-                isActive
-                  ? cn(tc.bg, tc.border, tc.text, 'shadow-xs scale-[1.02]')
-                  : 'bg-card/20 border-border/10 text-muted-foreground/70 hover:bg-card hover:border-border/20'
-              )}
-            >
-              <CatIcon
-                className={cn(
-                  'size-6 transition-colors',
-                  isActive ? tc.text : 'text-foreground/80'
-                )}
-              />
-              <span
-                className={cn(
-                  'text-[11px] font-bold uppercase tracking-widest leading-tight',
-                  isActive ? tc.text : 'text-foreground/80'
-                )}
-              >
-                {category.name}
-              </span>
-              <span
-                className={cn(
-                  'text-[10px] font-medium tabular-nums',
-                  isActive ? tc.text : 'text-foreground/80'
-                )}
-              >
-                {category.courses.length} ders
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* === DERS LİSTESİ === */}
-      {activeCategory && (
-        <div className="flex-1 min-h-0">
-          {/* Kategori başlığı */}
-          <div className="flex items-center gap-3 mb-5">
-            {activeTheme && (
-              <div
-                className={cn(
-                  'w-8 h-8 rounded-xl flex items-center justify-center',
-                  activeThemeConfig.bg
-                )}
-              >
-                <activeTheme.Icon
-                  className={cn('size-4', activeThemeConfig.text)}
-                />
-              </div>
-            )}
-            <div>
-              <h2 className="text-base font-black uppercase tracking-wider text-foreground">
-                {activeCategory.name}
-              </h2>
-              <p className="text-[11px] text-muted-foreground font-medium">
-                {sortedCourses.length} ders · seçili kategori
-              </p>
-            </div>
-          </div>
-
-          {/* Ders satırları */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeCategoryIndex}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="space-y-2.5 pb-8"
-            >
-              {sortedCourses.length === 0 ? (
-                <div className="text-center py-20 text-muted-foreground">
-                  <p className="text-sm">Bu kategoride henüz ders yok.</p>
-                </div>
-              ) : (
-                sortedCourses.map((course) => (
-                  <CourseRow
-                    key={course.id}
-                    course={course}
-                    stats={dashboardStats[course.id]}
-                    onNotes={(c) =>
-                      navigate(`${ROUTES.NOTES}/${c.course_slug}`)
-                    }
-                    onQuiz={(c) => navigate(`${ROUTES.QUIZ}/${c.course_slug}`)}
-                  />
-                ))
-              )}
-            </motion.div>
-          </AnimatePresence>
+    <PageContainer isLoading={loading} loadingFallback={<PageSkeleton />}>
+      <div className="flex flex-col min-h-full overflow-y-auto custom-scrollbar px-4 lg:px-6">
+        {/* Header */}
+        <div className="shrink-0">
+          <PageHeader
+            title="Çalışma Merkezi"
+            subtitle="Notlar ve sınavlar, tek ekranda."
+          />
         </div>
-      )}
-    </div>
+
+        {/* === KATEGORİ TAB BAR === */}
+        <div
+          className="grid gap-3 mb-8 shrink-0"
+          style={{ gridTemplateColumns: `repeat(${categories.length}, 1fr)` }}
+        >
+          {categories.map((category, idx) => {
+            const theme = CATEGORY_THEMES[category.name.toUpperCase()];
+            const CatIcon = theme?.Icon ?? Brain;
+            const tc = theme
+              ? COURSE_THEME_CONFIG[theme.theme]
+              : COURSE_THEME_CONFIG['primary'];
+            const isActive = idx === activeCategoryIndex;
+
+            return (
+              <button
+                key={category.id}
+                onClick={() => setActiveCategoryIndex(idx)}
+                className={cn(
+                  'flex flex-col items-center justify-center gap-2 shrink-0',
+                  'px-4 py-4 rounded-2xl border transition-all duration-300',
+                  'text-center group',
+                  isActive
+                    ? cn(tc.bg, tc.border, tc.text, 'shadow-xs scale-[1.02]')
+                    : 'bg-card/20 border-border/10 text-muted-foreground/70 hover:bg-card hover:border-border/20'
+                )}
+              >
+                <CatIcon
+                  className={cn(
+                    'size-6 transition-colors',
+                    isActive ? tc.text : 'text-foreground/80'
+                  )}
+                />
+                <span
+                  className={cn(
+                    'text-[11px] font-bold uppercase tracking-widest leading-tight',
+                    isActive ? tc.text : 'text-foreground/80'
+                  )}
+                >
+                  {category.name}
+                </span>
+                <span
+                  className={cn(
+                    'text-[10px] font-medium tabular-nums',
+                    isActive ? tc.text : 'text-foreground/80'
+                  )}
+                >
+                  {category.courses.length} ders
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* === DERS LİSTESİ === */}
+        {activeCategory && (
+          <div className="flex-1 min-h-0">
+            {/* Kategori başlığı */}
+            <div className="flex items-center gap-3 mb-5">
+              {activeTheme && (
+                <div
+                  className={cn(
+                    'w-8 h-8 rounded-xl flex items-center justify-center',
+                    activeThemeConfig.bg
+                  )}
+                >
+                  <activeTheme.Icon
+                    className={cn('size-4', activeThemeConfig.text)}
+                  />
+                </div>
+              )}
+              <div>
+                <h2 className="text-base font-black uppercase tracking-wider text-foreground">
+                  {activeCategory.name}
+                </h2>
+                <p className="text-[11px] text-muted-foreground font-medium">
+                  {sortedCourses.length} ders · seçili kategori
+                </p>
+              </div>
+            </div>
+
+            {/* Ders satırları */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeCategoryIndex}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+                className="space-y-2.5 pb-8"
+              >
+                {sortedCourses.length === 0 ? (
+                  <div className="text-center py-20 text-muted-foreground">
+                    <p className="text-sm">Bu kategoride henüz ders yok.</p>
+                  </div>
+                ) : (
+                  sortedCourses.map((course) => (
+                    <CourseRow
+                      key={course.id}
+                      course={course}
+                      stats={dashboardStats[course.id]}
+                      onNotes={(c) =>
+                        navigate(`${ROUTES.NOTES}/${c.course_slug}`)
+                      }
+                      onQuiz={(c) =>
+                        navigate(`${ROUTES.QUIZ}/${c.course_slug}`)
+                      }
+                    />
+                  ))
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+    </PageContainer>
   );
 }

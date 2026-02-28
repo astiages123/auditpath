@@ -24,7 +24,7 @@ export function QuizContainer({
     nextQuestion,
     previousQuestion,
     toggleExplanation,
-  } = useQuizEngine();
+  } = useQuizEngine(courseId || '');
 
   useEffect(() => {
     if (user?.id && courseId) {

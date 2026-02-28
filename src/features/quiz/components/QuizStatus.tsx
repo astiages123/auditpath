@@ -19,6 +19,8 @@ import { cleanMathContent } from '@/features/quiz/utils/mathUtils';
 // Timer & Progress Components (formerly in QuizProgress.tsx)
 // ============================================================================
 
+import { useQuizTimerStore } from '@/features/quiz/store';
+
 interface QuizTimerProps {
   isRunning: boolean;
   className?: string;
@@ -28,18 +30,22 @@ export const QuizTimer = memo(function QuizTimer({
   isRunning,
   className,
 }: QuizTimerProps) {
-  const [startTime] = useState(() => Date.now());
-  const [elapsed, setElapsed] = useState(0);
+  const [elapsed, setElapsed] = useState(() =>
+    Math.floor(useQuizTimerStore.getState().getTime() / 1000)
+  );
 
   useEffect(() => {
+    const updateTime = () => {
+      setElapsed(Math.floor(useQuizTimerStore.getState().getTime() / 1000));
+    };
+
+    updateTime();
+
     if (!isRunning) return;
 
-    const interval = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startTime) / 1000));
-    }, 1000);
-
+    const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
-  }, [startTime, isRunning]);
+  }, [isRunning]);
 
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;

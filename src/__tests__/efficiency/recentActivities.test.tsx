@@ -243,7 +243,7 @@ describe('RecentActivitiesContainer', () => {
 
   it('loading=true iken Skeleton gösterir, RecentActivitiesCard render etmez', () => {
     (useCognitiveInsights as ReturnType<typeof vi.fn>).mockReturnValue({
-      loading: true,
+      loadingSessions: true,
       recentSessions: [],
     });
     (useEfficiencyTrends as ReturnType<typeof vi.fn>).mockReturnValue({

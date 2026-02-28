@@ -18,6 +18,10 @@ import { useFaviconManager } from '@/features/pomodoro/hooks/useFaviconManager';
 import { useTimerNotifications } from '@/features/pomodoro/hooks/useTimerNotifications';
 import { useTimerPersistence } from '@/features/pomodoro/hooks/useTimerPersistence';
 import { calculateSessionTotals } from '../logic/sessionMath';
+import {
+  POMODORO_BREAK_DURATION_SECONDS,
+  POMODORO_WORK_DURATION_SECONDS,
+} from '../utils/constants';
 
 import { logger } from '@/utils/logger';
 
@@ -154,6 +158,74 @@ export function TimerController() {
                       end?: number;
                     }[],
                   });
+
+                  // --- RESTORE TIMER STATE FROM TIMELINE ---
+                  const timelineArray = activeSession.timeline as {
+                    type: 'work' | 'break' | 'pause';
+                    start: number;
+                    end?: number;
+                  }[];
+                  if (timelineArray.length > 0) {
+                    let currentMode: 'work' | 'break' = 'work';
+                    let elapsedMsInMode = 0;
+                    let isActiveStatus = false;
+                    let foundModeStart = false;
+                    let lastPauseStartTime: number | null = null;
+
+                    for (let i = timelineArray.length - 1; i >= 0; i--) {
+                      const event = timelineArray[i];
+
+                      if (!foundModeStart) {
+                        if (event.type === 'work' || event.type === 'break') {
+                          currentMode = event.type;
+                          foundModeStart = true;
+                          isActiveStatus = !event.end; // If the last mode event has no end, timer is active
+                        } else if (event.type === 'pause') {
+                          isActiveStatus = false;
+                          if (!lastPauseStartTime)
+                            lastPauseStartTime = event.start;
+                        }
+                      }
+
+                      if (foundModeStart) {
+                        if (event.type === currentMode) {
+                          const eEnd = event.end || Date.now();
+                          elapsedMsInMode += eEnd - event.start;
+                        } else if (event.type === 'pause') {
+                          // pauses don't add to elapsed time of the working mode
+                        } else {
+                          // Hit the previous mode, the cycle has ended going backwards
+                          break;
+                        }
+                      }
+                    }
+
+                    const isBreakMode = currentMode === 'break';
+                    const modeDuration = isBreakMode
+                      ? POMODORO_BREAK_DURATION_SECONDS
+                      : POMODORO_WORK_DURATION_SECONDS;
+                    const elapsedSeconds = Math.floor(elapsedMsInMode / 1000);
+                    const restoredTimeLeft = modeDuration - elapsedSeconds;
+
+                    const storeTimer = useTimerStore.getState();
+
+                    const restoredStartTime = isActiveStatus
+                      ? Date.now()
+                      : null;
+                    const restoredEndTime = isActiveStatus
+                      ? Date.now() + restoredTimeLeft * 1000
+                      : null;
+
+                    storeTimer.restoreState(
+                      restoredTimeLeft,
+                      isActiveStatus,
+                      isBreakMode,
+                      modeDuration,
+                      restoredStartTime,
+                      restoredEndTime,
+                      lastPauseStartTime
+                    );
+                  }
                 }
 
                 toast.info('Önceki oturumunuzdan devam ediliyor.');

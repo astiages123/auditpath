@@ -176,35 +176,6 @@ export async function updateChunkAILogic(
 
 // === SECTION === Mastery Helpers
 
-/**
- * Calculates chunk mastery score from all questions' rep_count.
- * rep=0 → 0, rep=1 → 33, rep=2 → 66, rep=3+ → 100
- */
-async function calculateChunkMasteryFromReps(
-  userId: string,
-  chunkId: string
-): Promise<number> {
-  const { data } = await safeQuery<{ rep_count: number | null }[]>(
-    supabase
-      .from('user_question_status')
-      .select('rep_count, questions!inner(chunk_id)')
-      .eq('user_id', userId)
-      .eq('questions.chunk_id', chunkId),
-    'calculateChunkMasteryFromReps error',
-    { userId, chunkId }
-  );
-
-  if (!data || data.length === 0) return 0;
-
-  const REP_TO_SCORE: Record<number, number> = { 0: 0, 1: 33, 2: 66, 3: 100 };
-  const total = data.reduce((sum, row) => {
-    const rep = Math.min(row.rep_count ?? 0, 3);
-    return sum + (REP_TO_SCORE[rep] ?? 100);
-  }, 0);
-
-  return Math.round(total / data.length);
-}
-
 // === SECTION === Quiz Submission
 
 export async function submitQuizAnswer(
@@ -262,22 +233,54 @@ export async function submitQuizAnswer(
   ];
 
   if (targetChunkId) {
-    const newMastery = await calculateChunkMasteryFromReps(
-      ctx.userId,
-      targetChunkId
-    );
+    const REP_TO_SCORE: Record<number, number> = { 0: 0, 1: 33, 2: 66, 3: 100 };
+    const oldRepCount = currentStatus ? currentStatus.rep_count : -1;
+    const oldScore =
+      oldRepCount >= 0 ? (REP_TO_SCORE[Math.min(oldRepCount, 3)] ?? 100) : 0;
+    const newScore = REP_TO_SCORE[Math.min(result.newRepCount, 3)] ?? 100;
+
+    let totalQuestions = masteryData?.total_questions_seen ?? 0;
+    const oldMastery = masteryData?.mastery_score ?? 0;
+    const isNewQuestion = oldRepCount === -1;
+
+    // Calculate implied total score and apply increment
+    const currentTotalScore = oldMastery * totalQuestions;
+    if (isNewQuestion) {
+      totalQuestions += 1;
+    }
+
+    const newTotalScore = currentTotalScore - oldScore + newScore;
+    const newMastery =
+      totalQuestions > 0 ? Math.round(newTotalScore / totalQuestions) : 0;
+    const cappedMastery = Math.min(100, Math.max(0, newMastery));
+
     updates.push(
       upsertChunkMastery({
         user_id: ctx.userId,
         chunk_id: targetChunkId,
         course_id: ctx.courseId,
-        mastery_score: newMastery,
+        mastery_score: cappedMastery,
+        total_questions_seen: totalQuestions,
         last_reviewed_session: ctx.sessionNumber,
         updated_at: new Date().toISOString(),
       })
     );
   }
 
-  await Promise.all(updates);
+  const updateResults = await Promise.all(
+    updates as Promise<{ success: boolean; error?: Error }>[]
+  );
+
+  const failed = updateResults.find(
+    (r) => typeof r === 'object' && r !== null && 'success' in r && !r.success
+  );
+
+  if (failed) {
+    throw (
+      failed.error ||
+      new Error('Yanıt veritabanına kaydedilirken bir hata oluştu')
+    );
+  }
+
   return result;
 }

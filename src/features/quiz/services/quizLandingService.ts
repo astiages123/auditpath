@@ -63,6 +63,20 @@ export async function getLandingDashboardData(
 
     if (coursesError) throw coursesError;
 
+    // 4.5 Fetch all question counts efficiently
+    const { data: allQuestions } = await supabase
+      .from('questions')
+      .select('course_id')
+      .is('parent_question_id', null);
+
+    const questionCountsByCourse: Record<string, number> = {};
+    allQuestions?.forEach((q) => {
+      if (q.course_id) {
+        questionCountsByCourse[q.course_id] =
+          (questionCountsByCourse[q.course_id] || 0) + 1;
+      }
+    });
+
     const stats: Record<string, LandingCourseStats> = {};
 
     // 0. Initialize stats for ALL courses from the database
@@ -122,60 +136,52 @@ export async function getLandingDashboardData(
 
     // 5. Finalize stats for all courses
     const allCourseIds = Object.keys(stats);
-    await Promise.all(
-      allCourseIds.map(async (courseId) => {
-        // Calculate Mastery & Difficult Subject if exists
-        const data = courseGroups[courseId];
-        if (data) {
-          let difficultSubject = null;
-          let minScore = Infinity;
+    allCourseIds.forEach((courseId) => {
+      // Calculate Mastery & Difficult Subject if exists
+      const data = courseGroups[courseId];
+      if (data) {
+        let difficultSubject = null;
+        let minScore = Infinity;
 
-          Object.entries(data.subjects).forEach(([subject, sData]) => {
-            const avg = sData.total / sData.count;
-            if (avg < minScore) {
-              minScore = avg;
-              difficultSubject = subject;
-            }
-          });
+        Object.entries(data.subjects).forEach(([subject, sData]) => {
+          const avg = sData.total / sData.count;
+          if (avg < minScore) {
+            minScore = avg;
+            difficultSubject = subject;
+          }
+        });
 
-          stats[courseId].averageMastery = Math.round(
-            data.totalScore / data.count
-          );
-          stats[courseId].difficultSubject =
-            minScore < 80 ? difficultSubject : null;
-        }
-
-        // Calculate Video Progress for EVERY course
-        const videosForCourse =
-          videoData?.filter(
-            (v: VideoProgressWithVideo) => v.video?.course_id === courseId
-          ) || [];
-        const completedMinutes = videosForCourse.reduce(
-          (acc: number, v: VideoProgressWithVideo) =>
-            acc + (v.video?.duration_minutes || 0),
-          0
+        stats[courseId].averageMastery = Math.round(
+          data.totalScore / data.count
         );
-        const courseTotalHours =
-          allCourses?.find((c) => c.id === courseId)?.total_hours || 0;
+        stats[courseId].difficultSubject =
+          minScore < 80 ? difficultSubject : null;
+      }
 
-        stats[courseId].videoProgress =
-          courseTotalHours > 0
-            ? Math.min(
-                100,
-                Math.round((completedMinutes / (courseTotalHours * 60)) * 100)
-              )
-            : 0;
+      // Calculate Video Progress for EVERY course
+      const videosForCourse =
+        videoData?.filter(
+          (v: VideoProgressWithVideo) => v.video?.course_id === courseId
+        ) || [];
+      const completedMinutes = videosForCourse.reduce(
+        (acc: number, v: VideoProgressWithVideo) =>
+          acc + (v.video?.duration_minutes || 0),
+        0
+      );
+      const courseTotalHours =
+        allCourses?.find((c) => c.id === courseId)?.total_hours || 0;
 
-        // Fetch Total Questions for EVERY course
-        const { count } = await supabase
-          .from('questions')
-          .select('*', { count: 'exact', head: true })
-          .eq('course_id', courseId)
-          .is('parent_question_id', null);
+      stats[courseId].videoProgress =
+        courseTotalHours > 0
+          ? Math.min(
+              100,
+              Math.round((completedMinutes / (courseTotalHours * 60)) * 100)
+            )
+          : 0;
 
-        stats[courseId].totalQuestions = count || 0;
-      })
-    );
+      // Assign Total Questions efficiently
+      stats[courseId].totalQuestions = questionCountsByCourse[courseId] || 0;
+    });
 
     // 6. Map Last Study Date from Activity
     activityData?.forEach((activity) => {

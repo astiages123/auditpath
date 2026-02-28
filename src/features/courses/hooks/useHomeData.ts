@@ -68,7 +68,7 @@ export function useHomeData(): HomeData {
 
         // Load stats if user is logged in
         if (userId) {
-          const stats = await getUserStats(userId);
+          const stats = await getUserStats(userId, cats);
           if (stats) {
             setUserStats(stats);
           }

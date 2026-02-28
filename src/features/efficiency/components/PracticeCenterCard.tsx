@@ -8,7 +8,7 @@ import { CardHeader } from './CardElements';
 import { useCognitiveInsights } from '../hooks/useCognitiveInsights';
 
 export const PracticeCenterCard = () => {
-  const { loading, bloomStats } = useCognitiveInsights();
+  const { loadingBloom: loading, bloomStats } = useCognitiveInsights();
 
   if (loading)
     return (

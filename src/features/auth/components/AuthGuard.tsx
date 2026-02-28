@@ -7,13 +7,6 @@ import logo from '@/assets/logo.svg';
 export function AuthGuard() {
   const { user, loading } = useAuth();
 
-  // Auto-open removed as per requirement
-  // useEffect(() => {
-  //     if (!loading && !user) {
-  //         setShowModal(true);
-  //     }
-  // }, [user, loading]);
-
   if (loading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-background">

@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import { safeQuery } from '@/lib/supabaseHelpers';
 import { getCycleCount } from '@/features/pomodoro/logic/sessionMath';
 import type {
   PomodoroInsert,
@@ -76,7 +77,7 @@ export async function logActivity(
   data: ActivityData
 ): Promise<boolean> {
   try {
-    let result;
+    let successFlag = false;
     if (type === 'pomodoro') {
       const pomodoroData = data as PomodoroInsert;
       const insertData: Database['public']['Tables']['pomodoro_sessions']['Insert'] =
@@ -91,7 +92,11 @@ export async function logActivity(
           total_break_time: pomodoroData.total_break_time,
           total_pause_time: pomodoroData.total_pause_time,
         };
-      result = await supabase.from('pomodoro_sessions').insert(insertData);
+      const res = await safeQuery(
+        supabase.from('pomodoro_sessions').insert(insertData),
+        'Error inserting pomodoro session'
+      );
+      successFlag = res.success;
     } else if (type === 'video') {
       const videoData = data as VideoUpsert;
       const insertData: Database['public']['Tables']['video_progress']['Insert'] =
@@ -101,7 +106,11 @@ export async function logActivity(
           completed: videoData.completed,
           completed_at: videoData.completed_at,
         };
-      result = await supabase.from('video_progress').upsert(insertData);
+      const res = await safeQuery(
+        supabase.from('video_progress').upsert(insertData),
+        'Error upserting video progress'
+      );
+      successFlag = res.success;
     } else {
       const quizData = data as QuizProgressData;
       const insertData: Database['public']['Tables']['user_quiz_progress']['Insert'] =
@@ -118,10 +127,14 @@ export async function logActivity(
           ai_diagnosis: quizData.ai_diagnosis || null,
           ai_insight: quizData.ai_insight || null,
         };
-      result = await supabase.from('user_quiz_progress').insert(insertData);
+      const res = await safeQuery(
+        supabase.from('user_quiz_progress').insert(insertData),
+        'Error inserting quiz progress'
+      );
+      successFlag = res.success;
     }
 
-    if (result.error) throw result.error;
+    if (!successFlag) throw new Error('Activity logging failed');
     return true;
   } catch (err) {
     logger.error(`Error logging ${type} activity:`, err as Error);
@@ -147,42 +160,50 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
   tomorrow.setDate(tomorrow.getDate() + 1);
 
   // 1. Fetch Today's Pomodoro Stats
-  const { data: todaySessions, error: todayError } = await supabase
-    .from('pomodoro_sessions')
-    .select('total_work_time, total_break_time, total_pause_time, timeline')
-    .eq('user_id', userId)
-    .gte('started_at', today.toISOString())
-    .lt('started_at', tomorrow.toISOString())
-    .or('total_work_time.gte.60,total_break_time.gte.60');
-
-  if (todayError) {
-    logger.error('Error fetching daily stats:', todayError);
-  }
+  const { data: todaySessions } = await safeQuery(
+    supabase
+      .from('pomodoro_sessions')
+      .select('total_work_time, total_break_time, total_pause_time, timeline')
+      .eq('user_id', userId)
+      .gte('started_at', today.toISOString())
+      .lt('started_at', tomorrow.toISOString())
+      .or('total_work_time.gte.60,total_break_time.gte.60'),
+    'Error fetching today pomodoro stats'
+  );
 
   // 2. Fetch Yesterday's Pomodoro Stats (for Trend)
-  const { data: yesterdaySessions } = await supabase
-    .from('pomodoro_sessions')
-    .select('total_work_time')
-    .eq('user_id', userId)
-    .gte('started_at', yesterday.toISOString())
-    .lt('started_at', today.toISOString());
+  const { data: yesterdaySessions } = await safeQuery(
+    supabase
+      .from('pomodoro_sessions')
+      .select('total_work_time')
+      .eq('user_id', userId)
+      .gte('started_at', yesterday.toISOString())
+      .lt('started_at', today.toISOString()),
+    'Error fetching yesterday pomodoro stats'
+  );
 
   // 3. Fetch Video Stats (Today & Yesterday)
-  const { data: todayVideos } = await supabase
-    .from('video_progress')
-    .select('video_id, video:videos(duration_minutes)')
-    .eq('user_id', userId)
-    .eq('completed', true)
-    .gte('completed_at', today.toISOString())
-    .lt('completed_at', tomorrow.toISOString());
+  const { data: todayVideos } = await safeQuery(
+    supabase
+      .from('video_progress')
+      .select('video_id, video:videos(duration_minutes)')
+      .eq('user_id', userId)
+      .eq('completed', true)
+      .gte('completed_at', today.toISOString())
+      .lt('completed_at', tomorrow.toISOString()),
+    'Error fetching today videos'
+  );
 
-  const { data: yesterdayVideos } = await supabase
-    .from('video_progress')
-    .select('video_id')
-    .eq('user_id', userId)
-    .eq('completed', true)
-    .gte('completed_at', yesterday.toISOString())
-    .lt('completed_at', today.toISOString());
+  const { data: yesterdayVideos } = await safeQuery(
+    supabase
+      .from('video_progress')
+      .select('video_id')
+      .eq('user_id', userId)
+      .eq('completed', true)
+      .gte('completed_at', yesterday.toISOString())
+      .lt('completed_at', today.toISOString()),
+    'Error fetching yesterday videos'
+  );
 
   // DB stores Seconds. UI expects Minutes.
   const todaySessionsData = todaySessions || [];
@@ -278,24 +299,23 @@ export async function getCumulativeStats(
   userId: string
 ): Promise<CumulativeStats> {
   // 1. Total Pomodoro
-  const { data: allSessions, error: sessionError } = await supabase
-    .from('pomodoro_sessions')
-    .select('total_work_time')
-    .eq('user_id', userId);
+  const { data: allSessions } = await safeQuery(
+    supabase
+      .from('pomodoro_sessions')
+      .select('total_work_time')
+      .eq('user_id', userId),
+    'Error fetching cumulative pomodoro stats'
+  );
 
   // 2. Total Video
-  const { data: allVideos, error: videoError } = await supabase
-    .from('video_progress')
-    .select('video_id, video:videos(duration_minutes)')
-    .eq('user_id', userId)
-    .eq('completed', true);
-
-  if (sessionError || videoError) {
-    logger.error('Error fetching cumulative stats:', {
-      sessionError: sessionError?.message,
-      videoError: videoError?.message,
-    });
-  }
+  const { data: allVideos } = await safeQuery(
+    supabase
+      .from('video_progress')
+      .select('video_id, video:videos(duration_minutes)')
+      .eq('user_id', userId)
+      .eq('completed', true),
+    'Error fetching cumulative video stats'
+  );
 
   const totalWorkSeconds =
     allSessions?.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
@@ -340,28 +360,26 @@ export async function getHistoryStats(
   startDate.setHours(VIRTUAL_DAY_START_HOUR, 0, 0, 0);
 
   // 1. Fetch Pomodoro Sessions
-  const { data: sessions, error: sessionError } = await supabase
-    .from('pomodoro_sessions')
-    .select('started_at, total_work_time')
-    .eq('user_id', userId)
-    .gte('started_at', startDate.toISOString())
-    .or('total_work_time.gte.60,total_break_time.gte.60');
+  const { data: sessions } = await safeQuery(
+    supabase
+      .from('pomodoro_sessions')
+      .select('started_at, total_work_time')
+      .eq('user_id', userId)
+      .gte('started_at', startDate.toISOString())
+      .or('total_work_time.gte.60,total_break_time.gte.60'),
+    'Error fetching pomodoro history'
+  );
 
   // 2. Fetch Video Progress
-  const { data: videoProgress, error: videoError } = await supabase
-    .from('video_progress')
-    .select('completed_at, video_id, video:videos(duration_minutes)')
-    .eq('user_id', userId)
-    .eq('completed', true)
-    .gte('completed_at', startDate.toISOString());
-
-  if (sessionError || videoError) {
-    logger.error('Error fetching history stats:', {
-      sessionError: sessionError?.message,
-      videoError: videoError?.message,
-    });
-    return [];
-  }
+  const { data: videoProgress } = await safeQuery(
+    supabase
+      .from('video_progress')
+      .select('completed_at, video_id, video:videos(duration_minutes)')
+      .eq('user_id', userId)
+      .eq('completed', true)
+      .gte('completed_at', startDate.toISOString()),
+    'Error fetching video history'
+  );
 
   // Group by Date
   const statsMap: Record<string, { pomodoro: number; video: number }> = {};
@@ -420,25 +438,34 @@ export async function getRecentActivities(
 ): Promise<RecentActivity[]> {
   try {
     const [pomodoro, video, quiz] = await Promise.all([
-      supabase
-        .from('pomodoro_sessions')
-        .select('id, course_name, started_at, total_work_time')
-        .eq('user_id', userId)
-        .order('started_at', { ascending: false })
-        .limit(limit),
-      supabase
-        .from('video_progress')
-        .select('id, completed_at, video:videos(title)')
-        .eq('user_id', userId)
-        .eq('completed', true)
-        .order('completed_at', { ascending: false })
-        .limit(limit),
-      supabase
-        .from('user_quiz_progress')
-        .select('id, answered_at, course:courses(name)')
-        .eq('user_id', userId)
-        .order('answered_at', { ascending: false })
-        .limit(limit),
+      safeQuery(
+        supabase
+          .from('pomodoro_sessions')
+          .select('id, course_name, started_at, total_work_time')
+          .eq('user_id', userId)
+          .order('started_at', { ascending: false })
+          .limit(limit),
+        'Error fetching recent pomodoros'
+      ),
+      safeQuery(
+        supabase
+          .from('video_progress')
+          .select('id, completed_at, video:videos(title)')
+          .eq('user_id', userId)
+          .eq('completed', true)
+          .order('completed_at', { ascending: false })
+          .limit(limit),
+        'Error fetching recent videos'
+      ),
+      safeQuery(
+        supabase
+          .from('user_quiz_progress')
+          .select('id, answered_at, course:courses(name)')
+          .eq('user_id', userId)
+          .order('answered_at', { ascending: false })
+          .limit(limit),
+        'Error fetching recent quizzes'
+      ),
     ]);
 
     const activities: RecentActivity[] = [
@@ -487,15 +514,17 @@ export async function getLast30DaysActivity(
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   thirtyDaysAgo.setHours(0, 0, 0, 0);
 
-  const { data, error } = await supabase
-    .from('pomodoro_sessions')
-    .select('started_at, total_work_time')
-    .eq('user_id', userId)
-    .gte('started_at', thirtyDaysAgo.toISOString())
-    .or('total_work_time.gte.60,total_break_time.gte.60');
+  const { data, success } = await safeQuery(
+    supabase
+      .from('pomodoro_sessions')
+      .select('started_at, total_work_time')
+      .eq('user_id', userId)
+      .gte('started_at', thirtyDaysAgo.toISOString())
+      .or('total_work_time.gte.60,total_break_time.gte.60'),
+    'Error fetching activity heatmap'
+  );
 
-  if (error || !data) {
-    if (error) logger.error('Error fetching activity heatmap:', error);
+  if (!success || !data) {
     return [];
   }
 

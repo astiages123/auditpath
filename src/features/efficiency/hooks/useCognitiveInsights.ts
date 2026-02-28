@@ -1,55 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { getBloomStats } from '@/features/quiz/services/quizAnalyticsService';
-import {
-  getRecentCognitiveInsights,
-  getRecentQuizSessions,
-} from '@/features/quiz/services/quizHistoryService';
-import { getRecentActivitySessions } from '@/features/pomodoro/services/pomodoroService';
-import { CognitiveInsight, RecentQuizSession } from '@/features/quiz/types';
-import { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
-import { BloomStats } from '@/features/quiz/types';
-import { logger } from '@/utils/logger';
+import { useCognitiveStore } from '@/features/efficiency/store/useCognitiveStore';
+import { BloomStats, CognitiveInsight } from '@/features/quiz/types';
 
 export function useCognitiveInsights() {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
 
-  const [bloomStats, setBloomStats] = useState<BloomStats[]>([]);
-  const [recentSessions, setRecentSessions] = useState<RecentSession[]>([]);
-  const [recentQuizzes, setRecentQuizzes] = useState<RecentQuizSession[]>([]);
-  const [cognitiveInsights, setCognitiveInsights] = useState<
-    CognitiveInsight[]
-  >([]);
+  const {
+    bloomStats,
+    recentSessions,
+    recentQuizzes,
+    cognitiveInsights,
+    error,
+    isFetchingBloom,
+    isFetchingSessions,
+    isFetchingQuizzes,
+    isFetchingCognitive,
+    fetchData,
+  } = useCognitiveStore();
 
   useEffect(() => {
-    async function fetchInsights() {
-      if (!user?.id) return;
-      setLoading(true);
-      setError(null);
-      try {
-        const [bloom, recent, quizzes, cognitive] = await Promise.all([
-          getBloomStats(user.id),
-          getRecentActivitySessions(user.id, 20),
-          getRecentQuizSessions(user.id, 50),
-          getRecentCognitiveInsights(user.id, 30),
-        ]);
-
-        setBloomStats(bloom || []);
-        setRecentSessions(recent || []);
-        setRecentQuizzes(quizzes || []);
-        setCognitiveInsights(cognitive || []);
-      } catch (err) {
-        logger.error('Failed to fetch cognitive insights', err as Error);
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
+    if (user?.id) {
+      fetchData(user.id);
     }
+  }, [user?.id, fetchData]);
 
-    fetchInsights();
-  }, [user?.id]);
+  // Specific loading states for different cards
+  const loadingBloom = isFetchingBloom && bloomStats === null;
+  const loadingSessions = isFetchingSessions && recentSessions === null;
+  const loadingQuizzes = isFetchingQuizzes && recentQuizzes === null;
+  const loadingCognitive = isFetchingCognitive && cognitiveInsights === null;
 
   // Derived State: Bloom Radar Data
   const order = ['Bilgi', 'Analiz', 'Uygula'];
@@ -68,14 +48,14 @@ export function useCognitiveInsights() {
           correct: 0,
         }))
       : bloomStats
-          .map((b) => ({
+          .map((b: BloomStats) => ({
             level: mapLevel[b.level] || b.level,
             score: b.score,
             questionsSolved: b.questionsSolved,
             correct: b.correct || 0,
           }))
           // Sort by defined order
-          .sort((a, b) => {
+          .sort((a: { level: string }, b: { level: string }) => {
             const idxA = order.indexOf(a.level);
             const idxB = order.indexOf(b.level);
             // If not in order list, put at end
@@ -84,14 +64,14 @@ export function useCognitiveInsights() {
 
   // Derived State: Cognitive Analysis
   const cognitiveAnalysis = (() => {
-    if (!cognitiveInsights.length) return null;
+    if (!cognitiveInsights || !cognitiveInsights.length) return null;
 
     let totalCorrect = 0;
     let totalAttempts = 0;
     let totalConsecutiveFails = 0;
     const confusedConceptsMap = new Map<string, number>();
 
-    cognitiveInsights.forEach((c) => {
+    cognitiveInsights.forEach((c: CognitiveInsight) => {
       totalAttempts++;
       if (c.responseType === 'correct') totalCorrect++;
       totalConsecutiveFails += c.consecutiveFails;
@@ -113,12 +93,16 @@ export function useCognitiveInsights() {
       .map(([text, count]) => ({ text, count }));
 
     const recentInsights = Array.from(
-      new Set(cognitiveInsights.map((c) => c.insight).filter(Boolean))
+      new Set(
+        cognitiveInsights
+          .map((c: CognitiveInsight) => c.insight)
+          .filter(Boolean)
+      )
     ).slice(0, 5);
 
     const criticalTopics = cognitiveInsights
-      .filter((c) => c.consecutiveFails >= 2)
-      .map((c) => ({
+      .filter((c: CognitiveInsight) => c.consecutiveFails >= 2)
+      .map((c: CognitiveInsight) => ({
         id: c.questionId,
         fails: c.consecutiveFails,
         diagnosis: c.diagnosis,
@@ -135,11 +119,14 @@ export function useCognitiveInsights() {
   })();
 
   return {
-    loading,
+    loadingBloom,
+    loadingSessions,
+    loadingQuizzes,
+    loadingCognitive,
     error,
     bloomStats: bloomRadarData,
-    recentSessions,
-    recentQuizzes,
+    recentSessions: recentSessions || [],
+    recentQuizzes: recentQuizzes || [],
     cognitiveAnalysis,
   };
 }

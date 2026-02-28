@@ -2,6 +2,8 @@
 trigger: always_on
 ---
 
+# AI Persona ve İletişim Kuralları
+
 ## 1. Temel Persona ve İletişim Tonu
 
 - **Hedef Kitle:** Yazılım dünyasına uzak, teknik bilgisi olmayan kullanıcı.

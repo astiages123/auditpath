@@ -1,110 +1,102 @@
 import { describe, expect, it } from 'vitest';
 import {
   calculateNextSession,
+  calculateQuizResult,
   calculateRepResult,
   calculateScoreChange,
-} from '@/features/quiz/logic/srsLogic';
+} from '../../features/quiz/logic/srsLogic';
 
-// === calculateRepResult ===
+describe('srsLogic - Testleri', () => {
+  describe('calculateRepResult', () => {
+    it('1. Doğru cevap verildiğinde rep_count artar (max 3)', () => {
+      expect(calculateRepResult(0, true)).toEqual({
+        newRepCount: 1,
+        newStatus: 'reviewing',
+      });
+      expect(calculateRepResult(1, true)).toEqual({
+        newRepCount: 2,
+        newStatus: 'reviewing',
+      });
+      expect(calculateRepResult(2, true)).toEqual({
+        newRepCount: 3,
+        newStatus: 'mastered',
+      });
+      expect(calculateRepResult(3, true)).toEqual({
+        newRepCount: 3,
+        newStatus: 'mastered',
+      });
+    });
 
-describe('calculateRepResult', () => {
-  it('active (rep=0) + doğru → reviewing (rep=1)', () => {
-    const result = calculateRepResult(0, true);
-    expect(result.newRepCount).toBe(1);
-    expect(result.newStatus).toBe('reviewing');
+    it('2. Yanlış cevap verildiğinde rep_count azalır (min 0)', () => {
+      expect(calculateRepResult(3, false)).toEqual({
+        newRepCount: 2,
+        newStatus: 'reviewing',
+      });
+      expect(calculateRepResult(2, false)).toEqual({
+        newRepCount: 1,
+        newStatus: 'reviewing',
+      });
+      expect(calculateRepResult(1, false)).toEqual({
+        newRepCount: 0,
+        newStatus: 'active',
+      });
+      expect(calculateRepResult(0, false)).toEqual({
+        newRepCount: 0,
+        newStatus: 'active',
+      });
+    });
   });
 
-  it('reviewing (rep=1) + doğru → reviewing (rep=2)', () => {
-    const result = calculateRepResult(1, true);
-    expect(result.newRepCount).toBe(2);
-    expect(result.newStatus).toBe('reviewing');
+  describe('calculateNextSession', () => {
+    it('3. Rep sayısına göre bir sonraki oturum aralığını doğru hesaplar', () => {
+      // gaps = [0, 1, 2, 5, 5]
+      expect(calculateNextSession(10, 0)).toBe(10); // rep 0 -> +0
+      expect(calculateNextSession(10, 1)).toBe(11); // rep 1 -> +1
+      expect(calculateNextSession(10, 2)).toBe(12); // rep 2 -> +2
+      expect(calculateNextSession(10, 3)).toBe(15); // rep 3 -> +5
+    });
   });
 
-  it('reviewing (rep=2) + doğru → mastered (rep=3)', () => {
-    const result = calculateRepResult(2, true);
-    expect(result.newRepCount).toBe(3);
-    expect(result.newStatus).toBe('mastered');
+  describe('calculateScoreChange', () => {
+    it('4. Skor değişimlerini (correct/incorrect/blank) doğru uygular', () => {
+      expect(calculateScoreChange('correct', 50)).toEqual({
+        delta: 10,
+        newScore: 60,
+      });
+      expect(calculateScoreChange('incorrect', 50)).toEqual({
+        delta: -5,
+        newScore: 45,
+      });
+      expect(calculateScoreChange('blank', 50)).toEqual({
+        delta: -2,
+        newScore: 48,
+      });
+    });
+
+    it('5. Skor 0 ve 100 arasında kalır (clamping)', () => {
+      expect(calculateScoreChange('correct', 95).newScore).toBe(100);
+      expect(calculateScoreChange('incorrect', 3).newScore).toBe(0);
+    });
   });
 
-  it('mastered (rep=3) + doğru → mastered kalır (rep=3, üst sınır)', () => {
-    const result = calculateRepResult(3, true);
-    expect(result.newRepCount).toBe(3);
-    expect(result.newStatus).toBe('mastered');
-  });
+  describe('calculateQuizResult', () => {
+    it('6. SRS ve Skor sonuçlarını birleştirerek SubmissionResult döner', () => {
+      const result = calculateQuizResult({ rep_count: 1 }, 'correct', 50, 10);
 
-  it('active (rep=0) + yanlış → active kalır (rep=0, alt sınır)', () => {
-    const result = calculateRepResult(0, false);
-    expect(result.newRepCount).toBe(0);
-    expect(result.newStatus).toBe('active');
-  });
+      expect(result).toEqual({
+        isCorrect: true,
+        scoreDelta: 10,
+        newMastery: 60,
+        newStatus: 'reviewing',
+        nextReviewSession: 12, // 10 + gap(2)
+        newRepCount: 2,
+      });
+    });
 
-  it('reviewing (rep=1) + yanlış → active (rep=0)', () => {
-    const result = calculateRepResult(1, false);
-    expect(result.newRepCount).toBe(0);
-    expect(result.newStatus).toBe('active');
-  });
-
-  it('reviewing (rep=2) + yanlış → reviewing (rep=1)', () => {
-    const result = calculateRepResult(2, false);
-    expect(result.newRepCount).toBe(1);
-    expect(result.newStatus).toBe('reviewing');
-  });
-
-  it('mastered (rep=3) + yanlış → reviewing (rep=2)', () => {
-    const result = calculateRepResult(3, false);
-    expect(result.newRepCount).toBe(2);
-    expect(result.newStatus).toBe('reviewing');
-  });
-});
-
-// === calculateNextSession ===
-
-describe('calculateNextSession', () => {
-  it('rep=0 → current + 0', () => {
-    expect(calculateNextSession(5, 0)).toBe(5);
-  });
-
-  it('rep=1 → current + 1', () => {
-    expect(calculateNextSession(5, 1)).toBe(6);
-  });
-
-  it('rep=2 → current + 2', () => {
-    expect(calculateNextSession(5, 2)).toBe(7);
-  });
-
-  it('rep=3 → current + 5', () => {
-    expect(calculateNextSession(5, 3)).toBe(10);
-  });
-});
-
-// === calculateScoreChange ===
-
-describe('calculateScoreChange', () => {
-  it('correct, score=50 → delta=+10, newScore=60', () => {
-    const result = calculateScoreChange('correct', 50);
-    expect(result.delta).toBe(10);
-    expect(result.newScore).toBe(60);
-  });
-
-  it('incorrect, score=50 → delta=-5, newScore=45', () => {
-    const result = calculateScoreChange('incorrect', 50);
-    expect(result.delta).toBe(-5);
-    expect(result.newScore).toBe(45);
-  });
-
-  it('blank, score=50 → delta=-2, newScore=48', () => {
-    const result = calculateScoreChange('blank', 50);
-    expect(result.delta).toBe(-2);
-    expect(result.newScore).toBe(48);
-  });
-
-  it('correct, score=95 → newScore=100 (üst sınır)', () => {
-    const result = calculateScoreChange('correct', 95);
-    expect(result.newScore).toBe(100);
-  });
-
-  it('incorrect, score=3 → newScore=0 (alt sınır)', () => {
-    const result = calculateScoreChange('incorrect', 3);
-    expect(result.newScore).toBe(0);
+    it('7. Status null ise rep_count 0 kabul edilerek sonuç üretilir', () => {
+      const result = calculateQuizResult(null, 'correct', 0, 1);
+      expect(result.newRepCount).toBe(1);
+      expect(result.newStatus).toBe('reviewing');
+    });
   });
 });

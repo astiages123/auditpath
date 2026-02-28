@@ -21,6 +21,15 @@ interface TimerState {
   resetTimer: (initialTime?: number) => void;
   tick: () => void;
   setMode: (mode: 'work' | 'break') => void;
+  restoreState: (
+    timeLeft: number,
+    isActive: boolean,
+    isBreak: boolean,
+    duration: number,
+    startTime: number | null,
+    endTime: number | null,
+    pauseStartTime: number | null
+  ) => void;
 }
 
 export const useTimerStore = create<TimerState>()(
@@ -97,6 +106,25 @@ export const useTimerStore = create<TimerState>()(
           pauseStartTime: null,
         });
       },
+
+      restoreState: (
+        timeLeft,
+        isActive,
+        isBreak,
+        duration,
+        startTime,
+        endTime,
+        pauseStartTime
+      ) =>
+        set({
+          timeLeft,
+          isActive,
+          isBreak,
+          duration,
+          startTime,
+          endTime,
+          pauseStartTime,
+        }),
     }),
     {
       name: 'timer-storage',

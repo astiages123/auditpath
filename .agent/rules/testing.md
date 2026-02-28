@@ -1,3 +1,7 @@
+---
+trigger: always_on
+---
+
 # Test Yazma ve Çalıştırma Kuralları
 
 - **Testleri Yazma:** İstenen testleri yazdıktan sonra tümünün başarıyla geçtiğinden emin olunmalıdır.

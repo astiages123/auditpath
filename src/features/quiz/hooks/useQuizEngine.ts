@@ -1,31 +1,26 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  MultipleChoiceQuestion,
   QuizQuestion,
   QuizResponseType,
   QuizResults,
   QuizState,
   SessionContext,
-  TrueFalseQuestion,
 } from '@/features/quiz/types';
 import {
   calculateInitialResults,
-  calculateTestResults,
   updateResults,
 } from '@/features/quiz/logic/quizCoreLogic';
-import {
-  fetchQuestionsByCourse,
-  fetchQuestionsByIds,
-  getReviewQueue,
-  startQuizSession,
-  submitQuizAnswer,
-} from '@/features/quiz/services/quizService';
-import { generateForChunk } from '@/features/quiz/logic/quizParser';
 import { MASTERY_THRESHOLD } from '@/features/quiz/utils/constants';
 import { usePomodoroSessionStore } from '@/features/pomodoro/store';
 import { useCelebrationStore } from '@/features/achievements/store';
 import { useQuotaStore } from '@/features/quiz/store';
-import { createTimer } from '../logic/quizCoreLogic';
+import { useQuizPersistence } from './useQuizPersistence';
+import { useQuizTimer } from './useQuizTimer';
+import { useQuizEngineApi } from './useQuizEngineApi';
+import {
+  calculateNextQuestionState,
+  calculatePreviousQuestionState,
+} from '@/features/quiz/logic/quizEngineHelpers';
 
 const INITIAL_QUIZ_STATE: QuizState = {
   currentQuestion: null,
@@ -61,38 +56,40 @@ export interface UseQuizEngineReturn {
   resetState: () => void;
 }
 
-export function useQuizEngine(): UseQuizEngineReturn {
-  const [state, setState] = useState<QuizState>(INITIAL_QUIZ_STATE);
-  const [results, setResults] = useState<QuizResults>(
-    calculateInitialResults()
-  );
+export function useQuizEngine(courseId: string): UseQuizEngineReturn {
+  const { loadEngine, saveEngine, clearEngine } = useQuizPersistence(courseId);
+  const api = useQuizEngineApi();
+  const { startTimer, stopTimer, resetTimer } = useQuizTimer();
+
+  // Initialize state from persistence if available
+  const [state, setState] = useState<QuizState>(() => {
+    const persisted = loadEngine();
+    return persisted?.state?.hasStarted ? persisted.state : INITIAL_QUIZ_STATE;
+  });
+
+  const [results, setResults] = useState<QuizResults>(() => {
+    const persisted = loadEngine();
+    return persisted?.state?.hasStarted
+      ? persisted.results
+      : calculateInitialResults();
+  });
+
   const [sessionContext, setSessionContext] = useState<SessionContext | null>(
-    null
+    () => {
+      const persisted = loadEngine();
+      return persisted?.state?.hasStarted ? persisted.sessionContext : null;
+    }
   );
 
-  const timerRef = useRef(createTimer());
-
+  // Save changes
   useEffect(() => {
-    const timer = timerRef.current;
-    return () => {
-      timer.clear();
-    };
-  }, []);
+    if (state.hasStarted) {
+      saveEngine(state, results, sessionContext);
+    }
+  }, [state, results, sessionContext, saveEngine]);
 
   const updateState = useCallback((patch: Partial<QuizState>) => {
     setState((prev) => ({ ...prev, ...patch }));
-  }, []);
-
-  const startTimer = useCallback(() => {
-    timerRef.current.start();
-  }, []);
-
-  const stopTimer = useCallback(() => {
-    return timerRef.current.stop();
-  }, []);
-
-  const resetTimer = useCallback(() => {
-    timerRef.current.reset();
   }, []);
 
   const loadQuestionsIntoState = useCallback(
@@ -113,77 +110,57 @@ export function useQuizEngine(): UseQuizEngineReturn {
   );
 
   const startQuiz = useCallback(
-    async (userId: string, courseId: string, chunkId?: string) => {
+    async (userId: string, courseIdParam: string, chunkId?: string) => {
+      const persisted = loadEngine();
+      if (persisted && persisted.state && persisted.state.hasStarted) {
+        setState(persisted.state);
+        setResults(persisted.results);
+        setSessionContext(persisted.sessionContext);
+        startTimer();
+        return;
+      }
+
       updateState({ isLoading: true, error: null });
 
       try {
-        const session = await startQuizSession(userId, courseId);
+        const session = await api.startQuizSession(userId, courseIdParam);
         setSessionContext(session);
         usePomodoroSessionStore
           .getState()
           .setSessionId(session.sessionNumber.toString());
 
-        const queue = await getReviewQueue(session, 10, chunkId);
-        if (queue.length > 0) {
-          const questions = await fetchQuestionsByIds(
-            queue.map((i) => i.questionId)
-          );
-          loadQuestionsIntoState(
-            questions.map((q) => {
-              const qd = q.question_data as
-                | TrueFalseQuestion
-                | MultipleChoiceQuestion;
-              return { ...qd, id: q.id } as QuizQuestion;
-            })
-          );
+        let questions: QuizQuestion[] = [];
+        const queueQuestions = await api.loadQuestionsFromQueue(
+          session,
+          chunkId
+        );
+
+        if (queueQuestions.length > 0) {
+          questions = queueQuestions;
         } else if (chunkId) {
-          await generateForChunk(
+          questions = await api.generateAndLoadQuestions(
+            userId,
+            session,
             chunkId,
-            {
-              onLog: () => {},
-              onTotalTargetCalculated: () => {},
-              onQuestionSaved: (count: number) =>
-                updateState({ generatedCount: count }),
-              onComplete: async () => {
-                const newQueue = await getReviewQueue(session, 10, chunkId);
-                const newQs = await fetchQuestionsByIds(
-                  newQueue.map((i) => i.questionId)
-                );
-                loadQuestionsIntoState(
-                  newQs.map((q) => {
-                    const qd = q.question_data as
-                      | TrueFalseQuestion
-                      | MultipleChoiceQuestion;
-                    return { ...qd, id: q.id } as QuizQuestion;
-                  })
-                );
-              },
-              onError: (err: string) =>
-                updateState({ error: err, isLoading: false }),
-            },
-            { usageType: 'antrenman', userId }
+            (count: number) => {
+              updateState({ generatedCount: count });
+            }
           );
         } else {
-          const randomQs = await fetchQuestionsByCourse(courseId, 10);
-          if (randomQs.length > 0) {
-            loadQuestionsIntoState(
-              randomQs.map((q) => {
-                const qd = q.question_data as
-                  | TrueFalseQuestion
-                  | MultipleChoiceQuestion;
-                return { ...qd, id: q.id } as QuizQuestion;
-              })
-            );
-          } else {
-            updateState({ isLoading: false, error: 'Soru bulunamadı.' });
-          }
+          questions = await api.loadRandomQuestions(courseIdParam);
+        }
+
+        if (questions.length > 0) {
+          loadQuestionsIntoState(questions);
+        } else {
+          updateState({ isLoading: false, error: 'Soru bulunamadı.' });
         }
       } catch (e: unknown) {
         const error = e as Error;
         updateState({ isLoading: false, error: error.message });
       }
     },
-    [updateState, loadQuestionsIntoState]
+    [updateState, loadQuestionsIntoState, loadEngine, startTimer, api]
   );
 
   const submitAnswer = useCallback(
@@ -201,6 +178,10 @@ export function useQuizEngine(): UseQuizEngineReturn {
 
       const timeSpent = stopTimer();
 
+      // Durumu geri alabilmek için mevcut değerleri kopyala
+      const previousState = { ...state };
+      const previousResults = { ...results };
+
       setResults((prev) =>
         updateResults(prev, actualType as QuizResponseType, timeSpent)
       );
@@ -211,31 +192,41 @@ export function useQuizEngine(): UseQuizEngineReturn {
         showExplanation: actualType !== 'blank',
       });
 
-      const result = await submitQuizAnswer(
-        sessionContext,
-        state.currentQuestion.id!,
-        state.currentQuestion.chunk_id || null,
-        actualType as QuizResponseType,
-        timeSpent,
-        state.selectedAnswer
-      );
+      try {
+        const result = await api.submitAnswer(
+          sessionContext,
+          state.currentQuestion.id!,
+          state.currentQuestion.chunk_id || null,
+          actualType as QuizResponseType,
+          timeSpent,
+          state.selectedAnswer
+        );
 
-      updateState({ lastSubmissionResult: result });
+        updateState({ lastSubmissionResult: result });
 
-      if (
-        result.newMastery >= MASTERY_THRESHOLD &&
-        state.currentQuestion.chunk_id
-      ) {
-        useCelebrationStore.getState().enqueueCelebration({
-          id: `MASTERY_${state.currentQuestion.chunk_id}_${result.newMastery}`,
-          title: 'Uzmanlık Seviyesi!',
-          description: `Bu konudaki ustalığın ${result.newMastery} puana ulaştı.`,
-          variant: 'achievement',
+        if (
+          result.newMastery >= MASTERY_THRESHOLD &&
+          state.currentQuestion.chunk_id
+        ) {
+          useCelebrationStore.getState().enqueueCelebration({
+            id: `MASTERY_${state.currentQuestion.chunk_id}_${result.newMastery}`,
+            title: 'Uzmanlık Seviyesi!',
+            description: `Bu konudaki ustalığın ${result.newMastery} puana ulaştı.`,
+            variant: 'achievement',
+          });
+        }
+        useQuotaStore.getState().decrementClientQuota();
+      } catch {
+        updateState({
+          error: 'Soru gönderilirken bir hata oluştu. Lütfen tekrar deneyin.',
         });
+        // Hata durumunda UI'ı eski haline döndür
+        setState(previousState);
+        setResults(previousResults);
+        startTimer(); // Süreyi kaldığı yerden devam ettir
       }
-      useQuotaStore.getState().decrementClientQuota();
     },
-    [state, sessionContext, stopTimer, updateState]
+    [state, results, sessionContext, stopTimer, startTimer, updateState, api]
   );
 
   const resetState = useCallback(() => {
@@ -243,7 +234,8 @@ export function useQuizEngine(): UseQuizEngineReturn {
     setResults(calculateInitialResults());
     setSessionContext(null);
     resetTimer();
-  }, [resetTimer]);
+    clearEngine();
+  }, [resetTimer, clearEngine]);
 
   const selectAnswer = useCallback(
     (index: number) => {
@@ -256,63 +248,23 @@ export function useQuizEngine(): UseQuizEngineReturn {
   );
 
   const nextQuestion = useCallback(() => {
-    const newHistory = [...state.history];
-    if (state.currentQuestion && state.isAnswered) {
-      newHistory.push({
-        ...state.currentQuestion,
-        userAnswer: state.selectedAnswer,
-        isCorrect: state.isCorrect,
-      });
-    }
+    const patch = calculateNextQuestionState(state, results);
+    updateState(patch);
 
-    if (state.queue.length > 0) {
-      const [next, ...rest] = state.queue;
-      updateState({
-        currentQuestion: next,
-        queue: rest,
-        history: newHistory,
-        selectedAnswer: null,
-        isAnswered: false,
-        showExplanation: false,
-        isCorrect: null,
-        lastSubmissionResult: null,
-      });
+    if (patch.queue) {
       resetTimer();
       startTimer();
     } else {
-      const summary = calculateTestResults(
-        results.correct,
-        results.incorrect,
-        results.blank,
-        results.totalTimeMs
-      );
-      updateState({
-        summary,
-        currentQuestion: null,
-        history: newHistory,
-        hasStarted: false,
-      });
+      clearEngine();
     }
-  }, [state, results, updateState, resetTimer, startTimer]);
+  }, [state, results, updateState, resetTimer, startTimer, clearEngine]);
 
   const previousQuestion = useCallback(() => {
-    if (state.history.length === 0) return;
-    const newHistory = [...state.history];
-    const prev = newHistory.pop()!;
-    const newQueue = state.currentQuestion
-      ? [state.currentQuestion, ...state.queue]
-      : state.queue;
-
-    updateState({
-      currentQuestion: prev,
-      queue: newQueue,
-      history: newHistory,
-      selectedAnswer: prev.userAnswer,
-      isAnswered: true,
-      showExplanation: true,
-      isCorrect: prev.isCorrect,
-    });
-  }, [state.currentQuestion, state.queue, state.history, updateState]);
+    const patch = calculatePreviousQuestionState(state);
+    if (patch) {
+      updateState(patch);
+    }
+  }, [state, updateState]);
 
   const toggleExplanation = useCallback(() => {
     updateState({ showExplanation: !state.showExplanation });

@@ -2,7 +2,6 @@ import { QUIZ_CONFIG } from '../utils/constants';
 import type { ConceptMapItem, MasteryNode } from '../types';
 
 // Use standard SRP: delegate to sub-modules
-export { createTimer } from '../hooks/useQuizTimer';
 export * from './quizCalculations';
 
 // ============================================================================

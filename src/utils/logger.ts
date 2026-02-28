@@ -58,13 +58,7 @@ export const logger = {
   /**
    * Internal method to create a log entry and handle reporting
    */
-  _log(_logMessage: LogMessage): void {
-    // TODO: Integrate with error tracking service (e.g., Sentry, LogRocket)
-    // Example implementation:
-    // if (log.level === 'error') {
-    //   Sentry.captureException(log.details, { extra: { message: log.message } });
-    // }
-  },
+  _log(_logMessage: LogMessage): void {},
 
   /**
    * Create a namespaced logger for specific modules/components

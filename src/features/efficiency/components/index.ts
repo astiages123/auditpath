@@ -10,7 +10,9 @@ export * from './CognitiveInsightsCard';
 export * from './FocusHubCard';
 export * from './PracticeCenterCard';
 export * from './RecentQuizzesCard';
-export * from './EfficiencyLearningInsights';
+export * from './LearningLoadCard';
+export * from './MasteryNavigatorCard';
+export * from './ConsistencyHeatmapCard';
 
 // Efficiency Elements
 export * from './CardElements';

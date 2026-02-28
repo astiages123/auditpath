@@ -5,6 +5,7 @@ import {
   HomeProgressSkeleton,
   CategoryGridSkeleton,
 } from '@/shared/components/SkeletonTemplates';
+import { PageContainer } from '@/components/layout/PageContainer';
 
 export default function HomePage() {
   const { categories, stats, loading, error } = useHomeData();
@@ -20,27 +21,30 @@ export default function HomePage() {
     }
   }, []);
 
-  if (loading && categories.length === 0) {
-    return (
-      <div className="py-8 md:py-12">
-        <HomeProgressSkeleton />
-        <CategoryGridSkeleton />
-      </div>
-    );
-  }
+  const isInitialLoading = loading && categories.length === 0;
 
   return (
-    <div className="bg-background text-foreground pb-8 md:pb-16">
-      {error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 mb-6 md:p-6 md:mb-8">
-          <h3 className="font-semibold text-destructive mb-2">
-            Veritabanı Hatası
-          </h3>
-          <p className="text-sm text-muted-foreground">{error}</p>
+    <PageContainer
+      isLoading={isInitialLoading}
+      loadingFallback={
+        <div className="py-8 md:py-12">
+          <HomeProgressSkeleton />
+          <CategoryGridSkeleton />
         </div>
-      )}
-
-      {!error && (
+      }
+      error={error}
+      errorFallback={
+        <div className="bg-background text-foreground pb-8 md:pb-16">
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 mb-6 md:p-6 md:mb-8">
+            <h3 className="font-semibold text-destructive mb-2">
+              Veritabanı Hatası
+            </h3>
+            <p className="text-sm text-muted-foreground">{error}</p>
+          </div>
+        </div>
+      }
+    >
+      <div className="bg-background text-foreground pb-8 md:pb-16 h-full flex flex-col">
         <ProgressHeader
           currentRank={stats.currentRank ?? null}
           nextRank={stats.nextRank ?? null}
@@ -52,16 +56,16 @@ export default function HomePage() {
           progressPercentage={stats.progressPercentage ?? 0}
           estimatedDays={stats.estimatedDays ?? 0}
         />
-      )}
 
-      {categories.length > 0 && (
-        <div className="flex-1 mt-auto">
-          <CategoryGrid
-            categories={categories}
-            categoryProgress={stats.categoryProgress}
-          />
-        </div>
-      )}
-    </div>
+        {categories.length > 0 && (
+          <div className="flex-1 mt-auto">
+            <CategoryGrid
+              categories={categories}
+              categoryProgress={stats.categoryProgress}
+            />
+          </div>
+        )}
+      </div>
+    </PageContainer>
   );
 }

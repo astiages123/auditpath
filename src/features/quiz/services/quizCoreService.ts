@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/utils/logger';
 import { type Json } from '@/types/database.types';
-import { handleSupabaseError, safeQuery } from '@/lib/supabaseHelpers';
+import { safeQuery } from '@/lib/supabaseHelpers';
 import {
   type ChunkMasteryRow,
   QuizQuestionSchema,
@@ -135,19 +135,17 @@ export async function getNoteChunkById(chunkId: string) {
     return null;
   }
 
-  const { data, error } = await supabase
-    .from('note_chunks')
-    .select('content, metadata, ai_logic, course:courses(course_slug)')
-    .eq('id', chunkId)
-    .single();
+  const { data, success } = await safeQuery(
+    supabase
+      .from('note_chunks')
+      .select('content, metadata, ai_logic, course:courses(course_slug)')
+      .eq('id', chunkId)
+      .maybeSingle(),
+    'getNoteChunkById error',
+    { chunkId }
+  );
 
-  if (error) {
-    if (error.code !== 'PGRST116') {
-      // Ignore single row not found errors
-      await handleSupabaseError(error, 'getNoteChunkById');
-    }
-    return null;
-  }
+  if (!success) return null;
   return data;
 }
 
@@ -178,12 +176,13 @@ export async function getCourseTopics(
     query = query.abortSignal(signal);
   }
 
-  const { data: chunks, error: chunksError } = await query;
+  const { data: chunks, success } = await safeQuery(
+    query,
+    'getCourseTopics error',
+    { courseId }
+  );
 
-  if (chunksError) {
-    await handleSupabaseError(chunksError, 'getCourseTopics');
-    return [];
-  }
+  if (!success) return [];
 
   if (!chunks || chunks.length === 0) return [];
 
@@ -210,12 +209,13 @@ export async function getCourseIdBySlug(
     .limit(1)
     .maybeSingle();
 
-  const { data, error } = await query;
+  const { data, success } = await safeQuery<{ id: string }>(
+    query,
+    'Course not found for slug',
+    { slug }
+  );
 
-  if (error || !data) {
-    quizLogger.warn(`Course not found for slug: ${slug}`, {
-      error: error?.message,
-    });
+  if (!success || !data) {
     return null;
   }
   return data.id;
@@ -228,14 +228,17 @@ export async function getCourseIdBySlug(
  * @returns Array of unique topic names
  */
 export async function getUniqueCourseTopics(courseId: string) {
-  const { data, error } = await supabase
-    .from('note_chunks')
-    .select('section_title')
-    .eq('course_id', courseId)
-    .order('section_title');
+  const { data, success } = await safeQuery<{ section_title: string | null }[]>(
+    supabase
+      .from('note_chunks')
+      .select('section_title')
+      .eq('course_id', courseId)
+      .order('section_title'),
+    'getUniqueCourseTopics error',
+    { courseId }
+  );
 
-  if (error) {
-    await handleSupabaseError(error, 'getUniqueCourseTopics');
+  if (!success || !data) {
     return [];
   }
 
@@ -252,16 +255,19 @@ export async function getUniqueCourseTopics(courseId: string) {
  * @returns First chunk ID or null
  */
 export async function getFirstChunkIdForTopic(courseId: string, topic: string) {
-  const { data, error } = await supabase
-    .from('note_chunks')
-    .select('id')
-    .eq('course_id', courseId)
-    .eq('section_title', topic)
-    .limit(1)
-    .maybeSingle();
+  const { data, success } = await safeQuery<{ id: string }>(
+    supabase
+      .from('note_chunks')
+      .select('id')
+      .eq('course_id', courseId)
+      .eq('section_title', topic)
+      .limit(1)
+      .maybeSingle(),
+    'getFirstChunkIdForTopic error',
+    { courseId, topic }
+  );
 
-  if (error) {
-    await handleSupabaseError(error, 'getFirstChunkIdForTopic');
+  if (!success) {
     return null;
   }
   return data?.id || null;
@@ -275,15 +281,18 @@ export async function getFirstChunkIdForTopic(courseId: string, topic: string) {
  * @returns Array of questions
  */
 export async function getTopicQuestions(courseId: string, topic: string) {
-  const { data, error } = await supabase
-    .from('questions')
-    .select('*, course:courses(course_slug)')
-    .eq('course_id', courseId)
-    .eq('section_title', topic)
-    .order('created_at', { ascending: true });
+  const { data, success } = await safeQuery<unknown[]>(
+    supabase
+      .from('questions')
+      .select('*, course:courses(course_slug)')
+      .eq('course_id', courseId)
+      .eq('section_title', topic)
+      .order('created_at', { ascending: true }),
+    'getTopicQuestions error',
+    { courseId, topic }
+  );
 
-  if (error) {
-    await handleSupabaseError(error, 'getTopicQuestions');
+  if (!success) {
     return [];
   }
 

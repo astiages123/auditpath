@@ -134,13 +134,13 @@ describe('EfficiencyModal and SessionListItem Integration', () => {
 
     // Gantt chart render olmalı. SessionGanttChart içinde CSS sınıfları kullanılarak renkler veriliyor
 
-    const workBlocks = document.querySelectorAll('.bg-emerald-500\\/20');
+    const workBlocks = document.querySelectorAll('.bg-emerald-900');
     expect(workBlocks.length).toBeGreaterThanOrEqual(1); // 2 adet work block koyduk ("Odak" tooltip'li)
 
-    const breakBlocks = document.querySelectorAll('.bg-sky-500\\/20');
+    const breakBlocks = document.querySelectorAll('.bg-sky-900');
     expect(breakBlocks.length).toBeGreaterThanOrEqual(1); // 1 break block koyduk ("Mola")
 
-    const pauseBlocks = document.querySelectorAll('.bg-zinc-500\\/20');
+    const pauseBlocks = document.querySelectorAll('.bg-zinc-900');
     expect(pauseBlocks.length).toBeGreaterThanOrEqual(1); // 1 pause block koyduk ("Duraklatma")
   });
 

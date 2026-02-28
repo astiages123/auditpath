@@ -123,7 +123,15 @@ export const useNotesNavigation = ({
 
     const element = document.getElementById(id);
     if (element && scrollContainer) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const containerRect = scrollContainer.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
+      const relativeTop = elementRect.top - containerRect.top;
+      const targetScrollTop = scrollContainer.scrollTop + relativeTop - 10;
+
+      scrollContainer.scrollTo({
+        top: targetScrollTop,
+        behavior: 'smooth',
+      });
     }
 
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);

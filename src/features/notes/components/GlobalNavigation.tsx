@@ -1,9 +1,11 @@
 import { memo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { PanelLeftClose } from 'lucide-react';
 import { cn, slugify } from '@/utils/stringHelpers';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { ROUTES } from '@/utils/routes';
+import { Button } from '@/components/ui/button';
 import { ToCTitleRenderer } from './ToCTitleRenderer';
 
 interface GlobalNavigationProps {
@@ -11,12 +13,14 @@ interface GlobalNavigationProps {
   activeChunkId: string | null;
   onChunkClick?: (chunkId: string) => void;
   courseSlug: string;
+  onToggle?: () => void;
 }
 
 export const GlobalNavigation = memo(function GlobalNavigation({
   chunks,
   activeChunkId,
   courseSlug,
+  onToggle,
 }: GlobalNavigationProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -35,10 +39,20 @@ export const GlobalNavigation = memo(function GlobalNavigation({
 
   return (
     <nav className="h-full flex flex-col">
-      <div className="p-4 border-b border-border/30">
-        <h2 className="text-sm font-bold tracking-widest text-center text-foreground">
+      <div className="p-4 border-b border-border/30 flex items-center justify-between">
+        <h2 className="text-[11px] font-black tracking-[0.2em] text-muted-foreground uppercase">
           KONULAR
         </h2>
+        {onToggle && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+            onClick={onToggle}
+          >
+            <PanelLeftClose className="w-4 h-4" />
+          </Button>
+        )}
       </div>
       <div
         ref={scrollContainerRef}

@@ -11,3 +11,4 @@ export { ToCTitleRenderer } from './ToCTitleRenderer';
 export { ScrollToTopButton } from './ScrollToTopButton';
 export { NotesCourseOverview } from './NotesCourseOverview';
 export { SyncButton } from './SyncButton';
+export { SearchResultsSidebar } from './SearchResultsSidebar';

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useQuizTopics } from './useQuizTopics';
 import { useQuizGeneration } from './useQuizGeneration';
+import { useQuizPersistence } from './useQuizPersistence';
 import { getTopicCompletionStatus } from '@/features/quiz/services/quizStatusService';
 import { getFirstChunkIdForTopic } from '@/features/quiz/services/quizService';
 import * as QuizService from '@/features/quiz/services/quizService';
@@ -86,8 +87,13 @@ export function useQuizManager({
     createGenerationCallbacks,
   } = useQuizGeneration();
 
+  const { saveManager, loadManager } = useQuizPersistence(courseId);
+
   const [selectedTopic, setSelectedTopic] = useState<TopicWithCounts | null>(
-    null
+    () => {
+      const persisted = loadManager();
+      return persisted?.selectedTopic || null;
+    }
   );
   const [targetChunkId, setTargetChunkId] = useState<string | null>(null);
   const [completionStatus, setCompletionStatus] =
@@ -95,7 +101,11 @@ export function useQuizManager({
   const [existingQuestions, setExistingQuestions] = useState<QuizQuestion[]>(
     []
   );
-  const [isQuizActive, setIsQuizActive] = useState(false);
+  const [isQuizActive, setIsQuizActive] = useState<boolean>(() => {
+    const persisted = loadManager();
+    return persisted?.isQuizActive || false;
+  });
+  // Load persisted state on mount - removed to use lazy initialization
 
   useEffect(() => {
     let mounted = true;
@@ -142,6 +152,13 @@ export function useQuizManager({
     }
     return QUIZ_PHASE.NOT_ANALYZED;
   })();
+
+  // Persist state when it changes
+  useEffect(() => {
+    if (selectedTopic) {
+      saveManager(selectedTopic, quizPhase, isQuizActive);
+    }
+  }, [selectedTopic, quizPhase, isQuizActive, saveManager]);
 
   const handleGenerate = useCallback(
     async (_mappingOnly = true) => {

@@ -251,4 +251,12 @@ export const markdownComponents = {
     return <div className={className} {...props} />;
   },
   pre: ({ ...props }: HTMLAttributes<HTMLPreElement>) => <pre {...props} />,
+  mark: ({ children, ...props }: HTMLAttributes<HTMLElement>) => (
+    <mark
+      className="bg-accent/30 text-foreground font-bold px-1 rounded-sm transition-all scroll-mt-32"
+      {...props}
+    >
+      {children}
+    </mark>
+  ),
 };

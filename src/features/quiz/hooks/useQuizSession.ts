@@ -10,6 +10,7 @@ import { storage } from '@/shared/services/storageService';
 import { QuizResponseType, ReviewItem } from '@/features/quiz/types';
 import { logger } from '@/utils/logger';
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { toast } from 'sonner';
 
 const STORAGE_PREFIX = 'auditpath_quiz_session_';
 
@@ -100,8 +101,9 @@ function sessionReducer(
     }
     case 'NEXT_QUESTION': {
       const nextIndex = state.currentReviewIndex + 1;
-      if (nextIndex >= state.reviewQueue.length)
+      if (nextIndex >= state.reviewQueue.length) {
         return { ...state, status: 'FINISHED', currentReviewIndex: nextIndex };
+      }
       return { ...state, currentReviewIndex: nextIndex, status: 'PLAYING' };
     }
     case 'PREV_QUESTION':
@@ -230,6 +232,7 @@ export function useQuizSession(): UseQuizSessionReturn {
         dispatch({ type: 'SYNC_COMPLETE' });
       } catch (err) {
         logger.error('[QuizSession] Error recording response:', err as Error);
+        toast.error('Yanıt kaydedilemedi. Lütfen tekrar deneyin.');
         dispatch({ type: 'SYNC_COMPLETE' });
       }
     },

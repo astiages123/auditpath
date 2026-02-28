@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
+import { safeQuery } from '@/lib/supabaseHelpers';
 import { getDailyVideoMilestones } from '@/features/courses/services/videoService';
 import {
   getStreakMilestones,
@@ -125,10 +126,13 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
       };
     });
 
-    await supabase.from('user_achievements').upsert(updates, {
-      onConflict: 'user_id,achievement_id',
-      ignoreDuplicates: true,
-    });
+    await safeQuery(
+      supabase.from('user_achievements').upsert(updates, {
+        onConflict: 'user_id,achievement_id',
+        ignoreDuplicates: true,
+      }),
+      'Error upserting unlocked achievements'
+    );
 
     // Anlık kutlama tetiklemesi - 10 saniye beklemeye gerek yok
     queryClient.invalidateQueries({
@@ -182,11 +186,14 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
     });
 
     if (toRevoke.length > 0) {
-      await supabase
-        .from('user_achievements')
-        .delete()
-        .eq('user_id', userId)
-        .in('achievement_id', toRevoke);
+      await safeQuery(
+        supabase
+          .from('user_achievements')
+          .delete()
+          .eq('user_id', userId)
+          .in('achievement_id', toRevoke),
+        'Error revoking achievements'
+      );
     }
   }
 
@@ -226,13 +233,16 @@ export function useUncelebratedQuery(userId: string | undefined) {
     queryFn: async () => {
       if (!userId) return [];
 
-      const { data, error } = await supabase
-        .from('user_achievements')
-        .select('achievement_id')
-        .eq('user_id', userId)
-        .eq('is_celebrated', false);
+      const { data, success } = await safeQuery(
+        supabase
+          .from('user_achievements')
+          .select('achievement_id')
+          .eq('user_id', userId)
+          .eq('is_celebrated', false),
+        'Error fetching uncelebrated achievements'
+      );
 
-      if (error) throw error;
+      if (!success) throw new Error('Error fetching uncelebrated achievements');
       return data || [];
     },
     enabled: !!userId,
@@ -259,12 +269,15 @@ export function useAchievements(userId: string) {
 }
 
 export async function markAsCelebrated(userId: string, achievementId: string) {
-  const { error } = await supabase
-    .from('user_achievements')
-    .update({ is_celebrated: true })
-    .eq('user_id', userId)
-    .eq('achievement_id', achievementId)
-    .eq('is_celebrated', false); // Concurrency safety
+  const { success } = await safeQuery(
+    supabase
+      .from('user_achievements')
+      .update({ is_celebrated: true })
+      .eq('user_id', userId)
+      .eq('achievement_id', achievementId)
+      .eq('is_celebrated', false), // Concurrency safety
+    'Error marking achievement as celebrated'
+  );
 
-  if (error) throw error;
+  if (!success) throw new Error('Failed to mark as celebrated');
 }

@@ -117,7 +117,7 @@ const QuizHistoryContent = ({ quizzes }: { quizzes: RecentQuizSession[] }) => (
 );
 
 export const RecentQuizzesCard = () => {
-  const { loading, recentQuizzes } = useCognitiveInsights();
+  const { loadingQuizzes: loading, recentQuizzes } = useCognitiveInsights();
   const displayQuizzes = recentQuizzes.slice(0, 5);
 
   if (loading) {

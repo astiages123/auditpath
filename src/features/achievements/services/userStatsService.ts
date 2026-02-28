@@ -2,6 +2,7 @@ import { supabase } from '@/lib/supabase';
 import { getNextRank, getRankForPercentage } from '../utils/rankHelpers';
 import { normalizeCategorySlug } from '@/features/courses/utils/categoryHelpers';
 import { getVirtualDateKey } from '@/utils/dateUtils';
+import type { Category } from '@/features/courses/types/courseTypes';
 
 import { calculateStreak } from '@/features/achievements/logic/streakLogic';
 import coursesData from '@/features/courses/services/courses.json';
@@ -9,15 +10,22 @@ import coursesData from '@/features/courses/services/courses.json';
 /**
  * Get comprehensive user statistics including progress, streak, and rank.
  */
-export async function getUserStats(userId: string) {
+export async function getUserStats(
+  userId: string,
+  predefinedCategories?: Category[]
+) {
   try {
-    const { data: categories, error: catError } = await supabase
-      .from('categories')
-      .select('*, courses(*)')
-      .order('sort_order');
+    let cats = predefinedCategories;
 
-    if (catError) throw catError;
-    const cats = categories || [];
+    if (!cats) {
+      const { data: categories, error: catError } = await supabase
+        .from('categories')
+        .select('*, courses(*)')
+        .order('sort_order');
+
+      if (catError) throw catError;
+      cats = categories || [];
+    }
 
     const courseToCategoryMap: Record<string, string> = {};
     const courseIdToSlugMap: Record<string, string> = {};

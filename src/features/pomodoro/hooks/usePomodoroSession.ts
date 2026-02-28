@@ -43,9 +43,8 @@ export function usePomodoroSession(userId: string | undefined) {
       setSessionCount(count + 1);
       currentSessionId = crypto.randomUUID();
       setSessionId(currentSessionId);
+      addTimelineEvent({ type: 'work', start: now });
     }
-
-    addTimelineEvent({ type: 'work', start: now });
 
     try {
       await upsertPomodoroSession(

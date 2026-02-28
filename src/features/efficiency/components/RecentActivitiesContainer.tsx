@@ -5,7 +5,8 @@ import { useEfficiencyTrends } from '../hooks/useEfficiencyTrends';
 import { RecentActivitiesCard } from './RecentActivitiesCard';
 
 export const RecentActivitiesContainer = () => {
-  const { loading: loadingInsights, recentSessions } = useCognitiveInsights();
+  const { loadingSessions: loadingInsights, recentSessions } =
+    useCognitiveInsights();
   const {
     loading: loadingTrends,
     focusPowerWeek,

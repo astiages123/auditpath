@@ -99,8 +99,8 @@ ALTER TYPE "public"."chunk_generation_status" OWNER TO "postgres";
 
 CREATE TYPE "public"."question_status" AS ENUM (
     'active',
-    'archived',
-    'pending_followup'
+    'reviewing',
+    'mastered'
 );
 
 
@@ -109,7 +109,6 @@ ALTER TYPE "public"."question_status" OWNER TO "postgres";
 
 CREATE TYPE "public"."question_usage_type" AS ENUM (
     'antrenman',
-    'arsiv',
     'deneme'
 );
 
@@ -685,7 +684,7 @@ CREATE TABLE IF NOT EXISTS "public"."user_question_status" (
     "consecutive_fails" integer DEFAULT 0,
     "next_review_at" timestamp with time zone,
     "next_review_session" integer,
-    "consecutive_success" integer DEFAULT 0
+    "rep_count" integer DEFAULT 0 NOT NULL
 );
 
 
@@ -1147,19 +1146,7 @@ CREATE POLICY "Allow authenticated read access" ON "public"."note_chunks" FOR SE
 
 
 
-CREATE POLICY "Allow authenticated read access" ON "public"."questions" FOR SELECT TO "authenticated" USING (true);
-
-
-
-CREATE POLICY "Allow authenticated read access" ON "public"."subject_guidelines" FOR SELECT TO "authenticated" USING (true);
-
-
-
 CREATE POLICY "Allow authenticated read access" ON "public"."videos" FOR SELECT TO "authenticated" USING (true);
-
-
-
-CREATE POLICY "Allow creator to insert questions" ON "public"."questions" FOR INSERT TO "authenticated" WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
 
 
 
@@ -1179,23 +1166,7 @@ CREATE POLICY "Anyone can read videos" ON "public"."videos" FOR SELECT USING (tr
 
 
 
-CREATE POLICY "Anyone can view questions" ON "public"."questions" FOR SELECT USING (true);
-
-
-
-CREATE POLICY "Enable insert for authenticated users" ON "public"."questions" FOR INSERT TO "authenticated" WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
-
-
-
-CREATE POLICY "Enable read access for all authenticated users" ON "public"."questions" FOR SELECT TO "authenticated" USING (true);
-
-
-
 CREATE POLICY "Service role can manage user_quotas" ON "public"."user_quotas" TO "service_role" USING (true) WITH CHECK (true);
-
-
-
-CREATE POLICY "Users can delete their own questions" ON "public"."questions" FOR DELETE USING ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
 
 
 
@@ -1204,22 +1175,6 @@ CREATE POLICY "Users can insert own profile" ON "public"."users" FOR INSERT TO "
 
 
 CREATE POLICY "Users can insert own progress" ON "public"."user_quiz_progress" FOR INSERT WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-
-
-CREATE POLICY "Users can insert own questions" ON "public"."questions" FOR INSERT WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
-
-
-
-CREATE POLICY "Users can insert questions" ON "public"."questions" FOR INSERT WITH CHECK (("auth"."role"() = 'authenticated'::"text"));
-
-
-
-CREATE POLICY "Users can insert their own counters" ON "public"."course_session_counters" FOR INSERT WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-
-
-CREATE POLICY "Users can manage their own achievements" ON "public"."user_achievements" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
@@ -1235,27 +1190,7 @@ CREATE POLICY "Users can manage their own pomodoro sessions" ON "public"."pomodo
 
 
 
-CREATE POLICY "Users can manage their own question status" ON "public"."user_question_status" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
-
-
-
 CREATE POLICY "Users can manage their own video progress" ON "public"."video_progress" TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-
-
-CREATE POLICY "Users can only access their own data" ON "public"."course_session_counters" TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-
-
-CREATE POLICY "Users can only access their own data" ON "public"."pomodoro_sessions" TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-
-
-CREATE POLICY "Users can only access their own data" ON "public"."user_achievements" TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id")) WITH CHECK ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-
-
-CREATE POLICY "Users can only access their own data" ON "public"."user_question_status" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
 
 
 
@@ -1263,27 +1198,11 @@ CREATE POLICY "Users can update own profile" ON "public"."users" FOR UPDATE TO "
 
 
 
-CREATE POLICY "Users can update own questions" ON "public"."questions" FOR UPDATE USING ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
-
-
-
-CREATE POLICY "Users can update their own counters" ON "public"."course_session_counters" FOR UPDATE USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-
-
 CREATE POLICY "Users can update their own profile" ON "public"."users" FOR UPDATE TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "id"));
 
 
 
-CREATE POLICY "Users can update their own questions" ON "public"."questions" FOR UPDATE USING ((( SELECT "auth"."uid"() AS "uid") = "created_by"));
-
-
-
 CREATE POLICY "Users can view their own chunk mastery" ON "public"."chunk_mastery" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
-
-
-
-CREATE POLICY "Users can view their own counters" ON "public"."course_session_counters" FOR SELECT TO "authenticated" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
@@ -1296,10 +1215,6 @@ CREATE POLICY "Users can view their own profile" ON "public"."users" FOR SELECT 
 
 
 CREATE POLICY "Users can view their own quota" ON "public"."user_quotas" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "user_id"));
-
-
-
-CREATE POLICY "Users manage own sessions" ON "public"."pomodoro_sessions" USING ((( SELECT "auth"."uid"() AS "uid") = "user_id"));
 
 
 
@@ -1345,10 +1260,6 @@ CREATE POLICY "exchange_rates_auth_read" ON "public"."exchange_rates" FOR SELECT
 
 
 
-CREATE POLICY "exchange_rates_service_role" ON "public"."exchange_rates" TO "service_role" USING (true) WITH CHECK (true);
-
-
-
 CREATE POLICY "exchange_rates_service_role_all" ON "public"."exchange_rates" TO "service_role" USING (true) WITH CHECK (true);
 
 
@@ -1372,6 +1283,22 @@ CREATE POLICY "pomodoro_sessions_user_access" ON "public"."pomodoro_sessions" TO
 
 
 ALTER TABLE "public"."questions" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "questions_delete_own" ON "public"."questions" FOR DELETE TO "authenticated" USING (("auth"."uid"() = "created_by"));
+
+
+
+CREATE POLICY "questions_insert_own" ON "public"."questions" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "created_by"));
+
+
+
+CREATE POLICY "questions_read_all" ON "public"."questions" FOR SELECT TO "authenticated" USING (true);
+
+
+
+CREATE POLICY "questions_update_own" ON "public"."questions" FOR UPDATE TO "authenticated" USING (("auth"."uid"() = "created_by"));
+
 
 
 CREATE POLICY "questions_user_access" ON "public"."questions" TO "authenticated" USING (("auth"."uid"() = "created_by")) WITH CHECK (("auth"."uid"() = "created_by"));
@@ -1934,6 +1861,233 @@ GRANT ALL ON TABLE "public"."videos" TO "service_role";
 
 
 
+
+
+
+revoke delete on table "public"."ai_generation_logs" from "anon";
+
+revoke insert on table "public"."ai_generation_logs" from "anon";
+
+revoke references on table "public"."ai_generation_logs" from "anon";
+
+revoke select on table "public"."ai_generation_logs" from "anon";
+
+revoke trigger on table "public"."ai_generation_logs" from "anon";
+
+revoke truncate on table "public"."ai_generation_logs" from "anon";
+
+revoke update on table "public"."ai_generation_logs" from "anon";
+
+revoke delete on table "public"."ai_generation_logs" from "authenticated";
+
+revoke insert on table "public"."ai_generation_logs" from "authenticated";
+
+revoke references on table "public"."ai_generation_logs" from "authenticated";
+
+revoke trigger on table "public"."ai_generation_logs" from "authenticated";
+
+revoke truncate on table "public"."ai_generation_logs" from "authenticated";
+
+revoke update on table "public"."ai_generation_logs" from "authenticated";
+
+revoke delete on table "public"."chunk_mastery" from "anon";
+
+revoke insert on table "public"."chunk_mastery" from "anon";
+
+revoke references on table "public"."chunk_mastery" from "anon";
+
+revoke select on table "public"."chunk_mastery" from "anon";
+
+revoke trigger on table "public"."chunk_mastery" from "anon";
+
+revoke truncate on table "public"."chunk_mastery" from "anon";
+
+revoke update on table "public"."chunk_mastery" from "anon";
+
+revoke delete on table "public"."course_session_counters" from "anon";
+
+revoke insert on table "public"."course_session_counters" from "anon";
+
+revoke references on table "public"."course_session_counters" from "anon";
+
+revoke select on table "public"."course_session_counters" from "anon";
+
+revoke trigger on table "public"."course_session_counters" from "anon";
+
+revoke truncate on table "public"."course_session_counters" from "anon";
+
+revoke update on table "public"."course_session_counters" from "anon";
+
+revoke delete on table "public"."exchange_rates" from "anon";
+
+revoke insert on table "public"."exchange_rates" from "anon";
+
+revoke references on table "public"."exchange_rates" from "anon";
+
+revoke trigger on table "public"."exchange_rates" from "anon";
+
+revoke truncate on table "public"."exchange_rates" from "anon";
+
+revoke update on table "public"."exchange_rates" from "anon";
+
+revoke references on table "public"."questions" from "anon";
+
+revoke trigger on table "public"."questions" from "anon";
+
+revoke truncate on table "public"."questions" from "anon";
+
+revoke delete on table "public"."subject_guidelines" from "anon";
+
+revoke insert on table "public"."subject_guidelines" from "anon";
+
+revoke references on table "public"."subject_guidelines" from "anon";
+
+revoke trigger on table "public"."subject_guidelines" from "anon";
+
+revoke truncate on table "public"."subject_guidelines" from "anon";
+
+revoke update on table "public"."subject_guidelines" from "anon";
+
+revoke delete on table "public"."subject_guidelines" from "authenticated";
+
+revoke insert on table "public"."subject_guidelines" from "authenticated";
+
+revoke references on table "public"."subject_guidelines" from "authenticated";
+
+revoke trigger on table "public"."subject_guidelines" from "authenticated";
+
+revoke truncate on table "public"."subject_guidelines" from "authenticated";
+
+revoke update on table "public"."subject_guidelines" from "authenticated";
+
+revoke delete on table "public"."subject_guidelines" from "service_role";
+
+revoke insert on table "public"."subject_guidelines" from "service_role";
+
+revoke references on table "public"."subject_guidelines" from "service_role";
+
+revoke trigger on table "public"."subject_guidelines" from "service_role";
+
+revoke truncate on table "public"."subject_guidelines" from "service_role";
+
+revoke update on table "public"."subject_guidelines" from "service_role";
+
+revoke delete on table "public"."user_question_status" from "anon";
+
+revoke insert on table "public"."user_question_status" from "anon";
+
+revoke references on table "public"."user_question_status" from "anon";
+
+revoke select on table "public"."user_question_status" from "anon";
+
+revoke trigger on table "public"."user_question_status" from "anon";
+
+revoke truncate on table "public"."user_question_status" from "anon";
+
+revoke update on table "public"."user_question_status" from "anon";
+
+revoke delete on table "public"."user_quiz_progress" from "anon";
+
+revoke insert on table "public"."user_quiz_progress" from "anon";
+
+revoke references on table "public"."user_quiz_progress" from "anon";
+
+revoke select on table "public"."user_quiz_progress" from "anon";
+
+revoke trigger on table "public"."user_quiz_progress" from "anon";
+
+revoke truncate on table "public"."user_quiz_progress" from "anon";
+
+revoke update on table "public"."user_quiz_progress" from "anon";
+
+revoke delete on table "public"."user_quotas" from "anon";
+
+revoke insert on table "public"."user_quotas" from "anon";
+
+revoke references on table "public"."user_quotas" from "anon";
+
+revoke select on table "public"."user_quotas" from "anon";
+
+revoke trigger on table "public"."user_quotas" from "anon";
+
+revoke truncate on table "public"."user_quotas" from "anon";
+
+revoke update on table "public"."user_quotas" from "anon";
+
+revoke delete on table "public"."user_quotas" from "authenticated";
+
+revoke insert on table "public"."user_quotas" from "authenticated";
+
+revoke references on table "public"."user_quotas" from "authenticated";
+
+revoke select on table "public"."user_quotas" from "authenticated";
+
+revoke trigger on table "public"."user_quotas" from "authenticated";
+
+revoke truncate on table "public"."user_quotas" from "authenticated";
+
+revoke update on table "public"."user_quotas" from "authenticated";
+
+revoke delete on table "public"."user_quotas" from "service_role";
+
+revoke insert on table "public"."user_quotas" from "service_role";
+
+revoke references on table "public"."user_quotas" from "service_role";
+
+revoke select on table "public"."user_quotas" from "service_role";
+
+revoke trigger on table "public"."user_quotas" from "service_role";
+
+revoke truncate on table "public"."user_quotas" from "service_role";
+
+revoke update on table "public"."user_quotas" from "service_role";
+
+revoke delete on table "public"."users" from "anon";
+
+revoke insert on table "public"."users" from "anon";
+
+revoke references on table "public"."users" from "anon";
+
+revoke trigger on table "public"."users" from "anon";
+
+revoke truncate on table "public"."users" from "anon";
+
+revoke update on table "public"."users" from "anon";
+
+revoke references on table "public"."users" from "authenticated";
+
+revoke trigger on table "public"."users" from "authenticated";
+
+revoke truncate on table "public"."users" from "authenticated";
+
+CREATE TRIGGER on_auth_user_created AFTER INSERT ON auth.users FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+
+  create policy "Public read access for lessons"
+  on "storage"."objects"
+  as permissive
+  for select
+  to public
+using ((bucket_id = 'lessons'::text));
+
+
+
+  create policy "Service role update access for lessons"
+  on "storage"."objects"
+  as permissive
+  for update
+  to public
+using ((bucket_id = 'lessons'::text));
+
+
+
+  create policy "Service role write access for lessons"
+  on "storage"."objects"
+  as permissive
+  for all
+  to service_role
+using ((bucket_id = 'lessons'::text))
+with check ((bucket_id = 'lessons'::text));
 
 
 

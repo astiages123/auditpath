@@ -133,7 +133,7 @@ export function RankCard({
               </span>
             </div>
             <div className="flex items-center gap-1">
-              <span>Sonraki:</span>
+              <span>Sonraki Unvan:</span>
               <span className="text-primary font-bold uppercase tracking-wider">
                 {nextRank.name}
               </span>

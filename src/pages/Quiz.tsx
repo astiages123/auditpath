@@ -23,6 +23,7 @@ import { SmartExamView } from '@/features/quiz/components/SmartExamView';
 import { QuizContainer } from '@/features/quiz/components/QuizContainer';
 import { cn, slugify } from '@/utils/stringHelpers';
 import { SplitLayoutSkeleton } from '@/shared/components/SkeletonTemplates';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { getCourseBySlug } from '@/features/courses/services/courseService';
 import {
   type Course,
@@ -120,127 +121,130 @@ export const QuizPage: FC = () => {
     navigate(`${ROUTES.QUIZ}/${courseSlug}`);
   };
 
-  if (isResolvingCourse) {
-    return <SplitLayoutSkeleton />;
-  }
-
-  if (!courseData) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-        <p className="text-muted-foreground">Kurs bulunamadı.</p>
-        <Button onClick={() => navigate(ROUTES.LIBRARY)}>
-          Çalışma Merkezi'ne Dön
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex flex-col h-[calc(100vh-96px)] lg:h-[calc(100vh-128px)] overflow-hidden">
-      <div
-        className={cn(
-          'flex-1 min-h-0 flex px-2 lg:px-4 h-full overflow-hidden',
-          isQuizActive ? 'flex flex-col' : 'grid lg:grid-cols-[240px_1fr] gap-4'
-        )}
-      >
-        {/* Sidebar */}
-        {!isQuizActive && (
-          <aside className="flex flex-col shrink-0 border rounded-xl bg-card h-[400px] lg:h-full overflow-hidden transition-all duration-300 ease-in-out z-20">
-            <div className="min-w-[240px] h-full flex flex-col">
-              <TopicSidebar
-                loading={loading}
-                topics={topics}
-                selectedTopic={selectedTopic}
-                onSelectTopic={handleTopicSelect}
-                onStartSmartExam={handleStartSmartExam}
-                isGeneratingExam={isGeneratingExam}
-              />
-            </div>
-          </aside>
-        )}
+    <PageContainer
+      isLoading={isResolvingCourse}
+      loadingFallback={<SplitLayoutSkeleton />}
+      isEmpty={!courseData}
+      emptyFallback={
+        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+          <p className="text-muted-foreground">Kurs bulunamadı.</p>
+          <Button onClick={() => navigate(ROUTES.LIBRARY)}>
+            Çalışma Merkezi'ne Dön
+          </Button>
+        </div>
+      }
+    >
+      <div className="flex flex-col h-[calc(100vh-96px)] lg:h-[calc(100vh-128px)] overflow-hidden">
+        <div
+          className={cn(
+            'flex-1 min-h-0 flex px-2 lg:px-4 h-full overflow-hidden',
+            isQuizActive
+              ? 'flex flex-col'
+              : 'grid lg:grid-cols-[240px_1fr] gap-4'
+          )}
+        >
+          {/* Sidebar */}
+          {!isQuizActive && (
+            <aside className="flex flex-col shrink-0 border rounded-xl bg-card h-[400px] lg:h-full overflow-hidden transition-all duration-300 ease-in-out z-20">
+              <div className="min-w-[240px] h-full flex flex-col">
+                <TopicSidebar
+                  loading={loading}
+                  topics={topics}
+                  selectedTopic={selectedTopic}
+                  onSelectTopic={handleTopicSelect}
+                  onStartSmartExam={handleStartSmartExam}
+                  isGeneratingExam={isGeneratingExam}
+                />
+              </div>
+            </aside>
+          )}
 
-        {/* Work Area */}
-        <div className="flex flex-col min-h-0 flex-1 bg-card rounded-xl border overflow-hidden h-full">
-          <ErrorBoundary>
-            {isQuizActive && selectedTopic ? (
-              <QuizContainer
-                chunkId={targetChunkId || undefined}
-                courseId={courseData.id}
-                onClose={handleBack}
-              />
-            ) : (
-              <div className="flex flex-col flex-1 min-h-0">
-                {/* Sticky Header */}
-                <div
-                  id="notes-sticky-header"
-                  className="group flex flex-col border-b border-border/10 shrink-0 bg-card/80 backdrop-blur-md z-10 transition-all duration-300"
-                >
-                  <div className="flex items-center gap-3 px-6 py-4">
-                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                      <BookOpen className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold text-foreground truncate">
-                        {selectedTopic ? selectedTopic.name : courseData.name}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
-                          Sınav Merkezi
-                        </p>
+          {/* Work Area */}
+          <div className="flex flex-col min-h-0 flex-1 bg-card rounded-xl border overflow-hidden h-full">
+            <ErrorBoundary>
+              {isQuizActive && selectedTopic ? (
+                <QuizContainer
+                  chunkId={targetChunkId || undefined}
+                  courseId={courseData?.id || ''}
+                  onClose={handleBack}
+                />
+              ) : (
+                <div className="flex flex-col flex-1 min-h-0">
+                  {/* Sticky Header */}
+                  <div
+                    id="notes-sticky-header"
+                    className="group flex flex-col border-b border-border/10 shrink-0 bg-card/80 backdrop-blur-md z-10 transition-all duration-300"
+                  >
+                    <div className="flex items-center gap-3 px-6 py-4">
+                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                        <BookOpen className="w-4 h-4" />
                       </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-base font-semibold text-foreground truncate">
+                          {selectedTopic
+                            ? selectedTopic.name
+                            : courseData?.name}
+                        </h3>
+                        <div className="flex items-center gap-2">
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+                            Sınav Merkezi
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3"></div>
                     </div>
-                    <div className="flex items-center gap-3"></div>
                   </div>
-                </div>
 
-                {/* Scroll Container */}
-                <div
-                  id="notes-scroll-container"
-                  className="flex-1 min-h-0 p-4 lg:p-6 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar mx-auto w-full"
-                >
-                  <div className="w-full flex-1 flex flex-col min-h-0 mx-auto transition-all duration-300 max-w-6xl">
-                    {selectedTopic ? (
-                      <div className="flex-1 flex flex-col min-h-0">
-                        {quizPhase === QUIZ_PHASE.NOT_ANALYZED && (
-                          <InitialStateView onGenerate={handleGenerate} />
-                        )}
+                  {/* Scroll Container */}
+                  <div
+                    id="notes-scroll-container"
+                    className="flex-1 min-h-0 p-4 lg:p-6 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar mx-auto w-full"
+                  >
+                    <div className="w-full flex-1 flex flex-col min-h-0 mx-auto transition-all duration-300 max-w-6xl">
+                      {selectedTopic ? (
+                        <div className="flex-1 flex flex-col min-h-0">
+                          {quizPhase === QUIZ_PHASE.NOT_ANALYZED && (
+                            <InitialStateView onGenerate={handleGenerate} />
+                          )}
 
-                        {quizPhase === QUIZ_PHASE.MAPPING && (
-                          <MappingProgressView
+                          {quizPhase === QUIZ_PHASE.MAPPING && (
+                            <MappingProgressView
+                              examProgress={examProgress}
+                              examLogs={examLogs}
+                            />
+                          )}
+
+                          {quizPhase === QUIZ_PHASE.BRIEFING &&
+                            completionStatus && (
+                              <BriefingView
+                                completionStatus={completionStatus}
+                                onStartQuiz={handleStartQuiz}
+                              />
+                            )}
+                        </div>
+                      ) : isGeneratingExam ? (
+                        <div className="flex-1 flex items-center justify-center">
+                          <SmartExamView
                             examProgress={examProgress}
                             examLogs={examLogs}
                           />
-                        )}
-
-                        {quizPhase === QUIZ_PHASE.BRIEFING &&
-                          completionStatus && (
-                            <BriefingView
-                              completionStatus={completionStatus}
-                              onStartQuiz={handleStartQuiz}
-                            />
-                          )}
-                      </div>
-                    ) : isGeneratingExam ? (
-                      <div className="flex-1 flex items-center justify-center">
-                        <SmartExamView
-                          examProgress={examProgress}
-                          examLogs={examLogs}
+                        </div>
+                      ) : (
+                        <CourseOverview
+                          courseName={courseData?.name || ''}
+                          progress={courseProgress}
                         />
-                      </div>
-                    ) : (
-                      <CourseOverview
-                        courseName={courseData.name}
-                        progress={courseProgress}
-                      />
-                    )}
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </ErrorBoundary>
+              )}
+            </ErrorBoundary>
+          </div>
         </div>
       </div>
-    </div>
+    </PageContainer>
   );
 };
 

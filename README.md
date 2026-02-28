@@ -1,136 +1,118 @@
 # AuditPath 🛡️
 
-![Durum](https://img.shields.io/badge/Durum-Aktif_Geliştirme-success?style=for-the-badge)
-![Stack](https://img.shields.io/badge/Stack-Vite_7_%7C_React_19_%7C_TypeScript-blue?style=for-the-badge&logo=typescript)
-![Veritabanı](https://img.shields.io/badge/DB-Supabase-green?style=for-the-badge)
-![Test](https://img.shields.io/badge/Kapsam-Yüksek-green?style=for-the-badge)
+[![Live Demo](https://img.shields.io/badge/🚀_Demo-audit--path.vercel.app-black?style=for-the-badge)](https://audit-path.vercel.app/)
+![Stack](https://img.shields.io/badge/React_19_|_TypeScript_|_Supabase-blue?style=for-the-badge&logo=typescript)
 
-AuditPath, gelişmiş algoritmalar ve AI destekli içerik üretimi ile öğrenme tutumunu optimize eden **bilişsel bir motor**dur.
+Denetimcilik ve KPSS sınavlarına hazırlık için kişisel öğrenme platformu.  
+Quiz, notlar, Pomodoro zamanlayıcısı, başarımlar ve çalışma analizi tek bir yerde.
 
 ---
 
-## ⚡ Öne Çıkan Özellikler
+## Özellikler
 
-### 🧠 Akıllı Tekrar Sistemi (SRS)
+### 🧠 AI Destekli Quiz
 
-Bildiklerini unutmamak için çalışır. AuditPath, performansına göre içerik yaşam döngüsünü yönetir:
+Farklı AI modelleri görev bazlı çalışır:
 
-| Kural                    | Açıklama                                        |
-| :----------------------- | :---------------------------------------------- |
-| **3 Vuruş Kuralı**       | 3 ardışık başarılı hatırlama → Arşiv            |
-| **Fibonacci Aralıkları** | `[1, 2, 5, 10, 20]` günlük genişleyen aralıklar |
-| **Sıfırlama**            | Herhangi bir hata → başlangıca geri dönüş       |
+| Görev                     | Model               |
+| ------------------------- | ------------------- |
+| Soru analizi              | Google Gemini Flash |
+| Kalite doğrulama          | Mimo v2 Flash       |
+| Açıklama & takip soruları | DeepSeek Chat       |
+
+Sorular çok aşamalı bir üretim hattından geçer: **Analiz → Taslak → Doğrulama → Revizyon.** Zod ile runtime şema kontrolü yapılır, yanlış ama mantıklı çeldirici şıklar üretilir.
+
+### 🔁 Akıllı Tekrar Sistemi (SRS)
+
+Yanlış cevaplanan sorular unutulmaz. Fibonacci aralıklarıyla tekrar planlanır: `[1, 2, 5, 10, 20]` gün. 3 ardışık doğru cevap sonrası soru arşive geçer.
 
 ### 🔗 Mastery Zinciri
 
-Kavramlar arasındaki bağımlılıkları modeller. Bir kavram **Mastery Zinciri** parçası sayılırsa:
+Kavramlar arasındaki bağımlılıklar modellenir. Bir kavramda ustalaşmak için hem o kavramın hem de ön koşullarının başarı oranı eşiği aşılmalıdır. Zincir tamamlandığında ekstra "can" bonusu kazanılır.
 
-1. Kendi başarı oranı **>%80**
-2. Tüm ön koşul kavramlar **>%85**
+### ⏱️ Pomodoro Zamanlayıcı
 
-Zincir tamamlandığında **+2 gün Resilience Bonus** kazanılır — seriyi koruyan bir "can".
+Web Worker tabanlı — sekme arka planda olsa bile sapmasız çalışır. Favicon üzerinde canlı geri sayım gösterimi ve oturum bazlı ders takibi yapar.
 
-### 🤖 AI İçerik Fabrikası
+### 🌙 Sanal Gün Sistemi
 
-Çok aşamalı üretim hattı ile kaliteli sorular:
+Gün başlangıcı 04:00 olarak ayarlanmıştır. Gece geç saate kadar yapılan çalışmalar doğru güne sayılır.
 
-```
-Analiz → Taslak → Doğrulama → Revizyon
-```
+### 📚 Notlar & Notion Entegrasyonu
 
-- **Zod** ile runtime schema kontrolü
-- Hallüsinasyon kontrolü
-- Akıllı şık üretimi (yanlış ama mantıklı seçenekler)
+Notlar Notion üzerinden yönetilir, Supabase Edge Function aracılığıyla tek tuşla senkronize edilir. Markdown, KaTeX (matematik) ve Mermaid (diyagram) desteğiyle zenginleştirilmiş okuma deneyimi sunar.
 
-### ⏱️ Web Worker Timer
+### 🏆 Başarım & Rozet Sistemi
 
-Ana thread'i meşgul etmeden çalışan Pomodoro ve sınav timer'ları. Ağır UI yükü altında bile **sıfır sapmalı** zaman tutma.
+Konu bazlı rozet seviyeleri (10 / 25 / 50 / 100 soru), 5 kademeli rank sistemi ve günlük çalışma serisi (streak) takibi içerir.
 
-### 🌙 Sanal Tarih Sistemi
+### 📊 Verimlilik Analitiği
 
-- **Gün başlangıcı**: 04:00
-- 03:59'da yapılan çalışma dün sayılır
-- Gece geç saatlere kadar çalışanlar için koruma
-
-### 🔄 Notion Senkronizasyonu
-
-Öğrenme içerikleri Notion üzerinden yönetilir ve özel entegrasyon aracı (`scripts/notion-sync`) sayesinde tek tuşla Supabase veritabanına aktarılır. Bu sayede veri girişi büyük ölçüde hızlanır ve yapılandırılır.
-
-### 📝 Gelişmiş Not Motoru (Notes)
-
-Soruların veya referansların açıklama sayfaları için zenginleştirilmiş okuma deneyimi sunar:
-
-- **Markdown & HTML** desteği
-- **KaTeX** üzerinden matematik denklemlerini görselleştirme
-- **Mermaid** formülü ile mimari ve akış şemalarını okuyabildiğiniz kod blokları desteği
-
-### 🏆 Oyunlaştırma (Achievements)
-
-Sürekli gelişimi teşvik etmek için tasarlanmış bağımsız bir **Başarı ve Rozet Sistemi**. Kullanıcı, sistem tarafından izlenen başarı metriklerini aşarak rozetlerin kilidini kırar.
-
-### 📊 Analitik ve Performans (Analytics)
-
-Zaman kullanımını ve tekrar eden başarıyı takip eden kapsamlı paneller:
-
-- **`Recharts` Desteği**: Pomodoro odak oturumları, test başarı oranları vb. için zengin grafikler.
-- Her kavrama ait **Mastery Skorları** üzerinden hazırlık seviyesinin canlı raporlanması.
-
-### 📶 Çevrimdışı Çalışma (Offline-First)
-
-İnternet bağlantısı olmadan da kesintisiz çalışma sağlayan özel bir katman mimarisi:
-
-- **IndexedDB (`clientDb`)**: Veriler lokalde birikir ve sayfanın en hızlı şekilde cevap vermesini sağlar
-- **`offlineQueueService`**: Yapılan her çevrimdışı işlemin (sorunun çözülmesi, pomodoro saati vs.) arkaya atılıp, bağlantı geldiğinde güvenle senkronize edilmesini sağlar.
+Günlük/haftalık çalışma metrikleri, Bloom Taksonomisi bazlı bilişsel yük analizi, ısı haritası ve odak gücü raporları.
 
 ---
 
-## 🛠️ Teknoloji Yığını
+## Teknoloji Yığını
 
-| Katman                  | Teknoloji                             |
-| :---------------------- | :------------------------------------ |
-| **Frontend**            | React 19, TypeScript, Vite 7          |
-| **UI**                  | Radix UI, Tailwind CSS, Framer Motion |
-| **State**               | Zustand, TanStack Query               |
-| **Backend**             | Supabase (PostgreSQL)                 |
-| **Veri Görselleştirme** | Recharts, Mermaid                     |
-| **Test**                | ESLint, TypeScript                    |
+| Katman    | Teknoloji                                     |
+| --------- | --------------------------------------------- |
+| Frontend  | React 19, TypeScript, Vite                    |
+| UI        | Radix UI, Tailwind CSS v4, Framer Motion      |
+| State     | Zustand, TanStack Query                       |
+| Backend   | Supabase (PostgreSQL + Auth + Edge Functions) |
+| Grafikler | Recharts, Mermaid                             |
+| Test      | Vitest, Testing Library                       |
+| AI        | Google Gemini, DeepSeek, Mimo                 |
 
 ---
 
-## 📁 Proje Yapısı
+## Kurulum
+
+```bash
+# Bağımlılıkları yükle
+npm install
+
+# Ortam değişkenlerini ayarla
+cp .env.example .env
+
+# Geliştirme sunucusunu başlat
+npm run dev
+```
+
+**.env** dosyasına Supabase bilgilerini ekle:
+
+```env
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+```
+
+AI anahtarları güvenlik için doğrudan Supabase Edge Function içinde tutulur, frontend'e açık değildir.
+
+---
+
+## Proje Yapısı
 
 ```
 src/
-├── api/              # Harici API servisleri (döviz kurları)
-├── components/       # Paylaşılan UI bileşenleri
-├── features/        # Özellik modülleri
-│   ├── auth/        # Kimlik doğrulama
-│   ├── courses/    # Kurs yönetimi
-│   ├── pomodoro/   # Pomodoro timer & oturumlar
-│   ├── quiz/       # Quiz motoru & AI üretimi
-│   └── ...
-├── hooks/          # Özel React hook'ları
-├── lib/            # Supabase, storage, offline
+├── features/       # Her özellik kendi klasöründe
+│   ├── quiz/       # AI quiz motoru & SRS
+│   ├── efficiency/ # Verimlilik & metrikler
+│   ├── achievements/
+│   ├── courses/
+│   ├── notes/      # Notion entegrasyonlu notlar
+│   ├── pomodoro/
+│   ├── analytics/
+│   └── auth/
 ├── pages/          # Sayfa bileşenleri
-├── shared/         # Paylaşılan modal, kart bileşenleri
-├── store/          # Zustand state yönetimi
-├── styles/         # Global stiller
-├── types/          # TypeScript tip tanımları
-├── utils/          # Yardımcı fonksiyonlar (SRS, mastery, tarih)
-└── workers/        # Web Worker'lar (timer)
+├── shared/         # Paylaşılan hook & bileşenler
+└── utils/          # Yardımcı araçlar
+supabase/
+├── functions/      # Edge Functions (AI proxy, Notion sync)
+└── migrations/
 ```
 
 ---
 
-## 📝 Geliştirme Notları
-
-- **Offline Çalışma**: IndexedDB destekli clientDb + offlineQueueService
-- **Veritabanı**: Supabase migrations `supabase/migrations/`
-- **Tip Üretimi**: `npm run update-types` → Supabase'ten TypeScript tipleri
-- **Linting**: `npm run lint` ve `npm run type-check`
-
----
-
-## 📄 Lisans
-
-MIT License - 2024 AuditPath
+<div align="center">
+  <sub>Banka müfettişliği hayaliyle, kod yazarak hazırlanıyorum. 🏦</sub>
+</div>
