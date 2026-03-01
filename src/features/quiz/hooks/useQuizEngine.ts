@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   QuizQuestion,
   QuizResponseType,
@@ -80,6 +80,15 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
       return persisted?.state?.hasStarted ? persisted.sessionContext : null;
     }
   );
+
+  const stateRef = useRef(state);
+  const resultsRef = useRef(results);
+
+  // Sync refs with state after render
+  useEffect(() => {
+    stateRef.current = state;
+    resultsRef.current = results;
+  }, [state, results]);
 
   // Save changes
   useEffect(() => {
@@ -165,22 +174,26 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
 
   const submitAnswer = useCallback(
     async (type: QuizResponseType = 'correct') => {
-      if (state.isAnswered || !state.currentQuestion || !sessionContext) {
+      const currentState = stateRef.current;
+      if (
+        currentState.isAnswered ||
+        !currentState.currentQuestion ||
+        !sessionContext
+      ) {
         return;
       }
 
       const actualType =
         type === 'correct'
-          ? state.selectedAnswer === state.currentQuestion.a
+          ? currentState.selectedAnswer === currentState.currentQuestion.a
             ? 'correct'
             : 'incorrect'
           : type;
 
       const timeSpent = stopTimer();
 
-      // Durumu geri alabilmek için mevcut değerleri kopyala
-      const previousState = { ...state };
-      const previousResults = { ...results };
+      const previousState = { ...currentState };
+      const previousResults = { ...resultsRef.current };
 
       setResults((prev) =>
         updateResults(prev, actualType as QuizResponseType, timeSpent)
@@ -195,21 +208,21 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
       try {
         const result = await api.submitAnswer(
           sessionContext,
-          state.currentQuestion.id!,
-          state.currentQuestion.chunk_id || null,
+          currentState.currentQuestion.id!,
+          currentState.currentQuestion.chunk_id || null,
           actualType as QuizResponseType,
           timeSpent,
-          state.selectedAnswer
+          currentState.selectedAnswer
         );
 
         updateState({ lastSubmissionResult: result });
 
         if (
           result.newMastery >= MASTERY_THRESHOLD &&
-          state.currentQuestion.chunk_id
+          currentState.currentQuestion.chunk_id
         ) {
           useCelebrationStore.getState().enqueueCelebration({
-            id: `MASTERY_${state.currentQuestion.chunk_id}_${result.newMastery}`,
+            id: `MASTERY_${currentState.currentQuestion.chunk_id}_${result.newMastery}`,
             title: 'Uzmanlık Seviyesi!',
             description: `Bu konudaki ustalığın ${result.newMastery} puana ulaştı.`,
             variant: 'achievement',
@@ -220,13 +233,12 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
         updateState({
           error: 'Soru gönderilirken bir hata oluştu. Lütfen tekrar deneyin.',
         });
-        // Hata durumunda UI'ı eski haline döndür
         setState(previousState);
         setResults(previousResults);
-        startTimer(); // Süreyi kaldığı yerden devam ettir
+        startTimer();
       }
     },
-    [state, results, sessionContext, stopTimer, startTimer, updateState, api]
+    [sessionContext, stopTimer, startTimer, updateState, api]
   );
 
   const resetState = useCallback(() => {
@@ -239,16 +251,20 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
 
   const selectAnswer = useCallback(
     (index: number) => {
-      if (state.isAnswered || !state.currentQuestion) return;
+      const currentState = stateRef.current;
+      if (currentState.isAnswered || !currentState.currentQuestion) return;
       updateState({
-        selectedAnswer: state.selectedAnswer === index ? null : index,
+        selectedAnswer: currentState.selectedAnswer === index ? null : index,
       });
     },
-    [state.isAnswered, state.currentQuestion, state.selectedAnswer, updateState]
+    [updateState]
   );
 
   const nextQuestion = useCallback(() => {
-    const patch = calculateNextQuestionState(state, results);
+    const patch = calculateNextQuestionState(
+      stateRef.current,
+      resultsRef.current
+    );
     updateState(patch);
 
     if (patch.queue) {
@@ -257,18 +273,18 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
     } else {
       clearEngine();
     }
-  }, [state, results, updateState, resetTimer, startTimer, clearEngine]);
+  }, [updateState, resetTimer, startTimer, clearEngine]);
 
   const previousQuestion = useCallback(() => {
-    const patch = calculatePreviousQuestionState(state);
+    const patch = calculatePreviousQuestionState(stateRef.current);
     if (patch) {
       updateState(patch);
     }
-  }, [state, updateState]);
+  }, [updateState]);
 
   const toggleExplanation = useCallback(() => {
-    updateState({ showExplanation: !state.showExplanation });
-  }, [state.showExplanation, updateState]);
+    updateState({ showExplanation: !stateRef.current.showExplanation });
+  }, [updateState]);
 
   const progressIndex =
     state.generatedCount - state.queue.length - (state.currentQuestion ? 1 : 0);

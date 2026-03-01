@@ -37,7 +37,7 @@ export const navItems: NavItem[] = [
   },
   {
     label: 'Program',
-    action: 'program',
+    href: ROUTES.PROGRAM,
     icon: CalendarDays,
     group: 'navigation',
   },

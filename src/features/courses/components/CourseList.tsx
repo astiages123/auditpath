@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import {
   ChevronDown,
@@ -7,9 +6,8 @@ import {
   Clock,
   TvMinimalPlay,
   Youtube,
-  FileText,
-  BarChart2,
-  Brain,
+  BookOpen,
+  BookOpenText,
 } from 'lucide-react';
 import { VideoList } from './VideoList';
 import { formatDurationShort } from '@/utils/dateUtils';
@@ -18,7 +16,6 @@ import { useCelebration } from '@/shared/hooks/useCelebration';
 import { getCourseIcon } from '../logic/coursesLogic';
 import { type Course } from '@/features/courses/types/courseTypes';
 import { cn } from '@/utils/stringHelpers';
-import { ROUTES } from '@/utils/routes';
 
 // Lazy load CourseStatsModal
 const CourseStatsModal = lazy(() =>
@@ -31,6 +28,7 @@ interface CourseListProps {
   courses: Course[];
   categoryColor: string;
   categoryBgColor: string;
+  slug?: string;
 }
 
 // Helper to remove instructor name (everything after " - ")
@@ -42,6 +40,7 @@ export function CourseList({
   courses,
   categoryColor,
   categoryBgColor,
+  slug: _slug,
 }: CourseListProps) {
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
   const { stats } = useProgress();
@@ -95,7 +94,7 @@ export function CourseList({
           'rounded-xl border overflow-hidden transition-all duration-200 group',
           isCompleted
             ? 'border-primary/50 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 shadow-[0_0_15px_-5px_rgba(var(--primary),0.5)]'
-            : 'border-white/5 bg-card hover:border-white/30 hover:bg-card/60'
+            : 'border-white/5 bg-card/40 hover:border-white/30 hover:bg-card/60'
         );
 
         const iconContainerClass = cn(
@@ -117,142 +116,159 @@ export function CourseList({
           isCompleted ? 'text-primary-foreground' : 'text-zinc-100'
         );
 
-        const progressTextClass = cn(
-          'text-sm font-bold ml-auto sm:ml-0 shrink-0',
-          isCompleted ? 'text-primary' : categoryColor
-        );
-
-        const completedBadgeClass = cn(
-          'bg-primary/20 px-1.5 sm:px-2 py-0.5 rounded text-[10px]',
-          'font-bold text-primary border border-primary/30 uppercase tracking-wide shrink-0'
-        );
-
         return (
           <div key={course.id} className={courseCardClass}>
-            {/* Course Header */}
+            {/* Main Content Area */}
             <div
-              className="flex flex-col p-5 gap-4 w-full cursor-pointer"
+              className="flex items-center gap-4 p-5 cursor-pointer"
               onClick={() =>
                 setExpandedCourse(
                   expandedCourse === course.id ? null : course.id
                 )
               }
             >
-              {/* Top Row: Badges */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 text-[10px] text-white font-bold uppercase tracking-widest text-muted-foreground bg-secondary/50 px-3 py-1.5 rounded-full border border-border/40">
-                  <Clock className="size-3.5 text-muted-foreground/50" />
-                  {formatDurationShort(totalHours)}
-                </div>
-                <div className="flex items-center gap-1.5 text-[10px] text-white font-bold uppercase tracking-widest text-muted-foreground bg-secondary/50 px-3 py-1.5 rounded-full border border-border/40">
-                  <TvMinimalPlay className="size-3.5 text-muted-foreground/50" />
-                  {totalVideos} Video
-                </div>
-                {isCompleted && (
-                  <div className={cn(completedBadgeClass, 'ml-auto')}>
-                    Tamam
-                  </div>
-                )}
+              {/* Column 1: Icon */}
+              <div className={iconContainerClass}>
+                <Icon className={iconClass} />
               </div>
 
-              {/* Middle Row: Icon, Name, Progress, Toggle */}
-              <div className="flex items-center gap-4 min-w-0">
-                <div className={iconContainerClass}>
-                  <Icon className={iconClass} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <h4 className={titleClass}>{displayName}</h4>
-                    <span className={progressTextClass}>%{progress}</span>
-                  </div>
-                  {/* Progress Bar */}
-                  <div className="mt-2 h-2 w-full bg-white/10 rounded-full overflow-hidden">
-                    <div
-                      style={{ width: `${progress}%` }}
-                      className={cn(
-                        'h-full rounded-full transition-all duration-500',
-                        isCompleted ? 'bg-primary' : 'bg-primary'
+              {/* Column 2: Name + Stats (Time, Videos, Youtube) */}
+              <div className="flex-1 min-w-0">
+                <h4 className={titleClass}>{displayName}</h4>
+
+                <div className="flex items-center gap-3 mt-1.5 overflow-x-auto no-scrollbar scrollbar-hide">
+                  {course.type === 'reading' ? (
+                    <>
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                        <BookOpen className="size-3 text-muted-foreground/50" />
+                        {totalVideos} Konu
+                      </div>
+                      {course.total_pages && (
+                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                          <BookOpenText className="size-3 text-muted-foreground/50" />
+                          {course.total_pages} Sayfa
+                        </div>
                       )}
-                    />
-                  </div>
-                </div>
-
-                <div className="shrink-0 flex items-center gap-2">
-                  {/* Actions (Desktop only here, simplified) */}
-                  <div className="hidden sm:flex items-center bg-zinc-900/40 border border-white/5 p-1 rounded-xl gap-0.5">
-                    {course.playlist_url && (
-                      <a
-                        href={course.playlist_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="size-8 flex items-center justify-center rounded-lg text-red-400 hover:bg-surface-hover transition-all"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Youtube className="size-4" />
-                      </a>
-                    )}
-                    <Link
-                      to={`/notes/${course.course_slug}`}
-                      className="size-8 flex items-center justify-center rounded-lg text-blue-400 hover:bg-surface-hover transition-all"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <FileText className="size-4" />
-                    </Link>
-                    <Link
-                      to={`${ROUTES.QUIZ}/${course.course_slug}`}
-                      className="size-8 flex items-center justify-center rounded-lg text-purple-400 hover:bg-surface-hover transition-all"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <Brain className="size-4" />
-                    </Link>
-                  </div>
-
-                  <button className="size-10 flex items-center justify-center rounded-xl bg-surface/50 text-muted-foreground border border-white/5 transition-all">
-                    {expandedCourse === course.id ? (
-                      <ChevronUp className="size-5" />
-                    ) : (
-                      <ChevronDown className="size-5" />
-                    )}
-                  </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                        <Clock className="size-3 text-muted-foreground/50" />
+                        {formatDurationShort(totalHours)}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                        <TvMinimalPlay className="size-3 text-muted-foreground/50" />
+                        {totalVideos} Video
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
-              {/* Bottom Row: Actions (Mobile visible) */}
-              <div className="flex sm:hidden items-center bg-zinc-900/40 border border-white/5 p-1 rounded-xl gap-1 w-full justify-around mt-1">
-                {course.playlist_url && (
-                  <a
-                    href={course.playlist_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 py-2 flex items-center justify-center rounded-lg text-red-400 hover:bg-surface-hover"
-                    onClick={(e) => e.stopPropagation()}
+              {/* Column 3: Progress % + Toggle Icon */}
+              <div className="flex items-center gap-4 shrink-0">
+                {course.type === 'reading' ? (
+                  [
+                    'turk-dis-politikasi',
+                    'uluslararasi-hukuk',
+                    'uluslararasi-iliskiler-kuramlari',
+                  ].includes(course.course_slug) ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        className="flex flex-col items-center gap-0.5 text-blue-400 hover:text-blue-300 transition-colors p-0.5"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(
+                            `https://ccnvhimlbkkydpcqtraw.supabase.co/storage/v1/object/public/pdfs/${course.course_slug}-1.pdf`,
+                            '_blank'
+                          );
+                        }}
+                      >
+                        <BookOpenText className="size-[18px]" />
+                        <span className="text-[9px] font-bold leading-none mt-0.5">
+                          C1
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="flex flex-col items-center gap-0.5 text-blue-400 hover:text-blue-300 transition-colors p-0.5"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(
+                            `https://ccnvhimlbkkydpcqtraw.supabase.co/storage/v1/object/public/pdfs/${course.course_slug}-2.pdf`,
+                            '_blank'
+                          );
+                        }}
+                      >
+                        <BookOpenText className="size-[18px]" />
+                        <span className="text-[9px] font-bold leading-none mt-0.5">
+                          C2
+                        </span>
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-blue-400 hover:text-blue-300 transition-colors p-0.5"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(
+                          `https://ccnvhimlbkkydpcqtraw.supabase.co/storage/v1/object/public/pdfs/${course.course_slug}.pdf`,
+                          '_blank'
+                        );
+                      }}
+                    >
+                      <BookOpenText className="size-5" />
+                    </button>
+                  )
+                ) : course.playlist_url ? (
+                  <button
+                    type="button"
+                    className="text-red-400 hover:text-red-300 transition-colors p-0.5"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(course.playlist_url!, '_blank');
+                    }}
                   >
                     <Youtube className="size-5" />
-                  </a>
-                )}
-                <Link
-                  to={`/notes/${course.course_slug}`}
-                  className="flex-1 py-2 flex items-center justify-center rounded-lg text-blue-400 hover:bg-surface-hover"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <FileText className="size-5" />
-                </Link>
-                <Link
-                  to={`${ROUTES.QUIZ}/${course.course_slug}`}
-                  className="flex-1 py-2 flex items-center justify-center rounded-lg text-purple-400 hover:bg-surface-hover"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Brain className="size-5" />
-                </Link>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedStatsCourse(course);
-                  }}
-                  className="flex-1 py-2 flex items-center justify-center rounded-lg text-primary"
-                >
-                  <BarChart2 className="size-5" />
-                </button>
+                  </button>
+                ) : null}
+
+                <div className="text-right">
+                  <span
+                    className={cn(
+                      'text-lg font-black leading-none',
+                      isCompleted ? 'text-primary' : categoryColor
+                    )}
+                  >
+                    %{progress}
+                  </span>
+                  <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-tighter mt-0.5">
+                    İlerleme
+                  </p>
+                </div>
+
+                <div className="p-2 rounded-xl bg-surface/50 border border-white/5 text-muted-foreground group-hover:text-white transition-colors">
+                  {expandedCourse === course.id ? (
+                    <ChevronUp className="size-4" />
+                  ) : (
+                    <ChevronDown className="size-4" />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Progress Bar - Full Width at Bottom */}
+            <div className="px-5 pb-5">
+              <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                <div
+                  style={{ width: `${progress}%` }}
+                  className={cn(
+                    'h-full rounded-full transition-all duration-500',
+                    'bg-primary'
+                  )}
+                />
               </div>
             </div>
 

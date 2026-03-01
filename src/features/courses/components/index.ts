@@ -5,7 +5,6 @@ export * from './CategoryCard';
 export * from './CategoryGrid';
 
 // Course Modals
-export * from './ProgramModal';
 export * from './CourseStatsModal';
 
 // Course Progress

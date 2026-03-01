@@ -10,51 +10,7 @@ import {
   type LogCallback,
   type Message,
 } from '@/features/quiz/types';
-
-// ============================================================================
-// Quiz Repository (formerly quizRepository.ts)
-// ============================================================================
-
-// Note: getCurrentSessionToken is imported from quizCoreService.ts via quizService.ts
 import { getCurrentSessionToken } from './quizCoreService';
-
-/**
- * Repository for quiz-related database operations
- */
-export const quizRepository = {
-  async getQuestionById(questionId: string) {
-    const { data, error } = await supabase
-      .from('questions')
-      .select('*')
-      .eq('id', questionId)
-      .single();
-
-    if (error) throw error;
-    return data;
-  },
-
-  async getQuestionsByChunk(chunkId: string) {
-    const { data, error } = await supabase
-      .from('questions')
-      .select('*')
-      .eq('chunk_id', chunkId);
-
-    if (error) throw error;
-    return data || [];
-  },
-
-  async getUserQuestionStatus(userId: string, questionId: string) {
-    const { data, error } = await supabase
-      .from('user_question_status')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('question_id', questionId)
-      .single();
-
-    if (error && error.code !== 'PGRST116') throw error; // PGRST116 = not found
-    return data;
-  },
-};
 
 // ============================================================================
 // Subject Knowledge Service (formerly subjectKnowledgeService.ts)

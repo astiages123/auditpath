@@ -15,7 +15,6 @@ const GROUP_ORDER: NavItem['group'][] = ['navigation', 'action', 'meta'];
 export function Sidebar() {
   const isSidebarCollapsed = useUIStore((state) => state.isSidebarCollapsed);
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
-  const setProgramOpen = useUIStore((state) => state.setProgramOpen);
   const { setOpen: setPomodoroOpen } = usePomodoro();
 
   // Artık Notes sayfasında otomatik daraltmıyoruz
@@ -37,8 +36,6 @@ export function Sidebar() {
   const handleAction = (action: string) => {
     if (action === 'pomodoro') {
       setPomodoroOpen(true);
-    } else if (action === 'program') {
-      setProgramOpen(true);
     }
   };
 

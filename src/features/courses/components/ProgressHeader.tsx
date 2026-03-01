@@ -71,9 +71,17 @@ export function ProgressHeader({
   const todaySchedule = WEEKLY_SCHEDULE.find((item) =>
     item.matchDays.includes(dayIndex)
   );
-  const todaysSubject = todaySchedule
-    ? todaySchedule.subject
-    : 'Serbest Çalışma';
+  // Determine current block based on time
+  const currentHour = today.getHours();
+  let blockName = 'FİNAL BLOK';
+  if (currentHour >= 6 && currentHour < 17) {
+    blockName = 'SABAH BLOK';
+  } else if (currentHour >= 17 && currentHour < 21) {
+    blockName = 'AKŞAM BLOK';
+  }
+
+  const currentBlock = todaySchedule?.blocks.find((b) => b.name === blockName);
+  const todaysSubject = currentBlock ? currentBlock.subject : 'Serbest Çalışma';
 
   // Calculate overall percentage based on HOURS for more accuracy
   const displayPercentage = isHydrated
@@ -181,9 +189,9 @@ export function ProgressHeader({
       <ProgressStatCard
         icon={CalendarDays}
         bgIcon={CalendarDays}
-        label="Günün Odağı"
+        label="Şu Anki Odak"
         value={todaysSubject}
-        subText="Sınav takvimine göre bugün"
+        subText={`Günün ${blockName.split(' ')[0].toLowerCase()} aşaması`}
         colorClass="text-accent"
         showSkeleton={showSkeleton}
         variants={itemVariants}

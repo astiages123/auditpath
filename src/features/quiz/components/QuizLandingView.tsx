@@ -90,7 +90,9 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                 )
                 .map((category, idx) => {
                   const categoryTheme =
-                    CATEGORY_THEMES[category.name.toUpperCase()];
+                    CATEGORY_THEMES[category.name.toUpperCase()] ||
+                    CATEGORY_THEMES['İKTİSAT'] ||
+                    Object.values(CATEGORY_THEMES)[0];
                   const CatIcon = categoryTheme?.Icon || Brain;
 
                   return (
@@ -132,7 +134,9 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                 <div className="flex items-center gap-3">
                   {(() => {
                     const categoryTheme =
-                      CATEGORY_THEMES[category.name.toUpperCase()];
+                      CATEGORY_THEMES[category.name.toUpperCase()] ||
+                      CATEGORY_THEMES['İKTİSAT'] ||
+                      Object.values(CATEGORY_THEMES)[0];
                     const CatIcon = categoryTheme?.Icon || Brain;
                     return (
                       <div className="w-12 h-12 rounded-2xl bg-secondary/50 flex items-center justify-center text-primary/80">

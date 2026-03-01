@@ -358,43 +358,93 @@ export async function fetchNullQuestionsFromChunk(
   );
 }
 
+export async function fetchActiveQuestionsFromChunks(
+  userId: string,
+  chunkIds: string[],
+  limit: number
+): Promise<QuestionWithStatus[]> {
+  if (chunkIds.length === 0) return [];
+  const { data } = await safeQuery<unknown[]>(
+    supabase
+      .from('user_question_status')
+      .select(
+        `
+          question_id, status, next_review_session,
+          questions!inner (id, chunk_id, course_id, parent_question_id, question_data)
+        `
+      )
+      .eq('user_id', userId)
+      .in('questions.chunk_id', chunkIds)
+      .eq('status', 'active')
+      .eq('questions.usage_type', 'antrenman')
+      .limit(limit),
+    'fetchActiveQuestionsFromChunks error',
+    { userId, chunkIds }
+  );
+
+  return parseArray(
+    QuestionWithStatusRowSchema,
+    data || []
+  ) as QuestionWithStatus[];
+}
+
+export async function fetchNullQuestionsFromChunks(
+  chunkIds: string[],
+  limit: number
+): Promise<QuestionWithStatus[]> {
+  if (chunkIds.length === 0) return [];
+  const { data } = await safeQuery<unknown[]>(
+    supabase
+      .from('questions')
+      .select(
+        `
+          id, chunk_id, course_id, parent_question_id, question_data,
+          user_question_status!left (id)
+        `
+      )
+      .in('chunk_id', chunkIds)
+      .eq('usage_type', 'antrenman')
+      .is('user_question_status.id', null)
+      .limit(limit),
+    'fetchNullQuestionsFromChunks error',
+    { chunkIds }
+  );
+
+  const typedData = (data || []) as {
+    id: string;
+    chunk_id: string;
+    course_id: string;
+    parent_question_id: string | null;
+    question_data: unknown;
+  }[];
+
+  return typedData.map(
+    (q): QuestionWithStatus => ({
+      question_id: q.id,
+      status: 'active',
+      next_review_session: null,
+      questions: {
+        id: q.id,
+        chunk_id: q.chunk_id,
+        course_id: q.course_id,
+        parent_question_id: q.parent_question_id,
+        question_data: q.question_data as QuizQuestion,
+      },
+    })
+  );
+}
+
 export async function fetchWaterfallTrainingQuestions(
   userId: string,
   courseId: string,
   targetChunkId: string,
   limit: number
 ): Promise<QuestionWithStatus[]> {
-  const results: QuestionWithStatus[] = [];
+  const allChunkIds: string[] = [];
 
-  const getFromChunk = async (
-    chunkId: string,
-    currentLimit: number
-  ): Promise<QuestionWithStatus[]> => {
-    if (!isValidUuid(chunkId)) return [];
-    const activeQuestions = await fetchActiveQuestionsFromChunk(
-      userId,
-      chunkId,
-      currentLimit
-    );
-    const remainingLimit = currentLimit - activeQuestions.length;
-    let nullQuestions: QuestionWithStatus[] = [];
-
-    if (remainingLimit > 0) {
-      nullQuestions = await fetchNullQuestionsFromChunk(
-        chunkId,
-        remainingLimit
-      );
-    }
-
-    return [...activeQuestions, ...nullQuestions];
-  };
-
-  const targetResults = isValidUuid(targetChunkId)
-    ? await getFromChunk(targetChunkId, limit)
-    : [];
-  results.push(...targetResults);
-
-  if (results.length >= limit) return results.slice(0, limit);
+  if (isValidUuid(targetChunkId)) {
+    allChunkIds.push(targetChunkId);
+  }
 
   const { data: weakChunks } = await safeQuery<{ chunk_id: string }[]>(
     supabase
@@ -416,11 +466,43 @@ export async function fetchWaterfallTrainingQuestions(
   );
 
   if (weakChunks) {
-    for (const chunk of weakChunks) {
-      const remaining = limit - results.length;
-      if (remaining <= 0) break;
-      const chunkResults = await getFromChunk(chunk.chunk_id, remaining);
-      results.push(...chunkResults);
+    allChunkIds.push(...weakChunks.map((c) => c.chunk_id));
+  }
+
+  if (allChunkIds.length === 0) return [];
+
+  const [activeQuestions, nullQuestions] = await Promise.all([
+    fetchActiveQuestionsFromChunks(userId, allChunkIds, limit),
+    fetchNullQuestionsFromChunks(allChunkIds, limit),
+  ]);
+
+  const activeByChunk = new Map<string, QuestionWithStatus[]>();
+  for (const q of activeQuestions) {
+    const chunkId = q.questions.chunk_id as string;
+    if (!activeByChunk.has(chunkId)) activeByChunk.set(chunkId, []);
+    activeByChunk.get(chunkId)!.push(q);
+  }
+
+  const nullByChunk = new Map<string, QuestionWithStatus[]>();
+  for (const q of nullQuestions) {
+    const chunkId = q.questions.chunk_id as string;
+    if (!nullByChunk.has(chunkId)) nullByChunk.set(chunkId, []);
+    nullByChunk.get(chunkId)!.push(q);
+  }
+
+  const results: QuestionWithStatus[] = [];
+
+  for (const chunkId of allChunkIds) {
+    const remaining = limit - results.length;
+    if (remaining <= 0) break;
+
+    const active = activeByChunk.get(chunkId) || [];
+    const nulls = nullByChunk.get(chunkId) || [];
+
+    results.push(...active.slice(0, remaining));
+    const stillNeeded = limit - results.length;
+    if (stillNeeded > 0) {
+      results.push(...nulls.slice(0, stillNeeded));
     }
   }
 

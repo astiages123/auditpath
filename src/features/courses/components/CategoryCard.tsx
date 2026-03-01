@@ -1,4 +1,10 @@
-import { TvMinimalPlay, Clock, ChevronDown, BookOpen } from 'lucide-react';
+import {
+  TvMinimalPlay,
+  Clock,
+  ChevronDown,
+  BookOpen,
+  FileText,
+} from 'lucide-react';
 import { CourseList } from './CourseList';
 import { useEffect } from 'react';
 import { useCelebration } from '@/shared/hooks/useCelebration';
@@ -31,11 +37,15 @@ export function CategoryCard({
   completedVideos: initialCompletedVideos,
   completedHours: initialCompletedHours,
   // completedCourses: _completedCourses, // Unused
+  slug,
   isOpen,
   onToggle,
 }: CategoryCardProps) {
   // Use config for styles
-  const categoryConfig = CATEGORY_THEMES[name] || CATEGORY_THEMES['EKONOMİ'];
+  const categoryConfig =
+    CATEGORY_THEMES[name.toUpperCase()] ||
+    CATEGORY_THEMES['İKTİSAT'] ||
+    Object.values(CATEGORY_THEMES)[0];
   const { Icon } = categoryConfig;
   const { stats } = useProgress();
   const { triggerCategoryCelebration, revokeCategoryCelebration } =
@@ -57,6 +67,8 @@ export function CategoryCard({
   const displayCompletedHours =
     catStats?.completedHours ?? initialCompletedHours;
   const displayTotalHours = initialTotalHours || (catStats?.totalHours ?? 0);
+
+  const isReadingCategory = courses.some((c) => c.type === 'reading');
 
   const progress =
     displayTotalHours > 0
@@ -99,18 +111,41 @@ export function CategoryCard({
             <BookOpen className="size-3.5 text-muted-foreground/40" />
             <span className="truncate">{courses.length} Kurs</span>
           </div>
-          <div className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-2xl bg-surface/40 border border-white/5 text-[10px] font-black text-muted-foreground uppercase tracking-tight shadow-sm">
-            <TvMinimalPlay className="size-3.5 text-muted-foreground/40" />
-            <span className="truncate">
-              {displayCompletedVideos}/{displayTotalVideos}
-            </span>
-          </div>
-          <div className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-2xl bg-surface/40 border border-white/5 text-[10px] font-black text-muted-foreground uppercase tracking-tight shadow-sm">
-            <Clock className="size-3.5 text-muted-foreground/40" />
-            <span className="truncate">
-              {formatDurationShort(displayCompletedHours)}
-            </span>
-          </div>
+          {isReadingCategory ? (
+            <>
+              <div className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-2xl bg-surface/40 border border-white/5 text-[10px] font-black text-muted-foreground uppercase tracking-tight shadow-sm">
+                <BookOpen className="size-3.5 text-muted-foreground/40" />
+                <span className="truncate">
+                  {displayCompletedVideos}/{displayTotalVideos} KONU
+                </span>
+              </div>
+              {slug !== 'KAMU_YONETIMI' &&
+                slug !== 'ULUSLARARASI_ILISKILER' && (
+                  <div className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-2xl bg-surface/40 border border-white/5 text-[10px] font-black text-muted-foreground uppercase tracking-tight shadow-sm">
+                    <FileText className="size-3.5 text-muted-foreground/40" />
+                    <span className="truncate">
+                      {Math.round(displayCompletedHours * 24)}/
+                      {Math.round(displayTotalHours * 24)} SAYFA
+                    </span>
+                  </div>
+                )}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-2xl bg-surface/40 border border-white/5 text-[10px] font-black text-muted-foreground uppercase tracking-tight shadow-sm">
+                <TvMinimalPlay className="size-3.5 text-muted-foreground/40" />
+                <span className="truncate">
+                  {displayCompletedVideos}/{displayTotalVideos}
+                </span>
+              </div>
+              <div className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-2xl bg-surface/40 border border-white/5 text-[10px] font-black text-muted-foreground uppercase tracking-tight shadow-sm">
+                <Clock className="size-3.5 text-muted-foreground/40" />
+                <span className="truncate">
+                  {formatDurationShort(displayCompletedHours)}
+                </span>
+              </div>
+            </>
+          )}
         </div>
 
         <div className="flex items-center justify-between gap-6">
@@ -132,14 +167,33 @@ export function CategoryCard({
                   <BookOpen className="size-3 text-muted-foreground/60" />
                   {courses.length} Kurs
                 </span>
-                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface/50 border border-white/5 whitespace-nowrap">
-                  <TvMinimalPlay className="size-3 text-muted-foreground/60" />
-                  {displayCompletedVideos}/{displayTotalVideos}
-                </span>
-                <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface/50 border border-white/5 whitespace-nowrap">
-                  <Clock className="size-3 text-muted-foreground/60" />
-                  {formatDuration(displayCompletedHours)}
-                </span>
+                {isReadingCategory ? (
+                  <>
+                    <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface/50 border border-white/5 whitespace-nowrap">
+                      <BookOpen className="size-3 text-muted-foreground/60" />
+                      {displayCompletedVideos}/{displayTotalVideos} KONU
+                    </span>
+                    {slug !== 'KAMU_YONETIMI' &&
+                      slug !== 'ULUSLARARASI_ILISKILER' && (
+                        <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface/50 border border-white/5 whitespace-nowrap">
+                          <FileText className="size-3 text-muted-foreground/60" />
+                          {Math.round(displayCompletedHours * 24)}/
+                          {Math.round(displayTotalHours * 24)} SAYFA
+                        </span>
+                      )}
+                  </>
+                ) : (
+                  <>
+                    <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface/50 border border-white/5 whitespace-nowrap">
+                      <TvMinimalPlay className="size-3 text-muted-foreground/60" />
+                      {displayCompletedVideos}/{displayTotalVideos} VİDEO
+                    </span>
+                    <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface/50 border border-white/5 whitespace-nowrap">
+                      <Clock className="size-3 text-muted-foreground/60" />
+                      {formatDuration(displayCompletedHours)}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -192,6 +246,7 @@ export function CategoryCard({
                 )}
                 categoryColor="text-accent"
                 categoryBgColor="bg-surface"
+                slug={slug}
               />
             </div>
           </motion.div>

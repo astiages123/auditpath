@@ -16,6 +16,7 @@ const CourseLibrary = lazy(() => import('@/pages/CourseLibrary'));
 const CostsPage = lazy(() => import('@/pages/Costs'));
 const QuizPage = lazy(() => import('@/pages/Quiz'));
 const RoadmapPage = lazy(() => import('@/pages/Roadmap'));
+const ProgramPage = lazy(() => import('@/pages/Program'));
 
 // Loading fallback logic moved to DashboardLayout
 
@@ -40,6 +41,7 @@ function App() {
 
             {/* Çalışma Merkezi */}
             <Route path={ROUTES.LIBRARY} element={<CourseLibrary />} />
+            <Route path={ROUTES.PROGRAM} element={<ProgramPage />} />
             <Route
               path={ROUTES.NOTES}
               element={<Navigate to={ROUTES.LIBRARY} replace />}

@@ -139,9 +139,6 @@ export async function getLearningLoadData({
     const dayOfWeek = d.getDay(); // 0=Pazar, 1=Pazartesi, ..., 6=Cumartesi
     const totalMins = item.extraStudyMinutes + item.videoMinutes;
 
-    // Yüksek Lisans Günleri (Salı, Çarşamba, Perşembe) - Gösterme
-    if ([2, 3, 4].includes(dayOfWeek)) return false;
-
     // Hafta sonu mantığı:
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       // Eğer veri varsa göster
@@ -276,8 +273,6 @@ export async function getFocusPowerData({
     const dayOfWeek = d.getDay();
     const hasActivity = item.workMinutes > 0;
 
-    if ([2, 3, 4].includes(dayOfWeek)) return false;
-
     // Hafta sonu mantığı:
     if (dayOfWeek === 0 || dayOfWeek === 6) {
       if (hasActivity) return true;
@@ -392,7 +387,6 @@ export async function getFocusTrend(userId: string): Promise<FocusTrend[]> {
       const dayOfWeek = d.getDay();
       const hasActivity = item.minutes > 0;
 
-      if ([2, 3, 4].includes(dayOfWeek)) return false;
       if (!hasActivity && (dayOfWeek === 0 || dayOfWeek === 6)) return false;
 
       return true;
@@ -490,7 +484,6 @@ export async function getEfficiencyTrend(
       const dayOfWeek = d.getDay();
       const hasActivity = item.workMinutes > 0 || item.videoMinutes > 0;
 
-      if ([2, 3, 4].includes(dayOfWeek)) return false;
       if (!hasActivity && (dayOfWeek === 0 || dayOfWeek === 6)) return false;
 
       return true;

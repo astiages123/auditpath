@@ -7,7 +7,8 @@ export interface Course {
 }
 
 export interface Category {
-  category: string;
+  id: string;
+  name: string;
   slug?: string;
   courses: Course[];
 }
@@ -29,7 +30,7 @@ export const calculateStaticTotals = () => {
 
   categories.forEach((cat) => {
     const categoryName =
-      cat.slug || cat.category.split(' (')[0].split('. ')[1] || cat.category;
+      cat.slug || cat.name.split(' (')[0].split('. ')[1] || cat.name;
 
     let catTotalVideos = 0;
     let catTotalHours = 0;

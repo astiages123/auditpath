@@ -16,7 +16,7 @@ const GROUP_ORDER: NavItem['group'][] = ['navigation', 'action', 'meta'];
 
 export const MobileSidebar: FC = () => {
   const { user, signOut } = useAuth();
-  const { setMobileMenuOpen, setProgramOpen } = useUIStore();
+  const { setMobileMenuOpen } = useUIStore();
   const { setOpen: setPomodoroOpen } = usePomodoro();
   const location = useLocation();
   const pathname = location.pathname;
@@ -28,8 +28,6 @@ export const MobileSidebar: FC = () => {
     setTimeout(() => {
       if (action === 'pomodoro') {
         setPomodoroOpen(true);
-      } else if (action === 'program') {
-        setProgramOpen(true);
       }
     }, 400);
   };

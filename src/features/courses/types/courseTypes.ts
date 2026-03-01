@@ -1,7 +1,9 @@
 import { Database } from '@/types/database.types';
 import { ConceptMapItem } from '@/features/quiz/types';
 
-export type Course = Database['public']['Tables']['courses']['Row'];
+export type Course = Database['public']['Tables']['courses']['Row'] & {
+  total_pages?: number;
+};
 
 export type Category = Database['public']['Tables']['categories']['Row'] & {
   courses: Course[];

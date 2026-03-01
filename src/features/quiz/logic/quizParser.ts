@@ -500,6 +500,21 @@ async function ensureQuotas(
       : {}
   ) as Record<string, Json>;
 
+  const existingQuotas = existingAILogic.suggested_quotas as
+    | { antrenman: number; deneme: number }
+    | null
+    | undefined;
+  const isInvalidated = existingAILogic.invalidated_at != null;
+
+  if (
+    existingQuotas &&
+    !isInvalidated &&
+    existingQuotas.antrenman === quotas.antrenman
+  ) {
+    log('MAPPING', 'Önceden hesaplanmış kotalar yükleniyor...');
+    return existingQuotas;
+  }
+
   const quotaAILogic: Record<string, Json> = {
     ...existingAILogic,
     suggested_quotas: quotas,

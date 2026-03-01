@@ -20,25 +20,25 @@ export function CourseSelector({
 
   const courseOptions = (
     coursesData as {
-      category: string;
+      name: string;
       courses: { id: string; name: string }[];
     }[]
   ).flatMap((category) =>
     category.courses.map((course) => ({
       id: course.id,
       name: course.name,
-      category: category.category,
+      category: category.name,
     }))
   );
 
   const filteredCategories = !searchQuery
     ? (coursesData as {
-        category: string;
+        name: string;
         courses: { id: string; name: string }[];
       }[])
     : (
         coursesData as {
-          category: string;
+          name: string;
           courses: { id: string; name: string }[];
         }[]
       )
@@ -110,13 +110,13 @@ export function CourseSelector({
           {filteredCategories.length > 0 ? (
             (
               filteredCategories as {
-                category: string;
+                name: string;
                 courses: { id: string; name: string }[];
               }[]
             ).map((cat, idx) => (
               <div key={idx} className="space-y-3">
                 <h3 className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] px-3">
-                  {cat.category.replace(/\(.*\)/, '')}
+                  {cat.name.replace(/\(.*\)/, '')}
                 </h3>
                 <div className="space-y-1">
                   {cat.courses.map((course) => (

@@ -76,7 +76,7 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
   // 3. Course/Category
   (
     coursesData as Array<{
-      category: string;
+      name: string;
       courses: Array<{ id: string; totalVideos: number }>;
     }>
   ).forEach((cat) => {
@@ -90,7 +90,7 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
       }
     });
     if (catCompleted && cat.courses.length > 0) {
-      eligibleIds.add(`CATEGORY_COMPLETION:${cat.category}`);
+      eligibleIds.add(`CATEGORY_COMPLETION:${cat.name}`);
     }
   });
 

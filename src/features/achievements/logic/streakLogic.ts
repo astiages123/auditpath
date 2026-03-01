@@ -31,12 +31,6 @@ export function calculateStreak(
     } else {
       const dayOfWeek = checkDate.getDay();
 
-      // Yüksek Lisans Günleri (Salı, Çarşamba, Perşembe) tamamen muaf
-      if ([2, 3, 4].includes(dayOfWeek)) {
-        checkDate.setDate(checkDate.getDate() - 1);
-        continue;
-      }
-
       // Hafta sonu kontrolü
       if (dayOfWeek === 0 || dayOfWeek === 6) {
         // İki hafta sonu gününün de boş olup olmadığını kontrol et
@@ -139,8 +133,8 @@ export function calculateStreakMilestones(activeDays: string[]): {
           if (skippedDay === 6) skippedSaturday = true;
           if (skippedDay === 0) skippedSunday = true;
 
-          // Eğer çalışma olmayan gün Hafta sonu veya Yüksek Lisans günü DEĞİLSE, streak kırılır
-          if (![0, 6, 2, 3, 4].includes(skippedDay)) {
+          // Eğer çalışma olmayan gün Hafta sonu DEĞİLSE, streak kırılır
+          if (![0, 6].includes(skippedDay)) {
             hasBothWeekendGaps = true; // Kırılmış kabul et (hafta içi boşluk)
             break;
           }

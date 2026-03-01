@@ -39,7 +39,7 @@ export function calculateNextSession(
   currentSession: number,
   newRepCount: number
 ): number {
-  const gaps = [0, 1, 2, 5, 5];
+  const gaps = [0, 1, 2, 5];
   return currentSession + (gaps[newRepCount] ?? 5);
 }
 

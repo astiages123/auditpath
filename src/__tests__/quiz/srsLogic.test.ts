@@ -49,7 +49,7 @@ describe('srsLogic - Testleri', () => {
 
   describe('calculateNextSession', () => {
     it('3. Rep sayısına göre bir sonraki oturum aralığını doğru hesaplar', () => {
-      // gaps = [0, 1, 2, 5, 5]
+      // gaps = [0, 1, 2, 5]
       expect(calculateNextSession(10, 0)).toBe(10); // rep 0 -> +0
       expect(calculateNextSession(10, 1)).toBe(11); // rep 1 -> +1
       expect(calculateNextSession(10, 2)).toBe(12); // rep 2 -> +2

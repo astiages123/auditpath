@@ -1,7 +1,6 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { PomodoroModal, TimerController } from '@/features/pomodoro/components';
-import { ProgramModal } from '@/features/courses/components';
 import { Toaster } from '@/components/ui/sonner';
 import { useCelebration } from '@/shared/hooks/useCelebration';
 import { useCelebrationStore } from '@/features/achievements/store/useCelebrationStore';
@@ -38,13 +37,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     closeCelebration();
   };
 
-  const {
-    isMobileMenuOpen,
-    setMobileMenuOpen,
-    isProgramOpen,
-    setProgramOpen,
-    isSidebarCollapsed,
-  } = useUIStore();
+  const { isMobileMenuOpen, setMobileMenuOpen, isSidebarCollapsed } =
+    useUIStore();
   usePomodoro();
 
   const location = useLocation();
@@ -124,7 +118,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
       <TimerController />
       <PomodoroModal />
-      <ProgramModal open={isProgramOpen} onOpenChange={setProgramOpen} />
       <Toaster position="top-center" richColors />
 
       {user && current && isOpen && (

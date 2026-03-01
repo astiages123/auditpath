@@ -295,7 +295,9 @@ export default function CourseLibrary() {
   }, []);
 
   const activeCategory = categories[activeCategoryIndex];
-  const activeTheme = CATEGORY_THEMES[activeCategory?.name.toUpperCase()];
+  const activeTheme = activeCategory
+    ? CATEGORY_THEMES[activeCategory.name.toUpperCase()]
+    : undefined;
   const activeThemeConfig = activeTheme
     ? COURSE_THEME_CONFIG[activeTheme.theme]
     : COURSE_THEME_CONFIG['primary'];
@@ -322,11 +324,14 @@ export default function CourseLibrary() {
           style={{ gridTemplateColumns: `repeat(${categories.length}, 1fr)` }}
         >
           {categories.map((category, idx) => {
-            const theme = CATEGORY_THEMES[category.name.toUpperCase()];
+            const theme =
+              CATEGORY_THEMES[category.name.toUpperCase()] ||
+              CATEGORY_THEMES['İKTİSAT'] ||
+              Object.values(CATEGORY_THEMES)[0];
             const CatIcon = theme?.Icon ?? Brain;
-            const tc = theme
-              ? COURSE_THEME_CONFIG[theme.theme]
-              : COURSE_THEME_CONFIG['primary'];
+            const tc =
+              COURSE_THEME_CONFIG[theme.theme] ||
+              COURSE_THEME_CONFIG['primary'];
             const isActive = idx === activeCategoryIndex;
 
             return (

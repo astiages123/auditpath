@@ -164,8 +164,8 @@ export function useOptimisticProgress() {
 
         const categoryName =
           categoryData.slug ||
-          categoryData.category.split(' (')[0].split('. ')[1] ||
-          categoryData.category;
+          categoryData.name.split(' (')[0].split('. ')[1] ||
+          categoryData.name;
 
         const existingCatStats = old.categoryProgress[categoryName] || {
           completedVideos: 0,

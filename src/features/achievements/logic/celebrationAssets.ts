@@ -19,7 +19,7 @@ export interface CelebrationAsset {
 }
 
 interface CategoryData {
-  category: string;
+  name: string;
   courses: Array<{ id: string; totalVideos: number; name: string }>;
 }
 
