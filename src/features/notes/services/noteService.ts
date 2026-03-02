@@ -59,12 +59,16 @@ export async function fetchCourseNotes(
 /**
  * Invokes the Notion sync Edge Function.
  *
+ * @param curriculum Optional curriculum data to sync
  * @returns Sync response data
  */
-export async function invokeNotionSync(): Promise<SyncResponse> {
+export async function invokeNotionSync(
+  curriculum?: unknown
+): Promise<SyncResponse> {
   const { data } = await safeQuery<SyncResponse>(
     supabase.functions.invoke<SyncResponse>('notion-sync', {
       method: 'POST',
+      body: curriculum ? { curriculum } : {},
     }) as PromiseLike<{ data: SyncResponse | null; error: unknown }>,
     'invokeNotionSync error'
   );

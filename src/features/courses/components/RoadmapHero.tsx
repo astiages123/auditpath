@@ -77,7 +77,7 @@ export const RoadmapHero: FC<RoadmapHeroProps> = ({
             <div className="text-center">
               <p className="text-xl font-black text-foreground">%{progress}</p>
               <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
-                İlerleme
+                Genel İlerleme
               </p>
             </div>
           </div>

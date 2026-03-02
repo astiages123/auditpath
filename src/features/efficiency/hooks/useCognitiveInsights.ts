@@ -1,35 +1,62 @@
-import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { useCognitiveStore } from '@/features/efficiency/store/useCognitiveStore';
+import { getBloomStats } from '@/features/quiz/services/quizAnalyticsService';
+import {
+  getRecentCognitiveInsights,
+  getRecentQuizSessions,
+} from '@/features/quiz/services/quizHistoryService';
+import { getRecentActivitySessions } from '@/features/pomodoro/services/pomodoroService';
 import { BloomStats, CognitiveInsight } from '@/features/quiz/types';
 
 export function useCognitiveInsights() {
   const { user } = useAuth();
+  const userId = user?.id;
 
   const {
-    bloomStats,
-    recentSessions,
-    recentQuizzes,
-    cognitiveInsights,
-    error,
-    isFetchingBloom,
-    isFetchingSessions,
-    isFetchingQuizzes,
-    isFetchingCognitive,
-    fetchData,
-  } = useCognitiveStore();
+    data: bloomStats,
+    isLoading: loadingBloom,
+    error: bloomError,
+  } = useQuery({
+    queryKey: ['bloomStats', userId],
+    queryFn: () => getBloomStats(userId!),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  useEffect(() => {
-    if (user?.id) {
-      fetchData(user.id);
-    }
-  }, [user?.id, fetchData]);
+  const {
+    data: recentSessions,
+    isLoading: loadingSessions,
+    error: sessionsError,
+  } = useQuery({
+    queryKey: ['recentSessions', userId],
+    queryFn: () => getRecentActivitySessions(userId!, 20),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  // Specific loading states for different cards
-  const loadingBloom = isFetchingBloom && bloomStats === null;
-  const loadingSessions = isFetchingSessions && recentSessions === null;
-  const loadingQuizzes = isFetchingQuizzes && recentQuizzes === null;
-  const loadingCognitive = isFetchingCognitive && cognitiveInsights === null;
+  const {
+    data: recentQuizzes,
+    isLoading: loadingQuizzes,
+    error: quizzesError,
+  } = useQuery({
+    queryKey: ['recentQuizzes', userId],
+    queryFn: () => getRecentQuizSessions(userId!, 50),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const {
+    data: cognitiveInsights,
+    isLoading: loadingCognitive,
+    error: cognitiveError,
+  } = useQuery({
+    queryKey: ['cognitiveInsights', userId],
+    queryFn: () => getRecentCognitiveInsights(userId!, 30),
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const error = bloomError || sessionsError || quizzesError || cognitiveError;
 
   // Derived State: Bloom Radar Data
   const order = ['Bilgi', 'Analiz', 'Uygula'];

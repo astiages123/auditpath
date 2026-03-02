@@ -8,7 +8,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/utils/routes';
-import { SyncButton } from '@/features/notes/components/SyncButton';
+import { SyncButton } from '@/shared/components/SyncButton';
 import { getNavItemsByGroup, NAV_GROUP_LABELS } from './dashboard/nav-config';
 import type { NavItem } from './dashboard/nav-config';
 

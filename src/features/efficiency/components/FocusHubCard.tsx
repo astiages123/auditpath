@@ -179,7 +179,7 @@ export const FocusHubCard = () => {
                   <div className="flex flex-col md:flex-row md:items-baseline gap-x-3 gap-y-1 justify-center md:justify-start">
                     <p
                       className={cn(
-                        'text-3xl md:text-4xl font-bold font-heading',
+                        'text-xl md:text-2xl font-bold font-heading',
                         getFlowColor(flowState)
                       )}
                     >
@@ -187,9 +187,8 @@ export const FocusHubCard = () => {
                     </p>
                     <p
                       className={cn(
-                        'text-[11px] font-bold tracking-wide lowercase',
-                        getFlowColor(flowState),
-                        'opacity-90'
+                        'text-xs font-bold tracking-wide lowercase whitespace-nowrap',
+                        getFlowColor(flowState)
                       )}
                     >
                       {getFlowStatusLabel(flowState)}

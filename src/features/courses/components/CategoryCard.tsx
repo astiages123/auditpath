@@ -42,18 +42,22 @@ export function CategoryCard({
   isOpen,
   onToggle,
 }: CategoryCardProps) {
-  // Use config for styles
-  const categoryConfig =
-    CATEGORY_THEMES[id] ||
-    CATEGORY_THEMES[id.toUpperCase()] ||
-    Object.values(CATEGORY_THEMES)[0];
-  const { Icon } = categoryConfig;
   const { stats } = useProgress();
   const { triggerCategoryCelebration, revokeCategoryCelebration } =
     useCelebration();
 
   const categoryName = name.split(' (')[0];
   const normalizedSlug = normalizeCategorySlug(categoryName);
+
+  // Use config for styles
+  const categoryConfig =
+    CATEGORY_THEMES[normalizedSlug] ||
+    CATEGORY_THEMES[slug] ||
+    CATEGORY_THEMES[id] ||
+    CATEGORY_THEMES[id.toUpperCase()] ||
+    Object.values(CATEGORY_THEMES)[0];
+  const { Icon } = categoryConfig;
+
   const catStats =
     stats.categoryProgress[normalizedSlug] ||
     stats.categoryProgress[categoryName] ||

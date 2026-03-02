@@ -201,13 +201,10 @@ export async function getUserStats(
     const progressPercentage = Math.round(
       (completedHours / globalTotalHours) * 100
     );
-    const currentRank =
-      completedVideos > 0
-        ? getRankForPercentage(progressPercentage)
-        : undefined;
+    const currentRank = getRankForPercentage(progressPercentage);
     const nextRank = currentRank ? getNextRank(currentRank.id) : null;
 
-    let rankProgress = 100;
+    let rankProgress = 0;
     if (currentRank && nextRank) {
       const diff = nextRank.minPercentage - currentRank.minPercentage;
       rankProgress =
@@ -263,9 +260,12 @@ export async function getUserStats(
       todayVideoCount:
         progress?.filter((p) => {
           const dateStr = p.completed_at || p.updated_at;
+          const video = p.video as { course_id: string };
+          const courseType = courseIdToTypeMap[video?.course_id] || 'video';
           return (
             dateStr &&
-            getVirtualDateKey(new Date(dateStr)) === getVirtualDateKey()
+            getVirtualDateKey(new Date(dateStr)) === getVirtualDateKey() &&
+            courseType !== 'reading'
           );
         }).length || 0,
     };

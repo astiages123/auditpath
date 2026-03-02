@@ -8975,13 +8975,6 @@
             "duration": "24 Sayfa"
           },
           {
-            "id": 4,
-            "title": "Zerman, Ece (2008). Interview with Fatmagül Berktay: \"Osmanlı-Türk Modernleşmesinin Özneleri, Sembolleri, Kuşkuları: Kadınlar\".",
-            "startPage": 65,
-            "durationMinutes": 15,
-            "duration": "6 Sayfa"
-          },
-          {
             "id": 5,
             "title": "1. Paper",
             "startPage": 1,
@@ -8989,9 +8982,9 @@
             "duration": "Paper"
           }
         ],
-        "totalVideos": 5,
-        "totalHours": 2.92,
-        "total_pages": 70
+        "totalVideos": 4,
+        "totalHours": 2.67,
+        "total_pages": 64
       },
       {
         "id": "ata-584-hafta-5",

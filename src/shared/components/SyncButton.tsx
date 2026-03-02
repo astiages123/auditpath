@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { CloudSync, Loader2 } from 'lucide-react';
-import { invokeNotionSync } from '../services/noteService';
+import { CloudSync, Loader2, CheckCircle2 } from 'lucide-react';
+import { invokeNotionSync } from '@/features/notes/services/noteService';
+import coursesData from '@/features/courses/services/courses.json';
 import { toast } from 'sonner';
 import { cn } from '@/utils/stringHelpers';
 import { Button } from '@/components/ui/button';
@@ -26,25 +27,43 @@ export function SyncButton({
     if (isSyncing) return;
 
     setIsSyncing(true);
-    const toastId = toast.info('Senkronize ediliyor', {
-      description: 'Notlar güncelleniyor, lütfen bekleyin...',
+    const toastId = toast.info('Senkronizasyon Başlatıldı', {
+      description: 'Notion notları kontrol ediliyor...',
       duration: Infinity,
       icon: <Loader2 className="size-4 text-blue-400 animate-spin" />,
     });
 
     try {
-      const data = await invokeNotionSync();
+      // 1. Unified Backend Sync (Notion Notes + Curriculum Totals)
+      const notionData = await invokeNotionSync(coursesData);
 
-      if (data.success && data.stats) {
+      if (!notionData.success) {
+        throw new Error(notionData.error || 'Senkronizasyon başarısız.');
+      }
+
+      if (notionData.success && notionData.stats) {
         toast.dismiss(toastId);
-        toast.success('Senkronizasyon Başarılı!', {
-          description: `${data.stats.synced} eklendi, ${data.stats.deleted} silindi, ${data.stats.skipped} atlandı.`,
+
+        const notionMsg = `${notionData.stats.synced} not güncellendi.`;
+        const currMsg = 'Müfredat istatistikleri güncellendi.';
+
+        toast.success('Master Sync Tamamlandı!', {
+          description: (
+            <div className="flex flex-col gap-1 mt-1">
+              <div className="flex items-center gap-2 text-xs">
+                <CheckCircle2 className="size-3 text-green-500" />
+                <span>{notionMsg}</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs">
+                <CheckCircle2 className="size-3 text-green-500" />
+                <span>{currMsg}</span>
+              </div>
+            </div>
+          ),
+          duration: 5000,
         });
+
         onSyncComplete?.();
-      } else {
-        throw new Error(
-          data.error || 'Senkronizasyon sırasında bir hata oluştu.'
-        );
       }
     } catch (error: unknown) {
       const message =

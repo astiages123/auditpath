@@ -115,10 +115,8 @@ export const RoadmapPath: FC<RoadmapPathProps> = ({
                           {milestone.title}
                         </h4>
                         <span className="text-xs font-mono font-bold text-muted-foreground shrink-0">
-                          {milestone.threshold === 0
-                            ? '0'
-                            : `${milestone.threshold}-${milestones[index + 1]?.threshold || 100}`}
-                          %
+                          {milestone.threshold}-
+                          {milestones[index + 1]?.threshold || 100}%
                         </span>
                       </div>
                       <p className="text-xs text-muted-foreground line-clamp-2">
@@ -224,10 +222,8 @@ export const RoadmapPath: FC<RoadmapPathProps> = ({
                     {milestone.title}
                   </h4>
                   <span className="text-[9px] font-mono font-bold text-muted-foreground/40">
-                    {milestone.threshold === 0
-                      ? '0'
-                      : `${milestone.threshold}-${milestones[index + 1]?.threshold || 100}`}
-                    %
+                    {milestone.threshold}-
+                    {milestones[index + 1]?.threshold || 100}%
                   </span>
                 </div>
                 <p

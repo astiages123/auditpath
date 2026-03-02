@@ -9,6 +9,7 @@ import {
   Youtube,
   BookOpen,
   BookOpenText,
+  Trophy,
 } from 'lucide-react';
 import { VideoList } from './VideoList';
 import { formatDurationShort } from '@/utils/dateUtils';
@@ -95,7 +96,7 @@ export function CourseList({
         const courseCardClass = cn(
           'rounded-xl border overflow-hidden transition-all duration-200 group',
           isCompleted
-            ? 'border-primary/50 bg-primary/5 hover:bg-primary/10 hover:border-primary/70 shadow-[0_0_15px_-5px_rgba(var(--primary),0.5)]'
+            ? 'border-accent/40 bg-accent/5 hover:bg-accent/10 hover:border-accent/60 shadow-[0_0_15px_-5px_var(--shadow-glow-accent)]'
             : 'border-white/5 bg-card/40 hover:border-white/30 hover:bg-card/60'
         );
 
@@ -115,14 +116,14 @@ export function CourseList({
 
         const titleClass = cn(
           'font-bold text-sm sm:text-base leading-tight transition-colors line-clamp-2',
-          isCompleted ? 'text-primary-foreground' : 'text-zinc-100'
+          isCompleted ? 'text-zinc-100' : 'text-zinc-100'
         );
 
         return (
           <div key={course.id} className={courseCardClass}>
             {/* Main Content Area */}
             <div
-              className="flex items-center gap-4 p-5 cursor-pointer"
+              className="flex items-center gap-4 p-5 cursor-pointer relative"
               role="button"
               tabIndex={0}
               onClick={() =>
@@ -142,6 +143,12 @@ export function CourseList({
               <div className={iconContainerClass}>
                 <Icon className={iconClass} />
               </div>
+
+              {isCompleted && (
+                <div className="absolute top-0 right-0 p-1.5 bg-accent rounded-bl-xl rounded-tr-lg shadow-lg z-50">
+                  <Trophy className="size-3.5 text-muted fill-foreground/20" />
+                </div>
+              )}
 
               {/* Column 2: Name + Stats (Time, Videos, Youtube) */}
               <div className="flex-1 min-w-0">
@@ -259,7 +266,7 @@ export function CourseList({
                   <span
                     className={cn(
                       'text-lg font-black leading-none',
-                      isCompleted ? 'text-primary' : categoryColor
+                      isCompleted ? 'text-accent' : categoryColor
                     )}
                   >
                     %{progress}

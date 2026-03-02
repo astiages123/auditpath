@@ -11,7 +11,6 @@ export function usePomodoroWorker(onTick: () => void) {
   const workerRef = useRef<Worker | null>(null);
   const onTickRef = useRef(onTick);
 
-  // Sync ref with latest prop
   useEffect(() => {
     onTickRef.current = onTick;
   }, [onTick]);
@@ -25,7 +24,6 @@ export function usePomodoroWorker(onTick: () => void) {
 
     workerRef.current = worker;
 
-    // Use the ref inside the stable handler
     worker.onmessage = (e) => {
       if (e.data === 'TICK') {
         onTickRef.current();

@@ -4,7 +4,7 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useUIStore } from '@/shared/store/useUIStore';
 import { AuthModal } from '@/features/auth/components/AuthModal';
 import { GlobalBreadcrumb } from '@/shared/components/GlobalBreadcrumb';
-import { SyncButton } from '@/features/notes/components/SyncButton';
+import { SyncButton } from '@/shared/components/SyncButton';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,

@@ -287,6 +287,63 @@ serve(async (req) => {
       )
     );
 
+    // --- NEW: Curriculum Sync ---
+    let curriculumUpdated = 0;
+    try {
+      const body = await req.json();
+      if (body?.curriculum && Array.isArray(body.curriculum)) {
+        for (const catData of body.curriculum) {
+          const catTotalHours = (catData.courses || []).reduce(
+            (sum: number, c: { totalHours?: number }) =>
+              sum + (c.totalHours || 0),
+            0
+          );
+          const categoryId = courseLookup.get(catData.name);
+          if (!categoryId) {
+            console.warn(`Category not found: ${catData.name}`);
+          }
+
+          // Note: courseLookup was built from courses, let's re-fetch categories to be sure
+          const { data: dbCat } = await supabase
+            .from('categories')
+            .select('id')
+            .eq('name', catData.name)
+            .single();
+
+          if (dbCat) {
+            await supabase
+              .from('categories')
+              .update({ total_hours: catTotalHours })
+              .eq('id', dbCat.id);
+
+            for (const courseData of catData.courses || []) {
+              const slug = courseData.slug || courseData.id;
+              const { data: dbCourse } = await supabase
+                .from('courses')
+                .select('id')
+                .eq('course_slug', slug)
+                .single();
+
+              if (dbCourse) {
+                await supabase
+                  .from('courses')
+                  .update({
+                    total_videos: courseData.totalVideos || 0,
+                    total_hours: courseData.totalHours || 0,
+                    total_pages: courseData.total_pages || 0,
+                    type: courseData.type || 'video',
+                  })
+                  .eq('id', dbCourse.id);
+                curriculumUpdated++;
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Curriculum sync error:', e);
+    }
+
     let deleted = 0;
     if (touched.size > 0) {
       const { data: dbChunks } = await supabase
@@ -317,6 +374,7 @@ serve(async (req) => {
       skipped: results.filter((r) => r.status === 'SKIPPED').length,
       deleted,
       errors: results.filter((r) => r.status === 'ERROR').length,
+      curriculumUpdated,
     };
 
     return new Response(JSON.stringify({ success: true, stats }), {

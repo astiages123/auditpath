@@ -1,23 +1,20 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, CheckCircle2, FileText, Pencil } from 'lucide-react';
-import { getCategories } from '@/features/courses/services/courseService';
-import type { Category, Course } from '@/features/courses/types/courseTypes';
+import type { Course } from '@/features/courses/types/courseTypes';
 import {
   CATEGORY_THEMES,
   COURSE_THEME_CONFIG,
 } from '@/features/courses/utils/coursesConfig';
 import { getCourseIcon } from '@/features/courses/logic/coursesLogic';
+import { normalizeCategorySlug } from '@/features/courses/utils/categoryHelpers';
 import { ROUTES } from '@/utils/routes';
 import { PageHeader } from '@/shared/components/PageHeader';
-import {
-  getLandingDashboardData,
-  type LandingCourseStats,
-} from '@/features/quiz/services/quizLandingService';
-import { supabase } from '@/lib/supabase';
+import { type LandingCourseStats } from '@/features/quiz/services/quizLandingService';
 import { cn } from '@/utils/stringHelpers';
 import { PageContainer } from '@/components/layout/PageContainer';
+import { useCourseLibraryData } from '@/features/courses/hooks/useCourseLibraryData';
 
 // === HELPERS ===
 
@@ -30,18 +27,6 @@ const formatDuration = (hours: number | null): string => {
   if (m > 0) parts.push(`${m} dk`);
   return parts.join(' ') || '—';
 };
-
-// Local getCourseIcon removed to use the centralized one.
-
-// getCourseTheme is not used, keeping it as it might be used later.
-/* const getCourseTheme = (course: Course): CourseTheme => {
-  const mapping = COURSE_KEYWORD_MAPPINGS.find((m) =>
-    m.keywords.some((kw) =>
-      course.name.toLowerCase().includes(kw.toLowerCase())
-    )
-  );
-  return mapping?.theme ?? 'primary';
-}; */
 
 // === SKELETON ===
 
@@ -152,7 +137,6 @@ function CourseRow({
   onNotes: (c: Course) => void;
   onQuiz: (c: Course) => void;
 }) {
-  // const Icon = getCourseIcon(course); // Moved inside render to avoid component creation during render error
   const videoProgress = stats?.videoProgress ?? 0;
   const mastery = stats?.averageMastery ?? 0;
 
@@ -237,53 +221,21 @@ function CourseRow({
 // === PAGE ===
 
 export default function CourseLibrary() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [dashboardStats, setDashboardStats] = useState<
-    Record<string, LandingCourseStats>
-  >({});
-  const [loading, setLoading] = useState(true);
+  const { categories, dashboardStats, loading } = useCourseLibraryData();
   const [activeCategoryIndex, setActiveCategoryIndex] = useState(0);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        const { data: userData } = await supabase.auth.getUser();
-        const userId = userData.user?.id;
-
-        const [data, stats] = await Promise.all([
-          getCategories(),
-          userId ? getLandingDashboardData(userId) : Promise.resolve({}),
-        ]);
-
-        const sorted = data
-          .filter((cat) => cat.name !== 'ATA 584' && cat.slug !== 'ATA_584')
-          .sort(
-            (a, b) =>
-              (a.sort_order || 0) - (b.sort_order || 0) ||
-              a.name.localeCompare(b.name)
-          );
-
-        if (!cancelled) {
-          setCategories(sorted);
-          setDashboardStats(stats);
-          setLoading(false);
-        }
-      } catch {
-        if (!cancelled) setLoading(false);
-      }
-    }
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   const activeCategory = categories[activeCategoryIndex];
+  const activeNormalizedSlug = activeCategory
+    ? normalizeCategorySlug(activeCategory.name)
+    : '';
+
   const activeTheme = activeCategory
-    ? CATEGORY_THEMES[activeCategory.name.toUpperCase()]
+    ? CATEGORY_THEMES[activeNormalizedSlug] ||
+      CATEGORY_THEMES[activeCategory.slug] ||
+      CATEGORY_THEMES[activeCategory.name.toUpperCase()]
     : undefined;
+
   const activeThemeConfig = activeTheme
     ? COURSE_THEME_CONFIG[activeTheme.theme]
     : COURSE_THEME_CONFIG['primary'];
@@ -310,9 +262,11 @@ export default function CourseLibrary() {
           style={{ gridTemplateColumns: `repeat(${categories.length}, 1fr)` }}
         >
           {categories.map((category, idx) => {
+            const normalizedSlug = normalizeCategorySlug(category.name);
             const theme =
+              CATEGORY_THEMES[normalizedSlug] ||
+              CATEGORY_THEMES[category.slug] ||
               CATEGORY_THEMES[category.name.toUpperCase()] ||
-              CATEGORY_THEMES['İKTİSAT'] ||
               Object.values(CATEGORY_THEMES)[0];
             const CatIcon = theme?.Icon ?? Brain;
             const tc =

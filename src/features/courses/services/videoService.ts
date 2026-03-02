@@ -166,10 +166,11 @@ export async function toggleVideoProgressBatch(
 export async function getDailyVideoMilestones(
   userId: string
 ): Promise<DailyVideoMilestones> {
+  // Join with videos and courses to check the type
   const { data, success } = await safeQuery(
     supabase
       .from('video_progress')
-      .select('completed_at')
+      .select('completed_at, video:videos(course:courses(type))')
       .eq('user_id', userId)
       .eq('completed', true)
       .not('completed_at', 'is', null),
@@ -180,10 +181,16 @@ export async function getDailyVideoMilestones(
     return { maxCount: 0, first5Date: null, first10Date: null };
   }
 
-  // Günlere göre grupla
+  // Günlere göre grupla (sadece video olanları)
   const dailyCounts: Record<string, number> = {};
   for (const row of data) {
     if (!row.completed_at) continue;
+
+    // Type kontrolü: Eğer course tipi 'reading' ise sayma
+    const videoData = row.video as { course: { type: string } };
+    const courseType = videoData?.course?.type || 'video';
+    if (courseType === 'reading') continue;
+
     const date = new Date(row.completed_at);
     const dayKey = `${date.getFullYear()}-${String(
       date.getMonth() + 1

@@ -23,7 +23,7 @@ export const VideoItem = memo(function VideoItem({
       onClick={(e) => onToggle(videoNumber, e.metaKey || e.ctrlKey)}
       className={`group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-300 text-left w-full ${
         completed
-          ? 'bg-linear-to-r from-emerald-500/20 to-emerald-500/5 border-emerald-500/20'
+          ? 'bg-accent/5 border-accent/30 shadow-[0_0_15px_-5px_var(--shadow-glow-accent)]'
           : 'bg-linear-to-r from-zinc-800/50 to-zinc-900/50 border-white/5 hover:from-zinc-800 hover:to-zinc-900 hover:border-white/10'
       }`}
     >
@@ -31,7 +31,7 @@ export const VideoItem = memo(function VideoItem({
       <div
         className={`shrink-0 flex items-center justify-center size-6 rounded-full border transition-all duration-300 ${
           completed
-            ? `bg-emerald-500 text-white border-emerald-500 shadow-[0_0_10px_-3px_rgba(16,185,129,0.5)]`
+            ? `bg-accent text-accent-foreground border-accent shadow-[0_0_10px_-3px_rgba(var(--accent),0.5)]`
             : 'border-zinc-600 bg-black/20 group-hover:border-zinc-400'
         }`}
       >
@@ -46,7 +46,7 @@ export const VideoItem = memo(function VideoItem({
       <span
         className={`text-sm font-mono shrink-0 ${
           completed
-            ? 'text-emerald-200/70'
+            ? 'text-accent/70'
             : 'text-zinc-300 group-hover:text-zinc-400'
         }`}
       >
@@ -58,7 +58,7 @@ export const VideoItem = memo(function VideoItem({
         <span
           className={`text-sm font-medium transition-colors ${
             completed
-              ? 'text-emerald-50'
+              ? 'text-zinc-100'
               : 'text-zinc-300 group-hover:text-zinc-100'
           }`}
         >
@@ -71,7 +71,7 @@ export const VideoItem = memo(function VideoItem({
         <span
           className={`text-xs font-medium px-2.5 py-1 rounded-md border transition-colors ${
             completed
-              ? 'bg-primary/10 border-primary/10 text-primary'
+              ? 'bg-accent/10 border-accent/10 text-accent/90'
               : 'bg-zinc-800/50 border-white/5 text-zinc-400 group-hover:bg-muted/40 group-hover:text-zinc-300'
           }`}
         >

@@ -69,7 +69,7 @@ export function RankCard({
                     currentRank?.color || 'text-white'
                   )}
                 >
-                  {currentRank?.name || 'Hiçlikten Yeni Doğan'}
+                  {currentRank?.name || 'Sürgün'}
                 </h3>
               )}
             </div>
@@ -94,17 +94,25 @@ export function RankCard({
               ) : (
                 <p className="text-xs text-muted-foreground">
                   {nextRank
-                    ? `${nextRank.name} seviyesine ulaşmak için %${100 - rankProgress} kaldı`
-                    : 'En üst seviyedesiniz!'}
+                    ? `${nextRank.name} rütbesine %${Math.max(0, 100 - rankProgress)} kaldı`
+                    : 'Zirveye ulaştınız!'}
                 </p>
               )}
             </div>
             {showSkeleton ? (
               <Skeleton className="h-8 w-16 bg-surface-hover" />
             ) : (
-              <span className="text-xl font-bold text-white tracking-tighter">
-                {rankProgress}%
-              </span>
+              <div className="text-right">
+                <span className="text-xl font-bold text-white tracking-tighter">
+                  {rankProgress}%
+                </span>
+                {/* 
+                  Kullanıcının %88 görüp şaşırmaması için rütbe içi ilerleme olduğunu belirtiyoruz.
+                */}
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter opacity-70">
+                  Rütbe Tahsili
+                </p>
+              </div>
             )}
           </div>
           <div className="relative h-2 w-full bg-white/10 rounded-full overflow-hidden">
@@ -128,7 +136,9 @@ export function RankCard({
               <span>
                 Tahmini Varış:{' '}
                 <span className="text-white font-medium">
-                  {displayEstimatedDays} gün
+                  {displayEstimatedDays > 0
+                    ? `${displayEstimatedDays} gün`
+                    : 'Çok yakında!'}
                 </span>
               </span>
             </div>

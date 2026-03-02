@@ -35,8 +35,8 @@ export default function TitleRoadmap({
   }));
 
   const progress =
-    requiredVideos > 0
-      ? Math.min(Math.round((watchedVideos / requiredVideos) * 100), 100)
+    totalHours > 0
+      ? Math.min(Math.round((completedHours / totalHours) * 100), 100)
       : 0;
 
   let currentRankIndex = milestones.length - 1;

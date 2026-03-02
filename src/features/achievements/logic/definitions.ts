@@ -418,7 +418,7 @@ export const ATA_ACHIEVEMENTS: Achievement[] = [
     id: 'ata_10',
     title: 'Geçmişin Ayak İzleri',
     motto: 'Tarihsel okumalara ve kadim metinlere başlangıç yaptın.',
-    imagePath: '/ranks/rank1.webp',
+    imagePath: '/badges/ata_10.webp',
     guild: 'ATA_584',
     requirement: {
       type: 'category_progress',
@@ -432,7 +432,7 @@ export const ATA_ACHIEVEMENTS: Achievement[] = [
     title: 'Devrim Şövalyesi',
     motto:
       'İnkılapların derinliğine iniyor, değişimin rüzgarını hissediyorsun.',
-    imagePath: '/ranks/rank2.webp',
+    imagePath: '/badges/ata_25.webp',
     guild: 'ATA_584',
     requirement: {
       type: 'category_progress',
@@ -445,7 +445,7 @@ export const ATA_ACHIEVEMENTS: Achievement[] = [
     id: 'ata_50',
     title: 'Cumhuriyet Meşalesi',
     motto: 'Kuruluş ilkelerini ve ruhunu layıkıyla kavramaya başladın.',
-    imagePath: '/ranks/rank3.webp',
+    imagePath: '/badges/ata_50.webp',
     guild: 'ATA_584',
     requirement: {
       type: 'category_progress',
@@ -459,7 +459,7 @@ export const ATA_ACHIEVEMENTS: Achievement[] = [
     title: 'Tarih Muhafızı',
     motto:
       'Geçmişin tüm ışığını geleceğe taşıyacak kadim metinlerde tam yetkinlik.',
-    imagePath: '/ranks/rank4.webp',
+    imagePath: '/badges/ata_100.webp',
     guild: 'ATA_584',
     requirement: {
       type: 'category_progress',
