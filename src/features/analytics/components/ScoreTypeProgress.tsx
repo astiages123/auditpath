@@ -128,9 +128,9 @@ export const ScoreTypeProgress: FC<ScoreTypeProgressProps> = ({
 
             {/* Area Details */}
             <div className="flex flex-wrap gap-2">
-              {type.details.map((detail, idx) => (
+              {type.details.map((detail) => (
                 <div
-                  key={idx}
+                  key={detail.label}
                   className="flex flex-col gap-1 flex-1 min-w-[70px]"
                 >
                   <div className="flex justify-between items-center text-[10px] uppercase tracking-wider font-bold text-foreground">

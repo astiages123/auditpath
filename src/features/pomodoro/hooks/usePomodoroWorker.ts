@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 
 /**
  * Hook to manage the specialized Pomodoro Timer Worker.
@@ -11,7 +11,7 @@ export function usePomodoroWorker(onTick: () => void) {
   const workerRef = useRef<Worker | null>(null);
   const onTickRef = useRef(onTick);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     onTickRef.current = onTick;
   }, [onTick]);
 
