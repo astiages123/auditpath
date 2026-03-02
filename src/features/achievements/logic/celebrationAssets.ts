@@ -5,8 +5,6 @@ import {
 } from '@/features/achievements/logic/achievementsData';
 import { getRankIcon, type Rank } from './rankIcons';
 import { RANKS } from '../utils/constants';
-import coursesData from '@/features/courses/services/courses.json';
-import { getCourseIcon } from '@/features/courses/logic/coursesLogic';
 
 export interface CelebrationAsset {
   title: string;
@@ -16,11 +14,6 @@ export interface CelebrationAsset {
   imageUrl?: string;
   variant: 'course' | 'rank' | 'achievement';
   metadata?: Record<string, unknown>;
-}
-
-interface CategoryData {
-  name: string;
-  courses: Array<{ id: string; totalVideos: number; name: string }>;
 }
 
 export function getCelebrationAsset(id: string): CelebrationAsset {
@@ -51,27 +44,16 @@ export function getCelebrationAsset(id: string): CelebrationAsset {
   // 2. Course Completions
   if (id.startsWith('COURSE_COMPLETION:')) {
     const courseId = id.split(':')[1];
-    let courseName = courseId;
-    let CourseIcon = GraduationCap;
-
-    // Find course name from JSON
-    for (const cat of coursesData as CategoryData[]) {
-      const c = cat.courses.find(
-        (c: { id: string; name: string }) => c.id === courseId
-      );
-      if (c) {
-        courseName = c.name || courseName;
-        CourseIcon = getCourseIcon(courseName, courseId) || GraduationCap;
-        break;
-      }
-    }
+    // Note: Finding names without full category list fetched in this sync function.
+    // Ideally, we pass the category info as well.
+    // For now, we use a generic placeholder or the ID itself if not available.
 
     return {
       variant: 'course',
       title: 'DERS TAMAMLANDI',
-      description: courseName,
+      description: courseId,
       subtitle: 'Bu alandaki kadim bilgileri özümsedin.',
-      icon: CourseIcon,
+      icon: GraduationCap, // Simplified, caller should provide name/icon if needed
       metadata: { courseId },
     };
   }

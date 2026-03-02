@@ -1,26 +1,30 @@
 import { memo } from 'react';
-import { Check, Circle } from 'lucide-react';
+import { Check, Circle, Play, FileText } from 'lucide-react';
 
-interface VideoItemProps {
-  _id: number;
-  videoNumber: number;
+interface CourseItemProps {
+  _id: string; // Changed from number to string (UUID)
+  itemNumber: number;
   title: string;
   duration: string;
   completed: boolean;
-  onToggle: (videoNumber: number, isModifierPressed: boolean) => void;
+  itemType: 'video' | 'reading';
+  onToggle: (itemNumber: number, isModifierPressed: boolean) => void;
 }
 
-export const VideoItem = memo(function VideoItem({
+export const CourseItem = memo(function CourseItem({
   _id,
-  videoNumber,
+  itemNumber,
   title,
   duration,
   completed,
+  itemType,
   onToggle,
-}: VideoItemProps) {
+}: CourseItemProps) {
+  const Icon = itemType === 'video' ? Play : FileText;
+
   return (
     <button
-      onClick={(e) => onToggle(videoNumber, e.metaKey || e.ctrlKey)}
+      onClick={(e) => onToggle(itemNumber, e.metaKey || e.ctrlKey)}
       className={`group relative flex items-center gap-3 p-3 rounded-xl border transition-all duration-300 text-left w-full ${
         completed
           ? 'bg-accent/5 border-accent/30 shadow-[0_0_15px_-5px_var(--shadow-glow-accent)]'
@@ -42,16 +46,25 @@ export const VideoItem = memo(function VideoItem({
         )}
       </div>
 
-      {/* Number */}
-      <span
-        className={`text-sm font-mono shrink-0 ${
-          completed
-            ? 'text-accent/70'
-            : 'text-zinc-300 group-hover:text-zinc-400'
-        }`}
-      >
-        {videoNumber}.
-      </span>
+      {/* Icon and Number */}
+      <div className="flex items-center gap-2 shrink-0">
+        <Icon
+          className={`size-3.5 ${
+            completed
+              ? 'text-accent/70'
+              : 'text-zinc-500 group-hover:text-zinc-400'
+          }`}
+        />
+        <span
+          className={`text-sm font-mono ${
+            completed
+              ? 'text-accent/70'
+              : 'text-zinc-300 group-hover:text-zinc-400'
+          }`}
+        >
+          {itemNumber}.
+        </span>
+      </div>
 
       {/* Content */}
       <div className="flex-1 min-w-0">

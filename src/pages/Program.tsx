@@ -57,24 +57,22 @@ export default function ProgramPage() {
 
               <CardContent className="p-5">
                 <div className="flex justify-between items-center mb-5">
-                  <div className="space-y-1">
-                    <h3
-                      className={cn(
-                        'text-lg font-bold',
-                        isToday ? 'text-primary' : 'text-foreground'
-                      )}
-                    >
-                      {item.dayName}
-                    </h3>
-                    {isToday && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-primary/10 text-primary text-[10px] h-5 px-2 flex w-fit"
-                      >
-                        BUGÜN
-                      </Badge>
+                  <h3
+                    className={cn(
+                      'text-lg font-bold',
+                      isToday ? 'text-primary' : 'text-foreground'
                     )}
-                  </div>
+                  >
+                    {item.dayName}
+                  </h3>
+                  {isToday && (
+                    <Badge
+                      variant="secondary"
+                      className="bg-primary/10 text-primary text-[10px] h-5 px-2 flex w-fit"
+                    >
+                      BUGÜN
+                    </Badge>
+                  )}
                 </div>
 
                 <div className="space-y-3">

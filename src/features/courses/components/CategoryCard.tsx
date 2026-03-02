@@ -124,17 +124,15 @@ export function CategoryCard({
                   {displayCompletedVideos}/{displayTotalVideos} KONU
                 </span>
               </div>
-              {slug !== 'KAMU_YONETIMI' &&
-                slug !== 'ULUSLARARASI_ILISKILER' &&
-                slug !== 'ATA_584' && (
-                  <div className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-2xl bg-surface/40 border border-white/5 text-[10px] font-black text-muted-foreground uppercase tracking-tight shadow-sm">
-                    <FileText className="size-3.5 text-muted-foreground/40" />
-                    <span className="truncate">
-                      {Math.round(displayCompletedHours * 24)}/
-                      {Math.round(displayTotalHours * 24)} SAYFA
-                    </span>
-                  </div>
-                )}
+              {slug !== 'SIYASAL_BILGILER' && slug !== 'ATA_584' && (
+                <div className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-2xl bg-surface/40 border border-white/5 text-[10px] font-black text-muted-foreground uppercase tracking-tight shadow-sm">
+                  <FileText className="size-3.5 text-muted-foreground/40" />
+                  <span className="truncate">
+                    {Math.round(displayCompletedHours * 24)}/
+                    {Math.round(displayTotalHours * 24)} SAYFA
+                  </span>
+                </div>
+              )}
             </>
           ) : (
             <>
@@ -165,7 +163,7 @@ export function CategoryCard({
               <Icon className="w-6 h-6" />
             </div>
             <div className="flex-1 min-w-0">
-              <h3 className="text-xl font-bold text-white tracking-tight">
+              <h3 className="text-lg font-bold text-white tracking-tight">
                 {name}
               </h3>
               <div className="hidden sm:flex items-center gap-2 mt-2 text-[10px] font-bold text-muted-foreground uppercase tracking-wider overflow-x-auto scrollbar-hide no-scrollbar">
@@ -179,15 +177,13 @@ export function CategoryCard({
                       <BookOpen className="size-3 text-muted-foreground/60" />
                       {displayCompletedVideos}/{displayTotalVideos} KONU
                     </span>
-                    {slug !== 'KAMU_YONETIMI' &&
-                      slug !== 'ULUSLARARASI_ILISKILER' &&
-                      slug !== 'ATA_584' && (
-                        <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface/50 border border-white/5 whitespace-nowrap">
-                          <FileText className="size-3 text-muted-foreground/60" />
-                          {Math.round(displayCompletedHours * 24)}/
-                          {Math.round(displayTotalHours * 24)} SAYFA
-                        </span>
-                      )}
+                    {slug !== 'SIYASAL_BILGILER' && slug !== 'ATA_584' && (
+                      <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface/50 border border-white/5 whitespace-nowrap">
+                        <FileText className="size-3 text-muted-foreground/60" />
+                        {Math.round(displayCompletedHours * 24)}/
+                        {Math.round(displayTotalHours * 24)} SAYFA
+                      </span>
+                    )}
                   </>
                 ) : (
                   <>
@@ -253,7 +249,7 @@ export function CategoryCard({
                 )}
                 categoryColor="text-accent"
                 categoryBgColor="bg-surface"
-                slug={slug}
+                categorySlug={slug}
               />
             </div>
           </motion.div>

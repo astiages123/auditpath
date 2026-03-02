@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Search, Play, Target, X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import coursesData from '@/features/courses/services/courses.json';
+import {
+  useCourses,
+  type CourseWithCategory,
+} from '@/features/courses/hooks/useCourses';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
 interface CourseSelectorProps {
@@ -17,42 +20,37 @@ export function CourseSelector({
 }: CourseSelectorProps) {
   const { setCourse } = usePomodoro();
   const [searchQuery, setSearchQuery] = useState('');
+  const { data: courses = [] } = useCourses();
 
-  const courseOptions = (
-    coursesData as {
-      name: string;
-      courses: { id: string; name: string }[];
-    }[]
-  ).flatMap((category) =>
-    category.courses.map((course) => ({
-      id: course.id,
-      name: course.name,
-      category: category.name,
-    }))
+  const filteredCourses = (
+    !searchQuery
+      ? courses
+      : courses.filter(
+          (course) =>
+            course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            course.category?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+  ).filter(
+    (course) => (course.category_slug || '').toLowerCase() !== 'academic'
   );
 
-  const filteredCategories = !searchQuery
-    ? (coursesData as {
-        name: string;
-        courses: { id: string; name: string }[];
-      }[])
-    : (
-        coursesData as {
-          name: string;
-          courses: { id: string; name: string }[];
-        }[]
-      )
-        .map((cat) => ({
-          ...cat,
-          courses: cat.courses.filter((c) =>
-            c.name.toLowerCase().includes(searchQuery.toLowerCase())
-          ),
-        }))
-        .filter((cat) => cat.courses.length > 0);
+  const handleAcademicSelect = () => {
+    setCourse({
+      id: 'academic',
+      name: 'Serbest Okuma',
+      category: 'Akademik Muafiyet',
+    });
+  };
 
   const handleCourseSelect = (courseId: string) => {
-    const course = courseOptions.find((c) => c.id === courseId);
-    if (course) setCourse(course);
+    const course = courses.find((c) => c.id === courseId);
+    if (course) {
+      setCourse({
+        id: course.id,
+        name: course.name,
+        category: course.category || '',
+      });
+    }
   };
 
   return (
@@ -71,12 +69,24 @@ export function CourseSelector({
         className="w-full max-w-lg bg-[#1a1a1c] border border-white/10 rounded-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-auto"
       >
         <div className="p-7 border-b border-white/5 bg-white/5 relative">
-          <button
-            onClick={onClose}
-            className="absolute right-6 top-7 p-2 rounded-full hover:bg-white/5 text-muted-foreground hover:text-white transition-colors"
-          >
-            <X size={20} />
-          </button>
+          <div className="absolute right-6 top-6 flex items-center gap-2">
+            <button
+              onClick={handleAcademicSelect}
+              className="p-2.5 rounded-xl hover:bg-amber-500/10 text-amber-500/60 hover:text-amber-500 transition-all group relative"
+              title="Serbest Okuma (Akademik Muafiyet)"
+            >
+              <Target size={20} />
+              <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-amber-500 text-black text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none uppercase tracking-tighter shadow-lg shadow-amber-500/20">
+                Akademik Muafiyet
+              </span>
+            </button>
+            <button
+              onClick={onClose}
+              className="p-2.5 rounded-xl hover:bg-white/5 text-muted-foreground hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+          </div>
           <div className="flex items-center gap-5">
             <div className="size-14 rounded-2xl bg-white/5 flex items-center justify-center text-primary border border-white/10">
               <Target size={28} />
@@ -108,35 +118,71 @@ export function CourseSelector({
           </div>
         </div>
         <div className="max-h-[360px] overflow-y-auto px-4 pb-6 custom-scrollbar space-y-6">
-          {filteredCategories.length > 0 ? (
-            (
-              filteredCategories as {
-                name: string;
-                courses: { id: string; name: string }[];
-              }[]
-            ).map((cat) => (
-              <div key={cat.name} className="space-y-3">
-                <h3 className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] px-3">
-                  {cat.name.replace(/\(.*\)/, '')}
-                </h3>
-                <div className="space-y-1">
-                  {cat.courses.map((course) => (
-                    <motion.button
-                      key={course.id}
-                      onClick={() => handleCourseSelect(course.id)}
-                      className="w-full text-left px-5 py-4 rounded-xl hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between group"
-                    >
-                      <span className="text-white/60 group-hover:text-white font-bold text-sm tracking-tight transition-colors">
-                        {course.name}
-                      </span>
-                      <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100 text-primary">
-                        <Play size={14} fill="currentColor" />
-                      </div>
-                    </motion.button>
-                  ))}
+          {Object.keys(
+            filteredCourses.reduce(
+              (
+                acc: Record<
+                  string,
+                  { courses: CourseWithCategory[]; order: number }
+                >,
+                course
+              ) => {
+                const cat = course.category || 'Diğer';
+                if (!acc[cat])
+                  acc[cat] = { courses: [], order: course.category_sort_order };
+                acc[cat].courses.push(course);
+                return acc;
+              },
+              {}
+            )
+          ).length > 0 ? (
+            Object.entries(
+              filteredCourses.reduce(
+                (
+                  acc: Record<
+                    string,
+                    { courses: CourseWithCategory[]; order: number }
+                  >,
+                  course
+                ) => {
+                  const cat = course.category || 'Diğer';
+                  if (!acc[cat])
+                    acc[cat] = {
+                      courses: [],
+                      order: course.category_sort_order,
+                    };
+                  acc[cat].courses.push(course);
+                  return acc;
+                },
+                {}
+              )
+            )
+              .sort((a, b) => a[1].order - b[1].order)
+              .map(([category, data]) => (
+                <div key={category} className="space-y-3">
+                  <h3 className="font-black text-primary uppercase tracking-wider px-3 py-2 rounded-2xl">
+                    {category}
+                  </h3>
+                  <div className="space-y-1">
+                    {data.courses
+                      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+                      .map((course) => (
+                        <motion.button
+                          key={course.id}
+                          onClick={() => handleCourseSelect(course.id)}
+                          className="w-full text-left px-5 py-4 rounded-xl hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between group"
+                        >
+                          <span className="text-white/60 group-hover:text-white font-bold text-sm tracking-tight transition-colors">
+                            {course.name}
+                          </span>
+                          <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all scale-75 group-hover:scale-100 text-primary">
+                            <Play size={14} fill="currentColor" />
+                          </div>
+                        </motion.button>
+                      ))}
+                  </div>
                 </div>
-              </div>
-            ))
+              ))
           ) : (
             <div className="py-12 text-center text-muted-foreground font-medium">
               Sonuç bulunamadı.

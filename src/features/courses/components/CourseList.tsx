@@ -11,7 +11,7 @@ import {
   BookOpenText,
   Trophy,
 } from 'lucide-react';
-import { VideoList } from './VideoList';
+import { CourseItemList } from './CourseItemList';
 import { formatDurationShort } from '@/utils/dateUtils';
 import { useProgress } from '@/shared/hooks/useProgress';
 import { useCelebration } from '@/shared/hooks/useCelebration';
@@ -31,7 +31,7 @@ interface CourseListProps {
   courses: Course[];
   categoryColor: string;
   categoryBgColor: string;
-  slug?: string;
+  categorySlug: string;
 }
 
 // Helper to remove instructor name (everything after " - ")
@@ -43,7 +43,7 @@ export function CourseList({
   courses,
   categoryColor,
   categoryBgColor,
-  slug: _slug,
+  categorySlug,
 }: CourseListProps) {
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
   const { stats } = useProgress();
@@ -96,7 +96,7 @@ export function CourseList({
         const courseCardClass = cn(
           'rounded-xl border overflow-hidden transition-all duration-200 group',
           isCompleted
-            ? 'border-accent/40 bg-accent/5 hover:bg-accent/10 hover:border-accent/60 shadow-[0_0_15px_-5px_var(--shadow-glow-accent)]'
+            ? 'border-accent/30 bg-card/40 hover:bg-card/60 hover:border-accent/30'
             : 'border-white/5 bg-card/40 hover:border-white/30 hover:bg-card/60'
         );
 
@@ -155,7 +155,7 @@ export function CourseList({
                 <h4 className={titleClass}>{displayName}</h4>
 
                 <div className="flex items-center gap-3 mt-1.5 overflow-x-auto no-scrollbar scrollbar-hide">
-                  {_slug === 'ATA_584' && (
+                  {categorySlug === 'ATA_584' && (
                     <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-wider whitespace-nowrap">
                       {course.course_slug.split('-').pop()}. HAFTA
                     </div>
@@ -168,7 +168,7 @@ export function CourseList({
                       </div>
                       {course.total_pages && (
                         <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
-                          {_slug !== 'ATA_584' ? (
+                          {categorySlug !== 'ATA_584' ? (
                             <BookOpenText className="size-3 text-muted-foreground/50" />
                           ) : (
                             <FileText className="size-3 text-muted-foreground/50" />
@@ -195,7 +195,7 @@ export function CourseList({
               {/* Column 3: Progress % + Toggle Icon */}
               <div className="flex items-center gap-4 shrink-0">
                 {course.type === 'reading' ? (
-                  _slug === 'ATA_584' ? null : [
+                  categorySlug === 'ATA_584' ? null : [
                       'turk-dis-politikasi',
                       'uluslararasi-hukuk',
                       'uluslararasi-iliskiler-kuramlari',
@@ -302,9 +302,10 @@ export function CourseList({
             {/* Expanded Video List */}
             {expandedCourse === course.id && (
               <div className="border-t border-border/50">
-                <VideoList
+                <CourseItemList
                   courseId={course.course_slug}
                   dbCourseId={course.id}
+                  categorySlug={categorySlug}
                   _categoryColor={categoryColor}
                 />
               </div>

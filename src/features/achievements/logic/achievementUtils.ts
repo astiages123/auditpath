@@ -11,9 +11,7 @@ function getCategoryDisplayName(slug: string): string {
     IKTISAT: 'İktisat',
     MUHASEBE_MALIYE: 'Muhasebe ve Maliye',
     GY_GK: 'Genel Yetenek - Genel Kültür',
-    KAMU_YONETIMI: 'Kamu Yönetimi',
-    ULUSLARARASI_ILISKILER: 'Uluslararası İlişkiler',
-    ATA_584: 'ATA 584',
+    SIYASAL_BILGILER: 'Siyasal Bilgiler',
   };
   return displayNames[slug] || slug;
 }

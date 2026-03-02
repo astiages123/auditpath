@@ -9,8 +9,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database.types';
 
-type Course = Database['public']['Tables']['courses']['Row'];
-
 export const courseKeys = {
   all: ['courses'] as const,
   list: () => [...courseKeys.all, 'list'] as const,
@@ -44,20 +42,44 @@ export function useCourseNames() {
   });
 }
 
+export type CourseWithCategory =
+  Database['public']['Tables']['courses']['Row'] & {
+    category: string;
+    category_slug: string;
+    category_sort_order: number;
+  };
+
 /**
- * Tüm kurs detaylarını döndürür.
+ * Tüm kurs detaylarını (kategori ismiyle birlikte) döndürür.
  */
 export function useCourses() {
   return useQuery({
     queryKey: courseKeys.list(),
-    queryFn: async (): Promise<Course[]> => {
+    queryFn: async (): Promise<CourseWithCategory[]> => {
       const { data, error } = await supabase
         .from('courses')
-        .select('*')
+        .select('*, categories(name, slug, sort_order)')
         .order('sort_order');
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map((item) => {
+        const categories = (
+          item as {
+            categories: {
+              name: string;
+              slug: string;
+              sort_order: number | null;
+            } | null;
+          }
+        ).categories;
+
+        return {
+          ...item,
+          category: categories?.name || 'Diğer',
+          category_slug: categories?.slug || '',
+          category_sort_order: categories?.sort_order ?? 999,
+        } as CourseWithCategory;
+      });
     },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,

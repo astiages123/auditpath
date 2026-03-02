@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { CloudSync, Loader2, CheckCircle2 } from 'lucide-react';
+import { CloudSync, Loader2 } from 'lucide-react';
 import { invokeNotionSync } from '@/features/notes/services/noteService';
-import coursesData from '@/features/courses/services/courses.json';
+import { useCategories } from '@/features/courses/hooks/useCategories';
 import { toast } from 'sonner';
 import { cn } from '@/utils/stringHelpers';
 import { Button } from '@/components/ui/button';
@@ -19,12 +19,13 @@ export function SyncButton({
   iconClassName,
 }: SyncButtonProps & { iconClassName?: string }) {
   const [isSyncing, setIsSyncing] = useState(false);
+  const { data: categories = [] } = useCategories();
 
   const handleSync = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isSyncing) return;
+    if (isSyncing || categories.length === 0) return;
 
     setIsSyncing(true);
     const toastId = toast.info('Senkronizasyon Başlatıldı', {
@@ -34,8 +35,8 @@ export function SyncButton({
     });
 
     try {
-      // 1. Unified Backend Sync (Notion Notes + Curriculum Totals)
-      const notionData = await invokeNotionSync(coursesData);
+      // 1. Notion Sync
+      const notionData = await invokeNotionSync();
 
       if (!notionData.success) {
         throw new Error(notionData.error || 'Senkronizasyon başarısız.');
@@ -44,24 +45,25 @@ export function SyncButton({
       if (notionData.success && notionData.stats) {
         toast.dismiss(toastId);
 
-        const notionMsg = `${notionData.stats.synced} not güncellendi.`;
-        const currMsg = 'Müfredat istatistikleri güncellendi.';
+        const { synced, errors } = notionData.stats;
 
-        toast.success('Master Sync Tamamlandı!', {
-          description: (
-            <div className="flex flex-col gap-1 mt-1">
-              <div className="flex items-center gap-2 text-xs">
-                <CheckCircle2 className="size-3 text-green-500" />
-                <span>{notionMsg}</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <CheckCircle2 className="size-3 text-green-500" />
-                <span>{currMsg}</span>
-              </div>
-            </div>
-          ),
-          duration: 5000,
-        });
+        if (synced === 0 && errors === 0) {
+          toast.success('Her Şey Güncel', {
+            description:
+              "Notion'da yeni veya değiştirilmiş bir not bulunamadı.",
+            duration: 4000,
+          });
+        } else {
+          const description =
+            errors > 0
+              ? `${synced} not güncellendi, ${errors} hata oluştu. Logları kontrol edin.`
+              : `${synced} not güncellendi.`;
+
+          toast.success('Senkronizasyon Tamamlandı', {
+            description,
+            duration: 5000,
+          });
+        }
 
         onSyncComplete?.();
       }

@@ -1,9 +1,12 @@
 import { Database } from '@/types/database.types';
 import { ConceptMapItem } from '@/features/quiz/types';
 
-export type Course = Database['public']['Tables']['courses']['Row'] & {
-  total_pages?: number | null;
-};
+export type CourseType = Database['public']['Enums']['course_type_enum'];
+export type ItemType = Database['public']['Enums']['item_type_enum'];
+
+export type Course = Database['public']['Tables']['courses']['Row'];
+
+export type Video = Database['public']['Tables']['videos']['Row'];
 
 export type Category = Database['public']['Tables']['categories']['Row'] & {
   courses: Course[];

@@ -105,6 +105,7 @@ export async function logActivity(
           video_id: videoData.video_id,
           completed: videoData.completed,
           completed_at: videoData.completed_at,
+          item_type: 'video',
         };
       const res = await safeQuery(
         supabase.from('video_progress').upsert(insertData),

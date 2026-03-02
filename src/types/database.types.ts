@@ -216,7 +216,7 @@ export type Database = {
           total_hours: number | null;
           total_pages: number | null;
           total_videos: number | null;
-          type: string | null;
+          type: Database['public']['Enums']['course_type_enum'];
           updated_at: string | null;
         };
         Insert: {
@@ -731,6 +731,7 @@ export type Database = {
           updated_at: string | null;
           user_id: string;
           video_id: string | null;
+          item_type: Database['public']['Enums']['item_type_enum'];
         };
         Insert: {
           completed?: boolean | null;
@@ -739,6 +740,7 @@ export type Database = {
           updated_at?: string | null;
           user_id: string;
           video_id?: string | null;
+          item_type: Database['public']['Enums']['item_type_enum'];
         };
         Update: {
           completed?: boolean | null;
@@ -747,6 +749,7 @@ export type Database = {
           updated_at?: string | null;
           user_id?: string;
           video_id?: string | null;
+          item_type?: Database['public']['Enums']['item_type_enum'];
         };
         Relationships: [
           {
@@ -774,6 +777,7 @@ export type Database = {
           id: string;
           title: string;
           video_number: number;
+          item_type: Database['public']['Enums']['item_type_enum'];
         };
         Insert: {
           course_id?: string | null;
@@ -783,6 +787,7 @@ export type Database = {
           id?: string;
           title: string;
           video_number: number;
+          item_type: Database['public']['Enums']['item_type_enum'];
         };
         Update: {
           course_id?: string | null;
@@ -792,6 +797,7 @@ export type Database = {
           id?: string;
           title?: string;
           video_number?: number;
+          item_type?: Database['public']['Enums']['item_type_enum'];
         };
         Relationships: [
           {
@@ -888,6 +894,8 @@ export type Database = {
       question_usage_type: 'antrenman' | 'deneme';
       quiz_response_type: 'correct' | 'incorrect' | 'blank';
       validation_status: 'PENDING' | 'APPROVED' | 'REJECTED';
+      item_type_enum: 'video' | 'reading';
+      course_type_enum: 'video' | 'reading';
     };
     CompositeTypes: {
       [_ in never]: never;

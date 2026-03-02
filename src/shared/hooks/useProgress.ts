@@ -3,11 +3,28 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getUserStats } from '@/features/achievements/services/userStatsService';
 import type { Rank } from '@/types/auth';
-import coursesData from '@/features/courses/services/courses.json';
-import {
-  calculateStaticTotals,
-  type Category,
-} from '@/features/courses/logic/courseStats';
+import { calculateStaticTotals } from '@/features/courses/logic/courseStats';
+import { useCategories } from '@/features/courses/hooks/useCategories';
+import type { Category } from '@/features/courses/types/courseTypes';
+
+export interface CategoryProgress {
+  completedVideos: number;
+  completedHours: number;
+  totalVideos: number;
+  totalHours: number;
+  completedReadings: number;
+  completedPages: number;
+  totalReadings: number;
+  totalPages: number;
+}
+
+export interface StaticTotals {
+  categoryStats: Record<string, CategoryProgress>;
+  totalAllVideos: number;
+  totalAllHours: number;
+  totalAllReadings: number;
+  totalAllPages: number;
+}
 
 export interface ProgressStats {
   completedVideos: number;
@@ -47,28 +64,36 @@ export const progressKeys = {
   user: (userId: string) => [...progressKeys.all, userId] as const,
 };
 
-const staticTotals = calculateStaticTotals();
-
 export const defaultStats: ProgressStats = {
   completedVideos: 0,
-  totalVideos: staticTotals.totalAllVideos,
+  totalVideos: 0,
   completedHours: 0,
-  totalHours: staticTotals.totalAllHours,
+  totalHours: 0,
   completedReadings: 0,
   completedPages: 0,
-  totalReadings: staticTotals.totalAllReadings,
-  totalPages: staticTotals.totalAllPages,
+  totalReadings: 0,
+  totalPages: 0,
   streak: 0,
-  categoryProgress: staticTotals.categoryStats,
+  categoryProgress: {},
   courseProgress: {},
 };
 
 export function useProgress() {
   const { user } = useAuth();
   const userId = user?.id;
+  const { data: categories } = useCategories();
 
-  const { data: stats, isLoading, refetch } = useProgressQuery(userId);
-  const { updateProgress } = useOptimisticProgress();
+  const staticTotals = useMemo(() => {
+    if (!categories) return null;
+    return calculateStaticTotals(categories);
+  }, [categories]);
+
+  const {
+    data: stats,
+    isLoading,
+    refetch,
+  } = useProgressQuery(userId, staticTotals);
+  const { updateProgress } = useOptimisticProgress(categories);
 
   const refreshProgress = useCallback(() => {
     refetch();
@@ -100,11 +125,17 @@ export function useProgress() {
     () => ({
       stats: stats || (defaultStats as ProgressStats),
       refreshProgress,
-      isLoading,
+      isLoading: isLoading || !staticTotals,
       streak: stats?.streak || 0,
       updateProgressOptimistically,
     }),
-    [stats, refreshProgress, isLoading, updateProgressOptimistically]
+    [
+      stats,
+      refreshProgress,
+      isLoading,
+      staticTotals,
+      updateProgressOptimistically,
+    ]
   );
 
   return value;
@@ -112,12 +143,13 @@ export function useProgress() {
 
 export function useProgressQuery(
   userId?: string,
+  staticTotals?: StaticTotals | null,
   initialStats?: Partial<ProgressStats>
 ) {
   return useQuery({
-    queryKey: progressKeys.user(userId || 'guest'),
+    queryKey: [...progressKeys.user(userId || 'guest'), staticTotals !== null],
     queryFn: async () => {
-      if (!userId) return defaultStats;
+      if (!userId || !staticTotals) return defaultStats;
 
       const dbStats = await getUserStats(userId);
       if (!dbStats) return defaultStats;
@@ -174,7 +206,7 @@ export function useProgressQuery(
   });
 }
 
-export function useOptimisticProgress() {
+export function useOptimisticProgress(categories?: Category[]) {
   const queryClient = useQueryClient();
 
   const updateProgress = (
@@ -190,19 +222,27 @@ export function useOptimisticProgress() {
       (old: ProgressStats | undefined) => {
         if (!old) return old;
 
-        const categories = coursesData as Category[];
-        const categoryData = categories.find((cat) =>
-          cat.courses.some((c) => c.id === courseId)
+        // Find category for the courseId.
+        // In the modular structure, we can check the index if it has course-to-category mapping,
+        // or check common naming conventions. For now, we'll search across categories if needed,
+        // but ideally the caller should provide the categorySlug.
+
+        // As a fallback, since we can't load all files here synchronously,
+        // we'll assume the courseId often contains the category prefix or we use the index.
+        const categoryData = categories?.find(
+          (cat) =>
+            courseId.startsWith(cat.slug.toLowerCase()) || cat.slug === courseId // simple match
         );
 
         if (!categoryData) return old;
 
-        const categoryName =
-          categoryData.slug ||
-          categoryData.name.split(' (')[0].split('. ')[1] ||
-          categoryData.name;
+        const categoryName = categoryData.slug;
 
-        const existingCatStats = old.categoryProgress[categoryName] || {
+        const currentCategoryProgress = old.categoryProgress as Record<
+          string,
+          CategoryProgress
+        >;
+        const existingCatStats = currentCategoryProgress[categoryName] || {
           completedVideos: 0,
           completedHours: 0,
           totalVideos: 0,
@@ -234,7 +274,9 @@ export function useOptimisticProgress() {
 
         // Eğer reading ise, genel süreye de etki edebiliriz.
         if (isReading) {
-          newCategoryProgress[categoryName].completedHours += deltaHours;
+          (newCategoryProgress as Record<string, CategoryProgress>)[
+            categoryName
+          ].completedHours += deltaHours;
         }
 
         const currentTodayCount = old.todayVideoCount || 0;
@@ -267,7 +309,9 @@ export function useOptimisticProgress() {
             ...old.courseProgress,
             [courseId]: (old.courseProgress[courseId] || 0) + deltaVideos,
           },
-          categoryProgress: newCategoryProgress,
+          categoryProgress: {
+            ...newCategoryProgress,
+          },
         };
       }
     );

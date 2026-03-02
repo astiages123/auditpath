@@ -9,7 +9,7 @@
   --card-foreground: oklch(92.19% 0 0deg);
   --popover: oklch(22.13% 0.0674 24.498deg);
   --popover-foreground: oklch(92.19% 0 0deg);
-  --primary: oklch(85.54% 0.1969 158.6115deg);
+  --primary: oklch(69.6% 0.17 162.48deg);
   --primary-foreground: oklch(0% 0 0deg);
   --secondary: oklch(26.86% 0 0deg);
   --secondary-foreground: oklch(92.19% 0 0deg);
@@ -225,7 +225,7 @@
 
 .seal-locked {
   filter: grayscale(100%);
-  opacity: 0.3;
+  opacity: 0.5;
 }
 
 /* Screen Shake for Stamp Celebration Effect */

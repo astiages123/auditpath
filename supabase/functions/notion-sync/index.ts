@@ -20,28 +20,27 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const n2m = new NotionToMarkdown({ notionClient: notion });
 
 // --- SCHEMAS ---
-const NotionBlockSchema = z.object({
-  id: z.string(),
-  has_children: z.boolean(),
-  type: z.string(),
-  callout: z
-    .object({
-      rich_text: z.array(z.object({ plain_text: z.string() })),
-      icon: z
-        .object({
-          type: z.enum(['emoji', 'external', 'file']),
-          emoji: z.string().optional(),
-        })
-        .optional(),
-    })
-    .optional(),
-});
+const NotionBlockSchema = z
+  .object({
+    id: z.string(),
+    has_children: z.boolean(),
+    type: z.string(),
+    callout: z
+      .object({
+        rich_text: z.array(z.unknown()),
+        icon: z.unknown().optional(),
+      })
+      .optional(),
+  })
+  .passthrough();
 
-const NotionPageSchema = z.object({
-  id: z.string(),
-  properties: z.record(z.unknown()),
-  last_edited_time: z.string(),
-});
+const NotionPageSchema = z
+  .object({
+    id: z.string(),
+    properties: z.record(z.unknown()),
+    last_edited_time: z.string(),
+  })
+  .passthrough();
 
 type NotionBlock = z.infer<typeof NotionBlockSchema> & {
   children?: NotionBlock[];
@@ -57,7 +56,10 @@ function setupCalloutTransformer() {
     const callout = parsed.data.callout;
     if (!callout) return false;
 
-    const icon = callout.icon?.type === 'emoji' ? callout.icon.emoji : '';
+    const iconData = callout.icon as
+      | { type?: string; emoji?: string }
+      | undefined;
+    const icon = iconData?.type === 'emoji' ? iconData.emoji : '';
     let titleContent = '';
 
     try {
@@ -71,7 +73,9 @@ function setupCalloutTransformer() {
           ? mdResult
           : (mdResult as { parent: string }).parent || '';
     } catch {
-      titleContent = callout.rich_text.map((t) => t.plain_text).join('');
+      titleContent = (callout.rich_text as Array<{ plain_text?: string }>)
+        .map((t) => t.plain_text || '')
+        .join('');
     }
 
     let childrenContent = '';
@@ -170,6 +174,9 @@ async function processPage(
     return { status: 'SKIPPED', details: 'Not completed' };
   }
   if (!courseId) {
+    console.log(
+      `[DEBUG] Kurs bulunamadı: '${courseName}'. Supabase 'courses' tablosundaki 'name' alanı ile Notion'daki 'Ders' alanı birebir aynı olmalı.`
+    );
     return { status: 'ERROR', details: `Course '${courseName}' not found` };
   }
 
@@ -275,6 +282,11 @@ serve(async (req) => {
     const pages = z
       .array(NotionPageSchema)
       .parse(notionResp.results.filter((p) => 'properties' in p));
+
+    console.log(
+      `[DEBUG] Notion'dan 'Tamamlandı' durumunda ${pages.length} sayfa bulundu.`
+    );
+
     const touched = new Set<string>();
     const active = new Set<string>();
 
@@ -287,62 +299,7 @@ serve(async (req) => {
       )
     );
 
-    // --- NEW: Curriculum Sync ---
-    let curriculumUpdated = 0;
-    try {
-      const body = await req.json();
-      if (body?.curriculum && Array.isArray(body.curriculum)) {
-        for (const catData of body.curriculum) {
-          const catTotalHours = (catData.courses || []).reduce(
-            (sum: number, c: { totalHours?: number }) =>
-              sum + (c.totalHours || 0),
-            0
-          );
-          const categoryId = courseLookup.get(catData.name);
-          if (!categoryId) {
-            console.warn(`Category not found: ${catData.name}`);
-          }
-
-          // Note: courseLookup was built from courses, let's re-fetch categories to be sure
-          const { data: dbCat } = await supabase
-            .from('categories')
-            .select('id')
-            .eq('name', catData.name)
-            .single();
-
-          if (dbCat) {
-            await supabase
-              .from('categories')
-              .update({ total_hours: catTotalHours })
-              .eq('id', dbCat.id);
-
-            for (const courseData of catData.courses || []) {
-              const slug = courseData.slug || courseData.id;
-              const { data: dbCourse } = await supabase
-                .from('courses')
-                .select('id')
-                .eq('course_slug', slug)
-                .single();
-
-              if (dbCourse) {
-                await supabase
-                  .from('courses')
-                  .update({
-                    total_videos: courseData.totalVideos || 0,
-                    total_hours: courseData.totalHours || 0,
-                    total_pages: courseData.total_pages || 0,
-                    type: courseData.type || 'video',
-                  })
-                  .eq('id', dbCourse.id);
-                curriculumUpdated++;
-              }
-            }
-          }
-        }
-      }
-    } catch (e) {
-      console.error('Curriculum sync error:', e);
-    }
+    // --- Removed: Curriculum Sync (Now managed directly in DB) ---
 
     let deleted = 0;
     if (touched.size > 0) {
@@ -374,7 +331,6 @@ serve(async (req) => {
       skipped: results.filter((r) => r.status === 'SKIPPED').length,
       deleted,
       errors: results.filter((r) => r.status === 'ERROR').length,
-      curriculumUpdated,
     };
 
     return new Response(JSON.stringify({ success: true, stats }), {

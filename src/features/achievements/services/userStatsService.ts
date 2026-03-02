@@ -5,7 +5,6 @@ import { getVirtualDateKey } from '@/utils/dateUtils';
 import type { Category } from '@/features/courses/types/courseTypes';
 
 import { calculateStreak } from '@/features/achievements/logic/streakLogic';
-import coursesData from '@/features/courses/services/courses.json';
 
 /**
  * Get comprehensive user statistics including progress, streak, and rank.
@@ -39,52 +38,35 @@ export async function getUserStats(
       });
     });
 
-    // Helper for totals
-    const getTotalsFromJSON = () => {
-      let h = 0,
-        v = 0,
-        r = 0,
-        p = 0;
-      coursesData.forEach(
-        (cat: {
-          courses?: {
-            totalHours?: number;
-            totalVideos?: number;
-            type?: string;
-            total_pages?: number;
-          }[];
-        }) => {
-          cat.courses?.forEach((c) => {
-            h += c.totalHours || 0;
-            if (c.type === 'reading') {
-              r += c.totalVideos || 0;
-              p += c.total_pages || 0;
-            } else {
-              v += c.totalVideos || 0;
-            }
-          });
-        }
-      );
-      return { h, v, r, p };
-    };
-
-    const jsonTotals = getTotalsFromJSON();
     const dbTotalHours = cats.reduce(
       (sum, cat) => sum + (cat.total_hours || 0),
       0
     );
-    const dbTotalVideos = cats.reduce(
+
+    const globalTotalHours = dbTotalHours || 280;
+    const globalTotalReadings = cats.reduce(
       (sum, cat) =>
-        sum + cat.courses.reduce((s, c) => s + (c.total_videos || 0), 0),
+        sum +
+        cat.courses.reduce(
+          (s, c) => s + (c.type === 'reading' ? c.total_videos || 0 : 0),
+          0
+        ),
       0
     );
-
-    const globalTotalHours =
-      dbTotalHours > 0 ? dbTotalHours : jsonTotals.h || 280;
-    const globalTotalVideos =
-      dbTotalVideos > 0 ? dbTotalVideos : jsonTotals.v || 550;
-    const globalTotalReadings = jsonTotals.r || 0;
-    const globalTotalPages = jsonTotals.p || 0;
+    const globalTotalVideos = cats.reduce(
+      (sum, cat) =>
+        sum +
+        cat.courses.reduce(
+          (s, c) => s + (c.type !== 'reading' ? c.total_videos || 0 : 0),
+          0
+        ),
+      0
+    );
+    const globalTotalPages = cats.reduce(
+      (sum, cat) =>
+        sum + cat.courses.reduce((s, c) => s + (c.total_pages || 0), 0),
+      0
+    );
 
     const { data: progress, error: progressError } = await supabase
       .from('video_progress')

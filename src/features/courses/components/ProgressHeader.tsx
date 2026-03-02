@@ -1,4 +1,12 @@
-import { Clock, TrendingUp, Flame, CalendarDays } from 'lucide-react';
+import {
+  Clock,
+  TrendingUp,
+  Flame,
+  CalendarDays,
+  Play,
+  Book,
+  BookOpen,
+} from 'lucide-react';
 import { useProgress } from '@/shared/hooks/useProgress';
 import {
   calculateRankProgress,
@@ -8,9 +16,7 @@ import { useSyncExternalStore } from 'react';
 import { RANKS } from '@/features/achievements/utils/constants';
 import type { Rank } from '@/types/auth';
 import { motion } from 'framer-motion';
-import { formatDurationShort } from '@/utils/dateUtils';
 import { WEEKLY_SCHEDULE } from '@/features/courses/utils/coursesConfig';
-import { Skeleton } from '@/components/ui/skeleton';
 import { RankCard } from './RankCard';
 import { ProgressStatCard } from './ProgressStatCard';
 import { useNavigate } from 'react-router-dom';
@@ -218,81 +224,57 @@ export function ProgressHeader({
         showSkeleton={showSkeleton}
         variants={itemVariants}
       >
-        <div className="grid grid-cols-2 gap-x-2 gap-y-3 mt-4">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-4 mt-6">
           {/* Süre */}
-          <div className="space-y-0.5 relative">
-            <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
-              Süre
-            </p>
-            {showSkeleton ? (
-              <Skeleton className="size-5 bg-zinc-800" />
-            ) : (
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-white">
-                  {formatDurationShort(displayCompletedHours)}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  /{formatDurationShort(displayTotalHours)}
-                </span>
-              </div>
-            )}
+          <div className="flex items-center gap-2.5">
+            <Clock className="size-4 text-orange-500 shrink-0" />
+            <div className="flex items-baseline gap-1">
+              <span className="text-[13px] font-bold text-white whitespace-nowrap">
+                {displayCompletedHours.toFixed(1).replace('.0', '')} sa
+              </span>
+              <span className="text-[10px] text-muted-foreground font-semibold whitespace-nowrap">
+                /{Math.round(displayTotalHours)} sa
+              </span>
+            </div>
           </div>
 
           {/* Video */}
-          <div className="space-y-0.5 border-l border-white/5 pl-2 relative">
-            <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
-              Video
-            </p>
-            {showSkeleton ? (
-              <Skeleton className="size-5 bg-zinc-800" />
-            ) : (
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-white">
-                  {displayCompletedVideos}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  /{displayTotalVideos}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Metin */}
-          <div className="space-y-0.5 pt-2 border-t border-white/5 relative">
-            <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
-              Metin
-            </p>
-            {showSkeleton ? (
-              <Skeleton className="size-5 bg-zinc-800" />
-            ) : (
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-white">
-                  {displayCompletedReadings}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  /{displayTotalReadings}
-                </span>
-              </div>
-            )}
+          <div className="flex items-center gap-2.5">
+            <Play className="size-4 text-blue-500 shrink-0" />
+            <div className="flex items-baseline gap-1">
+              <span className="text-[13px] font-bold text-white">
+                {displayCompletedVideos}
+              </span>
+              <span className="text-[10px] text-muted-foreground font-semibold">
+                /{displayTotalVideos}
+              </span>
+            </div>
           </div>
 
           {/* Sayfa */}
-          <div className="space-y-0.5 pt-2 border-l border-t border-white/5 pl-2 relative">
-            <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
-              Sayfa
-            </p>
-            {showSkeleton ? (
-              <Skeleton className="size-5 bg-zinc-800" />
-            ) : (
-              <div className="flex items-baseline gap-1">
-                <span className="text-sm font-bold text-white">
-                  {displayCompletedPages}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  /{displayTotalPages}
-                </span>
-              </div>
-            )}
+          <div className="flex items-center gap-2.5">
+            <BookOpen className="size-4 text-purple-500 shrink-0" />
+            <div className="flex items-baseline gap-1">
+              <span className="text-[13px] font-bold text-white">
+                {displayCompletedPages}
+              </span>
+              <span className="text-[10px] text-muted-foreground font-semibold">
+                /{displayTotalPages}
+              </span>
+            </div>
+          </div>
+
+          {/* Metin */}
+          <div className="flex items-center gap-2.5">
+            <Book className="size-4 text-emerald-500 shrink-0" />
+            <div className="flex items-baseline gap-1">
+              <span className="text-[13px] font-bold text-white">
+                {displayCompletedReadings}
+              </span>
+              <span className="text-[10px] text-muted-foreground font-semibold">
+                /{displayTotalReadings}
+              </span>
+            </div>
           </div>
         </div>
       </ProgressStatCard>

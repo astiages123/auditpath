@@ -25,13 +25,13 @@ export function SealCard({ achievement, isUnlocked, onClick }: SealCardProps) {
 
   const titleClass = cn(
     'text-sm font-semibold text-center transition-colors',
-    isUnlocked ? 'text-foreground' : 'text-muted-foreground'
+    isUnlocked ? 'text-foreground' : 'text-foreground'
   );
 
   const sealCardClass = cn(
     'seal-card relative group flex flex-col items-center',
     'p-4 rounded-2xl cursor-pointer',
-    'bg-card border border-border',
+    'bg-card/60 border border-border',
     'hover:border-accent/30',
     'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent'
   );

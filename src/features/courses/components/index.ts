@@ -13,6 +13,6 @@ export * from './RankCard';
 export * from './ProgressStatCard';
 export { default as TitleRoadmap } from './TitleRoadmap';
 
-// Course Video
-export * from './VideoList';
-export * from './VideoItem';
+// Course Items
+export * from './CourseItemList';
+export * from './CourseItem';

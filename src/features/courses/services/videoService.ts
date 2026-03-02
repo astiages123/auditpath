@@ -1,6 +1,16 @@
 import { supabase } from '@/lib/supabase';
 import { safeQuery } from '@/lib/supabaseHelpers';
 import type { DailyVideoMilestones } from '@/features/efficiency/types/efficiencyTypes';
+import { logger } from '@/utils/logger';
+
+export interface DatabaseItem {
+  id: string;
+  video_number: number;
+  title: string;
+  duration: string;
+  duration_minutes: number;
+  item_type: 'video' | 'reading';
+}
 
 /**
  * Get video progress for multiple videos in a course.
@@ -10,10 +20,10 @@ import type { DailyVideoMilestones } from '@/features/efficiency/types/efficienc
  * @param videoNumbers Array of video numbers to check
  * @returns Map of video number to completion status
  */
-export async function getVideoProgress(
+export async function getItemProgressByCourse(
   userId: string,
   courseId: string,
-  videoNumbers: number[]
+  itemNumbers: number[]
 ) {
   // 1. Get the video records for this course to map video_number to video_id
   const { data: videos, success: videoSuccess } = await safeQuery(
@@ -21,8 +31,8 @@ export async function getVideoProgress(
       .from('videos')
       .select('id, video_number')
       .eq('course_id', courseId)
-      .in('video_number', videoNumbers),
-    'Error finding videos for progress map'
+      .in('video_number', itemNumbers),
+    'Error finding items for progress map'
   );
 
   if (!videoSuccess || !videos) {
@@ -43,7 +53,7 @@ export async function getVideoProgress(
       .select('video_id, completed')
       .eq('user_id', userId)
       .in('video_id', videoIds),
-    'Error fetching video progress'
+    'Error fetching item progress'
   );
 
   if (!progressSuccess) {
@@ -70,26 +80,27 @@ export async function getVideoProgress(
  * @param videoNumber Video number
  * @param completed New completion status
  */
-export async function toggleVideoProgress(
+export async function toggleItemProgress(
   userId: string,
   courseId: string,
-  videoNumber: number,
+  itemNumber: number,
   completed: boolean
 ) {
-  const { data: video, success: videoSuccess } = await safeQuery<{
+  const { data: item, success: itemSuccess } = await safeQuery<{
     id: string;
     duration_minutes: number;
+    item_type: 'video' | 'reading';
   }>(
     supabase
       .from('videos')
-      .select('id, duration_minutes')
+      .select('id, duration_minutes, item_type')
       .eq('course_id', courseId)
-      .eq('video_number', videoNumber)
+      .eq('video_number', itemNumber)
       .single(),
-    'Error finding video for toggle'
+    'Error finding item for toggle'
   );
 
-  if (!videoSuccess || !video) {
+  if (!itemSuccess || !item) {
     return;
   }
 
@@ -98,7 +109,8 @@ export async function toggleVideoProgress(
     supabase.from('video_progress').upsert(
       {
         user_id: userId,
-        video_id: video.id,
+        video_id: item.id,
+        item_type: item.item_type,
         completed,
         updated_at: now,
         completed_at: completed ? now : null,
@@ -107,7 +119,7 @@ export async function toggleVideoProgress(
         onConflict: 'user_id,video_id',
       }
     ),
-    'Error toggling video progress'
+    'Error toggling item progress'
   );
 }
 
@@ -119,30 +131,31 @@ export async function toggleVideoProgress(
  * @param videoNumbers Array of video numbers
  * @param completed New completion status
  */
-export async function toggleVideoProgressBatch(
+export async function toggleItemProgressBatch(
   userId: string,
   courseId: string,
-  videoNumbers: number[],
+  itemNumbers: number[],
   completed: boolean
 ) {
-  // Get all video IDs for the batch
-  const { data: videos, success: videoSuccess } = await safeQuery(
+  // Get all item IDs for the batch
+  const { data: items, success: itemSuccess } = await safeQuery(
     supabase
       .from('videos')
-      .select('id, duration_minutes')
+      .select('id, duration_minutes, item_type')
       .eq('course_id', courseId)
-      .in('video_number', videoNumbers),
-    'Error finding videos for batch toggle'
+      .in('video_number', itemNumbers),
+    'Error finding items for batch toggle'
   );
 
-  if (!videoSuccess || !videos) {
+  if (!itemSuccess || !items) {
     return;
   }
 
   const now = new Date().toISOString();
-  const upsertData = videos.map((v) => ({
+  const upsertData = items.map((v) => ({
     user_id: userId,
     video_id: v.id,
+    item_type: v.item_type,
     completed,
     updated_at: now,
     completed_at: completed ? now : null,
@@ -152,7 +165,7 @@ export async function toggleVideoProgressBatch(
     supabase.from('video_progress').upsert(upsertData, {
       onConflict: 'user_id,video_id',
     }),
-    'Error batch toggling video progress'
+    'Error batch toggling item progress'
   );
 }
 
@@ -220,4 +233,26 @@ export async function getDailyVideoMilestones(
   }
 
   return { maxCount, first5Date, first10Date };
+}
+
+/**
+ * Fetches all videos for a specific course from the database.
+ *
+ * @param courseId The UUID of the course
+ */
+export async function getItemsByCourseId(
+  courseId: string
+): Promise<DatabaseItem[]> {
+  const { data, error } = await supabase
+    .from('videos')
+    .select('id, video_number, title, duration, duration_minutes, item_type')
+    .eq('course_id', courseId)
+    .order('video_number', { ascending: true });
+
+  if (error) {
+    logger.error('Error fetching items for course:', error);
+    return [];
+  }
+
+  return (data || []) as DatabaseItem[];
 }

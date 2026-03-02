@@ -1,22 +1,20 @@
-import coursesData from '@/features/courses/services/courses.json';
-
 export interface Course {
   id: string;
   type?: string;
-  totalVideos: number;
-  totalHours: number;
-  total_pages?: number;
+  total_videos: number | null;
+  total_hours: number | null;
+  total_pages?: number | null;
 }
 
 export interface Category {
   id: string;
   name: string;
   slug?: string;
+  total_hours?: number | null;
   courses: Course[];
 }
 
-export const calculateStaticTotals = () => {
-  const categories = coursesData as Category[];
+export const calculateStaticTotals = (categories: Category[]) => {
   const categoryStats: Record<
     string,
     {
@@ -37,33 +35,26 @@ export const calculateStaticTotals = () => {
   let totalAllPages = 0;
 
   categories.forEach((cat) => {
-    const categoryName =
-      cat.slug || cat.name.split(' (')[0].split('. ')[1] || cat.name;
+    const categoryName = cat.slug || cat.name;
 
     let catTotalVideos = 0;
-    let catTotalHours = 0;
     let catTotalReadings = 0;
     let catTotalPages = 0;
 
-    cat.courses.forEach((course) => {
-      // type video olarak varsayılır, reading ise text olarak sayılır
+    cat.courses?.forEach((course) => {
       if (course.type === 'reading') {
-        catTotalReadings += course.totalVideos || 0;
-        catTotalPages += course.total_pages || 0;
-        // İsteğe bağlı olarak okuma saatini de `catTotalHours`a katabiliriz.
-        // Biz metrikleri 4'e ayıracağımız için saatleri de genel ilerlemede hesaba katıyoruz.
-        catTotalHours += course.totalHours || 0;
+        catTotalReadings += course.total_videos || 0;
       } else {
-        catTotalVideos += course.totalVideos || 0;
-        catTotalHours += course.totalHours || 0;
+        catTotalVideos += course.total_videos || 0;
       }
+      catTotalPages += course.total_pages || 0;
     });
 
     categoryStats[categoryName] = {
       completedVideos: 0,
       completedHours: 0,
       totalVideos: catTotalVideos,
-      totalHours: catTotalHours,
+      totalHours: Number(cat.total_hours) || 0,
       completedReadings: 0,
       completedPages: 0,
       totalReadings: catTotalReadings,
@@ -71,7 +62,7 @@ export const calculateStaticTotals = () => {
     };
 
     totalAllVideos += catTotalVideos;
-    totalAllHours += catTotalHours;
+    totalAllHours += cat.total_hours || 0;
     totalAllReadings += catTotalReadings;
     totalAllPages += catTotalPages;
   });

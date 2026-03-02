@@ -6,6 +6,7 @@ import {
   getLandingDashboardData,
   LandingCourseStats,
 } from '@/features/quiz/services/quizLandingService';
+import { updateCategoryCache } from '../logic/coursesLogic';
 
 export function useCourseLibraryData() {
   const { user, loading: authLoading } = useAuth();
@@ -15,13 +16,20 @@ export function useCourseLibraryData() {
 
   const categories = useMemo(() => {
     if (!categoriesRaw) return [];
-    return categoriesRaw
-      .filter((cat) => cat.name !== 'ATA 584' && cat.slug !== 'ATA_584')
-      .sort(
-        (a, b) =>
-          (a.sort_order || 0) - (b.sort_order || 0) ||
-          a.name.localeCompare(b.name)
+
+    // Update logic cache for icons/themes
+    categoriesRaw.forEach((cat) => {
+      updateCategoryCache(
+        cat.slug,
+        cat.courses.map((c) => c.course_slug).filter(Boolean) as string[]
       );
+    });
+
+    return categoriesRaw.sort(
+      (a, b) =>
+        (a.sort_order || 0) - (b.sort_order || 0) ||
+        a.name.localeCompare(b.name)
+    );
   }, [categoriesRaw]);
 
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({

@@ -60,3 +60,11 @@ export async function getCourseBySlug(slug: string): Promise<Course | null> {
   }
   return data;
 }
+
+/**
+ * Fetches items (videos or reading sections) for a given course.
+ */
+export async function getItemsByCourse(courseId: string) {
+  const { getItemsByCourseId } = await import('./videoService');
+  return getItemsByCourseId(courseId);
+}

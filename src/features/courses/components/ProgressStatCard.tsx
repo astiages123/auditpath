@@ -66,7 +66,7 @@ export function ProgressStatCard({
       variants={variants}
       className={cn(
         'relative overflow-hidden rounded-3xl border group bg-linear-to-br',
-        compact ? 'p-4' : 'p-5',
+        compact ? 'p-4' : 'p-4',
         borderClass,
         gradientClass
       )}
@@ -119,7 +119,7 @@ export function ProgressStatCard({
           </div>
         </div>
       ) : (
-        <div className="relative flex flex-col justify-between h-full space-y-4">
+        <div className="relative flex flex-col justify-between h-full space-y-1">
           <div className="flex items-center gap-2">
             <div className={cn('p-2 rounded-xl border', iconBgClass)}>
               <Icon className="w-4 h-4" />

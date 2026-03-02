@@ -40,7 +40,7 @@ export async function upsertPomodoroSession(
 
   // Calculate Focus Power (Odak Gücü)
   // Formula: (Work / [Break + Pause]) * 20
-  const efficiencyScore = calculateFocusPower(
+  let efficiencyScore = calculateFocusPower(
     totals.totalWork,
     totals.totalBreak,
     totals.totalPause
@@ -69,12 +69,29 @@ export async function upsertPomodoroSession(
     }
   }
 
+  // Academic Exemption Check
+  if (finalCourseId === 'academic') {
+    efficiencyScore = 100; // Fixed Ideal Focus Power
+  } else if (finalCourseId) {
+    const { data: categoryData } = await supabase
+      .from('courses')
+      .select('category:categories(slug)')
+      .eq('id', finalCourseId)
+      .single();
+
+    const categorySlug = (categoryData?.category as { slug: string } | null)
+      ?.slug;
+    if (categorySlug === 'academic') {
+      efficiencyScore = 100; // Fixed Ideal Focus Power
+    }
+  }
+
   const { data, error } = await supabase
     .from('pomodoro_sessions')
     .upsert({
       id: session.id,
       user_id: userId,
-      course_id: finalCourseId,
+      course_id: uuidRegex.test(finalCourseId || '') ? finalCourseId : null,
       course_name: finalCourseName,
       timeline: session.timeline,
       started_at: new Date(session.startedAt).toISOString(),

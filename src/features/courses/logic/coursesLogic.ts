@@ -1,71 +1,77 @@
 import { BookOpen, FileText, LucideIcon } from 'lucide-react';
 import { storage } from '@/shared/services/storageService';
+import { logger } from '@/utils/logger';
 import {
   CATEGORY_THEMES,
   COURSE_THEME_CONFIG,
   CourseTheme,
   ICON_OVERRIDES,
 } from '../utils/coursesConfig';
-import coursesData from '../services/courses.json';
 
-interface VideoData {
+// Removed: import categoriesIndex from "../data/index.json";
+
+export interface CategoryIndexEntry {
+  id: string;
+  name: string;
+  slug: string;
+  total_hours: number;
+  dataPath: string;
+}
+
+export interface VideoData {
   id: number;
   title: string;
   duration: string;
   durationMinutes: number;
 }
 
-interface CourseData {
+export interface CourseData {
   id: string;
   name: string;
   type: string;
   course_slug?: string;
   videos: VideoData[];
+  total_videos?: number;
+  total_hours?: number;
+  total_pages?: number;
+  playlist_url?: string;
 }
 
-interface CategoryData {
+export interface CategoryData {
   id: string;
   name: string;
   slug: string;
+  total_hours?: number;
   courses: CourseData[];
 }
 
-const typedCoursesData = coursesData as CategoryData[];
-
-// --- Caches for O(1) Lookup ---
-const categoryMapCache = new Map<string, string>(); // courseId -> categoryId
-let isCacheInitialized = false;
-
-/**
- * Veritabanı ve JSON yapısını bir kez tarayıp hangi dersin
- * hangi kategoriye ait olduğunu hafızaya alır.
- */
-function initCache() {
-  if (isCacheInitialized) return;
-  typedCoursesData.forEach((category) => {
-    if (category.courses) {
-      category.courses.forEach((course) => {
-        categoryMapCache.set(course.id, category.slug);
-        if (course.course_slug) {
-          categoryMapCache.set(course.course_slug, category.slug);
-        }
-      });
-    }
-  });
-  isCacheInitialized = true;
-}
+// Memory cache for category identification
+const categoryMapCache = new Map<string, string>(); // courseSlug -> categorySlug
 
 /**
  * Verilen ID veya Slug değerinin hangi kategoriye ait olduğunu bulur.
+ * Bu cache artık dinamik olarak (getCategories sonrası) doldurulmalıdır.
  */
 export function getCategoryId(idOrSlug: string | null): string | null {
   if (!idOrSlug) return null;
 
-  // Eğer zaten bir kategori slug'ıysa doğrudan döndür
+  // 1. Eğer zaten bir kategori slug'ıysa doğrudan döndür
   if (CATEGORY_THEMES[idOrSlug]) return idOrSlug;
 
-  initCache();
+  // 2. Cache'den kontrol et
   return categoryMapCache.get(idOrSlug) || null;
+}
+
+/**
+ * Cache'i kategori/kurs verileri geldikçe doldurmak için yardımcı.
+ */
+export function updateCategoryCache(
+  categorySlug: string,
+  courseSlugs: string[]
+) {
+  courseSlugs.forEach((slug) => {
+    categoryMapCache.set(slug, categorySlug);
+  });
 }
 
 /**
@@ -229,30 +235,33 @@ export function calculateEstimatedDaysToNextRank(
 }
 
 // --- Video Navigasyon Mantığı ---
-function findCourseVideos(courseId: string): Array<{ id: number }> | null {
-  for (const category of typedCoursesData) {
-    const course = category.courses?.find((c) => c.id === courseId);
-    if (course) return course.videos;
-  }
-  return null;
-}
+// Note: Navigation across videos in a course requires the course data to be loaded.
+// This should be used within components that have already loaded the category data.
 
 export function getNextVideo(
-  courseId: string,
+  videos: VideoData[],
   currentId: number
 ): number | null {
-  const videos = findCourseVideos(courseId);
   if (!videos) return null;
   const idx = videos.findIndex((v) => v.id === currentId);
   return idx === -1 || idx === videos.length - 1 ? null : videos[idx + 1].id;
 }
 
 export function getPreviousVideo(
-  courseId: string,
+  videos: VideoData[],
   currentId: number
 ): number | null {
-  const videos = findCourseVideos(courseId);
   if (!videos) return null;
   const idx = videos.findIndex((v) => v.id === currentId);
   return idx <= 0 ? null : videos[idx - 1].id;
+}
+
+/**
+ * Dynamic Category Loader (Deprecated: Use getCategories service instead)
+ */
+export async function loadCategoryData(
+  _slug: string
+): Promise<CategoryData | null> {
+  logger.warn('loadCategoryData is deprecated. Fetch from DB instead.');
+  return null;
 }

@@ -15,9 +15,8 @@ export function normalizeCategorySlug(rawName: string): string {
     HUKUK: 'HUKUK',
     'MUHASEBE VE MALİYE': 'MUHASEBE_MALIYE',
     'GENEL YETENEK VE GENEL KÜLTÜR': 'GY_GK',
-    'KAMU YÖNETİMİ': 'KAMU_YONETIMI',
-    'ULUSLARARASI İLİŞKİLER': 'ULUSLARARASI_ILISKILER',
-    'ATA 584': 'ATA_584',
+    'SİYASAL BİLGİLER': 'SIYASAL_BILGILER',
+    'KAMU YÖNETİMİ VE ULUSLARARASI İLİŞKİLER': 'SIYASAL_BILGILER',
   };
   return slugMap[rawName] || rawName;
 }

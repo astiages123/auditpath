@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-// Yeni ikonlar eklendi: Scale (Hukuk), Coins (Ekonomi), Landmark (Muhasebe), Globe (Genel)
+// Siyasal Bilgiler ikonları eklendi: Scale (Hukuk), Coins (Ekonomi), Landmark (Muhasebe), Globe (Genel)
 import {
   Scroll,
   Sparkles,
@@ -10,8 +10,6 @@ import {
   Crown,
   Award,
   Building,
-  Handshake,
-  History,
 } from 'lucide-react';
 import { getUnlockedAchievements as getDbUnlocked } from '@/features/achievements/services/achievementService';
 import { type UnlockedAchievement } from '@/features/achievements/types/achievementsTypes';
@@ -27,9 +25,7 @@ const GUILD_ORDER: GuildType[] = [
   'HUKUK',
   'IKTISAT',
   'MUHASEBE_MALIYE',
-  'KAMU_YONETIMI',
-  'ULUSLARARASI_ILISKILER',
-  'ATA_584',
+  'SIYASAL_BILGILER',
   'GY_GK',
   'MASTERY',
   'HYBRID',
@@ -41,9 +37,7 @@ const GUILD_ICONS: Record<GuildType, React.ReactNode> = {
   HUKUK: <Scale className="w-5 h-5" />, // Terazi (Adalet)
   IKTISAT: <Coins className="w-5 h-5" />, // Sikkeler (Altın Akış)
   MUHASEBE_MALIYE: <Landmark className="w-5 h-5" />, // Hazine Binası (Muhafızlar)
-  KAMU_YONETIMI: <Building className="w-5 h-5" />, // Bina (Kamu)
-  ULUSLARARASI_ILISKILER: <Handshake className="w-5 h-5" />, // El sıkışma (Diplomasi)
-  ATA_584: <History className="w-5 h-5" />, // Tarih (Cumhuriyet)
+  SIYASAL_BILGILER: <Building className="w-5 h-5" />, // Bina (Kamu & Strateji)
   GY_GK: <Globe className="w-5 h-5" />, // Dünya Küresi (Yedi Diyar)
   HYBRID: <Scroll className="w-5 h-5" />, // Parşömen (Kadim İlimler)
   SPECIAL: <Sparkles className="w-5 h-5" />, // Işıltı (Büyü/Ustalık)

@@ -14,7 +14,7 @@ export async function getCourseMastery(
   // 1. Get all courses
   const { data: courses, error: coursesError } = await supabase
     .from('courses')
-    .select('id, name, total_videos, type');
+    .select('id, name, total_videos, type, course_slug');
 
   if (coursesError || !courses) return [];
 

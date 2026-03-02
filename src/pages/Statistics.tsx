@@ -5,15 +5,27 @@ import {
   CognitiveInsightsCard,
   FocusHubCard,
   LearningLoadCard,
-  MasteryNavigatorCard,
   ConsistencyHeatmapCard,
   PracticeCenterCard,
   RecentActivitiesContainer,
 } from '@/features/efficiency/components';
+import { ScoreTypeProgress } from '@/features/analytics/components/ScoreTypeProgress';
 import { useCognitiveInsights } from '@/features/efficiency/hooks/useCognitiveInsights';
+import { useMasteryChains } from '@/features/efficiency/hooks/useMasteryChains';
 
 const EfficiencyDashboard = () => {
   const { loadingCognitive, cognitiveAnalysis } = useCognitiveInsights();
+  const { lessonMastery } = useMasteryChains();
+
+  // lessonMastery'yi ScoreTypeProgress'in beklediği CourseMastery formatına dönüştür
+  const masteries = lessonMastery.map((m) => ({
+    courseId: m.lessonId,
+    courseName: m.title,
+    courseType: m.type,
+    videoProgress: m.videoProgress,
+    questionProgress: m.questionProgress,
+    masteryScore: m.mastery,
+  }));
 
   return (
     <div className="space-y-6">
@@ -27,13 +39,13 @@ const EfficiencyDashboard = () => {
         </div>
       </div>
 
-      {/* Row 2: Practice Center + Mastery Navigator */}
+      {/* Row 2: Practice Center + Score Type Progress */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <div>
           <PracticeCenterCard />
         </div>
         <div>
-          <MasteryNavigatorCard />
+          <ScoreTypeProgress masteries={masteries} />
         </div>
       </div>
 

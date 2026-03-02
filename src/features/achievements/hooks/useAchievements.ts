@@ -11,8 +11,8 @@ import { ACHIEVEMENTS, calculateAchievements } from '../logic/achievementsData';
 import { type ProgressStats } from '../types/achievementsTypes';
 import { RANKS } from '../utils/constants';
 import type { Rank } from '@/types/auth';
-import coursesData from '@/features/courses/services/courses.json';
 import { logger } from '@/utils/logger';
+import { getCategories } from '@/features/courses/services/courseService';
 
 export const achievementKeys = {
   all: ['achievements'] as const,
@@ -29,6 +29,8 @@ interface SyncContext {
 // Helper to keep the mutation function clean
 async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
   if (!userId || !stats) return;
+
+  const categories = await getCategories();
 
   // A. Gather Data
   const totalActiveDays = await getTotalActiveDays(userId);
@@ -73,24 +75,19 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
     });
   }
 
-  // 3. Course/Category
-  (
-    coursesData as Array<{
-      name: string;
-      courses: Array<{ id: string; totalVideos: number }>;
-    }>
-  ).forEach((cat) => {
-    let catCompleted = true;
-    cat.courses.forEach((c) => {
-      const doneCount = stats.courseProgress[c.id] || 0;
-      if (doneCount >= c.totalVideos && c.totalVideos > 0) {
-        eligibleIds.add(`COURSE_COMPLETION:${c.id}`);
-      } else {
-        catCompleted = false;
-      }
-    });
-    if (catCompleted && cat.courses.length > 0) {
-      eligibleIds.add(`CATEGORY_COMPLETION:${cat.name}`);
+  // 3. Category/Group Completions (Using DB categories)
+  categories.forEach((cat) => {
+    const catSlug = cat.slug;
+    const catStats =
+      stats.categoryProgress[catSlug] ||
+      stats.categoryProgress[catSlug.toLowerCase()];
+
+    if (
+      catStats &&
+      catStats.completedVideos >= catStats.totalVideos &&
+      catStats.totalVideos > 0
+    ) {
+      eligibleIds.add(`CATEGORY_COMPLETION:${catSlug}`);
     }
   });
 
