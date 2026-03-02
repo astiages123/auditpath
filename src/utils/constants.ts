@@ -15,9 +15,9 @@ export const DEFAULT_STORAGE_TTL_MS = 24 * 60 * 60 * 1000;
 // Used for pending operations that survive app restarts
 export const OFFLINE_QUEUE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Virtual day start hour (04:00 AM)
-// Users who study past midnight get counted toward previous day
-export const VIRTUAL_DAY_START_HOUR = 4;
+// Virtual day start hour (00:00 AM)
+// Users who study past midnight get counted toward previous day (disabled)
+export const VIRTUAL_DAY_START_HOUR = 0;
 
 // LLM request timeout (90 seconds)
 // Prevents hanging on slow API responses

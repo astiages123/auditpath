@@ -534,7 +534,9 @@ CREATE TABLE IF NOT EXISTS "public"."courses" (
     "sort_order" integer DEFAULT 0,
     "created_at" timestamp with time zone DEFAULT "now"(),
     "instructor" "text",
-    "updated_at" timestamp with time zone DEFAULT "now"()
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "type" character varying(50) DEFAULT 'video'::character varying,
+    "total_pages" integer DEFAULT 0
 );
 
 

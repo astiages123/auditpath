@@ -104,7 +104,10 @@ export const SessionListItem: FC<SessionListItemProps> = ({
   const focusPower = session.efficiencyScore;
 
   const TriggerContent = (
-    <div className="p-4 flex items-center justify-between bg-white/2 border border-white/5 hover:bg-white/5 hover:border-white/10 rounded-xl transition-all cursor-pointer group">
+    <button
+      type="button"
+      className="p-4 w-full flex items-center justify-between bg-white/2 border border-white/5 hover:bg-white/5 hover:border-white/10 rounded-xl transition-all cursor-pointer group"
+    >
       <div className="flex items-center gap-4">
         <div className="w-10 h-10 rounded-xl bg-surface flex items-center justify-center text-muted-foreground group-hover:text-primary transition-colors">
           <BookOpen className="w-5 h-5" />
@@ -141,7 +144,7 @@ export const SessionListItem: FC<SessionListItemProps> = ({
           <ChevronRight className="w-5 h-5 text-muted-foreground/40 group-hover:text-white/60 transition-colors" />
         )}
       </div>
-    </div>
+    </button>
   );
 
   if (disableModal) {
@@ -153,88 +156,86 @@ export const SessionListItem: FC<SessionListItemProps> = ({
   const pauseMins = Math.round(session.totalPauseTime / 60);
 
   return (
-    <div onClick={(e) => e.stopPropagation()} className="w-full">
-      <EfficiencyModal
-        title={`${session.courseName} - Oturum Detayı`}
-        trigger={TriggerContent}
-      >
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Oturum Akışı
-            </h5>
-            <div className="bg-white/3 p-5 rounded-xl border border-white/5">
-              <SessionGanttChart
-                sessions={[convertToSession(session)]}
-                detailed={true}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard
-              icon={LayoutGrid}
-              iconBg="bg-accent/10"
-              iconColor="text-accent"
-              label="Durdurma"
-              value={`${session.pauseCount} Adet`}
+    <EfficiencyModal
+      title={`${session.courseName} - Oturum Detayı`}
+      trigger={TriggerContent}
+    >
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <h5 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Oturum Akışı
+          </h5>
+          <div className="bg-white/3 p-5 rounded-xl border border-white/5">
+            <SessionGanttChart
+              sessions={[convertToSession(session)]}
+              detailed={true}
             />
-            <StatCard
-              icon={Zap}
-              iconBg="bg-accent/10"
-              iconColor="text-accent"
-              label="Odaklanma"
-              value={`${workMins} dk`}
-            />
-            <StatCard
-              icon={Coffee}
-              iconBg="bg-accent/10"
-              iconColor="text-accent"
-              label="Mola"
-              value={`${breakMins} dk`}
-            />
-            <StatCard
-              icon={PauseIcon}
-              iconBg="bg-accent/10"
-              iconColor="text-accent"
-              label="Duraklatma"
-              value={`${pauseMins} dk`}
-            />
-          </div>
-
-          <div className="bg-white/3 rounded-xl p-5 border border-white/5">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Odak Gücü
-              </span>
-              <span
-                className={cn(
-                  'text-xl font-bold',
-                  getEfficiencyColor(focusPower)
-                )}
-              >
-                {focusPower}{' '}
-                <span className="text-xs font-medium opacity-50 uppercase tracking-normal">
-                  puan
-                </span>
-              </span>
-            </div>
-            <div className="h-2 w-full bg-surface rounded-full overflow-hidden">
-              <div
-                className={cn(
-                  'h-full transition-all duration-700 rounded-full',
-                  focusPower >= 100
-                    ? 'bg-emerald-500'
-                    : focusPower >= 70
-                      ? 'bg-primary'
-                      : 'bg-rose-500'
-                )}
-                style={{ width: `${Math.min(100, focusPower)}%` }}
-              />
-            </div>
           </div>
         </div>
-      </EfficiencyModal>
-    </div>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            icon={LayoutGrid}
+            iconBg="bg-accent/10"
+            iconColor="text-accent"
+            label="Durdurma"
+            value={`${session.pauseCount} Adet`}
+          />
+          <StatCard
+            icon={Zap}
+            iconBg="bg-accent/10"
+            iconColor="text-accent"
+            label="Odaklanma"
+            value={`${workMins} dk`}
+          />
+          <StatCard
+            icon={Coffee}
+            iconBg="bg-accent/10"
+            iconColor="text-accent"
+            label="Mola"
+            value={`${breakMins} dk`}
+          />
+          <StatCard
+            icon={PauseIcon}
+            iconBg="bg-accent/10"
+            iconColor="text-accent"
+            label="Duraklatma"
+            value={`${pauseMins} dk`}
+          />
+        </div>
+
+        <div className="bg-white/3 rounded-xl p-5 border border-white/5">
+          <div className="flex items-center justify-between mb-4">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Odak Gücü
+            </span>
+            <span
+              className={cn(
+                'text-xl font-bold',
+                getEfficiencyColor(focusPower)
+              )}
+            >
+              {focusPower}{' '}
+              <span className="text-xs font-medium opacity-50 uppercase tracking-normal">
+                puan
+              </span>
+            </span>
+          </div>
+          <div className="h-2 w-full bg-surface rounded-full overflow-hidden">
+            <div
+              className={cn(
+                'h-full transition-all duration-700 rounded-full',
+                focusPower >= 100
+                  ? 'bg-emerald-500'
+                  : focusPower >= 70
+                    ? 'bg-primary'
+                    : 'bg-rose-500'
+              )}
+              style={{ width: `${Math.min(100, focusPower)}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </EfficiencyModal>
   );
 };

@@ -267,7 +267,7 @@ function QuizCardComponent({
 
                   return (
                     <OptionButton
-                      key={index}
+                      key={`opt-${index}-${option.slice(0, 10)}`}
                       option={option}
                       label={optionLabels[index]}
                       variant={variant}

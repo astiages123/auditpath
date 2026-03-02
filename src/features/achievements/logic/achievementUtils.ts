@@ -8,9 +8,12 @@ import { ACHIEVEMENTS } from './definitions';
 function getCategoryDisplayName(slug: string): string {
   const displayNames: Record<string, string> = {
     HUKUK: 'Hukuk',
-    EKONOMI: 'Ekonomi',
+    IKTISAT: 'İktisat',
     MUHASEBE_MALIYE: 'Muhasebe ve Maliye',
-    GENEL_YETENEK: 'Genel Yetenek',
+    GY_GK: 'Genel Yetenek - Genel Kültür',
+    KAMU_YONETIMI: 'Kamu Yönetimi',
+    ULUSLARARASI_ILISKILER: 'Uluslararası İlişkiler',
+    ATA_584: 'ATA 584',
   };
   return displayNames[slug] || slug;
 }

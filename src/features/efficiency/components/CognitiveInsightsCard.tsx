@@ -149,9 +149,9 @@ export const CognitiveInsightsCard = ({
               KAVRAM YANILGILARI
             </div>
             <div className="grid grid-cols-1 gap-2">
-              {topConfused.map((item, idx) => (
+              {topConfused.map((item) => (
                 <div
-                  key={idx}
+                  key={`confused-${item.text}`}
                   className="flex items-center justify-between p-2.5 rounded-lg bg-white/3 border border-white/5 hover:bg-white/5 transition-colors"
                 >
                   <span className="text-sm text-white/80 line-clamp-1">
@@ -178,7 +178,7 @@ export const CognitiveInsightsCard = ({
             <div className="space-y-2">
               {recentInsights.map((insight, idx) => (
                 <div
-                  key={idx}
+                  key={`insight-${idx}`}
                   className="p-3 rounded-lg bg-sky-500/5 border border-sky-500/10 text-sm text-sky-100/80 leading-relaxed italic"
                 >
                   "{insight}"

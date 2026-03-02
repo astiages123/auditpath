@@ -143,9 +143,9 @@ export const DistractionDetails = ({ sessions }: DistractionDetailsProps) => {
 
         {allPauses.length > 0 ? (
           <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-            {allPauses.map((pause, idx) => (
+            {allPauses.map((pause) => (
               <div
-                key={idx}
+                key={pause.start}
                 className="flex items-center justify-between p-3.5 bg-white/3 border border-white/5 rounded-xl hover:bg-white/5 transition-all"
               >
                 <div className="flex items-center gap-4">

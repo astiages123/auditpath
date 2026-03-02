@@ -62,10 +62,10 @@ export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
           }}
         >
           <TooltipProvider delayDuration={0}>
-            {data.map((day, i) => {
+            {data.map((day, _i) => {
               const level = getLevel(day);
               return (
-                <Tooltip key={i}>
+                <Tooltip key={day.date}>
                   <TooltipTrigger asChild>
                     <div
                       className={cn(

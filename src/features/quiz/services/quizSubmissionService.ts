@@ -98,17 +98,17 @@ export async function finishQuizSession(stats: {
 
 export async function recordQuizProgress(
   payload: Database['public']['Tables']['user_quiz_progress']['Insert']
-): Promise<{ success: boolean; error?: Error }> {
+): Promise<{ success: boolean; progressId?: string; error?: Error }> {
   if (!isValidUuid(payload.question_id)) return { success: true };
 
-  const { success, error } = await safeQuery(
-    supabase.from('user_quiz_progress').insert(payload),
+  const { success, data, error } = await safeQuery<{ id: string }>(
+    supabase.from('user_quiz_progress').insert(payload).select('id').single(),
     'recordQuizProgress error',
     { questionId: payload.question_id, ...payload }
   );
 
   if (!success) return { success: false, error: new Error(error) };
-  return { success: true };
+  return { success: true, progressId: data?.id };
 }
 
 export async function upsertUserQuestionStatus(
@@ -268,7 +268,11 @@ export async function submitQuizAnswer(
   }
 
   const updateResults = await Promise.all(
-    updates as Promise<{ success: boolean; error?: Error }>[]
+    updates as Promise<{
+      success: boolean;
+      progressId?: string;
+      error?: Error;
+    }>[]
   );
 
   const failed = updateResults.find(
@@ -280,6 +284,15 @@ export async function submitQuizAnswer(
       failed.error ||
       new Error('Yanıt veritabanına kaydedilirken bir hata oluştu')
     );
+  }
+
+  // Find the progressId from the recordQuizProgress result
+  const progressResult = updateResults.find(
+    (r) => typeof r === 'object' && r !== null && 'progressId' in r
+  );
+
+  if (progressResult && progressResult.progressId) {
+    result.progressId = progressResult.progressId;
   }
 
   return result;

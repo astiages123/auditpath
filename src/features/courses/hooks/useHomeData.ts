@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useReducer } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   getAllCourses,
@@ -18,20 +18,60 @@ interface HomeData {
   error: string | null;
 }
 
+type HomeState = {
+  categories: Category[];
+  userStats: ProgressStats | null;
+  loading: boolean;
+  error: string | null;
+};
+
+type HomeAction =
+  | { type: 'FETCH_START' }
+  | {
+      type: 'FETCH_SUCCESS';
+      categories: Category[];
+      userStats: ProgressStats | null;
+    }
+  | { type: 'FETCH_ERROR'; error: string }
+  | { type: 'SET_LOADING'; loading: boolean };
+
+function homeReducer(state: HomeState, action: HomeAction): HomeState {
+  switch (action.type) {
+    case 'FETCH_START':
+      return { ...state, loading: true, error: null };
+    case 'FETCH_SUCCESS':
+      return {
+        ...state,
+        categories: action.categories,
+        userStats: action.userStats,
+        loading: false,
+        error: null,
+      };
+    case 'FETCH_ERROR':
+      return { ...state, error: action.error, loading: false };
+    case 'SET_LOADING':
+      return { ...state, loading: action.loading };
+    default:
+      return state;
+  }
+}
+
 export function useHomeData(): HomeData {
   const { user, loading: authLoading } = useAuth();
   const userId = user?.id;
   const isLoaded = !authLoading;
 
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [userStats, setUserStats] = useState<ProgressStats | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(homeReducer, {
+    categories: [],
+    userStats: null,
+    loading: true,
+    error: null,
+  });
 
   useEffect(() => {
     async function loadData() {
       try {
-        setLoading(true);
+        dispatch({ type: 'FETCH_START' });
         // Load categories and all courses
         const [cats, allCourses] = await Promise.all([
           getCategories(),
@@ -48,6 +88,7 @@ export function useHomeData(): HomeData {
           (c) => !categorizedCourseIds.has(c.id)
         );
 
+        let finalCategories = cats;
         if (uncategorized.length > 0) {
           const otherCategory: Category = {
             id: 'uncategorized',
@@ -61,23 +102,28 @@ export function useHomeData(): HomeData {
             sort_order: 999,
             created_at: new Date().toISOString(),
           };
-          setCategories([...cats, otherCategory]);
-        } else {
-          setCategories(cats);
+          finalCategories = [...cats, otherCategory];
         }
 
         // Load stats if user is logged in
+        let stats: ProgressStats | null = null;
         if (userId) {
-          const stats = await getUserStats(userId, cats);
-          if (stats) {
-            setUserStats(stats);
-          }
+          stats = await getUserStats(userId, cats);
         }
+
+        dispatch({
+          type: 'FETCH_SUCCESS',
+          categories: finalCategories,
+          userStats: stats,
+        });
       } catch (e) {
         logger.error('[useHomeData] Failed to load data', e as Error);
-        setError('Veritabanı bağlantısı kurulamadı.');
+        dispatch({
+          type: 'FETCH_ERROR',
+          error: 'Veritabanı bağlantısı kurulamadı.',
+        });
       } finally {
-        setLoading(false);
+        dispatch({ type: 'SET_LOADING', loading: false });
       }
     }
 
@@ -93,7 +139,7 @@ export function useHomeData(): HomeData {
       nextRank: RANKS[1],
       rankProgress: 0,
       completedVideos: 0,
-      totalVideos: categories.reduce(
+      totalVideos: state.categories.reduce(
         (sum: number, cat: Category) =>
           sum +
           cat.courses.reduce((s: number, c) => s + (c.total_videos || 0), 0),
@@ -101,10 +147,28 @@ export function useHomeData(): HomeData {
       ),
       completedHours: 0,
       totalHours: Math.round(
-        categories.reduce(
+        state.categories.reduce(
           (sum: number, cat: Category) => sum + (cat.total_hours || 0),
           0
         )
+      ),
+      completedReadings: 0,
+      totalReadings: state.categories.reduce(
+        (sum: number, cat: Category) =>
+          sum +
+          cat.courses.reduce(
+            (s: number, c) =>
+              s + (c.type === 'reading' ? c.total_videos || 0 : 0),
+            0
+          ),
+        0
+      ),
+      completedPages: 0,
+      totalPages: state.categories.reduce(
+        (sum: number, cat: Category) =>
+          sum +
+          cat.courses.reduce((s: number, c) => s + (c.total_pages || 0), 0),
+        0
       ),
       progressPercentage: 0,
       estimatedDays: 0,
@@ -112,13 +176,13 @@ export function useHomeData(): HomeData {
       courseProgress: {},
       streak: 0,
     }),
-    [categories]
+    [state.categories]
   );
 
   return {
-    categories,
-    stats: userStats || defaultStats,
-    loading,
-    error,
+    categories: state.categories,
+    stats: state.userStats || defaultStats,
+    loading: state.loading,
+    error: state.error,
   };
 }

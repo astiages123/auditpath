@@ -1,4 +1,8 @@
 import { type ConceptMapItem, type Message } from '@/features/quiz/types';
+import {
+  CATEGORY_MAPPINGS,
+  DEFAULT_CATEGORY,
+} from '@/features/courses/utils/constants';
 
 export const GENERAL_QUALITY_RULES = `## GENEL KALİTE KURALLARI:
 1. **Akademik Dil:** Soru kökü ve şıklar resmi, akademik ve sınav formatına (KPSS) uygun olmalıdır.
@@ -108,6 +112,8 @@ export function buildAnalysisPrompt(
   courseName: string,
   importance: string = 'medium'
 ): string {
+  const category = CATEGORY_MAPPINGS[courseName] || DEFAULT_CATEGORY;
+
   return `Sen Uzman bir Eğitim İçerik Analistisin (KPSS A Grubu). 
 Görev: ${courseName} altındaki **"${sectionTitle}"** başlıklı metni tarayarak kapsamlı bir soru bankası haritası oluştur.
 BU DERSİN ÖNEM DERECESİ: ${importance.toUpperCase()}
@@ -125,7 +131,18 @@ Kurallar:
 5. 'odak' alanı 15 kelimeyi geçmemeli ve net bir öğrenme kazanımı belirtmelidir.
 6. Görsel Analizi: Çıktıdaki her objede 'gorsel' anahtarı mutlaka bulunmalıdır. Eğer ilgili görsel yoksa değeri kesinlikle null olmalıdır; anahtarı (key) asla silme veya atlama.
 7. Görsel varsa 'altText' alanına görselin teknik açıklamasını ekle.
-8. Her kavram için anahtar ismi olarak mutlaka 'baslik' kullanılmalıdır.
+8. Her kavram için anahtar ismi olarak mutlaka 'baslik' kullanılmalıdır.${
+    category === 'FULL_PRACTICE'
+      ? `\n9. GRAFİK KORUMA KURALI (Bu ders için zorunlu):
+Kavram haritası oluştururken grafik, koordinat sistemi, şekil veya tablo gerektiren kavramları tespit et.
+Bu tür kavramların 'gorsel' alanına 'GRAFİK_GEREKTIRIYOR' yaz.
+Örnekler:
+- 'Koordinat düzleminde nokta belirleme' → GRAFİK_GEREKTIRIYOR
+- 'İki doğrunun kesişim noktası' → GRAFİK_GEREKTIRIYOR  
+- 'Olasılık hesaplama' → null (grafik gerektirmiyor)
+- 'Faiz formülü uygulama' → null (grafik gerektirmiyor)`
+      : ''
+  }
 
 **Difficulty Index (Bilişsel Zorluk Endeksi) Kılavuzu:**
 - 1: Giriş seviyesi, basit anlatım, hikaye tarzı (Örn: Tarih giriş)
@@ -147,8 +164,10 @@ export function buildDraftingPrompt(
   concepts: ConceptMapItem[],
   strategy: { bloomLevel: string; instruction: string },
   usageType: 'antrenman' | 'deneme' = 'antrenman',
-  previousDiagnoses?: string[]
+  previousDiagnoses?: string[],
+  courseName: string = ''
 ): string {
+  const category = CATEGORY_MAPPINGS[courseName] || DEFAULT_CATEGORY;
   const parts = [
     `AMAÇ: Metni analiz ederek, belirtilen pedagojik stratejiye uygun, verilen her bir kavram için TEK BİR SORU (toplamda ${concepts.length} soru) üretmek.`,
     `---`,
@@ -192,8 +211,14 @@ Yanlış seçenekler rastgele üretilmemeli, şu üç kategoriden en az birine d
   parts.push(`PEDAGOJİK STRATEJİ:
 ${strategy.instruction}
 
-KANIT ZORUNLULUĞU:
-Eğer soru bir senaryo veya analiz içeriyorsa; evidence alanına metindeki dayanak kuralı/tanımı yaz ve yanına kısa bir notla bu kuralın sorudaki duruma nasıl bağlandığını açıkla. Eğer metinde doğrudan bir kanıt veya dayanak yoksa o soruyu üretme.`);
+${
+  category === 'FULL_PRACTICE'
+    ? `KANIT KURALI: evidence alanına sorunun dayandığı kuralı, formülü veya mantık öncülünü yaz. 
+Örnek matematik: "Güç kuralı: ∫xⁿ dx = xⁿ⁺¹/n+1"
+Örnek İngilizce: "Present Perfect: have/has + V3, tamamlanmış eylemler için kullanılır."
+Metinden direkt alıntı aramak zorunda değilsin.`
+    : `KANIT KURALI: evidence alanına sorunun doğru cevabının dayandığı metindeki cümleyi yaz. Eğer metinde bu soruyu destekleyen açık bir cümle yoksa bu kavram için soru üretme.`
+}`);
 
   if (previousDiagnoses && previousDiagnoses.length > 0) {
     parts.push(`KULLANICININ GEÇMİŞ HATALARI (BU KONUDA):

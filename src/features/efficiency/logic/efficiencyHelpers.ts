@@ -19,6 +19,7 @@ export function generateDateRange(days: number): string[] {
 
 export interface EfficiencyMetrics {
   totalVideoTime: number; // minutes
+  totalReadingTime?: number; // minutes [YENİ]
   totalPomodoroTime: number; // minutes
 }
 
@@ -50,8 +51,10 @@ export function calculateEfficiencyScore(
 export function calculateLearningFlow(
   metrics: EfficiencyMetrics
 ): LearningFlowResult {
+  const totalContentTime =
+    metrics.totalVideoTime + (metrics.totalReadingTime || 0);
   const score = calculateEfficiencyScore(
-    metrics.totalVideoTime,
+    totalContentTime,
     metrics.totalPomodoroTime
   );
 

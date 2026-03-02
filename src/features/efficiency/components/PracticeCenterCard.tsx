@@ -1,11 +1,24 @@
+import { lazy, Suspense } from 'react';
 import { Zap, Maximize2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { EfficiencyModal } from './EfficiencyModal';
 import { PracticePerformanceRadar as PracticeCenterContent } from './PracticePerformanceRadar';
-import { BloomKeyChart } from './BloomKeyChart';
 import { CardHeader } from './CardElements';
 import { useCognitiveInsights } from '../hooks/useCognitiveInsights';
+
+// Lazy load the chart component
+const BloomKeyChart = lazy(() =>
+  import('./BloomKeyChart').then((m) => ({
+    default: m.BloomKeyChart,
+  }))
+);
+
+const ChartFallback = () => (
+  <div className="w-full h-full flex items-center justify-center min-h-[150px]">
+    <Skeleton className="h-40 w-40 rounded-full bg-surface/20" />
+  </div>
+);
 
 export const PracticeCenterCard = () => {
   const { loadingBloom: loading, bloomStats } = useCognitiveInsights();
@@ -47,7 +60,9 @@ export const PracticeCenterCard = () => {
 
             <div className="flex-1 w-full flex items-center justify-center min-h-0">
               <div className="w-full h-full flex items-center justify-center p-2">
-                <BloomKeyChart data={bloomStats} />
+                <Suspense fallback={<ChartFallback />}>
+                  <BloomKeyChart data={bloomStats} />
+                </Suspense>
               </div>
             </div>
           </Card>

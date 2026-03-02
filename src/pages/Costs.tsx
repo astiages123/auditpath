@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   StatsSkeleton,
@@ -9,9 +10,15 @@ import { useAnalytics } from '@/features/analytics/hooks/useAnalytics';
 
 import { AnalyticsHeader } from '@/features/analytics/components/AnalyticsHeader';
 import { AnalyticsStats } from '@/features/analytics/components/AnalyticsStats';
-import { AnalyticsChart } from '@/features/analytics/components/AnalyticsChart';
 import { AnalyticsTable } from '@/features/analytics/components/AnalyticsTable';
 import { PageHeader } from '@/shared/components/PageHeader';
+
+// Lazy load the chart component
+const AnalyticsChart = lazy(() =>
+  import('@/features/analytics/components/AnalyticsChart').then((m) => ({
+    default: m.AnalyticsChart,
+  }))
+);
 
 export default function AnalyticsPage() {
   const {
@@ -23,7 +30,6 @@ export default function AnalyticsPage() {
     loading,
     visibleCount,
     deferredVisibleCount,
-    isMounted,
     isPending,
     dailyData,
     totalCostUsd,
@@ -64,39 +70,42 @@ export default function AnalyticsPage() {
         title="Maliyet Analizi"
         subtitle="AI model kullanım ve maliyet analizlerini takip et."
       />
-      <AnalyticsHeader
-        rate={rate}
-        selectedModel={selectedModel}
-        onModelChange={setSelectedModel}
-        availableModels={uniqueModels}
-      />
+      <div className="space-y-6">
+        <AnalyticsHeader
+          rate={rate}
+          selectedModel={selectedModel}
+          onModelChange={setSelectedModel}
+          availableModels={uniqueModels}
+        />
 
-      <AnalyticsStats
-        totalCostTry={totalCostTry}
-        totalCostUsd={totalCostUsd}
-        totalRequests={totalRequests}
-        cacheHitRate={cacheHitRate}
-        totalInputTokens={totalInputTokens}
-        totalOutputTokens={totalOutputTokens}
-        totalCachedTokens={totalCachedTokens}
-        formatCurrency={formatCurrency}
-      />
+        <AnalyticsStats
+          totalCostTry={totalCostTry}
+          totalCostUsd={totalCostUsd}
+          totalRequests={totalRequests}
+          cacheHitRate={cacheHitRate}
+          totalInputTokens={totalInputTokens}
+          totalOutputTokens={totalOutputTokens}
+          totalCachedTokens={totalCachedTokens}
+          formatCurrency={formatCurrency}
+        />
 
-      <AnalyticsChart
-        dailyData={dailyData}
-        isMounted={isMounted}
-        formatCurrency={formatCurrency}
-      />
+        <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
+          <AnalyticsChart
+            dailyData={dailyData}
+            formatCurrency={formatCurrency}
+          />
+        </Suspense>
 
-      <AnalyticsTable
-        logs={logs}
-        visibleCount={visibleCount}
-        deferredVisibleCount={deferredVisibleCount}
-        isPending={isPending}
-        rate={rate}
-        formatCurrency={formatCurrency}
-        onLoadMore={handleLoadMore}
-      />
+        <AnalyticsTable
+          logs={logs}
+          visibleCount={visibleCount}
+          deferredVisibleCount={deferredVisibleCount}
+          isPending={isPending}
+          rate={rate}
+          formatCurrency={formatCurrency}
+          onLoadMore={handleLoadMore}
+        />
+      </div>
     </div>
   );
 }

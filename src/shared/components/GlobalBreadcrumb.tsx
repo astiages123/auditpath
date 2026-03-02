@@ -40,8 +40,13 @@ const ROUTE_LABELS: Record<string, string> = {
 export function GlobalBreadcrumb() {
   const location = useLocation();
   const pathnames = location.pathname.split('/').filter((x) => x);
-  const [course, setCourse] = useState<Course | null>(null);
-  const [topicName, setTopicName] = useState<string | null>(null);
+  const [data, setData] = useState<{
+    course: Course | null;
+    topicName: string | null;
+  }>({
+    course: null,
+    topicName: null,
+  });
 
   // Segment indexers
   const isQuizPath = pathnames[0] === 'quiz';
@@ -57,7 +62,6 @@ export function GlobalBreadcrumb() {
     async function resolveData() {
       if (courseSlug) {
         const cData = await getCourseBySlug(courseSlug);
-        setCourse(cData);
 
         if (topicSlug && cData) {
           // Fetch topic name by slugifying section_title
@@ -66,18 +70,19 @@ export function GlobalBreadcrumb() {
             .select('section_title')
             .eq('course_id', cData.id);
 
+          let foundTopic: string | null = topicSlug;
           if (chunks) {
             const found = chunks.find(
               (c) => slugify(c.section_title) === topicSlug
             );
-            setTopicName(found ? found.section_title : topicSlug);
+            foundTopic = found ? found.section_title : topicSlug;
           }
+          setData({ course: cData, topicName: foundTopic });
         } else {
-          setTopicName(null);
+          setData({ course: cData, topicName: null });
         }
       } else {
-        setCourse(null);
-        setTopicName(null);
+        setData({ course: null, topicName: null });
       }
     }
     resolveData();
@@ -114,12 +119,12 @@ export function GlobalBreadcrumb() {
       };
     }
 
-    if (value === courseSlug && course) {
-      label = course.name;
+    if (value === courseSlug && data.course) {
+      label = data.course.name;
     }
 
-    if (value === topicSlug && topicName) {
-      label = topicName;
+    if (value === topicSlug && data.topicName) {
+      label = data.topicName;
     }
 
     return { label, to, last, originalIdx };

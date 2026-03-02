@@ -4,6 +4,7 @@ import {
   ChevronUp,
   GraduationCap,
   Clock,
+  FileText,
   TvMinimalPlay,
   Youtube,
   BookOpen,
@@ -16,6 +17,7 @@ import { useCelebration } from '@/shared/hooks/useCelebration';
 import { getCourseIcon } from '../logic/coursesLogic';
 import { type Course } from '@/features/courses/types/courseTypes';
 import { cn } from '@/utils/stringHelpers';
+import { env } from '@/utils/env';
 
 // Lazy load CourseStatsModal
 const CourseStatsModal = lazy(() =>
@@ -121,11 +123,20 @@ export function CourseList({
             {/* Main Content Area */}
             <div
               className="flex items-center gap-4 p-5 cursor-pointer"
+              role="button"
+              tabIndex={0}
               onClick={() =>
                 setExpandedCourse(
                   expandedCourse === course.id ? null : course.id
                 )
               }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setExpandedCourse(
+                    expandedCourse === course.id ? null : course.id
+                  );
+                }
+              }}
             >
               {/* Column 1: Icon */}
               <div className={iconContainerClass}>
@@ -137,6 +148,11 @@ export function CourseList({
                 <h4 className={titleClass}>{displayName}</h4>
 
                 <div className="flex items-center gap-3 mt-1.5 overflow-x-auto no-scrollbar scrollbar-hide">
+                  {_slug === 'ATA_584' && (
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-wider whitespace-nowrap">
+                      {course.course_slug.split('-').pop()}. HAFTA
+                    </div>
+                  )}
                   {course.type === 'reading' ? (
                     <>
                       <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
@@ -145,7 +161,11 @@ export function CourseList({
                       </div>
                       {course.total_pages && (
                         <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
-                          <BookOpenText className="size-3 text-muted-foreground/50" />
+                          {_slug !== 'ATA_584' ? (
+                            <BookOpenText className="size-3 text-muted-foreground/50" />
+                          ) : (
+                            <FileText className="size-3 text-muted-foreground/50" />
+                          )}
                           {course.total_pages} Sayfa
                         </div>
                       )}
@@ -168,11 +188,11 @@ export function CourseList({
               {/* Column 3: Progress % + Toggle Icon */}
               <div className="flex items-center gap-4 shrink-0">
                 {course.type === 'reading' ? (
-                  [
-                    'turk-dis-politikasi',
-                    'uluslararasi-hukuk',
-                    'uluslararasi-iliskiler-kuramlari',
-                  ].includes(course.course_slug) ? (
+                  _slug === 'ATA_584' ? null : [
+                      'turk-dis-politikasi',
+                      'uluslararasi-hukuk',
+                      'uluslararasi-iliskiler-kuramlari',
+                    ].includes(course.course_slug) ? (
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
@@ -180,7 +200,7 @@ export function CourseList({
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(
-                            `https://ccnvhimlbkkydpcqtraw.supabase.co/storage/v1/object/public/pdfs/${course.course_slug}-1.pdf`,
+                            `${env.supabase.url}/storage/v1/object/public/pdfs/${course.course_slug}-1.pdf`,
                             '_blank'
                           );
                         }}
@@ -196,7 +216,7 @@ export function CourseList({
                         onClick={(e) => {
                           e.stopPropagation();
                           window.open(
-                            `https://ccnvhimlbkkydpcqtraw.supabase.co/storage/v1/object/public/pdfs/${course.course_slug}-2.pdf`,
+                            `${env.supabase.url}/storage/v1/object/public/pdfs/${course.course_slug}-2.pdf`,
                             '_blank'
                           );
                         }}
@@ -214,7 +234,7 @@ export function CourseList({
                       onClick={(e) => {
                         e.stopPropagation();
                         window.open(
-                          `https://ccnvhimlbkkydpcqtraw.supabase.co/storage/v1/object/public/pdfs/${course.course_slug}.pdf`,
+                          `${env.supabase.url}/storage/v1/object/public/pdfs/${course.course_slug}.pdf`,
                           '_blank'
                         );
                       }}

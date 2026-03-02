@@ -1,26 +1,40 @@
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceArea,
-  ReferenceLine,
-  Cell,
-} from 'recharts';
+import { useState, useEffect } from 'react';
 import { cn } from '@/utils/stringHelpers';
-import { EfficiencyTrend } from '@/features/efficiency/types/efficiencyTypes';
+import {
+  EfficiencyTrend,
+  EfficiencyTrendProps,
+} from '@/features/efficiency/types/efficiencyTypes';
 import { formatDisplayDate } from '@/utils/dateUtils';
 import { EFFICIENCY_THRESHOLDS } from '../utils/constants';
 
-// --- Efficiency Trend Chart ---
-export interface EfficiencyTrendProps {
-  data: EfficiencyTrend[];
-}
+type RechartsModule = typeof import('recharts');
 
 export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
+  const [Recharts, setRecharts] = useState<RechartsModule | null>(null);
+
+  useEffect(() => {
+    import('recharts').then((mod) => setRecharts(mod));
+  }, []);
+
+  if (!Recharts) {
+    return (
+      <div className="w-full h-[400px] mt-4 animate-pulse bg-muted/20 rounded-xl" />
+    );
+  }
+
+  const {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    ReferenceArea,
+    ReferenceLine,
+    Cell,
+  } = Recharts;
+
   // 1. Veri Hazırlığı (Diverging Logic)
   // Deviation from 1.00 (Center of Ideal Range)
   const chartData = data.map((item: EfficiencyTrend) => ({
@@ -107,7 +121,7 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
             tick={{ fill: 'var(--muted-foreground)', fontSize: 10, dy: 10 }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(val) => {
+            tickFormatter={(val: string) => {
               return formatDisplayDate(val);
             }}
           />
@@ -130,7 +144,7 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
             axisLine={false}
             tickLine={false}
             width={40}
-            tickFormatter={(val) => {
+            tickFormatter={(val: number) => {
               // Display the absolute score equivalent instead of deviation for UX?
               // Or keep deviation? User asked "XAxis... score... YAxis... dates" previously,
               // now "YAxis (Dikey): domain={[-1.3, 2.7]}".
@@ -146,7 +160,7 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
             cursor={{ fill: 'rgba(255,255,255,0.05)' }}
             content={({ active, payload, label }) => {
               if (active && payload && payload.length) {
-                const dPayload = payload[0].payload;
+                const dPayload = payload[0].payload as EfficiencyTrend;
                 const dScore = dPayload.score;
 
                 const getStatusInfo = (val: number) => {
@@ -232,7 +246,7 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
             barSize={32} // Slightly wider bars for better visibility
             radius={[4, 4, 4, 4]}
           >
-            {chartData.map((entry, index) => {
+            {chartData.map((entry: EfficiencyTrend, index: number) => {
               const val = entry.score;
               let color = 'oklch(77.596% 0.14766 79.996)'; // Default accent
 

@@ -15,9 +15,9 @@ export async function getUserStats(
   predefinedCategories?: Category[]
 ) {
   try {
-    let cats = predefinedCategories;
+    let cats: Category[] = predefinedCategories ?? [];
 
-    if (!cats) {
+    if (!predefinedCategories) {
       const { data: categories, error: catError } = await supabase
         .from('categories')
         .select('*, courses(*)')
@@ -29,29 +29,43 @@ export async function getUserStats(
 
     const courseToCategoryMap: Record<string, string> = {};
     const courseIdToSlugMap: Record<string, string> = {};
+    const courseIdToTypeMap: Record<string, string> = {};
 
     cats.forEach((cat) => {
-      cat.courses.forEach((course: { id: string; course_slug: string }) => {
+      cat.courses.forEach((course) => {
         courseToCategoryMap[course.id] = cat.name;
         courseIdToSlugMap[course.id] = course.course_slug;
+        courseIdToTypeMap[course.id] = course.type || 'video';
       });
     });
 
     // Helper for totals
     const getTotalsFromJSON = () => {
       let h = 0,
-        v = 0;
+        v = 0,
+        r = 0,
+        p = 0;
       coursesData.forEach(
         (cat: {
-          courses?: { totalHours?: number; totalVideos?: number }[];
+          courses?: {
+            totalHours?: number;
+            totalVideos?: number;
+            type?: string;
+            total_pages?: number;
+          }[];
         }) => {
           cat.courses?.forEach((c) => {
             h += c.totalHours || 0;
-            v += c.totalVideos || 0;
+            if (c.type === 'reading') {
+              r += c.totalVideos || 0;
+              p += c.total_pages || 0;
+            } else {
+              v += c.totalVideos || 0;
+            }
           });
         }
       );
-      return { h, v };
+      return { h, v, r, p };
     };
 
     const jsonTotals = getTotalsFromJSON();
@@ -69,16 +83,20 @@ export async function getUserStats(
       dbTotalHours > 0 ? dbTotalHours : jsonTotals.h || 280;
     const globalTotalVideos =
       dbTotalVideos > 0 ? dbTotalVideos : jsonTotals.v || 550;
+    const globalTotalReadings = jsonTotals.r || 0;
+    const globalTotalPages = jsonTotals.p || 0;
 
     const { data: progress, error: progressError } = await supabase
       .from('video_progress')
-      .select('*, video:videos(duration_minutes, course_id)')
+      .select('*, video:videos(duration_minutes, course_id, duration)')
       .eq('user_id', userId)
       .eq('completed', true);
 
     if (progressError) throw progressError;
 
-    const completedVideos = progress?.length || 0;
+    let completedVideos = 0;
+    let completedReadings = 0;
+    let completedPages = 0;
     let completedHours = 0;
     const courseProgress: Record<string, number> = {};
     const categoryProgress: Record<
@@ -86,7 +104,11 @@ export async function getUserStats(
       {
         completedVideos: number;
         completedHours: number;
+        completedReadings: number;
+        completedPages: number;
         totalVideos: number;
+        totalReadings: number;
+        totalPages: number;
         totalHours: number;
       }
     > = {};
@@ -109,10 +131,27 @@ export async function getUserStats(
         const video = p.video as {
           duration_minutes: number;
           course_id: string;
+          duration: string;
         } | null;
         if (video) {
           const durationHours = video.duration_minutes / 60;
           completedHours += durationHours;
+          const courseType = courseIdToTypeMap[video.course_id] || 'video';
+
+          let parsedPages = 0;
+          if (courseType === 'reading') {
+            completedReadings += 1;
+            if (video.duration) {
+              const pagesMatch = video.duration.match(/\d+/);
+              if (pagesMatch) {
+                parsedPages = parseInt(pagesMatch[0], 10);
+                completedPages += parsedPages;
+              }
+            }
+          } else {
+            completedVideos += 1;
+          }
+
           const courseSlug =
             courseIdToSlugMap[video.course_id] || video.course_id;
           courseProgress[courseSlug] = (courseProgress[courseSlug] || 0) + 1;
@@ -125,15 +164,34 @@ export async function getUserStats(
               categoryProgress[normalizedCatName] = {
                 completedVideos: 0,
                 completedHours: 0,
+                completedReadings: 0,
+                completedPages: 0,
                 totalVideos:
                   cat?.courses.reduce(
-                    (sum, c) => sum + (c.total_videos || 0),
+                    (sum, c) =>
+                      sum + (c.type !== 'reading' ? c.total_videos || 0 : 0),
+                    0
+                  ) || 0,
+                totalReadings:
+                  cat?.courses.reduce(
+                    (sum, c) =>
+                      sum + (c.type === 'reading' ? c.total_videos || 0 : 0),
+                    0
+                  ) || 0,
+                totalPages:
+                  cat?.courses.reduce(
+                    (sum, c) => sum + (c.total_pages || 0),
                     0
                   ) || 0,
                 totalHours: cat?.total_hours || 0,
               };
             }
-            categoryProgress[normalizedCatName].completedVideos += 1;
+            if (courseType === 'reading') {
+              categoryProgress[normalizedCatName].completedReadings += 1;
+              categoryProgress[normalizedCatName].completedPages += parsedPages;
+            } else {
+              categoryProgress[normalizedCatName].completedVideos += 1;
+            }
             categoryProgress[normalizedCatName].completedHours += durationHours;
           }
         }
@@ -186,7 +244,11 @@ export async function getUserStats(
 
     return {
       completedVideos,
+      completedReadings,
+      completedPages,
       totalVideos: globalTotalVideos,
+      totalReadings: globalTotalReadings,
+      totalPages: globalTotalPages,
       completedHours: Math.round(completedHours * 10) / 10,
       totalHours: globalTotalHours,
       streak,

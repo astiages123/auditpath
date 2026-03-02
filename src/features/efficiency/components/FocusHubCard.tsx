@@ -21,7 +21,9 @@ export const FocusHubCard = () => {
     efficiencySummary,
     dailyGoalMinutes,
     todayVideoMinutes,
+    todayReadingMinutes,
     todayVideoCount,
+    pagesRead,
     videoTrendPercentage,
     trendPercentage,
   } = useDailyMetrics();
@@ -36,6 +38,7 @@ export const FocusHubCard = () => {
 
   const logic = useEfficiencyLogic({
     totalVideoTime: todayVideoMinutes,
+    totalReadingTime: todayReadingMinutes,
     totalPomodoroTime: currentWorkMinutes,
   });
 
@@ -155,7 +158,7 @@ export const FocusHubCard = () => {
               iconColor="text-accent"
               iconBg="bg-accent/10"
               title="Öğrenme Akışı"
-              subtitle="Video hızı ve çalışma süresi oranı. İdeal: 1.0x"
+              subtitle="İçerik tamamlama hızı ve çalışma süresi oranı. İdeal: 1.0x"
               action={
                 <Maximize2 className="w-5 h-5 text-muted-foreground/30 hover:text-white transition-colors" />
               }
@@ -214,7 +217,7 @@ export const FocusHubCard = () => {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 justify-center md:justify-start">
                       <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-                        Video İzleme
+                        İçerik Tamamlama
                       </p>
                       <TrendBadge percentage={videoTrendPercentage} />
                     </div>
@@ -222,11 +225,16 @@ export const FocusHubCard = () => {
                       {todayVideoCount}
                       <span className="text-muted-foreground/40 text-sm">
                         {' '}
-                        video
+                        içerik
                       </span>
                     </p>
-                    <p className="text-[12px] text-muted-foreground/60">
-                      {todayVideoMinutes} dk toplam
+                    <p className="text-[12px] text-muted-foreground/60 leading-tight">
+                      {todayVideoMinutes + todayReadingMinutes} dk toplam
+                      {pagesRead > 0 && (
+                        <span className="block italic text-emerald-400/80">
+                          ({pagesRead} sayfa)
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>

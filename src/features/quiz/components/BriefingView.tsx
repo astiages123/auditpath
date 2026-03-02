@@ -88,9 +88,9 @@ export function BriefingView({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">
-                {completionStatus.concepts?.map((c, i) => (
+                {completionStatus.concepts?.map((c) => (
                   <tr
-                    key={i}
+                    key={c.baslik}
                     className="hover:bg-primary/5 transition-colors group"
                   >
                     <td className="px-4 py-3 border-r border-border/10">
@@ -202,9 +202,9 @@ export function BriefingView({
                   color: 'text-purple-500',
                   bg: 'bg-purple-500/10',
                 },
-              ].map((d, i) => (
+              ].map((d) => (
                 <div
-                  key={i}
+                  key={d.label}
                   className="text-center p-2 rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div

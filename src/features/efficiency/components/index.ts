@@ -1,7 +1,4 @@
 // Efficiency Charts
-export * from './BloomKeyChart';
-export * from './EfficiencyTrendChart';
-export * from './FocusPowerTrendChart';
 export * from './SessionGanttChart';
 export * from './EfficiencyHeatmap';
 

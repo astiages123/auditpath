@@ -23,6 +23,7 @@ import {
   POMODORO_WORK_DURATION_SECONDS,
 } from '../utils/constants';
 
+import { usePomodoroWorker } from '../hooks/usePomodoroWorker';
 import { logger } from '@/utils/logger';
 
 export function TimerController() {
@@ -77,94 +78,76 @@ export function TimerController() {
     accessToken: session?.access_token,
   });
 
-  // 1. Core Tick using Web Worker
+  const { start, pause } = usePomodoroWorker(tick);
+
+  // 1. Core Tick Control
   useEffect(() => {
-    const worker = new Worker(
-      new URL('../logic/timerWorker.ts', import.meta.url),
-      { type: 'module' }
-    );
-
-    worker.onmessage = (e: MessageEvent<string>) => {
-      if (e.data === 'TICK') {
-        tick();
-      }
-    };
-
     if (isActive) {
-      worker.postMessage('START');
+      start();
     } else {
-      worker.postMessage('STOP');
+      pause();
     }
-
-    return () => {
-      worker.onmessage = null;
-      worker.postMessage('STOP');
-      worker.terminate();
-    };
-  }, [isActive, tick]);
+  }, [isActive, start, pause]);
 
   // 2. Initial Sync & Restore
   useEffect(() => {
-    if (!userId) return;
+    async function loadData() {
+      if (!userId) return;
 
-    const sync = async () => {
-      // Sync daily count
-      const count = await getDailySessionCount(userId);
-      if (!sessionId) {
-        setSessionCount(count + 1);
-      } else {
-        setSessionCount(count || 1);
-      }
+      try {
+        // 1. Sync daily count
+        const count = await getDailySessionCount(userId);
+        if (!sessionId) {
+          setSessionCount(count + 1);
+        } else {
+          setSessionCount(count || 1);
+        }
 
-      // Restore active session if idle
-      if (!hasRestored && !window._isPomodoroRestoring) {
-        setHasRestored(true);
-        window._isPomodoroRestoring = true;
+        // 2. Restore active session if idle
+        if (!hasRestored && !window._isPomodoroRestoring) {
+          setHasRestored(true);
+          window._isPomodoroRestoring = true;
 
-        if (!isActive && !sessionId) {
-          try {
-            const activeSession = await getLatestActiveSession(userId);
-            if (activeSession) {
-              const sessionAge =
-                Date.now() - new Date(activeSession.started_at).getTime();
-              const isRecent = sessionAge < SESSION_VALIDITY_DURATION_MS;
+          if (!isActive && !sessionId) {
+            try {
+              const activeSession = await getLatestActiveSession(userId);
+              if (activeSession) {
+                const sessionAge =
+                  Date.now() - new Date(activeSession.started_at).getTime();
+                const isRecent = sessionAge < SESSION_VALIDITY_DURATION_MS;
 
-              if (isRecent) {
-                // Double check if we already have a session in local state avoiding race connection
-                if (usePomodoroSessionStore.getState().sessionId) return;
-
-                setSessionId(activeSession.id);
-                if (
-                  activeSession.course_id &&
-                  activeSession.course_name &&
-                  !selectedCourse
-                ) {
-                  setCourse({
-                    id: activeSession.course_id,
-                    name: activeSession.course_name,
-                    category: activeSession.course?.category?.name || 'General',
-                  });
-                }
-
-                // Restore timeline if available to ensure pause calculations are correct
-                if (
-                  activeSession.timeline &&
-                  Array.isArray(activeSession.timeline)
-                ) {
+                if (isRecent) {
+                  // Consolidate updates to stores
                   usePomodoroSessionStore.setState({
-                    timeline: activeSession.timeline as {
+                    sessionId: activeSession.id,
+                    timeline:
+                      (activeSession.timeline as {
+                        type: 'work' | 'break' | 'pause';
+                        start: number;
+                        end?: number;
+                      }[]) || [],
+                  });
+
+                  if (
+                    activeSession.course_id &&
+                    activeSession.course_name &&
+                    !selectedCourse
+                  ) {
+                    setCourse({
+                      id: activeSession.course_id,
+                      name: activeSession.course_name,
+                      category:
+                        activeSession.course?.category?.name || 'General',
+                    });
+                  }
+
+                  // --- RESTORE TIMER STATE FROM TIMELINE ---
+                  const timelineArray =
+                    (activeSession.timeline as {
                       type: 'work' | 'break' | 'pause';
                       start: number;
                       end?: number;
-                    }[],
-                  });
-
-                  // --- RESTORE TIMER STATE FROM TIMELINE ---
-                  const timelineArray = activeSession.timeline as {
-                    type: 'work' | 'break' | 'pause';
-                    start: number;
-                    end?: number;
-                  }[];
+                    }[]) || [];
                   if (timelineArray.length > 0) {
                     let currentMode: 'work' | 'break' = 'work';
                     let elapsedMsInMode = 0;
@@ -179,7 +162,7 @@ export function TimerController() {
                         if (event.type === 'work' || event.type === 'break') {
                           currentMode = event.type;
                           foundModeStart = true;
-                          isActiveStatus = !event.end; // If the last mode event has no end, timer is active
+                          isActiveStatus = !event.end;
                         } else if (event.type === 'pause') {
                           isActiveStatus = false;
                           if (!lastPauseStartTime)
@@ -192,9 +175,8 @@ export function TimerController() {
                           const eEnd = event.end || Date.now();
                           elapsedMsInMode += eEnd - event.start;
                         } else if (event.type === 'pause') {
-                          // pauses don't add to elapsed time of the working mode
+                          // No-op
                         } else {
-                          // Hit the previous mode, the cycle has ended going backwards
                           break;
                         }
                       }
@@ -208,7 +190,6 @@ export function TimerController() {
                     const restoredTimeLeft = modeDuration - elapsedSeconds;
 
                     const storeTimer = useTimerStore.getState();
-
                     const restoredStartTime = isActiveStatus
                       ? Date.now()
                       : null;
@@ -226,23 +207,24 @@ export function TimerController() {
                       lastPauseStartTime
                     );
                   }
+                  toast.info('Önceki oturumunuzdan devam ediliyor.');
                 }
-
-                toast.info('Önceki oturumunuzdan devam ediliyor.');
               }
+            } catch (e: unknown) {
+              logger.error('Restoration failed', e as Error);
+            } finally {
+              window._isPomodoroRestoring = false;
             }
-          } catch (e: unknown) {
-            logger.error('Restoration failed', e as Error);
-          } finally {
+          } else {
             window._isPomodoroRestoring = false;
           }
-        } else {
-          window._isPomodoroRestoring = false;
         }
+      } catch (err) {
+        logger.error('Initial sync failed', err as Error);
       }
-    };
+    }
 
-    sync();
+    loadData();
   }, [
     userId,
     sessionId,

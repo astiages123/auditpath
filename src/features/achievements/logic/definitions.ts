@@ -11,10 +11,10 @@ export const GUILDS: Record<GuildType, GuildInfo> = {
     description: 'Hukuk ve Adalet Doktrinleri',
     color: 'oklch(0.7 0.15 250)',
   },
-  EKONOMI: {
-    id: 'EKONOMI',
+  IKTISAT: {
+    id: 'IKTISAT',
     name: 'Altın Akış ve Simya Konseyi',
-    description: 'Ekonomi ve Kaynak Yönetimi',
+    description: 'İktisat ve Kaynak Yönetimi',
     color: 'oklch(0.75 0.15 85)',
   },
   MUHASEBE_MALIYE: {
@@ -23,11 +23,29 @@ export const GUILDS: Record<GuildType, GuildInfo> = {
     description: 'Muhasebe ve Maliye Bilimi',
     color: 'oklch(0.65 0.15 145)',
   },
-  GENEL_YETENEK: {
-    id: 'GENEL_YETENEK',
+  GY_GK: {
+    id: 'GY_GK',
     name: 'Yedi Diyar ve Diplomasi Okulu',
-    description: 'Mantık, Lisan ve Genel Bilgelik',
+    description: 'Genel Yetenek ve Genel Kültür',
     color: 'oklch(0.7 0.15 300)',
+  },
+  KAMU_YONETIMI: {
+    id: 'KAMU_YONETIMI',
+    name: 'Büyük İdare ve Yönetim Konseyi',
+    description: 'Kamu ve Devlet Yönetimi Doktrinleri',
+    color: 'oklch(0.65 0.15 280)',
+  },
+  ULUSLARARASI_ILISKILER: {
+    id: 'ULUSLARARASI_ILISKILER',
+    name: 'Küresel Satranç ve Elçiler Meclisi',
+    description: 'Uluslararası İlişkiler ve Strateji',
+    color: 'oklch(0.7 0.18 40)',
+  },
+  ATA_584: {
+    id: 'ATA_584',
+    name: 'Cumhuriyet Ateşi ve Tarih Muhafızları',
+    description: 'Cumhuriyet Tarihi ve İnkılaplar',
+    color: 'oklch(0.6 0.20 20)',
   },
   HYBRID: {
     id: 'HYBRID',
@@ -119,10 +137,10 @@ export const ECONOMY_ACHIEVEMENTS: Achievement[] = [
     title: 'Bakır Yol',
     motto: 'Ticaret kervanlarının geçtiği tozlu yollarda ilk adımını attın.',
     imagePath: '/badges/ekonomi-10.webp',
-    guild: 'EKONOMI',
+    guild: 'IKTISAT',
     requirement: {
       type: 'category_progress',
-      category: 'EKONOMI',
+      category: 'IKTISAT',
       percentage: 10,
     },
     order: 5,
@@ -132,10 +150,10 @@ export const ECONOMY_ACHIEVEMENTS: Achievement[] = [
     title: 'Kervan Katibi',
     motto: 'Altın sikkelerin sesini ve servetin yönünü anlamaya başladın.',
     imagePath: '/badges/ekonomi-25.webp',
-    guild: 'EKONOMI',
+    guild: 'IKTISAT',
     requirement: {
       type: 'category_progress',
-      category: 'EKONOMI',
+      category: 'IKTISAT',
       percentage: 25,
     },
     order: 6,
@@ -146,10 +164,10 @@ export const ECONOMY_ACHIEVEMENTS: Achievement[] = [
     motto:
       'Arz ve talebin fırtınalı denizinde, sükuneti ve düzeni görebiliyorsun.',
     imagePath: '/badges/ekonomi-50.webp',
-    guild: 'EKONOMI',
+    guild: 'IKTISAT',
     requirement: {
       type: 'category_progress',
-      category: 'EKONOMI',
+      category: 'IKTISAT',
       percentage: 50,
     },
     order: 7,
@@ -160,10 +178,10 @@ export const ECONOMY_ACHIEVEMENTS: Achievement[] = [
     motto:
       'Altın akışının sırrına erdin; görünmez eller artık senin iradene boyun eğiyor.',
     imagePath: '/badges/ekonomi-100.webp',
-    guild: 'EKONOMI',
+    guild: 'IKTISAT',
     requirement: {
       type: 'category_progress',
-      category: 'EKONOMI',
+      category: 'IKTISAT',
       percentage: 100,
     },
     order: 8,
@@ -232,10 +250,10 @@ export const GENERAL_ACHIEVEMENTS: Achievement[] = [
     title: 'Yolcu Meşalesi',
     motto: 'Zihnin karanlık koridorlarında ilk meşaleyi sen yaktın.',
     imagePath: '/badges/genel-10.webp',
-    guild: 'GENEL_YETENEK',
+    guild: 'GY_GK',
     requirement: {
       type: 'category_progress',
-      category: 'GENEL_YETENEK',
+      category: 'GY_GK',
       percentage: 10,
     },
     order: 13,
@@ -245,10 +263,10 @@ export const GENERAL_ACHIEVEMENTS: Achievement[] = [
     title: 'Elçi Kuzgunu',
     motto: 'Bilgi uçsuz bucaksız diyarlardan sana doğru kanat çırpıyor.',
     imagePath: '/badges/genel-25.webp',
-    guild: 'GENEL_YETENEK',
+    guild: 'GY_GK',
     requirement: {
       type: 'category_progress',
-      category: 'GENEL_YETENEK',
+      category: 'GY_GK',
       percentage: 25,
     },
     order: 14,
@@ -258,10 +276,10 @@ export const GENERAL_ACHIEVEMENTS: Achievement[] = [
     title: 'Yedi Dilin Elçisi',
     motto: 'Uzak diyarların kadim dillerini konuşan, halklar arasındaki köprü.',
     imagePath: '/badges/genel-50.webp',
-    guild: 'GENEL_YETENEK',
+    guild: 'GY_GK',
     requirement: {
       type: 'category_progress',
-      category: 'GENEL_YETENEK',
+      category: 'GY_GK',
       percentage: 50,
     },
     order: 15,
@@ -272,13 +290,183 @@ export const GENERAL_ACHIEVEMENTS: Achievement[] = [
     motto:
       'Zihninle en karanlık labirentleri aydınlatan, bilmeceleri parçalayan bilge.',
     imagePath: '/badges/genel-100.webp',
-    guild: 'GENEL_YETENEK',
+    guild: 'GY_GK',
     requirement: {
       type: 'category_progress',
-      category: 'GENEL_YETENEK',
+      category: 'GY_GK',
       percentage: 100,
     },
     order: 16,
+  },
+];
+
+export const KAMU_YONETIMI_ACHIEVEMENTS: Achievement[] = [
+  {
+    id: 'kamu_10',
+    title: 'Siyaset Meydanı',
+    motto: 'Siyasi kavramlara ve kuramlara ilk adımı attın.',
+    imagePath: '/ranks/rank1.webp', // Resim yoksa ranklardan kullanılabilir geçici olarak
+    guild: 'KAMU_YONETIMI',
+    requirement: {
+      type: 'category_progress',
+      category: 'KAMU_YONETIMI',
+      percentage: 10,
+    },
+    order: 17,
+  },
+  {
+    id: 'kamu_25',
+    title: 'Bürokrasi Çarkı',
+    motto: 'Kamu düzenini ve idari yapıyı anlamaya başladın.',
+    imagePath: '/ranks/rank2.webp',
+    guild: 'KAMU_YONETIMI',
+    requirement: {
+      type: 'category_progress',
+      category: 'KAMU_YONETIMI',
+      percentage: 25,
+    },
+    order: 18,
+  },
+  {
+    id: 'kamu_50',
+    title: 'Devlet Aklı',
+    motto:
+      'Yönetim mekanizmalarında uzmanlaşıyor, çarkları ustaca döndürüyorsun.',
+    imagePath: '/ranks/rank3.webp',
+    guild: 'KAMU_YONETIMI',
+    requirement: {
+      type: 'category_progress',
+      category: 'KAMU_YONETIMI',
+      percentage: 50,
+    },
+    order: 19,
+  },
+  {
+    id: 'kamu_100',
+    title: 'Başvezir',
+    motto:
+      'Kamu yönetiminde mutlak hakimiyet sağladın; sistemin zirvesi sensin.',
+    imagePath: '/ranks/rank4.webp',
+    guild: 'KAMU_YONETIMI',
+    requirement: {
+      type: 'category_progress',
+      category: 'KAMU_YONETIMI',
+      percentage: 100,
+    },
+    order: 20,
+  },
+];
+
+export const ULUSLARARASI_ILISKILER_ACHIEVEMENTS: Achievement[] = [
+  {
+    id: 'ui_10',
+    title: 'Hudut Gözcüsü',
+    motto: 'Uzak diyarların politikalarını ve niyetlerini anlamaya başladın.',
+    imagePath: '/ranks/rank1.webp',
+    guild: 'ULUSLARARASI_ILISKILER',
+    requirement: {
+      type: 'category_progress',
+      category: 'ULUSLARARASI_ILISKILER',
+      percentage: 10,
+    },
+    order: 21,
+  },
+  {
+    id: 'ui_25',
+    title: 'Elçilik Katibi',
+    motto: 'Diplomatik bağları ve karmaşık anlaşmaları çözmeye başladın.',
+    imagePath: '/ranks/rank2.webp',
+    guild: 'ULUSLARARASI_ILISKILER',
+    requirement: {
+      type: 'category_progress',
+      category: 'ULUSLARARASI_ILISKILER',
+      percentage: 25,
+    },
+    order: 22,
+  },
+  {
+    id: 'ui_50',
+    title: 'Stratejik Müzakereci',
+    motto: 'Küresel satranç tahtasını ustalıkla okuma yetisi kazandın.',
+    imagePath: '/ranks/rank3.webp',
+    guild: 'ULUSLARARASI_ILISKILER',
+    requirement: {
+      type: 'category_progress',
+      category: 'ULUSLARARASI_ILISKILER',
+      percentage: 50,
+    },
+    order: 23,
+  },
+  {
+    id: 'ui_100',
+    title: 'Dünya Elçisi',
+    motto:
+      'Kıtalararası tam siyasi bilgeliğe ulaştın; dünya artık sözünü dinliyor.',
+    imagePath: '/ranks/rank4.webp',
+    guild: 'ULUSLARARASI_ILISKILER',
+    requirement: {
+      type: 'category_progress',
+      category: 'ULUSLARARASI_ILISKILER',
+      percentage: 100,
+    },
+    order: 24,
+  },
+];
+
+export const ATA_ACHIEVEMENTS: Achievement[] = [
+  {
+    id: 'ata_10',
+    title: 'Geçmişin Ayak İzleri',
+    motto: 'Tarihsel okumalara ve kadim metinlere başlangıç yaptın.',
+    imagePath: '/ranks/rank1.webp',
+    guild: 'ATA_584',
+    requirement: {
+      type: 'category_progress',
+      category: 'ATA_584',
+      percentage: 10,
+    },
+    order: 25,
+  },
+  {
+    id: 'ata_25',
+    title: 'Devrim Şövalyesi',
+    motto:
+      'İnkılapların derinliğine iniyor, değişimin rüzgarını hissediyorsun.',
+    imagePath: '/ranks/rank2.webp',
+    guild: 'ATA_584',
+    requirement: {
+      type: 'category_progress',
+      category: 'ATA_584',
+      percentage: 25,
+    },
+    order: 26,
+  },
+  {
+    id: 'ata_50',
+    title: 'Cumhuriyet Meşalesi',
+    motto: 'Kuruluş ilkelerini ve ruhunu layıkıyla kavramaya başladın.',
+    imagePath: '/ranks/rank3.webp',
+    guild: 'ATA_584',
+    requirement: {
+      type: 'category_progress',
+      category: 'ATA_584',
+      percentage: 50,
+    },
+    order: 27,
+  },
+  {
+    id: 'ata_100',
+    title: 'Tarih Muhafızı',
+    motto:
+      'Geçmişin tüm ışığını geleceğe taşıyacak kadim metinlerde tam yetkinlik.',
+    imagePath: '/ranks/rank4.webp',
+    guild: 'ATA_584',
+    requirement: {
+      type: 'category_progress',
+      category: 'ATA_584',
+      percentage: 100,
+    },
+    order: 28,
   },
 ];
 
@@ -287,72 +475,72 @@ export const HYBRID_ACHIEVEMENTS: Achievement[] = [
     id: 'hybrid_01',
     title: 'Ticaret Valisi',
     motto:
-      'Hukuk ve Ekonomi: Altının akışını yasaların gücüyle dizginliyorsun.',
+      'Hukuk ve İktisat: Altının akışını yasaların gücüyle dizginliyorsun.',
     imagePath: '/badges/hybrid-01.webp',
     guild: 'HYBRID',
     requirement: {
       type: 'multi_category_progress',
       categories: [
         { category: 'HUKUK', percentage: 25 },
-        { category: 'EKONOMI', percentage: 25 },
+        { category: 'IKTISAT', percentage: 25 },
       ],
     },
-    order: 17,
+    order: 29,
   },
   {
     id: 'hybrid_02',
     title: 'İmparatorluk Nazırı',
-    motto: 'Ekonomi ve Muhasebe: Hem serveti yönetiyor hem de tartabiliyorsun.',
+    motto: 'İktisat ve Muhasebe: Hem serveti yönetiyor hem de tartabiliyorsun.',
     imagePath: '/badges/hybrid-02.webp',
     guild: 'HYBRID',
     requirement: {
       type: 'multi_category_progress',
       categories: [
-        { category: 'EKONOMI', percentage: 50 },
+        { category: 'IKTISAT', percentage: 50 },
         { category: 'MUHASEBE_MALIYE', percentage: 50 },
       ],
     },
-    order: 18,
+    order: 30,
   },
   {
     id: 'hybrid_03',
     title: 'Bilge Diplomat',
-    motto: 'Hukuk ve Genel Yetenek: Keskin bir zeka ve sarsılmaz bir adalet.',
+    motto:
+      'Hukuk ve Uluslararası İlişkiler: Keskin bir zeka ve sarsılmaz bir adalet.',
     imagePath: '/badges/hybrid-03.webp',
     guild: 'HYBRID',
     requirement: {
       type: 'multi_category_progress',
       categories: [
         { category: 'HUKUK', percentage: 50 },
-        { category: 'GENEL_YETENEK', percentage: 50 },
+        { category: 'ULUSLARARASI_ILISKILER', percentage: 50 },
       ],
     },
-    order: 19,
+    order: 31,
   },
   {
     id: 'hybrid_04',
     title: 'Strateji Mimarı',
-    motto: 'Muhasebe ve Genel Yetenek: Mantığın ve sayıların gücü.',
+    motto: 'Kamu Yönetimi ve GY-GK: Yönetimsel aklın ve zekanın birleşimi.',
     imagePath: '/badges/hybrid-04.webp',
     guild: 'HYBRID',
     requirement: {
       type: 'multi_category_progress',
       categories: [
-        { category: 'MUHASEBE_MALIYE', percentage: 25 },
-        { category: 'GENEL_YETENEK', percentage: 25 },
+        { category: 'KAMU_YONETIMI', percentage: 25 },
+        { category: 'GY_GK', percentage: 25 },
       ],
     },
-    order: 20,
+    order: 32,
   },
   {
     id: 'hybrid_05',
     title: 'Büyük Konsey Üyesi',
-    motto:
-      'Beş disiplin tek zihinde: Tüm loncaların saygısını kazanan bir bilge.',
+    motto: 'Hükmü geçen tüm alanlarda sarsılmaz bir başarı ve bilgelik.',
     imagePath: '/badges/hybrid-05.webp',
     guild: 'HYBRID',
     requirement: { type: 'all_progress', percentage: 50 },
-    order: 21,
+    order: 33,
   },
 ];
 
@@ -364,7 +552,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/badges/special-01.webp',
     guild: 'SPECIAL',
     requirement: { type: 'daily_progress', count: 5 },
-    order: 22,
+    order: 34,
     isPermanent: true,
   },
   {
@@ -374,7 +562,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/badges/special-02.webp',
     guild: 'SPECIAL',
     requirement: { type: 'daily_progress', count: 10 },
-    order: 23,
+    order: 35,
     isPermanent: true,
   },
   {
@@ -384,7 +572,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/badges/special-03.webp',
     guild: 'SPECIAL',
     requirement: { type: 'streak', days: 7 },
-    order: 24,
+    order: 36,
     isPermanent: true,
   },
   {
@@ -394,7 +582,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/badges/special-04.webp',
     guild: 'SPECIAL',
     requirement: { type: 'total_active_days', days: 15 },
-    order: 25,
+    order: 37,
     isPermanent: true,
   },
   {
@@ -404,7 +592,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/badges/special-05.webp',
     guild: 'SPECIAL',
     requirement: { type: 'streak', days: 30 },
-    order: 26,
+    order: 38,
     isPermanent: true,
   },
   {
@@ -415,7 +603,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/badges/special-06.webp',
     guild: 'SPECIAL',
     requirement: { type: 'total_active_days', days: 60 },
-    order: 27,
+    order: 39,
     isPermanent: true,
   },
   {
@@ -425,7 +613,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/badges/special-07.webp',
     guild: 'SPECIAL',
     requirement: { type: 'total_active_days', days: 90 },
-    order: 28,
+    order: 40,
     isPermanent: true,
   },
   {
@@ -436,7 +624,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/badges/special-08.webp',
     guild: 'SPECIAL',
     requirement: { type: 'all_progress', percentage: 50 },
-    order: 29,
+    order: 41,
   },
   {
     id: 'special-09',
@@ -446,7 +634,7 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/badges/special-09.webp',
     guild: 'SPECIAL',
     requirement: { type: 'all_progress', percentage: 100 },
-    order: 30,
+    order: 42,
   },
 ];
 
@@ -458,7 +646,7 @@ export const TITLE_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/ranks/rank1.webp',
     guild: 'TITLES',
     requirement: { type: 'minimum_videos', count: 1 },
-    order: 31,
+    order: 43,
     isPermanent: true,
   },
   {
@@ -468,7 +656,7 @@ export const TITLE_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/ranks/rank2.webp',
     guild: 'TITLES',
     requirement: { type: 'all_progress', percentage: 25 },
-    order: 32,
+    order: 44,
     isPermanent: true,
   },
   {
@@ -479,7 +667,7 @@ export const TITLE_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/ranks/rank3.webp',
     guild: 'TITLES',
     requirement: { type: 'all_progress', percentage: 50 },
-    order: 33,
+    order: 45,
     isPermanent: true,
   },
   {
@@ -490,7 +678,7 @@ export const TITLE_ACHIEVEMENTS: Achievement[] = [
     imagePath: '/ranks/rank4.webp',
     guild: 'TITLES',
     requirement: { type: 'all_progress', percentage: 75 },
-    order: 34,
+    order: 46,
     isPermanent: true,
   },
 ];
@@ -500,6 +688,9 @@ export const ACHIEVEMENTS: Achievement[] = [
   ...ECONOMY_ACHIEVEMENTS,
   ...ACCOUNTING_ACHIEVEMENTS,
   ...GENERAL_ACHIEVEMENTS,
+  ...KAMU_YONETIMI_ACHIEVEMENTS,
+  ...ULUSLARARASI_ILISKILER_ACHIEVEMENTS,
+  ...ATA_ACHIEVEMENTS,
   ...HYBRID_ACHIEVEMENTS,
   ...SPECIAL_ACHIEVEMENTS,
   ...TITLE_ACHIEVEMENTS,

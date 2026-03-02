@@ -17,6 +17,8 @@ export interface DailyStats {
   dailyGoal: number;
   totalPauseMinutes: number;
   totalVideoMinutes: number;
+  totalReadingMinutes: number; // YENİ
+  pagesRead: number; // YENİ
   completedVideos: number;
   videoTrendPercentage: number;
   totalCycles: number;
@@ -69,6 +71,15 @@ export interface EfficiencyTrend {
   videoMinutes: number;
 }
 
+export interface EfficiencyTrendProps {
+  data: EfficiencyTrend[];
+}
+
+export interface FocusPowerTrendProps {
+  data: FocusPowerPoint[];
+  rangeLabel?: 'week' | 'month' | 'all';
+}
+
 export interface DailyEfficiencySummary {
   efficiencyScore: number;
   totalCycles: number;
@@ -100,6 +111,7 @@ export type Session = {
 export type LearningLoad = {
   day: string;
   videoMinutes: number;
+  readingMinutes?: number; // YENİ
   extraStudyMinutes: number; // Test solving, reading etc.
   rawDate?: Date;
 };

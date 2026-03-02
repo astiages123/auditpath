@@ -20,18 +20,18 @@ export function useEfficiencyTrends() {
   const [loading, setLoading] = useState(true);
 
   // Initialize with empty arrays (safe defaults) -> No Zombie Renders!
-  const [loadWeek, setLoadWeek] = useState<LearningLoad[]>([]);
-  const [loadDay, setLoadDay] = useState<LearningLoad[]>([]);
-  const [loadMonth, setLoadMonth] = useState<LearningLoad[]>([]);
-  const [loadAll, setLoadAll] = useState<LearningLoad[]>([]);
-
-  const [focusPowerWeek, setFocusPowerWeek] = useState<FocusPowerPoint[]>([]);
-  const [focusPowerMonth, setFocusPowerMonth] = useState<FocusPowerPoint[]>([]);
-  const [focusPowerAll, setFocusPowerAll] = useState<FocusPowerPoint[]>([]);
-
-  const [consistencyData, setConsistencyData] = useState<DayActivity[]>([]);
-  const [efficiencyTrend, setEfficiencyTrend] = useState<EfficiencyTrend[]>([]);
-  const [focusTrend, setFocusTrend] = useState<FocusTrend[]>([]);
+  const [trends, setTrends] = useState({
+    loadWeek: [] as LearningLoad[],
+    loadDay: [] as LearningLoad[],
+    loadMonth: [] as LearningLoad[],
+    loadAll: [] as LearningLoad[],
+    focusPowerWeek: [] as FocusPowerPoint[],
+    focusPowerMonth: [] as FocusPowerPoint[],
+    focusPowerAll: [] as FocusPowerPoint[],
+    consistencyData: [] as DayActivity[],
+    efficiencyTrend: [] as EfficiencyTrend[],
+    focusTrend: [] as FocusTrend[],
+  });
 
   useEffect(() => {
     let mounted = true;
@@ -66,16 +66,18 @@ export function useEfficiencyTrends() {
 
         if (!mounted) return;
 
-        setEfficiencyTrend(effTrend || []);
-        setFocusTrend(fTrend || []);
-        setLoadWeek(loadWeekData || []);
-        setLoadDay(loadDayData || []);
-        setLoadMonth(loadMonthData || []);
-        setLoadAll(loadAllData || []);
-        setFocusPowerWeek(focusPowerWeekData || []);
-        setFocusPowerMonth(focusPowerMonthData || []);
-        setFocusPowerAll(focusPowerAllData || []);
-        setConsistencyData(consistency || []);
+        setTrends({
+          efficiencyTrend: effTrend || [],
+          focusTrend: fTrend || [],
+          loadWeek: loadWeekData || [],
+          loadDay: loadDayData || [],
+          loadMonth: loadMonthData || [],
+          loadAll: loadAllData || [],
+          focusPowerWeek: focusPowerWeekData || [],
+          focusPowerMonth: focusPowerMonthData || [],
+          focusPowerAll: focusPowerAllData || [],
+          consistencyData: consistency || [],
+        });
       } catch (error) {
         if (mounted) {
           logger.error('Failed to fetch efficiency trends', error as Error);
@@ -96,15 +98,6 @@ export function useEfficiencyTrends() {
 
   return {
     loading,
-    efficiencyTrend,
-    focusTrend,
-    loadWeek,
-    loadDay,
-    loadMonth,
-    loadAll,
-    focusPowerWeek,
-    focusPowerMonth,
-    focusPowerAll,
-    consistencyData,
+    ...trends,
   };
 }

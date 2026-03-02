@@ -164,6 +164,8 @@ export const ChunkWithContentSchema = z.object({
   ai_logic: z.unknown(),
 });
 
+export type ValidatedChunkWithContent = z.infer<typeof ChunkWithContentSchema>;
+
 // ============================================================================
 // Pomodoro Timeline Schemas
 // ============================================================================
@@ -221,7 +223,7 @@ export const GeneratedQuestionSchema = z.object({
   o: z.array(z.string()).length(5, 'Tam olarak 5 seçenek olmalı'),
   a: z.number().int().min(0).max(4),
   exp: z.string().min(10, 'Açıklama metni çok kısa'),
-  evidence: z.string().min(1, 'Kanıt cümlesi zorunludur'),
+  evidence: z.string().optional(),
   img: z.preprocess((val) => {
     if (val === null || val === undefined || val === '') return null;
     if (typeof val === 'string') {
@@ -234,6 +236,8 @@ export const GeneratedQuestionSchema = z.object({
   diagnosis: z.string().max(500).optional(),
   insight: z.string().max(500).nullable().optional(),
 });
+
+export type GeneratedQuestionResult = z.infer<typeof GeneratedQuestionSchema>;
 
 export const BatchGeneratedQuestionSchema = z.object({
   questions: z.array(GeneratedQuestionSchema),

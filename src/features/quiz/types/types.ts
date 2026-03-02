@@ -232,6 +232,7 @@ export interface SubmissionResult {
   newStatus: 'active' | 'reviewing' | 'mastered';
   nextReviewSession: number;
   newRepCount: number;
+  progressId?: string;
 }
 
 export interface QuizState {

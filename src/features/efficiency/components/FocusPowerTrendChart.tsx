@@ -1,21 +1,34 @@
+import { useState, useEffect } from 'react';
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
-import { FocusPowerPoint } from '../types/efficiencyTypes';
+  FocusPowerPoint,
+  FocusPowerTrendProps,
+} from '../types/efficiencyTypes';
 
-// --- New Component: Focus Power Trend Chart ---
-export interface FocusPowerTrendProps {
-  data: FocusPowerPoint[];
-  rangeLabel: string; // "Hafta" | "Ay" | "Aylar"
-}
+type RechartsModule = typeof import('recharts');
 
 export const FocusPowerTrendChart = ({ data }: FocusPowerTrendProps) => {
+  const [Recharts, setRecharts] = useState<RechartsModule | null>(null);
+
+  useEffect(() => {
+    import('recharts').then((mod) => setRecharts(mod));
+  }, []);
+
+  if (!Recharts) {
+    return (
+      <div className="w-full h-full min-h-[300px] mt-4 animate-pulse bg-muted/20 rounded-xl" />
+    );
+  }
+
+  const {
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+  } = Recharts;
+
   // Determine gradient depending on trend?
   // Or just a beautiful emerald gradient since Focus Power is generally good.
   return (

@@ -1,5 +1,11 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
+import {
+  Brain,
+  ChevronDown,
+  CheckCircle,
+  XCircle,
+  BookOpen,
+} from 'lucide-react';
 import { QuizQuestion } from '@/features/quiz/types';
 import { MathRenderer } from './QuizStatus';
 
@@ -74,6 +80,20 @@ export function ExplanationPanel({
               </div>
 
               <div className="space-y-4">
+                {!isCorrect && question.evidence && (
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <BookOpen className="w-4 h-4 text-amber-400" />
+                      <span className="text-xs font-bold uppercase tracking-widest text-amber-400">
+                        Metindeki Dayanak
+                      </span>
+                    </div>
+                    <p className="text-sm text-amber-100/80 leading-relaxed italic">
+                      "{question.evidence}"
+                    </p>
+                  </div>
+                )}
+
                 {question.insight && (
                   <p className="text-sm leading-relaxed text-white/70 italic">
                     {question.insight}

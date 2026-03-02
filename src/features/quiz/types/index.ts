@@ -16,6 +16,7 @@ export {
   ConceptMapSchema,
   ExchangeRateSchema,
   FollowUpQuestionRowSchema,
+  type GeneratedQuestionResult,
   GeneratedQuestionSchema,
   type GenerationLog,
   type GenerationStep,
@@ -31,6 +32,7 @@ export {
   // Types from schemas
   type ValidatedAILogic,
   type ValidatedChunkMetadata,
+  type ValidatedChunkWithContent,
   type ValidatedConceptMapItem,
   type ValidatedExchangeRate,
   type ValidatedFollowUpQuestion,

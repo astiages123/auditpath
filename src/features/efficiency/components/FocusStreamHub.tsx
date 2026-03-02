@@ -1,7 +1,21 @@
+import { lazy, Suspense } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { EfficiencyTrend, Session } from '../types/efficiencyTypes';
-import { EfficiencyTrendChart } from './EfficiencyTrendChart';
 import { DistractionDetails } from './DistractionDetails';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Lazy load the chart component
+const EfficiencyTrendChart = lazy(() =>
+  import('./EfficiencyTrendChart').then((m) => ({
+    default: m.EfficiencyTrendChart,
+  }))
+);
+
+const ChartFallback = () => (
+  <div className="w-full h-[400px] flex items-center justify-center bg-surface/5 rounded-xl border border-border/10">
+    <Skeleton className="w-[90%] h-[300px] bg-surface/20" />
+  </div>
+);
 
 interface FocusStreamHubProps {
   sessions: Session[];
@@ -34,7 +48,9 @@ export const FocusStreamHub = ({
           </h4>
           <span className="text-[10px] text-muted-foreground">SON 30 GÜN</span>
         </div>
-        <EfficiencyTrendChart data={trendData} />
+        <Suspense fallback={<ChartFallback />}>
+          <EfficiencyTrendChart data={trendData} />
+        </Suspense>
       </div>
     </TabsContent>
   </Tabs>

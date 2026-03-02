@@ -98,11 +98,12 @@ export function CourseSelector({
               size={18}
             />
             <input
+              ref={(el) => el?.focus()}
               className="w-full bg-white/5 border border-white/5 rounded-xl py-4 pl-12 pr-4 text-white placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/40 font-bold transition-all"
               placeholder="Ders veya konu ara..."
+              aria-label="Ders veya konu ara"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              autoFocus
             />
           </div>
         </div>
@@ -113,8 +114,8 @@ export function CourseSelector({
                 name: string;
                 courses: { id: string; name: string }[];
               }[]
-            ).map((cat, idx) => (
-              <div key={idx} className="space-y-3">
+            ).map((cat) => (
+              <div key={cat.name} className="space-y-3">
                 <h3 className="text-[10px] font-black text-primary/60 uppercase tracking-[0.2em] px-3">
                   {cat.name.replace(/\(.*\)/, '')}
                 </h3>

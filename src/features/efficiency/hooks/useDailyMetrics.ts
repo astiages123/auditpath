@@ -9,7 +9,9 @@ import { logger } from '@/utils/logger';
 export interface DailyMetrics {
   dailyGoalMinutes: number;
   todayVideoMinutes: number;
+  todayReadingMinutes: number; // YENİ
   todayVideoCount: number;
+  pagesRead: number; // YENİ
   videoTrendPercentage: number;
   trendPercentage: number;
   efficiencySummary: DailyEfficiencySummary | null;
@@ -19,15 +21,16 @@ export interface DailyMetrics {
 export function useDailyMetrics() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-
-  // Initialize with safe defaults
-  const [efficiencySummary, setEfficiencySummary] =
-    useState<DailyEfficiencySummary | null>(null);
-  const [dailyGoalMinutes, setDailyGoalMinutes] = useState(200);
-  const [todayVideoMinutes, setTodayVideoMinutes] = useState(0);
-  const [todayVideoCount, setTodayVideoCount] = useState(0);
-  const [videoTrendPercentage, setVideoTrendPercentage] = useState(0);
-  const [trendPercentage, setTrendPercentage] = useState(0);
+  const [metrics, setMetrics] = useState({
+    efficiencySummary: null as DailyEfficiencySummary | null,
+    dailyGoalMinutes: 200,
+    todayVideoMinutes: 0,
+    todayReadingMinutes: 0,
+    todayVideoCount: 0,
+    pagesRead: 0,
+    videoTrendPercentage: 0,
+    trendPercentage: 0,
+  });
 
   useEffect(() => {
     async function fetchDailyMetrics() {
@@ -39,18 +42,19 @@ export function useDailyMetrics() {
           getDailyStats(user.id),
         ]);
 
-        setEfficiencySummary(summary);
-
         // Sync with Global Efficiency Store
         useEfficiencyStore.getState().setEfficiencySummary(summary);
 
-        if (daily) {
-          setDailyGoalMinutes(daily.goalMinutes || 200);
-          setTodayVideoMinutes(daily.totalVideoMinutes || 0);
-          setTodayVideoCount(daily.completedVideos || 0);
-          setVideoTrendPercentage(daily.videoTrendPercentage || 0);
-          setTrendPercentage(daily.trendPercentage || 0);
-        }
+        setMetrics({
+          efficiencySummary: summary,
+          dailyGoalMinutes: daily?.goalMinutes ?? 200,
+          todayVideoMinutes: daily?.totalVideoMinutes ?? 0,
+          todayReadingMinutes: daily?.totalReadingMinutes ?? 0,
+          todayVideoCount: daily?.completedVideos ?? 0,
+          pagesRead: daily?.pagesRead ?? 0,
+          videoTrendPercentage: daily?.videoTrendPercentage ?? 0,
+          trendPercentage: daily?.trendPercentage ?? 0,
+        });
       } catch (error) {
         logger.error('Failed to fetch daily metrics', error as Error);
       } finally {
@@ -62,12 +66,7 @@ export function useDailyMetrics() {
   }, [user?.id]);
 
   return {
-    dailyGoalMinutes,
-    todayVideoMinutes,
-    todayVideoCount,
-    videoTrendPercentage,
-    trendPercentage,
-    efficiencySummary,
+    ...metrics,
     loading,
   };
 }

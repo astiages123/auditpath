@@ -44,7 +44,7 @@ vi.mock('recharts', async (importOriginal) => {
 });
 
 describe('EfficiencyTrendChart - UI Test', () => {
-  it('should process { score: 85 } into { score: 85, deviation: 84 } and pass it to BarChart', () => {
+  it('should process { score: 85 } into { score: 85, deviation: 84 } and pass it to BarChart', async () => {
     // According to the component code: item.deviation = item.score - 1.0
     // So a score of 85 becomes deviation 84.
     const mockData = [
@@ -56,9 +56,11 @@ describe('EfficiencyTrendChart - UI Test', () => {
       },
     ];
 
-    const { getByTestId } = render(<EfficiencyTrendChart data={mockData} />);
+    const { findByTestId } = render(<EfficiencyTrendChart data={mockData} />);
 
-    const barChart = getByTestId('barchart');
+    // Since Recharts is dynamically imported inside the component (lazy loading)
+    // we need to wait for it to be rendered asynchronously
+    const barChart = await findByTestId('barchart');
     const passedData = JSON.parse(
       barChart.getAttribute('data-mock-props') || '[]'
     );
@@ -69,7 +71,7 @@ describe('EfficiencyTrendChart - UI Test', () => {
     expect(passedData[0].workMinutes).toBe(60);
   });
 
-  it("should not manipulate the user's data incorrectly (e.g. no Math.floor that destroys decimals on score)", () => {
+  it("should not manipulate the user's data incorrectly (e.g. no Math.floor that destroys decimals on score)", async () => {
     const mockData = [
       {
         date: '2024-05-20',
@@ -79,8 +81,8 @@ describe('EfficiencyTrendChart - UI Test', () => {
       },
     ];
 
-    const { getByTestId } = render(<EfficiencyTrendChart data={mockData} />);
-    const barChart = getByTestId('barchart');
+    const { findByTestId } = render(<EfficiencyTrendChart data={mockData} />);
+    const barChart = await findByTestId('barchart');
     const passedData = JSON.parse(
       barChart.getAttribute('data-mock-props') || '[]'
     );
@@ -90,10 +92,10 @@ describe('EfficiencyTrendChart - UI Test', () => {
     expect(passedData[0].deviation).toBe(0.25); // 1.25 - 1.0 = 0.25
   });
 
-  it('should set the Y-Axis domain correctly, not bound to [0,0]', () => {
-    const { getByTestId } = render(<EfficiencyTrendChart data={[]} />);
+  it('should set the Y-Axis domain correctly, not bound to [0,0]', async () => {
+    const { findByTestId } = render(<EfficiencyTrendChart data={[]} />);
 
-    const yAxis = getByTestId('yaxis');
+    const yAxis = await findByTestId('yaxis');
     const domainStr = yAxis.getAttribute('data-domain');
     const domain = JSON.parse(domainStr || '[]');
 

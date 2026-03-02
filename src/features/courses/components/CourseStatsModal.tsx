@@ -132,7 +132,7 @@ export function CourseStatsModal({
               <div className="flex items-end justify-between h-24 gap-2">
                 {dailyViews.map((val, i) => (
                   <div
-                    key={i}
+                    key={['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'][i]}
                     className="flex-1 flex flex-col justify-end items-center gap-1 group"
                   >
                     <div

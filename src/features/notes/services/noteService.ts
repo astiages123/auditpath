@@ -32,7 +32,10 @@ export async function fetchCourseNotes(
   userId: string,
   courseSlug: string,
   signal?: AbortSignal
-): Promise<{ courseName: string; chunks: CourseTopic[] } | null> {
+): Promise<{
+  courseName: string;
+  chunks: CourseTopic[];
+} | null> {
   const targetId = await getCourseIdBySlug(courseSlug, signal);
   if (!targetId || (signal && signal.aborted)) return null;
 

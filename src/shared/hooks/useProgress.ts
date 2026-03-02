@@ -14,6 +14,10 @@ export interface ProgressStats {
   totalVideos: number;
   completedHours: number;
   totalHours: number;
+  completedReadings: number;
+  completedPages: number;
+  totalReadings: number;
+  totalPages: number;
   streak: number;
   todayVideoCount?: number;
   categoryProgress: Record<
@@ -23,6 +27,10 @@ export interface ProgressStats {
       completedHours: number;
       totalVideos: number;
       totalHours: number;
+      completedReadings: number;
+      completedPages: number;
+      totalReadings: number;
+      totalPages: number;
     }
   >;
   courseProgress: Record<string, number>;
@@ -46,6 +54,10 @@ export const defaultStats: ProgressStats = {
   totalVideos: staticTotals.totalAllVideos,
   completedHours: 0,
   totalHours: staticTotals.totalAllHours,
+  completedReadings: 0,
+  completedPages: 0,
+  totalReadings: staticTotals.totalAllReadings,
+  totalPages: staticTotals.totalAllPages,
   streak: 0,
   categoryProgress: staticTotals.categoryStats,
   courseProgress: {},
@@ -63,9 +75,22 @@ export function useProgress() {
   }, [refetch]);
 
   const updateProgressOptimistically = useCallback(
-    (courseId: string, deltaVideos: number, deltaHours: number) => {
+    (
+      courseId: string,
+      deltaVideos: number,
+      deltaHours: number,
+      isReading: boolean = false,
+      deltaPages: number = 0
+    ) => {
       if (userId) {
-        updateProgress(userId, courseId, deltaVideos, deltaHours);
+        updateProgress(
+          userId,
+          courseId,
+          deltaVideos,
+          deltaHours,
+          isReading,
+          deltaPages
+        );
       }
     },
     [userId, updateProgress]
@@ -105,12 +130,16 @@ export function useProgressQuery(
           const catStats = stats as {
             completedVideos: number;
             completedHours: number;
+            completedReadings?: number;
+            completedPages?: number;
           };
           if (mergedCategoryProgress[catName]) {
             mergedCategoryProgress[catName] = {
               ...mergedCategoryProgress[catName],
               completedVideos: catStats.completedVideos || 0,
               completedHours: catStats.completedHours || 0,
+              completedReadings: catStats.completedReadings || 0,
+              completedPages: catStats.completedPages || 0,
             };
           }
         });
@@ -121,6 +150,10 @@ export function useProgressQuery(
         totalVideos: staticTotals.totalAllVideos,
         completedHours: dbStats.completedHours,
         totalHours: staticTotals.totalAllHours,
+        completedReadings: dbStats.completedReadings || 0,
+        completedPages: dbStats.completedPages || 0,
+        totalReadings: staticTotals.totalAllReadings,
+        totalPages: staticTotals.totalAllPages,
         streak: dbStats.streak || 0,
         categoryProgress: mergedCategoryProgress,
         courseProgress: dbStats.courseProgress || {},
@@ -148,7 +181,9 @@ export function useOptimisticProgress() {
     userId: string,
     courseId: string,
     deltaVideos: number,
-    deltaHours: number
+    deltaHours: number,
+    isReading: boolean = false,
+    deltaPages: number = 0
   ) => {
     queryClient.setQueryData(
       progressKeys.user(userId),
@@ -172,16 +207,35 @@ export function useOptimisticProgress() {
           completedHours: 0,
           totalVideos: 0,
           totalHours: 0,
+          completedReadings: 0,
+          completedPages: 0,
+          totalReadings: 0,
+          totalPages: 0,
         };
 
         const newCategoryProgress = {
           ...old.categoryProgress,
           [categoryName]: {
             ...existingCatStats,
-            completedVideos: existingCatStats.completedVideos + deltaVideos,
-            completedHours: existingCatStats.completedHours + deltaHours,
+            completedVideos: isReading
+              ? existingCatStats.completedVideos
+              : existingCatStats.completedVideos + deltaVideos,
+            completedHours: isReading
+              ? existingCatStats.completedHours // Metinlerin saati general totals'ta değerlendiriliyor mu? Evet calculateStaticTotals'ta reading kısmında "catTotalHours += course.totalHours" yapmıştık. Burada da deltaHours ile artırabiliriz.
+              : existingCatStats.completedHours + deltaHours,
+            completedReadings: isReading
+              ? existingCatStats.completedReadings + deltaVideos
+              : existingCatStats.completedReadings,
+            completedPages: isReading
+              ? existingCatStats.completedPages + deltaPages
+              : existingCatStats.completedPages,
           },
         };
+
+        // Eğer reading ise, genel süreye de etki edebiliriz.
+        if (isReading) {
+          newCategoryProgress[categoryName].completedHours += deltaHours;
+        }
 
         const currentTodayCount = old.todayVideoCount || 0;
         const newTodayCount = Math.max(0, currentTodayCount + deltaVideos);
@@ -197,8 +251,16 @@ export function useOptimisticProgress() {
 
         return {
           ...old,
-          completedVideos: old.completedVideos + deltaVideos,
+          completedVideos: isReading
+            ? old.completedVideos
+            : old.completedVideos + deltaVideos,
           completedHours: old.completedHours + deltaHours,
+          completedReadings: isReading
+            ? (old.completedReadings || 0) + deltaVideos
+            : old.completedReadings || 0,
+          completedPages: isReading
+            ? (old.completedPages || 0) + deltaPages
+            : old.completedPages || 0,
           streak: newStreak,
           todayVideoCount: newTodayCount,
           courseProgress: {

@@ -5,6 +5,7 @@ import { safeQuery } from '@/lib/supabaseHelpers';
 import {
   type ChunkMasteryRow,
   QuizQuestionSchema,
+  type ValidatedChunkWithContent,
 } from '@/features/quiz/types';
 import type { CourseTopic } from '@/features/courses/types/courseTypes';
 import { isValidUuid, parseOrThrow } from '@/utils/validation';
@@ -430,9 +431,11 @@ export async function getChunkMetadata(chunkId: string): Promise<{
   return data ?? null;
 }
 
-export async function getChunkWithContent(chunkId: string) {
+export async function getChunkWithContent(
+  chunkId: string
+): Promise<ValidatedChunkWithContent | null> {
   if (!isValidUuid(chunkId)) return null;
-  const { data } = await safeQuery<Record<string, unknown>>(
+  const { data } = await safeQuery<ValidatedChunkWithContent>(
     supabase
       .from('note_chunks')
       .select(

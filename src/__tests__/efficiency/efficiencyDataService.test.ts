@@ -46,52 +46,6 @@ describe('efficiencyDataService - Day Filtering Logic', () => {
   });
 
   describe('getLearningLoadData', () => {
-    it('should filter out Tuesday (2), Wednesday (3), and Thursday (4)', async () => {
-      // Mock 7 gün: Pazartesi (1) ile Pazar (0)
-      // 2024-01-01 -> Pazartesi
-      // 2024-01-02 -> Salı
-      // 2024-01-03 -> Çarşamba
-      // 2024-01-04 -> Perşembe
-      // 2024-01-05 -> Cuma
-      // 2024-01-06 -> Cumartesi
-      // 2024-01-07 -> Pazar
-
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2024-01-07T14:00:00Z')); // Pazar günü
-
-      // Salı, Çarşamba, Perşembe için veritabanında "veri olsa bile" elendiğini görmek için
-      // Her güne veri ekliyoruz.
-      const mockSessions = [
-        { started_at: '2024-01-01T10:00:00Z', total_work_time: 3600 }, // Pzt
-        { started_at: '2024-01-02T10:00:00Z', total_work_time: 3600 }, // Sal
-        { started_at: '2024-01-03T10:00:00Z', total_work_time: 3600 }, // Çar
-        { started_at: '2024-01-04T10:00:00Z', total_work_time: 3600 }, // Per
-        { started_at: '2024-01-05T10:00:00Z', total_work_time: 3600 }, // Cum
-        { started_at: '2024-01-06T10:00:00Z', total_work_time: 3600 }, // Cmt
-        { started_at: '2024-01-07T10:00:00Z', total_work_time: 3600 }, // Paz
-      ];
-
-      (safeQuery as Mock).mockResolvedValue({ data: mockSessions });
-
-      const result = await getLearningLoadData({
-        userId: 'user-1',
-        days: 7,
-      });
-
-      // Cmt ve Paz veri var, Pzt, Cum veri var -> Bunlar kalır.
-      // Sal, Çar, Per -> Elenmeli
-      expect(result.length).toBe(4); // Pzt, Cum, Cmt, Paz
-
-      const daysInResult = result.map((r: LearningLoad) => r.rawDate!.getDay());
-      expect(daysInResult).not.toContain(2); // Salı olmamalı
-      expect(daysInResult).not.toContain(3); // Çarşamba olmamalı
-      expect(daysInResult).not.toContain(4); // Perşembe olmamalı
-      expect(daysInResult).toContain(1); // Pazartesi olmalı
-      expect(daysInResult).toContain(5); // Cuma olmalı
-
-      vi.useRealTimers();
-    });
-
     it('should remove weekend days if totalMins is 0, but keep them if > 0', async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2024-01-07T14:00:00Z')); // Pazar günü
@@ -119,75 +73,9 @@ describe('efficiencyDataService - Day Filtering Logic', () => {
 
       vi.useRealTimers();
     });
-    it('should remove BOTH Saturday and Sunday if totalMins is 0 for both (KEEP SUNDAY TO BREAK STREAK)', async () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2024-01-07T14:00:00Z')); // Pazar günü
-
-      // Sadece Cuma gününe kadar çalışılmış. Cumartesi ve Pazar boş.
-      const mockSessions = [
-        { started_at: '2024-01-01T10:00:00Z', total_work_time: 3600 }, // Pzt
-        { started_at: '2024-01-05T10:00:00Z', total_work_time: 3600 }, // Cuma
-      ];
-
-      (safeQuery as Mock).mockResolvedValue({ data: mockSessions });
-
-      const result = await getLearningLoadData({
-        userId: 'user-1',
-        days: 7,
-      });
-
-      const daysInResult = result.map((r: LearningLoad) => r.rawDate!.getDay());
-
-      // Yeni kural uyarınca: Eğer 2 günü de çalışmadıysa 1 gün tatil sayılır (Cumartesi silinir),
-      // Fakat Pazar günü disiplin cezası olarak listede "0" değer ile KAPANMALI.
-      expect(daysInResult).toContain(0);
-      expect(daysInResult).not.toContain(6);
-
-      // Sadece Pazartesi(1), Cuma(5) ve Pazar(0) listede olmalı
-      expect(daysInResult).toContain(1);
-      expect(daysInResult).toContain(5);
-      expect(result.length).toBe(3);
-
-      vi.useRealTimers();
-    });
   });
 
   describe('getFocusPowerData', () => {
-    it('should filter out Tuesday, Wednesday, and Thursday', async () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2024-01-07T14:00:00Z')); // Pazar günü
-
-      const mockSessions = [
-        { started_at: '2024-01-01T10:00:00Z', total_work_time: 3600 },
-        { started_at: '2024-01-02T10:00:00Z', total_work_time: 3600 },
-        { started_at: '2024-01-03T10:00:00Z', total_work_time: 3600 },
-        { started_at: '2024-01-04T10:00:00Z', total_work_time: 3600 },
-        { started_at: '2024-01-05T10:00:00Z', total_work_time: 3600 },
-        { started_at: '2024-01-06T10:00:00Z', total_work_time: 3600 },
-        { started_at: '2024-01-07T10:00:00Z', total_work_time: 3600 },
-      ];
-
-      (safeQuery as Mock).mockResolvedValue({ data: mockSessions });
-
-      const result = await getFocusPowerData({
-        userId: 'user-1',
-        range: 'week',
-      });
-
-      expect(result.length).toBe(4);
-
-      const datesInResult = result.map((r) =>
-        new Date(r.originalDate).getDay()
-      );
-      expect(datesInResult).not.toContain(2);
-      expect(datesInResult).not.toContain(3);
-      expect(datesInResult).not.toContain(4);
-      expect(datesInResult).toContain(1);
-      expect(datesInResult).toContain(5);
-
-      vi.useRealTimers();
-    });
-
     it('should remove weekend days if there is no activity, but keep them if > 0', async () => {
       vi.useFakeTimers();
       vi.setSystemTime(new Date('2024-01-07T14:00:00Z')); // Pazar günü

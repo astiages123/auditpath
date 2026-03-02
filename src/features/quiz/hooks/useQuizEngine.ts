@@ -11,6 +11,7 @@ import {
   updateResults,
 } from '@/features/quiz/logic/quizCoreLogic';
 import { MASTERY_THRESHOLD } from '@/features/quiz/utils/constants';
+import { logger } from '@/utils/logger';
 import { usePomodoroSessionStore } from '@/features/pomodoro/store';
 import { useCelebrationStore } from '@/features/achievements/store';
 import { useQuotaStore } from '@/features/quiz/store';
@@ -216,6 +217,24 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
         );
 
         updateState({ lastSubmissionResult: result });
+
+        // Arka planda çalışır, await etme, kullanıcıyı bekletme
+        if (actualType === 'incorrect' && result.progressId) {
+          import('@/features/quiz/services/followUpService')
+            .then(({ generateFollowUpForWrongAnswer }) => {
+              generateFollowUpForWrongAnswer(
+                result.progressId!,
+                currentState.currentQuestion?.id || '',
+                currentState.selectedAnswer,
+                sessionContext.userId,
+                sessionContext.courseId,
+                sessionContext.sessionNumber
+              ).catch(() => {}); // sessizce hata yut
+            })
+            .catch((err) => {
+              logger.error('Failed to load followUpService', err);
+            });
+        }
 
         if (
           result.newMastery >= MASTERY_THRESHOLD &&

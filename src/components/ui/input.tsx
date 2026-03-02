@@ -33,6 +33,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         type={type}
         className={cn(inputVariants({ className }))}
         ref={ref}
+        aria-label={props['aria-label'] || props.placeholder}
         {...props}
       />
     );

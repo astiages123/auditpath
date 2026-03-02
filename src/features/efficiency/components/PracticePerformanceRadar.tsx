@@ -1,6 +1,20 @@
+import { lazy, Suspense } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import type { BloomStats } from '@/features/quiz/types/types';
-import { BloomKeyChart } from './BloomKeyChart';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Lazy load the chart component
+const BloomKeyChart = lazy(() =>
+  import('./BloomKeyChart').then((m) => ({
+    default: m.BloomKeyChart,
+  }))
+);
+
+const ChartFallback = () => (
+  <div className="w-full flex items-center justify-center min-h-[300px]">
+    <Skeleton className="h-60 w-60 rounded-full bg-surface/20" />
+  </div>
+);
 
 export const PracticePerformanceRadar = ({ data }: { data: BloomStats[] }) => (
   <Tabs defaultValue="bloom" className="w-full">
@@ -10,7 +24,9 @@ export const PracticePerformanceRadar = ({ data }: { data: BloomStats[] }) => (
     </TabsList>
     <TabsContent value="bloom" className="flex flex-col items-center mt-4">
       <div className="w-full max-w-md">
-        <BloomKeyChart data={data} />
+        <Suspense fallback={<ChartFallback />}>
+          <BloomKeyChart data={data} />
+        </Suspense>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 w-full mt-6">
         {data.map((item) => (

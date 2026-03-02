@@ -12,11 +12,7 @@ vi.mock('@/utils/dateUtils', () => ({
     return `${year}-${month}-${day}`;
   },
   getVirtualDate: vi.fn((date?: Date) => {
-    const d = date ? new Date(date) : new Date();
-    if (d.getHours() < 4) {
-      d.setDate(d.getDate() - 1);
-    }
-    return d;
+    return date ? new Date(date) : new Date();
   }),
 }));
 
@@ -42,12 +38,12 @@ describe('streakLogic - calculateStreak', () => {
     expect(result).toBe(2);
   });
 
-  it('Salı, Çarşamba, Perşembe boş olsa bile streak bozulmaz', () => {
+  it('Salı, Çarşamba, Perşembe boşsa streak bozulur', () => {
     mockedGetVirtualDate.mockReturnValue(new Date('2026-02-13T12:00:00')); // Cuma
     // Pazartesi(9) aktif, Salı(10), Çar(11), Per(12) boş, Cuma(13) aktif
     const activeDays = new Set(['2026-02-09', '2026-02-13']);
     const result = calculateStreak(activeDays, '2026-02-09');
-    expect(result).toBe(2);
+    expect(result).toBe(1); // Cuma günüyle 1 günlük yeni seri başlar
   });
 
   it('Hafta içi normal gün (Pazartesi) boşluk streak i bozar', () => {

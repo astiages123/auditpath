@@ -62,6 +62,13 @@ export function ProgressHeader({
     isHydrated && stats ? stats.completedHours : initialCompletedHours;
   const displayTotalHours =
     initialTotalHours || (isHydrated && stats ? stats.totalHours : 0);
+  const displayCompletedReadings =
+    isHydrated && stats ? stats.completedReadings || 0 : 0;
+  const displayTotalReadings =
+    isHydrated && stats ? stats.totalReadings || 0 : 0;
+  const displayCompletedPages =
+    isHydrated && stats ? stats.completedPages || 0 : 0;
+  const displayTotalPages = isHydrated && stats ? stats.totalPages || 0 : 0;
 
   // Schedule mapping from config
   const today = new Date();
@@ -73,10 +80,15 @@ export function ProgressHeader({
   );
   // Determine current block based on time
   const currentHour = today.getHours();
+  // 3. Final: 21:00-00:00 (Yani 21 ile 24 arası)
   let blockName = 'FİNAL BLOK';
-  if (currentHour >= 6 && currentHour < 17) {
+
+  // 1. Sabah Blok: 00:00-17:00
+  if (currentHour >= 0 && currentHour < 17) {
     blockName = 'SABAH BLOK';
-  } else if (currentHour >= 17 && currentHour < 21) {
+  }
+  // 2. Akşam: 17:00-21:00
+  else if (currentHour >= 17 && currentHour < 21) {
     blockName = 'AKŞAM BLOK';
   }
 
@@ -200,15 +212,18 @@ export function ProgressHeader({
       <ProgressStatCard
         icon={Clock}
         bgIcon={Clock}
-        label="Zaman ve Video"
+        label="İlerleme Özeti"
         value=""
         colorClass="text-accent"
         showSkeleton={showSkeleton}
         variants={itemVariants}
       >
-        <div className="grid grid-cols-2 gap-2 mt-4">
-          <div className="space-y-0.5">
-            <p className="text-sm text-muted-foreground">Süre</p>
+        <div className="grid grid-cols-2 gap-x-2 gap-y-3 mt-4">
+          {/* Süre */}
+          <div className="space-y-0.5 relative">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
+              Süre
+            </p>
             {showSkeleton ? (
               <Skeleton className="size-5 bg-zinc-800" />
             ) : (
@@ -222,8 +237,12 @@ export function ProgressHeader({
               </div>
             )}
           </div>
-          <div className="space-y-0.5 border-l border-white/5 pl-2">
-            <p className="text-sm text-muted-foreground">Video</p>
+
+          {/* Video */}
+          <div className="space-y-0.5 border-l border-white/5 pl-2 relative">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
+              Video
+            </p>
             {showSkeleton ? (
               <Skeleton className="size-5 bg-zinc-800" />
             ) : (
@@ -233,6 +252,44 @@ export function ProgressHeader({
                 </span>
                 <span className="text-xs text-muted-foreground">
                   /{displayTotalVideos}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Metin */}
+          <div className="space-y-0.5 pt-2 border-t border-white/5 relative">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
+              Metin
+            </p>
+            {showSkeleton ? (
+              <Skeleton className="size-5 bg-zinc-800" />
+            ) : (
+              <div className="flex items-baseline gap-1">
+                <span className="text-sm font-bold text-white">
+                  {displayCompletedReadings}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  /{displayTotalReadings}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Sayfa */}
+          <div className="space-y-0.5 pt-2 border-l border-t border-white/5 pl-2 relative">
+            <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-bold">
+              Sayfa
+            </p>
+            {showSkeleton ? (
+              <Skeleton className="size-5 bg-zinc-800" />
+            ) : (
+              <div className="flex items-baseline gap-1">
+                <span className="text-sm font-bold text-white">
+                  {displayCompletedPages}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  /{displayTotalPages}
                 </span>
               </div>
             )}

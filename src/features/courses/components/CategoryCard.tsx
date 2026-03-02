@@ -31,6 +31,7 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({
+  id,
   name,
   totalHours: initialTotalHours,
   courses,
@@ -43,8 +44,8 @@ export function CategoryCard({
 }: CategoryCardProps) {
   // Use config for styles
   const categoryConfig =
-    CATEGORY_THEMES[name.toUpperCase()] ||
-    CATEGORY_THEMES['İKTİSAT'] ||
+    CATEGORY_THEMES[id] ||
+    CATEGORY_THEMES[id.toUpperCase()] ||
     Object.values(CATEGORY_THEMES)[0];
   const { Icon } = categoryConfig;
   const { stats } = useProgress();
@@ -120,7 +121,8 @@ export function CategoryCard({
                 </span>
               </div>
               {slug !== 'KAMU_YONETIMI' &&
-                slug !== 'ULUSLARARASI_ILISKILER' && (
+                slug !== 'ULUSLARARASI_ILISKILER' &&
+                slug !== 'ATA_584' && (
                   <div className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-2xl bg-surface/40 border border-white/5 text-[10px] font-black text-muted-foreground uppercase tracking-tight shadow-sm">
                     <FileText className="size-3.5 text-muted-foreground/40" />
                     <span className="truncate">
@@ -174,7 +176,8 @@ export function CategoryCard({
                       {displayCompletedVideos}/{displayTotalVideos} KONU
                     </span>
                     {slug !== 'KAMU_YONETIMI' &&
-                      slug !== 'ULUSLARARASI_ILISKILER' && (
+                      slug !== 'ULUSLARARASI_ILISKILER' &&
+                      slug !== 'ATA_584' && (
                         <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface/50 border border-white/5 whitespace-nowrap">
                           <FileText className="size-3 text-muted-foreground/60" />
                           {Math.round(displayCompletedHours * 24)}/

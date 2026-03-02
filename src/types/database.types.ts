@@ -214,6 +214,7 @@ export type Database = {
           playlist_url: string | null;
           sort_order: number | null;
           total_hours: number | null;
+          total_pages: number | null;
           total_videos: number | null;
           type: string | null;
           updated_at: string | null;
@@ -228,6 +229,7 @@ export type Database = {
           playlist_url?: string | null;
           sort_order?: number | null;
           total_hours?: number | null;
+          total_pages?: number | null;
           total_videos?: number | null;
           type?: string | null;
           updated_at?: string | null;
@@ -242,6 +244,7 @@ export type Database = {
           playlist_url?: string | null;
           sort_order?: number | null;
           total_hours?: number | null;
+          total_pages?: number | null;
           total_videos?: number | null;
           type?: string | null;
           updated_at?: string | null;

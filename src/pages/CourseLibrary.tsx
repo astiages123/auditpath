@@ -1,22 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  BookOpen,
-  Brain,
-  CheckCircle2,
-  FileText,
-  LucideIcon,
-  Pencil,
-} from 'lucide-react';
+import { Brain, CheckCircle2, FileText, Pencil } from 'lucide-react';
 import { getCategories } from '@/features/courses/services/courseService';
 import type { Category, Course } from '@/features/courses/types/courseTypes';
 import {
-  ICON_OVERRIDES,
-  COURSE_KEYWORD_MAPPINGS,
   CATEGORY_THEMES,
   COURSE_THEME_CONFIG,
 } from '@/features/courses/utils/coursesConfig';
+import { getCourseIcon } from '@/features/courses/logic/coursesLogic';
 import { ROUTES } from '@/utils/routes';
 import { PageHeader } from '@/shared/components/PageHeader';
 import {
@@ -39,21 +31,7 @@ const formatDuration = (hours: number | null): string => {
   return parts.join(' ') || '—';
 };
 
-const getCourseIcon = (course: Course): LucideIcon => {
-  const override = ICON_OVERRIDES.find((o) =>
-    course.course_slug.toLowerCase().includes(o.keyword.toLowerCase())
-  );
-  if (override) return override.icon;
-
-  const mapping = COURSE_KEYWORD_MAPPINGS.find((m) =>
-    m.keywords.some((kw) =>
-      course.name.toLowerCase().includes(kw.toLowerCase())
-    )
-  );
-  if (mapping) return mapping.icon;
-
-  return BookOpen;
-};
+// Local getCourseIcon removed to use the centralized one.
 
 // getCourseTheme is not used, keeping it as it might be used later.
 /* const getCourseTheme = (course: Course): CourseTheme => {
@@ -100,13 +78,16 @@ function PageSkeleton() {
       {/* Tab bar skeleton */}
       <div className="flex gap-3">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-14 w-36 rounded-2xl bg-muted/15 shrink-0" />
+          <div
+            key={`skeleton-tab-${i}`}
+            className="h-14 w-36 rounded-2xl bg-muted/15 shrink-0"
+          />
         ))}
       </div>
       {/* Rows skeleton */}
       <div className="space-y-3">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <CourseRowSkeleton key={i} />
+          <CourseRowSkeleton key={`skeleton-row-${i}`} />
         ))}
       </div>
     </div>
@@ -190,9 +171,12 @@ function CourseRow({
     >
       {/* İkon */}
       <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-primary/15 transition-transform duration-300 group-hover:scale-110">
-        {React.createElement(getCourseIcon(course), {
-          className: 'size-5 text-primary',
-        })}
+        {React.createElement(
+          getCourseIcon(course.name, course.course_slug ?? course.id),
+          {
+            className: 'size-5 text-primary',
+          }
+        )}
       </div>
 
       {/* Ders Adı + Meta */}
@@ -273,11 +257,13 @@ export default function CourseLibrary() {
           userId ? getLandingDashboardData(userId) : Promise.resolve({}),
         ]);
 
-        const sorted = [...data].sort(
-          (a, b) =>
-            (a.sort_order || 0) - (b.sort_order || 0) ||
-            a.name.localeCompare(b.name)
-        );
+        const sorted = data
+          .filter((cat) => cat.name !== 'ATA 584' && cat.slug !== 'ATA_584')
+          .sort(
+            (a, b) =>
+              (a.sort_order || 0) - (b.sort_order || 0) ||
+              a.name.localeCompare(b.name)
+          );
 
         if (!cancelled) {
           setCategories(sorted);

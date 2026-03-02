@@ -1,13 +1,4 @@
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as RechartsTooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-} from 'recharts';
+import { lazy, Suspense } from 'react';
 import { BookOpen, Maximize2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,92 +9,14 @@ import { useEfficiencyTrends } from '../hooks/useEfficiencyTrends';
 import { useDailyMetrics } from '../hooks/useDailyMetrics';
 import { DAILY_GOAL_MINUTES as DEFAULT_DAILY_GOAL_MINUTES } from '../utils/constants';
 
-export const LearningLoadChart = ({
-  data,
-  targetMinutes,
-}: {
-  data: { day: string; extraStudyMinutes: number }[];
-  targetMinutes?: number;
-}) => {
-  return (
-    <ResponsiveContainer width="100%" height={230}>
-      <BarChart
-        data={data}
-        margin={{ top: 20, right: 30, left: 10, bottom: 5 }}
-        barSize={32}
-      >
-        <defs>
-          <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity={1} />
-            <stop offset="100%" stopColor="#0284c7" stopOpacity={0.8} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid
-          strokeDasharray="3 3"
-          vertical={false}
-          stroke="rgba(255,255,255,0.05)"
-        />
-        <XAxis
-          dataKey="day"
-          tick={{ fill: '#94a3b8', fontSize: 11 }}
-          axisLine={false}
-          tickLine={false}
-          dy={10}
-        />
-        <YAxis
-          domain={[
-            0,
-            targetMinutes ? Math.max(targetMinutes + 20, 100) : 'auto',
-          ]}
-          tick={{ fill: '#94a3b8', fontSize: 11 }}
-          axisLine={false}
-          tickLine={false}
-          width={70}
-          tickFormatter={(val) => `${val}dk`}
-        />
-        <RechartsTooltip
-          cursor={{ fill: 'rgba(255,255,255,0.03)', radius: 4 }}
-          formatter={(value: number | undefined) =>
-            value !== undefined ? [`${value} dk`, 'Çalışma'] : ['-', 'Çalışma']
-          }
-          contentStyle={{
-            backgroundColor: '#1a1c1e',
-            borderColor: 'rgba(255,255,255,0.1)',
-            color: '#f8fafc',
-            borderRadius: '12px',
-            boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.5)',
-            padding: '12px',
-          }}
-          itemStyle={{ color: '#38bdf8', fontWeight: 600 }}
-        />
-        <Bar
-          dataKey="extraStudyMinutes"
-          name="Çalışma"
-          fill="url(#barGradient)"
-          radius={[6, 6, 6, 6]}
-        />
-        {targetMinutes && (
-          <ReferenceLine
-            y={targetMinutes}
-            stroke="#10b981"
-            strokeWidth={2.5}
-            strokeDasharray="5 5"
-            ifOverflow="extendDomain"
-            label={{
-              position: 'insideTopRight',
-              value: `Hedef: ${targetMinutes} dk`,
-              fill: '#10b981',
-              fontSize: 11,
-              fontWeight: 'bold',
-              dy: -30,
-              dx: -5,
-            }}
-          />
-        )}
-      </BarChart>
-    </ResponsiveContainer>
-  );
-};
+// Lazy load the chart component
+const LearningLoadChart = lazy(() => import('./LearningLoadChart'));
+
+const ChartFallback = () => (
+  <div className="w-full h-[230px] flex items-center justify-center bg-surface/5 rounded-xl border border-border/10">
+    <Skeleton className="w-[90%] h-[180px] bg-surface/20" />
+  </div>
+);
 
 export const LearningLoadCard = () => {
   const { loading, loadWeek, loadDay, loadMonth, loadAll } =
@@ -127,7 +40,7 @@ export const LearningLoadCard = () => {
         <div className="flex-1 w-full min-h-0 mt-4 flex items-end gap-2">
           {[...Array(7)].map((_, i) => (
             <Skeleton
-              key={i}
+              key={`skeleton-bar-${i}`}
               className="flex-1 rounded-t-lg bg-surface"
               style={{ height: `${(((i + 1) * 117) % 60) + 20}%` }}
             />
@@ -153,7 +66,9 @@ export const LearningLoadCard = () => {
               }
             />
             <div className="flex-1 w-full min-h-0 mt-4">
-              <LearningLoadChart data={loadWeek} targetMinutes={dailyGoal} />
+              <Suspense fallback={<ChartFallback />}>
+                <LearningLoadChart data={loadWeek} targetMinutes={dailyGoal} />
+              </Suspense>
             </div>
           </Card>
         </div>

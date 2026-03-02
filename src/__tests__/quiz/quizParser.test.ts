@@ -50,7 +50,7 @@ describe('quizParser - Testleri', () => {
           odak: '',
           seviye: 'Analiz',
           gorsel: null,
-        }).bloomLevel
+        })?.bloomLevel
       ).toBe('analysis');
       expect(
         determineNodeStrategy(0, {
@@ -58,7 +58,7 @@ describe('quizParser - Testleri', () => {
           odak: '',
           seviye: 'Uygulama',
           gorsel: null,
-        }).bloomLevel
+        })?.bloomLevel
       ).toBe('application');
       expect(
         determineNodeStrategy(0, {
@@ -66,8 +66,19 @@ describe('quizParser - Testleri', () => {
           odak: '',
           seviye: 'Bilgi',
           gorsel: null,
-        }).bloomLevel
+        })?.bloomLevel
       ).toBe('knowledge');
+    });
+
+    it('9. Görsel "GRAFİK_GEREKTIRIYOR" ise null döner', () => {
+      expect(
+        determineNodeStrategy(0, {
+          baslik: '',
+          odak: '',
+          seviye: 'Analiz',
+          gorsel: 'GRAFİK_GEREKTIRIYOR',
+        })
+      ).toBeNull();
     });
 
     it('8. Seviye verilmediğinde kategori bazlı dağılıma döner', () => {

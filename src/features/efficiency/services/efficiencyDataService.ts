@@ -82,42 +82,85 @@ export async function getLearningLoadData({
   userId,
   days,
 }: LearningLoadParams): Promise<LearningLoad[]> {
-  const sessionsData = await fetchSessionHistory<{
-    started_at: string;
-    total_work_time: number | null;
-  }>(userId, 'started_at, total_work_time', 'getLearningLoadData error', {
-    days,
-  });
+  const queryStartDate = new Date();
+  queryStartDate.setDate(queryStartDate.getDate() - (days - 1));
+  queryStartDate.setHours(0, 0, 0, 0);
 
-  const dailyMap = new Map<string, number>();
+  const [sessionsData, videoData] = await Promise.all([
+    fetchSessionHistory<{
+      started_at: string;
+      total_work_time: number | null;
+    }>(userId, 'started_at, total_work_time', 'getLearningLoadData error', {
+      days,
+    }),
+    supabase
+      .from('video_progress')
+      .select('completed_at, video:videos(duration_minutes, duration)')
+      .eq('user_id', userId)
+      .eq('completed', true)
+      .gte('completed_at', queryStartDate.toISOString()),
+  ]);
+
+  const dailyMap = new Map<
+    string,
+    { pomodoro: number; video: number; reading: number }
+  >();
 
   sessionsData?.forEach((s) => {
     const dateKey = getVirtualDateKey(new Date(s.started_at));
     const mins = Math.round((s.total_work_time || 0) / 60);
-    dailyMap.set(dateKey, (dailyMap.get(dateKey) || 0) + mins);
+    const entry = dailyMap.get(dateKey) || {
+      pomodoro: 0,
+      video: 0,
+      reading: 0,
+    };
+    entry.pomodoro += mins;
+    dailyMap.set(dateKey, entry);
   });
 
-  // Decide how many days to return.
-  // If 'days' is small (like 7 or 30), we strictly conform to that range.
-  // The 'days' param implies "Last N days".
+  interface Video {
+    duration_minutes: number | null;
+    duration: string | null;
+  }
+
+  videoData.data?.forEach((v) => {
+    if (!v.completed_at) return;
+    const dateKey = getVirtualDateKey(new Date(v.completed_at));
+    const video = v.video as Video;
+    const duration = video?.duration_minutes || 0;
+    const isReading = video?.duration?.includes('Sayfa');
+
+    const entry = dailyMap.get(dateKey) || {
+      pomodoro: 0,
+      video: 0,
+      reading: 0,
+    };
+    if (isReading) entry.reading += duration;
+    else entry.video += duration;
+    dailyMap.set(dateKey, entry);
+  });
 
   const rawData: (LearningLoad & { rawDate: Date })[] = [];
-
-  // Create range for requested days
   const anchorDate = getVirtualDayStart();
 
   for (let i = days - 1; i >= 0; i--) {
     const d = new Date(anchorDate);
     d.setDate(d.getDate() - i);
-    d.setHours(12, 0, 0, 0); // Noon for display/key generation
+    d.setHours(12, 0, 0, 0);
 
     const dateKey = getVirtualDateKey(d);
     const dayName = i === 0 ? 'Bugün' : formatDisplayDate(d);
+    const stats = dailyMap.get(dateKey) || {
+      pomodoro: 0,
+      video: 0,
+      reading: 0,
+    };
 
     rawData.push({
       day: dayName,
-      videoMinutes: 0,
-      extraStudyMinutes: Math.round(dailyMap.get(dateKey) || 0),
+      videoMinutes: stats.video,
+      readingMinutes: stats.reading,
+      extraStudyMinutes: stats.pomodoro,
       rawDate: new Date(d),
     });
   }
@@ -127,51 +170,39 @@ export async function getLearningLoadData({
   rawData.forEach((item) => {
     const d = item.rawDate;
     const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-    const totalMins = item.extraStudyMinutes + item.videoMinutes;
+    const totalContent = item.videoMinutes + (item.readingMinutes || 0);
+    const totalMins = item.extraStudyMinutes + totalContent;
     if (isWeekend && totalMins === 0) {
       weekendNoActivityStrDates.add(d.toISOString().split('T')[0]);
     }
   });
 
-  // Filter out graduate study days (Tue, Wed, Thu) and empty weekend days
+  // Filter out empty weekend days
   return rawData.filter((item) => {
     const d = item.rawDate;
-    const dayOfWeek = d.getDay(); // 0=Pazar, 1=Pazartesi, ..., 6=Cumartesi
-    const totalMins = item.extraStudyMinutes + item.videoMinutes;
+    const dayOfWeek = d.getDay();
+    const totalContent = item.videoMinutes + (item.readingMinutes || 0);
+    const totalMins = item.extraStudyMinutes + totalContent;
 
-    // Hafta sonu mantığı:
     if (dayOfWeek === 0 || dayOfWeek === 6) {
-      // Eğer veri varsa göster
       if (totalMins > 0) return true;
-
-      // Veri yoksa (0 ise) kontrol et:
-      // Acaba bu haftanın diğer hafta sonu gününde de veri yok mu?
-      // İkisi de 0 ise, Pazar gününü tutarak disiplin cezasını (streak kırılmasını) gösterelim, Cumartesi'yi silelim.
       const msInDay = 24 * 60 * 60 * 1000;
-
       let otherWeekendDayStr = '';
       if (dayOfWeek === 6) {
-        // Cumartesi ise, Pazar'a (yarın) bak
         const sundayDate = new Date(d.getTime() + msInDay);
         otherWeekendDayStr = sundayDate.toISOString().split('T')[0];
       } else if (dayOfWeek === 0) {
-        // Pazar ise, Cumartesi'ye (dün) bak
         const saturdayDate = new Date(d.getTime() - msInDay);
         otherWeekendDayStr = saturdayDate.toISOString().split('T')[0];
       }
-
       const otherDayAlsoZero =
         weekendNoActivityStrDates.has(otherWeekendDayStr);
-
       if (otherDayAlsoZero) {
-        // İkisi de 0 ise, biz Pazar'ı cezai gün olarak listede tutalım (Pazar is true, Cumartesi is false)
         return dayOfWeek === 0;
       } else {
-        // Sadece bu gün 0 ise, adayın 1 günlük tatil hakkı vardır, listeden çıkar.
         return false;
       }
     }
-
     return true;
   });
 }
@@ -311,20 +342,35 @@ export async function getConsistencyData({
   days?: number;
 }): Promise<DayActivity[]> {
   const queryStartDate = new Date();
-  queryStartDate.setMonth(queryStartDate.getMonth() - 6);
+  queryStartDate.setDate(queryStartDate.getDate() - (days - 1));
+  queryStartDate.setHours(0, 0, 0, 0);
 
-  const sessionsData = await fetchSessionHistory<{
-    started_at: string;
-    total_work_time: number | null;
-  }>(userId, 'started_at, total_work_time', 'getConsistencyData error', {
-    days,
-  });
+  const [sessionsData, videoData] = await Promise.all([
+    fetchSessionHistory<{
+      started_at: string;
+      total_work_time: number | null;
+    }>(userId, 'started_at, total_work_time', 'getConsistencyData error', {
+      days,
+    }),
+    supabase
+      .from('video_progress')
+      .select('completed_at')
+      .eq('user_id', userId)
+      .eq('completed', true)
+      .gte('completed_at', queryStartDate.toISOString()),
+  ]);
 
   const dailyMap = new Map<string, number>();
   sessionsData?.forEach((s) => {
     const dateKey = getVirtualDateKey(new Date(s.started_at));
     const mins = Math.round((s.total_work_time || 0) / 60);
     dailyMap.set(dateKey, (dailyMap.get(dateKey) || 0) + mins);
+  });
+
+  videoData.data?.forEach((v) => {
+    if (!v.completed_at) return;
+    const dateKey = getVirtualDateKey(new Date(v.completed_at));
+    dailyMap.set(dateKey, (dailyMap.get(dateKey) || 0) + 1); // Content completion counts as activity
   });
 
   const heatmap: DayActivity[] = [];
@@ -335,12 +381,12 @@ export async function getConsistencyData({
     d.setHours(12, 0, 0, 0);
 
     const dateKey = getVirtualDateKey(d);
-    const mins = dailyMap.get(dateKey) || 0;
+    const val = dailyMap.get(dateKey) || 0;
 
     heatmap.push({
       date: dateKey,
-      totalMinutes: mins,
-      count: mins > 0 ? 1 : 0,
+      totalMinutes: val,
+      count: val > 0 ? 1 : 0,
       level: 0,
       intensity: 0,
     });

@@ -5,7 +5,7 @@ import { formatDateKey, getVirtualDate } from '@/utils/dateUtils';
  *
  * Critical Rules:
  * - Weekend (Saturday/Sunday) gaps do NOT break streak
- * - Virtual day logic (04:00 start) is applied via getVirtualDate()
+ * - Standard day logic (00:00 start) is applied via getVirtualDate() (which now returns standard dates)
  * - Streak counts consecutive days ending TODAY or YESTERDAY
  *
  * @param activeDays Set of active day strings in YYYY-MM-DD format

@@ -14,7 +14,7 @@ export async function getCourseMastery(
   // 1. Get all courses
   const { data: courses, error: coursesError } = await supabase
     .from('courses')
-    .select('id, name, total_videos');
+    .select('id, name, total_videos, type');
 
   if (coursesError || !courses) return [];
 
@@ -80,6 +80,7 @@ export async function getCourseMastery(
       return {
         courseId: c.id,
         courseName: c.name,
+        courseType: c.type || 'video',
         videoProgress: Math.round(videoRatio * 100),
         questionProgress: Math.round(Math.min(1, questRatio) * 100),
         masteryScore: mastery,

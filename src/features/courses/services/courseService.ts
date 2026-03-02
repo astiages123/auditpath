@@ -23,7 +23,7 @@ export async function getCategories(): Promise<Category[]> {
     return [];
   }
 
-  return categories;
+  return categories as Category[];
 }
 
 /**

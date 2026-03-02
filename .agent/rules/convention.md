@@ -29,7 +29,7 @@ trigger: always_on
 
 ## TypeScript Kullanımı
 
-- `any` tipi kullanılmamalıdır. Her şeyin tipi `src/types/` veya özellik altındaki `types/` klasöründe tanımlanmalıdır.
+- **`any` tipi KESİNLİKLE yasaktır.** Kullanılmamalıdır. Eğer kullanılacak verinin tipi henüz belli değilse `unknown` kullanılmalı ve çalışma zamanı doğrulama (runtime validation, örn: Zod) yapılmalıdır. Her şeyin tipi `src/types/` veya özellik altındaki `types/` klasöründe tanımlanmalıdır.
 - Veri tabanı dönüşleri için `database.types.ts` referans alınmalıdır.
 - **Dosya Boyutu:**
   - **Servis ve Logic dosyaları (`.ts`):** Fonksiyonlar birbirinden bağımsız ve `// === SECTION ===` yorumlarıyla ayrılmış olduğu sürece **1000 satıra kadar** kabul edilebilir. Bu dosyalarda AI yalnızca ilgili fonksiyonu okur, tüm dosyayı kavramak gerekmez. Bölmek ortak import/tip tekrarına yol açacağı için tercih edilmez.

@@ -77,7 +77,10 @@ export function determineNodeStrategy(
 ): {
   bloomLevel: BloomLevel;
   instruction: string;
-} {
+} | null {
+  if (concept?.gorsel === 'GRAFİK_GEREKTIRIYOR') {
+    return null;
+  }
   if (concept?.seviye) {
     if (concept.seviye === 'Analiz') {
       return {
@@ -243,10 +246,14 @@ export async function draftQuestion(input: {
     input.concept,
     input.courseName
   );
+  if (!strategy) return null;
+
   const taskPrompt = buildDraftingPrompt(
     [input.concept],
     strategy,
-    input.usageType
+    input.usageType,
+    undefined,
+    input.courseName
   );
   const aiConfig = getTaskConfig('drafting');
 
@@ -288,10 +295,14 @@ export async function draftBatch(input: {
     input.concepts[0].concept,
     input.courseName
   );
+  if (!strategy) return null;
+
   const taskPrompt = buildDraftingPrompt(
     input.concepts.map((c) => c.concept),
     strategy,
-    input.usageType
+    input.usageType,
+    undefined,
+    input.courseName
   );
   const aiConfig = getTaskConfig('drafting');
 
@@ -322,7 +333,7 @@ export async function draftBatch(input: {
     );
     return {
       ...q,
-      bloomLevel: itemStrategy.bloomLevel,
+      bloomLevel: itemStrategy?.bloomLevel || 'knowledge',
       img: q.img ?? null,
       concept: inputConcept.concept.baslik,
       insight: q.insight ?? undefined,
@@ -621,6 +632,20 @@ export async function generateForChunk(
         if (cached) {
           totalGeneratedCount++;
           callbacks.onQuestionSaved(totalGeneratedCount);
+          continue;
+        }
+
+        const nodeStrategy = determineNodeStrategy(
+          i,
+          concept,
+          chunk.course_name || ''
+        );
+        if (!nodeStrategy) {
+          // Grafik gerektiren kavram, atla
+          log(
+            'GENERATING',
+            `"${concept.baslik}" grafik gerektiriyor, atlanıyor.`
+          );
           continue;
         }
 

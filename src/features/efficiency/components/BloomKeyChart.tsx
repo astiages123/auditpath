@@ -1,14 +1,24 @@
-import {
-  RadialBarChart,
-  RadialBar,
-  Legend,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts';
+import { useState, useEffect } from 'react';
 import { BloomStats } from '@/features/quiz/types';
 
-// --- Bloom Key Chart (Polar Bar) ---
+type RechartsModule = typeof import('recharts');
+
 export const BloomKeyChart = ({ data }: { data: BloomStats[] }) => {
+  const [Recharts, setRecharts] = useState<RechartsModule | null>(null);
+
+  useEffect(() => {
+    import('recharts').then((mod) => setRecharts(mod));
+  }, []);
+
+  if (!Recharts) {
+    return (
+      <div className="w-full h-[300px] animate-pulse bg-muted/20 rounded-xl" />
+    );
+  }
+
+  const { RadialBarChart, RadialBar, Legend, Tooltip, ResponsiveContainer } =
+    Recharts;
+
   // We want to transform data to have specific colors for each level
   // Order: Hatırla (Red) -> Anla (Orange) -> Uygula (Yellow) -> Analiz (Green) -> Değerlendir (Blue) -> Yarat (Violet)
 

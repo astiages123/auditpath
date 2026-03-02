@@ -3,7 +3,6 @@ import {
   BookOpen,
   ArrowRight,
   Brain,
-  LucideIcon,
   Calendar,
   AlertTriangle,
 } from 'lucide-react';
@@ -11,11 +10,8 @@ import {
   type Course,
   type Category,
 } from '@/features/courses/types/courseTypes';
-import {
-  ICON_OVERRIDES,
-  COURSE_KEYWORD_MAPPINGS,
-  CATEGORY_THEMES,
-} from '@/features/courses/utils/coursesConfig';
+import { CATEGORY_THEMES } from '@/features/courses/utils/coursesConfig';
+import { getCourseIcon } from '@/features/courses/logic/coursesLogic';
 import { type LandingCourseStats } from '@/features/quiz/services/quizLandingService';
 
 interface QuizLandingViewProps {
@@ -28,23 +24,7 @@ interface QuizLandingViewProps {
 /**
  * Helper to get dynamic icon for a course based on its name or slug.
  */
-const getCourseIcon = (course: Course): LucideIcon => {
-  // 1. Check direct keyword overrides in slug
-  const override = ICON_OVERRIDES.find((o) =>
-    course.course_slug.toLowerCase().includes(o.keyword.toLowerCase())
-  );
-  if (override) return override.icon;
-
-  // 2. Check keyword mappings
-  const mapping = COURSE_KEYWORD_MAPPINGS.find((m) =>
-    m.keywords.some((kw) =>
-      course.name.toLowerCase().includes(kw.toLowerCase())
-    )
-  );
-  if (mapping) return mapping.icon;
-
-  return BookOpen; // Default
-};
+// Local getCourseIcon removed to use centralized one.
 
 export const QuizLandingView: FC<QuizLandingViewProps> = ({
   categories,
@@ -161,7 +141,10 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                       a.name.localeCompare(b.name)
                   )
                   .map((course, _index) => {
-                    const Icon = getCourseIcon(course);
+                    const Icon = getCourseIcon(
+                      course.name,
+                      course.course_slug ?? course.id
+                    );
                     const stats = dashboardStats[course.id];
                     const mastery = stats?.averageMastery || 0;
                     const lastStudy = stats?.lastStudyDate
@@ -178,7 +161,14 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                     return (
                       <div
                         key={course.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => onCourseSelect(course)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            onCourseSelect(course);
+                          }
+                        }}
                         className="group relative bg-card backdrop-blur-sm border border-border/40 rounded-[2.5rem] overflow-hidden cursor-pointer shadow-sm hover:border-primary/30"
                       >
                         <div className="p-8 space-y-6">

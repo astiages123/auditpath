@@ -7,6 +7,10 @@ import {
   WEEKLY_SCHEDULE,
   COURSE_THEME_CONFIG,
 } from '@/features/courses/utils/coursesConfig';
+import {
+  getCourseTheme,
+  getCourseIcon,
+} from '@/features/courses/logic/coursesLogic';
 
 export default function ProgramPage() {
   const today = new Date();
@@ -26,8 +30,13 @@ export default function ProgramPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-6">
         {WEEKLY_SCHEDULE.map((item) => {
           const isToday = item.matchDays.includes(currentDayIndex);
-          const cardTheme =
-            COURSE_THEME_CONFIG[item.blocks[0]?.theme || 'primary'];
+          const firstBlockTheme = item.blocks[0]
+            ? item.blocks[0].theme ||
+              getCourseTheme(
+                item.blocks[0].courseOrCategoryId || item.blocks[0].subject
+              )
+            : 'primary';
+          const cardTheme = COURSE_THEME_CONFIG[firstBlockTheme];
 
           return (
             <Card
@@ -69,11 +78,18 @@ export default function ProgramPage() {
                 </div>
 
                 <div className="space-y-3">
-                  {item.blocks.map((block, idx) => {
-                    const blockTheme = COURSE_THEME_CONFIG[block.theme];
+                  {item.blocks.map((block) => {
+                    const resolvedTheme =
+                      block.theme ||
+                      getCourseTheme(block.courseOrCategoryId || block.subject);
+                    const blockTheme = COURSE_THEME_CONFIG[resolvedTheme];
+                    const ResolvedIcon =
+                      block.icon ||
+                      getCourseIcon(block.courseOrCategoryId || block.subject);
+                    const blockKey = `${block.name}-${block.subject}`;
                     return (
                       <div
-                        key={idx}
+                        key={blockKey}
                         className="flex items-center gap-3 p-3 bg-background/50 rounded-lg border border-border/30 hover:bg-background/80 transition-colors"
                       >
                         <div
@@ -83,7 +99,7 @@ export default function ProgramPage() {
                             blockTheme.bg
                           )}
                         >
-                          <block.icon className="h-5 w-5" />
+                          <ResolvedIcon className="h-5 w-5" />
                         </div>
                         <div className="flex flex-col flex-1 overflow-hidden">
                           <span className="text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-widest">

@@ -88,11 +88,11 @@ export function TopicSidebar({
             </Button>
           </div>
         ) : (
-          topics.map((topic, index) => {
+          topics.map((topic) => {
             const isActive = selectedTopic?.name === topic.name;
             return (
               <button
-                key={index}
+                key={topic.name}
                 onClick={() => onSelectTopic(topic)}
                 className={cn(
                   'group relative w-full text-left flex items-center gap-3 px-3 py-3 mx-1 rounded-xl transition-all duration-300',
@@ -151,9 +151,9 @@ export function TopicList({
 }) {
   return (
     <div className="space-y-1">
-      {topics.map((topic, index) => (
+      {topics.map((topic) => (
         <button
-          key={index}
+          key={topic.name}
           onClick={() => onSelectTopic(topic)}
           className="group relative w-full text-left flex items-center gap-3 px-3 py-3 mx-1 rounded-xl transition-all duration-300 border border-transparent hover:bg-white/5 hover:border-white/5"
         >

@@ -16,7 +16,7 @@ export function StatsSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {[1, 2, 3, 4].map((i) => (
-        <Card key={i} className="p-6">
+        <Card key={`skel-stat-${i}`} className="p-6">
           <div className="space-y-3">
             <Skeleton className="h-4 w-24" />
             <Skeleton className="h-8 w-32" />
@@ -53,7 +53,7 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
         <Skeleton className="h-10 w-24" />
       </div>
       {[...Array(rows)].map((_, i) => (
-        <div key={i} className="flex gap-4 items-center">
+        <div key={`skel-row-${i}`} className="flex gap-4 items-center">
           <Skeleton className="size-12 rounded-lg" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-full" />
@@ -80,7 +80,10 @@ export function HomeProgressSkeleton() {
         </div>
       </Card>
       {[1, 2, 3].map((i) => (
-        <Card key={i} className="p-6 h-[180px] flex flex-col justify-between">
+        <Card
+          key={`skel-progress-${i}`}
+          className="p-6 h-[180px] flex flex-col justify-between"
+        >
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <Skeleton className="size-10 rounded-xl" />
@@ -99,7 +102,7 @@ export function CategoryGridSkeleton() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start animate-pulse">
       {[1, 2, 3, 4].map((i) => (
-        <Card key={i} className="p-6 min-h-[160px]">
+        <Card key={`skel-category-${i}`} className="p-6 min-h-[160px]">
           <div className="flex flex-col gap-6">
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-4">
@@ -196,7 +199,10 @@ export function LibraryGridSkeleton() {
           </div>
           <div className="space-y-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="flex items-center gap-4 px-4 py-2">
+              <div
+                key={`skel-toc-item-${i}`}
+                className="flex items-center gap-4 px-4 py-2"
+              >
                 <Skeleton className="size-5 rounded-md" />
                 <Skeleton className="h-4 w-24" />
               </div>
@@ -207,7 +213,7 @@ export function LibraryGridSkeleton() {
         {/* Main Content Area Skeleton */}
         <div className="flex-1 bg-card/20 rounded-xl p-6 md:p-10 space-y-12">
           {[1, 2].map((section) => (
-            <div key={section} className="space-y-6">
+            <div key={`skel-sec-${section}`} className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <Skeleton className="size-12 rounded-2xl" />
@@ -217,7 +223,7 @@ export function LibraryGridSkeleton() {
               </div>
               <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
                 {[1, 2, 3].map((i) => (
-                  <LibraryCardSkeleton key={i} />
+                  <LibraryCardSkeleton key={`skel-lib-card-${i}`} />
                 ))}
               </div>
             </div>
@@ -237,7 +243,10 @@ export function SplitLayoutSkeleton() {
           <div className="p-4 space-y-4">
             <Skeleton className="h-8 w-full" />
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-center gap-3">
+              <div
+                key={`skel-nav-item-${i}`}
+                className="flex items-center gap-3"
+              >
                 <Skeleton className="size-8 rounded-lg" />
                 <Skeleton className="h-4 flex-1" />
               </div>
@@ -274,7 +283,7 @@ export function SplitLayoutSkeleton() {
             <Skeleton className="h-4 w-24" />
             <div className="space-y-4">
               {[1, 2, 3, 4].map((i) => (
-                <Skeleton key={i} className="h-3 w-full" />
+                <Skeleton key={`skel-toc-line-${i}`} className="h-3 w-full" />
               ))}
             </div>
           </div>

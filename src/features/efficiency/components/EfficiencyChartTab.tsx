@@ -1,7 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { cn } from '@/utils/stringHelpers';
-import { FocusPowerTrendChart } from './FocusPowerTrendChart';
 import { FocusPowerPoint } from '../types/efficiencyTypes';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Lazy load the chart component
+const FocusPowerTrendChart = lazy(() =>
+  import('./FocusPowerTrendChart').then((m) => ({
+    default: m.FocusPowerTrendChart,
+  }))
+);
+
+const ChartFallback = () => (
+  <div className="w-full h-full min-h-[300px] flex items-center justify-center bg-surface/5 rounded-lg border border-white/5">
+    <Skeleton className="w-[90%] h-[250px] bg-surface/20" />
+  </div>
+);
 
 interface EfficiencyChartTabProps {
   weekData: FocusPowerPoint[];
@@ -91,11 +104,13 @@ export const EfficiencyChartTab: React.FC<EfficiencyChartTabProps> = ({
       </div>
 
       <div className="h-[350px] w-full bg-black/10 rounded-lg border border-white/5 p-2">
-        <FocusPowerTrendChart
-          key={`${range}-chart`}
-          data={getData()}
-          rangeLabel={range}
-        />
+        <Suspense fallback={<ChartFallback />}>
+          <FocusPowerTrendChart
+            key={`${range}-chart`}
+            data={getData()}
+            rangeLabel={range}
+          />
+        </Suspense>
       </div>
     </div>
   );

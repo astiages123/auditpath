@@ -1,4 +1,4 @@
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useReducer, useTransition } from 'react';
 import { fetchCourseNotes } from '../services/noteService';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { storage } from '@/shared/services/storageService';
@@ -9,11 +9,45 @@ interface UseNotesDataProps {
   userId?: string;
 }
 
-interface NotesData {
+type NotesState = {
   chunks: CourseTopic[];
   loading: boolean;
   error: string | null;
   courseName: string;
+};
+
+type NotesAction =
+  | { type: 'FETCH_START' }
+  | {
+      type: 'FETCH_SUCCESS';
+      chunks: CourseTopic[];
+      courseName: string;
+    }
+  | { type: 'FETCH_ERROR'; error: string }
+  | { type: 'SET_LOADING'; loading: boolean };
+
+function notesReducer(state: NotesState, action: NotesAction): NotesState {
+  switch (action.type) {
+    case 'FETCH_START':
+      return { ...state, loading: true, error: null };
+    case 'FETCH_SUCCESS':
+      return {
+        ...state,
+        chunks: action.chunks,
+        courseName: action.courseName,
+        loading: false,
+        error: null,
+      };
+    case 'FETCH_ERROR':
+      return { ...state, error: action.error, loading: false };
+    case 'SET_LOADING':
+      return { ...state, loading: action.loading };
+    default:
+      return state;
+  }
+}
+
+export interface NotesData extends NotesState {
   isPending: boolean;
 }
 
@@ -21,10 +55,12 @@ export function useNotesData({
   courseSlug,
   userId,
 }: UseNotesDataProps): NotesData {
-  const [chunks, setChunks] = useState<CourseTopic[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [courseName, setCourseName] = useState('');
+  const [state, dispatch] = useReducer(notesReducer, {
+    chunks: [],
+    loading: true,
+    error: null,
+    courseName: '',
+  });
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
@@ -33,12 +69,12 @@ export function useNotesData({
 
     async function fetchNotes() {
       if (!userId || !courseSlug) {
-        setLoading(false);
+        dispatch({ type: 'SET_LOADING', loading: false });
         return;
       }
 
       try {
-        setLoading(true);
+        dispatch({ type: 'FETCH_START' });
         // Standardize cache key
         const cacheKey = `cached_notes_v6_${courseSlug}`;
         const cached = storage.get<{ data: CourseTopic[]; timestamp: number }>(
@@ -46,9 +82,11 @@ export function useNotesData({
         );
 
         if (cached?.data) {
-          setChunks(cached.data);
-          setCourseName(cached.data[0]?.course_name || '');
-          setLoading(false);
+          dispatch({
+            type: 'FETCH_SUCCESS',
+            chunks: cached.data,
+            courseName: cached.data[0]?.course_name || '',
+          });
         }
 
         const result = await fetchCourseNotes(userId, courseSlug, signal);
@@ -57,8 +95,11 @@ export function useNotesData({
 
         if (result.chunks.length > 0) {
           startTransition(() => {
-            setChunks(result.chunks);
-            setCourseName(result.courseName);
+            dispatch({
+              type: 'FETCH_SUCCESS',
+              chunks: result.chunks,
+              courseName: result.courseName || '',
+            });
           });
 
           storage.set(cacheKey, {
@@ -66,15 +107,21 @@ export function useNotesData({
             data: result.chunks,
           });
         } else if (!cached) {
-          setError('Bu ders için henüz içerik bulunmuyor.');
+          dispatch({
+            type: 'FETCH_ERROR',
+            error: 'Bu ders için henüz içerik bulunmuyor.',
+          });
         }
       } catch (err) {
         if (signal.aborted) return;
         logger.error('Notes loading error', err as Error);
-        setError('Notlar yüklenirken bir hata oluştu.');
+        dispatch({
+          type: 'FETCH_ERROR',
+          error: 'Notlar yüklenirken bir hata oluştu.',
+        });
       } finally {
         if (!signal.aborted) {
-          setLoading(false);
+          dispatch({ type: 'SET_LOADING', loading: false });
         }
       }
     }
@@ -87,10 +134,7 @@ export function useNotesData({
   }, [courseSlug, userId]);
 
   return {
-    chunks,
-    loading,
-    error,
-    courseName,
+    ...state,
     isPending,
   };
 }

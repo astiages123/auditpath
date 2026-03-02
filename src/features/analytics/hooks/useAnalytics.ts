@@ -15,62 +15,83 @@ import {
 } from '../logic/analyticsLogic';
 import { AiGenerationCost } from '../types/analyticsTypes';
 import { handleSupabaseError } from '@/lib/supabaseHelpers';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 
 export function useAnalytics() {
-  const [rawLogs, setRawLogs] = useState<AiGenerationCost[]>([]);
+  const { user } = useAuth();
   const [selectedModel, setSelectedModel] = useState<string>('all');
-  const [rate, setRate] = useState<number>(0);
-  const [loading, setLoading] = useState(true);
+  const [state, setState] = useState({
+    rawLogs: [] as AiGenerationCost[],
+    rate: 0,
+    loading: true,
+  });
   const [visibleCount, setVisibleCount] = useState(50);
-  const [isMounted, setIsMounted] = useState(false);
 
   const [isPending, startTransition] = useTransition();
   const deferredVisibleCount = useDeferredValue(visibleCount);
 
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    let mounted = true;
 
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
+    async function fetchAnalytics() {
+      if (!user?.id) return;
+      setState((prev) => ({ ...prev, loading: true }));
+
       try {
-        const tryRate = await ExchangeRateService.getUsdToTryRate();
-        setRate(tryRate);
+        // Assuming getActivityLogs and getLearningRate are defined or imported
+        // For this edit, I'll use the existing AnalyticsService and ExchangeRateService
+        // to match the original file's context, but adapt to the new state structure.
+        const [logsData, rateData] = await Promise.all([
+          AnalyticsService.fetchGenerationCosts(), // Replaced getActivityLogs
+          ExchangeRateService.getUsdToTryRate(), // Replaced getLearningRate
+        ]);
 
-        const data = await AnalyticsService.fetchGenerationCosts();
-        const validatedData = validateLogs(data || []);
-        setRawLogs(validatedData);
+        if (mounted) {
+          const validatedData = validateLogs(logsData || []); // Apply validation
+          setState({
+            rawLogs: validatedData,
+            rate: rateData || 0,
+            loading: false,
+          });
+        }
       } catch (error) {
-        handleSupabaseError(error, 'useAnalytics.fetchData');
-      } finally {
-        setLoading(false);
+        if (mounted) {
+          // Assuming logger is defined or imported
+          // console.error('Failed to fetch analytics', error); // Replaced logger.error
+          handleSupabaseError(error, 'useAnalytics.fetchAnalytics'); // Using existing error handler
+          setState((prev) => ({ ...prev, loading: false }));
+        }
       }
     }
-    fetchData();
-  }, []);
+
+    fetchAnalytics();
+
+    return () => {
+      mounted = false;
+    };
+  }, [user?.id]); // Dependency on user.id as per instruction
 
   const uniqueModels = useMemo(() => {
-    const models = rawLogs
+    const models = state.rawLogs // Use state.rawLogs
       .map((l) => l.model)
       .filter((m): m is string => typeof m === 'string' && m.length > 0);
     return Array.from(new Set(models)).sort();
-  }, [rawLogs]);
+  }, [state.rawLogs]); // Dependency on state.rawLogs
 
   const filteredLogs = useMemo(() => {
-    if (selectedModel === 'all') return rawLogs;
-    return rawLogs.filter((l) => l.model === selectedModel);
-  }, [rawLogs, selectedModel]);
+    if (selectedModel === 'all') return state.rawLogs;
+    return state.rawLogs.filter((l) => l.model === selectedModel);
+  }, [state.rawLogs, selectedModel]);
 
   const dailyData = useMemo(
-    () => processDailyData(filteredLogs, rate),
-    [filteredLogs, rate]
+    () => processDailyData(filteredLogs, state.rate),
+    [filteredLogs, state.rate]
   );
   const totalCostUsd = useMemo(
     () => calculateTotalCostUsd(filteredLogs),
     [filteredLogs]
   );
-  const totalCostTry = totalCostUsd * rate;
+  const totalCostTry = totalCostUsd * state.rate;
   const totalRequests = filteredLogs.length;
   const cacheHitRate = useMemo(
     () => calculateCacheHitRate(filteredLogs),
@@ -104,11 +125,10 @@ export function useAnalytics() {
     selectedModel,
     setSelectedModel,
     uniqueModels,
-    rate,
-    loading,
+    rate: state.rate,
+    loading: state.loading,
     visibleCount,
     deferredVisibleCount,
-    isMounted,
     isPending,
     dailyData,
     totalCostUsd,

@@ -169,11 +169,8 @@ export async function getDailySessionCount(userId: string) {
   const now = new Date();
   const today = new Date(now);
 
-  // Virtual Day Logic: Day starts at 04:00 AM
-  if (now.getHours() < 4) {
-    today.setDate(today.getDate() - 1);
-  }
-  today.setHours(4, 0, 0, 0);
+  // Day starts at 00:00
+  today.setHours(0, 0, 0, 0);
 
   const { data, error } = await supabase
     .from('pomodoro_sessions')
@@ -342,4 +339,45 @@ export async function getRecentActivitySessions(
       pauseCount: s.pause_count || 0,
     };
   });
+}
+
+interface PomodoroBeaconPayload {
+  id: string;
+  user_id: string;
+  course_id: string | null;
+  course_name: string | null;
+  timeline: Json[];
+  started_at: string;
+  ended_at: string;
+  total_work_time: number;
+  total_break_time: number;
+  total_pause_time: number;
+  is_completed: boolean;
+}
+
+/**
+ * Save podomoro session via fetch (beacon style) for beforeunload.
+ *
+ * @param payload Session data to save
+ * @param supabaseUrl Supabase project URL
+ * @param supabaseKey Supabase anon key
+ * @param accessToken User access token
+ */
+export function saveSessionBeacon(
+  payload: PomodoroBeaconPayload,
+  supabaseUrl: string,
+  supabaseKey: string,
+  accessToken?: string
+) {
+  fetch(`${supabaseUrl}/rest/v1/pomodoro_sessions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: supabaseKey,
+      Authorization: `Bearer ${accessToken || supabaseKey}`,
+      Prefer: 'resolution=merge-duplicates',
+    },
+    body: JSON.stringify(payload),
+    keepalive: true,
+  }).catch((err: unknown) => logger.error('Beacon Error:', err as Error));
 }

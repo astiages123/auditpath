@@ -1,6 +1,16 @@
+import { lazy, Suspense } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { LearningLoad } from '../types/efficiencyTypes';
-import { LearningLoadChart } from './LearningLoadCard';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Lazy load the chart component
+const LearningLoadChart = lazy(() => import('./LearningLoadChart'));
+
+const ChartFallback = () => (
+  <div className="w-full h-[230px] flex items-center justify-center bg-surface/5 rounded-xl border border-border/10">
+    <Skeleton className="w-[90%] h-[180px] bg-surface/20" />
+  </div>
+);
 
 interface LearningLoadAnalysisProps {
   dayData: LearningLoad[];
@@ -25,16 +35,24 @@ export const LearningLoadAnalysis = ({
       <TabsTrigger value="all">Tümü</TabsTrigger>
     </TabsList>
     <TabsContent value="day" className="mt-4">
-      <LearningLoadChart data={dayData} targetMinutes={targetMinutes} />
+      <Suspense fallback={<ChartFallback />}>
+        <LearningLoadChart data={dayData} targetMinutes={targetMinutes} />
+      </Suspense>
     </TabsContent>
     <TabsContent value="week" className="mt-4">
-      <LearningLoadChart data={weekData} targetMinutes={targetMinutes} />
+      <Suspense fallback={<ChartFallback />}>
+        <LearningLoadChart data={weekData} targetMinutes={targetMinutes} />
+      </Suspense>
     </TabsContent>
     <TabsContent value="month" className="mt-4">
-      <LearningLoadChart data={monthData} />
+      <Suspense fallback={<ChartFallback />}>
+        <LearningLoadChart data={monthData} />
+      </Suspense>
     </TabsContent>
     <TabsContent value="all" className="mt-4">
-      <LearningLoadChart data={allData} />
+      <Suspense fallback={<ChartFallback />}>
+        <LearningLoadChart data={allData} />
+      </Suspense>
     </TabsContent>
   </Tabs>
 );

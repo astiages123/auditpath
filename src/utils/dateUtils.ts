@@ -12,19 +12,12 @@
  * @returns Sanal gün olarak ayarlanmış Date nesnesi (mutate edilmez, yeni Date döner)
  */
 export function getVirtualDate(date: Date = new Date()): Date {
-  const d = new Date(date);
-  if (d.getHours() < 4) {
-    d.setDate(d.getDate() - 1);
-  }
-  return d;
+  return new Date(date);
 }
 
 function getVirtualDayStartInternal(date?: Date): Date {
   const now = date ? new Date(date) : new Date();
-  if (now.getHours() < 4) {
-    now.setDate(now.getDate() - 1);
-  }
-  now.setHours(4, 0, 0, 0);
+  now.setHours(0, 0, 0, 0);
   return now;
 }
 

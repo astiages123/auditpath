@@ -9,6 +9,12 @@ import { useCallback, useEffect, useRef } from 'react';
  */
 export function usePomodoroWorker(onTick: () => void) {
   const workerRef = useRef<Worker | null>(null);
+  const onTickRef = useRef(onTick);
+
+  // Sync ref with latest prop
+  useEffect(() => {
+    onTickRef.current = onTick;
+  }, [onTick]);
 
   useEffect(() => {
     // Initialize Worker only once
@@ -19,9 +25,10 @@ export function usePomodoroWorker(onTick: () => void) {
 
     workerRef.current = worker;
 
+    // Use the ref inside the stable handler
     worker.onmessage = (e) => {
       if (e.data === 'TICK') {
-        onTick();
+        onTickRef.current();
       }
     };
 
@@ -29,16 +36,20 @@ export function usePomodoroWorker(onTick: () => void) {
       worker.terminate();
       workerRef.current = null;
     };
-  }, [onTick]);
-
-  const postMessage = useCallback((message: 'START' | 'PAUSE' | 'RESET') => {
-    workerRef.current?.postMessage(message);
   }, []);
+
+  const postMessage = useCallback(
+    (message: 'START' | 'PAUSE' | 'RESET' | 'STOP') => {
+      workerRef.current?.postMessage(message);
+    },
+    []
+  );
 
   return {
     start: () => postMessage('START'),
     pause: () => postMessage('PAUSE'),
     reset: () => postMessage('RESET'),
+    stop: () => postMessage('STOP'),
     workerRef,
   };
 }

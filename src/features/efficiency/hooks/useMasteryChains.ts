@@ -79,6 +79,7 @@ export function useMasteryChains() {
   const lessonMastery = courseMastery.map((m) => ({
     lessonId: m.courseId,
     title: m.courseName,
+    type: m.courseType,
     mastery: m.masteryScore,
     videoProgress: m.videoProgress,
     questionProgress: m.questionProgress,

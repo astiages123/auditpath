@@ -41,36 +41,39 @@ async function getMermaid() {
 
 export const MermaidDiagram = memo(({ code }: MermaidDiagramProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [svg, setSvg] = useState<string>('');
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [state, setState] = useState({
+    svg: '',
+    error: null as string | null,
+    isLoading: true,
+  });
 
   useEffect(() => {
     const renderDiagram = async () => {
       if (!code.trim()) return;
 
       try {
-        setIsLoading(true);
-        setError(null);
+        setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
         const mermaid = await getMermaid();
 
         const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
         const { svg: renderedSvg } = await mermaid.render(id, code);
         const sanitizedSvg = sanitizeHtml(renderedSvg);
-        setSvg(sanitizedSvg);
+        setState({ svg: sanitizedSvg, error: null, isLoading: false });
       } catch (err) {
         logger.error('Mermaid render error:', err as Error);
-        setError('Diyagram render edilemedi');
-      } finally {
-        setIsLoading(false);
+        setState((prev) => ({
+          ...prev,
+          error: 'Diyagram render edilemedi',
+          isLoading: false,
+        }));
       }
     };
 
     renderDiagram();
   }, [code]);
 
-  if (isLoading) {
+  if (state.isLoading) {
     return (
       <div className="my-8 rounded-xl border border-border/50 bg-card p-8 flex items-center justify-center">
         <Loader2 className="w-6 h-6 text-primary animate-spin" />
@@ -79,12 +82,12 @@ export const MermaidDiagram = memo(({ code }: MermaidDiagramProps) => {
     );
   }
 
-  if (error) {
+  if (state.error) {
     return (
       <div className="my-8 rounded-xl border border-destructive/50 bg-destructive/10 p-6">
         <div className="flex items-center gap-2 text-destructive mb-2">
           <AlertCircle className="w-5 h-5" />
-          <span className="font-medium">{error}</span>
+          <span className="font-medium">{state.error}</span>
         </div>
         <pre className="text-xs text-white/90 overflow-x-auto">{code}</pre>
       </div>
@@ -95,7 +98,7 @@ export const MermaidDiagram = memo(({ code }: MermaidDiagramProps) => {
     <div
       ref={containerRef}
       className="my-8 p-6 rounded-xl overflow-x-auto flex justify-center [&_svg]:max-w-full"
-      dangerouslySetInnerHTML={{ __html: svg }}
+      dangerouslySetInnerHTML={{ __html: state.svg }}
     />
   );
 });

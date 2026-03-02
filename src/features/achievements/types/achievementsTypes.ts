@@ -12,9 +12,12 @@ export interface StreakMilestones {
 
 export type GuildType =
   | 'HUKUK'
-  | 'EKONOMI'
+  | 'IKTISAT'
   | 'MUHASEBE_MALIYE'
-  | 'GENEL_YETENEK'
+  | 'GY_GK'
+  | 'KAMU_YONETIMI'
+  | 'ULUSLARARASI_ILISKILER'
+  | 'ATA_584'
   | 'HYBRID'
   | 'SPECIAL'
   | 'TITLES'

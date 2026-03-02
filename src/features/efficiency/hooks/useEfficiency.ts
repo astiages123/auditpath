@@ -7,12 +7,14 @@ import {
 
 export interface EfficiencyMetrics {
   totalVideoTime: number; // minutes
+  totalReadingTime: number; // minutes [YENİ]
   totalPomodoroTime: number; // minutes
 }
 
 export function useEfficiencyLogic(todayMetrics: EfficiencyMetrics) {
   const learningFlowMetrics = calculateLearningFlow({
     totalVideoTime: todayMetrics.totalVideoTime,
+    totalReadingTime: todayMetrics.totalReadingTime,
     totalPomodoroTime: todayMetrics.totalPomodoroTime,
   });
 

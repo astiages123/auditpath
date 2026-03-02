@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { env } from '@/utils/env';
-import { logger } from '@/utils/logger';
 import { calculateSessionTotals } from '../logic/sessionMath';
+import { saveSessionBeacon } from '../services/pomodoroService';
 
 interface UseTimerPersistenceProps {
   userId: string | undefined;
@@ -57,17 +57,7 @@ export function useTimerPersistence({
         const supabaseUrl = env.supabase.url;
         const supabaseKey = env.supabase.anonKey;
 
-        fetch(`${supabaseUrl}/rest/v1/pomodoro_sessions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: supabaseKey,
-            Authorization: `Bearer ${accessToken || supabaseKey}`,
-            Prefer: 'resolution=merge-duplicates',
-          },
-          body: JSON.stringify(payload),
-          keepalive: true,
-        }).catch((err: unknown) => logger.error('Beacon Error:', err as Error));
+        saveSessionBeacon(payload, supabaseUrl, supabaseKey, accessToken);
       }
     };
 

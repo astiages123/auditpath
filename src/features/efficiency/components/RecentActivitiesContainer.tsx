@@ -31,7 +31,7 @@ export const RecentActivitiesContainer = () => {
         <div className="flex-1 space-y-3 mt-4">
           {[...Array(5)].map((_, i) => (
             <div
-              key={i}
+              key={`skeleton-activity-${i}`}
               className="flex items-center gap-4 p-3 rounded-lg border border-white/5"
             >
               <Skeleton className="h-10 w-10 rounded-full bg-surface" />

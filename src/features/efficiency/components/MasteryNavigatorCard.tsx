@@ -9,6 +9,7 @@ import { useMasteryChains } from '../hooks/useMasteryChains';
 interface MasteryItem {
   lessonId: string;
   title: string;
+  type?: string;
   mastery: number;
   videoProgress: number;
   questionProgress: number;
@@ -24,7 +25,10 @@ export const MasteryNavigatorCard = () => {
         <Skeleton className="h-6 w-48 mb-6 bg-surface" />
         <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
           {[...Array(4)].map((_, i) => (
-            <Skeleton key={i} className="h-32 rounded-2xl bg-surface" />
+            <Skeleton
+              key={`skeleton-card-${i}`}
+              className="h-32 rounded-2xl bg-surface"
+            />
           ))}
         </div>
       </Card>
@@ -86,7 +90,9 @@ export const MasteryNavigatorCard = () => {
                     <div className="space-y-2 pt-1">
                       <div className="flex flex-col gap-1.5">
                         <div className="flex justify-between text-[11px] uppercase tracking-wider font-bold">
-                          <span className="text-white/80">Video (%60)</span>
+                          <span className="text-white/80">
+                            {node.type === 'reading' ? 'Metin' : 'Video'} (%60)
+                          </span>
                           <span className="text-emerald-400">
                             %{node.videoProgress}
                           </span>

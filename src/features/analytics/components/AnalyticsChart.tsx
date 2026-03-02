@@ -1,27 +1,53 @@
 import { FC } from 'react';
 import { TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from 'recharts';
+import { useState, useEffect } from 'react';
+
+type RechartsModule = typeof import('recharts');
 
 interface AnalyticsChartProps {
   dailyData: { date: string; cost: number; fullDate?: string }[];
-  isMounted: boolean;
   formatCurrency: (value: number) => string;
 }
 
 export const AnalyticsChart: FC<AnalyticsChartProps> = ({
   dailyData,
-  isMounted,
   formatCurrency,
 }) => {
+  const [Recharts, setRecharts] = useState<RechartsModule | null>(null);
+
+  useEffect(() => {
+    import('recharts').then((mod) => setRecharts(mod));
+  }, []);
+
+  if (!Recharts) {
+    return (
+      <Card className="bg-card/30 border-border shadow-2xl overflow-hidden">
+        <CardHeader className="border-b border-border/40 bg-card/20 py-4">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            <CardTitle className="text-lg font-heading font-bold text-white">
+              Günlük Harcama Geçmişi (TRY)
+            </CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6">
+          <div className="w-full h-[350px] animate-pulse bg-muted/20 rounded-xl" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const {
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    AreaChart,
+    Area,
+  } = Recharts;
+
   return (
     <Card className="bg-card/30 border-border shadow-2xl overflow-hidden">
       <CardHeader className="border-b border-border/40 bg-card/20 py-4">
@@ -42,7 +68,7 @@ export const AnalyticsChart: FC<AnalyticsChartProps> = ({
             position: 'relative',
           }}
         >
-          {isMounted && dailyData.length > 0 && (
+          {dailyData.length > 0 && (
             <ResponsiveContainer
               key="analytics-chart"
               width="100%"
@@ -79,7 +105,7 @@ export const AnalyticsChart: FC<AnalyticsChartProps> = ({
                   dy={10}
                 />
                 <YAxis
-                  tickFormatter={(value) => `₺${value}`}
+                  tickFormatter={(value: number) => `₺${value}`}
                   tickLine={false}
                   axisLine={false}
                   tick={{ fill: 'var(--muted-foreground)', fontSize: 12 }}
@@ -99,13 +125,16 @@ export const AnalyticsChart: FC<AnalyticsChartProps> = ({
                     marginBottom: '4px',
                     fontWeight: 'bold',
                   }}
-                  formatter={(value: number | undefined) => [
-                    formatCurrency(value || 0),
+                  formatter={(value) => [
+                    formatCurrency(Number(value) || 0),
                     'Harcama',
                   ]}
-                  labelFormatter={(label, payload) =>
-                    payload[0]?.payload?.fullDate || label
-                  }
+                  labelFormatter={(label, payload) => {
+                    const p = payload as Array<{
+                      payload?: { fullDate?: string };
+                    }>;
+                    return p[0]?.payload?.fullDate || String(label);
+                  }}
                   cursor={{
                     stroke: 'var(--primary)',
                     strokeWidth: 1,

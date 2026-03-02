@@ -8877,5 +8877,393 @@
       }
     ],
     "total_hours": 63.800000000000004
+  },
+  {
+    "id": "ATA_584",
+    "name": "ATA 584",
+    "slug": "ATA_584",
+    "courses": [
+      {
+        "id": "ata-584-hafta-1",
+        "name": "Introduction to the Class: History and Politics of Women and Gender",
+        "type": "reading",
+        "playlistUrl": null,
+        "videos": [
+          {
+            "id": 1,
+            "title": "Kandiyoti, Deniz (2022). \"Kadın Haklarından Toplumsal Cinsiyete\".",
+            "startPage": 1,
+            "durationMinutes": 17.5,
+            "duration": "7 Sayfa"
+          }
+        ],
+        "totalVideos": 1,
+        "totalHours": 0.29,
+        "total_pages": 7
+      },
+      {
+        "id": "ata-584-hafta-2",
+        "name": "Feminism and Feminist History-Writing",
+        "type": "reading",
+        "playlistUrl": null,
+        "videos": [
+          {
+            "id": 1,
+            "title": "Tuğ, Başak (2014). Gender and Ottoman Social History.",
+            "startPage": 1,
+            "durationMinutes": 5,
+            "duration": "2 Sayfa"
+          },
+          {
+            "id": 2,
+            "title": "Çakır, Serpil (2007). Feminism and Feminist History-Writing in Turkey: The Discovery of Ottoman Feminism.",
+            "startPage": 3,
+            "durationMinutes": 55,
+            "duration": "22 Sayfa"
+          },
+          {
+            "id": 3,
+            "title": "Öztürkmen, Arzu (2013). The Women's Movement under Ottoman and Republican Rule: A Historical Reappraisal.",
+            "startPage": 25,
+            "durationMinutes": 22.5,
+            "duration": "9 Sayfa"
+          },
+          {
+            "id": 4,
+            "title": "Özdoğan, Başak Deniz (2019). In the Beginning Was \"A Woman\": Motivation, Agency, and the Will of Fatma Aliye.",
+            "startPage": 34,
+            "durationMinutes": 42.5,
+            "duration": "17 Sayfa"
+          },
+          {
+            "id": 5,
+            "title": "Gümüş-İspir, Can (2025). Geç Osmanlı İmparatorluğu'nda Hıfzısıhhanın Mekân, Toplumsal Cinsiyet ve Ahlâk Bağlamında Bir İncelemesi.",
+            "startPage": 51,
+            "durationMinutes": 10,
+            "duration": "4 Sayfa"
+          }
+        ],
+        "totalVideos": 5,
+        "totalHours": 2.25,
+        "total_pages": 54
+      },
+      {
+        "id": "ata-584-hafta-4",
+        "name": "Modernization, Family, and Citizenship",
+        "type": "reading",
+        "playlistUrl": null,
+        "videos": [
+          {
+            "id": 1,
+            "title": "Kayhan, Leyla (2021). \"Neighborhood and Family Lives\" In A Companion to Early Modern Istanbul.",
+            "startPage": 1,
+            "durationMinutes": 57.5,
+            "duration": "23 Sayfa"
+          },
+          {
+            "id": 2,
+            "title": "Balsoy, Gülhan (2019). The Solitary Female Refugees and the Widows' Asylum (Kırmızı Kışla) in Late Nineteenth-Century Istanbul.",
+            "startPage": 24,
+            "durationMinutes": 42.5,
+            "duration": "17 Sayfa"
+          },
+          {
+            "id": 3,
+            "title": "İleri, Nurçin (2025). \"Ideal Family, Citizenship, and Hygiene: Representations of Electric Household Appliances in Early Republican Turkey\".",
+            "startPage": 41,
+            "durationMinutes": 60,
+            "duration": "24 Sayfa"
+          },
+          {
+            "id": 4,
+            "title": "Zerman, Ece (2008). Interview with Fatmagül Berktay: \"Osmanlı-Türk Modernleşmesinin Özneleri, Sembolleri, Kuşkuları: Kadınlar\".",
+            "startPage": 65,
+            "durationMinutes": 15,
+            "duration": "6 Sayfa"
+          },
+          {
+            "id": 5,
+            "title": "1. Paper",
+            "startPage": 1,
+            "durationMinutes": 0,
+            "duration": "Paper"
+          }
+        ],
+        "totalVideos": 5,
+        "totalHours": 2.92,
+        "total_pages": 70
+      },
+      {
+        "id": "ata-584-hafta-5",
+        "name": "Visibility, Intersectionality, Slavery, and Gender",
+        "type": "reading",
+        "playlistUrl": null,
+        "videos": [
+          {
+            "id": 1,
+            "title": "İleri, Nurçin (2025). \"Women, Visibility, and Politics of Night from Ottoman Empire to Contemporary Turkey\".",
+            "startPage": 1,
+            "durationMinutes": 45,
+            "duration": "18 Sayfa"
+          },
+          {
+            "id": 2,
+            "title": "Fleet, Kate (2016). \"The Extremes of Visibility: Slave Women in Ottoman Public Space\".",
+            "startPage": 19,
+            "durationMinutes": 55,
+            "duration": "22 Sayfa"
+          }
+        ],
+        "totalVideos": 2,
+        "totalHours": 1.67,
+        "total_pages": 40
+      },
+      {
+        "id": "ata-584-hafta-6",
+        "name": "Making the Modern Turkish Citizen & Women and Science",
+        "type": "reading",
+        "playlistUrl": null,
+        "videos": [
+          {
+            "id": 1,
+            "title": "Baykan Calafato, Özge (2024). \"The Construction of the New Turkish Woman\" and \"Modern Turkish Masculinities\" In Making the Modern Turkish Citizen.",
+            "startPage": 1,
+            "durationMinutes": 142.5,
+            "duration": "57 Sayfa"
+          },
+          {
+            "id": 2,
+            "title": "Bilim Akademisi (2023). \"Manisa'nın Dağ ve Oya Köyleri - Behice Boran (1910-1987)\".",
+            "startPage": 58,
+            "durationMinutes": 57.5,
+            "duration": "23 Sayfa"
+          },
+          {
+            "id": 3,
+            "title": "Bilim Akademisi (2023). \"Türkiye'nin Kuşları - Saadet Ergene Bayramoğlu (1902-1948)\".",
+            "startPage": 81,
+            "durationMinutes": 57.5,
+            "duration": "23 Sayfa"
+          }
+        ],
+        "totalVideos": 3,
+        "totalHours": 4.29,
+        "total_pages": 103
+      },
+      {
+        "id": "ata-584-hafta-7",
+        "name": "History of Emotions",
+        "type": "reading",
+        "playlistUrl": null,
+        "videos": [
+          {
+            "id": 1,
+            "title": "Afacan, Şeyma (2023). \"Do we need an Ottoman version of the history of emotions?\".",
+            "startPage": 1,
+            "durationMinutes": 15,
+            "duration": "6 Sayfa"
+          },
+          {
+            "id": 2,
+            "title": "Oğuz, Çiğdem (2023). \"Ottoman history one hundred years on\".",
+            "startPage": 7,
+            "durationMinutes": 7.5,
+            "duration": "3 Sayfa"
+          },
+          {
+            "id": 3,
+            "title": "Afacan, Şeyma (2024). Geç Osmanlı Kapitalizminin Duygusuz İnsanı: Ortak Bir Hayal.",
+            "startPage": 10,
+            "durationMinutes": 7.5,
+            "duration": "3 Sayfa"
+          },
+          {
+            "id": 4,
+            "title": "Afacan, Şeyma (2022). \"Duygular Tarihi: Bir Ezber Bozma Alanı\".",
+            "startPage": 13,
+            "durationMinutes": 90,
+            "duration": "36 Sayfa"
+          }
+        ],
+        "totalVideos": 4,
+        "totalHours": 2,
+        "total_pages": 48
+      },
+      {
+        "id": "ata-584-hafta-8",
+        "name": "State Feminism & the Transformation of Women's Movement in Turkey",
+        "type": "reading",
+        "playlistUrl": null,
+        "videos": [
+          {
+            "id": 1,
+            "title": "Sirman, Nükhet (1989). Feminism in Turkey: A Short History.",
+            "startPage": 1,
+            "durationMinutes": 82.5,
+            "duration": "33 Sayfa"
+          },
+          {
+            "id": 2,
+            "title": "Arat, Yeşim (1993). Women's Studies in Turkey: From Kemalism to Feminism.",
+            "startPage": 34,
+            "durationMinutes": 40,
+            "duration": "16 Sayfa"
+          },
+          {
+            "id": 3,
+            "title": "Tekeli, Şirin (2013). The Turkish Women's Movement: A Brief History of Success.",
+            "startPage": 50,
+            "durationMinutes": 12.5,
+            "duration": "5 Sayfa"
+          },
+          {
+            "id": 4,
+            "title": "Tuğ, Başak (2024). \"Feminist Tarihyazımında Dalgaları Aşmak: 1930-1950 Arası Feminist Mücadelede Sabiha Sertel\".",
+            "startPage": 55,
+            "durationMinutes": 42.5,
+            "duration": "17 Sayfa"
+          }
+        ],
+        "totalVideos": 4,
+        "totalHours": 2.96,
+        "total_pages": 71
+      },
+      {
+        "id": "ata-584-hafta-9",
+        "name": "Labor History from a Gender Perspective",
+        "type": "reading",
+        "playlistUrl": null,
+        "videos": [
+          {
+            "id": 1,
+            "title": "Balsoy, Gülhan (2024). Women in Working Life in the Early Years of Republican Turkey.",
+            "startPage": 1,
+            "durationMinutes": 27.5,
+            "duration": "11 Sayfa"
+          },
+          {
+            "id": 2,
+            "title": "Akgöz, Görkem (2023). Metaphorical Machines or Mindless Consumers: Young Working-Class Femininity in Early Postwar Turkey.",
+            "startPage": 12,
+            "durationMinutes": 55,
+            "duration": "22 Sayfa"
+          },
+          {
+            "id": 3,
+            "title": "Ağır, Seven & Kayhan, Leyla (2025). Women's roles in Turkish family businesses: Patterns and transformations from the 1960s to the 1990s.",
+            "startPage": 34,
+            "durationMinutes": 82.5,
+            "duration": "33 Sayfa"
+          },
+          {
+            "id": 4,
+            "title": "Akgöz, Görkem (2021). Spaces of National-Industrial Modernity: Factories and Factory Women in Early Republican Turkey.",
+            "startPage": 67,
+            "durationMinutes": 17.5,
+            "duration": "7 Sayfa"
+          }
+        ],
+        "totalVideos": 4,
+        "totalHours": 3.04,
+        "total_pages": 73
+      },
+      {
+        "id": "ata-584-hafta-10",
+        "name": "Contemporary Gender Studies",
+        "type": "reading",
+        "playlistUrl": null,
+        "videos": [
+          {
+            "id": 1,
+            "title": "bell hooks (2000). Feminism is for Everybody.",
+            "startPage": 1,
+            "durationMinutes": 72.5,
+            "duration": "29 Sayfa"
+          },
+          {
+            "id": 2,
+            "title": "Alnıaçık, Ayşe & Altan-Olcay, Özlem (2025). \"Anti-Feminist and Anti-Gender Coalitions and Feminist Resilience in Turkey\".",
+            "startPage": 30,
+            "durationMinutes": 70,
+            "duration": "28 Sayfa"
+          },
+          {
+            "id": 3,
+            "title": "Gökarıksel, Banu (2011). The intimate politics of secularism and the headscarf: the mall, the neighborhood, and the public square in Istanbul.",
+            "startPage": 58,
+            "durationMinutes": 52.5,
+            "duration": "21 Sayfa"
+          }
+        ],
+        "totalVideos": 3,
+        "totalHours": 3.25,
+        "total_pages": 78
+      },
+      {
+        "id": "ata-584-hafta-11",
+        "name": "Social Reproduction, Gender, and Ecology",
+        "type": "reading",
+        "playlistUrl": null,
+        "videos": [
+          {
+            "id": 1,
+            "title": "Barca, Stefania (2020). \"Introduction\" & \"Sex/gender\", In Forces of reproduction.",
+            "startPage": 1,
+            "durationMinutes": 50,
+            "duration": "20 Sayfa"
+          },
+          {
+            "id": 2,
+            "title": "Harcourt, Wendy (2026). Why feminist political ecology matters.",
+            "startPage": 21,
+            "durationMinutes": 15,
+            "duration": "6 Sayfa"
+          },
+          {
+            "id": 3,
+            "title": "Akbulut, Bengi (2024). Feminist Degrowth and Ecosocial Transition.",
+            "startPage": 27,
+            "durationMinutes": 7.5,
+            "duration": "3 Sayfa"
+          },
+          {
+            "id": 4,
+            "title": "Kurtege Sefer, Bengü (2023). Imagined landscapes for contested politics of land reform, peasant struggles and women in rural Turkey.",
+            "startPage": 30,
+            "durationMinutes": 42.5,
+            "duration": "17 Sayfa"
+          }
+        ],
+        "totalVideos": 4,
+        "totalHours": 1.92,
+        "total_pages": 46
+      },
+      {
+        "id": "ata-584-hafta-12",
+        "name": "New Masculinities & Queer Studies",
+        "type": "reading",
+        "playlistUrl": null,
+        "videos": [
+          {
+            "id": 1,
+            "title": "Erol, Maral & Özbay, Cenk (2018). No andropause for gay men: The body, aging and sexuality in Turkey.",
+            "startPage": 1,
+            "durationMinutes": 30,
+            "duration": "12 Sayfa"
+          },
+          {
+            "id": 2,
+            "title": "Özküralpli, İlkay (2020). \"Feminizm ve Erkeklik Çalışmaları İttifakına Dair\".",
+            "startPage": 13,
+            "durationMinutes": 17.5,
+            "duration": "7 Sayfa"
+          }
+        ],
+        "totalVideos": 2,
+        "totalHours": 0.79,
+        "total_pages": 19
+      }
+    ],
+    "total_hours": 25.38
   }
 ]

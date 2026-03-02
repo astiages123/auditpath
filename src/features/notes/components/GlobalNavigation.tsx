@@ -88,6 +88,13 @@ export const GlobalNavigation = memo(function GlobalNavigation({
               </span>
 
               <div className="flex-1 min-w-0">
+                {courseSlug === 'ATA_584' && (
+                  <div className="mb-1">
+                    <span className="px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-[8px] font-black text-primary uppercase tracking-wider">
+                      {chunk.id.match(/hafta-(\d+)/)?.[1]}. HAFTA
+                    </span>
+                  </div>
+                )}
                 <ToCTitleRenderer
                   title={
                     chunk.section_title.match(/^\d/)

@@ -15,7 +15,10 @@ export const ConsistencyHeatmapCard = () => {
         <div className="flex-1 w-full flex items-center justify-center">
           <div className="grid grid-cols-7 gap-1.5">
             {[...Array(49)].map((_, i) => (
-              <Skeleton key={i} className="h-3.5 w-3.5 rounded-sm bg-surface" />
+              <Skeleton
+                key={`heatmap-skel-${i}`}
+                className="h-3.5 w-3.5 rounded-sm bg-surface"
+              />
             ))}
           </div>
         </div>

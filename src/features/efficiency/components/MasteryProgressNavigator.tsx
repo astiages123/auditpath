@@ -4,6 +4,7 @@ import { cn } from '@/utils/stringHelpers';
 interface MasteryItem {
   lessonId: string;
   title: string;
+  type?: string;
   mastery: number;
   videoProgress: number;
   questionProgress: number;
@@ -68,7 +69,8 @@ export const MasteryProgressNavigator = ({
             </div>
             <div className="flex justify-between text-[10px] uppercase tracking-wider font-bold pt-1">
               <span className="text-emerald-400">
-                Video %{lesson.videoProgress}
+                {lesson.type === 'reading' ? 'Metin' : 'Video'} %
+                {lesson.videoProgress}
               </span>
               <span className="text-primary font-bold">
                 Quiz %{lesson.questionProgress}

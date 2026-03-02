@@ -4,15 +4,14 @@ import {
   BookOpen,
   Brain,
   Briefcase,
-  BriefcaseConveyorBelt,
+  Building2,
   Calculator,
   Calendar,
-  ChartColumnStacked,
   ChartNoAxesCombined,
   Code,
   Coffee,
-  Coins,
   Earth,
+  FileText,
   Gavel,
   Globe,
   GraduationCap,
@@ -23,15 +22,12 @@ import {
   LucideIcon,
   Map,
   Puzzle,
-  Receipt,
-  ReceiptText,
   Scale,
   ScrollText,
   ShieldUser,
   Sigma,
   TrendingUp,
   Users,
-  Wallet,
 } from 'lucide-react';
 
 // --- Types ---
@@ -39,8 +35,9 @@ import {
 export interface DailyBlock {
   name: string; // "SABAH BLOK", "AKŞAM BLOK", "FİNAL BLOK"
   subject: string;
-  icon: LucideIcon;
-  theme: CourseTheme;
+  courseOrCategoryId?: string; // used to derive icon and theme
+  icon?: LucideIcon; // override
+  theme?: CourseTheme; // override
 }
 
 export interface WeeklyScheduleItem {
@@ -146,6 +143,62 @@ export const COURSE_THEME_CONFIG: Record<
   },
 };
 
+export const CATEGORY_THEMES: Record<
+  string,
+  {
+    Icon: LucideIcon;
+    theme: CourseTheme;
+  }
+> = {
+  GY_GK: { Icon: Brain, theme: 'orange' },
+  HUKUK: { Icon: Scale, theme: 'rose' },
+  IKTISAT: { Icon: TrendingUp, theme: 'emerald' },
+  MUHASEBE_MALIYE: { Icon: Calculator, theme: 'blue' },
+  KAMU_YONETIMI: { Icon: Building2, theme: 'purple' },
+  ULUSLARARASI_ILISKILER: { Icon: Globe, theme: 'amber' },
+  ATA_584: { Icon: GraduationCap, theme: 'rose' },
+};
+
+export const ICON_OVERRIDES: Record<string, LucideIcon> = {
+  // GY_GK
+  'sozel-mantik': Puzzle,
+  'matematik-ve-geometri': Sigma,
+  tarih: ScrollText,
+  cografya: Map,
+  vatandaslik: ShieldUser,
+  ingilizce: Languages,
+  // HUKUK
+  'anayasa-hukuku': Scale,
+  'idare-hukuku': Landmark,
+  'ceza-hukuku': Gavel,
+  'borclar-hukuku': Handshake,
+  'medeni-hukuk': Users,
+  'ticaret-hukuku': Briefcase,
+  'icra-iflas-hukuku': FileText,
+  // IKTISAT
+  'mikro-iktisat': ChartNoAxesCombined,
+  'makro-iktisat': Earth,
+  'para-banka-kredi': Banknote,
+  'uluslararasi-iktisat': Globe,
+  'kalkinma-buyume': TrendingUp,
+  'turkiye-ekonomisi': BadgeTurkishLira,
+  'iktisadi-doktrinler-tarihi': History,
+  // MUHASEBE VE MALİYE
+  maliye: Landmark,
+  muhasebe: Calculator,
+  // KAMU YÖNETİMİ
+  'siyaset-bilimi': Users,
+  'yonetim-bilimi': Building2,
+  'turk-siyasal-hayati': ScrollText,
+  'yerel-yonetimler': Map,
+  // ULUSLARARASI İLİŞKİLER
+  'diplomasi-tarihi': History,
+  'turk-dis-politikasi': Handshake,
+  'uluslararasi-hukuk': Scale,
+  'uluslararasi-orgutler': Globe,
+  'uluslararasi-iliskiler-kuramlari': Brain,
+};
+
 export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
   {
     id: 1,
@@ -156,8 +209,7 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
       {
         name: 'SABAH BLOK',
         subject: 'Muhasebe',
-        icon: Calculator,
-        theme: 'blue',
+        courseOrCategoryId: 'muhasebe',
       },
       {
         name: 'AKŞAM BLOK',
@@ -185,7 +237,11 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
         icon: GraduationCap,
         theme: 'rose',
       },
-      { name: 'AKŞAM BLOK', subject: 'YDS', icon: Globe, theme: 'amber' },
+      {
+        name: 'AKŞAM BLOK',
+        subject: 'Yabancı Dil',
+        courseOrCategoryId: 'ingilizce',
+      },
       {
         name: 'FİNAL BLOK',
         subject: 'Vibecoding',
@@ -203,8 +259,7 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
       {
         name: 'SABAH BLOK',
         subject: 'Uluslararası İlişkiler',
-        icon: Landmark,
-        theme: 'emerald',
+        courseOrCategoryId: 'ULUSLARARASI_ILISKILER',
       },
       {
         name: 'AKŞAM BLOK',
@@ -229,8 +284,7 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
       {
         name: 'SABAH BLOK',
         subject: 'Kamu Yönetimi',
-        icon: Landmark,
-        theme: 'blue',
+        courseOrCategoryId: 'KAMU_YONETIMI',
       },
       {
         name: 'AKŞAM BLOK',
@@ -252,13 +306,8 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
     dayName: 'Cuma',
     matchDays: [5],
     blocks: [
-      {
-        name: 'SABAH BLOK',
-        subject: 'İktisat',
-        icon: TrendingUp,
-        theme: 'emerald',
-      },
-      { name: 'AKŞAM BLOK', subject: 'Hukuk', icon: Scale, theme: 'rose' },
+      { name: 'SABAH BLOK', subject: 'İktisat', courseOrCategoryId: 'IKTISAT' },
+      { name: 'AKŞAM BLOK', subject: 'Hukuk', courseOrCategoryId: 'HUKUK' },
       {
         name: 'FİNAL BLOK',
         subject: 'Vibecoding',
@@ -273,13 +322,12 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
     dayName: 'Cumartesi',
     matchDays: [6],
     blocks: [
+      { name: 'SABAH BLOK', subject: 'Maliye', courseOrCategoryId: 'maliye' },
       {
-        name: 'SABAH BLOK',
-        subject: 'Maliye',
-        icon: Calculator,
-        theme: 'purple',
+        name: 'AKŞAM BLOK',
+        subject: 'Yabancı Dil',
+        courseOrCategoryId: 'ingilizce',
       },
-      { name: 'AKŞAM BLOK', subject: 'YDS', icon: Globe, theme: 'amber' },
       {
         name: 'FİNAL BLOK',
         subject: 'Vibecoding',
@@ -294,8 +342,8 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
     dayName: 'Pazar',
     matchDays: [0],
     blocks: [
-      { name: 'SABAH BLOK', subject: 'TATİL', icon: Coffee, theme: 'rose' },
-      { name: 'AKŞAM BLOK', subject: 'TATİL', icon: Coffee, theme: 'rose' },
+      { name: 'SABAH BLOK', subject: 'TATİL', icon: Coffee, theme: 'orange' },
+      { name: 'AKŞAM BLOK', subject: 'TATİL', icon: Coffee, theme: 'orange' },
       {
         name: 'FİNAL BLOK',
         subject: 'PLANLAMA',
@@ -304,169 +352,4 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
       },
     ],
   },
-];
-
-export const CATEGORY_THEMES: Record<
-  string,
-  {
-    Icon: LucideIcon;
-    theme: CourseTheme;
-  }
-> = {
-  'GENEL YETENEK VE GENEL KÜLTÜR': {
-    Icon: Brain,
-    theme: 'orange',
-  },
-  HUKUK: {
-    Icon: Scale,
-    theme: 'rose',
-  },
-  İKTİSAT: {
-    Icon: TrendingUp,
-    theme: 'emerald',
-  },
-  'MUHASEBE VE MALİYE': {
-    Icon: Calculator,
-    theme: 'blue',
-  },
-  'YABANCI DİL': {
-    Icon: Globe,
-    theme: 'amber',
-  },
-};
-
-// Map old color names to our themes if needed, or just use the config directly.
-// In CategoryCard, it used 'orange' for GY-GK. Let's add 'orange' to CourseTheme if strictly needed,
-// but for now I'll map it to 'amber' or 'primary' or add 'orange' to config.
-// The original code had 'orange' for Genelyetenek. 'amber' is close.
-// Let's stick to existing themes in config or add 'orange' if valid.
-// COURSE_THEME_CONFIG doesn't have orange. It has amber.
-// I will use 'amber' for General Talent to keep it consistent with 'amber' definition if it exists,
-// or I can add 'orange' to COURSE_THEME_CONFIG.
-// Current COURSE_THEME_CONFIG: emerald, amber, blue, purple, rose, primary.
-// Hukuk was 'blue' in CategoryCard (weird, usually Hukuk is associated with scales/red/brown, but ok).
-// Wait, in CategoryCard:
-// EKONOMI -> Emerald
-// HUKUK -> Blue
-// MUHASEBE -> Purple
-// GENEL -> Orange
-//
-// In courses.logic (getCourseColor):
-// Hukuk -> Amber
-// Muhasebe -> Blue
-// Maliye -> Purple
-//
-// There is a mismatch between generic course logic and category card logic!
-// "Hukuk" courses were Amber in `courses-logic.ts` (legacy) but Blue in `CategoryCard`.
-// "Muhasebe" courses were Blue in `courses-logic` but Purple in `CategoryCard` (paired with Maliye).
-//
-// I should standardize this.
-// I will trust `CategoryCard` grouping more for the "Subject" level, but `courses-logic` is for individual items.
-// Let's update `CATEGORY_THEMES` to be the source of truth and update `COURSE_THEME_CONFIG` to include 'orange' if needed.
-
-// Mappings for course keywords to themes and icons
-export const COURSE_KEYWORD_MAPPINGS: Array<{
-  keywords: string[];
-  theme: CourseTheme;
-  icon: LucideIcon;
-}> = [
-  {
-    keywords: [
-      'iktisat',
-      'ekonomi',
-      'mikro',
-      'makro',
-      'büyüme',
-      'kalkınma',
-      'doktrinler',
-    ],
-    theme: 'emerald',
-    icon: TrendingUp,
-  },
-  {
-    keywords: [
-      'hukuk',
-      'anayasa',
-      'ceza',
-      'idare',
-      'borçlar',
-      'medeni',
-      'ticaret',
-    ],
-    theme: 'rose',
-    icon: Gavel,
-  },
-  {
-    keywords: [
-      'muhasebe',
-      'hesap',
-      'finansal',
-      'maliyet',
-      'şirketler',
-      'bilanço',
-      'maliye',
-      'vergi',
-      'bütçe',
-      'borçlanma',
-      'kamu maliyesi',
-    ],
-    theme: 'blue',
-    icon: Calculator,
-  },
-  {
-    keywords: [
-      'genel kültür',
-      'tarih',
-      'coğrafya',
-      'vatandaşlık',
-      'matematik',
-      'sözel mantık',
-      'geometri',
-    ],
-    theme: 'orange',
-    icon: Brain,
-  },
-  {
-    keywords: ['ingilizce', 'yabancı dil', 'dil'],
-    theme: 'amber',
-    icon: Globe,
-  },
-];
-
-// Special case overrides for icons - specific course to icon mapping
-export const ICON_OVERRIDES: Array<{ keyword: string; icon: LucideIcon }> = [
-  // GENEL YETENEK VE GENEL KÜLTÜR
-  { keyword: 'sozel-mantik', icon: Puzzle },
-  { keyword: 'matematik-ve-geometri', icon: Sigma },
-  { keyword: 'tarih', icon: ScrollText },
-  { keyword: 'cografya', icon: Map },
-  { keyword: 'vatandaslik', icon: ShieldUser },
-  // HUKUK
-  { keyword: 'anayasa-hukuku', icon: Scale },
-  { keyword: 'i-dare-hukuku', icon: Landmark },
-  { keyword: 'ceza-hukuku', icon: Gavel },
-  { keyword: 'borclar-hukuku', icon: Handshake },
-  { keyword: 'medeni-hukuk', icon: Users },
-  { keyword: 'ticaret-hukuku', icon: Briefcase },
-  // İKTİSAT
-  { keyword: 'mikro-iktisat', icon: ChartNoAxesCombined },
-  { keyword: 'makro-iktisat', icon: Earth },
-  { keyword: 'iktisadi-doktrinler-tarihi', icon: History },
-  { keyword: 'para-banka-ve-kredi', icon: Banknote },
-  { keyword: 'uluslararasi-iktisat', icon: Globe },
-  { keyword: 'kalkinma-ve-buyume', icon: TrendingUp },
-  { keyword: 'turkiye-ekonomisi', icon: BadgeTurkishLira },
-  // MUHASEBE VE MALİYE
-  { keyword: 'kamu-maliyesi', icon: Landmark },
-  { keyword: 'butce', icon: Wallet },
-  { keyword: 'devlet-borclanmasi', icon: Handshake },
-  { keyword: 'maliye-politikasi', icon: Briefcase },
-  { keyword: 'vergi-hukuku', icon: Receipt },
-  { keyword: 'turk-vergi-sistemi', icon: ReceiptText },
-  { keyword: 'finansal-muhasebe', icon: Calculator },
-  { keyword: 'maliyet-muhasebesi', icon: Coins },
-  { keyword: 'sirketler-muhasebesi', icon: BriefcaseConveyorBelt },
-  { keyword: 'mali-tablolar-analizi', icon: ChartColumnStacked },
-  // YABANCI DİL
-  { keyword: 'i-ngilizce', icon: Languages },
 ];

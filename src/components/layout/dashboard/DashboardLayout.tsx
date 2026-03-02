@@ -111,7 +111,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {isMobileMenuOpen && (
           <div
             className="absolute inset-0 z-50 cursor-pointer pointer-events-auto"
+            role="button"
+            tabIndex={0}
+            aria-label="Menüyü kapat"
             onClick={() => setMobileMenuOpen(false)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                setMobileMenuOpen(false);
+              }
+            }}
           />
         )}
       </div>

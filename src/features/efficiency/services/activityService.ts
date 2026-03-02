@@ -145,7 +145,7 @@ export async function logActivity(
 // === SECTION === Stats Functions
 
 /**
- * Get daily statistics with virtual day logic (day starts at 04:00).
+ * Get daily statistics with standard day logic (day starts at 00:00).
  *
  * @param userId User ID
  * @returns Daily statistics
@@ -244,18 +244,26 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     );
   }
 
-  // Calculate Video Stats
-  let totalVideoMinutes = 0;
-  const completedVideosCount = todayVideos?.length || 0;
-
-  if (todayVideos) {
-    totalVideoMinutes = todayVideos.reduce((acc, vp) => {
-      const duration =
-        (vp.video as { duration_minutes?: number })?.duration_minutes || 0;
-      return acc + duration;
-    }, 0);
+  interface Video {
+    duration_minutes: number | null;
+    duration: string | null;
   }
 
+  const totalVideoMinutesData = todayVideos?.reduce(
+    (acc, vp) => {
+      const video = vp.video as Video;
+      const duration = video?.duration_minutes || 0;
+      const isReading = video?.duration?.includes('Sayfa');
+      return {
+        minutes: acc.minutes + (isReading ? 0 : duration),
+        readingMinutes: acc.readingMinutes + (isReading ? duration : 0),
+        pages: acc.pages + (isReading ? parseInt(video.duration || '0') : 0),
+      };
+    },
+    { minutes: 0, readingMinutes: 0, pages: 0 }
+  ) || { minutes: 0, readingMinutes: 0, pages: 0 };
+
+  const completedVideosCount = todayVideos?.length || 0;
   const yesterdayVideoCount = yesterdayVideos?.length || 0;
   let videoTrendPercentage = 0;
   if (yesterdayVideoCount === 0) {
@@ -282,7 +290,9 @@ export async function getDailyStats(userId: string): Promise<DailyStats> {
     trendPercentage,
     dailyGoal: goalMinutes,
     totalPauseMinutes,
-    totalVideoMinutes: Math.round(totalVideoMinutes),
+    totalVideoMinutes: Math.round(totalVideoMinutesData.minutes),
+    totalReadingMinutes: Math.round(totalVideoMinutesData.readingMinutes),
+    pagesRead: totalVideoMinutesData.pages,
     completedVideos: completedVideosCount,
     videoTrendPercentage,
     totalCycles,

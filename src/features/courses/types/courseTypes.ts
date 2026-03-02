@@ -2,7 +2,7 @@ import { Database } from '@/types/database.types';
 import { ConceptMapItem } from '@/features/quiz/types';
 
 export type Course = Database['public']['Tables']['courses']['Row'] & {
-  total_pages?: number;
+  total_pages?: number | null;
 };
 
 export type Category = Database['public']['Tables']['categories']['Row'] & {
@@ -47,6 +47,7 @@ export interface TopicWithCounts {
 export interface CourseMastery {
   courseId: string;
   courseName: string;
+  courseType?: string;
   videoProgress: number; // 0-100
   questionProgress: number; // 0-100
   masteryScore: number; // (video * 0.6) + (question * 0.4)

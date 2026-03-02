@@ -200,7 +200,7 @@ export const SessionGanttChart = ({
 
                     return (
                       <div
-                        key={idx}
+                        key={block.start}
                         className={cn(
                           'absolute h-full rounded-md border flex items-center justify-center transition-all group hover:z-20 hover:scale-[1.02] hover:brightness-125 cursor-default',
                           getBlockStyles(block.type)

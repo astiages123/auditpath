@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useReducer } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { logger } from '@/utils/logger';
@@ -37,16 +37,63 @@ function findCourse(slug: string): CourseData | null {
   return null;
 }
 
+type StaticVideo = {
+  id: number;
+  videoNumber: number;
+  title: string;
+  duration: string;
+};
+
+type VideoState = {
+  videos: VideoActionState[];
+  staticVideos: StaticVideo[];
+  loading: boolean;
+};
+
+type VideoAction =
+  | { type: 'START_LOADING' }
+  | {
+      type: 'SET_INITIAL_DATA';
+      payload: { staticVideos: StaticVideo[]; videos: VideoActionState[] };
+    }
+  | { type: 'SET_PROGRESS'; payload: VideoActionState[] }
+  | { type: 'FINISH_LOADING' }
+  | { type: 'UPDATE_VIDEOS'; payload: VideoActionState[] };
+
+const initialState: VideoState = {
+  videos: [],
+  staticVideos: [],
+  loading: true,
+};
+
+function videoReducer(state: VideoState, action: VideoAction): VideoState {
+  switch (action.type) {
+    case 'START_LOADING':
+      return { ...state, loading: true };
+    case 'SET_INITIAL_DATA':
+      return {
+        ...state,
+        staticVideos: action.payload.staticVideos,
+        videos: action.payload.videos,
+      };
+    case 'SET_PROGRESS':
+      return { ...state, videos: action.payload };
+    case 'FINISH_LOADING':
+      return { ...state, loading: false };
+    case 'UPDATE_VIDEOS':
+      return { ...state, videos: action.payload };
+    default:
+      return state;
+  }
+}
+
 export function VideoList({
   courseId,
   dbCourseId,
   _categoryColor,
 }: VideoListProps) {
-  const [videos, setVideos] = useState<VideoActionState[]>([]);
-  const [staticVideos, setStaticVideos] = useState<
-    Array<{ id: number; videoNumber: number; title: string; duration: string }>
-  >([]); // To hold title/duration which are static
-  const [loading, setLoading] = useState(true);
+  const [state, dispatch] = useReducer(videoReducer, initialState);
+  const { videos, staticVideos, loading } = state;
 
   const { user } = useAuth();
   const userId = user?.id;
@@ -57,10 +104,12 @@ export function VideoList({
     let isMounted = true;
 
     const loadData = async () => {
+      dispatch({ type: 'START_LOADING' });
+
       // 1. Load static data
       const course = findCourse(courseId);
       if (!course) {
-        if (isMounted) setLoading(false);
+        if (isMounted) dispatch({ type: 'FINISH_LOADING' });
         return;
       }
 
@@ -80,36 +129,36 @@ export function VideoList({
 
       // Set initial state (not completed)
       if (isMounted) {
-        setStaticVideos(staticData);
-        setVideos(initialVideos);
-      }
+        // Initial state update
+        dispatch({
+          type: 'SET_INITIAL_DATA',
+          payload: { staticVideos: staticData, videos: initialVideos },
+        });
 
-      // 2. Fetch Progress (if logged in)
-      if (userId) {
-        try {
-          const videoNumbers = initialVideos.map((v) => v.videoNumber);
-          // Use Generic video.service.ts
-          const progressMap = await getVideoProgress(
-            userId,
-            dbCourseId,
-            videoNumbers
-          );
+        // 2. Fetch Progress (if logged in)
+        if (userId) {
+          try {
+            const videoNumbers = initialVideos.map((v) => v.videoNumber);
+            const progressMap = await getVideoProgress(
+              userId,
+              dbCourseId,
+              videoNumbers
+            );
 
-          if (isMounted) {
-            setVideos((prev) =>
-              prev.map((v) => ({
+            if (isMounted) {
+              const updatedWithProgress = initialVideos.map((v) => ({
                 ...v,
                 completed: !!progressMap[v.videoNumber.toString()],
-              }))
-            );
+              }));
+              dispatch({ type: 'SET_PROGRESS', payload: updatedWithProgress });
+            }
+          } catch (error) {
+            logger.error('Failed to load progress', error as Error);
+            toast.error('İlerleme yüklenemedi');
           }
-        } catch (error) {
-          logger.error('Failed to load progress', error as Error);
-          toast.error('İlerleme yüklenemedi');
         }
+        dispatch({ type: 'FINISH_LOADING' });
       }
-
-      if (isMounted) setLoading(false);
     };
 
     loadData();
@@ -125,7 +174,7 @@ export function VideoList({
       videoNumber,
       isModifierPressed
     );
-    setVideos(updated);
+    dispatch({ type: 'UPDATE_VIDEOS', payload: updated });
   };
 
   return (
@@ -136,7 +185,7 @@ export function VideoList({
             // Skeleton Array
             return Array.from({ length: 5 }).map((_, i) => (
               <div
-                key={i}
+                key={`skeleton-${i}`}
                 className="flex items-center gap-3 p-3 rounded-xl border border-white/5 bg-zinc-900/20"
               >
                 <Skeleton className="size-6 rounded-full" />
