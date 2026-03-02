@@ -7,5 +7,5 @@ export const ROUTES = {
   QUIZ: '/quiz',
   LIBRARY: '/library',
   ROADMAP: '/roadmap',
-  PROGRAM: '/program',
+  SCHEDULE: '/schedule',
 } as const;

@@ -230,21 +230,9 @@ export async function getFocusPowerData({
     { days: range === 'week' ? 7 : range === 'month' ? 30 : 180 }
   );
 
-  // Get categories to identify academic courses
-  const { data: courses } = await supabase
-    .from('courses')
-    .select('id, category:categories(slug)');
-  const academicCourseIds = new Set(
-    (courses || [])
-      .filter(
-        (c) => (c.category as { slug: string } | null)?.slug === 'academic'
-      )
-      .map((c) => c.id)
-  );
-
   const focusPowerAggMap = new Map<
     string,
-    { work: number; breakTime: number; pause: number; academicWork: number }
+    { work: number; breakTime: number; pause: number }
   >();
 
   sessionsData?.forEach((s) => {
@@ -252,26 +240,18 @@ export async function getFocusPowerData({
     const workSec = s.total_work_time || 0;
     const breakSec = s.total_break_time || 0;
     const pauseSec = s.total_pause_time || 0;
-    const isAcademic =
-      s.course_id === 'academic' ||
-      (s.course_id && academicCourseIds.has(s.course_id));
 
     if (!focusPowerAggMap.has(dateKey)) {
       focusPowerAggMap.set(dateKey, {
         work: 0,
         breakTime: 0,
         pause: 0,
-        academicWork: 0,
       });
     }
     const entry = focusPowerAggMap.get(dateKey)!;
-    if (isAcademic) {
-      entry.academicWork += workSec;
-    } else {
-      entry.work += workSec;
-      entry.breakTime += breakSec;
-      entry.pause += pauseSec;
-    }
+    entry.work += workSec;
+    entry.breakTime += breakSec;
+    entry.pause += pauseSec;
   });
 
   // Calculate points based on range
@@ -291,16 +271,11 @@ export async function getFocusPowerData({
         work: 0,
         breakTime: 0,
         pause: 0,
-        academicWork: 0,
       };
 
       let score = 0;
       if (agg.work > 0) {
-        // Average of non-academic work if it exists
         score = calculateFocusPower(agg.work, agg.breakTime, agg.pause);
-      } else if (agg.academicWork > 0) {
-        // Only academic work today -> 100
-        score = 100;
       }
 
       const dayName = formatDisplayDate(d);
@@ -311,7 +286,7 @@ export async function getFocusPowerData({
         date: dayName,
         originalDate: d.toISOString(),
         score: score,
-        workMinutes: Math.round((agg.work + agg.academicWork) / 60),
+        workMinutes: Math.round(agg.work / 60),
         breakMinutes: Math.round(agg.breakTime / 60),
         pauseMinutes: Math.round(agg.pause / 60),
       });
@@ -487,7 +462,7 @@ export async function getEfficiencyTrend(
   queryStartDate.setDate(queryStartDate.getDate() - daysToCheck);
   const dateStr = queryStartDate.toISOString();
 
-  const [sessions, coursesResponse, videoProgressResponse] = await Promise.all([
+  const [sessions, videoProgressResponse] = await Promise.all([
     fetchSessionHistory<{
       started_at: string;
       total_work_time: number | null;
@@ -498,7 +473,6 @@ export async function getEfficiencyTrend(
       'getEfficiencyTrend sessions error',
       { days: daysToCheck }
     ),
-    supabase.from('courses').select('id, category:categories(slug)'),
     supabase
       .from('video_progress')
       .select('completed_at, video:videos(duration_minutes)')
@@ -507,39 +481,23 @@ export async function getEfficiencyTrend(
       .gte('completed_at', dateStr),
   ]);
 
-  const coursesData = coursesResponse.data;
   const videoProgress = videoProgressResponse.data;
-
-  const academicCourseIds = new Set(
-    (coursesData || [])
-      .filter(
-        (c) => (c.category as { slug: string } | null)?.slug === 'academic'
-      )
-      .map((c) => c.id)
-  );
 
   const dailyMap = new Map<
     string,
-    { workSeconds: number; videoMinutes: number; academicMinutes: number }
+    { workSeconds: number; videoMinutes: number }
   >();
 
   const dateRange = generateDateRange(daysToCheck);
   dateRange.forEach((date: string) =>
-    dailyMap.set(date, { workSeconds: 0, videoMinutes: 0, academicMinutes: 0 })
+    dailyMap.set(date, { workSeconds: 0, videoMinutes: 0 })
   );
 
   sessions.forEach((s) => {
     const day = getVirtualDateKey(new Date(s.started_at));
     if (dailyMap.has(day)) {
       const entry = dailyMap.get(day)!;
-      const isAcademic =
-        s.course_id === 'academic' ||
-        (s.course_id && academicCourseIds.has(s.course_id));
-      if (isAcademic) {
-        entry.academicMinutes += (s.total_work_time || 0) / 60;
-      } else {
-        entry.workSeconds += s.total_work_time || 0;
-      }
+      entry.workSeconds += s.total_work_time || 0;
     }
   });
 
@@ -569,19 +527,15 @@ export async function getEfficiencyTrend(
     .map(([date, stats]) => {
       const workMinutes = stats.workSeconds / 60;
       const videoMinutes = stats.videoMinutes;
-      const academicMinutes = stats.academicMinutes;
 
       // Academic minutes are treated as "ideal balance" (1.0 ratio)
       // We add them to work and also "virtually" to video to maintain the ratio if mixed
-      const score = calculateEfficiencyScore(
-        videoMinutes + academicMinutes,
-        workMinutes + academicMinutes
-      );
+      const score = calculateEfficiencyScore(videoMinutes, workMinutes);
 
       return {
         date,
         score,
-        workMinutes: Math.round(workMinutes + academicMinutes),
+        workMinutes: Math.round(workMinutes),
         videoMinutes: Math.round(videoMinutes),
       };
     })
@@ -636,20 +590,7 @@ export async function getDailyEfficiencySummary(
   let totalCycles = 0;
 
   // To exclude academic from average focus power
-  const nonAcademicScores: number[] = [];
-  const academicScores: number[] = [];
-
-  const { data: courses } = await supabase
-    .from('courses')
-    .select('id, category:categories(slug)');
-
-  const academicCourseIds = new Set(
-    (courses || [])
-      .filter(
-        (c) => (c.category as { slug: string } | null)?.slug === 'academic'
-      )
-      .map((c) => c.id)
-  );
+  const scores: number[] = [];
 
   const detailedSessions: DetailedSession[] = sessionsData.map((s) => {
     const work = s.total_work_time || 0;
@@ -664,12 +605,8 @@ export async function getDailyEfficiencySummary(
     totalPauseCount += pCount;
     totalCycles += getCycleCount(s.timeline);
 
-    const isAcademic =
-      s.course_id === 'academic' ||
-      (s.course_id && academicCourseIds.has(s.course_id));
     if (eff > 0) {
-      if (isAcademic) academicScores.push(eff);
-      else nonAcademicScores.push(eff);
+      scores.push(eff);
     }
 
     // Validate timeline structure
@@ -701,14 +638,9 @@ export async function getDailyEfficiencySummary(
   });
 
   const dailyFocusPower =
-    nonAcademicScores.length > 0
-      ? Math.round(
-          nonAcademicScores.reduce((acc, val) => acc + val, 0) /
-            nonAcademicScores.length
-        )
-      : academicScores.length > 0
-        ? 100
-        : calculateFocusPower(totalWork, totalBreak, totalPause);
+    scores.length > 0
+      ? Math.round(scores.reduce((acc, val) => acc + val, 0) / scores.length)
+      : calculateFocusPower(totalWork, totalBreak, totalPause);
 
   return {
     efficiencyScore: dailyFocusPower,

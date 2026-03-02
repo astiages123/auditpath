@@ -40,7 +40,7 @@ export async function upsertPomodoroSession(
 
   // Calculate Focus Power (Odak Gücü)
   // Formula: (Work / [Break + Pause]) * 20
-  let efficiencyScore = calculateFocusPower(
+  const efficiencyScore = calculateFocusPower(
     totals.totalWork,
     totals.totalBreak,
     totals.totalPause
@@ -66,23 +66,6 @@ export async function upsertPomodoroSession(
     } else {
       // If we can't find it, set to null to avoid Postgres 400 error
       finalCourseId = null;
-    }
-  }
-
-  // Academic Exemption Check
-  if (finalCourseId === 'academic') {
-    efficiencyScore = 100; // Fixed Ideal Focus Power
-  } else if (finalCourseId) {
-    const { data: categoryData } = await supabase
-      .from('courses')
-      .select('category:categories(slug)')
-      .eq('id', finalCourseId)
-      .single();
-
-    const categorySlug = (categoryData?.category as { slug: string } | null)
-      ?.slug;
-    if (categorySlug === 'academic') {
-      efficiencyScore = 100; // Fixed Ideal Focus Power
     }
   }
 

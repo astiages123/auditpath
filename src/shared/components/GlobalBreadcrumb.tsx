@@ -35,6 +35,7 @@ const ROUTE_LABELS: Record<string, string> = {
   quiz: 'Çalışma Merkezi',
   library: 'Çalışma Merkezi',
   roadmap: 'Yolculuk',
+  schedule: 'Çalışma Programı',
 };
 
 export function GlobalBreadcrumb() {
@@ -138,7 +139,7 @@ export function GlobalBreadcrumb() {
             <BreadcrumbLink asChild>
               <Link to={ROUTES.HOME} className="flex items-center gap-1.5">
                 <Home className="size-4" />
-                <span>Anasayfa</span>
+                <span>Ana Sayfa</span>
               </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>

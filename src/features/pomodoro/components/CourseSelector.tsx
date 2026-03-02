@@ -22,25 +22,13 @@ export function CourseSelector({
   const [searchQuery, setSearchQuery] = useState('');
   const { data: courses = [] } = useCourses();
 
-  const filteredCourses = (
-    !searchQuery
-      ? courses
-      : courses.filter(
-          (course) =>
-            course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            course.category?.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-  ).filter(
-    (course) => (course.category_slug || '').toLowerCase() !== 'academic'
-  );
-
-  const handleAcademicSelect = () => {
-    setCourse({
-      id: 'academic',
-      name: 'Serbest Okuma',
-      category: 'Akademik Muafiyet',
-    });
-  };
+  const filteredCourses = !searchQuery
+    ? courses
+    : courses.filter(
+        (course) =>
+          course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          course.category?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
   const handleCourseSelect = (courseId: string) => {
     const course = courses.find((c) => c.id === courseId);
@@ -70,16 +58,6 @@ export function CourseSelector({
       >
         <div className="p-7 border-b border-white/5 bg-white/5 relative">
           <div className="absolute right-6 top-6 flex items-center gap-2">
-            <button
-              onClick={handleAcademicSelect}
-              className="p-2.5 rounded-xl hover:bg-amber-500/10 text-amber-500/60 hover:text-amber-500 transition-all group relative"
-              title="Serbest Okuma (Akademik Muafiyet)"
-            >
-              <Target size={20} />
-              <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-amber-500 text-black text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none uppercase tracking-tighter shadow-lg shadow-amber-500/20">
-                Akademik Muafiyet
-              </span>
-            </button>
             <button
               onClick={onClose}
               className="p-2.5 rounded-xl hover:bg-white/5 text-muted-foreground hover:text-white transition-colors"

@@ -24,8 +24,7 @@ export const ScoreTypeProgress: FC<ScoreTypeProgressProps> = ({
   const scoreTypes = [
     {
       id: 'p30',
-      title: 'P30 (İdari)',
-      description: 'Kaymakamlık ve İdari Yargı hedefi',
+      title: 'P30',
       value: scores.p30,
       icon: Building2,
       color: 'text-blue-400',
@@ -40,8 +39,7 @@ export const ScoreTypeProgress: FC<ScoreTypeProgressProps> = ({
     },
     {
       id: 'p35',
-      title: 'P35 (Diplomatik)',
-      description: 'Dışişleri ve Diplomasi kadroları',
+      title: 'P35',
       value: scores.p35,
       icon: Globe,
       color: 'text-emerald-400',
@@ -56,8 +54,7 @@ export const ScoreTypeProgress: FC<ScoreTypeProgressProps> = ({
     },
     {
       id: 'p48',
-      title: 'P48 (Genel Alan)',
-      description: 'Müfettişlik ve Uzmanlık kadroları',
+      title: 'P48',
       value: scores.p48,
       icon: Layers,
       color: 'text-amber-400',
@@ -111,9 +108,6 @@ export const ScoreTypeProgress: FC<ScoreTypeProgressProps> = ({
                   <h4 className="text-xs font-bold text-white/90 leading-tight">
                     {type.title}
                   </h4>
-                  <p className="text-[10px] text-muted-foreground/60">
-                    {type.description}
-                  </p>
                 </div>
               </div>
               <span className="text-lg font-black text-white/90">
@@ -139,7 +133,7 @@ export const ScoreTypeProgress: FC<ScoreTypeProgressProps> = ({
                   key={idx}
                   className="flex flex-col gap-1 flex-1 min-w-[70px]"
                 >
-                  <div className="flex justify-between items-center text-[9px] uppercase tracking-wider font-bold text-muted-foreground/60">
+                  <div className="flex justify-between items-center text-[10px] uppercase tracking-wider font-bold text-foreground">
                     <span>{detail.label}</span>
                     <span
                       className={cn(
@@ -147,7 +141,7 @@ export const ScoreTypeProgress: FC<ScoreTypeProgressProps> = ({
                           ? 'text-emerald-400'
                           : detail.val >= 40
                             ? 'text-amber-400'
-                            : 'text-white/40'
+                            : 'text-foreground'
                       )}
                     >
                       %{Math.round(detail.val)}

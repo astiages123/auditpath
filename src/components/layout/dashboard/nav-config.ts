@@ -36,8 +36,8 @@ export const navItems: NavItem[] = [
     group: 'navigation',
   },
   {
-    label: 'Program',
-    href: ROUTES.PROGRAM,
+    label: 'Çalışma Programı',
+    href: ROUTES.SCHEDULE,
     icon: CalendarDays,
     group: 'navigation',
   },

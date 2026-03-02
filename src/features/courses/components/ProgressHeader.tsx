@@ -84,22 +84,8 @@ export function ProgressHeader({
   const todaySchedule = WEEKLY_SCHEDULE.find((item) =>
     item.matchDays.includes(dayIndex)
   );
-  // Determine current block based on time
-  const currentHour = today.getHours();
-  // 3. Final: 21:00-00:00 (Yani 21 ile 24 arası)
-  let blockName = 'FİNAL BLOK';
-
-  // 1. Sabah Blok: 00:00-17:00
-  if (currentHour >= 0 && currentHour < 17) {
-    blockName = 'SABAH BLOK';
-  }
-  // 2. Akşam: 17:00-21:00
-  else if (currentHour >= 17 && currentHour < 21) {
-    blockName = 'AKŞAM BLOK';
-  }
-
-  const currentBlock = todaySchedule?.blocks.find((b) => b.name === blockName);
-  const todaysSubject = currentBlock ? currentBlock.subject : 'Serbest Çalışma';
+  const currentBlock = todaySchedule?.blocks[0];
+  const todaysSubject = currentBlock ? currentBlock.subject : 'Günün Dersi';
 
   // Calculate overall percentage based on HOURS for more accuracy
   const displayPercentage = isHydrated
@@ -209,7 +195,7 @@ export function ProgressHeader({
         bgIcon={CalendarDays}
         label="Şu Anki Odak"
         value={todaysSubject}
-        subText={`Günün ${blockName.split(' ')[0].toLowerCase()} aşaması`}
+        subText="Günün ana odağı"
         colorClass="text-accent"
         showSkeleton={showSkeleton}
         variants={itemVariants}

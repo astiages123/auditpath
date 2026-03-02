@@ -12,22 +12,22 @@ import {
   getCourseIcon,
 } from '@/features/courses/logic/coursesLogic';
 
-export default function ProgramPage() {
+export default function SchedulePage() {
   const today = new Date();
   const currentDayIndex = today.getDay();
 
   useEffect(() => {
-    document.title = 'Program | AuditPath';
+    document.title = 'Çalışma Programı | AuditPath';
   }, []);
 
   return (
     <div className="bg-background text-foreground pb-20">
       <PageHeader
-        title="Program"
-        subtitle="Haftalık çalışma takvimi ve ders programı detayları."
+        title="Çalışma Programı"
+        subtitle="Haftalık rutin ve ders çalışma planı."
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6 gap-4 mt-6">
         {WEEKLY_SCHEDULE.map((item) => {
           const isToday = item.matchDays.includes(currentDayIndex);
           const firstBlockTheme = item.blocks[0]
@@ -75,7 +75,7 @@ export default function ProgramPage() {
                   )}
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {item.blocks.map((block) => {
                     const resolvedTheme =
                       block.theme ||
@@ -88,22 +88,19 @@ export default function ProgramPage() {
                     return (
                       <div
                         key={blockKey}
-                        className="flex items-center gap-3 p-3 bg-background/50 rounded-lg border border-border/30 hover:bg-background/80 transition-colors"
+                        className="flex flex-col items-center gap-3 p-4 bg-background/50 rounded-lg border border-border/30 hover:bg-background/80 transition-colors text-center"
                       >
                         <div
                           className={cn(
-                            'p-2 rounded-lg shadow-sm border border-border/50',
+                            'p-3 rounded-xl shadow-sm border border-border/50',
                             blockTheme.text,
                             blockTheme.bg
                           )}
                         >
-                          <ResolvedIcon className="h-5 w-5" />
+                          <ResolvedIcon className="h-6 w-6" />
                         </div>
                         <div className="flex flex-col flex-1 overflow-hidden">
-                          <span className="text-[11px] font-semibold text-muted-foreground/80 uppercase tracking-widest">
-                            {block.name}
-                          </span>
-                          <span className="font-bold text-sm tracking-tight text-foreground truncate">
+                          <span className="font-extrabold text-sm tracking-tight text-foreground leading-snug">
                             {block.subject}
                           </span>
                         </div>

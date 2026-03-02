@@ -212,15 +212,9 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
     matchDays: [1],
     blocks: [
       {
-        name: 'SABAH BLOK',
+        name: '',
         subject: 'Hukuk',
         courseOrCategoryId: 'HUKUK',
-      },
-      {
-        name: 'AKŞAM BLOK',
-        subject: 'MA Okuma',
-        icon: BookOpen,
-        theme: 'purple',
       },
     ],
   },
@@ -231,14 +225,8 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
     matchDays: [2],
     blocks: [
       {
-        name: 'SABAH BLOK',
+        name: '',
         subject: 'Yüksek Lisans Dersi',
-        icon: BookOpen,
-        theme: 'purple',
-      },
-      {
-        name: 'AKŞAM BLOK',
-        subject: 'MA Okuma',
         icon: BookOpen,
         theme: 'purple',
       },
@@ -251,15 +239,9 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
     matchDays: [3],
     blocks: [
       {
-        name: 'SABAH BLOK',
+        name: '',
         subject: 'Muhasebe ve Maliye',
         courseOrCategoryId: 'MUHASEBE_MALIYE',
-      },
-      {
-        name: 'AKŞAM BLOK',
-        subject: 'MA Okuma',
-        icon: BookOpen,
-        theme: 'purple',
       },
     ],
   },
@@ -270,15 +252,9 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
     matchDays: [4],
     blocks: [
       {
-        name: 'SABAH BLOK',
+        name: '',
         subject: 'Genel Yetenek ve Genel Kültür',
         courseOrCategoryId: 'GY_GK',
-      },
-      {
-        name: 'AKŞAM BLOK',
-        subject: 'MA Okuma',
-        icon: BookOpen,
-        theme: 'purple',
       },
     ],
   },
@@ -289,15 +265,9 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
     matchDays: [5],
     blocks: [
       {
-        name: 'SABAH BLOK',
+        name: '',
         subject: 'İktisat',
         courseOrCategoryId: 'IKTISAT',
-      },
-      {
-        name: 'AKŞAM BLOK',
-        subject: 'MA Okuma',
-        icon: BookOpen,
-        theme: 'purple',
       },
     ],
   },
@@ -308,15 +278,9 @@ export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
     matchDays: [6, 0],
     blocks: [
       {
-        name: 'SABAH BLOK',
+        name: '',
         subject: 'Siyasal Bilgiler',
         courseOrCategoryId: 'SIYASAL_BILGILER',
-      },
-      {
-        name: 'AKŞAM BLOK',
-        subject: 'MA Okuma',
-        icon: BookOpen,
-        theme: 'purple',
       },
     ],
   },
