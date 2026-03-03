@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { PanelLeftOpen, PanelRightOpen } from 'lucide-react';
+import { PanelLeftOpen, PanelRightOpen, X } from 'lucide-react';
 
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -113,7 +113,7 @@ export default function NotesPage() {
           >
             <div
               className={cn(
-                'flex-1 min-h-0 flex flex-col lg:grid gap-4 px-2 lg:px-4 h-full transition-all duration-300 ease-in-out overflow-hidden',
+                'flex-1 min-h-0 lg:grid gap-4 px-2 lg:px-4 h-full transition-all duration-300 ease-in-out overflow-hidden',
                 activeChunkId !== ''
                   ? 'lg:grid-cols-[var(--left-panel-width)_1fr_var(--right-panel-width)]'
                   : 'lg:grid-cols-[var(--left-panel-width)_1fr]'
@@ -127,7 +127,8 @@ export default function NotesPage() {
             >
               <aside
                 className={cn(
-                  'flex flex-col shrink-0 border rounded-xl bg-card h-[400px] lg:h-full z-20 overflow-hidden transition-all duration-300 ease-in-out',
+                  // Desktop: grid column olarak kalır
+                  'hidden lg:flex flex-col shrink-0 border rounded-xl bg-card overflow-hidden transition-all duration-300 ease-in-out lg:h-full',
                   !isLeftPanelVisible &&
                     'lg:w-0 lg:opacity-0 lg:border-none lg:pointer-events-none'
                 )}
@@ -152,6 +153,7 @@ export default function NotesPage() {
 
               <main className="flex flex-col min-h-0 flex-1 bg-card rounded-xl border h-full overflow-hidden">
                 <NotesHeader
+                  onOpenMenu={() => setIsLeftPanelVisible(true)}
                   activeChunkId={activeChunkId}
                   currentChunk={currentChunk}
                   courseName={chunks[0]?.course_name || 'Ders Notları'}
@@ -175,7 +177,7 @@ export default function NotesPage() {
                   <div className="relative w-full flex-1 flex flex-col min-h-0 mx-auto transition-all duration-300">
                     {/* Floating Side Triggers */}
                     {!isLeftPanelVisible && (
-                      <div className="absolute -left-2 lg:-left-4 top-0 h-full flex items-start pt-4 z-30">
+                      <div className="hidden lg:flex absolute -left-2 lg:-left-4 top-0 h-full items-start pt-4 z-30">
                         <Button
                           variant="secondary"
                           size="icon"
@@ -188,7 +190,7 @@ export default function NotesPage() {
                     )}
 
                     {!isRightPanelVisible && activeChunkId !== '' && (
-                      <div className="absolute -right-2 lg:-right-4 top-0 h-full flex items-start pt-4 z-30">
+                      <div className="hidden lg:flex absolute -right-2 lg:-right-4 top-0 h-full items-start pt-4 z-30">
                         <Button
                           variant="secondary"
                           size="icon"
@@ -279,6 +281,41 @@ export default function NotesPage() {
             </div>
           </div>
         </ErrorBoundary>
+
+        {/* Mobile Topics Modal */}
+        {isLeftPanelVisible && (
+          <div className="fixed inset-0 z-50 lg:hidden flex flex-col bg-background animate-in slide-in-from-left duration-200">
+            <div className="flex items-center justify-between px-4 py-4 border-b border-border/20">
+              <span className="text-base font-bold">İçindekiler</span>
+              <button
+                onClick={() => setIsLeftPanelVisible(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              {debouncedQuery && debouncedQuery.length >= 2 ? (
+                <SearchResultsSidebar
+                  results={results}
+                  query={debouncedQuery}
+                  onResultClick={(id) => {
+                    handleSearchResultClick(id);
+                    setIsLeftPanelVisible(false);
+                  }}
+                />
+              ) : (
+                <GlobalNavigation
+                  chunks={chunks}
+                  activeChunkId={activeChunkId}
+                  courseSlug={courseSlug || ''}
+                  onItemClick={() => setIsLeftPanelVisible(false)}
+                  onToggle={() => setIsLeftPanelVisible(false)}
+                />
+              )}
+            </div>
+          </div>
+        )}
       </PageContainer>
 
       <QuizDrawer

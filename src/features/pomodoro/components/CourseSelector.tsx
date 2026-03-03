@@ -46,7 +46,7 @@ export function CourseSelector({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 flex items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-md pointer-events-auto z-50"
+      className="fixed inset-0 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md pointer-events-auto z-50"
       onClick={onBackdropClick}
     >
       <motion.div
@@ -54,9 +54,9 @@ export function CourseSelector({
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
         ref={modalRef}
-        className="w-full max-w-lg bg-[#1a1a1c] border border-white/10 rounded-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-auto"
+        className="w-full max-w-lg bg-[#1a1a1c] border border-white/10 rounded-2xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden pointer-events-auto flex flex-col max-h-[85vh]"
       >
-        <div className="p-7 border-b border-white/5 bg-white/5 relative">
+        <div className="p-5 sm:p-7 border-b border-white/5 bg-white/5 relative">
           <div className="absolute right-6 top-6 flex items-center gap-2">
             <button
               onClick={onClose}
@@ -66,11 +66,11 @@ export function CourseSelector({
             </button>
           </div>
           <div className="flex items-center gap-5">
-            <div className="size-14 rounded-2xl bg-white/5 flex items-center justify-center text-primary border border-white/10">
-              <Target size={28} />
+            <div className="size-10 sm:size-14 rounded-2xl bg-white/5 flex items-center justify-center text-primary border border-white/10">
+              <Target size={22} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                 Hedef Belirle
               </h2>
               <p className="text-sm text-muted-foreground font-medium">
@@ -95,7 +95,7 @@ export function CourseSelector({
             />
           </div>
         </div>
-        <div className="max-h-[360px] overflow-y-auto px-4 pb-6 custom-scrollbar space-y-6">
+        <div className="flex-1 overflow-y-auto px-4 pb-5 custom-scrollbar space-y-4">
           {Object.keys(
             filteredCourses.reduce(
               (
@@ -148,7 +148,7 @@ export function CourseSelector({
                         <motion.button
                           key={course.id}
                           onClick={() => handleCourseSelect(course.id)}
-                          className="w-full text-left px-5 py-4 rounded-xl hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between group"
+                          className="w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 active:bg-white/10 transition-colors flex items-center justify-between group"
                         >
                           <span className="text-white/60 group-hover:text-white font-bold text-sm tracking-tight transition-colors">
                             {course.name}

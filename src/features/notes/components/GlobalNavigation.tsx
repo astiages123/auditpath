@@ -11,7 +11,7 @@ import { ToCTitleRenderer } from './ToCTitleRenderer';
 interface GlobalNavigationProps {
   chunks: CourseTopic[];
   activeChunkId: string | null;
-  onChunkClick?: (chunkId: string) => void;
+  onItemClick?: () => void;
   courseSlug: string;
   onToggle?: () => void;
 }
@@ -19,6 +19,7 @@ interface GlobalNavigationProps {
 export const GlobalNavigation = memo(function GlobalNavigation({
   chunks,
   activeChunkId,
+  onItemClick,
   courseSlug,
   onToggle,
 }: GlobalNavigationProps) {
@@ -47,7 +48,7 @@ export const GlobalNavigation = memo(function GlobalNavigation({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+            className="hidden lg:flex h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
             onClick={onToggle}
           >
             <PanelLeftClose className="w-4 h-4" />
@@ -68,6 +69,7 @@ export const GlobalNavigation = memo(function GlobalNavigation({
               key={chunk.id}
               id={`nav-item-${chunkId}`}
               to={url}
+              onClick={() => onItemClick?.()}
               className={cn(
                 'group relative flex items-center gap-3 px-3 py-3 mx-1 mb-2 rounded-xl transition-all duration-300',
                 isActive

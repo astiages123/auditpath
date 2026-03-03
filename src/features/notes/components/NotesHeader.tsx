@@ -1,11 +1,12 @@
 import { FC, useRef, useEffect } from 'react';
-import { BookOpen, Clock, Brain, X, Search } from 'lucide-react';
+import { BookOpen, Clock, Brain, X, Search, Menu } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/utils/stringHelpers';
 
 interface NotesHeaderProps {
+  onOpenMenu: () => void;
   activeChunkId: string;
   currentChunk?: {
     section_title: string;
@@ -21,6 +22,7 @@ interface NotesHeaderProps {
 }
 
 export const NotesHeader: FC<NotesHeaderProps> = ({
+  onOpenMenu,
   activeChunkId,
   currentChunk,
   courseName,
@@ -44,8 +46,15 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
       id="notes-sticky-header"
       className="group flex flex-col border-b border-border/10 shrink-0 bg-card/80 backdrop-blur-md z-10 transition-all duration-300"
     >
-      <div className="flex items-center gap-3 px-6 py-4">
-        <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+      <div className="flex items-center gap-2 px-3 md:px-6 py-3 md:py-4">
+        {/* BookOpen ikonunun soluna ekle (sadece mobile): */}
+        <button
+          className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+          onClick={onOpenMenu}
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+        <div className="w-8 h-8 bg-primary/10 rounded-lg hidden lg:flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
           <BookOpen className="w-4 h-4" />
         </div>
         <div className="flex-1 min-w-0">
@@ -94,7 +103,7 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
                 onClick={() => setIsQuizDrawerOpen(true)}
               >
                 <Brain className="w-3.5 h-3.5" />
-                Sınava Gir
+                <span className="hidden sm:inline">Sınava Gir</span>
               </Button>
 
               <div className="flex items-center">
@@ -102,7 +111,7 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
                   {isSearchOpen && (
                     <motion.div
                       initial={{ width: 0, opacity: 0, x: 20 }}
-                      animate={{ width: 180, opacity: 1, x: 0 }}
+                      animate={{ width: 'auto', opacity: 1, x: 0 }}
                       exit={{ width: 0, opacity: 0, x: 20 }}
                       transition={{
                         type: 'spring',
@@ -116,7 +125,7 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Ara..."
-                        className="h-9 w-[170px] bg-background border-border rounded-sm text-[13px] border focus:ring-0 focus-visible:ring-0 focus:border-primary/50 transition-colors shadow-none"
+                        className="h-9 w-[120px] sm:w-[170px] bg-background border-border rounded-sm text-[13px] border focus:ring-0 focus-visible:ring-0 focus:border-primary/50 transition-colors shadow-none"
                       />
                     </motion.div>
                   )}

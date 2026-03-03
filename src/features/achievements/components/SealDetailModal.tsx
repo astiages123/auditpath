@@ -1,11 +1,5 @@
 import { Calendar, Award } from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { GUILDS, getRequirementDescription } from '../logic/achievementsData';
 import { formatDisplayDate } from '@/utils/dateUtils';
 import type { Achievement } from '../types/achievementsTypes';
@@ -40,11 +34,16 @@ export function SealDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md bg-card border-border">
-        <DialogHeader className="text-center">
-          {/* Guild Badge */}
+      <DialogContent className="sm:max-w-sm bg-card border-border p-0 overflow-hidden">
+        {/* Header — guild rengi ile arka plan */}
+        <div
+          className="px-6 pt-6 pb-4 text-center"
+          style={{
+            background: `linear-gradient(to bottom, color-mix(in oklch, ${guild.color} 12%, transparent), transparent)`,
+          }}
+        >
           <div
-            className="mx-auto mb-2 px-3 py-1 rounded-full text-xs font-semibold"
+            className="inline-flex mx-auto mb-3 px-3 py-1 rounded-full text-xs font-semibold"
             style={{
               backgroundColor: `color-mix(in oklch, ${guild.color} 20%, transparent)`,
               color: guild.color,
@@ -54,20 +53,16 @@ export function SealDetailModal({
           </div>
 
           <DialogTitle
-            className="text-xl text-center"
+            className="text-lg text-center leading-snug"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             {achievement.title}
           </DialogTitle>
+        </div>
 
-          <DialogDescription className="text-center text-muted-foreground">
-            {getRequirementDescription(achievement.requirement)}
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* Large Seal Image */}
-        <div className="flex justify-center py-6">
-          <div className="relative w-48 h-48">
+        {/* Resim — orta */}
+        <div className="flex justify-center py-4">
+          <div className="relative w-32 h-32">
             <img
               src={achievement.imagePath}
               alt={achievement.title}
@@ -78,28 +73,32 @@ export function SealDetailModal({
           </div>
         </div>
 
-        {/* Motto */}
-        <div className="text-center px-4">
-          <blockquote className="italic text-foreground border-l-2 border-primary/50 pl-4 text-sm">
+        {/* Alt bilgi — motto + gereksinim + tarih */}
+        <div className="px-6 pb-6 space-y-3">
+          {/* Gereksinim */}
+          <p className="text-center text-sm text-muted-foreground">
+            {getRequirementDescription(achievement.requirement)}
+          </p>
+
+          {/* Motto */}
+          <blockquote className="italic text-foreground/80 border-l-2 border-primary/40 pl-3 text-sm leading-relaxed">
             &ldquo;{achievement.motto}&rdquo;
           </blockquote>
-        </div>
 
-        {/* Unlock Date or Status */}
-        <div className="mt-4 pt-4 border-t border-border/50">
-          {isUnlocked && unlockDate ? (
-            <div className="flex items-center justify-center gap-2 text-sm text-primary">
-              <Calendar className="w-4 h-4" />
-              <span>
-                Kazanıldı: {unlockDate ? formatDate(unlockDate) : 'Yeni'}
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Award className="w-4 h-4" />
-              <span>Henüz kazanılmadı</span>
-            </div>
-          )}
+          {/* Tarih / Durum */}
+          <div className="pt-2 border-t border-border/40">
+            {isUnlocked && unlockDate ? (
+              <div className="flex items-center justify-center gap-2 text-sm text-primary">
+                <Calendar className="w-4 h-4 shrink-0" />
+                <span>Kazanıldı: {formatDate(unlockDate)}</span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Award className="w-4 h-4 shrink-0" />
+                <span>Henüz kazanılmadı</span>
+              </div>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

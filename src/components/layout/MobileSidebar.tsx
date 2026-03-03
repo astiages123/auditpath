@@ -141,6 +141,7 @@ export const MobileSidebar: FC = () => {
                   showLabel={false}
                   onSyncComplete={() => setMobileMenuOpen(false)}
                   className="size-11 rounded-2xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white flex items-center justify-center p-0"
+                  iconClassName="size-5 transition-colors"
                 />
                 <Link
                   to={ROUTES.COSTS}
@@ -148,17 +149,17 @@ export const MobileSidebar: FC = () => {
                   className="size-11 rounded-2xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white flex items-center justify-center transition-all"
                   title="Harcama Analizi"
                 >
-                  <Banknote className="size-5" />
+                  <Banknote className="size-5 transition-colors" />
                 </Link>
                 <button
                   onClick={() => {
                     signOut();
                     setMobileMenuOpen(false);
                   }}
-                  className="size-11 rounded-2xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-destructive flex items-center justify-center transition-all active:scale-90"
+                  className="size-11 rounded-2xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white flex items-center justify-center transition-all active:scale-90"
                   aria-label="Çıkış Yap"
                 >
-                  <LogOut className="size-5" />
+                  <LogOut className="size-5 transition-colors" />
                 </button>
               </div>
             </div>

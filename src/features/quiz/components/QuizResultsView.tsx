@@ -39,8 +39,11 @@ const ScoreVisualizer = memo(
       className="bg-card border border-border rounded-2xl p-6 flex-col flex-center relative overflow-hidden"
     >
       <div className="absolute inset-0 bg-linear-to-br from-primary/5 to-transparent pointer-events-none" />
-      <div className="relative w-48 h-48 mb-4">
-        <svg className="w-full h-full transform -rotate-90">
+      <div className="relative w-36 h-36 md:w-48 md:h-48 mb-4">
+        <svg
+          className="w-full h-full transform -rotate-90"
+          viewBox="0 0 192 192"
+        >
           <circle
             cx="96"
             cy="96"
@@ -63,7 +66,7 @@ const ScoreVisualizer = memo(
           />
         </svg>
         <div className="absolute inset-0 flex-col flex-center">
-          <span className="text-5xl font-bold tracking-tighter">
+          <span className="text-3xl md:text-5xl font-bold tracking-tighter">
             {animatedPercent}
           </span>
           <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider mt-2">
@@ -129,7 +132,12 @@ const MetricsSummary = memo(
             </div>
             <span className="text-sm font-medium">{item.label}</span>
           </div>
-          <div className={cn('text-3xl font-bold', item.full && 'font-mono')}>
+          <div
+            className={cn(
+              'text-xl md:text-3xl font-bold',
+              item.full && 'font-mono'
+            )}
+          >
             {item.value}
           </div>
         </motion.div>
@@ -362,7 +370,7 @@ export function QuizResultsView({
   }, [stats.percentage]);
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-8 p-6">
+    <div className="w-full max-w-4xl mx-auto space-y-6 p-3 md:p-6">
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}

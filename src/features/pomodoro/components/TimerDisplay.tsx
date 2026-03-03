@@ -58,14 +58,14 @@ export function TimerDisplay() {
           <span className="text-[10px] font-black uppercase text-white/90 tracking-widest leading-none mb-1">
             {isWorking ? 'ODAKLANMA' : 'MOLA'}
           </span>
-          <span className="text-sm font-bold text-white truncate max-w-[160px] leading-tight">
+          <span className="text-sm font-bold text-white truncate max-w-[100px] sm:max-w-[160px] leading-tight">
             {selectedCourse.name}
           </span>
         </div>
       </div>
 
       {/* Divider */}
-      <div className="h-8 w-px bg-white/10 shrink-0" />
+      <div className="h-8 w-px bg-white/10 shrink-0 hidden sm:block" />
 
       {/* === CENTER BLOCK: Timer === */}
       <div className="flex items-center gap-4 shrink-0 px-2">
@@ -73,7 +73,7 @@ export function TimerDisplay() {
         <div className="flex items-center">
           <span
             className={cn(
-              'font-mono font-bold text-4xl tabular-nums tracking-wider leading-none transition-colors duration-300',
+              'font-mono font-bold text-2xl sm:text-4xl tabular-nums tracking-wider leading-none transition-colors duration-300',
               isOvertime
                 ? 'text-white underline decoration-accent underline-offset-8'
                 : 'text-white'
@@ -81,12 +81,12 @@ export function TimerDisplay() {
           >
             {minutes}
           </span>
-          <span className="font-mono font-bold text-3xl mx-3 leading-none text-white/50">
+          <span className="font-mono font-bold text-xl sm:text-3xl mx-1.5 sm:mx-3 leading-none text-white/50">
             :
           </span>
           <span
             className={cn(
-              'font-mono font-bold text-4xl tabular-nums tracking-wider leading-none transition-colors duration-300',
+              'font-mono font-bold text-2xl sm:text-4xl tabular-nums tracking-wider leading-none transition-colors duration-300',
               isOvertime
                 ? 'text-white underline decoration-accent underline-offset-8'
                 : 'text-white'

@@ -71,7 +71,10 @@ export function CategoryCard({
   );
   const displayCompletedHours =
     catStats?.completedHours ?? initialCompletedHours;
-  const displayTotalHours = initialTotalHours || (catStats?.totalHours ?? 0);
+  const displayTotalHours =
+    initialTotalHours ||
+    catStats?.totalHours ||
+    courses.reduce((acc, course) => acc + (course.total_hours || 0), 0);
 
   const isReadingCategory = courses.some((c) => c.type === 'reading');
 
@@ -145,7 +148,7 @@ export function CategoryCard({
               <div className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-2xl bg-surface/40 border border-white/5 text-[10px] font-black text-muted-foreground uppercase tracking-tight shadow-sm">
                 <Clock className="size-3.5 text-muted-foreground/40" />
                 <span className="truncate">
-                  {formatDurationShort(displayCompletedHours)}
+                  {formatDurationShort(displayTotalHours)}
                 </span>
               </div>
             </>
@@ -193,7 +196,7 @@ export function CategoryCard({
                     </span>
                     <span className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface/50 border border-white/5 whitespace-nowrap">
                       <Clock className="size-3 text-muted-foreground/60" />
-                      {formatDuration(displayCompletedHours)}
+                      {formatDuration(displayTotalHours)}
                     </span>
                   </>
                 )}

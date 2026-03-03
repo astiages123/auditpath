@@ -29,23 +29,23 @@ export const RoadmapHero: FC<RoadmapHeroProps> = ({
   estimatedDays,
 }) => {
   return (
-    <div className="rounded-xl border border-border bg-card/20 px-5 py-3 mb-4">
-      <div className="flex items-center gap-6">
+    <div className="rounded-xl border border-border bg-card/20 px-4 py-4 mb-4">
+      <div className="flex flex-col sm:flex-row items-center sm:items-center gap-6 text-center sm:text-left">
         {/* Sol - Rank Info + Kaldı */}
-        <div className="flex items-center gap-4 flex-1 min-w-0">
+        <div className="flex flex-col sm:flex-row items-center gap-4 flex-1 min-w-0">
           <img
             src={currentMilestone.imagePath}
             alt={currentMilestone.title}
-            className="size-25 object-contain shrink-0"
+            className="size-16 sm:size-20 object-contain shrink-0"
           />
-          <div className="min-w-0 flex-1">
+          <div className="min-w-0 flex-1 flex flex-col items-center sm:items-start">
             <div className="flex items-center gap-2 mb-1">
               <Sparkles className="w-4 h-4 text-amber-500" />
               <span className="text-xs font-bold uppercase tracking-normal text-amber-600">
-                Mevcut
+                Mevcut Seviye
               </span>
             </div>
-            <p className="text-xl font-black text-foreground leading-tight">
+            <p className="text-lg sm:text-xl font-black text-foreground leading-tight">
               {currentMilestone.title}
             </p>
             {nextMilestone && (
@@ -70,23 +70,25 @@ export const RoadmapHero: FC<RoadmapHeroProps> = ({
         </div>
 
         {/* Sağ - Stats */}
-        <div className="flex items-center gap-6 shrink-0">
+        <div className="flex items-center justify-around sm:justify-start gap-4 sm:gap-8 shrink-0 flex-wrap w-full sm:w-auto pt-4 sm:pt-0 border-t sm:border-t-0 border-border/20">
           {/* İlerleme */}
-          <div className="flex items-center gap-3">
-            <TrendingUp className="w-7 h-7 text-primary" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <TrendingUp className="w-5 h-5 sm:w-7 sm:h-7 text-primary" />
             <div className="text-center">
-              <p className="text-xl font-black text-foreground">%{progress}</p>
+              <p className="text-base sm:text-xl font-black text-foreground">
+                %{progress}
+              </p>
               <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">
-                Genel İlerleme
+                İlerleme
               </p>
             </div>
           </div>
 
           {/* Tamamlanan Video */}
-          <div className="flex items-center gap-3">
-            <Play className="w-7 h-7 text-accent" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Play className="w-5 h-5 sm:w-7 sm:h-7 text-accent" />
             <div className="text-center">
-              <p className="text-xl font-black text-foreground">
+              <p className="text-base sm:text-xl font-black text-foreground">
                 {watchedVideos}
                 <span className="text-sm text-muted-foreground font-medium">
                   /{requiredVideos}
@@ -102,10 +104,10 @@ export const RoadmapHero: FC<RoadmapHeroProps> = ({
           {nextMilestone &&
             estimatedDays !== undefined &&
             estimatedDays > 0 && (
-              <div className="flex items-center gap-3">
-                <Sparkles className="w-7 h-7 text-amber-500" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Sparkles className="w-5 h-5 sm:w-7 sm:h-7 text-amber-500" />
                 <div className="text-center">
-                  <p className="text-xl font-black text-amber-600">
+                  <p className="text-base sm:text-xl font-black text-amber-600">
                     {estimatedDays}g
                   </p>
                   <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">

@@ -37,7 +37,7 @@ export function PomodoroAlerts({
               Mevcut oturumun kaydedilmeyecek. Emin misin?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
             <AlertDialogCancel className="rounded-xl border-border bg-secondary text-foreground hover:bg-secondary/80 transition-colors">
               İptal
             </AlertDialogCancel>
@@ -60,7 +60,7 @@ export function PomodoroAlerts({
               Tüm çalışmaların kaydedilecek. Günü bitirmek istiyor musun?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
             <AlertDialogCancel className="rounded-xl border-border bg-secondary text-foreground hover:bg-secondary/80 transition-colors">
               Devam Et
             </AlertDialogCancel>

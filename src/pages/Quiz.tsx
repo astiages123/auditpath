@@ -1,6 +1,6 @@
 import { useEffect, FC, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { BookOpen } from 'lucide-react';
+import { BookOpen, Menu, X } from 'lucide-react';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/utils/routes';
@@ -38,6 +38,7 @@ export const QuizPage: FC = () => {
   const navigate = useNavigate();
   const [courseData, setCourseData] = useState<Course | null>(null);
   const [isResolvingCourse, setIsResolvingCourse] = useState(true);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Fetch course data by slug
   useEffect(() => {
@@ -146,7 +147,11 @@ export const QuizPage: FC = () => {
         >
           {/* Sidebar */}
           {!isQuizActive && (
-            <aside className="flex flex-col shrink-0 border rounded-xl bg-card h-[400px] lg:h-full overflow-hidden transition-all duration-300 ease-in-out z-20">
+            <aside
+              className={cn(
+                'hidden lg:flex flex-col shrink-0 border rounded-xl bg-card h-full overflow-hidden transition-all duration-300 ease-in-out z-20'
+              )}
+            >
               <div className="min-w-[240px] h-full flex flex-col">
                 <TopicSidebar
                   loading={loading}
@@ -177,7 +182,13 @@ export const QuizPage: FC = () => {
                     className="group flex flex-col border-b border-border/10 shrink-0 bg-card/80 backdrop-blur-md z-10 transition-all duration-300"
                   >
                     <div className="flex items-center gap-3 px-6 py-4">
-                      <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                      <button
+                        className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-accent transition-colors"
+                        onClick={() => setIsMobileSidebarOpen(true)}
+                      >
+                        <Menu className="w-4 h-4" />
+                      </button>
+                      <div className="w-8 h-8 bg-primary/10 rounded-lg hidden lg:flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                         <BookOpen className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -244,6 +255,37 @@ export const QuizPage: FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile Topics Modal */}
+      {isMobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex flex-col bg-background animate-in slide-in-from-left duration-200">
+          <div className="flex items-center justify-between px-4 py-4 border-b border-border/20">
+            <span className="text-base font-bold">Konular</span>
+            <button
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-muted transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            <TopicSidebar
+              loading={loading}
+              topics={topics}
+              selectedTopic={selectedTopic}
+              onSelectTopic={(topic) => {
+                handleTopicSelect(topic);
+                setIsMobileSidebarOpen(false);
+              }}
+              onStartSmartExam={() => {
+                handleStartSmartExam();
+                setIsMobileSidebarOpen(false);
+              }}
+              isGeneratingExam={isGeneratingExam}
+            />
+          </div>
+        </div>
+      )}
     </PageContainer>
   );
 };

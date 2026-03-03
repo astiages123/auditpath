@@ -123,7 +123,7 @@ export function CourseList({
           <div key={course.id} className={courseCardClass}>
             {/* Main Content Area */}
             <div
-              className="flex items-center gap-4 p-5 cursor-pointer relative"
+              className="flex items-center gap-2 sm:gap-4 p-3 sm:p-5 cursor-pointer relative"
               role="button"
               tabIndex={0}
               onClick={() =>
@@ -154,7 +154,7 @@ export function CourseList({
               <div className="flex-1 min-w-0">
                 <h4 className={titleClass}>{displayName}</h4>
 
-                <div className="flex items-center gap-3 mt-1.5 overflow-x-auto no-scrollbar scrollbar-hide">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-1.5 overflow-hidden">
                   {categorySlug === 'ATA_584' && (
                     <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 border border-primary/20 text-[9px] font-black text-primary uppercase tracking-wider whitespace-nowrap">
                       {course.course_slug.split('-').pop()}. HAFTA
@@ -162,16 +162,16 @@ export function CourseList({
                   )}
                   {course.type === 'reading' ? (
                     <>
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
-                        <BookOpen className="size-3 text-muted-foreground/50" />
+                      <div className="flex items-center gap-1.5 text-[8.5px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                        <BookOpen className="size-[10px] sm:size-3 text-muted-foreground/50" />
                         {totalVideos} Konu
                       </div>
                       {course.total_pages && (
-                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 text-[8.5px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
                           {categorySlug !== 'ATA_584' ? (
-                            <BookOpenText className="size-3 text-muted-foreground/50" />
+                            <BookOpenText className="size-[10px] sm:size-3 text-muted-foreground/50" />
                           ) : (
-                            <FileText className="size-3 text-muted-foreground/50" />
+                            <FileText className="size-[10px] sm:size-3 text-muted-foreground/50" />
                           )}
                           {course.total_pages} Sayfa
                         </div>
@@ -179,12 +179,12 @@ export function CourseList({
                     </>
                   ) : (
                     <>
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
-                        <Clock className="size-3 text-muted-foreground/50" />
+                      <div className="flex items-center gap-1.5 text-[8.5px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                        <Clock className="size-[10px] sm:size-3 text-muted-foreground/50" />
                         {formatDurationShort(totalHours)}
                       </div>
-                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
-                        <TvMinimalPlay className="size-3 text-muted-foreground/50" />
+                      <div className="flex items-center gap-1.5 text-[8.5px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                        <TvMinimalPlay className="size-[10px] sm:size-3 text-muted-foreground/50" />
                         {totalVideos} Video
                       </div>
                     </>
@@ -193,7 +193,7 @@ export function CourseList({
               </div>
 
               {/* Column 3: Progress % + Toggle Icon */}
-              <div className="flex items-center gap-4 shrink-0">
+              <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                 {course.type === 'reading' ? (
                   categorySlug === 'ATA_584' ? null : [
                       'turk-dis-politikasi',
@@ -265,13 +265,13 @@ export function CourseList({
                 <div className="text-right">
                   <span
                     className={cn(
-                      'text-lg font-black leading-none',
+                      'text-sm sm:text-lg font-black leading-none',
                       isCompleted ? 'text-accent' : categoryColor
                     )}
                   >
                     %{progress}
                   </span>
-                  <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-tighter mt-0.5">
+                  <p className="text-[8px] sm:text-[9px] font-bold text-muted-foreground/60 uppercase tracking-tighter mt-0.5">
                     İlerleme
                   </p>
                 </div>

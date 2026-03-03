@@ -12,6 +12,7 @@ import { CourseSelector } from './CourseSelector';
 import { TimerDisplay } from './TimerDisplay';
 import { TimerControls } from './TimerControls';
 import { PomodoroAlerts } from './PomodoroAlerts';
+import { MobilePomodoroBar } from './MobilePomodoroBar';
 
 export function PomodoroModal() {
   const {
@@ -155,14 +156,15 @@ export function PomodoroModal() {
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed inset-x-0 bottom-8 flex justify-center px-4 pointer-events-none"
+            className="fixed inset-x-0 bottom-4 sm:bottom-8 flex justify-center px-4 pointer-events-none"
           >
             <motion.div
               layout
               ref={modalRef}
               className={cn(
                 'pointer-events-auto relative overflow-hidden',
-                'rounded-2xl flex items-center h-20 px-8 gap-6 min-w-[640px] shadow-2xl shadow-black/80',
+                // Desktop: mevcut yatay bar
+                'hidden sm:flex items-center h-20 px-8 gap-6 min-w-[640px] rounded-2xl shadow-2xl shadow-black/80',
                 'transition-colors duration-700 ease-in-out',
                 status === 'paused'
                   ? 'bg-gray-800'
@@ -194,6 +196,16 @@ export function PomodoroModal() {
                 onDiscard={() => setShowCloseAlert(true)}
               />
             </motion.div>
+
+            {/* Mobile Pill — sadece sm altında görünür */}
+            <MobilePomodoroBar
+              isWorking={isWorking}
+              status={status}
+              progress={progress}
+              onFinishDay={() => setShowFinishAlert(true)}
+              onDiscard={() => setShowCloseAlert(true)}
+              onSwitchMode={handleSwitchMode}
+            />
           </motion.div>
         )}
       </AnimatePresence>

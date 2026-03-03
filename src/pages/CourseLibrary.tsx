@@ -258,8 +258,12 @@ export default function CourseLibrary() {
 
         {/* === KATEGORİ TAB BAR === */}
         <div
-          className="grid gap-3 mb-8 shrink-0"
-          style={{ gridTemplateColumns: `repeat(${categories.length}, 1fr)` }}
+          className="flex lg:grid gap-3 mb-8 shrink-0 overflow-x-auto pb-1 scrollbar-none -mx-4 px-4 lg:mx-0 lg:px-0"
+          style={
+            {
+              gridTemplateColumns: `repeat(${categories.length}, 1fr)`,
+            } as React.CSSProperties
+          }
         >
           {categories.map((category, idx) => {
             const normalizedSlug = normalizeCategorySlug(category.name);
@@ -279,7 +283,7 @@ export default function CourseLibrary() {
                 key={category.id}
                 onClick={() => setActiveCategoryIndex(idx)}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-2 shrink-0',
+                  'flex flex-col items-center justify-center gap-2 shrink-0 min-w-[100px] lg:min-w-0',
                   'px-4 py-4 rounded-2xl border transition-all duration-300',
                   'text-center group',
                   isActive

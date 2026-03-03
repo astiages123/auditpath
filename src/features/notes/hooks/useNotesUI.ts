@@ -8,7 +8,12 @@ interface UseNotesUIProps {
 
 export function useNotesUI({ chunks, activeChunkId }: UseNotesUIProps) {
   // Panel visibility states
-  const [isLeftPanelVisible, setIsLeftPanelVisible] = useState(true);
+  const [isLeftPanelVisible, setIsLeftPanelVisible] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  });
   const [isRightPanelVisible, setIsRightPanelVisible] = useState(true);
 
   // Quiz drawer state

@@ -44,18 +44,15 @@ export const QuizFooter: FC<QuizFooterProps> = ({
   const isNextActive = isAnswered || selectedAnswer !== null;
 
   const footerWrapperClass = cn(
-    'bg-black/30 backdrop-blur-md px-6 md:px-10 py-3 md:py-4 border-t border-white/5',
-    'flex flex-col md:flex-row items-center justify-between gap-4 mt-auto'
+    'bg-black/30 backdrop-blur-md px-3 md:px-6 lg:px-10 py-2 md:py-4 border-t border-white/5',
+    'flex flex-col md:flex-row items-center justify-between gap-2 md:gap-4 mt-auto'
   );
 
-  const prevBtnClass = cn(
-    'flex-1 md:flex-none h-auto py-2 px-2 sm:px-4',
-    'md:w-auto w-full'
-  );
+  const prevBtnClass = cn('h-auto py-2 px-3', 'flex-none');
 
   const nextBtnClass = cn(
-    'flex-1 md:flex-none px-3 sm:px-6 h-auto py-2 font-bold text-xs sm:text-sm',
-    'duration-200 flex font-heading group',
+    'px-3 sm:px-6 h-auto py-2 font-bold text-xs sm:text-sm',
+    'duration-200 flex font-heading group flex-none',
     isNextActive ? 'shadow-lg shadow-primary/10 hover:bg-primary/90' : ''
   );
 
@@ -68,7 +65,7 @@ export const QuizFooter: FC<QuizFooterProps> = ({
         selectedAnswer={selectedAnswer}
       />
 
-      <div className="flex items-center gap-2 md:gap-6 w-full md:w-auto">
+      <div className="flex items-center gap-2 md:gap-6 w-full md:w-auto justify-end md:justify-start">
         {historyLength > 0 && (
           <Button
             variant="glass-subtle"
@@ -89,7 +86,7 @@ export const QuizFooter: FC<QuizFooterProps> = ({
               initial={{ opacity: 0, scale: 0.9, x: 10 }}
               animate={{ opacity: 1, scale: 1, x: 0 }}
               exit={{ opacity: 0, scale: 0.9, x: 10 }}
-              className="flex-1 md:flex-none flex"
+              className="flex-none flex"
             >
               <Button
                 variant="primary-soft"
