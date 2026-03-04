@@ -204,7 +204,7 @@ export function ProgressHeader({
         variants={itemVariants}
         className="sm:col-span-2 lg:col-span-2"
       >
-        <div className="grid grid-cols-2 mt-2 pt-1 border-t border-white/10">
+        <div className="grid grid-cols-2 mt-2 pt-1 border-white/10">
           {/* Süre */}
           <div className="flex flex-col items-center justify-center p-2 py-3 border-r border-b border-white/10 gap-1.5">
             <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider text-center">
