@@ -37,7 +37,6 @@ export interface ProgressStats {
   completedPages: number;
   totalReadings: number;
   totalPages: number;
-  streak: number;
   todayVideoCount: number;
   categoryProgress: Record<string, CategoryProgress>;
   courseProgress: Record<string, number>;
@@ -65,7 +64,6 @@ export const defaultStats: ProgressStats = {
   completedPages: 0,
   totalReadings: 0,
   totalPages: 0,
-  streak: 0,
   todayVideoCount: 0,
   categoryProgress: {},
   courseProgress: {},
@@ -121,7 +119,6 @@ export function useProgress() {
       stats: stats || defaultStats,
       refreshProgress,
       isLoading: isLoading || !staticTotals,
-      streak: stats?.streak || 0,
       updateProgressOptimistically,
     }),
     [
@@ -181,7 +178,6 @@ export function useProgressQuery(
         completedPages: dbStats.completedPages || 0,
         totalReadings: staticTotals.totalAllReadings,
         totalPages: staticTotals.totalAllPages,
-        streak: dbStats.streak || 0,
         categoryProgress: mergedCategoryProgress,
         courseProgress: dbStats.courseProgress || {},
         currentRank: dbStats.currentRank,
@@ -266,13 +262,6 @@ export function useOptimisticProgress(categories?: Category[]) {
         const currentTodayCount = old.todayVideoCount || 0;
         const newTodayCount = Math.max(0, currentTodayCount + deltaVideos);
 
-        let newStreak = old.streak;
-        if (currentTodayCount === 0 && newTodayCount > 0) {
-          newStreak += 1;
-        } else if (currentTodayCount > 0 && newTodayCount === 0) {
-          newStreak = Math.max(0, newStreak - 1);
-        }
-
         return {
           ...old,
           completedVideos: isReading
@@ -285,7 +274,6 @@ export function useOptimisticProgress(categories?: Category[]) {
           completedPages: isReading
             ? (old.completedPages || 0) + deltaPages
             : old.completedPages || 0,
-          streak: newStreak,
           todayVideoCount: newTodayCount,
           courseProgress: {
             ...old.courseProgress,

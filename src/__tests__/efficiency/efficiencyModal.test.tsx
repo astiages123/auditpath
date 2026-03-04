@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SessionListItem } from '@/features/efficiency/components/SessionListItem';
+import { SessionListItem } from '@/features/efficiency/components/content/SessionListItem';
 import { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
 
 // Mock the base Session object to pass to SessionListItem

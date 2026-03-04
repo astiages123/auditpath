@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { lazy } from 'react';
 import DashboardLayout from '@/components/layout/dashboard/DashboardLayout';
-import { AuthGuard } from '@/features/auth/components/AuthGuard';
+import { AuthGuard } from '@/features/auth/components/layout/AuthGuard';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { ROUTES } from '@/utils/routes';
 import { Outlet } from 'react-router-dom';

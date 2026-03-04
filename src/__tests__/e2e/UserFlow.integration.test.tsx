@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { AuthProvider } from '@/features/auth/components/AuthProvider';
+import { AuthProvider } from '@/features/auth/components/layout/AuthProvider';
 import { getSupabase } from '@/lib/supabase';
 import { MemoryRouter, Routes, Route, useNavigate } from 'react-router-dom';
 

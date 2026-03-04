@@ -1,33 +1,18 @@
-// ===========================
-// === CARDS & LISTS ===
-// ===========================
-export * from './CourseCard';
-export * from './CourseList';
-export * from './CategoryCard';
-export * from './CategoryGrid';
+export * from "./cards/CategoryCard";
+export * from "./cards/CourseCard";
+export * from "./cards/ProgressStatCard";
+export * from "./cards/RankCard";
 
-// ===========================
-// === MODALS ===
-// ===========================
-export * from './CourseStatsModal';
+export * from "./content/CategoryGrid";
+export * from "./content/CourseItem";
+export * from "./content/CourseItemList";
+export * from "./content/CourseList";
 
-// ===========================
-// === PROGRESS & DASHBOARD ===
-// ===========================
-export * from './ProgressHeader';
-export * from './RankCard';
-export * from './ProgressStatCard';
+export * from "./layout/ProgressHeader";
+export * from "./layout/RoadmapFooter";
 
-// ===========================
-// === ROADMAP ===
-// ===========================
-export * from './RoadmapFooter';
-export * from './RoadmapHero';
-export * from './RoadmapPath';
-export { default as TitleRoadmap } from './TitleRoadmap';
+export * from "./modals/CourseStatsModal";
 
-// ===========================
-// === INDIVIDUAL ITEMS ===
-// ===========================
-export * from './CourseItemList';
-export * from './CourseItem';
+export * from "./views/RoadmapHero";
+export * from "./views/RoadmapPath";
+export { default as TitleRoadmap } from "./views/TitleRoadmap";

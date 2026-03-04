@@ -43,7 +43,7 @@ export function checkTopicMastery(
  * based on their current progress statistics and activity log.
  *
  * @param stats - The user's current progress statistics
- * @param log - The user's activity log including streaks and active days
+ * @param log - The user's activity log including active days
  * @returns Array of unlocked achievement IDs
  */
 export function calculateAchievements(
@@ -105,11 +105,6 @@ export function isAchievementUnlocked(
         if (stats.totalHours === 0) return false;
         const percent = (stats.completedHours / stats.totalHours) * 100;
         return percent >= req.percentage;
-      }
-
-      case 'streak': {
-        // Unlocked if current streak is greater than or equal to required days
-        return log.currentStreak >= req.days;
       }
 
       case 'daily_progress': {

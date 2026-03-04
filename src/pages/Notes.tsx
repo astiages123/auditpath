@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NotebookPen, Layout, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ScoreTypeRadarModal } from '@/features/analytics/components/ScoreTypeRadarModal';
+import { ScoreTypeRadarModal } from '@/features/analytics/components/modals/ScoreTypeRadarModal';
 import { useNotesPageLogic } from '@/features/notes/hooks/useNotesPageLogic';
-import { NotesLeftPanel } from '@/features/notes/components/NotesLeftPanel';
-import { NotesMainContent } from '@/features/notes/components/NotesMainContent';
-import { NotesMobileTopics } from '@/features/notes/components/NotesMobileTopics';
-import { QuizDrawer } from '@/features/quiz/components/QuizDrawer';
+import { NotesLeftPanel } from '@/features/notes/components/layout/NotesLeftPanel';
+import { NotesMainContent } from '@/features/notes/components/layout/NotesMainContent';
+import { NotesMobileTopics } from '@/features/notes/components/layout/NotesMobileTopics';
+import { QuizDrawer } from '@/features/quiz/components/layout/QuizDrawer';
 
 /**
  * Notlar Sayfası

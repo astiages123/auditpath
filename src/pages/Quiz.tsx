@@ -11,16 +11,16 @@ import {
   QUIZ_PHASE,
 } from '@/features/quiz/hooks/useQuizManager';
 import { useQuizPersistence } from '@/features/quiz/hooks/useQuizPersistence';
-import { TopicSidebar } from '@/features/quiz/components/QuizSideComponents';
+import { TopicSidebar } from '@/features/quiz/components/layout/QuizSideComponents';
 import {
   InitialStateView,
   CourseOverview,
-} from '@/features/quiz/components/QuizIntroViews';
+} from '@/features/quiz/components/views/QuizIntroViews';
 
-import { MappingProgressView } from '@/features/quiz/components/MappingProgressView';
-import { BriefingView } from '@/features/quiz/components/BriefingView';
-import { SmartExamView } from '@/features/quiz/components/SmartExamView';
-import { QuizContainer } from '@/features/quiz/components/QuizContainer';
+import { MappingProgressView } from '@/features/quiz/components/views/MappingProgressView';
+import { BriefingView } from '@/features/quiz/components/views/BriefingView';
+import { SmartExamView } from '@/features/quiz/components/views/SmartExamView';
+import { QuizContainer } from '@/features/quiz/components/layout/QuizContainer';
 import { cn, slugify } from '@/utils/stringHelpers';
 import { SplitLayoutSkeleton } from '@/shared/components/SkeletonTemplates';
 import { PageContainer } from '@/components/layout/PageContainer';

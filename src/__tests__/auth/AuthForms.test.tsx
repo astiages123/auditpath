@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { AuthForms } from '../../features/auth/components/AuthForms';
+import { AuthForms } from '../../features/auth/components/forms/AuthForms';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import type { AuthError, Session, User } from '@supabase/supabase-js';

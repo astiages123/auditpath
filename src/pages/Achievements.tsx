@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { AchievementsRoom } from '@/features/achievements/components/AchievementsRoom';
+import { AchievementsRoom } from '@/features/achievements/components/views/AchievementsRoom';
 import { PageHeader } from '@/shared/components/PageHeader';
 
 export default function AchievementsPage() {

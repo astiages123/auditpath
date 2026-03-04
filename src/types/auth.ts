@@ -26,15 +26,3 @@ export interface Rank {
   imagePath: string;
   order: number;
 }
-
-// ===========================
-// === SERİ (STREAK) TİPLERİ ===
-// ===========================
-
-/**
- * Kullanıcının seri (streak) dönüm noktalarını temsil eder.
- */
-export interface StreakMilestones {
-  maxStreak: number;
-  first7StreakDate: string | null;
-}

@@ -3,7 +3,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import { render } from '@testing-library/react';
-import { EfficiencyTrendChart } from '@/features/efficiency/components/EfficiencyTrendChart';
+import { EfficiencyTrendChart } from '@/features/efficiency/components/charts/EfficiencyTrendChart';
 
 // Mock recharts because it uses ResizeObserver and SVG which is hard for JSDOM
 vi.mock('recharts', async (importOriginal) => {

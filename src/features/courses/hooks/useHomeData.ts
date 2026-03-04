@@ -131,7 +131,6 @@ export function useHomeData(): HomeData {
       estimatedDays: 0,
       categoryProgress: {},
       courseProgress: {},
-      streak: 0,
       todayVideoCount: 0,
     }),
     [finalCategories]

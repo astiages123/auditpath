@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useProgress } from '@/shared/hooks/useProgress';
-import TitleRoadmap from '@/features/courses/components/TitleRoadmap';
+import TitleRoadmap from '@/features/courses/components/views/TitleRoadmap';
 import { Loader2 } from 'lucide-react';
 
 export default function RoadmapPage() {

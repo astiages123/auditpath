@@ -474,7 +474,6 @@ export interface ChunkMasteryRow {
   user_id: string;
   mastery_score: number;
   last_full_review_at: string | null;
-  streak: number;
   total_questions_seen: number;
 }
 

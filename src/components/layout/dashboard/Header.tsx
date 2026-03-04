@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useUIStore } from '@/shared/store/useUIStore';
-import { AuthModal } from '@/features/auth/components/AuthModal';
+import { AuthModal } from '@/features/auth/components/modals/AuthModal';
 import { GlobalBreadcrumb } from '@/shared/components/GlobalBreadcrumb';
 import { SyncButton } from '@/shared/components/SyncButton';
 import { Button } from '@/components/ui/button';

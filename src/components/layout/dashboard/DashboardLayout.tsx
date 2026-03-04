@@ -19,14 +19,18 @@ const CelebrationModal = lazy(() =>
   }))
 );
 const PomodoroModal = lazy(() =>
-  import('@/features/pomodoro/components/PomodoroModal').then((module) => ({
-    default: module.PomodoroModal,
-  }))
+  import('@/features/pomodoro/components/modals/PomodoroModal').then(
+    (module) => ({
+      default: module.PomodoroModal,
+    })
+  )
 );
 const TimerController = lazy(() =>
-  import('@/features/pomodoro/components/TimerController').then((module) => ({
-    default: module.TimerController,
-  }))
+  import('@/features/pomodoro/components/controls/TimerController').then(
+    (module) => ({
+      default: module.TimerController,
+    })
+  )
 );
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {

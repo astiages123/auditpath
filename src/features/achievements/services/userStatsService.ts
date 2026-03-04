@@ -3,7 +3,6 @@ import { getNextRank, getRankForPercentage } from '../utils/rankHelpers';
 import { normalizeCategorySlug } from '@/features/courses/utils/categoryHelpers';
 import { getVirtualDateKey } from '@/utils/dateUtils';
 import type { Category } from '@/features/courses/types/courseTypes';
-import { calculateStreak } from '@/features/achievements/logic/streakLogic';
 
 // ===========================
 // === TYPES ===
@@ -18,7 +17,6 @@ export interface UserProgressData {
   totalPages: number;
   completedHours: number;
   totalHours: number;
-  streak: number;
   categoryProgress: Record<
     string,
     {
@@ -47,7 +45,7 @@ export interface UserProgressData {
 // ===========================
 
 /**
- * Get comprehensive user statistics including progress, streak, and rank.
+ * Get comprehensive user statistics including progress and rank.
  *
  * @param userId - The UUID of the user
  * @param predefinedCategories - Optional pre-fetched categories array
@@ -250,11 +248,6 @@ export async function getUserStats(
       rankProgress = 0;
     }
 
-    const firstActivityKey = firstActivityDate
-      ? getVirtualDateKey(firstActivityDate)
-      : null;
-    const streak = calculateStreak(activeDays, firstActivityKey);
-
     const hoursRemaining = Math.max(0, globalTotalHours - completedHours);
     const dailyAverage =
       activeDays.size > 0 ? completedHours / activeDays.size : 0;
@@ -274,7 +267,6 @@ export async function getUserStats(
       totalPages: globalTotalPages,
       completedHours: Math.round(completedHours * 10) / 10,
       totalHours: globalTotalHours,
-      streak,
       categoryProgress,
       courseProgress,
       currentRank,
@@ -306,5 +298,4 @@ export async function getUserStats(
 // ===========================
 
 export * from './courseMasteryService';
-export * from './streakService';
 export * from './activeDaysService';

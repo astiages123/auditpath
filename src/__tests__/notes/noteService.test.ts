@@ -55,7 +55,7 @@ describe('noteService', () => {
 
       expect(result?.courseName).toBe('Audit 101');
       expect(result?.chunks.length).toBe(1);
-      expect(getCourseIdBySlug).toHaveBeenCalledWith('audit-101', undefined);
+      expect(getCourseIdBySlug).toHaveBeenCalledWith('audit-101');
       expect(getCourseTopics).toHaveBeenCalledWith('u1', 'c123', undefined);
     });
 

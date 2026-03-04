@@ -1,7 +1,7 @@
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 
 import { slugify } from '@/utils/stringHelpers';
-import { type LocalToCItem } from '../components/LocalToC';
+import { type LocalToCItem } from '@/features/notes/components/navigation/LocalToC';
 
 // === BÖLÜM ADI: TİPLER (TYPES) ===
 // ===========================

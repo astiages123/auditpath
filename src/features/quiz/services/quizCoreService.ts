@@ -366,7 +366,6 @@ export async function getChunkMastery(
       user_id: userId,
       mastery_score: data.mastery_score,
       last_full_review_at: data.last_full_review_at,
-      streak: 0,
       total_questions_seen: data.total_questions_seen ?? 0,
     };
   } catch (error) {

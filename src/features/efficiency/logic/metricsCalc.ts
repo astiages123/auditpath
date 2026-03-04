@@ -25,23 +25,13 @@ export function calculateFocusPower(
   breakSeconds: number,
   pauseSeconds: number
 ): number {
-  try {
-    if (workSeconds < 0 || breakSeconds < 0 || pauseSeconds < 0) {
-      throw new Error('Süre değerleri negatif olamaz.');
-    }
+  if (workSeconds <= 0) return 0;
 
-    if (workSeconds === 0) return 0;
+  const totalInterruptionSeconds = breakSeconds + pauseSeconds;
+  const effectiveInterruptionSeconds = Math.max(60, totalInterruptionSeconds);
+  const focusScore = (workSeconds / effectiveInterruptionSeconds) * 20;
 
-    const totalInterruptionSeconds = breakSeconds + pauseSeconds;
-    const effectiveInterruptionSeconds = Math.max(60, totalInterruptionSeconds);
-
-    const focusScore = (workSeconds / effectiveInterruptionSeconds) * 20;
-
-    return Math.round(focusScore);
-  } catch (error) {
-    console.error('[metricsCalc][calculateFocusPower] Hata:', error);
-    throw error;
-  }
+  return Math.max(0, Math.round(focusScore));
 }
 
 /**
@@ -58,20 +48,11 @@ export function calculateFocusPower(
  * calculateFocusScore({ totalWork: 4000, totalBreak: 1000, pauseCount: 0, totalPause: 0 })
  */
 export function calculateFocusScore(totals: SessionTotals): number {
-  try {
-    if (totals.totalWork < 0 || totals.totalBreak < 0) {
-      throw new Error('Çalışma ve mola süreleri negatif olamaz.');
-    }
+  const totalDuration = totals.totalWork + totals.totalBreak;
 
-    const totalDuration = totals.totalWork + totals.totalBreak;
+  if (totalDuration <= 0) return 0;
 
-    if (totalDuration <= 0) return 0;
+  const percentageScore = (totals.totalWork / totalDuration) * 100;
 
-    const percentageScore = (totals.totalWork / totalDuration) * 100;
-
-    return Math.max(0, Math.min(100, Math.round(percentageScore)));
-  } catch (error) {
-    console.error('[metricsCalc][calculateFocusScore] Hata:', error);
-    throw error;
-  }
+  return Math.max(0, Math.min(100, Math.round(percentageScore)));
 }

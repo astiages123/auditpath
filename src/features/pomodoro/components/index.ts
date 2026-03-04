@@ -1,9 +1,10 @@
-// Pomodoro Config
-export { PomodoroModal } from './PomodoroModal';
-export { PomodoroAlerts } from './PomodoroAlerts';
-export { CourseSelector } from './CourseSelector';
+export { CourseSelector } from './controls/CourseSelector';
+export { TimerController } from './controls/TimerController';
+export { TimerControls } from './controls/TimerControls';
 
-// Timer
-export { TimerController } from './TimerController';
-export { TimerControls } from './TimerControls';
-export { TimerDisplay } from './TimerDisplay';
+export { PomodoroAlerts } from './feedback/PomodoroAlerts';
+
+export { MobilePomodoroBar } from './layout/MobilePomodoroBar';
+export { TimerDisplay } from './layout/TimerDisplay';
+
+export { PomodoroModal } from './modals/PomodoroModal';

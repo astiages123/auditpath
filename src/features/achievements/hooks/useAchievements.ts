@@ -2,10 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { safeQuery } from '@/lib/supabaseHelpers';
 import { getDailyVideoMilestones } from '@/features/courses/services/videoService';
-import {
-  getStreakMilestones,
-  getTotalActiveDays,
-} from '@/features/achievements/services/userStatsService';
+import { getTotalActiveDays } from '@/features/achievements/services/userStatsService';
 import { getUnlockedAchievements } from '@/features/achievements/services/achievementService';
 import { ACHIEVEMENTS, calculateAchievements } from '../logic/achievementsData';
 import { type ProgressStats } from '../types/achievementsTypes';
@@ -46,10 +43,7 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
     // Gather specific milestone metrics
     const totalActiveDays = await getTotalActiveDays(userId);
     const dailyMilestones = await getDailyVideoMilestones(userId);
-    const streakMilestones = await getStreakMilestones(userId);
-
     const activityLog = {
-      currentStreak: stats.streak,
       totalActiveDays,
       dailyVideosCompleted: dailyMilestones.maxCount,
     };
@@ -109,11 +103,6 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
         if (id === 'special-02' && dailyMilestones.first10Date) {
           unlockDate = new Date(dailyMilestones.first10Date).toISOString();
         }
-        if (id === 'special-03' && streakMilestones.first7DayStreakDate) {
-          unlockDate = new Date(
-            streakMilestones.first7DayStreakDate
-          ).toISOString();
-        }
 
         return {
           user_id: userId,
@@ -153,9 +142,6 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
 
         // Dynamic and legacy achievements handling
         if (id.startsWith('RANK_UP:')) return false;
-
-        const isEventBasedPrefix = ['streak'];
-        if (isEventBasedPrefix.some((p) => id.includes(p))) return false;
 
         return true;
       });

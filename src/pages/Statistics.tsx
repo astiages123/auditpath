@@ -11,7 +11,7 @@ import {
   PracticeCenterCard,
   RecentActivitiesContainer,
 } from '@/features/efficiency/components';
-import { ScoreTypeProgress } from '@/features/analytics/components/ScoreTypeProgress';
+import { ScoreTypeProgress } from '@/features/analytics/components/layout/ScoreTypeProgress';
 import { useCognitiveInsights } from '@/features/efficiency/hooks/useCognitiveInsights';
 import { useEfficiencyTrends } from '@/features/efficiency/hooks/useEfficiencyTrends';
 import { useDailyMetrics } from '@/features/efficiency/hooks/useDailyMetrics';

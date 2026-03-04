@@ -8,14 +8,14 @@ import {
 
 import { useAnalytics } from '@/features/analytics/hooks/useAnalytics';
 
-import { AnalyticsHeader } from '@/features/analytics/components/AnalyticsHeader';
-import { AnalyticsStats } from '@/features/analytics/components/AnalyticsStats';
-import { AnalyticsTable } from '@/features/analytics/components/AnalyticsTable';
+import { AnalyticsHeader } from '@/features/analytics/components/layout/AnalyticsHeader';
+import { AnalyticsStats } from '@/features/analytics/components/layout/AnalyticsStats';
+import { AnalyticsTable } from '@/features/analytics/components/charts/AnalyticsTable';
 import { PageHeader } from '@/shared/components/PageHeader';
 
 // Lazy load the chart component
 const AnalyticsChart = lazy(() =>
-  import('@/features/analytics/components/AnalyticsChart').then((m) => ({
+  import('@/features/analytics/components/charts/AnalyticsChart').then((m) => ({
     default: m.AnalyticsChart,
   }))
 );

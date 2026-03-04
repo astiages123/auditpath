@@ -12,14 +12,6 @@ export interface UnlockedAchievement {
   unlockedAt: string;
 }
 
-/**
- * Represents the streak milestones achieved by the user.
- */
-export interface StreakMilestones {
-  maxStreak: number;
-  first7DayStreakDate: string | null;
-}
-
 // ===========================
 // === GUILD TYPES ===
 // ===========================
@@ -63,7 +55,6 @@ export type RequirementType =
       categories: { category: string; percentage: number }[];
     }
   | { type: 'all_progress'; percentage: number }
-  | { type: 'streak'; days: number }
   | { type: 'daily_progress'; count: number }
   | { type: 'total_active_days'; days: number }
   | { type: 'minimum_videos'; count: number };
@@ -104,7 +95,6 @@ export interface ProgressStats {
   totalVideos: number;
   completedHours: number;
   totalHours: number;
-  streak: number;
   todayVideoCount?: number;
   categoryProgress: Record<string, CategoryProgress>;
   courseProgress: Record<string, number>;
@@ -124,7 +114,6 @@ export interface ProgressStats {
  * Represents a log of user activity.
  */
 export interface ActivityLog {
-  currentStreak: number;
   totalActiveDays: number;
   dailyVideosCompleted: number;
 }

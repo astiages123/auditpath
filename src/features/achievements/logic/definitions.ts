@@ -502,7 +502,7 @@ export const HYBRID_ACHIEVEMENTS: Achievement[] = [
 ];
 
 /**
- * Special achievements for unique milestones and streaks.
+ * Special achievements for unique milestones.
  */
 export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
   {
@@ -523,36 +523,6 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
     guild: 'SPECIAL',
     requirement: { type: 'daily_progress', count: 10 },
     order: 35,
-    isPermanent: true,
-  },
-  {
-    id: 'special-03',
-    title: 'Sönmeyen Meşale',
-    motto: 'Yedi gün boyunca karanlığı ilminle dağıttın; meşalen hiç sönmedi.',
-    imagePath: '/badges/special-03.webp',
-    guild: 'SPECIAL',
-    requirement: { type: 'streak', days: 7 },
-    order: 36,
-    isPermanent: true,
-  },
-  {
-    id: 'special-04',
-    title: 'Kıdemli Gezgin',
-    motto: 'Bilgelik yolunda kararlı adımlarla ilerleyen kıdemli yolcu.',
-    imagePath: '/badges/special-04.webp',
-    guild: 'SPECIAL',
-    requirement: { type: 'total_active_days', days: 15 },
-    order: 37,
-    isPermanent: true,
-  },
-  {
-    id: 'special-05',
-    title: 'Kutsal Adanmışlık',
-    motto: 'Bilgelik yolunda tam bir ay boyunca her gün yürüdün.',
-    imagePath: '/badges/special-05.webp',
-    guild: 'SPECIAL',
-    requirement: { type: 'streak', days: 30 },
-    order: 38,
     isPermanent: true,
   },
   {

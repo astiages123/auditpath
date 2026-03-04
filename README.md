@@ -44,7 +44,7 @@ Notlar Notion üzerinden yönetilir, Supabase Edge Function aracılığıyla tek
 
 ### 🏆 Başarım & Rozet Sistemi
 
-Konu bazlı rozet seviyeleri (10 / 25 / 50 / 100 soru), 5 kademeli rank sistemi ve günlük çalışma serisi (streak) takibi içerir.
+Konu bazlı rozet seviyeleri (10 / 25 / 50 / 100 soru) ve 5 kademeli rank sistemi içerir.
 
 ### 📊 Verimlilik Analitiği
 

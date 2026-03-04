@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
-import { AuthProvider } from '../../features/auth/components/AuthProvider';
+import { AuthProvider } from '../../features/auth/components/layout/AuthProvider';
 import { getSupabase } from '@/lib/supabase';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 

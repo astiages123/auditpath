@@ -1,30 +1,38 @@
 // Efficiency Charts
-export * from './SessionGanttChart';
-export * from './EfficiencyHeatmap';
+export * from "./charts/SessionGanttChart";
+export * from "./charts/EfficiencyHeatmap";
 
 // Efficiency Cards
-export * from './CognitiveInsightsCard';
-export * from './FocusHubCard';
-export * from './PracticeCenterCard';
-export * from './RecentQuizzesCard';
-export * from './LearningLoadCard';
-export * from './MasteryNavigatorCard';
-export * from './ConsistencyHeatmapCard';
+export * from "./cards/CognitiveInsightsCard";
+export * from "./cards/FocusHubCard";
+export * from "./cards/PracticeCenterCard";
+export * from "./cards/RecentQuizzesCard";
+export * from "./cards/LearningLoadCard";
+export * from "./cards/MasteryNavigatorCard";
+export * from "./cards/ConsistencyHeatmapCard";
 
 // Efficiency Elements
-export * from './CardElements';
-export * from './EfficiencyChartTab';
-export * from './GoalProgressRing';
+export {
+  CardHeader,
+  type CardHeaderProps,
+  CommonEmptyState,
+  type CommonEmptyStateProps,
+  TrendBadge,
+  type TrendBadgeProps,
+} from "./shared/CardElements";
+export * from "./content/EfficiencyChartTab";
+export * from "./shared/GoalProgressRing";
 
 // Efficiency Modals
-export * from './DistractionDetails';
-export { FocusStreamHub as FocusHubContent } from './FocusStreamHub';
-export { LearningLoadAnalysis as LearningLoadContent } from './LearningLoadAnalysis';
-export { PracticePerformanceRadar as PracticeCenterContent } from './PracticePerformanceRadar';
-export { MasteryProgressNavigator as MasteryNavigatorContent } from './MasteryProgressNavigator';
-export * from './EfficiencyModal';
+export * from "./content/DistractionDetails";
+export { FocusStreamHub as FocusHubContent } from "./content/FocusStreamHub";
+export { LearningLoadAnalysis as LearningLoadContent } from "./content/LearningLoadAnalysis";
+export { PracticePerformanceRadar as PracticeCenterContent } from "./charts/PracticePerformanceRadar";
+export { MasteryProgressNavigator as MasteryNavigatorContent } from "./content/MasteryProgressNavigator";
+export * from "./modals/EfficiencyModal";
 
 // Efficiency Activities
-export * from './RecentActivitiesCard';
-export * from './SessionListItem';
-export * from './RecentActivitiesContainer';
+export * from "./cards/RecentActivitiesCard";
+export * from "./cards/StatisticsCard";
+export * from "./cards/StatsMetricCard";
+export * from "./content/RecentActivitiesContainer";

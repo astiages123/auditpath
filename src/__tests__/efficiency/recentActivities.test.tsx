@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { RecentActivitiesCard } from '@/features/efficiency/components/RecentActivitiesCard';
-import { RecentActivitiesContainer } from '@/features/efficiency/components/RecentActivitiesContainer';
+import { RecentActivitiesCard } from '@/features/efficiency/components/cards/RecentActivitiesCard';
+import { RecentActivitiesContainer } from '@/features/efficiency/components/content/RecentActivitiesContainer';
 import { formatEfficiencyTime } from '@/features/efficiency/logic/efficiencyHelpers';
 import { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
 
@@ -10,7 +10,7 @@ import { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
 
 // EfficiencyModal: Trigger içeriğini ve children'ı doğrudan render eder,
 // Radix Dialog portalını tetiklemez.
-vi.mock('@/features/efficiency/components/EfficiencyModal', () => ({
+vi.mock('@/features/efficiency/components/modals/EfficiencyModal', () => ({
   EfficiencyModal: ({
     trigger,
     children,
@@ -26,12 +26,12 @@ vi.mock('@/features/efficiency/components/EfficiencyModal', () => ({
 }));
 
 // EfficiencyChartTab: Recharts ve karmaşık grafik bileşeni — stub.
-vi.mock('@/features/efficiency/components/EfficiencyChartTab', () => ({
+vi.mock('@/features/efficiency/components/content/EfficiencyChartTab', () => ({
   EfficiencyChartTab: () => <div data-testid="efficiency-chart-tab-mock" />,
 }));
 
 // SessionGanttChart: Karmaşık SVG grafik bileşeni — stub.
-vi.mock('@/features/efficiency/components/SessionGanttChart', () => ({
+vi.mock('@/features/efficiency/components/charts/SessionGanttChart', () => ({
   SessionGanttChart: () => <div data-testid="session-gantt-chart-mock" />,
 }));
 

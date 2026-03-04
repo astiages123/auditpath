@@ -47,8 +47,6 @@ export function getRequirementDescription(
           .join(' + ');
       case 'all_progress':
         return `Tüm ilimlerde %${requirement.percentage} ilerleme`;
-      case 'streak':
-        return `${requirement.days} gün kesintisiz çalışma`;
       case 'daily_progress':
         return `Toplam ${requirement.count}+ video tamamla`;
       case 'total_active_days':

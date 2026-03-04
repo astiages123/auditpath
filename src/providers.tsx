@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { AuthProvider } from '@/features/auth/components/AuthProvider';
+import { AuthProvider } from '@/features/auth/components/layout/AuthProvider';
 
 const queryClient = new QueryClient({
   defaultOptions: {

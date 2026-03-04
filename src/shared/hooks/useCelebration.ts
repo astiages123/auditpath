@@ -85,7 +85,6 @@ export function useCelebration() {
 
     const currentStatsHash = JSON.stringify({
       completed: stats.completedVideos,
-      streak: stats.streak,
       rank: stats.currentRank?.id,
       courseProgress: stats.courseProgress,
     });
