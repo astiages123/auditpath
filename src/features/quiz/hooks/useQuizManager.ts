@@ -95,6 +95,8 @@ export interface UseQuizManagerReturn {
   handleStartQuiz: () => void;
   /** Soru üretimini başlatır */
   handleGenerate: (mappingOnly?: boolean) => Promise<void>;
+  /** Soru üretimini durdurur */
+  handleStopGeneration: () => void;
   /** Konu listesine geri döner */
   handleBackToTopics: () => void;
   /** Quizi bitirir */
@@ -133,7 +135,8 @@ export function useQuizManager({
     userId: user?.id,
   });
 
-  const { generation, startGeneration, resetGeneration } = useQuizGeneration();
+  const { generation, startGeneration, stopGeneration, resetGeneration } =
+    useQuizGeneration();
 
   const { saveManager, loadManager } = useQuizPersistence(courseId);
 
@@ -255,6 +258,11 @@ export function useQuizManager({
     },
     [targetChunkId, user, selectedTopic, courseId, startGeneration]
   );
+
+  /** Soru üretimini durdurur (kullanıcı isteğiyle) */
+  const handleStopGeneration = useCallback(() => {
+    stopGeneration();
+  }, [stopGeneration]);
 
   /** Quiz oturumunu başlatır */
   const handleStartQuiz = useCallback(() => {
@@ -459,6 +467,7 @@ export function useQuizManager({
     courseProgress,
     handleStartQuiz,
     handleGenerate,
+    handleStopGeneration,
     handleBackToTopics,
     handleFinishQuiz,
     handleStartSmartExam,

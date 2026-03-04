@@ -75,7 +75,7 @@ export async function analyzeNoteChunk(
 
     const options: StructuredOptions<z.infer<typeof ConceptMapResponseSchema>> =
       {
-        model: 'smart',
+        task: 'analysis',
         schema: ConceptMapResponseSchema,
         onLog: (m: string, d?: Record<string, unknown>) => onLog?.(m, d),
       };
@@ -144,8 +144,7 @@ export async function draftQuestion(input: {
       ? aiConfig.systemPromptPrefix + '\n' + GLOBAL_AI_SYSTEM_PROMPT
       : GLOBAL_AI_SYSTEM_PROMPT,
     input.sharedContextPrompt,
-    taskPrompt +
-      '\n\n### ZORUNLU JSON FORMATI\nLütfen cevabını sadece geçerli bir JSON objesi olarak döndür.'
+    taskPrompt
   );
 
   const result = await generate<z.infer<typeof GeneratedQuestionSchema>>(
@@ -201,7 +200,7 @@ export async function draftBatch(input: {
       : GLOBAL_AI_SYSTEM_PROMPT,
     input.sharedContextPrompt,
     taskPrompt +
-      '\n\n### ZORUNLU JSON FORMATI\nLütfen cevabını sadece geçerli bir JSON objesi olarak döndür.'
+      `\n\nBu istekte ${input.concepts.length} kavram var. Her kavram için ayrı bir soru üret ve hepsini tek bir JSON objesi içinde döndür:\n{"questions": [{soru1}, {soru2}, ...]}`
   );
 
   const result = await generate<z.infer<typeof BatchGeneratedQuestionSchema>>(
@@ -367,7 +366,7 @@ async function ensureConcepts(
   }
 
   const updatedAILogic = {
-    ...(typeof chunk.ai_logic === 'object'
+    ...(chunk.ai_logic !== null && typeof chunk.ai_logic === 'object'
       ? (chunk.ai_logic as Record<string, Json>)
       : {}),
     concept_map: analysisResult.concept_map as Json,
@@ -409,9 +408,13 @@ async function ensureQuotas(
   ) => void
 ) {
   const quotas = calculateQuotas(concepts);
+
+  // DB'den güncel ai_logic'i çek — ensureConcepts zaten kaydetmiş olabilir
+  const freshChunk = await getChunkWithContent(chunkId);
+  const freshAILogic = freshChunk?.ai_logic;
   const existingAILogic = (
-    typeof chunk.ai_logic === 'object'
-      ? (chunk.ai_logic as Record<string, Json>)
+    freshAILogic !== null && typeof freshAILogic === 'object'
+      ? (freshAILogic as Record<string, Json>)
       : {}
   ) as Record<string, Json>;
 
@@ -467,6 +470,7 @@ export async function generateForChunk(
     targetCount?: number;
     usageType?: 'antrenman' | 'deneme';
     userId?: string;
+    signal?: AbortSignal;
   } = {}
 ) {
   const log = (
@@ -533,6 +537,9 @@ export async function generateForChunk(
         i < targetConcepts.length && totalGeneratedCount < totalTarget;
         i++
       ) {
+        if (options.signal?.aborted) {
+          throw new Error('İşlem kullanıcı tarafından durduruldu.');
+        }
         const concept = targetConcepts[i];
         const cached = await fetchCachedQuestion(
           chunk.id,
@@ -592,6 +599,9 @@ export async function generateForChunk(
             );
 
             for (let j = 0; j < draftedBatchResult.length; j++) {
+              if (options.signal?.aborted) {
+                throw new Error('İşlem kullanıcı tarafından durduruldu.');
+              }
               const bufferItem = draftingBuffer[j];
               if (!bufferItem) continue;
 

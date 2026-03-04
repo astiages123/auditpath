@@ -1,7 +1,10 @@
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/utils/logger';
 import { safeQuery } from '@/lib/supabaseHelpers';
-import { UnifiedLLMClient as BaseLLMClient } from '@/lib/unified-llm';
+import {
+  type LLMErrorCode,
+  UnifiedLLMClient as BaseLLMClient,
+} from '@/lib/unified-llm';
 import { RateLimitService } from '@/shared/services/rateLimitService';
 
 // ============================================================================
@@ -92,7 +95,7 @@ export const UnifiedLLMClient = {
       temperature?: number;
       onLog?: (msg: string, details?: Record<string, unknown>) => void;
     }
-  ): Promise<{ content: string | null }> {
+  ): Promise<{ content: string | null; errorCode?: LLMErrorCode }> {
     const FUNC = 'UnifiedLLMClient.generate';
     try {
       // BaseLLMClient options structure includes provider as Enum or String
@@ -105,7 +108,10 @@ export const UnifiedLLMClient = {
         provider: (options?.provider || 'google') as
           | 'google'
           | 'openai'
-          | 'anthropic',
+          | 'anthropic'
+          | 'deepseek'
+          | 'mimo'
+          | 'cerebras',
         model: options?.model,
         temperature: options?.temperature,
       });
@@ -117,7 +123,7 @@ export const UnifiedLLMClient = {
         });
       }
 
-      return { content: response.content };
+      return { content: response.content, errorCode: response.errorCode };
     } catch (error) {
       console.error(`[${MODULE}][${FUNC}] Hata:`, error);
       logger.error(MODULE, FUNC, 'LLM Üretim Hatası:', error);

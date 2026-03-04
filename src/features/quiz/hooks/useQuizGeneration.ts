@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { generateForChunk } from '@/features/quiz/logic/quizParser';
-import { GenerationLog } from '@/features/quiz/types';
+import { GenerationLog, type GenerationStep } from '@/features/quiz/types';
 import { logger } from '@/utils/logger';
 import { MAX_LOG_ENTRIES } from '../utils/constants';
 
@@ -47,6 +47,9 @@ export function useQuizGeneration() {
     INITIAL_GENERATION_STATE
   );
 
+  // İptal mekanizması için controller ref'i
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   // === CALLBACKS ===
 
   /**
@@ -84,18 +87,24 @@ export function useQuizGeneration() {
           console.error('[useQuizGeneration][onCompleteExtra] Hata:', err);
         } finally {
           setGeneration((prev) => ({ ...prev, isGenerating: false }));
+          abortControllerRef.current = null;
         }
       },
       /** Üretim sırasında bir hata oluştuğunda */
       onError: (err: string) => {
+        const isAbort = err.includes('kullanıcı tarafından durduruldu');
+
         console.error('[useQuizGeneration][onError] Hata:', err);
-        logger.error(
-          'QuizGeneration',
-          'createGenerationCallbacks',
-          'Üretim hatası:',
-          { message: err }
-        );
+        if (!isAbort) {
+          logger.error(
+            'QuizGeneration',
+            'createGenerationCallbacks',
+            'Üretim hatası:',
+            { message: err }
+          );
+        }
         setGeneration((prev) => ({ ...prev, isGenerating: false }));
+        abortControllerRef.current = null;
       },
     }),
     []
@@ -118,6 +127,14 @@ export function useQuizGeneration() {
     ) => {
       if (!targetChunkId) return;
 
+      // Önceki işlemi iptal et
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
       const initialLogs: GenerationLog[] = [
         {
           id: 'ai-warning-' + Date.now(),
@@ -138,25 +155,65 @@ export function useQuizGeneration() {
         await generateForChunk(
           targetChunkId,
           createGenerationCallbacks(onComplete),
-          { userId }
+          { userId, signal: controller.signal }
         );
       } catch (error) {
-        console.error('[useQuizGeneration][startGeneration] Hata:', error);
-        logger.error(
-          'QuizGeneration',
-          'startGeneration',
-          'Üretim başlatılamadı:',
-          error as Error
-        );
+        // Kontrol generateForChunk'ın içinden de fırlatılmış olabilir
+        const isAbortError =
+          error instanceof Error &&
+          error.message.includes('kullanıcı tarafından durduruldu');
+
+        if (!isAbortError) {
+          console.error('[useQuizGeneration][startGeneration] Hata:', error);
+          logger.error(
+            'QuizGeneration',
+            'startGeneration',
+            'Üretim başlatılamadı:',
+            error as Error
+          );
+        }
+
         setGeneration((prev) => ({ ...prev, isGenerating: false }));
+        abortControllerRef.current = null;
       }
     },
     [createGenerationCallbacks]
   );
 
+  /** Üretim sürecini dışarıdan (UI vb.) durdurmak için çağrılır */
+  const stopGeneration = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+      setGeneration((prev) => ({
+        ...prev,
+        isGenerating: false,
+        logs: [
+          {
+            id: 'ai-abort-' + Date.now(),
+            message: 'İşlem kullanıcı tarafından durduruldu.',
+            step: 'ERROR' as GenerationStep,
+            details: {},
+            timestamp: new Date(),
+          },
+          ...prev.logs,
+        ].slice(0, MAX_LOG_ENTRIES),
+      }));
+    }
+  }, []);
+
   /** Üretim durumunu sıfırlar */
   const resetGeneration = useCallback(() => {
     setGeneration(INITIAL_GENERATION_STATE);
+  }, []);
+
+  // Bileşen unmount olduğunda varsa isteği iptal et
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, []);
 
   // === RETURN ===
@@ -164,6 +221,7 @@ export function useQuizGeneration() {
   return {
     generation,
     startGeneration,
+    stopGeneration,
     resetGeneration,
     createGenerationCallbacks,
   };

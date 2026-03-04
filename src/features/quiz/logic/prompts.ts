@@ -115,7 +115,22 @@ Kategori: ${category}
 
 Yukarıdaki metinden en kritik öğrenme noktalarını analiz et ve bir kavram haritası oluştur.
 Her kavram için başlık, odak noktası ve zorluk seviyesi (Bilgi, Uygulama, Analiz) belirle.
-SADECE JSON döndür.`;
+
+### ZORUNLU JSON FORMATI
+Yanıtını aşağıdaki şemaya BİREBİR uygun, geçerli bir JSON objesi olarak döndür. Markdown etiketi (\`\`\`json) kullanma.
+{
+  "difficulty_index": <1-5 arası tam sayı, metnin bilişsel zorluk endeksi>,
+  "concepts": [
+    {
+      "baslik": "<kavramın kısa başlığı>",
+      "odak": "<bu kavramın öğrenme odak noktası>",
+      "seviye": "Bilgi | Uygulama | Analiz",
+      "gorsel": null,
+      "isException": false,
+      "prerequisites": []
+    }
+  ]
+}`;
 }
 
 /**
@@ -144,7 +159,18 @@ ${
     ? `\nZAYIF NOKTALAR: ${previousDiagnoses.join(', ')}`
     : ''
 }
-SADECE JSON döndür.`;
+
+### ZORUNLU JSON FORMATI
+Yanıtını aşağıdaki şemaya BİREBİR uygun, geçerli bir JSON objesi olarak döndür. Markdown etiketi kullanma.
+{
+  "q": "<soru metni>",
+  "o": ["<A seçeneği>", "<B seçeneği>", "<C seçeneği>", "<D seçeneği>", "<E seçeneği>"],
+  "a": <doğru cevabın 0-4 arası indeksi>,
+  "exp": "<doğru cevabın açıklaması>",
+  "evidence": "<metinden dayanak cümlesi>",
+  "diagnosis": "<öğrencinin olası hata noktası>",
+  "insight": "<kavramsal çıkarım notu>"
+}`;
 }
 
 /**
@@ -153,10 +179,36 @@ SADECE JSON döndür.`;
 export function buildBatchValidationPrompt(
   questions: GeneratedQuestion[]
 ): string {
+  const questionList = questions
+    .map(
+      (q, i) =>
+        `### Soru ${i}:\n${JSON.stringify(
+          { q: q.q, o: q.o, a: q.a, exp: q.exp },
+          null,
+          2
+        )}`
+    )
+    .join('\n\n');
+
   return `### GÖREV: SORU DENETİMİ
 Sana verilen ${questions.length} soruyu; bilimsel doğruluk ve format açısından denetle.
 Hatalı olanları REDDET ve revizyon önerisi sun.
-SADECE JSON döndür.`;
+
+${questionList}
+
+### ZORUNLU JSON FORMATI
+Yanıtını aşağıdaki şemaya BİREBİR uygun, geçerli bir JSON objesi olarak döndür. Markdown etiketi kullanma.
+{
+  "results": [
+    {
+      "index": <soru indeksi (0'dan başlar)>,
+      "total_score": <0-100 arası toplam puan>,
+      "decision": "APPROVED" veya "REJECTED",
+      "critical_faults": ["<varsa hata açıklaması>"],
+      "improvement_suggestion": "<iyileştirme önerisi>"
+    }
+  ]
+}`;
 }
 /**
  * Takip (follow-up) soruları için prompt oluşturur.

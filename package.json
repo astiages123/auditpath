@@ -52,7 +52,6 @@
     "katex": "^0.16.27",
     "lucide-react": "^0.562.0",
     "mermaid": "^11.12.2",
-    "p-limit": "^7.2.0",
     "radix-ui": "^1.4.3",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -70,7 +69,6 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
-    "@notionhq/client": "^2.2.15",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -78,7 +76,6 @@
     "@types/canvas-confetti": "^1.9.0",
     "@types/dompurify": "^3.0.5",
     "@types/node": "^20",
-    "@types/pg": "^8.16.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^5.1.2",
@@ -94,8 +91,6 @@
     "husky": "^9.1.7",
     "jsdom": "^28.1.0",
     "lint-staged": "^16.2.7",
-    "notion-to-md": "^3.1.9",
-    "pg": "^8.16.3",
     "prettier": "^3.8.1",
     "sharp": "^0.34.5",
     "stylelint": "^17.3.0",

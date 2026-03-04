@@ -82,6 +82,7 @@ export const QuizPage: FC = () => {
     examProgress,
     handleStartQuiz,
     handleGenerate,
+    handleStopGeneration,
     handleFinishQuiz,
     handleStartSmartExam,
     courseProgress,
@@ -223,6 +224,7 @@ export const QuizPage: FC = () => {
                             <MappingProgressView
                               examProgress={examProgress}
                               examLogs={examLogs}
+                              onCancel={handleStopGeneration}
                             />
                           )}
 

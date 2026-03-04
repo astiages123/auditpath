@@ -19,6 +19,8 @@ interface MappingProgressViewProps {
   examProgress: { current: number; total: number };
   /** Üretim sürecine ait teknik kayıtlar */
   examLogs: GenerationLog[];
+  /** Soru üretim işlemini durdurma fonskiyonu */
+  onCancel?: () => void;
 }
 
 // === LOGIC: HELPERS ===
@@ -50,6 +52,7 @@ const getFriendlyMessage = (step: GenerationStep, msg: string) => {
 export function MappingProgressView({
   examProgress,
   examLogs,
+  onCancel,
 }: MappingProgressViewProps) {
   // === STATE ===
 
@@ -127,6 +130,21 @@ export function MappingProgressView({
             className={`h-2.5 transition-all duration-700 ${hasError ? '[&>div]:bg-red-500' : ''}`}
           />
         </div>
+
+        {/* CANCEL BUTTON (YUKARI TAŞINDI) */}
+        {!hasError && !isAllDone && onCancel && (
+          <div className="flex justify-center -mt-2">
+            <Button
+              variant="destructive"
+              className="w-full gap-2 font-bold shadow-md h-12 text-base relative overflow-hidden group"
+              onClick={onCancel}
+            >
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <AlertCircle className="w-5 h-5" />
+              Üretimi Durdur
+            </Button>
+          </div>
+        )}
 
         {/* STEPS TIMELINE SECTION */}
         <div className="space-y-8 relative">

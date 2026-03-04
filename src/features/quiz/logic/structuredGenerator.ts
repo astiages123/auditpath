@@ -2,7 +2,7 @@ import { z } from 'zod';
 import type { LLMProvider, Message } from '@/features/quiz/types';
 import { UnifiedLLMClient } from '@/features/quiz/services/quizInfoService';
 import { logger } from '@/utils/logger';
-import { type AITask } from '@/utils/aiConfig';
+import { type AITask, getTaskConfig } from '@/utils/aiConfig';
 
 // === SECTION: Types & Constants ===
 
@@ -21,6 +21,7 @@ export interface StructuredOptions<T> {
 
 const DEFAULT_RETRY_PROMPT = `BİR ÖNCEKİ CEVABIN JSON ŞEMASINA UYMUYORDU. 
 Lütfen cevabını SADECE geçerli bir JSON objesi olarak tekrar gönder. Markdown etiketi ( \`\`\`json ) kullanma.`;
+const GOOGLE_MODEL = 'gemini-3-flash-preview';
 
 // === SECTION: Generator Logic ===
 
@@ -41,6 +42,26 @@ export async function generate<T>(
     onLog,
   } = options;
 
+  // Task bazlı model/provider/temperature seçimi
+  // options.task varsa aiConfig'den doğru yapılandırmayı çek
+  // yoksa model:'smart' → Gemini, default → Gemini
+  let resolvedProvider = options.provider;
+  let resolvedModel: string = GOOGLE_MODEL;
+  let resolvedTemp = options.temperature ?? 0.2;
+
+  if (options.task) {
+    const taskConfig = getTaskConfig(options.task);
+    resolvedProvider = resolvedProvider || (taskConfig.provider as LLMProvider);
+    resolvedModel = taskConfig.model;
+    resolvedTemp = options.temperature ?? taskConfig.temperature;
+    onLog?.(
+      `Task: ${options.task} → ${taskConfig.provider}/${taskConfig.model}`
+    );
+  } else if (options.model === 'smart') {
+    resolvedModel = GOOGLE_MODEL;
+    resolvedProvider = resolvedProvider || 'google';
+  }
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const isRetry = attempt > 0;
@@ -54,13 +75,23 @@ export async function generate<T>(
         onLog?.(`Yeniden deneme (Retry) yapılıyor: #${attempt}`);
       }
 
-      // LLM İsteği
+      // LLM İsteği — task bazlı provider/model kullanılıyor
       const response = await UnifiedLLMClient.generate(currentMessages, {
-        provider: options.provider,
-        model: options.model === 'smart' ? 'google' : 'google', // Örnek model eşleme
-        temperature: options.temperature ?? 0.2,
+        provider: resolvedProvider,
+        model: resolvedModel,
+        temperature: resolvedTemp,
         onLog,
       });
+
+      if (
+        response?.errorCode === 'AUTH_INVALID_JWT' ||
+        response?.errorCode === 'AUTH_SESSION_INVALID'
+      ) {
+        onLog?.('Oturum doğrulama hatası nedeniyle üretim durduruldu.', {
+          errorCode: response.errorCode,
+        });
+        return null;
+      }
 
       if (!response || !response.content) {
         throw new Error('LLM boş bir yanıt döndürdü.');
@@ -71,7 +102,23 @@ export async function generate<T>(
       // Markdown bloklarını temizle
       rawJson = rawJson.replace(/^```json\s*/i, '').replace(/```\s*$/i, '');
 
-      const parsedData = JSON.parse(rawJson);
+      let parsedData: unknown;
+      try {
+        parsedData = JSON.parse(rawJson);
+      } catch (parseErr) {
+        onLog?.('JSON parse hatası.', {
+          rawPreview: rawJson.slice(0, 300),
+          error: String(parseErr),
+          attempt,
+        });
+        logger.error(
+          'StructuredGenerator',
+          'generate',
+          `JSON parse hatası (Deneme ${attempt})`,
+          { rawPreview: rawJson.slice(0, 300) }
+        );
+        continue;
+      }
 
       // Zod Doğrulaması
       const validation = schema.safeParse(parsedData);
@@ -79,15 +126,24 @@ export async function generate<T>(
         return validation.data;
       }
 
+      const zodErrors = validation.error.issues.map(
+        (issue) => `${issue.path.join('.')}: ${issue.message}`
+      );
       onLog?.('Şema doğrulama (validation) başarısız oldu.', {
-        errors: validation.error.issues,
+        errors: zodErrors,
         attempt,
       });
+      logger.error(
+        'StructuredGenerator',
+        'generate',
+        `Zod validation hatası (Deneme ${attempt})`,
+        { zodErrors, keysReceived: Object.keys(parsedData as object) }
+      );
     } catch (error) {
       logger.error(
         'StructuredGenerator',
         'generate',
-        `Hata (Deneme ${attempt})`,
+        `Beklenmedik hata (Deneme ${attempt})`,
         error
       );
       onLog?.(`Üretim hatası (Deneme ${attempt})`, { error: String(error) });

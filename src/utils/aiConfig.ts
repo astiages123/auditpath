@@ -42,13 +42,12 @@ const TASK_CONFIGS: Record<AITask, AIConfig> = {
   /** Veri ve içerik analizi */
   analysis: {
     provider: 'google',
-    model: 'gemini-2.0-flash-exp',
+    model: 'gemini-3-flash-preview',
     temperature: 0.7,
   },
-  /** Doğrulama ve kontrol işlemleri */
   validation: {
-    provider: 'mimo',
-    model: 'mimo-v2-flash',
+    provider: 'cerebras',
+    model: 'gpt-oss-120b',
     temperature: 0.1,
   },
   /** İlk taslak oluşturma */

@@ -7,7 +7,7 @@ const PROVIDERS = {
   cerebras: {
     url: 'https://api.cerebras.ai/v1/chat/completions',
     envKey: 'CEREBRAS_API_KEY',
-    defaultModel: 'zai-glm-4.7',
+    defaultModel: 'gpt-oss-120b', // using user's explicit model request
   },
   mimo: {
     url: 'https://api.xiaomimimo.com/v1/chat/completions',
@@ -61,30 +61,37 @@ Deno.serve(async (req: Request) => {
   }
 
   const startTime = Date.now();
-  let userId: string | null = null;
+  let userId: string = '';
 
   try {
     // 1. Authenticate User
+    // adminClient.auth.getUser(token) is used because it validates the JWT
+    // using the project's JWT secret directly — independent of which publishable
+    // key the client used (legacy anon key or new sb_publishable_ key).
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) throw new Error('Missing Authorization header');
 
-    const supabaseClient = createClient(sbUrl, sbKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
+    const token = authHeader.replace('Bearer ', '');
 
+    // Validate JWT token securely using Supabase auth admin
     const {
       data: { user },
       error: authError,
-    } = await supabaseClient.auth.getUser();
+    } = await adminClient.auth.getUser(token);
+
     if (authError || !user) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized', details: authError }),
+        JSON.stringify({
+          error: 'Unauthorized',
+          details: authError?.message || 'Invalid or expired token',
+        }),
         {
           status: 401,
           headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         }
       );
     }
+
     userId = user.id;
 
     // 2. Check Quota
@@ -136,11 +143,19 @@ Deno.serve(async (req: Request) => {
     const targetModel = model || config.defaultModel;
 
     // 4. Prepare and Call AI API
+    // Cerebras Limits: 30 RPM, 60,000 TPM
+    const defaultMaxTokens =
+      resolvedProvider === 'cerebras'
+        ? 8192 // Cerebras supports larger contexts, giving it ~8k max tokens
+        : resolvedProvider === 'mimo'
+          ? 4096
+          : 8192;
+
     const body: Record<string, unknown> = {
       model: targetModel,
       messages,
       temperature: temperature ?? (resolvedProvider === 'mimo' ? 0.3 : 0.1),
-      max_tokens: max_tokens || 8192,
+      max_tokens: max_tokens || defaultMaxTokens,
     };
 
     if (resolvedProvider === 'mimo') {
@@ -153,10 +168,22 @@ Deno.serve(async (req: Request) => {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
-    if (resolvedProvider === 'mimo') headers['api-key'] = apiKey;
-    else headers['Authorization'] = `Bearer ${apiKey}`;
+    let targetUrl = config.url;
 
-    const response = await fetch(config.url, {
+    if (resolvedProvider === 'mimo') {
+      headers['api-key'] = apiKey;
+    } else if (resolvedProvider === 'google') {
+      // Gemini OpenAI-compatible endpoint is strict about API key transport.
+      // Send both header and query param for maximum compatibility.
+      headers['x-goog-api-key'] = apiKey;
+      const url = new URL(config.url);
+      url.searchParams.set('key', apiKey);
+      targetUrl = url.toString();
+    } else {
+      headers['Authorization'] = `Bearer ${apiKey}`;
+    }
+
+    const response = await fetch(targetUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
@@ -187,7 +214,7 @@ Deno.serve(async (req: Request) => {
 
     // 5. Clean and Parse Response
     let cleanedText = responseText;
-    if (resolvedProvider === 'mimo') {
+    if (resolvedProvider === 'mimo' || resolvedProvider === 'cerebras') {
       cleanedText = responseText
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
         .replace(/<think>[\s\S]*/gi, '')

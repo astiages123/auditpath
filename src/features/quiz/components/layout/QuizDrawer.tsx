@@ -61,6 +61,7 @@ export function QuizDrawer({
     examProgress,
     handleStartQuiz,
     handleGenerate,
+    handleStopGeneration,
     handleFinishQuiz,
     courseProgress,
     resetState,
@@ -191,6 +192,7 @@ export function QuizDrawer({
                           <MappingProgressView
                             examProgress={examProgress}
                             examLogs={examLogs}
+                            onCancel={handleStopGeneration}
                           />
                         )}
 
