@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Target, Maximize2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -6,7 +7,11 @@ import { MasteryProgressNavigator as MasteryNavigatorContent } from './MasteryPr
 import { CardHeader } from './CardElements';
 import { useMasteryChains } from '../hooks/useMasteryChains';
 
-interface MasteryItem {
+// ==========================================
+// === TYPES / PROPS ===
+// ==========================================
+
+export interface MasteryItem {
   lessonId: string;
   title: string;
   type?: string;
@@ -15,11 +20,36 @@ interface MasteryItem {
   questionProgress: number;
 }
 
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
 export const MasteryNavigatorCard = () => {
+  // ==========================================
+  // === HOOKS ===
+  // ==========================================
   const { lessonMastery } = useMasteryChains();
+
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
   const loading = !lessonMastery || lessonMastery.length === 0;
 
-  if (loading)
+  // Sort by mastery score (DESC) and then by title (ASC), exclude 100%
+  const displayNodes: MasteryItem[] = useMemo(() => {
+    return [...(lessonMastery || [])]
+      .filter((item) => item.mastery < 100)
+      .sort((a, b) => {
+        if (b.mastery !== a.mastery) return b.mastery - a.mastery;
+        return a.title.localeCompare(b.title);
+      })
+      .slice(0, 4);
+  }, [lessonMastery]);
+
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
+  if (loading) {
     return (
       <Card className="h-full flex flex-col p-6">
         <Skeleton className="h-6 w-48 mb-6 bg-surface" />
@@ -33,22 +63,14 @@ export const MasteryNavigatorCard = () => {
         </div>
       </Card>
     );
-
-  // Sort by mastery score (DESC) and then by title (ASC), exclude 100%
-  const displayNodes: MasteryItem[] = [...(lessonMastery || [])]
-    .filter((item) => item.mastery < 100)
-    .sort((a, b) => {
-      if (b.mastery !== a.mastery) return b.mastery - a.mastery;
-      return a.title.localeCompare(b.title);
-    })
-    .slice(0, 4);
+  }
 
   return (
     <EfficiencyModal
       title="Akıllı Müfredat Ustalığı"
       trigger={
         <div className="h-full w-full cursor-pointer">
-          <Card className="h-full flex flex-col p-6 overflow-hidden relative group">
+          <Card className="h-full flex flex-col p-6 overflow-hidden relative group hover:border-accent/40 transition-all duration-300">
             <CardHeader
               icon={Target}
               iconColor="text-accent"

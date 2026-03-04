@@ -1,10 +1,14 @@
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
 /**
  * Represents a single event in the Pomodoro timeline.
  */
 export interface TimelineEvent {
   type: 'work' | 'break' | 'pause';
   start: number;
-  end?: number;
+  end?: number | null;
 }
 
 /**
@@ -16,14 +20,26 @@ export interface SessionTotals {
   totalPause: number;
 }
 
+// ===========================
+// === PURE CALCULATIONS ===
+// ===========================
+
 /**
  * Calculates the total duration for each activity type in seconds.
+ *
  * @param timeline - The array of timeline events
  * @param now - Optional current timestamp to use for ongoing events. Defaults to Date.now()
  * @returns Object containing total seconds for work, break, and pause.
+ *
+ * @example
+ * const events: TimelineEvent[] = [
+ *   { type: 'work', start: 1000, end: 2000 }
+ * ];
+ * const totals = calculateSessionTotals(events);
+ * // returns { totalWork: 1, totalBreak: 0, totalPause: 0 }
  */
 export function calculateSessionTotals(
-  timeline: TimelineEvent[] | unknown,
+  timeline: TimelineEvent[],
   now: number = Date.now()
 ): SessionTotals {
   if (!Array.isArray(timeline) || timeline.length === 0) {
@@ -31,7 +47,7 @@ export function calculateSessionTotals(
   }
 
   // Sort timeline by start time to ensure sequential processing
-  const sortedTimeline = [...(timeline as TimelineEvent[])]
+  const sortedTimeline = [...timeline]
     .filter((e) => e && e.start !== undefined && e.start !== null)
     .sort((a, b) => a.start - b.start);
 
@@ -43,7 +59,7 @@ export function calculateSessionTotals(
     const event = sortedTimeline[i];
     const nextEvent = sortedTimeline[i + 1];
 
-    let endTime = event.end || now;
+    let endTime = event.end ?? now;
 
     if (nextEvent && nextEvent.start < endTime) {
       endTime = nextEvent.start;
@@ -67,6 +83,8 @@ export function calculateSessionTotals(
       case 'duraklama':
         pauseMs += duration;
         break;
+      default:
+        break;
     }
   }
 
@@ -79,19 +97,24 @@ export function calculateSessionTotals(
 
 /**
  * Counts the number of pause events in the timeline.
+ *
  * @param timeline - The array of timeline events
  * @returns The count of pause events
+ *
+ * @example
+ * const events: TimelineEvent[] = [
+ *   { type: 'pause', start: 1000, end: 2000 }
+ * ];
+ * const pauses = calculatePauseCount(events);
+ * // returns 1
  */
-export function calculatePauseCount(
-  timeline: TimelineEvent[] | unknown
-): number {
+export function calculatePauseCount(timeline: TimelineEvent[]): number {
   if (!Array.isArray(timeline)) {
     return 0;
   }
 
-  return timeline.filter((event: unknown) => {
-    const evt = event as { type?: string };
-    const eventType = (evt.type || '').toLowerCase();
+  return timeline.filter((event: TimelineEvent) => {
+    const eventType = (event.type || '').toLowerCase();
     return (
       eventType === 'pause' ||
       eventType === 'duraklatma' ||
@@ -102,10 +125,20 @@ export function calculatePauseCount(
 
 /**
  * Calculates the number of 'work' cycles in a session based on the timeline.
+ *
  * @param timeline - The array of timeline events
  * @returns The number of work cycles
+ *
+ * @example
+ * const events: TimelineEvent[] = [
+ *   { type: 'work', start: 1000, end: 2000 },
+ *   { type: 'break', start: 2000, end: 3000 },
+ *   { type: 'work', start: 3000, end: 4000 }
+ * ];
+ * const cycles = getCycleCount(events);
+ * // returns 2
  */
-export function getCycleCount(timeline: TimelineEvent[] | unknown): number {
+export function getCycleCount(timeline: TimelineEvent[]): number {
   if (!Array.isArray(timeline)) {
     return 0;
   }
@@ -113,7 +146,7 @@ export function getCycleCount(timeline: TimelineEvent[] | unknown): number {
   let count = 0;
   let inWorkBlock = false;
 
-  const sortedTimeline = [...(timeline as TimelineEvent[])]
+  const sortedTimeline = [...timeline]
     .filter((e) => e && e.start !== undefined && e.start !== null)
     .sort((a, b) => a.start - b.start);
 

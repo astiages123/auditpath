@@ -7,12 +7,19 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { upsertPomodoroSession } from '@/features/pomodoro/services/pomodoroService';
 import { Json } from '@/types/database.types';
 
-// Sub-components
+// ===========================
+// === SUB-COMPONENTS ===
+// ===========================
+
 import { CourseSelector } from './CourseSelector';
 import { TimerDisplay } from './TimerDisplay';
 import { TimerControls } from './TimerControls';
 import { PomodoroAlerts } from './PomodoroAlerts';
 import { MobilePomodoroBar } from './MobilePomodoroBar';
+
+// ===========================
+// === COMPONENT DEFINITION ===
+// ===========================
 
 export function PomodoroModal() {
   const {
@@ -62,31 +69,6 @@ export function PomodoroModal() {
 
   const isWorking = mode === 'work';
 
-  /* const performSave = async () => {
-    if (!selectedCourse || !startTime) return;
-    const closedTimeline = timeline.map(
-      (e: { start: number; end?: number; type: string }) => ({
-        ...e,
-        end: e.end || Date.now(),
-      })
-    );
-
-    try {
-      await upsertPomodoroSession(
-        {
-          id: sessionId || crypto.randomUUID(),
-          courseId: selectedCourse.id,
-          courseName: selectedCourse.name,
-          timeline: closedTimeline as Json[],
-          startedAt: originalStartTime || startTime,
-        },
-        userId || ''
-      );
-    } catch (error) {
-      logger.error('Pomodoro save error:', error as Error);
-    }
-  }; */
-
   const handleSwitchMode = async () => {
     switchMode();
   };
@@ -101,12 +83,10 @@ export function PomodoroModal() {
     if (userId && selectedCourse && sessionId) {
       const finalStartedAt = originalStartTime || startTime || Date.now();
 
-      const closedTimeline = timeline.map(
-        (e: { start: number; end?: number; type: string }) => ({
-          ...e,
-          end: e.end || Date.now(),
-        })
-      );
+      const closedTimeline = timeline.map((e) => ({
+        ...e,
+        end: e.end || Date.now(),
+      }));
 
       await upsertPomodoroSession(
         {

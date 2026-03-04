@@ -3,8 +3,44 @@ import { TrendingUp, TrendingDown } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Reusable Trend Badge component
-export const TrendBadge = ({ percentage }: { percentage: number }) => {
+// ==========================================
+// === TYPES / PROPS ===
+// ==========================================
+
+export interface TrendBadgeProps {
+  percentage: number;
+}
+
+export interface CardHeaderProps {
+  icon: ElementType;
+  iconColor?: string;
+  iconBg?: string;
+  title: string;
+  subtitle: string;
+  badge?: ReactNode;
+  action?: ReactNode;
+}
+
+export interface StatCardProps {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  icon?: ReactNode;
+  trend?: string;
+  trendLabel?: string;
+  className?: string;
+  loading?: boolean;
+}
+
+// ==========================================
+// === COMPONENT: TREND BADGE ===
+// ==========================================
+
+/**
+ * Reusable component showing an upward or downward trend badge based on percentage.
+ */
+export const TrendBadge = ({ percentage }: TrendBadgeProps) => {
+  // === RENDER ===
   if (percentage === 0) return null;
 
   const isPositive = percentage > 0;
@@ -25,7 +61,13 @@ export const TrendBadge = ({ percentage }: { percentage: number }) => {
   );
 };
 
-// Shared CardHeader component for consistency
+// ==========================================
+// === COMPONENT: CARD HEADER ===
+// ==========================================
+
+/**
+ * Reusable header component maintaining consistent styling across stat cards.
+ */
 export const CardHeader = memo(
   ({
     icon: Icon,
@@ -35,48 +77,39 @@ export const CardHeader = memo(
     subtitle,
     badge,
     action,
-  }: {
-    icon: ElementType;
-    iconColor?: string;
-    iconBg?: string;
-    title: string;
-    subtitle: string;
-    badge?: ReactNode;
-    action?: ReactNode;
-  }) => (
-    <div className="flex justify-between items-start">
-      <div className="flex items-center gap-4">
-        <div className={cn('p-2.5 rounded-xl', iconBg)}>
-          <Icon className={cn('w-5 h-5', iconColor)} />
+  }: CardHeaderProps) => {
+    // === RENDER ===
+    return (
+      <div className="flex justify-between items-start">
+        <div className="flex items-center gap-4">
+          <div className={cn('p-2.5 rounded-xl', iconBg)}>
+            <Icon className={cn('w-5 h-5', iconColor)} />
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-base font-semibold text-white tracking-wide">
+              {title}
+            </span>
+            <span className="text-xs text-muted-foreground/80">{subtitle}</span>
+          </div>
         </div>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-base font-semibold text-white tracking-wide">
-            {title}
-          </span>
-          <span className="text-xs text-muted-foreground/80">{subtitle}</span>
+        <div className="flex items-center gap-3">
+          {badge}
+          {action}
         </div>
       </div>
-      <div className="flex items-center gap-3">
-        {badge}
-        {action}
-      </div>
-    </div>
-  )
+    );
+  }
 );
 
 CardHeader.displayName = 'CardHeader';
 
-export interface StatCardProps {
-  title: string;
-  value: string | number;
-  subtitle?: string;
-  icon?: ReactNode;
-  trend?: string;
-  trendLabel?: string;
-  className?: string;
-  loading?: boolean;
-}
+// ==========================================
+// === COMPONENT: STAT CARD ===
+// ==========================================
 
+/**
+ * A versatile statistic card with trending state and loading skeleton support.
+ */
 export const StatCard = ({
   title,
   value,
@@ -87,6 +120,7 @@ export const StatCard = ({
   className,
   loading,
 }: StatCardProps) => {
+  // === RENDER ===
   if (loading) {
     return (
       <div className={cn('p-4 rounded-2xl bg-card border-border', className)}>

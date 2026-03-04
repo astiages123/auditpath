@@ -3,20 +3,32 @@ import { env } from '@/utils/env';
 import { calculateSessionTotals } from '../logic/sessionMath';
 import { saveSessionBeacon } from '../services/pomodoroService';
 
-interface UseTimerPersistenceProps {
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
+export interface UseTimerPersistenceProps {
   userId: string | undefined;
   sessionId: string | null;
   selectedCourse: { id: string; name: string } | null;
   timeline: {
     type: 'work' | 'break' | 'pause';
     start: number;
-    end?: number;
+    end?: number | null;
   }[];
   startTime: number | null;
   originalStartTime: number | null;
   accessToken: string | undefined;
 }
 
+// ===========================
+// === HOOK DEFINITION ===
+// ===========================
+
+/**
+ * Sends a beacon request with the unwritten pomodoro session data upon browser unload/close.
+ * Ensures session tracking remains intact even if the user closes the tab unexpectedly.
+ */
 export function useTimerPersistence({
   userId,
   sessionId,

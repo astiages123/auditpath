@@ -2,13 +2,15 @@ import { ClipboardCheck, Maximize2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { CardHeader } from './CardElements';
-
 import { EfficiencyModal } from './EfficiencyModal';
 import { cn } from '@/utils/stringHelpers';
-import { useCognitiveInsights } from '../hooks/useCognitiveInsights';
-import { Skeleton } from '@/components/ui/skeleton';
-import { RecentQuizSession } from '@/features/quiz/types';
 import { formatDisplayDate } from '@/utils/dateUtils';
+
+import type { RecentQuizSession } from '@/features/quiz/types';
+
+// ==========================================
+// === HELPERS ===
+// ==========================================
 
 const formatDate = (dateStr: string) => {
   return formatDisplayDate(dateStr, {
@@ -16,6 +18,10 @@ const formatDate = (dateStr: string) => {
     month: 'long',
   });
 };
+
+// ==========================================
+// === INTERNAL COMPONENTS ===
+// ==========================================
 
 const ScoreBoard = ({
   correct,
@@ -116,48 +122,35 @@ const QuizHistoryContent = ({ quizzes }: { quizzes: RecentQuizSession[] }) => (
   </div>
 );
 
-export const RecentQuizzesCard = () => {
-  const { loadingQuizzes: loading, recentQuizzes } = useCognitiveInsights();
+// ==========================================
+// === PROPS ===
+// ==========================================
+
+export interface RecentQuizzesCardProps {
+  recentQuizzes: RecentQuizSession[];
+}
+
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
+export const RecentQuizzesCard = ({
+  recentQuizzes,
+}: RecentQuizzesCardProps) => {
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
   const displayQuizzes = recentQuizzes.slice(0, 5);
 
-  if (loading) {
-    return (
-      <Card className="h-full flex flex-col p-6">
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-32 bg-surface" />
-              <Skeleton className="h-3 w-48 bg-surface" />
-            </div>
-          </div>
-        </div>
-        <div className="mt-6 flex-1 space-y-3">
-          {[...Array(3)].map((_, i) => (
-            <div
-              key={`skeleton-quiz-${i}`}
-              className="p-4 rounded-2xl bg-white/3 border border-white/5"
-            >
-              <div className="flex-between">
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-32 bg-surface" />
-                  <Skeleton className="h-3 w-24 bg-surface" />
-                </div>
-                <Skeleton className="h-8 w-12 bg-surface" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-    );
-  }
-
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   return (
     <EfficiencyModal
       title="Quiz Geçmişi"
       trigger={
         <div className="h-full w-full cursor-pointer">
-          <Card className="h-full flex flex-col p-6">
+          <Card className="h-full flex flex-col p-6 hover:border-accent/40 transition-all duration-300">
             <CardHeader
               icon={ClipboardCheck}
               iconColor="text-accent"

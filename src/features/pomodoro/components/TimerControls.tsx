@@ -3,12 +3,20 @@ import { motion } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
-interface TimerControlsProps {
+// ===========================
+// === PROPS DEFINITION ===
+// ===========================
+
+export interface TimerControlsProps {
   isExpanded: boolean;
   onSwitchMode: () => void;
   onFinishDay: () => void;
   onDiscard: () => void;
 }
+
+// ===========================
+// === COMPONENT DEFINITION ===
+// ===========================
 
 export function TimerControls({
   onSwitchMode,

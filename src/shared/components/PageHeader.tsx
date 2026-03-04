@@ -1,17 +1,22 @@
 import { FC, ReactNode } from 'react';
 import { cn } from '@/utils/stringHelpers';
 
+// === PROPS ===
+
 interface PageHeaderProps {
   title: string;
   subtitle?: string | ReactNode;
   className?: string;
 }
 
+// === COMPONENT ===
+
 export const PageHeader: FC<PageHeaderProps> = ({
   title,
   subtitle,
   className,
 }) => {
+  // === RENDER ===
   return (
     <div
       className={cn(

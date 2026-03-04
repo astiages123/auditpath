@@ -1,4 +1,3 @@
-import { DayActivity } from '@/features/efficiency/types/efficiencyTypes';
 import { cn } from '@/utils/stringHelpers';
 import { formatDisplayDate } from '@/utils/dateUtils';
 import {
@@ -8,12 +7,31 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-interface EfficiencyHeatmapProps {
+import type { DayActivity } from '@/features/efficiency/types/efficiencyTypes';
+
+// ==========================================
+// === TYPES / PROPS ===
+// ==========================================
+
+export interface EfficiencyHeatmapProps {
   data: DayActivity[];
 }
 
+export type HeatmapLevel = 0 | 1 | 2 | 3 | 4 | 5;
+
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
+/**
+ * A GitHub-like contribution heatmap showing daily active focus minutes.
+ */
 export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
-  const getLevel = (day: DayActivity): 0 | 1 | 2 | 3 | 4 | 5 => {
+  // ==========================================
+  // === HELPERS ===
+  // ==========================================
+
+  const getLevel = (day: DayActivity): HeatmapLevel => {
     const minutes = day.totalMinutes || 0;
     if (minutes > 200) return 5;
     if (minutes > 150) return 4;
@@ -23,7 +41,7 @@ export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
     return 0;
   };
 
-  const getLevelStyles = (level: number) => {
+  const getLevelStyles = (level: HeatmapLevel) => {
     switch (level) {
       case 0:
         return 'bg-foreground/5 border-white/20';
@@ -50,6 +68,9 @@ export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
     });
   };
 
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   return (
     <div className="flex flex-col h-full w-full py-1">
       <div className="w-full flex justify-center">
@@ -62,7 +83,7 @@ export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
           }}
         >
           <TooltipProvider delayDuration={0}>
-            {data.map((day, _i) => {
+            {data.map((day) => {
               const level = getLevel(day);
               return (
                 <Tooltip key={day.date}>
@@ -108,7 +129,7 @@ export function EfficiencyHeatmap({ data }: EfficiencyHeatmapProps) {
             Az
           </span>
           <div className="flex gap-1.5">
-            {[0, 1, 2, 3, 4, 5].map((l) => (
+            {([0, 1, 2, 3, 4, 5] as HeatmapLevel[]).map((l) => (
               <div
                 key={l}
                 className={cn(

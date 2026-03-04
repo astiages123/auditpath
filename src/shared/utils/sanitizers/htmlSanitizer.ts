@@ -1,6 +1,10 @@
 import DOMPurify from 'dompurify';
 
+// === TYPES ===
+
 export type ContentType = 'strict' | 'markdown' | 'raw' | 'html';
+
+// === CONFIG ===
 
 const COMMON_FORBID_ATTR = [
   'onerror',
@@ -32,7 +36,6 @@ export const STRICT_CONFIG = {
 };
 
 export const MARKDOWN_CONFIG = {
-  // ... existing tags ...
   ALLOWED_TAGS: [
     'b',
     'strong',
@@ -217,6 +220,8 @@ export const HTML_CONFIG = {
     'object',
     'embed',
     'link',
+    'meta',
+    'head',
   ],
   FORBID_ATTR: [
     ...COMMON_FORBID_ATTR,
@@ -228,6 +233,11 @@ export const HTML_CONFIG = {
   ],
 };
 
+// === FUNCTIONS ===
+
+/**
+ * Sanitizes a string using DOMPurify with the specified configuration
+ */
 export function sanitizeString(
   value: string,
   contentType: ContentType = 'strict'
@@ -244,5 +254,8 @@ export function sanitizeString(
   return DOMPurify.sanitize(value, config);
 }
 
+/**
+ * Convenience helper for HTML sanitization
+ */
 export const sanitizeHtml = (html: string): string =>
   sanitizeString(html, 'html');

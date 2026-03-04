@@ -1,20 +1,45 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/utils/stringHelpers';
-import {
-  EfficiencyTrend,
-  EfficiencyTrendProps,
-} from '@/features/efficiency/types/efficiencyTypes';
 import { formatDisplayDate } from '@/utils/dateUtils';
 import { EFFICIENCY_THRESHOLDS } from '../utils/constants';
 
+import type {
+  EfficiencyTrend,
+  EfficiencyTrendProps,
+} from '@/features/efficiency/types/efficiencyTypes';
+
 type RechartsModule = typeof import('recharts');
 
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
+/**
+ * Renders the Efficiency Trend diverging bar chart, mapping items against standard multiplier thresholds.
+ */
 export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
+  // ==========================================
+  // === HOOKS & STATE ===
+  // ==========================================
   const [Recharts, setRecharts] = useState<RechartsModule | null>(null);
 
   useEffect(() => {
     import('recharts').then((mod) => setRecharts(mod));
   }, []);
+
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
+
+  // Deviation from 1.00 (Center of Ideal Range)
+  const chartData = data.map((item: EfficiencyTrend) => ({
+    ...item,
+    deviation: item.score - 1.0,
+  }));
+
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
 
   if (!Recharts) {
     return (
@@ -35,13 +60,6 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
     Cell,
   } = Recharts;
 
-  // 1. Veri Hazırlığı (Diverging Logic)
-  // Deviation from 1.00 (Center of Ideal Range)
-  const chartData = data.map((item: EfficiencyTrend) => ({
-    ...item,
-    deviation: item.score - 1.0,
-  }));
-
   return (
     <div className="w-full h-[400px] mt-4">
       <ResponsiveContainer width="100%" height="100%">
@@ -57,42 +75,31 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
             opacity={0.5}
           />
 
-          {/* 2. Zemin Bölgeleri (Background Zones) */}
-          {/* Maps to ranges shifted by -1.00 */}
-
-          {/* Critical High: > SPEED */}
+          {/* Background Zones - shifted by -1.00 */}
           <ReferenceArea
             y1={EFFICIENCY_THRESHOLDS.SPEED - 1.0}
             y2={2.0}
             fill="oklch(63.68% 0.2078 25.3313)"
             fillOpacity={0.12}
           />
-
-          {/* Warning High: OPTIMAL_MAX - SPEED */}
           <ReferenceArea
             y1={EFFICIENCY_THRESHOLDS.OPTIMAL_MAX - 1.0}
             y2={EFFICIENCY_THRESHOLDS.SPEED - 1.0}
             fill="oklch(77.596% 0.14766 79.996)"
             fillOpacity={0.12}
           />
-
-          {/* Optimal: DEEP - OPTIMAL_MAX */}
           <ReferenceArea
             y1={EFFICIENCY_THRESHOLDS.DEEP - 1.0}
             y2={EFFICIENCY_THRESHOLDS.OPTIMAL_MAX - 1.0}
             fill="oklch(85.54% 0.1969 158.6115)"
             fillOpacity={0.12}
           />
-
-          {/* Warning Low: STUCK - DEEP */}
           <ReferenceArea
             y1={EFFICIENCY_THRESHOLDS.STUCK - 1.0}
             y2={EFFICIENCY_THRESHOLDS.DEEP - 1.0}
             fill="oklch(77.596% 0.14766 79.996)"
             fillOpacity={0.12}
           />
-
-          {/* Critical Low: < STUCK */}
           <ReferenceArea
             y1={-1.0}
             y2={EFFICIENCY_THRESHOLDS.STUCK - 1.0}
@@ -100,7 +107,7 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
             fillOpacity={0.12}
           />
 
-          {/* Merkez Hattı: 1.00x */}
+          {/* Center Line: 1.00x */}
           <ReferenceLine
             y={0}
             stroke="oklch(85.54% 0.1969 158.6115)"
@@ -115,7 +122,7 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
             }}
           />
 
-          {/* 2. Eksen Yapılandırması */}
+          {/* Axes */}
           <XAxis
             dataKey="date"
             tick={{ fill: 'var(--muted-foreground)', fontSize: 10, dy: 10 }}
@@ -145,12 +152,6 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
             tickLine={false}
             width={40}
             tickFormatter={(val: number) => {
-              // Display the absolute score equivalent instead of deviation for UX?
-              // Or keep deviation? User asked "XAxis... score... YAxis... dates" previously,
-              // now "YAxis (Dikey): domain={[-1.3, 2.7]}".
-              // I will simply show the Deviation value or maybe empty to avoid confusion if areas are colored.
-              // But usually users want to see scale.
-              // Let's show signed deviation as requested.
               if (val === 0) return '0';
               return val > 0 ? `+${val.toFixed(1)}` : val.toFixed(1);
             }}
@@ -240,12 +241,7 @@ export const EfficiencyTrendChart = ({ data }: EfficiencyTrendProps) => {
             }}
           />
 
-          {/* 3. Bar Renkleri: Skor bazlı */}
-          <Bar
-            dataKey="deviation"
-            barSize={32} // Slightly wider bars for better visibility
-            radius={[4, 4, 4, 4]}
-          >
+          <Bar dataKey="deviation" barSize={32} radius={[4, 4, 4, 4]}>
             {chartData.map((entry: EfficiencyTrend, index: number) => {
               const val = entry.score;
               let color = 'oklch(77.596% 0.14766 79.996)'; // Default accent

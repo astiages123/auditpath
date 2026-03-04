@@ -1,19 +1,45 @@
 import { create } from 'zustand';
-import { supabase } from '@/lib/supabase';
-import { logger } from '@/utils/logger';
 import { z } from 'zod';
+import { supabase } from '@/lib/supabase';
 
-interface QuotaStore {
-  quota: {
-    dailyLimit: number;
-    remaining: number;
-    isLoading: boolean;
-    error: string | null;
-  };
-  fetchQuota: () => Promise<void>;
-  decrementClientQuota: () => void; // For optimistic UI updates
+// ============================================================================
+// STATE TYPES
+// ============================================================================
+
+/**
+ * Kullanıcı kota bilgilerini temsil eden arayüz.
+ */
+interface QuotaInfo {
+  /** Günlük toplam soru limiti */
+  dailyLimit: number;
+  /** Kalan soru hakkı */
+  remaining: number;
+  /** Veri yükleniyor mu? */
+  isLoading: boolean;
+  /** Varsa hata mesajı */
+  error: string | null;
 }
 
+/**
+ * Kullanıcı kotasını (limitlerini) yöneten Zustand store arayüzü.
+ */
+interface QuotaStore {
+  /** Kota durumu nesnesi */
+  quota: QuotaInfo;
+  /** Sunucudan güncel kota bilgilerini çeker */
+  fetchQuota: () => Promise<void>;
+  /** İstemci tarafında kalan kotayı 1 azaltır (iyimser güncelleme) */
+  decrementClientQuota: () => void;
+}
+
+// ============================================================================
+// INITIAL STATE & STORE
+// ============================================================================
+
+/**
+ * Kullanıcının günlük soru limitlerini ve kalan haklarını takip eden store.
+ * Supabase RPC ("get_user_quota_info") kullanarak veri çeker.
+ */
 export const useQuotaStore = create<QuotaStore>()((set) => ({
   quota: {
     dailyLimit: 50,
@@ -22,16 +48,22 @@ export const useQuotaStore = create<QuotaStore>()((set) => ({
     error: null,
   },
 
+  // ============================================================================
+  // ACTIONS
+  // ============================================================================
+
   fetchQuota: async () => {
     set((state) => ({
       quota: { ...state.quota, isLoading: true, error: null },
     }));
+
     try {
-      // Call the RPC defined in our migration
+      // Supabase üzerinden RPC çağrısı yap
       const { data, error } = await supabase.rpc('get_user_quota_info');
 
       if (error) throw error;
 
+      // Gelen veriyi Zod ile doğrula
       const QuotaSchema = z.object({
         daily_limit: z.number().optional().default(50),
         remaining: z.number().optional().default(50),
@@ -47,9 +79,15 @@ export const useQuotaStore = create<QuotaStore>()((set) => ({
             error: null,
           },
         });
+      } else {
+        console.warn(
+          '[useQuotaStore][fetchQuota] Veri doğrulama hatası:',
+          parsedQuota.error
+        );
+        throw new Error('Geçersiz kota verisi');
       }
     } catch (err) {
-      logger.error('Failed to fetch quota:', { err });
+      console.error('[useQuotaStore][fetchQuota] Hata:', err);
       set((state) => ({
         quota: {
           ...state.quota,

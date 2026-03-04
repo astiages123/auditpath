@@ -26,6 +26,10 @@ import {
 import { usePomodoroWorker } from '../hooks/usePomodoroWorker';
 import { logger } from '@/utils/logger';
 
+// ===========================
+// === COMPONENT DEFINITION ===
+// ===========================
+
 export function TimerController() {
   // Timer state
   const { isActive, timeLeft, isBreak, duration, startTime } = useTimerStore();
@@ -210,8 +214,14 @@ export function TimerController() {
                   toast.info('Önceki oturumunuzdan devam ediliyor.');
                 }
               }
-            } catch (e: unknown) {
-              logger.error('Restoration failed', e as Error);
+            } catch (error: unknown) {
+              console.error('[TimerController][loadData] Hata:', error);
+              logger.error(
+                'TimerController',
+                'loadData',
+                'Restoration failed',
+                error as Error
+              );
             } finally {
               window._isPomodoroRestoring = false;
             }
@@ -219,8 +229,14 @@ export function TimerController() {
             window._isPomodoroRestoring = false;
           }
         }
-      } catch (err) {
-        logger.error('Initial sync failed', err as Error);
+      } catch (error: unknown) {
+        console.error('[TimerController][loadData] Hata:', error);
+        logger.error(
+          'TimerController',
+          'loadData',
+          'Initial sync failed',
+          error as Error
+        );
       }
     }
 

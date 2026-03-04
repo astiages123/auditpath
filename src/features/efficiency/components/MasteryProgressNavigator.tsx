@@ -1,7 +1,12 @@
+import { useMemo } from 'react';
 import { Target } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 
-interface MasteryItem {
+// ==========================================
+// === TYPES / PROPS ===
+// ==========================================
+
+export interface MasteryItem {
   lessonId: string;
   title: string;
   type?: string;
@@ -10,15 +15,27 @@ interface MasteryItem {
   questionProgress: number;
 }
 
-interface MasteryProgressNavigatorProps {
+export interface MasteryProgressNavigatorProps {
   sessions: MasteryItem[];
 }
+
+// ==========================================
+// === COMPONENT ===
+// ==========================================
 
 export const MasteryProgressNavigator = ({
   sessions,
 }: MasteryProgressNavigatorProps) => {
-  const sortedSessions = [...sessions].sort((a, b) => b.mastery - a.mastery);
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
+  const sortedSessions = useMemo(() => {
+    return [...sessions].sort((a, b) => b.mastery - a.mastery);
+  }, [sessions]);
 
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

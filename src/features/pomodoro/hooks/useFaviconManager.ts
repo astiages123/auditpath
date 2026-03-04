@@ -2,9 +2,11 @@ import { useCallback, useEffect, useRef } from 'react';
 import { logger } from '@/utils/logger';
 import faviconIco from '@/assets/favicon.ico';
 
+// ===========================
+// === HOOK DEFINITION ===
+// ===========================
+
 /**
- * useFaviconManager
- *
  * Dinamik favicon ve sayfa başlığı yönetimi sağlayan hook.
  * - Favicon üzerine ilerleme halkası çizer.
  * - Sayfa başlığını zamanlayıcı durumuna göre günceller.
@@ -77,8 +79,11 @@ export function useFaviconManager(
 
         ctx.drawImage(imageRef.current, offset, offset, size, size);
         ctx.restore();
-      } catch (e) {
-        logger.debug('Favicon draw error:', { error: String(e) });
+      } catch (e: unknown) {
+        console.error('[useFaviconManager][drawFavicon] Hata:', e);
+        logger.warn('UseFaviconManager', 'drawFavicon', 'Favicon draw error', {
+          error: String(e),
+        });
       }
     }
 
@@ -157,6 +162,8 @@ export function useFaviconManager(
       };
       img.onerror = () => {
         logger.warn(
+          'UseFaviconManager',
+          'useEffect',
           'Favicon image could not be loaded, drawing only progress ring.'
         );
         imageRef.current = null;

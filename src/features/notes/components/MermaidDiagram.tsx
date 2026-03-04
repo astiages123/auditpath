@@ -3,13 +3,32 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import { sanitizeHtml } from '@/shared/utils/sanitizers/htmlSanitizer';
 import { logger } from '@/utils/logger';
 
-interface MermaidDiagramProps {
+// === BÖLÜM ADI: TİPLER (TYPES) ===
+// ===========================
+
+export interface MermaidDiagramProps {
+  /** Mermaid şema kodu (Ham metin) */
   code: string;
 }
 
-// Mermaid'i bir kere başlat, her render'da tekrar başlatma
-let mermaidInitialized = false;
+export interface MermaidDiagramState {
+  /** Üretilen SVG markup kodu */
+  svg: string;
+  /** Hata durumu */
+  error: string | null;
+  /** Yüklenme durumu */
+  isLoading: boolean;
+}
 
+// === BÖLÜM ADI: SİSTEM YARDIMCILARI (SINGLETON LOGIC) ===
+// ===========================
+
+// Mermaid'i bir kere başlat, her render'da tekrar başlatma
+let mermaidInitialized: boolean = false;
+
+/**
+ * Asenkron çalışan dinamik mermaid paket yükleyicisi ve tema atayıcısı.
+ */
 async function getMermaid() {
   const mermaid = (await import('mermaid')).default;
 
@@ -39,32 +58,59 @@ async function getMermaid() {
   return mermaid;
 }
 
-export const MermaidDiagram = memo(({ code }: MermaidDiagramProps) => {
+// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
+// ===========================
+
+/**
+ * Notlar içerisindeki Mermaid şema kalıplarını dinamik olarak import edip işleyen
+ * ve güvenle (XSS denetimi vs) ekrana basan bileşen.
+ *
+ * @param {MermaidDiagramProps} props
+ * @returns {React.ReactElement}
+ */
+export const MermaidDiagram = memo(function MermaidDiagram({
+  code,
+}: MermaidDiagramProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [state, setState] = useState({
+  const [state, setState] = useState<MermaidDiagramState>({
     svg: '',
-    error: null as string | null,
+    error: null,
     isLoading: true,
   });
 
+  // === EFEKTLER (EFFECTS) ===
+
   useEffect(() => {
-    const renderDiagram = async () => {
+    const renderDiagram = async (): Promise<void> => {
       if (!code.trim()) return;
 
       try {
-        setState((prev) => ({ ...prev, isLoading: true, error: null }));
+        setState((prev: MermaidDiagramState) => ({
+          ...prev,
+          isLoading: true,
+          error: null,
+        }));
 
         const mermaid = await getMermaid();
 
-        const id = `mermaid-${Math.random().toString(36).substr(2, 9)}`;
-        const { svg: renderedSvg } = await mermaid.render(id, code);
-        const sanitizedSvg = sanitizeHtml(renderedSvg);
+        // Çakışmayı engellemek için özgün bir ID tasarlıyoruz
+        const diagramId: string = `mermaid-${Math.random().toString(36).substring(2, 9)}`;
+        const { svg: renderedSvg } = await mermaid.render(diagramId, code);
+
+        const sanitizedSvg: string = sanitizeHtml(renderedSvg);
+
         setState({ svg: sanitizedSvg, error: null, isLoading: false });
-      } catch (err) {
-        logger.error('Mermaid render error:', err as Error);
-        setState((prev) => ({
+      } catch (err: unknown) {
+        console.error('[MermaidDiagram][renderDiagram] Hata:', err);
+        logger.error(
+          'MermaidDiagram',
+          'renderDiagram',
+          'Mermaid render error:',
+          err as Error
+        );
+        setState((prev: MermaidDiagramState) => ({
           ...prev,
-          error: 'Diyagram render edilemedi',
+          error: 'Diyagram render edilemedi.',
           isLoading: false,
         }));
       }
@@ -72,6 +118,8 @@ export const MermaidDiagram = memo(({ code }: MermaidDiagramProps) => {
 
     renderDiagram();
   }, [code]);
+
+  // === UI RENDER ===
 
   if (state.isLoading) {
     return (
@@ -102,5 +150,3 @@ export const MermaidDiagram = memo(({ code }: MermaidDiagramProps) => {
     />
   );
 });
-
-MermaidDiagram.displayName = 'MermaidDiagram';

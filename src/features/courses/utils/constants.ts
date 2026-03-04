@@ -1,8 +1,18 @@
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
+/** Represents the category mapping for course distribution strategies */
 export type CourseCategory =
   | 'SCENARIO_BASED'
   | 'THEORY_BASED'
   | 'FULL_PRACTICE';
 
+// ===========================
+// === EXAM STRATEGY CONFIG ===
+// ===========================
+
+/** Importance mappings for specific exam strategies */
 export const EXAM_STRATEGY: Record<
   string,
   { importance: 'high' | 'medium' | 'low' }
@@ -49,6 +59,11 @@ export const EXAM_STRATEGY: Record<
   'uluslararasi-iliskiler-kuramlari': { importance: 'low' },
 };
 
+// ===========================
+// === CATEGORY MAPPINGS ===
+// ===========================
+
+/** Predefined manual mappings between course string name and CourseCategory type */
 export const CATEGORY_MAPPINGS: Record<string, CourseCategory> = {
   // FULL_PRACTICE (%100 Uygulama/İşlem)
   'Sözel Mantık': 'FULL_PRACTICE',
@@ -88,8 +103,14 @@ export const CATEGORY_MAPPINGS: Record<string, CourseCategory> = {
   'Uluslararası İlişkiler Kuramları': 'THEORY_BASED',
 };
 
+// ===========================
+// === DEFAULT CONFIGS ===
+// ===========================
+
+/** Default category to be used as a fallback mechanism */
 export const DEFAULT_CATEGORY: CourseCategory = 'THEORY_BASED';
 
+/** Distributed knowledge configurations relative to course categories */
 export const CATEGORY_DISTRIBUTIONS: Record<
   CourseCategory,
   ('knowledge' | 'application' | 'analysis')[]

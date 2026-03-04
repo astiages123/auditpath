@@ -12,7 +12,6 @@ import {
 } from '@/features/quiz/logic/quizCoreLogic';
 import { MASTERY_THRESHOLD } from '@/features/quiz/utils/constants';
 import { logger } from '@/utils/logger';
-import { usePomodoroSessionStore } from '@/features/pomodoro/store';
 import { useCelebrationStore } from '@/features/achievements/store';
 import { useQuotaStore } from '@/features/quiz/store';
 import { useQuizPersistence } from './useQuizPersistence';
@@ -22,6 +21,10 @@ import {
   calculateNextQuestionState,
   calculatePreviousQuestionState,
 } from '@/features/quiz/logic/quizEngineHelpers';
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
 
 const INITIAL_QUIZ_STATE: QuizState = {
   currentQuestion: null,
@@ -40,27 +43,55 @@ const INITIAL_QUIZ_STATE: QuizState = {
   history: [],
 };
 
+// ============================================================================
+// TYPES
+// ============================================================================
+
 export interface UseQuizEngineReturn {
+  /** Mevcut quiz durumu */
   state: QuizState;
+  /** Oturum sonuçları */
   results: QuizResults;
+  /** İlerleme indeksi (0-toplam) */
   progressIndex: number;
+  /** Sınavı başlatır */
   startQuiz: (
     userId: string,
     courseId: string,
     chunkId?: string
   ) => Promise<void>;
+  /** Seçenek seçer */
   selectAnswer: (index: number) => void;
+  /** Cevabı gönderir */
   submitAnswer: (type?: QuizResponseType) => Promise<void>;
+  /** Sonraki soruya geçer */
   nextQuestion: () => void;
+  /** Önceki soruya döner */
   previousQuestion: () => void;
+  /** Açıklama panelini açar/kapatır */
   toggleExplanation: () => void;
+  /** Durumu sıfırlar */
   resetState: () => void;
 }
 
+// ============================================================================
+// HOOK
+// ============================================================================
+
+/**
+ * Quiz çözüm sürecini (motorunu) yöneten ana hook.
+ * Soru yükleme, cevaplama, ilerleme ve zamanlayıcı yönetimini koordine eder.
+ *
+ * @param courseId - Kursun ID'si
+ * @returns {UseQuizEngineReturn} Motor durumu ve aksiyon fonksiyonları
+ */
 export function useQuizEngine(courseId: string): UseQuizEngineReturn {
+  // === EXTERNAL HOOKS ===
   const { loadEngine, saveEngine, clearEngine } = useQuizPersistence(courseId);
   const api = useQuizEngineApi();
   const { startTimer, stopTimer, resetTimer } = useQuizTimer();
+
+  // === STATE ===
 
   // Initialize state from persistence if available
   const [state, setState] = useState<QuizState>(() => {
@@ -82,26 +113,18 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
     }
   );
 
+  // Sync state and results for use in callbacks without stale closures
   const stateRef = useRef(state);
   const resultsRef = useRef(results);
 
-  // Sync refs with state after render
-  useEffect(() => {
-    stateRef.current = state;
-    resultsRef.current = results;
-  }, [state, results]);
+  // === HELPERS ===
 
-  // Save changes
-  useEffect(() => {
-    if (state.hasStarted) {
-      saveEngine(state, results, sessionContext);
-    }
-  }, [state, results, sessionContext, saveEngine]);
-
+  /** State güncelleyici yardımcı */
   const updateState = useCallback((patch: Partial<QuizState>) => {
     setState((prev) => ({ ...prev, ...patch }));
   }, []);
 
+  /** Soruları state'e yükler ve zamanlayıcıyı başlatır */
   const loadQuestionsIntoState = useCallback(
     (questions: QuizQuestion[]) => {
       if (questions.length === 0) return;
@@ -119,6 +142,11 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
     [updateState, startTimer]
   );
 
+  // === ACTIONS ===
+
+  /**
+   * Quiz oturumunu başlatır. Mevcut bir oturum varsa onu yükler.
+   */
   const startQuiz = useCallback(
     async (userId: string, courseIdParam: string, chunkId?: string) => {
       const persisted = loadEngine();
@@ -135,9 +163,13 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
       try {
         const session = await api.startQuizSession(userId, courseIdParam);
         setSessionContext(session);
-        usePomodoroSessionStore
-          .getState()
-          .setSessionId(session.sessionNumber.toString());
+
+        // Pomodoro oturumuyla bağdaştır
+        const { pomodoroAdapter } =
+          await import('@/shared/services/pomodoroAdapter');
+        pomodoroAdapter.associateQuizWithPomodoro(
+          session.sessionNumber.toString()
+        );
 
         let questions: QuizQuestion[] = [];
         const queueQuestions = await api.loadQuestionsFromQueue(
@@ -167,12 +199,17 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
         }
       } catch (e: unknown) {
         const error = e as Error;
+        console.error('[useQuizEngine][startQuiz] Hata:', error);
+        logger.error('QuizEngine', 'startQuiz', 'Quiz başlatılamadı:', error);
         updateState({ isLoading: false, error: error.message });
       }
     },
     [updateState, loadQuestionsIntoState, loadEngine, startTimer, api]
   );
 
+  /**
+   * Mevcut sorunun cevabını veritabanına gönderir.
+   */
   const submitAnswer = useCallback(
     async (type: QuizResponseType = 'correct') => {
       const currentState = stateRef.current;
@@ -184,6 +221,7 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
         return;
       }
 
+      // Cevap tipini belirle
       const actualType =
         type === 'correct'
           ? currentState.selectedAnswer === currentState.currentQuestion.a
@@ -193,9 +231,11 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
 
       const timeSpent = stopTimer();
 
+      // Hata durumunda rollback için yedekle
       const previousState = { ...currentState };
       const previousResults = { ...resultsRef.current };
 
+      // UI'yı anında güncelle (Optimistic UI)
       setResults((prev) =>
         updateResults(prev, actualType as QuizResponseType, timeSpent)
       );
@@ -218,7 +258,7 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
 
         updateState({ lastSubmissionResult: result });
 
-        // Arka planda çalışır, await etme, kullanıcıyı bekletme
+        // Yanlış cevap durumunda follow-up üretimi (Arka planda)
         if (actualType === 'incorrect' && result.progressId) {
           import('@/features/quiz/services/followUpService')
             .then(({ generateFollowUpForWrongAnswer }) => {
@@ -229,13 +269,23 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
                 sessionContext.userId,
                 sessionContext.courseId,
                 sessionContext.sessionNumber
-              ).catch(() => {}); // sessizce hata yut
+              ).catch(() => {});
             })
             .catch((err) => {
-              logger.error('Failed to load followUpService', err);
+              console.error(
+                '[useQuizEngine][submitAnswer] Follow-up yükleme hatası:',
+                err
+              );
+              logger.error(
+                'QuizEngine',
+                'submitAnswer',
+                'Failed to load followUpService',
+                err
+              );
             });
         }
 
+        // Mastery eşiği geçildiyse kutlama tetikle
         if (
           result.newMastery >= MASTERY_THRESHOLD &&
           currentState.currentQuestion.chunk_id
@@ -247,8 +297,12 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
             variant: 'achievement',
           });
         }
+
+        // Kotayı düşür
         useQuotaStore.getState().decrementClientQuota();
-      } catch {
+      } catch (err) {
+        console.error('[useQuizEngine][submitAnswer] Hata:', err);
+        logger.error('QuizEngine', 'submitAnswer', 'Hata:', err as Error);
         updateState({
           error: 'Soru gönderilirken bir hata oluştu. Lütfen tekrar deneyin.',
         });
@@ -260,6 +314,7 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
     [sessionContext, stopTimer, startTimer, updateState, api]
   );
 
+  /** Tüm motor durumunu temizler ve sıfırlar */
   const resetState = useCallback(() => {
     setState(INITIAL_QUIZ_STATE);
     setResults(calculateInitialResults());
@@ -268,6 +323,7 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
     clearEngine();
   }, [resetTimer, clearEngine]);
 
+  /** Bir seçeneği seçer/iptal eder */
   const selectAnswer = useCallback(
     (index: number) => {
       const currentState = stateRef.current;
@@ -279,6 +335,7 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
     [updateState]
   );
 
+  /** Bir sonraki soruya ilerler veya sınavı bitirir */
   const nextQuestion = useCallback(() => {
     const patch = calculateNextQuestionState(
       stateRef.current,
@@ -294,6 +351,7 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
     }
   }, [updateState, resetTimer, startTimer, clearEngine]);
 
+  /** Bir önceki soruya döner */
   const previousQuestion = useCallback(() => {
     const patch = calculatePreviousQuestionState(stateRef.current);
     if (patch) {
@@ -301,12 +359,32 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
     }
   }, [updateState]);
 
+  /** Açıklama panelini açar/kapatır */
   const toggleExplanation = useCallback(() => {
     updateState({ showExplanation: !stateRef.current.showExplanation });
   }, [updateState]);
 
+  // === SIDE EFFECTS ===
+
+  // Sync refs with state after render
+  useEffect(() => {
+    stateRef.current = state;
+    resultsRef.current = results;
+  }, [state, results]);
+
+  // Save state changes to persistence
+  useEffect(() => {
+    if (state.hasStarted) {
+      saveEngine(state, results, sessionContext);
+    }
+  }, [state, results, sessionContext, saveEngine]);
+
+  // === CALCULATIONS ===
+
   const progressIndex =
     state.generatedCount - state.queue.length - (state.currentQuestion ? 1 : 0);
+
+  // === RETURN ===
 
   return {
     state,

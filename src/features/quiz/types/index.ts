@@ -1,7 +1,11 @@
-// Export all types from types.ts
+/**
+ * Quiz özellik grubu için tüm tiplerin ve şemaların merkezi dışa aktarma dosyası.
+ */
+
+// === SECTION: Types ===
 export * from './types';
 
-// Export from schemas.ts - avoid re-exporting types that exist in both files
+// === SECTION: Schemas & Validated Types ===
 export {
   AILogicSchema,
   BaseQuestionSchema,
@@ -29,7 +33,7 @@ export {
   QuizQuestionSchema,
   SubmitQuizAnswerSchema,
   TrueFalseQuestionSchema,
-  // Types from schemas
+  // Tip olarak şemalardan türetilenler
   type ValidatedAILogic,
   type ValidatedChunkMetadata,
   type ValidatedChunkWithContent,

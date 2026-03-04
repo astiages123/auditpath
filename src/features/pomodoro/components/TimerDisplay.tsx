@@ -4,6 +4,10 @@ import { motion } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
+// ===========================
+// === COMPONENT DEFINITION ===
+// ===========================
+
 export function TimerDisplay() {
   const {
     mode,

@@ -1,51 +1,32 @@
-import { Skeleton } from '@/components/ui/skeleton';
-import { Card } from '@/components/ui/card';
-import { useCognitiveInsights } from '../hooks/useCognitiveInsights';
-import { useEfficiencyTrends } from '../hooks/useEfficiencyTrends';
 import { RecentActivitiesCard } from './RecentActivitiesCard';
 
-export const RecentActivitiesContainer = () => {
-  const { loadingSessions: loadingInsights, recentSessions } =
-    useCognitiveInsights();
-  const {
-    loading: loadingTrends,
-    focusPowerWeek,
-    focusPowerMonth,
-    focusPowerAll,
-  } = useEfficiencyTrends();
+import type { FocusPowerPoint } from '../types/efficiencyTypes';
+import type { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
 
-  const loading = loadingInsights || loadingTrends;
+// ==========================================
+// === PROPS ===
+// ==========================================
 
-  if (loading)
-    return (
-      <Card className="h-full flex flex-col p-6">
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-32 bg-surface" />
-              <Skeleton className="h-3 w-48 bg-surface" />
-            </div>
-          </div>
-        </div>
-        <div className="flex-1 space-y-3 mt-4">
-          {[...Array(5)].map((_, i) => (
-            <div
-              key={`skeleton-activity-${i}`}
-              className="flex items-center gap-4 p-3 rounded-lg border border-white/5"
-            >
-              <Skeleton className="h-10 w-10 rounded-full bg-surface" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-32 bg-surface" />
-                <Skeleton className="h-3 w-24 bg-surface" />
-              </div>
-              <Skeleton className="h-6 w-16 bg-surface" />
-            </div>
-          ))}
-        </div>
-      </Card>
-    );
+export interface RecentActivitiesContainerProps {
+  recentSessions: RecentSession[];
+  focusPowerWeek: FocusPowerPoint[];
+  focusPowerMonth: FocusPowerPoint[];
+  focusPowerAll: FocusPowerPoint[];
+}
 
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
+export const RecentActivitiesContainer = ({
+  recentSessions,
+  focusPowerWeek,
+  focusPowerMonth,
+  focusPowerAll,
+}: RecentActivitiesContainerProps) => {
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   return (
     <div className="h-full w-full">
       <RecentActivitiesCard

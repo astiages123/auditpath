@@ -2,23 +2,46 @@ import { useState, useEffect } from 'react';
 
 type RechartsModule = typeof import('recharts');
 
-interface LearningLoadChartProps {
-  data: {
-    day: string;
-    extraStudyMinutes: number;
-    videoMinutes: number;
-    readingMinutes?: number;
-  }[];
+// ==========================================
+// === TYPES / PROPS ===
+// ==========================================
+
+export interface LearningLoadData {
+  day: string;
+  extraStudyMinutes: number;
+  videoMinutes: number;
+  readingMinutes?: number;
+}
+
+export interface LearningLoadChartProps {
+  data: LearningLoadData[];
   targetMinutes?: number;
 }
 
-const LearningLoadChart = ({ data, targetMinutes }: LearningLoadChartProps) => {
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
+/**
+ * Renders a stacked bar chart displaying the user's daily learning load
+ * across different content types (focus, video, reading).
+ */
+export const LearningLoadChart = ({
+  data,
+  targetMinutes,
+}: LearningLoadChartProps) => {
+  // ==========================================
+  // === HOOKS & STATE ===
+  // ==========================================
   const [Recharts, setRecharts] = useState<RechartsModule | null>(null);
 
   useEffect(() => {
     import('recharts').then((mod) => setRecharts(mod));
   }, []);
 
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   if (!Recharts) {
     return (
       <div className="w-full h-[230px] animate-pulse bg-muted/20 rounded-xl" />

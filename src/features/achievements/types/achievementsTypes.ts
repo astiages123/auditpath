@@ -1,15 +1,32 @@
 import type { Rank } from '@/types/auth';
 
+// ===========================
+// === BASIC TYPES ===
+// ===========================
+
+/**
+ * Represents an achievement unlocked by the user.
+ */
 export interface UnlockedAchievement {
   id: string;
   unlockedAt: string;
 }
 
+/**
+ * Represents the streak milestones achieved by the user.
+ */
 export interface StreakMilestones {
   maxStreak: number;
   first7DayStreakDate: string | null;
 }
 
+// ===========================
+// === GUILD TYPES ===
+// ===========================
+
+/**
+ * Represents the type of a guild.
+ */
 export type GuildType =
   | 'HUKUK'
   | 'IKTISAT'
@@ -21,6 +38,9 @@ export type GuildType =
   | 'TITLES'
   | 'MASTERY';
 
+/**
+ * Represents information about a specific guild.
+ */
 export interface GuildInfo {
   id: GuildType;
   name: string;
@@ -29,6 +49,13 @@ export interface GuildInfo {
   topicMasteryBadge?: string;
 }
 
+// ===========================
+// === ACHIEVEMENT DEFINITIONS ===
+// ===========================
+
+/**
+ * Represents the requirements to unlock an achievement.
+ */
 export type RequirementType =
   | { type: 'category_progress'; category: string; percentage: number }
   | {
@@ -41,6 +68,9 @@ export type RequirementType =
   | { type: 'total_active_days'; days: number }
   | { type: 'minimum_videos'; count: number };
 
+/**
+ * Represents a predefined achievement.
+ */
 export interface Achievement {
   id: string;
   title: string;
@@ -52,15 +82,23 @@ export interface Achievement {
   isPermanent?: boolean;
 }
 
-// Rank is imported from global types
+// ===========================
+// === PROGRESS STATS ===
+// ===========================
 
-interface CategoryProgress {
+/**
+ * Represents progress for a specific category.
+ */
+export interface CategoryProgress {
   completedVideos: number;
   totalVideos: number;
   completedHours: number;
   totalHours: number;
 }
 
+/**
+ * Represents overall user progress statistics.
+ */
 export interface ProgressStats {
   completedVideos: number;
   totalVideos: number;
@@ -78,13 +116,22 @@ export interface ProgressStats {
   dailyAverage?: number;
 }
 
+// ===========================
+// === ACTIVITY & MASTERY ===
+// ===========================
+
+/**
+ * Represents a log of user activity.
+ */
 export interface ActivityLog {
   currentStreak: number;
   totalActiveDays: number;
   dailyVideosCompleted: number;
 }
 
-// Topic Mastery Stats for badge unlocking
+/**
+ * Represents statistics for topic mastery, used for badge unlocking.
+ */
 export interface TopicMasteryStats {
   topicId: string;
   courseId: string;

@@ -5,13 +5,42 @@ import {
   formatEfficiencyTime,
 } from '../logic/efficiencyHelpers';
 
+import type { FlowState } from '../types/efficiencyTypes';
+
+// ==========================================
+// === TYPES ===
+// ==========================================
+
 export interface EfficiencyMetrics {
-  totalVideoTime: number; // minutes
-  totalReadingTime: number; // minutes [YENİ]
-  totalPomodoroTime: number; // minutes
+  totalVideoTime: number; // in minutes
+  totalReadingTime: number; // in minutes
+  totalPomodoroTime: number; // in minutes
 }
 
-export function useEfficiencyLogic(todayMetrics: EfficiencyMetrics) {
+export interface EfficiencyLogicResult {
+  learningFlow: number;
+  flowState: FlowState;
+  isWarning: boolean;
+  goalProgress: number;
+  goalMinutes: number;
+  currentMinutes: number;
+  formattedCurrentTime: string;
+}
+
+// ==========================================
+// === HOOK ===
+// ==========================================
+
+/**
+ * Encapsulates calculation of goal progress and learning flow scores
+ * from aggregated daily activity metrics (video, reading, pomodoro times).
+ *
+ * @param {EfficiencyMetrics} todayMetrics Raw total times for today across categories
+ * @returns {EfficiencyLogicResult} Formatted and processed goal logic results
+ */
+export function useEfficiencyLogic(
+  todayMetrics: EfficiencyMetrics
+): EfficiencyLogicResult {
   const learningFlowMetrics = calculateLearningFlow({
     totalVideoTime: todayMetrics.totalVideoTime,
     totalReadingTime: todayMetrics.totalReadingTime,
@@ -21,7 +50,6 @@ export function useEfficiencyLogic(todayMetrics: EfficiencyMetrics) {
   const learningFlow = learningFlowMetrics.score;
   const flowState = learningFlowMetrics.state;
 
-  // Warning is now handled by flowState colors in UI, but we keep a boolean for backward compat if needed
   const isWarning = flowState !== 'optimal';
 
   const goalProgress = calculateGoalProgress(

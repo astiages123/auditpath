@@ -4,6 +4,10 @@ import { Brain, AlertTriangle, Lightbulb, Zap } from 'lucide-react';
 import { CardHeader } from './CardElements';
 import { cn } from '@/utils/stringHelpers';
 
+// ==========================================
+// === TYPES / PROPS ===
+// ==========================================
+
 export interface CognitiveAnalysis {
   focusScore?: number;
   topConfused?: { text: string; count: number }[];
@@ -12,15 +16,37 @@ export interface CognitiveAnalysis {
   hasData?: boolean;
 }
 
-interface CognitiveInsightsCardProps {
+export interface CognitiveInsightsCardProps {
   loading: boolean;
   cognitiveAnalysis: CognitiveAnalysis | null;
 }
 
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
+/**
+ * Displays user's cognitive health, including their focus score,
+ * confusion topics, recent insights, and areas of missing knowledge.
+ */
 export const CognitiveInsightsCard = ({
   loading,
   cognitiveAnalysis,
 }: CognitiveInsightsCardProps) => {
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
+
+  const { focusScore, topConfused, recentInsights, criticalTopics, hasData } =
+    cognitiveAnalysis || {};
+
+  const hideData =
+    !hasData || (!topConfused?.length && !recentInsights?.length);
+
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
+
   if (loading) {
     return (
       <Card className="h-full flex flex-col p-6 min-h-[300px] animate-pulse">
@@ -51,12 +77,9 @@ export const CognitiveInsightsCard = ({
     );
   }
 
-  const { focusScore, topConfused, recentInsights, criticalTopics, hasData } =
-    cognitiveAnalysis || {};
-
-  if (!hasData || (!topConfused?.length && !recentInsights?.length)) {
+  if (hideData) {
     return (
-      <Card className="h-full flex flex-col p-6 min-h-[300px]">
+      <Card className="h-full flex flex-col p-6 min-h-[300px] hover:border-accent/40 transition-all duration-300">
         <CardHeader
           icon={Brain}
           iconColor="text-accent"
@@ -83,7 +106,7 @@ export const CognitiveInsightsCard = ({
   }
 
   return (
-    <Card className="h-full flex flex-col p-6 min-h-[300px]">
+    <Card className="h-full flex flex-col p-6 min-h-[300px] hover:border-accent/40 transition-all duration-300">
       <div className="flex justify-between items-start mb-6">
         <CardHeader
           icon={Brain}

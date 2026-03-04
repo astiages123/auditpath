@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { RecentActivitiesCard } from '@/features/efficiency/components/RecentActivitiesCard';
 import { RecentActivitiesContainer } from '@/features/efficiency/components/RecentActivitiesContainer';
@@ -54,9 +54,6 @@ vi.mock('@/features/efficiency/hooks/useEfficiencyTrends', () => ({
   useEfficiencyTrends: vi.fn(),
 }));
 
-import { useCognitiveInsights } from '@/features/efficiency/hooks/useCognitiveInsights';
-import { useEfficiencyTrends } from '@/features/efficiency/hooks/useEfficiencyTrends';
-
 // === MOCK VERİ ===
 
 /** 3 farklı derse ait mock RecentSession listesi */
@@ -98,12 +95,6 @@ const mockSessions: RecentSession[] = [
     pauseCount: 0,
   },
 ];
-
-const emptyFocusPower = {
-  focusPowerWeek: [],
-  focusPowerMonth: [],
-  focusPowerAll: [],
-};
 
 // === YARDIMCI FONKSIYON TESTLERİ ===
 
@@ -237,75 +228,31 @@ describe('RecentActivitiesCard', () => {
 // === RecentActivitiesContainer BİLEŞEN TESTLERİ ===
 
 describe('RecentActivitiesContainer', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('loading=true iken Skeleton gösterir, RecentActivitiesCard render etmez', () => {
-    (useCognitiveInsights as ReturnType<typeof vi.fn>).mockReturnValue({
-      loadingSessions: true,
-      recentSessions: [],
-    });
-    (useEfficiencyTrends as ReturnType<typeof vi.fn>).mockReturnValue({
-      loading: false,
-      focusPowerWeek: [],
-      focusPowerMonth: [],
-      focusPowerAll: [],
-    });
-
-    render(<RecentActivitiesContainer />);
-
-    // Yükleme sırasında ders adları görünmez
-    expect(screen.queryByText('Anayasa')).not.toBeInTheDocument();
-    expect(screen.queryByText('Son Çalışmalar')).not.toBeInTheDocument();
-    expect(screen.queryByText('Henüz Çalışma Yok')).not.toBeInTheDocument();
-  });
-
-  it('loading=false iken RecentActivitiesCard render eder ve oturum listesi görünür', () => {
-    (useCognitiveInsights as ReturnType<typeof vi.fn>).mockReturnValue({
-      loading: false,
-      recentSessions: mockSessions,
-    });
-    (useEfficiencyTrends as ReturnType<typeof vi.fn>).mockReturnValue({
-      loading: false,
-      ...emptyFocusPower,
-    });
-
-    render(<RecentActivitiesContainer />);
+  it('oturum listesi görünür', () => {
+    render(
+      <RecentActivitiesContainer
+        recentSessions={mockSessions}
+        focusPowerWeek={[]}
+        focusPowerMonth={[]}
+        focusPowerAll={[]}
+      />
+    );
 
     expect(screen.getByText('Anayasa')).toBeInTheDocument();
     expect(screen.getByText('İktisat')).toBeInTheDocument();
     expect(screen.getByText('Medeni Hukuk')).toBeInTheDocument();
   });
 
-  it('loading=false ve sessions=[] iken fallback gösterir', () => {
-    (useCognitiveInsights as ReturnType<typeof vi.fn>).mockReturnValue({
-      loading: false,
-      recentSessions: [],
-    });
-    (useEfficiencyTrends as ReturnType<typeof vi.fn>).mockReturnValue({
-      loading: false,
-      ...emptyFocusPower,
-    });
-
-    render(<RecentActivitiesContainer />);
+  it('sessions=[] iken fallback gösterir', () => {
+    render(
+      <RecentActivitiesContainer
+        recentSessions={[]}
+        focusPowerWeek={[]}
+        focusPowerMonth={[]}
+        focusPowerAll={[]}
+      />
+    );
 
     expect(screen.getByText('Henüz Çalışma Yok')).toBeInTheDocument();
-  });
-
-  it('useEfficiencyTrends loading=true ise de Skeleton gösterir', () => {
-    (useCognitiveInsights as ReturnType<typeof vi.fn>).mockReturnValue({
-      loading: false,
-      recentSessions: mockSessions,
-    });
-    (useEfficiencyTrends as ReturnType<typeof vi.fn>).mockReturnValue({
-      loading: true,
-      ...emptyFocusPower,
-    });
-
-    render(<RecentActivitiesContainer />);
-
-    // Her iki hook da loading=false olana kadar kart render edilmez
-    expect(screen.queryByText('Anayasa')).not.toBeInTheDocument();
   });
 });

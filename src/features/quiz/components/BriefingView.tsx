@@ -11,10 +11,16 @@ import {
 import { TopicCompletionStats } from '@/features/courses/types/courseTypes';
 import { Badge } from '@/components/ui/badge';
 
+// === TYPES ===
+
 interface BriefingViewProps {
+  /** Konu tamamlama ve kota istatistikleri */
   completionStatus: TopicCompletionStats;
+  /** Quiz başlatma/hazırlama butonuna tıklanınca tetiklenir */
   onStartQuiz: () => void;
 }
+
+// === CONSTANTS: ANIMATION VARIANTS ===
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -29,12 +35,22 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
+// === COMPONENT ===
+
+/**
+ * Quiz öncesi bilgilendirme ekranı.
+ * Kavram matrisini, zorluk analizini ve soru dağılımını gösterir.
+ */
 export function BriefingView({
   completionStatus,
   onStartQuiz,
 }: BriefingViewProps) {
+  // === RENDER LOGIC ===
+
   const isReady =
     completionStatus.antrenman.existing >= completionStatus.antrenman.quota;
+
+  // === RENDER ===
 
   return (
     <motion.div
@@ -43,6 +59,7 @@ export function BriefingView({
       animate="visible"
       className="w-full h-full flex flex-col gap-3 py-2 min-h-0"
     >
+      {/* BAŞLAT BUTONU */}
       <motion.div variants={itemVariants} className="shrink-0">
         <button
           onClick={onStartQuiz}
@@ -55,7 +72,9 @@ export function BriefingView({
         </button>
       </motion.div>
 
+      {/* İSTATİSTİK PANELLERİ */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 flex-1 min-h-0 md:min-h-0 overflow-hidden">
+        {/* KAVRAM MATRİSİ TABLOSU */}
         <motion.div
           variants={itemVariants}
           className="bg-card backdrop-blur-sm rounded-xl border border-border/50 overflow-hidden flex flex-col min-h-0 md:h-full shadow-sm"
@@ -127,7 +146,9 @@ export function BriefingView({
           </div>
         </motion.div>
 
+        {/* SAĞ PANEL: ZORLUK VE DAĞILIM */}
         <div className="flex flex-col gap-3 min-h-0 md:h-full overflow-y-auto custom-scrollbar pr-1">
+          {/* ZORLUK ANALİZİ */}
           <motion.div
             variants={itemVariants}
             className="flex-1 p-4 bg-card backdrop-blur-sm rounded-xl border border-border/50 flex flex-col justify-center gap-2.5 shadow-sm relative overflow-hidden group"
@@ -174,6 +195,7 @@ export function BriefingView({
             </div>
           </motion.div>
 
+          {/* SORU DAĞILIMI */}
           <motion.div
             variants={itemVariants}
             className="flex-1 p-4 bg-card backdrop-blur-sm rounded-xl border border-border/50 flex flex-col justify-center shadow-sm relative overflow-hidden group"

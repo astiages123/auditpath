@@ -1,26 +1,47 @@
 import { SessionTotals } from '@/features/pomodoro/logic/sessionMath';
 
+// ==========================================
+// === METRIC CALCULATIONS ===
+// ==========================================
+
 /**
- * Calculates the Focus Power score based on the formula: (Work / [Break + Pause]) * 20
+ * Calculates the Focus Power score.
+ * Formula: (Work / [Break + Pause]) * 20
+ * Minimum effective interruption is considered 60 seconds to prevent division by zero or inflated scores.
  *
  * @param workSeconds - Total work time in seconds
  * @param breakSeconds - Total break time in seconds
  * @param pauseSeconds - Total pause time in seconds
- * @returns Focus power score
+ * @returns Focus power score calculated based on the session parameters
+ *
+ * @throws {Error} Throws if negative values are provided for time seconds
+ *
+ * @example
+ * // returns 33
+ * calculateFocusPower(100, 30, 30)
  */
 export function calculateFocusPower(
   workSeconds: number,
   breakSeconds: number,
   pauseSeconds: number
 ): number {
-  if (workSeconds <= 0) return 0;
+  try {
+    if (workSeconds < 0 || breakSeconds < 0 || pauseSeconds < 0) {
+      throw new Error('Süre değerleri negatif olamaz.');
+    }
 
-  const totalInterruptionSeconds = breakSeconds + pauseSeconds;
-  const effectiveInterruptionSeconds = Math.max(60, totalInterruptionSeconds);
+    if (workSeconds === 0) return 0;
 
-  const score = (workSeconds / effectiveInterruptionSeconds) * 20;
+    const totalInterruptionSeconds = breakSeconds + pauseSeconds;
+    const effectiveInterruptionSeconds = Math.max(60, totalInterruptionSeconds);
 
-  return Math.round(score);
+    const focusScore = (workSeconds / effectiveInterruptionSeconds) * 20;
+
+    return Math.round(focusScore);
+  } catch (error) {
+    console.error('[metricsCalc][calculateFocusPower] Hata:', error);
+    throw error;
+  }
 }
 
 /**
@@ -28,13 +49,29 @@ export function calculateFocusPower(
  * Formula: (Work / (Work + Break)) * 100
  *
  * @param totals - Object containing totalWork and totalBreak in SECONDS
- * @returns Focus score (0-100)
+ * @returns Focus score as a percentage (0-100)
+ *
+ * @throws {Error} Throws if negative values are provided in the totals object
+ *
+ * @example
+ * // returns 80
+ * calculateFocusScore({ totalWork: 4000, totalBreak: 1000, pauseCount: 0, totalPause: 0 })
  */
 export function calculateFocusScore(totals: SessionTotals): number {
-  const totalDuration = totals.totalWork + totals.totalBreak;
+  try {
+    if (totals.totalWork < 0 || totals.totalBreak < 0) {
+      throw new Error('Çalışma ve mola süreleri negatif olamaz.');
+    }
 
-  if (totalDuration <= 0) return 0;
+    const totalDuration = totals.totalWork + totals.totalBreak;
 
-  const score = (totals.totalWork / totalDuration) * 100;
-  return Math.max(0, Math.min(100, Math.round(score)));
+    if (totalDuration <= 0) return 0;
+
+    const percentageScore = (totals.totalWork / totalDuration) * 100;
+
+    return Math.max(0, Math.min(100, Math.round(percentageScore)));
+  } catch (error) {
+    console.error('[metricsCalc][calculateFocusScore] Hata:', error);
+    throw error;
+  }
 }

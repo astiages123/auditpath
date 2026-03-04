@@ -4,6 +4,13 @@ import {
   type GuildType,
 } from '../types/achievementsTypes';
 
+// ===========================
+// === GUILD DEFINITIONS ===
+// ===========================
+
+/**
+ * Definitions for all available guilds in the system.
+ */
 export const GUILDS: Record<GuildType, GuildInfo> = {
   HUKUK: {
     id: 'HUKUK',
@@ -62,6 +69,13 @@ export const GUILDS: Record<GuildType, GuildInfo> = {
   },
 };
 
+// ===========================
+// === ACHIEVEMENT DEFINITIONS ===
+// ===========================
+
+/**
+ * Achievements related to the Law (Hukuk) category.
+ */
 export const LAW_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'hukuk_10',
@@ -119,6 +133,9 @@ export const LAW_ACHIEVEMENTS: Achievement[] = [
   },
 ];
 
+/**
+ * Achievements related to the Economy (İktisat) category.
+ */
 export const ECONOMY_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'eko_10',
@@ -176,6 +193,9 @@ export const ECONOMY_ACHIEVEMENTS: Achievement[] = [
   },
 ];
 
+/**
+ * Achievements related to the Accounting (Muhasebe/Maliye) category.
+ */
 export const ACCOUNTING_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'mu_10',
@@ -232,6 +252,9 @@ export const ACCOUNTING_ACHIEVEMENTS: Achievement[] = [
   },
 ];
 
+/**
+ * Achievements related to General Capabilities (GY/GK).
+ */
 export const GENERAL_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'genel_10',
@@ -288,6 +311,9 @@ export const GENERAL_ACHIEVEMENTS: Achievement[] = [
   },
 ];
 
+/**
+ * Achievements related to Public Admin & Intl Relations (Kamu/Uluslararası İlişkiler).
+ */
 export const KAMU_ULUS_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'kamu_10',
@@ -398,6 +424,9 @@ export const KAMU_ULUS_ACHIEVEMENTS: Achievement[] = [
   },
 ];
 
+/**
+ * Achievements related to cross-disciplinary hybrid categories.
+ */
 export const HYBRID_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'hybrid_01',
@@ -472,6 +501,9 @@ export const HYBRID_ACHIEVEMENTS: Achievement[] = [
   },
 ];
 
+/**
+ * Special achievements for unique milestones and streaks.
+ */
 export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'special-01',
@@ -566,6 +598,9 @@ export const SPECIAL_ACHIEVEMENTS: Achievement[] = [
   },
 ];
 
+/**
+ * Title achievements related to overall app mastery / rankings.
+ */
 export const TITLE_ACHIEVEMENTS: Achievement[] = [
   {
     id: 'RANK_UP:1',
@@ -611,6 +646,13 @@ export const TITLE_ACHIEVEMENTS: Achievement[] = [
   },
 ];
 
+// ===========================
+// === ALL ACHIEVEMENTS EXPORT ===
+// ===========================
+
+/**
+ * A combined array of all available achievements.
+ */
 export const ACHIEVEMENTS: Achievement[] = [
   ...LAW_ACHIEVEMENTS,
   ...ECONOMY_ACHIEVEMENTS,

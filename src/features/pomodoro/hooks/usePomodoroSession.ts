@@ -8,17 +8,22 @@ import {
   usePomodoroUIStore,
 } from '@/features/pomodoro/store';
 import { logger } from '@/utils/logger';
+import { TimelineEventSchema } from '../types/pomodoroTypes';
 import { z } from 'zod';
+import { Json } from '@/types/database.types';
 
-const TimelineEventSchema = z.object({
-  type: z.enum(['work', 'break', 'pause']),
-  start: z.number(),
-  end: z.number().optional(),
-});
-const TimelineSchema = z.array(TimelineEventSchema);
+const TimelineArraySchema = z.array(TimelineEventSchema);
+
+// ===========================
+// === HOOK DEFINITION ===
+// ===========================
 
 /**
  * Hook to manage Pomodoro session persistence and lifecycle.
+ * Automatically synchronizes session state with Supabase.
+ *
+ * @param userId - ID of the authenticated user
+ * @returns Object providing session initialization methods
  */
 export function usePomodoroSession(userId: string | undefined) {
   const {
@@ -47,21 +52,36 @@ export function usePomodoroSession(userId: string | undefined) {
     }
 
     try {
+      // Validate and cast timeline prior to DB upsert
+      const parsedTimeline = TimelineArraySchema.parse(
+        timeline.length > 0 ? timeline : [{ type: 'work', start: now }]
+      );
+      const timelineAsJson: Json[] = parsedTimeline.map((timelineEvent) => ({
+        type: timelineEvent.type,
+        start: timelineEvent.start,
+        end: timelineEvent.end ?? null,
+        duration: timelineEvent.duration ?? null,
+      }));
+
       await upsertPomodoroSession(
         {
           id: currentSessionId,
           courseId: selectedCourse.id,
           courseName: selectedCourse.name,
-          timeline: TimelineSchema.parse(
-            timeline.length > 0 ? timeline : [{ type: 'work', start: now }]
-          ),
+          timeline: timelineAsJson,
           startedAt: originalStartTime || now,
           isCompleted: false,
         },
         userId
       );
-    } catch (error) {
-      logger.error('Failed to upsert session:', error as Error);
+    } catch (error: unknown) {
+      console.error('[usePomodoroSession][initializeSession] Hata:', error);
+      logger.error(
+        'UsePomodoroSession',
+        'initializeSession',
+        'Failed to upsert session',
+        error as Error
+      );
     }
 
     return currentSessionId;

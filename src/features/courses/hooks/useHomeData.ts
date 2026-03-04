@@ -1,20 +1,38 @@
+// ===========================
+// === IMPORTS ===
+// ===========================
+
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getUserStats } from '@/features/achievements/services/userStatsService';
-import { type Category } from '@/features/courses/types/courseTypes';
+import type { Category } from '@/features/courses/types/courseTypes';
 import type { ProgressStats } from '@/shared/hooks/useProgress';
 import { RANKS } from '@/features/achievements/utils/constants';
 import { useCategories } from './useCategories';
 import { useAllCourses } from './useAllCourses';
 
-interface HomeData {
+// ===========================
+// === INTERFACES ===
+// ===========================
+
+export interface HomeData {
   categories: Category[];
   stats: ProgressStats;
   loading: boolean;
   error: string | null;
 }
 
+// ===========================
+// === HOOK ===
+// ===========================
+
+/**
+ * Hook to retrieve curated data for the user's home dashboard.
+ * Merges categorized and uncategorized courses, and fetches user progress statistics.
+ *
+ * @returns HomeData object containing categories, stats, loading, and error states.
+ */
 export function useHomeData(): HomeData {
   const { user, loading: authLoading } = useAuth();
   const userId = user?.id;
@@ -59,7 +77,14 @@ export function useHomeData(): HomeData {
     error: statsError,
   } = useQuery({
     queryKey: ['userStats', userId],
-    queryFn: () => getUserStats(userId!, finalCategories),
+    queryFn: async () => {
+      try {
+        return await getUserStats(userId!, finalCategories);
+      } catch (error) {
+        console.error('[useHomeData][getUserStats] Hata:', error);
+        throw error;
+      }
+    },
     enabled: !!userId && finalCategories.length > 0,
     staleTime: 5 * 60 * 1000,
   });
@@ -107,6 +132,7 @@ export function useHomeData(): HomeData {
       categoryProgress: {},
       courseProgress: {},
       streak: 0,
+      todayVideoCount: 0,
     }),
     [finalCategories]
   );

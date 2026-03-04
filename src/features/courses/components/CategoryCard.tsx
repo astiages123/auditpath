@@ -1,3 +1,7 @@
+// ===========================
+// === IMPORTS ===
+// ===========================
+
 import {
   TvMinimalPlay,
   Clock,
@@ -14,10 +18,13 @@ import { cn } from '@/utils/stringHelpers';
 import { formatDuration, formatDurationShort } from '@/utils/dateUtils';
 import { normalizeCategorySlug } from '../utils/categoryHelpers';
 import { CATEGORY_THEMES } from '../utils/coursesConfig';
+import type { Course } from '@/features/courses/types/courseTypes';
 
-import { type Course } from '@/features/courses/types/courseTypes';
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
 
-interface CategoryCardProps {
+export interface CategoryCardProps {
   id: string;
   name: string;
   slug: string;
@@ -25,11 +32,18 @@ interface CategoryCardProps {
   courses: Course[];
   completedVideos: number;
   completedHours: number;
-  // completedCourses: number;
   isOpen: boolean;
   onToggle: () => void;
 }
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * Renders a collapsible category card displaying aggregated progress
+ * and course listings for a specific category area.
+ */
 export function CategoryCard({
   id,
   name,
@@ -37,7 +51,6 @@ export function CategoryCard({
   courses,
   completedVideos: initialCompletedVideos,
   completedHours: initialCompletedHours,
-  // completedCourses: _completedCourses, // Unused
   slug,
   isOpen,
   onToggle,

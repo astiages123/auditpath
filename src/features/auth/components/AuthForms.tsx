@@ -1,15 +1,23 @@
+// === TYPES ===
 import { useState, useCallback } from 'react';
 import * as z from 'zod';
+import { Loader2 } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { logger } from '@/utils/logger';
+import { type AuthFormErrors } from '../types';
 
+/** Regex for basic email validation. */
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** Rate limit between auth attempts. */
+const RATE_LIMIT_MS = 2000;
+
+/** Validation schema for authentication forms. */
 const authSchema = z.object({
   identifier: z
     .string()
@@ -28,11 +36,7 @@ const authSchema = z.object({
   password: z.string().min(6, 'Şifre en az 6 karakter olmalıdır.'),
 });
 
-interface FormErrors {
-  identifier?: string;
-  password?: string;
-}
-
+/** Mapping of Supabase error codes to user-friendly messages. */
 const SUPABASE_ERROR_MESSAGES: Record<string, string> = {
   invalid_credentials: 'E-posta veya şifre hatalı.',
   user_not_found: 'Kullanıcı bulunamadı.',
@@ -46,28 +50,49 @@ const SUPABASE_ERROR_MESSAGES: Record<string, string> = {
   default: 'Bir hata oluştu. Lütfen tekrar deneyin.',
 };
 
+/** Tracks the time of the last request for rate limiting. */
+let lastRequestTime = 0;
+
+// === HELPERS ===
+/**
+ * Resolves a user-friendly error message from a Supabase error.
+ * @param error - The error object from Supabase.
+ * @returns {string} The formatted error message.
+ */
 const getSupabaseErrorMessage = (error: unknown): string => {
   const err = error as { code?: string; message?: string };
   const code = err?.code || '';
   return SUPABASE_ERROR_MESSAGES[code] || SUPABASE_ERROR_MESSAGES.default;
 };
 
-let lastRequestTime = 0;
-const RATE_LIMIT_MS = 2000;
-
+// === COMPONENTS ===
+/**
+ * Component for login and registration forms.
+ * @param {Object} props - Component props.
+ * @param {() => void} [props.onSuccess] - Callback on successful authentication.
+ */
 export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
+  // === STATE ===
   const [formData, setFormData] = useState({ identifier: '', password: '' });
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<AuthFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // === HANDLERS ===
+  /**
+   * Handles input changes and clears associated errors.
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
     setFormData((prev) => ({ ...prev, [id]: value }));
-    if (errors[id as keyof FormErrors]) {
+
+    if (errors[id as keyof AuthFormErrors]) {
       setErrors((prev) => ({ ...prev, [id]: undefined }));
     }
   };
 
+  /**
+   * Handles form submission.
+   */
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -84,11 +109,12 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
 
       try {
         const validation = authSchema.safeParse(formData);
+
         if (!validation.success) {
-          const fieldErrors: FormErrors = {};
+          const fieldErrors: AuthFormErrors = {};
           validation.error.issues.forEach((err) => {
             if (err.path[0]) {
-              fieldErrors[err.path[0] as keyof FormErrors] = err.message;
+              fieldErrors[err.path[0] as keyof AuthFormErrors] = err.message;
             }
           });
           setErrors(fieldErrors);
@@ -122,7 +148,14 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
         toast.success('Giriş başarılı!');
         onSuccess?.();
       } catch (error: unknown) {
-        logger.error('Auth form submission error', error as Error);
+        console.error('[AuthForms][handleSubmit] Hata:', error);
+        logger.error(
+          'Auth',
+          'handleSubmit',
+          'Auth form submission error',
+          error as Error
+        );
+
         const err = error as { code?: string; message?: string };
 
         if (err.code) {
@@ -139,6 +172,7 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
     [formData, onSuccess]
   );
 
+  // === RENDER ===
   return (
     <div className="grid gap-6">
       <form onSubmit={handleSubmit}>

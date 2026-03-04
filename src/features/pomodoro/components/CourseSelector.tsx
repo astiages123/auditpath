@@ -7,11 +7,19 @@ import {
 } from '@/features/courses/hooks/useCourses';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
-interface CourseSelectorProps {
+// ===========================
+// === PROPS DEFINITION ===
+// ===========================
+
+export interface CourseSelectorProps {
   onClose: () => void;
   modalRef: React.RefObject<HTMLDivElement | null>;
   onBackdropClick: (e: React.MouseEvent) => void;
 }
+
+// ===========================
+// === COMPONENT DEFINITION ===
+// ===========================
 
 export function CourseSelector({
   onClose,

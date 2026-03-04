@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   AlertCircle,
   Clock,
@@ -8,78 +9,109 @@ import {
 } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 import { calculateFocusPower } from '@/features/efficiency/logic/metricsCalc';
-import { Session } from '../types/efficiencyTypes';
 
-interface DistractionDetailsProps {
+import type { Session } from '../types/efficiencyTypes';
+
+type TimelineEvent = NonNullable<Session['timeline']>[number];
+
+// ==========================================
+// === TYPES / PROPS ===
+// ==========================================
+
+export interface DistractionDetailsProps {
   sessions: Session[];
 }
 
-interface TimelineEvent {
-  type: 'pause' | 'break' | string;
-  start: number;
-  duration?: number;
-}
-
-interface TimelinePause extends TimelineEvent {
+export interface TimelinePause extends TimelineEvent {
   lessonName?: string;
   timeLabel?: string;
 }
 
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
+/**
+ * Extracts and visualizes distraction and pause timelines from standard sessions.
+ */
 export const DistractionDetails = ({ sessions }: DistractionDetailsProps) => {
-  const totalPauses = sessions.reduce((acc, s) => {
-    const pauseEvents =
-      s.timeline?.filter((t: TimelineEvent) => t.type === 'pause') || [];
-    return acc + pauseEvents.length;
-  }, 0);
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
 
-  const totalPauseMinutes = sessions.reduce((acc, s) => {
-    const pauseEvents =
-      s.timeline?.filter((t: TimelineEvent) => t.type === 'pause') || [];
-    const pauseMins = pauseEvents.reduce(
-      (pAcc: number, p: TimelineEvent) => pAcc + (p.duration || 0),
-      0
-    );
-    return acc + pauseMins;
-  }, 0);
+  const { totalPauses, totalPauseMinutes, focusPower, allPauses } =
+    useMemo(() => {
+      const pauses = sessions.reduce((acc, s) => {
+        const pauseEvents =
+          s.timeline?.filter((t: TimelineEvent) => t.type === 'pause') || [];
+        return acc + pauseEvents.length;
+      }, 0);
 
-  const totalBreakMinutes = sessions.reduce((acc, s) => {
-    const breakEvents =
-      s.timeline?.filter((t: TimelineEvent) => t.type === 'break') || [];
-    const breakMins = breakEvents.reduce(
-      (pAcc: number, p: TimelineEvent) => pAcc + (p.duration || 0),
-      0
-    );
-    return acc + breakMins;
-  }, 0);
+      const pauseMinutes = sessions.reduce((acc, s) => {
+        const pauseEvents =
+          s.timeline?.filter((t: TimelineEvent) => t.type === 'pause') || [];
+        const pMins = pauseEvents.reduce(
+          (pAcc: number, p: TimelineEvent) => pAcc + (p.duration || 0),
+          0
+        );
+        return acc + pMins;
+      }, 0);
 
-  const totalWorkMinutes = sessions.reduce((acc, s) => acc + s.duration, 0);
+      const breakMinutes = sessions.reduce((acc, s) => {
+        const breakEvents =
+          s.timeline?.filter((t: TimelineEvent) => t.type === 'break') || [];
+        const bMins = breakEvents.reduce(
+          (pAcc: number, p: TimelineEvent) => pAcc + (p.duration || 0),
+          0
+        );
+        return acc + bMins;
+      }, 0);
 
-  const focusPower = calculateFocusPower(
-    totalWorkMinutes * 60,
-    totalBreakMinutes * 60,
-    totalPauseMinutes * 60
-  );
+      const workMinutes = sessions.reduce((acc, s) => acc + s.duration, 0);
 
+      const power = calculateFocusPower(
+        workMinutes * 60,
+        breakMinutes * 60,
+        pauseMinutes * 60
+      );
+
+      const formattedPauses = sessions
+        .flatMap((s) =>
+          (
+            s.timeline?.filter((t: TimelineEvent) => t.type === 'pause') || []
+          ).map(
+            (p: TimelineEvent): TimelinePause => ({
+              ...p,
+              lessonName: s.lessonName,
+              timeLabel: new Date(p.start).toLocaleTimeString('tr-TR', {
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+            })
+          )
+        )
+        .sort((a, b) => b.start - a.start);
+
+      return {
+        totalPauses: pauses,
+        totalPauseMinutes: pauseMinutes,
+        focusPower: power,
+        allPauses: formattedPauses,
+      };
+    }, [sessions]);
+
+  // ==========================================
+  // === HELPERS ===
+  // ==========================================
   const getStabilityColor = (score: number) => {
     if (score >= 100) return 'text-emerald-400';
     if (score >= 70) return 'text-primary';
     return 'text-rose-400';
   };
 
-  const allPauses = sessions
-    .flatMap((s) =>
-      (s.timeline?.filter((t: TimelineEvent) => t.type === 'pause') || []).map(
-        (p: TimelineEvent): TimelinePause => ({
-          ...p,
-          lessonName: s.lessonName,
-          timeLabel: new Date(p.start).toLocaleTimeString('tr-TR', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
-        })
-      )
-    )
-    .sort((a, b) => b.start - a.start);
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
 
   return (
     <div className="space-y-6">

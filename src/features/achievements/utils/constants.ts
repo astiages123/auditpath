@@ -1,11 +1,18 @@
 import type { Rank } from '@/types/auth';
 
+// ===========================
+// === RANK CONSTANTS ===
+// ===========================
+
+/**
+ * Predefined list of global user ranks based on progress percentage.
+ */
 export const RANKS: Rank[] = [
   {
     id: '1',
     name: 'Sürgün',
     minPercentage: 0,
-    color: 'text-slate-500',
+    color: 'text-slate-300',
     motto: 'Bilginin krallığından uzakta, sislerin içinde yolunu arıyorsun.',
     imagePath: '/ranks/rank1.webp',
     order: 1,

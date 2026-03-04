@@ -1,21 +1,30 @@
-// --- Daily Goal Progress Ring (SVG) ---
+// ==========================================
+// === PROPS ===
+// ==========================================
+
 export interface GoalRingProps {
   progress: number; // 0-100
   size?: number;
   strokeWidth?: number;
 }
 
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
 export const GoalProgressRing = ({
   progress,
   size = 120,
   strokeWidth = 10,
 }: GoalRingProps) => {
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset =
     circumference - (Math.min(progress, 100) / 100) * circumference;
 
-  // Softer color palette
   const getStrokeColor = () => {
     if (progress >= 100) return 'oklch(85.54% 0.1969 158.6115)'; // primary
     if (progress >= 50) return 'oklch(85.54% 0.1969 158.6115)'; // primary
@@ -23,6 +32,9 @@ export const GoalProgressRing = ({
     return 'oklch(82.968% 0.0001 271.152)'; // muted-foreground
   };
 
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   return (
     <div className="relative flex items-center justify-center">
       <svg width={size} height={size} className="transform -rotate-90">

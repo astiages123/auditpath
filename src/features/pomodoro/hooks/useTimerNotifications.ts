@@ -4,7 +4,11 @@ import { playNotificationSound } from '../logic/audioUtils';
 import { logger } from '@/utils/logger';
 import faviconSvg from '@/assets/favicon.svg';
 
-interface UseTimerNotificationsProps {
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
+export interface UseTimerNotificationsProps {
   timeLeft: number;
   isActive: boolean;
   isBreak: boolean;
@@ -13,6 +17,14 @@ interface UseTimerNotificationsProps {
   startTime: number | null;
 }
 
+// ===========================
+// === HOOK DEFINITION ===
+// ===========================
+
+/**
+ * Handles automated user notifications (Browser + Application sounds).
+ * Triggered automatically when the timer reaches zero.
+ */
 export function useTimerNotifications({
   timeLeft,
   isActive,
@@ -62,8 +74,17 @@ export function useTimerNotifications({
                 window.focus();
                 notification.close();
               };
-            } catch (e: unknown) {
-              logger.error('Desktop Notification failed', e as Error);
+            } catch (error: unknown) {
+              console.error(
+                '[useTimerNotifications][sendNotification] Hata:',
+                error
+              );
+              logger.error(
+                'UseTimerNotifications',
+                'sendNotification',
+                'Desktop Notification failed',
+                error as Error
+              );
             }
           }
         };

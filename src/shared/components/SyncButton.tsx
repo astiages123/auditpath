@@ -6,18 +6,24 @@ import { toast } from 'sonner';
 import { cn } from '@/utils/stringHelpers';
 import { Button } from '@/components/ui/button';
 
+// === PROPS ===
+
 interface SyncButtonProps {
   className?: string;
   onSyncComplete?: () => void;
   showLabel?: boolean;
+  iconClassName?: string;
 }
+
+// === COMPONENT ===
 
 export function SyncButton({
   className,
   onSyncComplete,
   showLabel = true,
   iconClassName,
-}: SyncButtonProps & { iconClassName?: string }) {
+}: SyncButtonProps) {
+  // === HOOKS ===
   const [isSyncing, setIsSyncing] = useState(false);
   const { data: categories = [] } = useCategories();
 
@@ -78,6 +84,8 @@ export function SyncButton({
       setIsSyncing(false);
     }
   };
+
+  // === RENDER ===
 
   return (
     <Button

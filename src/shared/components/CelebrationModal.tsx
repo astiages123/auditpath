@@ -10,6 +10,8 @@ import {
 import { cn } from '@/utils/stringHelpers';
 import { LucideIcon } from 'lucide-react';
 
+// === PROPS ===
+
 interface CelebrationModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -21,6 +23,8 @@ interface CelebrationModalProps {
   variant?: 'course' | 'rank' | 'achievement';
 }
 
+// === COMPONENT ===
+
 export function CelebrationModal({
   isOpen,
   onClose,
@@ -31,6 +35,7 @@ export function CelebrationModal({
   imageUrl,
   variant = 'course',
 }: CelebrationModalProps) {
+  // === HOOKS ===
   const [showContent, setShowContent] = useState(false);
 
   useEffect(() => {
@@ -76,6 +81,8 @@ export function CelebrationModal({
       };
     }
   }, [isOpen, variant]);
+
+  // === RENDER ===
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

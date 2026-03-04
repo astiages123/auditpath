@@ -1,5 +1,7 @@
 import { ContentType, sanitizeString } from './htmlSanitizer';
 
+// === FUNCTIONS ===
+
 /**
  * Deep sanitizes an object using DOMPurify
  * @param obj - The object to sanitize
@@ -18,7 +20,7 @@ export function deepSanitize<T>(
   }
 
   if (Array.isArray(obj)) {
-    return obj.map((item) => deepSanitize(item, contentType)) as T;
+    return obj.map((item: unknown) => deepSanitize(item, contentType)) as T;
   }
 
   if (typeof obj === 'object') {

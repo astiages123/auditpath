@@ -18,17 +18,29 @@ import {
   GenerationSuccessDialog,
 } from './GenerationDialogs';
 
+// === TYPES ===
+
 interface GenerateQuestionButtonProps {
+  /** Soru üretilecek içeriğin kimliği */
   chunkId: string;
+  /** Üretim başarıyla tamamlandığında tetiklenir */
   onComplete?: () => void;
+  /** Dialog açılıp kapandığında tetiklenir */
   onOpenChange?: (open: boolean) => void;
+  /** Dışarıdan gelen kota istatistikleri */
   externalStats?: {
     existing: number;
     quota: number;
   };
+  /** Buton üzerindeki metin */
   label?: string;
 }
 
+// === COMPONENT ===
+
+/**
+ * Akıllı soru üretme sürecini başlatan ve izleyen buton/dialog bileşeni.
+ */
 export function GenerateQuestionButton({
   chunkId,
   onComplete,
@@ -36,6 +48,8 @@ export function GenerateQuestionButton({
   externalStats,
   label,
 }: GenerateQuestionButtonProps) {
+  // === STATE & HOOKS ===
+
   const [open, setOpen] = useState(false);
   const {
     genState,
@@ -50,9 +64,13 @@ export function GenerateQuestionButton({
     open,
   });
 
+  // === SIDE EFFECTS ===
+
   useEffect(() => {
     onOpenChange?.(open);
   }, [open, onOpenChange]);
+
+  // === CALCULATIONS ===
 
   const displayedUsed = externalStats
     ? externalStats.existing + genState.savedCount
@@ -72,6 +90,8 @@ export function GenerateQuestionButton({
       : 0;
 
   const isProcessing = genState.loading;
+
+  // === RENDER ===
 
   return (
     <>
@@ -96,7 +116,9 @@ export function GenerateQuestionButton({
             )}
           </Button>
         </DialogTrigger>
+
         <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col">
+          {/* HEADER SECTION */}
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-yellow-500" />
@@ -107,12 +129,14 @@ export function GenerateQuestionButton({
             </DialogDescription>
           </DialogHeader>
 
+          {/* MAIN CONTENT SECTION */}
           {initializing ? (
             <div className="py-8 flex justify-center">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
           ) : status ? (
             <div className="py-4 space-y-4 flex-1 overflow-hidden flex flex-col">
+              {/* Kota Bilgisi */}
               <QuotaDisplay
                 displayedUsed={displayedUsed}
                 displayedQuota={displayedQuota}
@@ -130,8 +154,10 @@ export function GenerateQuestionButton({
                 conceptCount={status.conceptCount}
               />
 
+              {/* Canlı Log Akışı */}
               <GenerationLiveStream logs={genState.liveStreamLogs} />
 
+              {/* Yardımcı Bilgi Kutusu */}
               {!genState.loading && genState.liveStreamLogs.length === 0 && (
                 <div className="rounded-md bg-yellow-500/10 p-3 text-sm text-yellow-600 border border-yellow-500/20">
                   <p className="font-semibold mb-1">Nasıl Çalışır?</p>
@@ -153,6 +179,7 @@ export function GenerateQuestionButton({
             </div>
           )}
 
+          {/* FOOTER SECTION */}
           <DialogFooter>
             <Button
               onClick={handleGenerate}
@@ -177,6 +204,7 @@ export function GenerateQuestionButton({
         </DialogContent>
       </Dialog>
 
+      {/* DURUM DİALOGLARI */}
       <GenerationLoadingDialog
         open={genState.loading}
         status={genState.status}

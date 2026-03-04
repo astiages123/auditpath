@@ -5,8 +5,12 @@ import {
   POMODORO_WORK_DURATION_SECONDS,
 } from '../utils/constants';
 
-interface TimerState {
-  // Core timer state
+// ===========================
+// === STORE INTERFACE ===
+// ===========================
+
+export interface TimerState {
+  // === STATE ===
   timeLeft: number;
   isActive: boolean;
   isBreak: boolean;
@@ -15,12 +19,18 @@ interface TimerState {
   endTime: number | null;
   pauseStartTime: number | null;
 
-  // Actions
+  // === ACTIONS ===
+  /** Begins the countdown timer */
   startTimer: () => void;
+  /** Pauses the current timer */
   pauseTimer: () => void;
+  /** Resets the timer to its initial duration or a custom time */
   resetTimer: (initialTime?: number) => void;
+  /** Updates the remaining time */
   tick: () => void;
+  /** Sets the Pomodoro mode ('work' or 'break') */
   setMode: (mode: 'work' | 'break') => void;
+  /** Restores previous timer state from local storage or memory */
   restoreState: (
     timeLeft: number,
     isActive: boolean,
@@ -31,6 +41,10 @@ interface TimerState {
     pauseStartTime: number | null
   ) => void;
 }
+
+// ===========================
+// === STORE IMPLEMENTATION ===
+// ===========================
 
 export const useTimerStore = create<TimerState>()(
   persist(

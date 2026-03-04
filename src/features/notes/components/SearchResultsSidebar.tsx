@@ -1,22 +1,40 @@
 import { memo } from 'react';
-import { SearchResult } from '../hooks/useSearch';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
+import { type SearchResult } from '../types';
 
-interface SearchResultsSidebarProps {
+// === BÖLÜM ADI: TİPLER (TYPES) ===
+// ===========================
+
+export interface SearchResultsSidebarProps {
+  /** Bulunan arama sonuçları dizisi */
   results: SearchResult[];
+  /** Kullanıcı bir sonuca tıkladığında çalışacak eylem */
   onResultClick: (result: SearchResult) => void;
+  /** Mevcut arama sorgusu (sadece sonuç bulunamadı mesajı için) */
   query: string;
 }
 
+// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
+// ===========================
+
+/**
+ * Arama yapıldığında sağ tarafta veya modal içinde arama sonuçlarını (vurgulu özetleriyle)
+ * listeleyen yan panel bileşeni.
+ *
+ * @param {SearchResultsSidebarProps} props
+ * @returns {React.ReactElement}
+ */
 export const SearchResultsSidebar = memo(function SearchResultsSidebar({
   results,
   onResultClick,
   query,
-}: SearchResultsSidebarProps) {
+}: SearchResultsSidebarProps): React.ReactElement {
+  // === UI RENDER ===
+
   return (
     <nav className="h-full flex flex-col bg-card select-none">
       <div className="p-4 border-b border-border/30 flex items-center justify-between bg-primary/5">
@@ -36,11 +54,11 @@ export const SearchResultsSidebar = memo(function SearchResultsSidebar({
             </p>
           </div>
         ) : (
-          results.map((result) => (
+          results.map((result: SearchResult) => (
             <button
               key={result.id}
               onClick={() => onResultClick(result)}
-              className="w-full group text-left p-3 rounded-xl border border-border/40 bg-card/50 hover:bg-primary/5 hover:border-primary/30 transition-all duration-300"
+              className="w-full group text-left p-3 rounded-xl border border-border/40 bg-card/50 hover:bg-primary/5 hover:border-primary/30 transition-all duration-300 transition-colors"
             >
               <div className="text-[13px] leading-relaxed overflow-hidden">
                 <div className="text-muted-foreground/60 line-clamp-2">

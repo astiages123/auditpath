@@ -1,14 +1,27 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2, ArrowRight, Brain } from 'lucide-react';
 
+// === TYPES ===
+
 interface IntermissionScreenProps {
+  /** Kaçıncı setteyiz? (0 tabanlı) */
   batchIndex: number;
+  /** Toplam set sayısı */
   totalBatches: number;
+  /** Devam et butonuna tıklandığında tetiklenir */
   onContinue: () => void;
+  /** Bu setteki doğru sayısı */
   correctCount?: number;
+  /** Bu setteki yanlış sayısı */
   incorrectCount?: number;
 }
 
+// === COMPONENT ===
+
+/**
+ * Quiz setleri arasında gösterilen ara ekran.
+ * Kullanıcıya mevcut setin özetini sunar ve mola vermesini tavsiye eder.
+ */
 export function IntermissionScreen({
   batchIndex,
   totalBatches,
@@ -16,12 +29,15 @@ export function IntermissionScreen({
   correctCount = 0,
   incorrectCount = 0,
 }: IntermissionScreenProps) {
+  // === RENDER ===
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       className="max-w-md mx-auto text-center py-12 space-y-8"
     >
+      {/* BAŞLIK VE İKON */}
       <div className="space-y-2">
         <div className="w-20 h-20 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto ring-1 ring-emerald-500/30 mb-6">
           <CheckCircle2 className="w-10 h-10 text-emerald-500" />
@@ -35,6 +51,7 @@ export function IntermissionScreen({
         </p>
       </div>
 
+      {/* SKOR ÖZETİ */}
       <div className="grid grid-cols-2 gap-4">
         <div className="p-4 bg-background/50 border border-emerald-500/20 rounded-xl">
           <div className="text-3xl font-bold text-emerald-500 mb-1">
@@ -54,6 +71,7 @@ export function IntermissionScreen({
         </div>
       </div>
 
+      {/* BİLGİLENDİRME NOTU */}
       <div className="bg-muted/10 p-4 rounded-xl text-sm text-muted-foreground">
         <div className="flex items-center justify-center gap-2 mb-2 text-foreground font-medium">
           <Brain className="w-4 h-4 text-primary" />
@@ -62,6 +80,7 @@ export function IntermissionScreen({
         <p>Kısa bir nefes al ve hazır olduğunda devam et.</p>
       </div>
 
+      {/* DEVAM ET BUTONU */}
       <button
         onClick={onContinue}
         className="w-full py-4 bg-primary text-primary-foreground rounded-xl font-bold text-lg hover:bg-primary/90 transition-all shadow-lg hover:shadow-primary/25 flex items-center justify-center gap-2 group"

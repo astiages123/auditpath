@@ -1,3 +1,4 @@
+// === TYPES ===
 import {
   Dialog,
   DialogContent,
@@ -6,14 +7,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { AuthForms } from './AuthForms';
+import { type AuthModalProps } from '../types';
 import logo from '@/assets/logo.svg';
 
-interface AuthModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}
-
+// === COMPONENTS ===
+/**
+ * Modal component that wraps the authentication forms.
+ * @param {AuthModalProps} props - Component props.
+ */
 export function AuthModal({ open, onOpenChange }: AuthModalProps) {
+  // === RENDER ===
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px] border-border/40 bg-background/95 backdrop-blur-xl shadow-2xl p-6 gap-6">

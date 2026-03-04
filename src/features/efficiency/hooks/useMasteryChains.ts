@@ -2,81 +2,169 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getCourseMastery } from '@/features/achievements/services/userStatsService';
 import { supabase } from '@/lib/supabase';
-import { ConceptMapItem } from '@/features/quiz/types';
-import { CourseMastery } from '@/features/courses/types/courseTypes';
+import { safeQuery } from '@/lib/supabaseHelpers';
 import {
   calculateMasteryChains,
   processGraphForAtlas,
 } from '@/features/quiz/logic/quizCoreLogic';
 
-export function useMasteryChains() {
+import type { ConceptMapItem } from '@/features/quiz/types';
+import type { CourseMastery } from '@/features/courses/types/courseTypes';
+
+// ==========================================
+// === TYPES ===
+// ==========================================
+
+export interface FormattedLessonMastery {
+  lessonId: string;
+  title: string;
+  type?: string;
+  mastery: number;
+  videoProgress: number;
+  questionProgress: number;
+  goal: number;
+}
+
+export interface MasteryChainStats {
+  totalChains: number;
+  resilienceBonusDays: number;
+  nodes: unknown[];
+  edges: unknown[];
+}
+
+export interface MasteryChainsHook {
+  lessonMastery: FormattedLessonMastery[];
+  masteryChainStats: MasteryChainStats | null;
+}
+
+interface NoteChunkRow {
+  id: string;
+  metadata: unknown;
+  course_id: string | null;
+}
+
+interface ChunkMasteryRow {
+  chunk_id: string | null;
+  mastery_score: number | null;
+}
+
+// ==========================================
+// === HOOK ===
+// ==========================================
+
+/**
+ * Retrieves and processes mastery-related statistics mapping course mastery metrics
+ * as well as evaluating note chunks metadata to compute a knowledge graph visualization properties.
+ *
+ * @returns {MasteryChainsHook} Computed lesson scores and generated node/edge sets representing skill maps
+ */
+export function useMasteryChains(): MasteryChainsHook {
   const { user } = useAuth();
   const [courseMastery, setCourseMastery] = useState<CourseMastery[]>([]);
-  const [masteryChainStats, setMasteryChainStats] = useState<{
-    totalChains: number;
-    resilienceBonusDays: number;
-    nodes: unknown[];
-    edges: unknown[];
-  } | null>(null);
+  const [masteryChainStats, setMasteryChainStats] =
+    useState<MasteryChainStats | null>(null);
 
+  // --- COURSE MASTERY ---
   useEffect(() => {
+    let mounted = true;
+
     async function fetchMastery() {
       if (!user?.id) return;
-      const mastery = await getCourseMastery(user.id);
-      setCourseMastery(mastery || []);
+      try {
+        const mastery = await getCourseMastery(user.id);
+        if (mounted && mastery) {
+          setCourseMastery(mastery);
+        }
+      } catch (error) {
+        console.error('[useMasteryChains][fetchMastery] Hata:', error);
+      }
     }
+
     fetchMastery();
+
+    return () => {
+      mounted = false;
+    };
   }, [user?.id]);
 
+  // --- MASTERY CHAIN COMPUTATION ---
   useEffect(() => {
+    let mounted = true;
+
     async function fetchMasteryChains() {
       if (!user?.id) return;
 
-      const { data: chunksData } = await supabase
-        .from('note_chunks')
-        .select('id, metadata, course_id')
-        .not('metadata', 'is', null);
+      try {
+        const [{ data: chunksData }, { data: masteryData }] = await Promise.all(
+          [
+            safeQuery<NoteChunkRow[]>(
+              supabase
+                .from('note_chunks')
+                .select('id, metadata, course_id')
+                .not('metadata', 'is', null),
+              'Error fetching note chunks'
+            ),
+            safeQuery<ChunkMasteryRow[]>(
+              supabase
+                .from('chunk_mastery')
+                .select('chunk_id, mastery_score')
+                .eq('user_id', user.id),
+              'Error fetching chunk mastery'
+            ),
+          ]
+        );
 
-      const { data: masteryData } = await supabase
-        .from('chunk_mastery')
-        .select('chunk_id, mastery_score')
-        .eq('user_id', user.id);
+        if (!mounted || !chunksData) return;
 
-      if (!chunksData) return;
+        const chunkMasteryMap = new Map<string, number>();
+        (masteryData || []).forEach((masteryItem: ChunkMasteryRow) => {
+          if (!masteryItem.chunk_id) return;
+          chunkMasteryMap.set(
+            masteryItem.chunk_id,
+            masteryItem.mastery_score || 0
+          );
+        });
 
-      const chunkMasteryMap = new Map<string, number>();
-      masteryData?.forEach((m) => {
-        chunkMasteryMap.set(m.chunk_id, m.mastery_score);
-      });
+        const allConcepts: ConceptMapItem[] = [];
+        const conceptScoreMap: Record<string, number> = {};
 
-      const allConcepts: ConceptMapItem[] = [];
-      const conceptScoreMap: Record<string, number> = {};
+        chunksData?.forEach((chunk: NoteChunkRow) => {
+          if (
+            typeof chunk.metadata === 'object' &&
+            chunk.metadata !== null &&
+            'concept_map' in chunk.metadata &&
+            Array.isArray(chunk.metadata.concept_map)
+          ) {
+            const score = chunkMasteryMap.get(chunk.id) || 0;
 
-      chunksData.forEach((chunk) => {
-        const metadata = chunk.metadata as {
-          concept_map?: ConceptMapItem[];
-        } | null;
-        if (metadata?.concept_map && Array.isArray(metadata.concept_map)) {
-          const score = chunkMasteryMap.get(chunk.id) || 0;
+            chunk.metadata.concept_map.forEach(
+              (conceptItem: ConceptMapItem) => {
+                allConcepts.push(conceptItem);
+                const current = conceptScoreMap[conceptItem.baslik] || 0;
+                conceptScoreMap[conceptItem.baslik] = Math.max(current, score);
+              }
+            );
+          }
+        });
 
-          metadata.concept_map.forEach((c) => {
-            allConcepts.push(c);
-            const current = conceptScoreMap[c.baslik] || 0;
-            conceptScoreMap[c.baslik] = Math.max(current, score);
-          });
-        }
-      });
+        const rawNodes = calculateMasteryChains(allConcepts, conceptScoreMap);
+        const stats = processGraphForAtlas(rawNodes);
 
-      const rawNodes = calculateMasteryChains(allConcepts, conceptScoreMap);
-      const stats = processGraphForAtlas(rawNodes);
-
-      setMasteryChainStats(stats);
+        setMasteryChainStats(stats as MasteryChainStats);
+      } catch (error) {
+        console.error('[useMasteryChains][fetchMasteryChains] Hata:', error);
+      }
     }
 
     fetchMasteryChains();
+
+    return () => {
+      mounted = false;
+    };
   }, [user?.id]);
 
-  const lessonMastery = courseMastery.map((m) => ({
+  // --- DERIVED STATE ---
+  const lessonMastery: FormattedLessonMastery[] = courseMastery.map((m) => ({
     lessonId: m.courseId,
     title: m.courseName,
     type: m.courseType,
@@ -86,6 +174,7 @@ export function useMasteryChains() {
     goal: 100,
   }));
 
+  // --- RETURN ---
   return {
     lessonMastery,
     masteryChainStats,

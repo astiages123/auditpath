@@ -1,14 +1,30 @@
 import { lazy, Suspense } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import type { BloomStats } from '@/features/quiz/types/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Lazy load the chart component
+import type { BloomStats } from '@/features/quiz/types/types';
+
+// ==========================================
+// === LAZY COMPONENTS ===
+// ==========================================
+
 const BloomKeyChart = lazy(() =>
   import('./BloomKeyChart').then((m) => ({
     default: m.BloomKeyChart,
   }))
 );
+
+// ==========================================
+// === PROPS ===
+// ==========================================
+
+export interface PracticePerformanceRadarProps {
+  data: BloomStats[];
+}
+
+// ==========================================
+// === COMPONENT: FALLBACK ===
+// ==========================================
 
 const ChartFallback = () => (
   <div className="w-full flex items-center justify-center min-h-[300px]">
@@ -16,7 +32,16 @@ const ChartFallback = () => (
   </div>
 );
 
-export const PracticePerformanceRadar = ({ data }: { data: BloomStats[] }) => (
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
+export const PracticePerformanceRadar = ({
+  data,
+}: PracticePerformanceRadarProps) => (
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   <Tabs defaultValue="bloom" className="w-full">
     <TabsList className="w-full grid grid-cols-2">
       <TabsTrigger value="bloom">Bloom Radarı</TabsTrigger>

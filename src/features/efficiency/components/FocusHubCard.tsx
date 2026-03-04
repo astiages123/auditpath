@@ -2,22 +2,45 @@ import { useMemo } from 'react';
 import { Target, Maximize2 } from 'lucide-react';
 
 import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/utils/stringHelpers';
+
+import { CardHeader, TrendBadge } from './CardElements';
 import { EfficiencyModal } from './EfficiencyModal';
 import { FocusStreamHub as FocusHubContent } from './FocusStreamHub';
 import { GoalProgressRing } from './GoalProgressRing';
-import { Session } from '../types/efficiencyTypes';
-import { CardHeader, TrendBadge } from './CardElements';
 import { getFlowColor, getFlowStatusLabel } from '../logic/flowStateConfig';
-import { cn } from '@/utils/stringHelpers';
-import { useDailyMetrics } from '../hooks/useDailyMetrics';
-import { useEfficiencyTrends } from '../hooks/useEfficiencyTrends';
 import { useEfficiencyLogic } from '../hooks/useEfficiency';
+import type { DailyMetrics } from '../hooks/useDailyMetrics';
 import { DAILY_GOAL_MINUTES as DEFAULT_DAILY_GOAL_MINUTES } from '../utils/constants';
+import type {
+  DetailedSession,
+  EfficiencyTrend,
+  Session,
+} from '../types/efficiencyTypes';
 
-export const FocusHubCard = () => {
+type TimelineEvent = NonNullable<Session['timeline']>[number];
+
+// ==========================================
+// === TYPES / PROPS ===
+// ==========================================
+
+export interface FocusHubCardProps {
+  dailyMetrics: Omit<DailyMetrics, 'loading'>;
+  efficiencyTrend: EfficiencyTrend[];
+}
+
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
+export const FocusHubCard = ({
+  dailyMetrics,
+  efficiencyTrend,
+}: FocusHubCardProps) => {
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
   const {
-    loading: loadingDaily,
     efficiencySummary,
     dailyGoalMinutes,
     todayVideoMinutes,
@@ -26,11 +49,7 @@ export const FocusHubCard = () => {
     pagesRead,
     videoTrendPercentage,
     trendPercentage,
-  } = useDailyMetrics();
-
-  const { loading: loadingTrends, efficiencyTrend } = useEfficiencyTrends();
-
-  const loading = loadingDaily || loadingTrends;
+  } = dailyMetrics;
 
   const currentWorkMinutes = Math.round(
     (efficiencySummary?.netWorkTimeSeconds || 0) / 60
@@ -44,55 +63,80 @@ export const FocusHubCard = () => {
 
   const { learningFlow, flowState, goalProgress } = logic;
 
-  // Transform sessions for the modal
+  // Transform sessions for the modal view into a format expected by FocusStreamHub
   const sessions: Session[] = useMemo(() => {
-    if (!efficiencySummary?.sessions) return [];
+    if (
+      !efficiencySummary?.sessions ||
+      !Array.isArray(efficiencySummary.sessions)
+    )
+      return [];
 
-    return efficiencySummary.sessions.map((s: unknown) => {
-      const session = s as {
-        id: string;
-        startedAt: string;
-        courseName?: string;
-        workTimeSeconds: number;
-        breakTimeSeconds: number;
-        pauseTimeSeconds: number;
-        timeline?: Array<{
-          type?: string;
-          start: string | number;
-          end: string | number;
-        }>;
-      };
+    return efficiencySummary.sessions.map((session: DetailedSession) => {
       const startDate = new Date(session.startedAt);
       const totalDurationSec =
         session.workTimeSeconds +
         session.breakTimeSeconds +
         session.pauseTimeSeconds;
+
       const endDate = new Date(startDate.getTime() + totalDurationSec * 1000);
 
-      const rawTimeline = (
-        Array.isArray(session.timeline) ? session.timeline : []
-      ) as {
-        type?: string;
-        start: string | number;
-        end: string | number;
-      }[];
-      const timeline = rawTimeline.map((item) => ({
-        type: item.type?.toLowerCase() || 'work',
-        start: Number(item.start),
-        end: Number(item.end),
+      const rawTimeline = Array.isArray(session.timeline)
+        ? session.timeline
+        : [];
+
+      const timeline: TimelineEvent[] = rawTimeline.map((item) => ({
+        type:
+          typeof item === 'object' &&
+          item !== null &&
+          'type' in item &&
+          typeof item.type === 'string'
+            ? (item.type.toLowerCase() as 'work' | 'break' | 'pause')
+            : 'work',
+        start:
+          typeof item === 'object' &&
+          item !== null &&
+          'start' in item &&
+          typeof item.start === 'number'
+            ? item.start
+            : 0,
+        end:
+          typeof item === 'object' &&
+          item !== null &&
+          'end' in item &&
+          typeof item.end === 'number'
+            ? item.end
+            : 0,
         duration: Math.round(
-          (Number(item.end) - Number(item.start)) / 1000 / 60
+          ((typeof item === 'object' &&
+          item !== null &&
+          'end' in item &&
+          typeof item.end === 'number'
+            ? item.end
+            : 0) -
+            (typeof item === 'object' &&
+            item !== null &&
+            'start' in item &&
+            typeof item.start === 'number'
+              ? item.start
+              : 0)) /
+            1000 /
+            60
         ),
       }));
 
-      const pauseIntervals = timeline
+      const normalizedTimeline = timeline.map((timelineItem) => ({
+        ...timelineItem,
+        type: (timelineItem.type || 'work') as 'work' | 'break' | 'pause',
+      }));
+
+      const pauseIntervals = normalizedTimeline
         .filter((t) => t.type === 'pause')
         .map((t) => ({
           start: new Date(t.start).toLocaleTimeString('tr-TR', {
             hour: '2-digit',
             minute: '2-digit',
           }),
-          end: new Date(t.end).toLocaleTimeString('tr-TR', {
+          end: new Date(t.end || Date.now()).toLocaleTimeString('tr-TR', {
             hour: '2-digit',
             minute: '2-digit',
           }),
@@ -111,7 +155,7 @@ export const FocusHubCard = () => {
           minute: '2-digit',
         }),
         duration: Math.round(session.workTimeSeconds / 60),
-        timeline,
+        timeline: normalizedTimeline,
         pauseIntervals,
       };
     });
@@ -119,40 +163,15 @@ export const FocusHubCard = () => {
 
   const dailyGoal = dailyGoalMinutes || DEFAULT_DAILY_GOAL_MINUTES;
 
-  if (loading)
-    return (
-      <Card className="h-full flex flex-col p-4 md:p-6">
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-32 bg-surface" />
-              <Skeleton className="h-3 w-48 bg-surface" />
-            </div>
-          </div>
-        </div>
-        <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-8 mt-6">
-          <Skeleton className="h-40 w-40 rounded-full bg-surface shrink-0" />
-          <div className="space-y-4 w-full md:w-auto flex flex-col items-center md:items-start">
-            <div className="space-y-2">
-              <Skeleton className="h-3 w-24 bg-surface" />
-              <Skeleton className="h-10 w-48 bg-surface" />
-            </div>
-            <div className="space-y-2 w-full">
-              <Skeleton className="h-16 w-full md:w-48 bg-surface rounded-lg" />
-              <Skeleton className="h-16 w-full md:w-48 bg-surface rounded-lg" />
-            </div>
-          </div>
-        </div>
-      </Card>
-    );
-
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   return (
     <EfficiencyModal
       title="Öğrenme Akışı Analizi"
       trigger={
         <div className="h-full w-full cursor-pointer">
-          <Card className="h-full flex flex-col p-4 md:p-6">
+          <Card className="h-full flex flex-col p-4 md:p-6 hover:border-accent/40 transition-all duration-300">
             <CardHeader
               icon={Target}
               iconColor="text-accent"

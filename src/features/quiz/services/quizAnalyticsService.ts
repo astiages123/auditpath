@@ -1,225 +1,223 @@
 import { supabase } from '@/lib/supabase';
 import { safeQuery } from '@/lib/supabaseHelpers';
-import type {
-  BloomStats,
-  QuizStats,
-  SRSStats,
-  SubjectCompetency,
-} from '@/features/quiz/types';
+import { logger } from '@/utils/logger';
+import { type QuizResults, type SRSStats } from '@/features/quiz/types';
+
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const MODULE = 'QuizAnalyticsService';
+
+// ============================================================================
+// ANALYTICS SERVICES
+// ============================================================================
 
 /**
- * Get overall quiz statistics for a user.
+ * Kullanıcının kurstaki genel quiz istatistiklerini hesaplar.
+ * Doğru, yanlış, boş sayılarını ve toplam geçen süreyi döndürür.
  *
- * @param userId User ID
- * @returns Quiz statistics
+ * @param userId - Kullanıcı ID'si
+ * @param courseId - Kurs ID'si
+ * @returns Quiz istatistikleri (QuizResults)
  */
-export async function getQuizStats(userId: string): Promise<QuizStats> {
-  const { data, success } = await safeQuery(
-    supabase
-      .from('user_quiz_progress')
-      .select('response_type')
-      .eq('user_id', userId),
-    'getQuizStats error',
-    { userId }
-  );
+export async function getQuizAggregateStats(
+  userId: string,
+  courseId: string
+): Promise<QuizResults> {
+  const FUNC = 'getQuizAggregateStats';
+  try {
+    const { data } = await safeQuery<
+      { response_type: string | null; time_spent_ms: number | null }[]
+    >(
+      supabase
+        .from('user_quiz_progress')
+        .select('response_type, time_spent_ms')
+        .eq('user_id', userId)
+        .eq('course_id', courseId),
+      `${FUNC} error`,
+      { userId, courseId }
+    );
 
-  if (!success) {
-    return {
-      totalQuestions: 0,
-      correctAnswers: 0,
-      incorrectAnswers: 0,
-      blankAnswers: 0,
-      averageTime: 0,
-      masteryScore: 0,
-      totalAnswered: 0,
+    const stats: QuizResults = {
       correct: 0,
       incorrect: 0,
       blank: 0,
-      remaining: 0,
-      successRate: 0,
+      totalTimeMs: 0,
     };
+
+    data?.forEach((row) => {
+      if (row.response_type === 'correct') stats.correct++;
+      else if (row.response_type === 'incorrect') stats.incorrect++;
+      else stats.blank++;
+
+      stats.totalTimeMs += row.time_spent_ms || 0;
+    });
+
+    return stats;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return { correct: 0, incorrect: 0, blank: 0, totalTimeMs: 0 };
   }
-
-  const totalAnswered = data?.length || 0;
-  const correct =
-    data?.filter((r) => r.response_type === 'correct').length || 0;
-  const incorrect =
-    data?.filter((r) => r.response_type === 'incorrect').length || 0;
-  const blank = data?.filter((r) => r.response_type === 'blank').length || 0;
-
-  return {
-    totalQuestions: totalAnswered,
-    correctAnswers: correct,
-    incorrectAnswers: incorrect,
-    blankAnswers: blank,
-    averageTime: 0,
-    masteryScore:
-      totalAnswered > 0 ? Math.round((correct / totalAnswered) * 100) : 0,
-    totalAnswered,
-    correct,
-    incorrect,
-    blank,
-    remaining: 0,
-    successRate:
-      totalAnswered > 0 ? Math.round((correct / totalAnswered) * 100) : 0,
-  };
 }
 
 /**
- * Get subject-wise competency scores.
+ * Konu (topic) bazlı yetkinlik skorlarını getirir.
+ * Her bir konu için başarı yüzdesini ve öne çıkan Bloom seviyesini hesaplar.
  *
- * @param userId User ID
- * @returns Array of subject competency scores
+ * @param userId - Kullanıcı ID'si
+ * @param courseId - Kurs ID'si
+ * @returns Konu bazlı skor listesi
  */
-export async function getSubjectCompetency(
-  userId: string
-): Promise<SubjectCompetency[]> {
-  const coursesRes = await safeQuery(
-    supabase.from('courses').select('id, name'),
-    'fetch courses for competency error'
-  );
-  if (!coursesRes.success || !coursesRes.data) return [];
+export async function getTopicProficiencyScores(
+  userId: string,
+  courseId: string
+): Promise<{ section_title: string; bloom_level: string; score: number }[]> {
+  const FUNC = 'getTopicProficiencyScores';
+  try {
+    const { data } = await safeQuery<
+      {
+        mastery_score: number;
+        chunk: {
+          section_title: string;
+          ai_logic: unknown;
+        } | null;
+      }[]
+    >(
+      supabase
+        .from('chunk_mastery')
+        .select(
+          `
+                  mastery_score,
+                  chunk:note_chunks(section_title, ai_logic)
+              `
+        )
+        .eq('user_id', userId)
+        .eq('course_id', courseId),
+      `${FUNC} error`,
+      { userId, courseId }
+    );
 
-  const courseMap = new Map(coursesRes.data.map((c) => [c.id, c.name]));
+    const results: {
+      section_title: string;
+      bloom_level: string;
+      score: number;
+    }[] = [];
 
-  const { data, success } = await safeQuery(
-    supabase
-      .from('user_quiz_progress')
-      .select('course_id, response_type')
-      .eq('user_id', userId),
-    'fetch user progress for competency error',
-    { userId }
-  );
+    data?.forEach((row) => {
+      if (!row.chunk) return;
 
-  if (!success || !data) return [];
+      const aiLogic =
+        (row.chunk.ai_logic as { primary_bloom_level?: string }) || {};
+      const bloom = aiLogic.primary_bloom_level || 'knowledge';
 
-  const stats: Record<string, { correct: number; total: number }> = {};
-
-  data.forEach((row) => {
-    const cName = courseMap.get(row.course_id) || 'Unknown';
-    if (!stats[cName]) stats[cName] = { correct: 0, total: 0 };
-
-    stats[cName].total += 1;
-    if (row.response_type === 'correct') {
-      stats[cName].correct += 1;
-    }
-  });
-
-  return Object.entries(stats)
-    .map(([subject, val]) => {
-      const ratio = val.total > 0 ? val.correct / val.total : 0;
-      let masteryLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert' =
-        'beginner';
-      if (ratio >= 0.8) masteryLevel = 'expert';
-      else if (ratio >= 0.6) masteryLevel = 'advanced';
-      else if (ratio >= 0.4) masteryLevel = 'intermediate';
-
-      return {
-        subject,
-        score: Math.round(ratio * 100),
-        totalQuestions: val.total,
-        correctAnswers: val.correct,
-        masteryLevel,
+      const bloomMap: Record<string, string> = {
+        knowledge: 'Bilgi',
+        application: 'Uygulama',
+        analysis: 'Analiz',
       };
-    })
-    .sort((a, b) => b.totalQuestions - a.totalQuestions)
-    .slice(0, 6);
+
+      results.push({
+        section_title: row.chunk.section_title,
+        bloom_level: bloomMap[bloom] || 'Bilgi',
+        score: row.mastery_score,
+      });
+    });
+
+    return results;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return [];
+  }
 }
 
 /**
- * Get Bloom's taxonomy level statistics.
+ * Aralıklı tekrar (SRS) istatistiklerini getirir.
+ * Aktif, incelenen ve ustalaşılan soru sayılarını hesaplar.
  *
- * @param userId User ID
- * @returns Array of Bloom level statistics
+ * @param userId - Kullanıcı ID'si
+ * @param courseId - Kurs ID'si
+ * @returns SRS İstatistikleri (SRSStats)
  */
-export async function getBloomStats(userId: string): Promise<BloomStats[]> {
-  const { data, success } = await safeQuery<
-    {
-      response_type: string;
-      question: { bloom_level: string | null } | null;
-    }[]
-  >(
-    supabase
-      .from('user_quiz_progress')
-      .select('response_type, question:questions(bloom_level)')
-      .eq('user_id', userId),
-    'getBloomStats error',
-    { userId }
-  );
+export async function getSRSStats(
+  userId: string,
+  courseId: string
+): Promise<SRSStats> {
+  const FUNC = 'getSRSStats';
+  try {
+    const { data } = await safeQuery<{ status: string | null }[]>(
+      supabase
+        .from('user_question_status')
+        .select('status, questions!inner(course_id)')
+        .eq('user_id', userId)
+        .eq('questions.course_id', courseId),
+      `${FUNC} error`,
+      { userId, courseId }
+    );
 
-  if (!success || !data) return [];
+    const stats: SRSStats = {
+      active: 0,
+      reviewing: 0,
+      mastered: 0,
+      totalCards: data?.length || 0,
+      dueCards: 0, // Şimdilik basitleştirilmiş
+      reviewCards: 0,
+      retentionRate: 0,
+    };
 
-  const levels: Record<string, { correct: number; total: number }> = {
-    knowledge: { correct: 0, total: 0 },
-    application: { correct: 0, total: 0 },
-    analysis: { correct: 0, total: 0 },
-  };
+    data?.forEach((row) => {
+      if (row.status === 'active') stats.active++;
+      else if (row.status === 'reviewing') stats.reviewing++;
+      else if (row.status === 'mastered') stats.mastered++;
+    });
 
-  data.forEach(
-    (row: {
-      response_type: string;
-      question: { bloom_level: string | null } | null;
-    }) => {
-      const bloomLevel = row.question?.bloom_level;
-      if (bloomLevel && levels[bloomLevel]) {
-        levels[bloomLevel].total += 1;
-        if (row.response_type === 'correct') {
-          levels[bloomLevel].correct += 1;
-        }
-      }
-    }
-  );
-
-  return Object.entries(levels).map(([key, val]) => ({
-    level: key,
-    correct: val.correct,
-    questionsSolved: val.total,
-    score: val.total > 0 ? Math.round((val.correct / val.total) * 100) : 0,
-  }));
-}
-
-/**
- * Get SRS (Spaced Repetition System) statistics.
- *
- * @param userId User ID
- * @returns SRS statistics by mastery level
- */
-export async function getSRSStats(userId: string): Promise<SRSStats> {
-  const { data, success } = await safeQuery(
-    supabase
-      .from('chunk_mastery')
-      .select('mastery_score')
-      .eq('user_id', userId),
-    'getSRSStats error',
-    { userId }
-  );
-
-  if (!success || !data) {
+    return stats;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
     return {
+      active: 0,
+      reviewing: 0,
+      mastered: 0,
       totalCards: 0,
       dueCards: 0,
       reviewCards: 0,
       retentionRate: 0,
     };
   }
+}
 
-  const stats = { mastered: 0, reviewing: 0, active: 0 };
+/**
+ * Kurs için temel çözüm istatistiklerini getirir.
+ *
+ * @param userId - Kullanıcı ID'si
+ * @param courseId - Kurs ID'si
+ * @returns Çözülen toplam soru sayısı objesi veya null
+ */
+export async function getCourseStats(
+  userId: string,
+  courseId: string
+): Promise<{ totalQuestionsSolved: number } | null> {
+  const FUNC = 'getCourseStats';
+  try {
+    const { count } = await safeQuery(
+      supabase
+        .from('user_quiz_progress')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('course_id', courseId),
+      `${FUNC} error`,
+      { userId, courseId }
+    );
 
-  data.forEach((row) => {
-    const score = row.mastery_score || 0;
-    if (score === 0) stats.active++;
-    else if (score < 80) stats.reviewing++;
-    else stats.mastered++;
-  });
-
-  const totalCards = data.length;
-  const retentionRate =
-    totalCards > 0 ? Math.round((stats.mastered / totalCards) * 100) : 0;
-
-  return {
-    totalCards,
-    dueCards: stats.reviewing,
-    reviewCards: stats.reviewing,
-    retentionRate,
-  };
+    return {
+      totalQuestionsSolved: count || 0,
+    };
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return { totalQuestionsSolved: 0 };
+  }
 }

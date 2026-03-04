@@ -1,10 +1,14 @@
 import { LogCallback, Message } from '@/types/common';
 import type { Json } from '@/types/database.types';
 
+// === SECTION: Re-exports ===
+
 export { type LogCallback, type Message };
 export type { Json };
 
-// AI Response types
+// === SECTION: AI & Provider Types ===
+
+/** AI tarafından üretilen ham yanıt nesnesi */
 export interface AIResponse {
   content: string;
   usage?: {
@@ -15,9 +19,12 @@ export interface AIResponse {
   };
 }
 
+/** Desteklenen LLM sağlayıcıları */
 export type LLMProvider = 'cerebras' | 'google' | 'mimo' | 'deepseek';
 
-// Quiz analytics types
+// === SECTION: Analytics & Stats ===
+
+/** Veritabanına yeni bir quiz sorusu eklemek için kullanılan nesne */
 export interface QuizInsert {
   id?: string;
   course_id: string;
@@ -28,6 +35,7 @@ export interface QuizInsert {
   created_at?: string;
 }
 
+/** Bloom taksonomisi seviyelerine göre istatistikler */
 export interface BloomStats {
   level: string;
   correct: number;
@@ -35,6 +43,7 @@ export interface BloomStats {
   score: number;
 }
 
+/** Genel quiz başarı istatistikleri */
 export interface QuizStats {
   totalQuestions: number;
   correctAnswers: number;
@@ -42,7 +51,7 @@ export interface QuizStats {
   blankAnswers: number;
   averageTime: number;
   masteryScore: number;
-  totalAnswered?: number; // For backwards compatibility
+  totalAnswered?: number; // Geriye dönük uyumluluk için
   correct?: number;
   incorrect?: number;
   blank?: number;
@@ -50,13 +59,20 @@ export interface QuizStats {
   successRate?: number;
 }
 
+/** Spaced Repetition System (SRS/Aralıklı Tekrar) istatistikleri */
 export interface SRSStats {
+  active: number;
+  reviewing: number;
+  mastered: number;
   totalCards: number;
   dueCards: number;
   reviewCards: number;
   retentionRate: number;
 }
 
+// === SECTION: Concept & Mastery Domain ===
+
+/** Konu yetkinlik detayları */
 export interface SubjectCompetency {
   subject: string;
   score: number;
@@ -65,6 +81,7 @@ export interface SubjectCompetency {
   masteryLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert';
 }
 
+/** Kavram haritası içindeki bir düğüm/kavram */
 export interface ConceptMapItem {
   baslik: string;
   odak: string;
@@ -76,39 +93,57 @@ export interface ConceptMapItem {
   [key: string]: unknown;
 }
 
+// === SECTION: Question Definitions ===
+
+/** Bloom seviyeleri */
+export type BloomLevel =
+  | 'Bilgi'
+  | 'Uygulama'
+  | 'Analiz'
+  | 'knowledge'
+  | 'application'
+  | 'analysis';
+
+/** Quiz yanıt tipleri */
 export type QuizResponseType = 'correct' | 'incorrect' | 'blank';
 
+/** Soru format tipleri */
 export type QuizQuestionType = 'multiple_choice' | 'true_false';
 
+/** Tüm soru tipleri için ortak alanlar */
 export interface BaseQuestion {
   id?: string;
-  q: string; // Question text
-  exp: string; // Explanation
-  img?: number | null; // Index of the image in imageUrls array
-  imageUrls?: string[]; // Array of image URLs for the chunk
-  imgPath?: string | null; // Legacy/Optional path override
-  diagnosis?: string;
-  insight?: string;
-  evidence?: string;
+  q: string; // Soru metni
+  exp: string; // Açıklama
+  img?: number | null; // imageUrls içindeki görsel indeksi
+  imageUrls?: string[]; // Chunk ile ilişkili tüm görsel URL'leri
+  imgPath?: string | null; // Geriye dönük uyumluluk için yol
+  diagnosis?: string; // Yapay zeka teşhisi
+  insight?: string; // Yapay zeka mentor notu
+  evidence?: string; // Doğrulayıcı metin alıntısı
   chunk_id?: string;
   courseSlug?: string;
   topicSlug?: string;
 }
 
+/** Çoktan seçmeli soru tipi (Genellikle 5 seçenekli) */
 export interface MultipleChoiceQuestion extends BaseQuestion {
   type: 'multiple_choice';
-  o: string[]; // Typically 5 options
-  a: number; // Correct index
+  o: string[]; // Seçenekler
+  a: number; // Doğru seçeneğin indeksi
 }
 
+/** Doğru-Yanlış soru tipi */
 export interface TrueFalseQuestion extends BaseQuestion {
   type: 'true_false';
   o: string[]; // ["Doğru", "Yanlış"]
-  a: number; // 0 or 1
+  a: number; // 0 veya 1
 }
 
+/** Tüm soru tiplerini kapsayan Union tipi */
 export type QuizQuestion = MultipleChoiceQuestion | TrueFalseQuestion;
 
+/** Yapay zeka tarafından yeni üretilmiş soru nesnesi */
 export interface GeneratedQuestion extends Omit<BaseQuestion, 'id'> {
   o: string[];
   a: number;
@@ -116,6 +151,7 @@ export interface GeneratedQuestion extends Omit<BaseQuestion, 'id'> {
   concept: string;
 }
 
+/** Quiz oturum bağlamı */
 export interface SessionContext {
   userId: string;
   courseId: string;
@@ -124,6 +160,7 @@ export interface SessionContext {
   courseName?: string;
 }
 
+/** Gelişmiş puanlama sonucu */
 export interface AdvancedScoreResult {
   baseDelta: number;
   finalScore: number;
@@ -131,18 +168,38 @@ export interface AdvancedScoreResult {
   timeRatio: number;
 }
 
+/** Quiz ana sayfasındaki ders kartları için istatistik özetleri */
+export interface LandingCourseStats {
+  averageMastery: number;
+  lastStudyDate: string | null;
+  difficultSubject: string | null;
+  totalQuestions?: number;
+  totalSolved?: number;
+  masteredCount?: number;
+  recentActivity?: {
+    title: string;
+    score: number;
+    date: string;
+  }[];
+}
+
+// === SECTION: Exam & Atlas Domain ===
+
+/** Sınav soru dağılımı girdisi */
 export interface ExamDistributionInput {
   examTotal: number;
   importance: 'high' | 'medium' | 'low';
   chunks: ChunkMetric[];
 }
 
+/** Sınav ders ağırlığı */
 export interface ExamSubjectWeight {
   subject?: string;
   importance: 'high' | 'medium' | 'low';
   examTotal?: number;
 }
 
+/** Atlas/Grafik görünümü için yetkinlik düğümü */
 export interface MasteryNode {
   id: string;
   label: string;
@@ -157,6 +214,7 @@ export interface MasteryNode {
   };
 }
 
+/** Atlas grafik verisi ve zincir istatistikleri */
 export interface MasteryChainStats {
   totalChains: number;
   resilienceBonusDays: number;
@@ -164,6 +222,9 @@ export interface MasteryChainStats {
   edges: { source: string; target: string; isStrong: boolean }[];
 }
 
+// === SECTION: Session & History ===
+
+/** Geçmiş quiz oturumu özeti */
 export interface RecentQuizSession {
   uniqueKey: string;
   courseName: string;
@@ -176,6 +237,7 @@ export interface RecentQuizSession {
   successRate: number;
 }
 
+/** Bilişsel analiz ve hata teşhisi nesnesi */
 export interface CognitiveInsight {
   id: string;
   courseId: string;
@@ -187,6 +249,7 @@ export interface CognitiveInsight {
   date: string;
 }
 
+/** Chunk bazlı metrikler */
 export interface ChunkMetric {
   id: string;
   concept_count: number;
@@ -194,6 +257,7 @@ export interface ChunkMetric {
   mastery_score: number;
 }
 
+/** Durum bilgisi ile birlikte soru nesnesi */
 export interface QuestionWithStatus {
   question_id: string;
   status: 'active' | 'reviewing' | 'mastered';
@@ -207,6 +271,7 @@ export interface QuestionWithStatus {
   };
 }
 
+/** Repository'den dönen ham soru verisi */
 export interface RepositoryQuestion {
   id: string;
   chunk_id: string | null;
@@ -218,6 +283,7 @@ export interface RepositoryQuestion {
   chunk?: { section_title: string } | null;
 }
 
+/** Veritabanı user_question_status tablosu satırı */
 export interface UserQuestionStatusRow {
   question_id: string;
   status: 'active' | 'reviewing' | 'mastered';
@@ -225,6 +291,7 @@ export interface UserQuestionStatusRow {
   next_review_session: number | null;
 }
 
+/** Soru gönderim sonucu */
 export interface SubmissionResult {
   isCorrect: boolean;
   scoreDelta: number;
@@ -235,6 +302,9 @@ export interface SubmissionResult {
   progressId?: string;
 }
 
+// === SECTION: Application State Types ===
+
+/** Quiz bileşeni içindeki UI durumu */
 export interface QuizState {
   currentQuestion: QuizQuestion | null;
   queue: QuizQuestion[];
@@ -255,6 +325,7 @@ export interface QuizState {
   })[];
 }
 
+/** Test sonucu özeti */
 export interface TestResultSummary {
   percentage: number;
   masteryScore: number;
@@ -262,6 +333,7 @@ export interface TestResultSummary {
   totalTimeFormatted: string;
 }
 
+/** Quiz sonuç sayıları */
 export interface QuizResults {
   correct: number;
   incorrect: number;
@@ -269,6 +341,7 @@ export interface QuizResults {
   totalTimeMs: number;
 }
 
+/** İnceleme kuyruğundaki soru ögesi */
 export interface ReviewItem {
   questionId: string;
   status: 'active' | 'reviewing' | 'mastered';
@@ -280,6 +353,7 @@ export interface ReviewItem {
   isCorrectAnswer?: boolean | null;
 }
 
+/** Quiz oturumunun mevcut durumu */
 export type QuizSessionStatus =
   | 'IDLE'
   | 'INITIALIZING'
@@ -289,6 +363,7 @@ export type QuizSessionStatus =
   | 'FINISHED'
   | 'ERROR';
 
+/** Kullanıcının kota bilgileri */
 export type QuotaInfo = {
   dailyLimit?: number;
   dailyQuota?: number;
@@ -300,6 +375,7 @@ export type QuotaInfo = {
   isMaintenanceMode?: boolean;
 } | null;
 
+/** Kursa özel istatistikler */
 export type CourseStats = {
   totalQuestions?: number;
   totalQuestionsSolved?: number;
@@ -309,6 +385,7 @@ export type CourseStats = {
   averageMastery?: number;
 } | null;
 
+/** Quiz oturumunun genel durumu */
 export interface QuizSessionState {
   status: QuizSessionStatus;
   sessionInfo: { currentSession: number; courseId: string } | null;
@@ -329,6 +406,7 @@ export interface QuizSessionState {
   startTime: number | null;
 }
 
+/** Oturum başlatma için payload */
 export interface InitializePayload {
   sessionInfo: { currentSession: number; courseId: string };
   quotaInfo: QuotaInfo;
@@ -339,6 +417,7 @@ export interface InitializePayload {
   initialReviewIndex?: number;
 }
 
+/** Soru yanıtlama için payload */
 export interface AnswerPayload {
   questionId?: string;
   answerIndex?: number;
@@ -348,6 +427,7 @@ export interface AnswerPayload {
   timeSpent?: number;
 }
 
+/** Scaffolding (ipucu/destek) ekleme için payload */
 export interface ScaffoldingPayload {
   questionId: string;
   chunkId?: string;
@@ -355,6 +435,7 @@ export interface ScaffoldingPayload {
   priority?: number;
 }
 
+/** Quiz oturumu için eylem tipleri */
 export type QuizAction =
   | { type: 'INITIALIZE'; payload: InitializePayload }
   | { type: 'SET_ERROR'; payload: string }
@@ -370,6 +451,7 @@ export type QuizAction =
   | { type: 'FINISH_QUIZ' }
   | { type: 'PREV_QUESTION' };
 
+/** Chunk bazlı yapay zeka analiz mantığı */
 export interface ChunkAILogic {
   difficulty_index?: number;
   concept_map?: ConceptMapItem[];
@@ -381,10 +463,12 @@ export interface ChunkAILogic {
   [key: string]: unknown;
 }
 
+/** Chunk meta verileri */
 export interface ChunkMetadata {
   [key: string]: unknown;
 }
 
+/** Chunk ustalık tablosu satırı */
 export interface ChunkMasteryRow {
   chunk_id: string;
   user_id: string;
@@ -394,6 +478,7 @@ export interface ChunkMasteryRow {
   total_questions_seen: number;
 }
 
+/** Kota durum özeti */
 export interface QuotaStatus {
   used: number;
   quota: {

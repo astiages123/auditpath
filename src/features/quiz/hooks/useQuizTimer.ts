@@ -1,24 +1,65 @@
 import { useCallback, useEffect } from 'react';
 import { useQuizTimerStore } from '@/features/quiz/store';
 
+// ============================================================================
+// HOOK
+// ============================================================================
+
+/**
+ * Quiz süresini yöneten ve merkezi store ile senkronize çalışan hook.
+ * Soruların ne kadar sürede çözüldüğünü takip etmek için kullanılır.
+ *
+ * @returns {Object} { startTimer, stopTimer, resetTimer }
+ */
 export function useQuizTimer() {
+  // === SIDE EFFECTS ===
+
   useEffect(() => {
+    // Bileşen unmount olduğunda durumu temizle
     return () => {
-      useQuizTimerStore.getState().clear();
+      try {
+        useQuizTimerStore.getState().clear();
+      } catch (err) {
+        console.error('[useQuizTimer][unmount] Hata:', err);
+      }
     };
   }, []);
 
+  // === ACTIONS ===
+
+  /** Zamanlayıcıyı başlatır */
   const startTimer = useCallback(() => {
-    useQuizTimerStore.getState().start();
+    try {
+      useQuizTimerStore.getState().start();
+    } catch (err) {
+      console.error('[useQuizTimer][startTimer] Hata:', err);
+    }
   }, []);
 
+  /** Zamanlayıcıyı durdurur ve geçen süreyi MS cinsinden döner */
   const stopTimer = useCallback(() => {
-    return useQuizTimerStore.getState().stop();
+    try {
+      return useQuizTimerStore.getState().stop();
+    } catch (err) {
+      console.error('[useQuizTimer][stopTimer] Hata:', err);
+      return 0;
+    }
   }, []);
 
+  /** Zamanlayıcıyı sıfırlar */
   const resetTimer = useCallback(() => {
-    useQuizTimerStore.getState().reset();
+    try {
+      useQuizTimerStore.getState().reset();
+    } catch (err) {
+      console.error('[useQuizTimer][resetTimer] Hata:', err);
+    }
   }, []);
 
-  return { startTimer, stopTimer, resetTimer };
+  // === RETURN ===
+
+  return {
+    startTimer,
+    stopTimer,
+    resetTimer,
+  };
 }

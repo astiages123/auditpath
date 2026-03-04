@@ -11,20 +11,29 @@ import {
 } from 'lucide-react';
 import { ROUTES } from '@/utils/routes';
 
+// === TYPES ===
+
+export type NavGroup = 'navigation' | 'action' | 'meta';
+export type NavAction = 'pomodoro' | 'program';
+
 export interface NavItem {
   label: string;
-  href?: string;
-  action?: 'pomodoro' | 'program';
+  group: NavGroup;
   icon: LucideIcon;
-  group: 'navigation' | 'action' | 'meta';
+  href?: string;
+  action?: NavAction;
   mobileOnly?: boolean;
 }
 
-export const NAV_GROUP_LABELS: Record<NavItem['group'], string> = {
+// === CONSTANTS ===
+
+export const NAV_GROUP_LABELS: Record<NavGroup, string> = {
   navigation: 'Ana Yörünge',
   action: 'Derin Çalışma',
   meta: 'Gelişim ve İçgörü',
 };
+
+// === CONFIG ===
 
 export const navItems: NavItem[] = [
   // === ANA YÖRÜNGE (Navigation Zone) ===
@@ -78,7 +87,9 @@ export const navItems: NavItem[] = [
   },
 ];
 
-export function getNavItemsByGroup(): Record<NavItem['group'], NavItem[]> {
+// === FUNCTIONS ===
+
+export function getNavItemsByGroup(): Record<NavGroup, NavItem[]> {
   return {
     navigation: navItems.filter((item) => item.group === 'navigation'),
     action: navItems.filter((item) => item.group === 'action'),

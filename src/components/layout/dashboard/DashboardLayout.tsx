@@ -1,6 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
-import { PomodoroModal, TimerController } from '@/features/pomodoro/components';
 import { Toaster } from '@/components/ui/sonner';
 import { useCelebration } from '@/shared/hooks/useCelebration';
 import { useCelebrationStore } from '@/features/achievements/store/useCelebrationStore';
@@ -19,8 +18,19 @@ const CelebrationModal = lazy(() =>
     default: module.CelebrationModal,
   }))
 );
+const PomodoroModal = lazy(() =>
+  import('@/features/pomodoro/components/PomodoroModal').then((module) => ({
+    default: module.PomodoroModal,
+  }))
+);
+const TimerController = lazy(() =>
+  import('@/features/pomodoro/components/TimerController').then((module) => ({
+    default: module.TimerController,
+  }))
+);
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  // === HOOKS ===
   const { user } = useAuth();
   useCelebration();
 
@@ -30,6 +40,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     (state) => state.closeCelebration
   );
 
+  const { isMobileMenuOpen, setMobileMenuOpen, isSidebarCollapsed } =
+    useUIStore();
+  usePomodoro();
+
+  const location = useLocation();
+
+  // === HANDLERS ===
+
   const handleComplete = async () => {
     if (current && current.onClose) {
       await current.onClose();
@@ -37,11 +55,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     closeCelebration();
   };
 
-  const { isMobileMenuOpen, setMobileMenuOpen, isSidebarCollapsed } =
-    useUIStore();
-  usePomodoro();
-
-  const location = useLocation();
+  // === RENDER ===
 
   const isFullWidthPage =
     location.pathname.startsWith(ROUTES.NOTES) ||
@@ -124,8 +138,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         )}
       </div>
 
-      <TimerController />
-      <PomodoroModal />
+      <Suspense fallback={null}>
+        <TimerController />
+        <PomodoroModal />
+      </Suspense>
       <Toaster position="top-center" richColors />
 
       {user && current && isOpen && (

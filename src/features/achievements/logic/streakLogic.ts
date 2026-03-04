@@ -1,16 +1,21 @@
 import { formatDateKey, getVirtualDate } from '@/utils/dateUtils';
 
+// ===========================
+// === STREAK CALCULATION ===
+// ===========================
+
 /**
- * Calculate current streak with weekend allowance logic.
+ * Calculates the current streak of consecutive active days.
  *
- * Critical Rules:
- * - Weekend (Saturday/Sunday) gaps do NOT break streak
- * - Standard day logic (00:00 start) is applied via getVirtualDate() (which now returns standard dates)
- * - Streak counts consecutive days ending TODAY or YESTERDAY
+ * Rules:
+ * - A gap on a weekend (Saturday or Sunday) does NOT break the streak, provided it's only one weekend day.
+ * - If both Saturday and Sunday are missed, the streak breaks.
+ * - Standard day logic (00:00 start) is applied via getVirtualDate().
+ * - Streak counts consecutive days ending TODAY or YESTERDAY.
  *
- * @param activeDays Set of active day strings in YYYY-MM-DD format
- * @param firstActivityKey First activity date key (YYYY-MM-DD)
- * @returns Current streak count
+ * @param activeDays - A Set of date strings (YYYY-MM-DD) representing days the user was active
+ * @param firstActivityKey - The date string (YYYY-MM-DD) of the user's first ever activity
+ * @returns The current consecutive streak count
  */
 export function calculateStreak(
   activeDays: Set<string>,
@@ -19,7 +24,7 @@ export function calculateStreak(
   let streak = 0;
   const checkDate = getVirtualDate();
   let consecutiveDays = 0;
-  let gapCount = 0; // Track weekday gaps
+  let gapCount = 0; // Track weekday gaps or first-day non-activity
 
   // Check consecutive days starting from the virtual "Today"
   while (true) {
@@ -31,53 +36,52 @@ export function calculateStreak(
     } else {
       const dayOfWeek = checkDate.getDay();
 
-      // Hafta sonu kontrolü
+      // Weekend allowance logic
       if (dayOfWeek === 0 || dayOfWeek === 6) {
-        // İki hafta sonu gününün de boş olup olmadığını kontrol et
+        // Check if the other weekend day is also empty
         const otherWeekendDay = new Date(checkDate);
         if (dayOfWeek === 0) {
-          otherWeekendDay.setDate(checkDate.getDate() - 1); // Cumartesi'ye bak
+          otherWeekendDay.setDate(checkDate.getDate() - 1); // Check Saturday
         } else {
-          otherWeekendDay.setDate(checkDate.getDate() + 1); // Pazar'a bak
+          otherWeekendDay.setDate(checkDate.getDate() + 1); // Check Sunday
         }
 
         const otherWeekendDayStr = formatDateKey(otherWeekendDay);
         if (activeDays.has(otherWeekendDayStr)) {
-          // Hafta sonundan biri dolu, seri bozulmaz
+          // One of the weekend days is active, streak continues
           checkDate.setDate(checkDate.getDate() - 1);
           continue;
         } else {
-          // İki gün de boş!
-          // Eğer bugün (ilk bakışta) boşluk veriyorsak ve hala ilk gündeysek (gapCount)
-          // hemen kırmayız, ama seri içindeysek kırılır.
+          // Both weekend days are empty!
+          // If we are checking the very first day (Today) and it's empty, we allow checking yesterday
           if (consecutiveDays === 0 && gapCount === 0) {
             gapCount++;
             checkDate.setDate(checkDate.getDate() - 1);
             continue;
           } else {
-            break;
+            break; // Streak breaks
           }
         }
       }
 
-      // Hafta içi ve aktif değil
+      // Weekday gap handling
       if (consecutiveDays === 0 && gapCount === 0) {
-        // Bugün (ilk kontrol edilen gün) henüz aktivite yoksa dünü kontrol etmeye devam et
+        // Allow the first checked day (Today) to be empty without breaking an existing streak from Yesterday
         gapCount++;
         checkDate.setDate(checkDate.getDate() - 1);
         continue;
       } else {
-        // Bir boşluk bulundu, streak burada sonlanır
+        // Streak ends on a weekday gap
         break;
       }
     }
 
-    // Güvenlik: ilk aktivite gününün ötesine gitmeyi önle (sadece gün bazlı kontrol)
+    // Safeguard: do not check before the user's first activity ever
     if (firstActivityKey && formatDateKey(checkDate) < firstActivityKey) {
       break;
     }
 
-    // Döngü sınırı
+    // Safeguard infinite loop break condition
     if (consecutiveDays > 5000) {
       break;
     }
@@ -87,11 +91,19 @@ export function calculateStreak(
   return streak;
 }
 
+// ===========================
+// === MILESTONES CALCULATION ===
+// ===========================
+
 /**
- * Calculate streak milestones with weekend allowance.
+ * Calculates historical streak milestones, including maximum streak and the first date a 7-day streak was achieved.
  *
- * @param activeDays Array of active day strings in YYYY-MM-DD format (sorted)
- * @returns Object with maxStreak and first7StreakDate
+ * Rules:
+ * - Includes weekend allowance similar to calculateStreak.
+ * - Missing a single weekend day does not reset the streak.
+ *
+ * @param activeDays - An array of active day strings in YYYY-MM-DD format, sorted chronologically
+ * @returns An object containing the user's maximum streak and the date of their first 7-day streak
  */
 export function calculateStreakMilestones(activeDays: string[]): {
   maxStreak: number;
@@ -101,15 +113,14 @@ export function calculateStreakMilestones(activeDays: string[]): {
     return { maxStreak: 0, first7DayStreakDate: null };
   }
 
-  // Streak hesapla - hafta sonu izni kuralıyla
-  // Cumartesi (6) veya Pazar (0) günlerinde 1 gün boşluk streak'i bozmaz
   let maxStreak = 0;
   let currentStreak = 0;
   let first7DayStreakDate: string | null = null;
   let lastActiveDate: Date | null = null;
 
   for (const dayKey of activeDays) {
-    const currentDate = new Date(dayKey + 'T12:00:00Z'); // UTC ortası için
+    // Add time strictly avoiding timezone shifts affecting the date
+    const currentDate = new Date(dayKey + 'T12:00:00Z');
 
     if (lastActiveDate === null) {
       currentStreak = 1;
@@ -118,42 +129,41 @@ export function calculateStreakMilestones(activeDays: string[]): {
       const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
       if (diffDays === 1) {
-        // Ardışık gün
+        // Consecutive date
         currentStreak++;
+      } else {
+        // Gap of 1 or more days exists
         let hasBothWeekendGaps = false;
         let skippedSaturday = false;
         let skippedSunday = false;
 
+        // Inspect skipped days
         for (let j = 1; j < diffDays; j++) {
           const skippedDate = new Date(
             lastActiveDate.getTime() + j * 24 * 60 * 60 * 1000
           );
-          const skippedDay = skippedDate.getDay(); // 0=Pazar, 6=Cumartesi, 2=Salı, 3=Çarşamba, 4=Perşembe
+          const skippedDay = skippedDate.getDay(); // 0 = Sunday, 6 = Saturday
 
           if (skippedDay === 6) skippedSaturday = true;
           if (skippedDay === 0) skippedSunday = true;
 
-          // Eğer çalışma olmayan gün Hafta sonu DEĞİLSE, streak kırılır
-          if (![0, 6].includes(skippedDay)) {
-            hasBothWeekendGaps = true; // Kırılmış kabul et (hafta içi boşluk)
+          if (skippedDay !== 0 && skippedDay !== 6) {
+            hasBothWeekendGaps = true; // Gap fell on a weekday, breaks streak
             break;
           }
         }
 
         if (skippedSaturday && skippedSunday) {
-          hasBothWeekendGaps = true;
+          hasBothWeekendGaps = true; // Both weekend days skipped, breaks streak
         }
 
         if (!hasBothWeekendGaps) {
-          // Sadece izinli günler veya TEK HAFTA SONU boşluğu var - streak devam
+          // The gap was exactly one weekend day, streak continues
           currentStreak++;
         } else {
-          // Hafta içi boşluk veya İKİ HAFTA SONU günü boşluğu - streak kırıldı
+          // Unallowed gap, reset current streak
           currentStreak = 1;
         }
-      } else {
-        // 3+ gün boşluk - streak kırıldı
-        currentStreak = 1;
       }
     }
 
@@ -161,7 +171,7 @@ export function calculateStreakMilestones(activeDays: string[]): {
       maxStreak = currentStreak;
     }
 
-    // İlk 7 günlük streak
+    // Capture the first timestamp where streak >= 7
     if (first7DayStreakDate === null && currentStreak >= 7) {
       first7DayStreakDate = dayKey;
     }

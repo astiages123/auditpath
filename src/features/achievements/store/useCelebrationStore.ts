@@ -1,8 +1,18 @@
 import { create } from 'zustand';
-import { LucideIcon } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
+// ===========================
+// === TYPES ===
+// ===========================
+
+/**
+ * Defines the type of celebration being presented.
+ */
 export type CelebrationVariant = 'course' | 'rank' | 'achievement' | 'group';
 
+/**
+ * Represents a discrete celebration event to be displayed.
+ */
 export interface CelebrationEvent {
   id: string;
   title: string;
@@ -12,9 +22,13 @@ export interface CelebrationEvent {
   imageUrl?: string;
   variant: CelebrationVariant;
   metadata?: Record<string, unknown>;
+  /** Optional callback to run upon closing this celebration */
   onClose?: () => Promise<void> | void;
 }
 
+/**
+ * Manages the state and queue of celebration events.
+ */
 export interface CelebrationStore {
   celebrationQueue: CelebrationEvent[];
   currentCelebration: CelebrationEvent | null;
@@ -25,6 +39,13 @@ export interface CelebrationStore {
   clearCelebrations: () => void;
 }
 
+// ===========================
+// === STORE CREATION ===
+// ===========================
+
+/**
+ * Zustand store for managing celebration events sequentially.
+ */
 export const useCelebrationStore = create<CelebrationStore>()((set, get) => ({
   celebrationQueue: [],
   currentCelebration: null,
@@ -32,19 +53,23 @@ export const useCelebrationStore = create<CelebrationStore>()((set, get) => ({
 
   enqueueCelebration: (event) => {
     const { currentCelebration, celebrationQueue } = get();
+    // Deduping: Avoid enqueuing an identical event
     if (
       currentCelebration?.id === event.id ||
       celebrationQueue.some((e) => e.id === event.id)
     ) {
       return;
     }
+
     set((state) => {
+      // If none playing, immediately trigger it
       if (!state.currentCelebration) {
         return {
           currentCelebration: event,
           isCelebrationOpen: true,
         };
       }
+      // Otherwise, add to the back of the queue
       return {
         celebrationQueue: [...state.celebrationQueue, event],
       };
@@ -55,6 +80,7 @@ export const useCelebrationStore = create<CelebrationStore>()((set, get) => ({
     set((state) => {
       const nextEvent = state.celebrationQueue[0] || null;
       const remainingQueue = state.celebrationQueue.slice(1);
+
       if (nextEvent) {
         return {
           currentCelebration: nextEvent,

@@ -1,4 +1,3 @@
-// Removed unused imports
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { QuizLoadingView, QuizErrorView, QuizProgress } from './QuizStatus';
 import { QuizCard } from './QuizCard';
@@ -6,19 +5,34 @@ import { QuizFooter } from './QuizFooter';
 import { QuizResultsView } from './QuizResultsView';
 import type { QuizQuestion, QuizState } from '@/features/quiz/types';
 
+// === TYPES ===
+
 interface QuizViewProps {
+  /** Mevcut quiz durumu */
   state: QuizState;
+  /** İlerleme indeksi */
   progressIndex: number;
+  /** Onay handler */
   onConfirm: () => void;
+  /** Boş bırak handler */
   onBlank: () => void;
+  /** Sonraki soru handler */
   onNext: () => void;
+  /** Önceki soru handler */
   onPrev: () => void;
+  /** Seçenek seçme handler */
   onSelect: (index: number) => void;
+  /** Açıklama göster/gizle handler */
   onToggleExplanation: () => void;
+  /** Yeniden dene handler */
   onRetry: () => void;
+  /** Kapatma handler */
   onClose: () => void;
 }
 
+/**
+ * Quiz arayüzünün (progress, card, footer) birleşimini yöneten ana görünüm bileşeni.
+ */
 export function QuizView({
   state,
   progressIndex,
@@ -31,7 +45,9 @@ export function QuizView({
   onRetry,
   onClose,
 }: QuizViewProps) {
-  // If the summary exists, it means the quiz is finished
+  // === RENDER LOGIC ===
+
+  // Sınav bittiyse sonuç ekranını göster
   if (state.summary) {
     return (
       <QuizResultsView
@@ -47,11 +63,13 @@ export function QuizView({
     );
   }
 
+  // === RENDER ===
   return (
     <ErrorBoundary>
       <div className="flex flex-col h-full overflow-hidden">
         <div className="flex-1 overflow-hidden p-0 min-h-0">
           <div className="max-w-full mx-auto h-full flex flex-col">
+            {/* Yükleme Ekranı */}
             {state.isLoading && (
               <QuizLoadingView
                 isLoading={state.isLoading}
@@ -59,11 +77,16 @@ export function QuizView({
                 totalToGenerate={state.totalToGenerate}
               />
             )}
+
+            {/* Hata Ekranı */}
             {state.error && (
               <QuizErrorView error={state.error} onRetry={onRetry} />
             )}
+
+            {/* Aktif Quiz Alanı */}
             {!state.isLoading && !state.error && state.hasStarted && (
               <div className="flex flex-col h-full min-h-0">
+                {/* İlerleme Çubuğu */}
                 <ErrorBoundary
                   fallback={
                     <div className="p-4 text-red-500 text-center text-sm border border-red-500/20 rounded-lg m-4">
@@ -79,6 +102,8 @@ export function QuizView({
                     lastSubmissionResult={state.lastSubmissionResult}
                   />
                 </ErrorBoundary>
+
+                {/* Soru Kartı */}
                 <div className="flex-1 min-h-0 overflow-hidden">
                   <ErrorBoundary
                     fallback={
@@ -103,6 +128,8 @@ export function QuizView({
                     />
                   </ErrorBoundary>
                 </div>
+
+                {/* Alt Kontrol Paneli */}
                 <ErrorBoundary
                   fallback={
                     <div className="p-4 bg-red-500/10 text-red-500 text-center text-sm font-medium">
@@ -114,7 +141,7 @@ export function QuizView({
                     isAnswered={state.isAnswered}
                     showExplanation={state.showExplanation}
                     selectedAnswer={state.selectedAnswer}
-                    isSubmitting={state.isLoading} // Approximated from isLoading
+                    isSubmitting={state.isLoading}
                     onPrev={onPrev}
                     onNext={onNext}
                     onConfirm={onConfirm}
@@ -135,7 +162,7 @@ export function QuizView({
                           .filter((id): id is string => !!id)
                       )}
                     progressIndex={progressIndex}
-                    questionResults={{}} // Simplified for now
+                    questionResults={{}}
                   />
                 </ErrorBoundary>
               </div>

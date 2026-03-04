@@ -1,3 +1,7 @@
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
 export interface Course {
   id: string;
   type?: string;
@@ -14,7 +18,38 @@ export interface Category {
   courses: Course[];
 }
 
-export const calculateStaticTotals = (categories: Category[]) => {
+export interface CategoryStatsResult {
+  categoryStats: Record<
+    string,
+    {
+      completedVideos: number;
+      completedHours: number;
+      totalVideos: number;
+      totalHours: number;
+      completedReadings: number;
+      completedPages: number;
+      totalReadings: number;
+      totalPages: number;
+    }
+  >;
+  totalAllVideos: number;
+  totalAllHours: number;
+  totalAllReadings: number;
+  totalAllPages: number;
+}
+
+// ===========================
+// === LOGIC FUNCTIONS ===
+// ===========================
+
+/**
+ * Calculates static totals for categories and their courses.
+ * @param categories - Array of categories containing course details
+ * @returns An object containing calculated totals for videos, hours, readings, and pages
+ */
+export const calculateStaticTotals = (
+  categories: Category[]
+): CategoryStatsResult => {
   const categoryStats: Record<
     string,
     {

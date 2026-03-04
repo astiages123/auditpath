@@ -8,35 +8,63 @@ import { ROUTES } from '@/utils/routes';
 import { Button } from '@/components/ui/button';
 import { ToCTitleRenderer } from './ToCTitleRenderer';
 
-interface GlobalNavigationProps {
+// === BÖLÜM ADI: TİPLER (TYPES) ===
+// ===========================
+
+export interface GlobalNavigationProps {
+  /** Ders konu kümeleri */
   chunks: CourseTopic[];
+  /** Açıkta olan (aktif) chunk'ın ID'si */
   activeChunkId: string | null;
-  onItemClick?: () => void;
+  /** Dersin veya eğitimin slug (adlandırma) başlığı */
   courseSlug: string;
+  /** Konuya tıklandığında tetiklenecek eylem (örneğin mobil menü kapama) */
+  onItemClick?: () => void;
+  /** Sol menüyü açıp kapamak için (masaüstü gibi) toggle metodu */
   onToggle?: () => void;
 }
 
+// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
+// ===========================
+
+/**
+ * Ders içindeki ana konu yığınlarını (chunks) sağlayan global gezinme menüsü.
+ * Sol tarafta (Masaüstü) veya çekmecede (Mobil) gösterilir.
+ *
+ * @param {GlobalNavigationProps} props
+ * @returns {React.ReactElement}
+ */
 export const GlobalNavigation = memo(function GlobalNavigation({
   chunks,
   activeChunkId,
   onItemClick,
   courseSlug,
   onToggle,
-}: GlobalNavigationProps) {
+}: GlobalNavigationProps): React.ReactElement {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll the active item into view within the sidebar
+  // === YARDIMCI MANTIK & EFEKTLER ===
+
+  // Aktif olan öğeyi yan menü içinde görünecek şekilde kaydırma
   useEffect(() => {
-    if (activeChunkId && scrollContainerRef.current) {
-      const activeItem = document.getElementById(`nav-item-${activeChunkId}`);
-      if (activeItem) {
-        activeItem.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
+    try {
+      if (activeChunkId && scrollContainerRef.current) {
+        const activeItem: HTMLElement | null = document.getElementById(
+          `nav-item-${activeChunkId}`
+        );
+        if (activeItem) {
+          activeItem.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+          });
+        }
       }
+    } catch (error: unknown) {
+      console.error('[GlobalNavigation][scrollIntoView] Hata:', error);
     }
   }, [activeChunkId]);
+
+  // === UI RENDER ===
 
   return (
     <nav className="h-full flex flex-col">
@@ -50,6 +78,7 @@ export const GlobalNavigation = memo(function GlobalNavigation({
             size="icon"
             className="hidden lg:flex h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
             onClick={onToggle}
+            title="Menüyü Kapat"
           >
             <PanelLeftClose className="w-4 h-4" />
           </Button>
@@ -59,10 +88,12 @@ export const GlobalNavigation = memo(function GlobalNavigation({
         ref={scrollContainerRef}
         className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-2 space-y-1 pb-15"
       >
-        {chunks.map((chunk, index) => {
-          const chunkId = slugify(chunk.section_title);
-          const isActive = activeChunkId === chunkId;
-          const url = `${ROUTES.NOTES}/${courseSlug}/${chunkId}`;
+        {chunks.map((chunk: CourseTopic, index: number) => {
+          const chunkId: string = slugify(chunk.section_title);
+          const isActive: boolean = activeChunkId === chunkId;
+          const url: string = `${ROUTES.NOTES}/${courseSlug}/${chunkId}`;
+          const weekMatch: RegExpMatchArray | null =
+            chunk.id.match(/hafta-(\d+)/);
 
           return (
             <Link
@@ -90,10 +121,10 @@ export const GlobalNavigation = memo(function GlobalNavigation({
               </span>
 
               <div className="flex-1 min-w-0">
-                {courseSlug === 'ATA_584' && (
+                {courseSlug === 'ATA_584' && weekMatch && (
                   <div className="mb-1">
                     <span className="px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-[8px] font-black text-primary uppercase tracking-wider">
-                      {chunk.id.match(/hafta-(\d+)/)?.[1]}. HAFTA
+                      {weekMatch[1]}. HAFTA
                     </span>
                   </div>
                 )}

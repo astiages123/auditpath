@@ -1,65 +1,78 @@
-import { QuizResults, QuizState } from '@/features/quiz/types';
-import { calculateTestResults } from '@/features/quiz/logic/quizCoreLogic';
+import { type QuizQuestion, type QuizResults, type QuizState } from '../types';
+import { calculateTestResults } from './quizCalculations';
 
-export function calculateNextQuestionState(
+// === SECTION: State Transition Helpers ===
+
+/**
+ * Bir sonraki soruya geçiş için durumu günceller.
+ */
+export const calculateNextQuestionState = (
   state: QuizState,
   results: QuizResults
-): Partial<QuizState> {
-  const newHistory = [...state.history];
-
-  if (state.currentQuestion && state.isAnswered) {
-    newHistory.push({
-      ...state.currentQuestion,
-      userAnswer: state.selectedAnswer,
-      isCorrect: state.isCorrect,
-    });
-  }
-
-  if (state.queue.length > 0) {
-    const [next, ...rest] = state.queue;
+): Partial<QuizState> => {
+  if (state.queue.length === 0) {
     return {
-      currentQuestion: next,
-      queue: rest,
-      history: newHistory,
-      selectedAnswer: null,
-      isAnswered: false,
-      showExplanation: false,
-      isCorrect: null,
-      lastSubmissionResult: null,
-    };
-  } else {
-    const summary = calculateTestResults(
-      results.correct,
-      results.incorrect,
-      results.blank,
-      results.totalTimeMs
-    );
-    return {
-      summary,
       currentQuestion: null,
-      history: newHistory,
       hasStarted: false,
+      summary: calculateTestResults(
+        results.correct,
+        results.incorrect,
+        results.blank,
+        results.totalTimeMs
+      ),
     };
   }
-}
 
-export function calculatePreviousQuestionState(
+  const [nextQuestion, ...remainingQueue] = state.queue;
+
+  // Mevcut soruyu geçmişe ekle
+  const newHistory = state.currentQuestion
+    ? [
+        ...state.history,
+        {
+          ...state.currentQuestion,
+          userAnswer: state.selectedAnswer,
+          isCorrect: state.isCorrect,
+        },
+      ]
+    : state.history;
+
+  return {
+    currentQuestion: nextQuestion,
+    queue: remainingQueue,
+    history: newHistory,
+    selectedAnswer: null,
+    isAnswered: false,
+    showExplanation: false,
+    isCorrect: null,
+  };
+};
+
+/**
+ * Önceki soruya (geçmişe) dönüş için durumu günceller.
+ */
+export const calculatePreviousQuestionState = (
   state: QuizState
-): Partial<QuizState> | null {
-  if (state.history.length === 0) return null;
-  const newHistory = [...state.history];
-  const prev = newHistory.pop()!;
+): Partial<QuizState> => {
+  if (state.history.length === 0) return {};
+
+  const history = [...state.history];
+  const lastItem = history.pop();
+
+  if (!lastItem) return {};
+
+  // Mevcut soruyu kuyruğa geri ekle (eğer varsa)
   const newQueue = state.currentQuestion
     ? [state.currentQuestion, ...state.queue]
     : state.queue;
 
   return {
-    currentQuestion: prev,
+    currentQuestion: lastItem as QuizQuestion,
     queue: newQueue,
-    history: newHistory,
-    selectedAnswer: prev.userAnswer,
+    history,
+    selectedAnswer: lastItem.userAnswer,
     isAnswered: true,
     showExplanation: true,
-    isCorrect: prev.isCorrect,
+    isCorrect: lastItem.isCorrect,
   };
-}
+};

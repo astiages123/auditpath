@@ -11,7 +11,7 @@ import { getCourseIcon } from '@/features/courses/logic/coursesLogic';
 import { normalizeCategorySlug } from '@/features/courses/utils/categoryHelpers';
 import { ROUTES } from '@/utils/routes';
 import { PageHeader } from '@/shared/components/PageHeader';
-import { type LandingCourseStats } from '@/features/quiz/services/quizLandingService';
+import type { CourseLibraryStats } from '@/features/courses/hooks/useCourseLibraryData';
 import { cn } from '@/utils/stringHelpers';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { useCourseLibraryData } from '@/features/courses/hooks/useCourseLibraryData';
@@ -133,7 +133,7 @@ function CourseRow({
   onQuiz,
 }: {
   course: Course;
-  stats?: LandingCourseStats;
+  stats?: CourseLibraryStats;
   onNotes: (c: Course) => void;
   onQuiz: (c: Course) => void;
 }) {

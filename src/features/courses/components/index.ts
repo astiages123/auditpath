@@ -1,18 +1,33 @@
-// Course Items
+// ===========================
+// === CARDS & LISTS ===
+// ===========================
 export * from './CourseCard';
 export * from './CourseList';
 export * from './CategoryCard';
 export * from './CategoryGrid';
 
-// Course Modals
+// ===========================
+// === MODALS ===
+// ===========================
 export * from './CourseStatsModal';
 
-// Course Progress
+// ===========================
+// === PROGRESS & DASHBOARD ===
+// ===========================
 export * from './ProgressHeader';
 export * from './RankCard';
 export * from './ProgressStatCard';
+
+// ===========================
+// === ROADMAP ===
+// ===========================
+export * from './RoadmapFooter';
+export * from './RoadmapHero';
+export * from './RoadmapPath';
 export { default as TitleRoadmap } from './TitleRoadmap';
 
-// Course Items
+// ===========================
+// === INDIVIDUAL ITEMS ===
+// ===========================
 export * from './CourseItemList';
 export * from './CourseItem';

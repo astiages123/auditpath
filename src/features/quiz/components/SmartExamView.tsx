@@ -1,24 +1,57 @@
 import { Loader2 } from 'lucide-react';
 import { GenerationLog } from '@/features/quiz/types';
+import { cn } from '@/utils/stringHelpers';
+
+// === TYPES ===
 
 interface SmartExamViewProps {
+  /** Karma sınav üretim ilerlemesi */
   examProgress: { current: number; total: number };
+  /** Üretim sürecindeki teknik kayıtlar */
   examLogs: GenerationLog[];
 }
 
+// === COMPONENT ===
+
+/**
+ * Kullanıcıya özel hazırlanan karma "Smart Exam" (Deneme Sınavı) üretim ekranı.
+ * İlerlemeyi ve teknik logları görsel olarak gösterir.
+ */
 export function SmartExamView({ examProgress, examLogs }: SmartExamViewProps) {
+  // === RENDER LOGIC ===
+
+  const progressPercentage = Math.round(
+    (examProgress.current / (examProgress.total || 1)) * 100
+  );
+
+  /** Log seviyeleri için renk ve etiket haritası */
+  const logStepMap: Record<string, { label: string; color: string }> = {
+    INIT: {
+      label: 'Hazırlık',
+      color: 'bg-blue-400/10 text-blue-400 border-blue-400/20',
+    },
+    MAPPING: {
+      label: 'Analiz',
+      color: 'bg-indigo-400/10 text-indigo-400 border-indigo-400/20',
+    },
+    GENERATING: {
+      label: 'Oluşturma',
+      color: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
+    },
+  };
+
+  // === RENDER ===
+
   return (
     <div className="flex flex-col items-center justify-center min-h-0 w-full max-w-2xl mx-auto space-y-8 p-6 overflow-y-auto h-full">
       <div className="w-full space-y-8 animate-in fade-in zoom-in-95 duration-500">
+        {/* HEADER & LOADER SECTION */}
         <div className="flex flex-col items-center text-center space-y-4 shrink-0">
           <div className="relative">
             <Loader2 className="w-16 h-16 text-primary animate-spin" />
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-xs font-bold text-white bg-zinc-900 rounded-full w-8 h-8 flex items-center justify-center border border-white/10">
-                {Math.round(
-                  (examProgress.current / (examProgress.total || 1)) * 100
-                )}
-                %
+                {progressPercentage}%
               </span>
             </div>
           </div>
@@ -33,24 +66,10 @@ export function SmartExamView({ examProgress, examLogs }: SmartExamViewProps) {
           </div>
         </div>
 
+        {/* LOG TERMINAL SECTION */}
         <div className="w-full h-64 bg-muted/20 backdrop-blur-sm rounded-2xl border border-white/5 p-4 font-mono text-[10px] overflow-y-auto flex flex-col-reverse shadow-inner">
           {examLogs.map((log) => {
-            const stepMap: Record<string, { label: string; color: string }> = {
-              INIT: {
-                label: 'Hazırlık',
-                color: 'bg-blue-400/10 text-blue-400 border-blue-400/20',
-              },
-              MAPPING: {
-                label: 'Analiz',
-                color: 'bg-indigo-400/10 text-indigo-400 border-indigo-400/20',
-              },
-              GENERATING: {
-                label: 'Oluşturma',
-                color:
-                  'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
-              },
-            };
-            const stepInfo = stepMap[log.step] || {
+            const stepInfo = logStepMap[log.step] || {
               label: log.step,
               color: 'bg-zinc-400/10 text-zinc-400 border-zinc-400/20',
             };
@@ -69,7 +88,10 @@ export function SmartExamView({ examProgress, examLogs }: SmartExamViewProps) {
                   })}
                 </span>
                 <span
-                  className={`px-1.5 py-0.5 rounded-md border text-[9px] font-bold uppercase tracking-wider ${stepInfo.color}`}
+                  className={cn(
+                    'px-1.5 py-0.5 rounded-md border text-[9px] font-bold uppercase tracking-wider',
+                    stepInfo.color
+                  )}
                 >
                   {stepInfo.label}
                 </span>

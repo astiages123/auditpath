@@ -28,8 +28,6 @@ export default function AnalyticsPage() {
     uniqueModels,
     rate,
     loading,
-    visibleCount,
-    deferredVisibleCount,
     isPending,
     dailyData,
     totalCostUsd,
@@ -40,6 +38,7 @@ export default function AnalyticsPage() {
     totalOutputTokens,
     totalCachedTokens,
     handleLoadMore,
+    hasMore,
   } = useAnalytics();
 
   const formatCurrency = (value: number) => {
@@ -98,11 +97,10 @@ export default function AnalyticsPage() {
 
         <AnalyticsTable
           logs={logs}
-          visibleCount={visibleCount}
-          deferredVisibleCount={deferredVisibleCount}
+          formatCurrency={formatCurrency}
+          hasMore={hasMore}
           isPending={isPending}
           rate={rate}
-          formatCurrency={formatCurrency}
           onLoadMore={handleLoadMore}
         />
       </div>

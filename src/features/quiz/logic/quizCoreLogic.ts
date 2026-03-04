@@ -1,13 +1,17 @@
 import { QUIZ_CONFIG } from '../utils/constants';
 import type { ConceptMapItem, MasteryNode } from '../types';
 
-// Use standard SRP: delegate to sub-modules
+// Standartlara uygun SRP: Hesaplamaları dışarıdan al ve birleştir.
 export * from './quizCalculations';
 
-// ============================================================================
-// Mastery Nodes & Atlas Processing
-// ============================================================================
+// === SECTION: Mastery Nodes & Atlas Processing ===
 
+/**
+ * Kavram listesini ve kullanıcı skorlarını kullanarak bir ustalık grafiği oluşturur.
+ * @param concepts - Dersin kavram listesi
+ * @param conceptScoreMap - Kavram başlığına göre kullanıcı skorları
+ * @returns Ustalık düğümleri (nodes) listesi
+ */
 export function calculateMasteryChains(
   concepts: ConceptMapItem[],
   conceptScoreMap: Record<string, number>
@@ -15,8 +19,10 @@ export function calculateMasteryChains(
   const nodes: MasteryNode[] = concepts.map((concept, index) => {
     const score = conceptScoreMap[concept.baslik] || 0;
     let status: MasteryNode['status'] = 'weak';
-    if (score >= QUIZ_CONFIG.MASTERY_THRESHOLDS.EXCELLENT) status = 'mastered';
-    else if (score >= QUIZ_CONFIG.MASTERY_THRESHOLDS.GOOD) {
+
+    if (score >= QUIZ_CONFIG.MASTERY_THRESHOLDS.EXCELLENT) {
+      status = 'mastered';
+    } else if (score >= QUIZ_CONFIG.MASTERY_THRESHOLDS.GOOD) {
       status = 'in-progress';
     }
 
@@ -28,35 +34,45 @@ export function calculateMasteryChains(
       prerequisites: concept.prerequisites || [],
       isChainComplete: score >= QUIZ_CONFIG.MASTERY_THRESHOLDS.EXCELLENT,
       depth: 0,
-      data: { focus: concept.odak, aiInsight: undefined },
+      data: {
+        focus: concept.odak,
+        aiInsight: undefined,
+      },
     };
   });
 
-  // Optimize lookup: Map label to MasteryNode
+  // Performans için lookup map oluştur
   const nodeMap = new Map<string, MasteryNode>();
   nodes.forEach((n) => nodeMap.set(n.label, n));
 
+  /** Düğüm derinliğini özyinelemeli (recursive) hesaplar */
   const calculateDepth = (
     node: MasteryNode,
     visited: Set<string> = new Set()
   ): number => {
     if (visited.has(node.id)) return 0;
     visited.add(node.id);
+
     if (!node.prerequisites || node.prerequisites.length === 0) return 0;
 
     const prereqDepths = node.prerequisites.map((prereqLabel) => {
       const prereqNode = nodeMap.get(prereqLabel);
       return prereqNode ? calculateDepth(prereqNode, new Set(visited)) + 1 : 0;
     });
+
     return Math.max(...prereqDepths, 0);
   };
 
   nodes.forEach((node) => {
     node.depth = calculateDepth(node);
   });
+
   return nodes;
 }
 
+/**
+ * Ustalık grafiğini görselleştirme ve analiz için işler.
+ */
 export function processGraphForAtlas(nodes: MasteryNode[]): {
   totalChains: number;
   resilienceBonusDays: number;
@@ -67,6 +83,7 @@ export function processGraphForAtlas(nodes: MasteryNode[]): {
   const nodeMap = new Map<string, MasteryNode>();
   nodes.forEach((n) => nodeMap.set(n.label, n));
 
+  // Kenarları (edges) oluştur
   nodes.forEach((node) => {
     node.prerequisites.forEach((prereqLabel) => {
       const prereqNode = nodeMap.get(prereqLabel);
@@ -82,8 +99,10 @@ export function processGraphForAtlas(nodes: MasteryNode[]): {
     });
   });
 
+  // Bağımsız zincirleri (chains) bulmak için basit bir DFS
   const visited = new Set<string>();
   let totalChains = 0;
+
   const visitNode = (nodeId: string) => {
     if (visited.has(nodeId)) return;
     visited.add(nodeId);
@@ -102,6 +121,7 @@ export function processGraphForAtlas(nodes: MasteryNode[]): {
   });
 
   const masteredChains = edges.filter((e) => e.isStrong).length;
+  // Başarılı zincirlere göre direnç bonusu (basitleştirilmiş)
   const resilienceBonusDays = Math.floor(masteredChains * 0.5);
 
   return { totalChains, resilienceBonusDays, nodes, edges };

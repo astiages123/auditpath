@@ -1,22 +1,42 @@
 import { memo } from 'react';
-import { cn } from '@/utils/stringHelpers';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import 'katex/dist/katex.min.css'; // Ensure CSS is imported if not globally available, though NotesPage usually has it.
+import 'katex/dist/katex.min.css';
+import { cn } from '@/utils/stringHelpers';
 
-interface ToCTitleRendererProps {
+// === BÖLÜM ADI: TİPLER (TYPES) ===
+// ===========================
+
+export interface ToCTitleRendererProps {
+  /** İçindekiler tablosunda gösterilecek başlık metni */
   title: string;
-  className?: string; // Allow passing external classes
+  /** Ek CSS sınıfları (esneklik için) */
+  className?: string;
 }
 
+// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
+// ===========================
+
+/**
+ * İçindekiler (ToC) listesindeki başlıkları güvenli bir şekilde render eden
+ * ve markdown içerebilecek (örn: matematiksel ifadeler, KaTeX) başlıkları
+ * bozulmadan gösteren bileşen.
+ *
+ * @param {ToCTitleRendererProps} props
+ * @returns {React.ReactElement}
+ */
 export const ToCTitleRenderer = memo(function ToCTitleRenderer({
   title,
   className,
-}: ToCTitleRendererProps) {
-  // Escape dots after numbers to prevent Markdown from interpreting them as ordered lists
-  // e.g. "1. Introduction" -> "1\. Introduction"
-  const escapedTitle = title.replace(/(\d+)\./g, '$1\\.');
+}: ToCTitleRendererProps): React.ReactElement {
+  // === RENDER İŞ MANTIĞI ===
+
+  // Rakam sonrası gelen noktaları (1., 2.) markdown syntaxından kaçırıyoruz ki
+  // siparişli liste (ordered list) elemanı olarak algılanmasın.
+  const escapedTitle: string = title.replace(/(\d+)\./g, '$1\\.');
+
+  // === UI RENDER ===
 
   return (
     <div className={cn('whitespace-normal wrap-break-word', className)}>
@@ -24,7 +44,7 @@ export const ToCTitleRenderer = memo(function ToCTitleRenderer({
         remarkPlugins={[remarkMath]}
         rehypePlugins={[rehypeKatex]}
         components={{
-          // Override paragraph to span to avoid block-level disruption inside anchors
+          // A etiketleri içinde block element (P) bozulma yaratabileceği için inline (span) olarak eziyoruz.
           p: ({ ...props }) => (
             <span
               style={{ display: 'inline' }}
@@ -32,7 +52,7 @@ export const ToCTitleRenderer = memo(function ToCTitleRenderer({
               {...props}
             />
           ),
-          // Ensure math is rendered inline
+          // Matematik ifadelerinin inline görünmesini garantilemek.
           div: ({ className: innerClass, ...props }) => {
             return (
               <span
@@ -41,13 +61,12 @@ export const ToCTitleRenderer = memo(function ToCTitleRenderer({
               />
             );
           },
-          // Bold işaretini yok say — ToC'de tüm başlıklar aynı weight olmalı
+          // İçindekiler listesinde her şey aynı font-weight olmalı. Bold & italic etkisini kapattık.
           strong: ({ ...props }) => <span {...props} />,
           em: ({ ...props }) => <span {...props} />,
         }}
         allowedElements={['p', 'span', 'strong', 'em', 'code', 'br']}
-        // We limit elements to avoid inserting huge blocks like H1 or Images in a ToC link
-        unwrapDisallowed={true}
+        unwrapDisallowed={true} // İzin verilmeyen etiketlerin içindeki metni korur, sadece dış sargıyı çıkarır.
       >
         {escapedTitle}
       </ReactMarkdown>

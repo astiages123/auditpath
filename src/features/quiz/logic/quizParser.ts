@@ -1,9 +1,13 @@
+import { logger } from '@/utils/logger';
 import { z } from 'zod';
+
+import { getTaskConfig } from '@/utils/aiConfig';
 import { type Json } from '@/types/database.types';
+import { isValid, parseOrThrow } from '@/utils/validation';
+import { shuffle } from '../utils/mathUtils';
 import {
   AILogicSchema,
   BatchGeneratedQuestionSchema,
-  BatchValidationResult,
   BatchValidationResultSchema,
   ChunkWithContentSchema,
   type ConceptMapItem,
@@ -12,228 +16,106 @@ import {
   GeneratedQuestionSchema,
   type GenerationStep,
   type GeneratorCallbacks,
+  type ValidatedAILogic,
   type ValidationResult,
-} from '@/features/quiz/types';
+} from '../types';
 import {
-  BLOOM_INSTRUCTIONS,
-  buildAnalysisPrompt,
-  buildBatchValidationPrompt,
-  buildDraftingPrompt,
   GLOBAL_AI_SYSTEM_PROMPT,
   PromptArchitect,
   VALIDATION_SYSTEM_PROMPT,
-} from '@/features/quiz/logic/prompts';
-import { StructuredGenerator } from '@/features/quiz/logic/structuredGenerator';
-import { getTaskConfig } from '@/utils/aiConfig';
-import { isValid, parseOrThrow } from '@/utils/validation';
-import { logger } from '@/utils/logger';
-import { getSubjectGuidelines } from '@/features/quiz/services/quizInfoService';
-import * as Repository from '@/features/quiz/services/quizService';
-import { updateChunkAILogic } from '@/features/quiz/services/quizSubmissionService';
-import { type BloomLevel, calculateQuotas } from './quizCoreLogic';
+} from './prompts';
+import { generate, type StructuredOptions } from './structuredGenerator';
+import { calculateQuotas } from './quizCoreLogic';
+import { getSubjectGuidelines } from '../services/quizInfoService';
 import {
-  CATEGORY_DISTRIBUTIONS,
-  CATEGORY_MAPPINGS,
-  type CourseCategory,
-  DEFAULT_CATEGORY,
-  EXAM_STRATEGY,
-} from '@/features/courses/utils/constants';
-import type { ExamSubjectWeight } from '@/features/quiz/types';
-import { shuffle } from '../utils/mathUtils';
+  updateChunkAILogic,
+  updateChunkStatus,
+} from '../services/quizSubmissionService';
+import { getChunkWithContent } from '../services/quizCoreService';
+import {
+  createQuestion,
+  fetchCachedQuestion,
+} from '../services/quizQuestionService';
 
-const parserLogger = logger.withPrefix('[ParserLogic]');
+// Yeni modüllerden içe aktarmalar
+import {
+  determineNodeStrategy,
+  getSubjectStrategy,
+} from './quizParserStrategy';
+import { parseJsonResponse } from './quizParserHelpers';
 
-// === SECTION === Subject Strategy Helpers (formerly in srsLogic)
+// Mevcut dışa aktarmaları koruyoruz (Public API bozulmasın diye re-export yapıyoruz)
+export { determineNodeStrategy, getSubjectStrategy, parseJsonResponse };
 
-export function getSubjectStrategy(
-  courseName: string
-): ExamSubjectWeight | undefined {
-  const normalizedName = courseName
-    .trim()
-    .toLowerCase()
-    .replace(/,/g, '')
-    .replace(/ /g, '-')
-    .replace(/ı/g, 'i')
-    .replace(/i̇/g, 'i')
-    .replace(/ğ/g, 'g')
-    .replace(/ü/g, 'u')
-    .replace(/ş/g, 's')
-    .replace(/ö/g, 'o')
-    .replace(/ç/g, 'c');
-
-  return (
-    EXAM_STRATEGY[normalizedName] || EXAM_STRATEGY[courseName] || undefined
-  );
-}
-
-function getCourseCategory(courseName: string): CourseCategory {
-  return CATEGORY_MAPPINGS[courseName] || DEFAULT_CATEGORY;
-}
-
-export function determineNodeStrategy(
-  index: number,
-  concept?: ConceptMapItem,
-  courseName: string = ''
-): {
-  bloomLevel: BloomLevel;
-  instruction: string;
-} | null {
-  if (concept?.gorsel === 'GRAFİK_GEREKTIRIYOR') {
-    return null;
-  }
-  if (concept?.seviye) {
-    if (concept.seviye === 'Analiz') {
-      return {
-        bloomLevel: 'analysis',
-        instruction: BLOOM_INSTRUCTIONS.analysis,
-      };
-    }
-    if (concept.seviye === 'Uygulama') {
-      return {
-        bloomLevel: 'application',
-        instruction: BLOOM_INSTRUCTIONS.application,
-      };
-    }
-    if (concept.seviye === 'Bilgi') {
-      return {
-        bloomLevel: 'knowledge',
-        instruction: BLOOM_INSTRUCTIONS.knowledge,
-      };
-    }
-  }
-
-  const category = getCourseCategory(courseName);
-  const distribution = CATEGORY_DISTRIBUTIONS[category];
-  const cycleIndex = index % 10;
-  const targetBloomLevel = (distribution[cycleIndex] ||
-    'knowledge') as BloomLevel;
-
-  return {
-    bloomLevel: targetBloomLevel,
-    instruction: BLOOM_INSTRUCTIONS[targetBloomLevel],
-  };
-}
-
-// FALLBACK_QUESTION removed based on audit recommendation.
-// Revision failures will now return null and be skipped.
-
-// === SECTION === Parsing Utilities
+// === SECTION: Analysis Logic ===
 
 /**
- * Parse JSON from LLM response (simple extraction)
+ * Bir içerik parçasını (chunk) analiz eder ve kavram haritası oluşturur.
+ * @param text - Analiz edilecek metin
+ * @param onLog - Günlükleme callback'i
+ * @returns Analiz sonucu ve kavram listesi
  */
-export function parseJsonResponse(
-  text: string | null | undefined,
-  type: 'object' | 'array',
+export async function analyzeNoteChunk(
+  text: string,
   onLog?: (msg: string, details?: Record<string, unknown>) => void
-): unknown {
-  if (!text || typeof text !== 'string') return null;
+): Promise<ValidatedAILogic | null> {
+  onLog?.('Chunk analizi başlatılıyor...', { contentLength: text.length });
 
   try {
-    let cleanText = text.trim();
+    const context = PromptArchitect.buildContext(text);
+    const task = PromptArchitect.analysisPrompt(
+      'Bilinmeyen Bölüm',
+      'Genel Ders'
+    );
+    const messages = PromptArchitect.assemble(
+      GLOBAL_AI_SYSTEM_PROMPT,
+      context,
+      task
+    );
 
-    // 0. </think>...</think> bloklarını temizle (Qwen modelleri bunu ekliyor)
-    cleanText = cleanText
-      .replace(/<think>[\s\S]*?<\/think>/gi, '')
-      .replace(/<think>[\s\S]*/gi, '')
-      .trim();
+    const options: StructuredOptions<z.infer<typeof ConceptMapResponseSchema>> =
+      {
+        model: 'smart',
+        schema: ConceptMapResponseSchema,
+        onLog: (m: string, d?: Record<string, unknown>) => onLog?.(m, d),
+      };
 
-    // 1. Markdown bloklarını temizle (```json ... ``` veya sadece ``` ... ```)
-    const markdownMatch = cleanText.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (markdownMatch) {
-      cleanText = markdownMatch[1].trim();
+    const result = await generate<z.infer<typeof ConceptMapResponseSchema>>(
+      messages,
+      options
+    );
+
+    if (!result) {
+      throw new Error('Yapay zeka analiz raporu oluşturamadı.');
     }
 
-    // 2. Daha güvenli JSON ayıklama - indexOf ve lastIndexOf kullanarak
-    const firstChar = type === 'array' ? '[' : '{';
-    const lastChar = type === 'array' ? ']' : '}';
-    const start = cleanText.indexOf(firstChar);
-    const end = cleanText.lastIndexOf(lastChar);
-
-    if (start !== -1) {
-      if (end !== -1 && end > start) {
-        cleanText = cleanText.substring(start, end + 1);
-      } else {
-        // Truncated or invalid end - take from start onwards to let forgiving parser try
-        cleanText = cleanText.substring(start);
-      }
-    } else {
-      onLog?.('Geçerli JSON yapısı bulunamadı', {
-        text: cleanText.substring(0, 100),
-      });
-      return null;
-    }
-    // 3. LaTeX Backslash Düzeltme (PRE-PROCESS)
-    const regex = /(\\["\\/nrt]|\\u[0-9a-fA-F]{4})|(\\)/g;
-
-    cleanText = cleanText.replace(regex, (match, valid, invalid) => {
-      if (valid) return valid;
-      if (invalid) return '\\\\';
-      return match;
+    onLog?.('Analiz tamamlandı.', {
+      difficulty: result.difficulty_index,
+      conceptCount: result.concepts.length,
     });
 
-    // 4. Forgiving JSON Parser for Truncated Responses
-    try {
-      return JSON.parse(cleanText);
-    } catch (e) {
-      const closers = ['}', ']', '"}', '"]', '}', ']', ']}', '}}'];
-
-      for (const closer of closers) {
-        try {
-          return JSON.parse(cleanText + closer);
-        } catch {
-          continue;
-        }
-      }
-
-      logger.warn('JSON Parse Error (Unrecoverable):', {
-        error: e as Error,
-        context: 'Quiz Utils',
-      });
-      return null;
-    }
-  } catch (e) {
-    logger.error('JSON Parse Error (Critical):', {
-      error: e as Error,
-      context: 'Quiz Utils',
-    });
+    return {
+      difficulty_index: result.difficulty_index,
+      concept_map: result.concepts,
+      generated_at: new Date().toISOString(),
+    };
+  } catch (error) {
+    onLog?.('Analiz sırasında hata!', { error: String(error) });
+    logger.error(
+      'ParserLogic',
+      'analyzeNoteChunk',
+      'Analiz hatası',
+      error as Error
+    );
     return null;
   }
 }
 
-// === SECTION === Analysis & Question Generation
+// === SECTION: Question Generation Logic ===
 
-export async function runChunkAnalysis(input: {
-  content: string;
-  courseName: string;
-  sectionTitle: string;
-  importance: 'high' | 'medium' | 'low';
-}) {
-  const systemPrompt = buildAnalysisPrompt(
-    input.sectionTitle,
-    input.courseName,
-    input.importance
-  );
-  const contextPrompt = PromptArchitect.buildContext(
-    PromptArchitect.cleanReferenceImages(input.content)
-  );
-  const aiConfig = getTaskConfig('analysis');
-
-  const messages = PromptArchitect.assemble(
-    aiConfig.systemPromptPrefix
-      ? aiConfig.systemPromptPrefix + '\n' + systemPrompt
-      : systemPrompt,
-    contextPrompt,
-    `Ders Önem Derecesi: ${input.importance}\nLütfen kavram haritasını ve bilişsel zorluk endeksini oluştur. JSON formatında çıktı ver.`
-  );
-
-  return await StructuredGenerator.generate(messages, {
-    schema: ConceptMapResponseSchema,
-    task: 'analysis',
-    throwOnValidationError: true,
-  });
-}
-
+/**
+ * Belirli bir kavram için soru tasarlar.
+ */
 export async function draftQuestion(input: {
   concept: ConceptMapItem;
   index: number;
@@ -248,7 +130,7 @@ export async function draftQuestion(input: {
   );
   if (!strategy) return null;
 
-  const taskPrompt = buildDraftingPrompt(
+  const taskPrompt = PromptArchitect.draftingPrompt(
     [input.concept],
     strategy,
     input.usageType,
@@ -266,10 +148,13 @@ export async function draftQuestion(input: {
       '\n\n### ZORUNLU JSON FORMATI\nLütfen cevabını sadece geçerli bir JSON objesi olarak döndür.'
   );
 
-  const result = await StructuredGenerator.generate(messages, {
-    schema: GeneratedQuestionSchema,
-    task: 'drafting',
-  });
+  const result = await generate<z.infer<typeof GeneratedQuestionSchema>>(
+    messages,
+    {
+      schema: GeneratedQuestionSchema,
+      task: 'drafting',
+    }
+  );
 
   if (!result) return null;
 
@@ -282,6 +167,9 @@ export async function draftQuestion(input: {
   } satisfies GeneratedQuestion;
 }
 
+/**
+ * Toplu soru tasarımı yapar.
+ */
 export async function draftBatch(input: {
   concepts: { concept: ConceptMapItem; index: number }[];
   courseName: string;
@@ -290,14 +178,15 @@ export async function draftBatch(input: {
 }): Promise<GeneratedQuestion[] | null> {
   if (input.concepts.length === 0) return [];
 
+  const firstConcept = input.concepts[0];
   const strategy = determineNodeStrategy(
-    input.concepts[0].index,
-    input.concepts[0].concept,
+    firstConcept.index,
+    firstConcept.concept,
     input.courseName
   );
   if (!strategy) return null;
 
-  const taskPrompt = buildDraftingPrompt(
+  const taskPrompt = PromptArchitect.draftingPrompt(
     input.concepts.map((c) => c.concept),
     strategy,
     input.usageType,
@@ -315,16 +204,17 @@ export async function draftBatch(input: {
       '\n\n### ZORUNLU JSON FORMATI\nLütfen cevabını sadece geçerli bir JSON objesi olarak döndür.'
   );
 
-  const result = await StructuredGenerator.generate(messages, {
-    schema: BatchGeneratedQuestionSchema,
-    task: 'drafting',
-    throwOnValidationError: true,
-  });
+  const result = await generate<z.infer<typeof BatchGeneratedQuestionSchema>>(
+    messages,
+    {
+      schema: BatchGeneratedQuestionSchema,
+      task: 'drafting',
+    }
+  );
 
   if (!result) return null;
 
   return result.questions.map((q, i) => {
-    // LLM might return fewer questions than requested in case of error, handle gently
     const inputConcept = input.concepts[i] || input.concepts[0];
     const itemStrategy = determineNodeStrategy(
       inputConcept.index,
@@ -341,14 +231,17 @@ export async function draftBatch(input: {
   });
 }
 
+/**
+ * Üretilen soruları doğrular.
+ */
 export async function validateBatch(
   questions: GeneratedQuestion[],
   content: string
-): Promise<BatchValidationResult | null> {
+): Promise<z.infer<typeof BatchValidationResultSchema> | null> {
   const contextPrompt = PromptArchitect.buildContext(
     PromptArchitect.cleanReferenceImages(content)
   );
-  const taskPrompt = buildBatchValidationPrompt(questions);
+  const taskPrompt = PromptArchitect.batchValidationPrompt(questions);
   const aiConfig = getTaskConfig('validation');
 
   const messages = PromptArchitect.assemble(
@@ -359,12 +252,16 @@ export async function validateBatch(
     taskPrompt
   );
 
-  const result = await StructuredGenerator.generate(messages, {
-    schema: BatchValidationResultSchema,
-    task: 'validation',
-  });
+  const result = await generate<z.infer<typeof BatchValidationResultSchema>>(
+    messages,
+    {
+      schema: BatchValidationResultSchema,
+      task: 'validation',
+    }
+  );
 
   if (result) {
+    // Skor bazlı karar düzeltme (Logic layer override)
     result.results.forEach((r) => {
       if (r.total_score >= 70 && r.decision === 'REJECTED') {
         r.decision = 'APPROVED';
@@ -377,6 +274,9 @@ export async function validateBatch(
   return null;
 }
 
+/**
+ * Hatalı soruyu revize eder.
+ */
 export async function reviseQuestion(
   originalQuestion: GeneratedQuestion,
   validationResult: ValidationResult,
@@ -394,6 +294,7 @@ export async function reviseQuestion(
   )}\n\n## KRİTİK HATALAR:\n${validationResult.critical_faults.join(
     '\n'
   )}\n\n## ÖNERİ:\n${validationResult.improvement_suggestion}`;
+
   const aiConfig = getTaskConfig('revision');
 
   const messages = PromptArchitect.assemble(
@@ -404,10 +305,13 @@ export async function reviseQuestion(
     revisionTask
   );
 
-  const result = await StructuredGenerator.generate(messages, {
-    schema: GeneratedQuestionSchema,
-    task: 'revision',
-  });
+  const result = await generate<z.infer<typeof GeneratedQuestionSchema>>(
+    messages,
+    {
+      schema: GeneratedQuestionSchema,
+      task: 'revision',
+    }
+  );
 
   if (result) {
     return {
@@ -415,17 +319,18 @@ export async function reviseQuestion(
       bloomLevel: originalQuestion.bloomLevel,
       img: originalQuestion.img,
       concept: originalQuestion.concept,
-      insight: (result.insight ?? undefined) as string | undefined, // Explicit cast to satisfy strict type if needed
+      insight: result.insight ?? undefined,
     } satisfies GeneratedQuestion;
   }
 
   return null;
 }
 
-// === SECTION === Orchestration
+// === SECTION: Orchestration Logic ===
 
-// --- Sub-steps for Orchestration ---
-
+/**
+ * Belirli bir chunk için kavram haritası olmasını garanti eder (cache yoksa üretir).
+ */
 async function ensureConcepts(
   chunkId: string,
   chunk: z.infer<typeof ChunkWithContentSchema>,
@@ -439,8 +344,7 @@ async function ensureConcepts(
     ? parseOrThrow(AILogicSchema, chunk.ai_logic)
     : {};
 
-  const existingConcepts: ConceptMapItem[] =
-    (aiLogic.concept_map as ConceptMapItem[]) || [];
+  const existingConcepts = (aiLogic.concept_map as ConceptMapItem[]) || [];
   const isCacheValid = existingConcepts.length > 0 && !aiLogic.invalidated_at;
 
   if (isCacheValid) {
@@ -452,13 +356,9 @@ async function ensureConcepts(
   }
 
   log('MAPPING', 'Konunun kritik noktaları belirleniyor...');
-  const strategy = getSubjectStrategy(chunk.course_name || '');
-  const analysisResult = await runChunkAnalysis({
-    content: chunk.content,
-    courseName: chunk.course_name || '',
-    sectionTitle: chunk.section_title || '',
-    importance: strategy?.importance || 'medium',
-  });
+  const analysisResult = await analyzeNoteChunk(chunk.content, (m, d) =>
+    log('MAPPING', m, d)
+  );
 
   if (!analysisResult) {
     throw new Error(
@@ -470,7 +370,7 @@ async function ensureConcepts(
     ...(typeof chunk.ai_logic === 'object'
       ? (chunk.ai_logic as Record<string, Json>)
       : {}),
-    concept_map: analysisResult.concepts as Json,
+    concept_map: analysisResult.concept_map as Json,
     difficulty_index: analysisResult.difficulty_index,
     generated_at: new Date().toISOString(),
     invalidated_at: null,
@@ -483,17 +383,21 @@ async function ensureConcepts(
   );
 
   if (analysisUpdateError) {
-    parserLogger.error('Failed to update ai_logic with concepts', {
-      error: analysisUpdateError,
-    });
+    console.error(
+      '[ParserLogic][ensureConcepts] Güncelleme Hatası:',
+      analysisUpdateError
+    );
   }
 
   return {
-    concepts: analysisResult.concepts,
-    difficultyIndex: analysisResult.difficulty_index,
+    concepts: analysisResult.concept_map || [],
+    difficultyIndex: analysisResult.difficulty_index || 3,
   };
 }
 
+/**
+ * Belirli bir chunk için kotaları garanti eder.
+ */
 async function ensureQuotas(
   chunkId: string,
   chunk: z.infer<typeof ChunkWithContentSchema>,
@@ -515,6 +419,7 @@ async function ensureQuotas(
     | { antrenman: number; deneme: number }
     | null
     | undefined;
+
   const isInvalidated = existingAILogic.invalidated_at != null;
 
   if (
@@ -528,7 +433,8 @@ async function ensureQuotas(
 
   const quotaAILogic: Record<string, Json> = {
     ...existingAILogic,
-    suggested_quotas: quotas,
+
+    suggested_quotas: quotas as Json,
     reasoning:
       typeof existingAILogic.reasoning === 'string'
         ? existingAILogic.reasoning
@@ -542,14 +448,18 @@ async function ensureQuotas(
   );
 
   if (quotaUpdateError) {
-    parserLogger.error('Failed to update ai_logic with quotas', {
-      error: quotaUpdateError,
-    });
+    console.error(
+      '[ParserLogic][ensureQuotas] Kotas Hatası:',
+      quotaUpdateError
+    );
   }
 
   return quotas;
 }
 
+/**
+ * Chunk bazlı toplu üretim işlemini yönetir (Orchestration).
+ */
 export async function generateForChunk(
   chunkId: string,
   callbacks: GeneratorCallbacks,
@@ -575,8 +485,8 @@ export async function generateForChunk(
 
   try {
     log('INIT', 'Ders materyalleri kütüphaneden alınıyor...');
-    await Repository.updateChunkStatus(chunkId, 'PROCESSING');
-    const rawChunk = await Repository.getChunkWithContent(chunkId);
+    await updateChunkStatus(chunkId, 'PROCESSING');
+    const rawChunk = await getChunkWithContent(chunkId);
     if (!rawChunk) throw new Error(`Chunk (ID: ${chunkId}) bulunamadı.`);
 
     const chunk = parseOrThrow(ChunkWithContentSchema, rawChunk);
@@ -594,6 +504,7 @@ export async function generateForChunk(
         (acc, type) => acc + (quotas[type as keyof typeof quotas] || 0),
         0
       );
+
     callbacks.onTotalTargetCalculated(totalTarget);
 
     const guidelines = await getSubjectGuidelines(chunk.course_name || '');
@@ -602,7 +513,7 @@ export async function generateForChunk(
       cleanContent,
       chunk.course_name || '',
       chunk.section_title || '',
-      guidelines
+      guidelines || undefined
     );
 
     let totalGeneratedCount = 0;
@@ -623,7 +534,7 @@ export async function generateForChunk(
         i++
       ) {
         const concept = targetConcepts[i];
-        const cached = await Repository.fetchCachedQuestion(
+        const cached = await fetchCachedQuestion(
           chunk.id,
           type,
           concept.baslik
@@ -641,7 +552,6 @@ export async function generateForChunk(
           chunk.course_name || ''
         );
         if (!nodeStrategy) {
-          // Grafik gerektiren kavram, atla
           log(
             'GENERATING',
             `"${concept.baslik}" grafik gerektiriyor, atlanıyor.`
@@ -721,7 +631,7 @@ export async function generateForChunk(
                 'SAVING',
                 `${bufferItem.concept.baslik} kütüphaneye ekleniyor...`
               );
-              const { error: saveErr } = await Repository.createQuestion({
+              const { error: saveErr } = await createQuestion({
                 chunk_id: chunk.id,
                 course_id: chunk.course_id,
                 section_title: chunk.section_title || 'Genel',
@@ -741,7 +651,7 @@ export async function generateForChunk(
                   evidence: question.evidence,
                   diagnosis: question.diagnosis,
                   insight: question.insight,
-                },
+                } as Json,
                 concept_title: bufferItem.concept.baslik,
               });
 
@@ -756,14 +666,14 @@ export async function generateForChunk(
       }
     }
 
-    await Repository.updateChunkStatus(chunkId, 'COMPLETED');
+    await updateChunkStatus(chunkId, 'COMPLETED');
     log('COMPLETED', 'Tüm işlemler başarıyla tamamlandı!');
     callbacks.onComplete({ success: true, generated: totalGeneratedCount });
   } catch (e: unknown) {
     const error = e as Error;
-    parserLogger.error('Generation Error:', error);
+    logger.error('ParserLogic', 'generateForChunk', 'Üretim hatası', error);
     log('ERROR', `Hata oluştu: ${error.message}`);
     callbacks.onError(error.message || 'Error occurred during generation.');
-    await Repository.updateChunkStatus(chunkId, 'FAILED');
+    await updateChunkStatus(chunkId, 'FAILED');
   }
 }

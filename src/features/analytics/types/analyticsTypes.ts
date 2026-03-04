@@ -1,5 +1,12 @@
 import { z } from 'zod';
 
+// ==========================================
+// SCHEMAS
+// ==========================================
+
+/**
+ * Zod schema for validating raw AI generation cost logs from Supabase.
+ */
 export const AiGenerationCostSchema = z.object({
   id: z.string(),
   created_at: z.string(),
@@ -15,4 +22,12 @@ export const AiGenerationCostSchema = z.object({
   status: z.number().nullable().optional(),
 });
 
+// ==========================================
+// TYPES
+// ==========================================
+
+/**
+ * Type inferred from the AiGenerationCostSchema.
+ * Represents an entry in the AI generation costs table.
+ */
 export type AiGenerationCost = z.infer<typeof AiGenerationCostSchema>;

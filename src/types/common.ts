@@ -1,38 +1,21 @@
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
+// ===========================
+// === KİMLİK (AUTH) TİPLERİ ===
+// ===========================
+
 /**
- * Standard User interface, potentially extending Supabase User with app-specific fields
+ * Standart Kullanıcı tipi, Supabase User tipini referans alır.
  */
 export type User = SupabaseUser;
 
-/**
- * Generic API response wrapper
- */
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  status?: number;
-}
+// ===========================
+// === YAPAY ZEKA (AI) TİPLERİ ===
+// ===========================
 
 /**
- * Common timestamp type for consistency
+ * Yapay zeka yanıtındaki token kullanımı ve diğer meta verileri temsil eder.
  */
-export type Timestamp = string; // ISO String
-
-/**
- * Common Theme/Visual types
- */
-export type ThemeMode = 'light' | 'dark' | 'system';
-
-/**
- * LLM Interaction Base Types
- */
-export interface Message {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
 export interface AIResponseMetadata {
   usage?: {
     prompt_tokens: number;
@@ -47,31 +30,27 @@ export interface AIResponseMetadata {
   };
 }
 
-/**
- * Log levels for consistency across the application
- */
-export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
+// ===========================
+// === API & AĞ TİPLERİ ===
+// ===========================
 
 /**
- * Standard Log Message interface
+ * Genel API yanıtlarını sarmalayan standart arayüz.
+ * @template T - Yanıt verisinin tipi.
  */
-export interface LogMessage {
-  level: LogLevel;
-  message: string;
-  details?: Record<string, unknown> | Error;
-  timestamp: string;
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  status?: number;
 }
 
-/**
- * General purpose logging callback
- */
-export type LogCallback = (
-  message: string,
-  details?: Record<string, unknown>
-) => void;
+// ===========================
+// === JSON & VERİ TİPLERİ ===
+// ===========================
 
 /**
- * Common Json type
+ * Üstesinden gelinemeyen veya esnek JSON verilerini güvenli şekilde tiplendirmek için kullanılır.
  */
 export type Json =
   | string
@@ -82,3 +61,52 @@ export type Json =
       [key: string]: Json | undefined;
     }
   | Json[];
+
+// ===========================
+// === LOGLAMA TİPLERİ ===
+// ===========================
+
+/**
+ * Genel amaçlı loglama geri çağırım (callback) fonksiyonu tipi.
+ */
+export type LogCallback = (
+  message: string,
+  details?: Record<string, unknown>
+) => void;
+
+/**
+ * Uygulama genelinde kullanılan standart log seviyeleri.
+ */
+export type LogLevel = 'info' | 'warn' | 'error' | 'debug';
+
+/**
+ * Standart log mesajı veri yapısını temsil eder.
+ */
+export interface LogMessage {
+  level: LogLevel;
+  message: string;
+  details?: Record<string, unknown> | Error;
+  timestamp: string;
+}
+
+// ===========================
+// === ARAYÜZ (UI) & İLETİŞİM TİPLERİ ===
+// ===========================
+
+/**
+ * LLM (Büyük Dil Modeli) ile etkileşim mesajını temsil eder.
+ */
+export interface Message {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+/**
+ * Tema modu seçeneklerini belirtir.
+ */
+export type ThemeMode = 'light' | 'dark' | 'system';
+
+/**
+ * Tarih ve saat değerlerini ISO formatında tutan ortak yapı.
+ */
+export type Timestamp = string;

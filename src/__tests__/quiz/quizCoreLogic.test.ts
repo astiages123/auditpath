@@ -1,26 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
-  calculateMastery,
+  calculateMasteryScore,
   calculateTestResults,
 } from '@/features/quiz/logic/quizCoreLogic';
 
-describe('quizCoreLogic - calculateMastery', () => {
+describe('quizCoreLogic - calculateMasteryScore', () => {
   it('sıfır toplam soruda 0 döner', () => {
-    expect(
-      calculateMastery(
-        { correct: 0, incorrect: 0, blank: 0, totalTimeMs: 0 },
-        0
-      )
-    ).toBe(0);
+    expect(calculateMasteryScore(0, 0)).toBe(0);
   });
 
   it('doğru oranı yüzde olarak döner', () => {
-    expect(
-      calculateMastery(
-        { correct: 7, incorrect: 3, blank: 0, totalTimeMs: 0 },
-        10
-      )
-    ).toBe(70);
+    expect(calculateMasteryScore(7, 10)).toBe(70);
   });
 });
 

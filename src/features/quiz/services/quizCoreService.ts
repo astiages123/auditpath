@@ -1,452 +1,444 @@
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/utils/logger';
-import { type Json } from '@/types/database.types';
 import { safeQuery } from '@/lib/supabaseHelpers';
+import { isValidUuid } from '@/utils/validation';
 import {
   type ChunkMasteryRow,
-  QuizQuestionSchema,
   type ValidatedChunkWithContent,
 } from '@/features/quiz/types';
 import type { CourseTopic } from '@/features/courses/types/courseTypes';
-import { isValidUuid, parseOrThrow } from '@/utils/validation';
 
-const quizLogger = logger.withPrefix('[QuizCoreService]');
+// ============================================================================
+// CONSTANTS
+// ============================================================================
 
-// --- Course & Session Core Services ---
+const MODULE = 'QuizCoreService';
 
+// ============================================================================
+// CORE SERVICES
+// ============================================================================
+
+/**
+ * Kurs ID bazlı kurs adını getirir.
+ *
+ * @param courseId - Kursun UUID'si
+ * @returns Kurs adı veya null
+ */
 export async function getCourseName(courseId: string): Promise<string | null> {
-  const { data } = await safeQuery<{ name: string }>(
-    supabase.from('courses').select('name').eq('id', courseId).single(),
-    'getCourseName error',
-    { courseId }
-  );
-  return data?.name || null;
+  const FUNC = 'getCourseName';
+  try {
+    const { data } = await safeQuery<{ name: string }>(
+      supabase.from('courses').select('name').eq('id', courseId).single(),
+      `${FUNC} error`,
+      { courseId }
+    );
+    return data?.name || null;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return null;
+  }
 }
 
+/**
+ * Mevcut auth session token bilgisini döndürür.
+ * API isteklerinde yetkilendirme için kullanılır.
+ *
+ * @returns Erişim token'ı veya null
+ */
 export async function getCurrentSessionToken(): Promise<string | null> {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) {
-    quizLogger.error('Auth session error', error);
+  const FUNC = 'getCurrentSessionToken';
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) {
+      console.error(`[${MODULE}][${FUNC}] Auth session error:`, error);
+      logger.error(MODULE, FUNC, 'Auth session error', error);
+      return null;
+    }
+    return data.session?.access_token || null;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
     return null;
   }
-  return data.session?.access_token || null;
 }
 
+/**
+ * Mevcut giriş yapmış kullanıcının ID bilgisini döndürür.
+ *
+ * @returns Kullanıcı ID'si veya null
+ */
 export async function getCurrentUserId(): Promise<string | null> {
-  const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
-  if (error) {
-    quizLogger.error('Auth user error', error);
+  const FUNC = 'getCurrentUserId';
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser();
+    if (error) {
+      console.error(`[${MODULE}][${FUNC}] Auth user error:`, error);
+      logger.error(MODULE, FUNC, 'Auth user error', error);
+      return null;
+    }
+    return user?.id || null;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
     return null;
   }
-  return user?.id || null;
 }
 
+/**
+ * Kursun en son çalışılan (frontier) chunk ID bilgisini getirir.
+ * Kullanıcının nerede kaldığını takip etmek için kullanılır.
+ *
+ * @param userId - Kullanıcı ID'si
+ * @param courseId - Kurs ID'si
+ * @returns Son çalışılan ünite ID'si veya null
+ */
 export async function getFrontierChunkId(
   userId: string,
   courseId: string
 ): Promise<string | null> {
-  const { data } = await safeQuery<{ chunk_id: string }>(
-    supabase
-      .from('chunk_mastery')
-      .select('chunk_id')
-      .eq('user_id', userId)
-      .eq('course_id', courseId)
-      .order('updated_at', { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    'getFrontierChunkId error',
-    { userId, courseId }
-  );
+  const FUNC = 'getFrontierChunkId';
+  try {
+    const { data } = await safeQuery<{ chunk_id: string }>(
+      supabase
+        .from('chunk_mastery')
+        .select('chunk_id')
+        .eq('user_id', userId)
+        .eq('course_id', courseId)
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      `${FUNC} error`,
+      { userId, courseId }
+    );
 
-  return data?.chunk_id || null;
+    return data?.chunk_id || null;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return null;
+  }
 }
 
+/**
+ * Kullanıcının belirli bir ünite için son AI teşhislerini (diagnoses) getirir.
+ *
+ * @param userId - Kullanıcı ID'si
+ * @param chunkId - Ünite ID'si
+ * @param limit - Getirilecek kayıt sayısı
+ * @returns Teşhis metinleri listesi
+ */
 export async function getRecentDiagnoses(
   userId: string,
   chunkId: string,
   limit: number
 ): Promise<string[]> {
-  if (!isValidUuid(chunkId)) return [];
-  const { data } = await safeQuery<{ ai_diagnosis: string | null }[]>(
-    supabase
-      .from('user_quiz_progress')
-      .select('ai_diagnosis')
-      .eq('user_id', userId)
-      .eq('chunk_id', chunkId)
-      .not('ai_diagnosis', 'is', null)
-      .order('answered_at', { ascending: false })
-      .limit(limit),
-    'getRecentDiagnoses error',
-    { userId, chunkId }
-  );
+  const FUNC = 'getRecentDiagnoses';
+  try {
+    if (!isValidUuid(chunkId)) return [];
+    const { data } = await safeQuery<{ ai_diagnosis: string | null }[]>(
+      supabase
+        .from('user_quiz_progress')
+        .select('ai_diagnosis')
+        .eq('user_id', userId)
+        .eq('chunk_id', chunkId)
+        .not('ai_diagnosis', 'is', null)
+        .order('answered_at', { ascending: false })
+        .limit(limit),
+      `${FUNC} error`,
+      { userId, chunkId }
+    );
 
-  return (data || [])
-    .map((p) => p.ai_diagnosis)
-    .filter((d): d is string => Boolean(d));
+    return (data || [])
+      .map((p) => p.ai_diagnosis)
+      .filter((d): d is string => Boolean(d));
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return [];
+  }
 }
 
+/**
+ * Kurs için mastery ve genel istatistik özetini getirir.
+ *
+ * @param userId - Kullanıcı ID'si
+ * @param courseId - Kurs ID'si
+ * @returns Mastery puanları ve görülen soru sayıları
+ */
 export async function getCourseStatsAggregate(
   userId: string,
   courseId: string
-) {
-  const { data: masteryData } = await safeQuery<
-    { total_questions_seen: number | null; mastery_score: number }[]
-  >(
-    supabase
-      .from('chunk_mastery')
-      .select('total_questions_seen, mastery_score')
-      .eq('user_id', userId)
-      .eq('course_id', courseId),
-    'getCourseStatsAggregate error',
-    { userId, courseId }
-  );
-  return masteryData;
-}
-
-export async function fetchCourseMastery(courseId: string, userId: string) {
-  const { data } = await safeQuery<
-    { chunk_id: string; mastery_score: number }[]
-  >(
-    supabase
-      .from('chunk_mastery')
-      .select('chunk_id, mastery_score')
-      .eq('course_id', courseId)
-      .eq('user_id', userId),
-    'fetchCourseMastery error',
-    { courseId, userId }
-  );
-  return data || [];
-}
-
-// --- Note Chunk & Topic Services ---
-
-/**
- * Get a note chunk by ID.
- *
- * @param chunkId Chunk ID (must be valid UUID)
- * @returns Chunk data or null
- */
-export async function getNoteChunkById(chunkId: string) {
-  // Basic UUID validation to prevent Postgres errors
-  if (!isValidUuid(chunkId)) {
-    quizLogger.warn(`Invalid UUID passed to getNoteChunkById: ${chunkId}`);
+): Promise<
+  { total_questions_seen: number | null; mastery_score: number }[] | null
+> {
+  const FUNC = 'getCourseStatsAggregate';
+  try {
+    const { data: masteryData } = await safeQuery<
+      { total_questions_seen: number | null; mastery_score: number }[]
+    >(
+      supabase
+        .from('chunk_mastery')
+        .select('total_questions_seen, mastery_score')
+        .eq('user_id', userId)
+        .eq('course_id', courseId),
+      `${FUNC} error`,
+      { userId, courseId }
+    );
+    return masteryData ?? null;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
     return null;
   }
+}
 
-  const { data, success } = await safeQuery(
-    supabase
-      .from('note_chunks')
-      .select('content, metadata, ai_logic, course:courses(course_slug)')
-      .eq('id', chunkId)
-      .maybeSingle(),
-    'getNoteChunkById error',
-    { chunkId }
-  );
+// ============================================================================
+// NOTE CHUNK & TOPIC SERVICES
+// ============================================================================
 
-  if (!success) return null;
-  return data;
+export interface NoteChunkData {
+  content: string;
+  metadata: Record<string, unknown>;
+  ai_logic: Record<string, unknown>;
+  course: { course_slug: string };
 }
 
 /**
- * Get all topics (chunks) for a course.
+ * ID bazlı note chunk verisini getirir.
  *
- * @param userId User ID
- * @param courseId Course ID
- * @returns Array of course topics
+ * @param chunkId - Ünite ID'si
+ * @returns Ünite verisi veya null
+ */
+export async function getNoteChunkById(
+  chunkId: string
+): Promise<NoteChunkData | null> {
+  const FUNC = 'getNoteChunkById';
+  try {
+    if (!isValidUuid(chunkId)) {
+      console.warn(`[${MODULE}][${FUNC}] Geçersiz UUID: ${chunkId}`);
+      logger.warn(MODULE, FUNC, `Invalid UUID passed: ${chunkId}`);
+      return null;
+    }
+
+    const { data, success } = await safeQuery<NoteChunkData>(
+      supabase
+        .from('note_chunks')
+        .select('content, metadata, ai_logic, course:courses(course_slug)')
+        .eq('id', chunkId)
+        .maybeSingle(),
+      `${FUNC} error`,
+      { chunkId }
+    );
+
+    if (!success) return null;
+    return data ?? null;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return null;
+  }
+}
+
+/**
+ * Bir kursa ait tüm konuları (chunk) getirir.
+ *
+ * @param _userId - Kullanıcı ID'si (Kullanılmıyor, geriye dönük uyumluluk)
+ * @param courseId - Kurs ID'si
+ * @param signal - AbortSignal (opsiyonel)
+ * @returns Konu listesi
  */
 export async function getCourseTopics(
-  userId: string,
+  _userId: string,
   courseId: string | null,
   signal?: AbortSignal
 ): Promise<CourseTopic[]> {
-  if (!courseId) return [];
+  const FUNC = 'getCourseTopics';
+  try {
+    if (!courseId) return [];
 
-  // 1. Get all chunks for this course (sorted by chunk_order)
-  let query = supabase
-    .from('note_chunks')
-    .select(
-      'id, created_at, course_id, course_name, section_title, chunk_order, content, status, last_synced_at, metadata, ai_logic'
-    )
-    .eq('course_id', courseId)
-    .order('chunk_order', { ascending: true });
-
-  if (signal) {
-    query = query.abortSignal(signal);
-  }
-
-  const { data: chunks, success } = await safeQuery(
-    query,
-    'getCourseTopics error',
-    { courseId }
-  );
-
-  if (!success) return [];
-
-  if (!chunks || chunks.length === 0) return [];
-
-  return chunks.map((c) => ({
-    ...c,
-    questionCount: 0,
-  })) as CourseTopic[];
-}
-
-/**
- * Convert course slug to course ID.
- *
- * @param slug Course slug
- * @returns Course ID or null if not found
- */
-export async function getCourseIdBySlug(
-  slug: string,
-  _signal?: AbortSignal
-): Promise<string | null> {
-  const query = supabase
-    .from('courses')
-    .select('id')
-    .eq('course_slug', slug)
-    .limit(1)
-    .maybeSingle();
-
-  const { data, success } = await safeQuery<{ id: string }>(
-    query,
-    'Course not found for slug',
-    { slug }
-  );
-
-  if (!success || !data) {
-    return null;
-  }
-  return data.id;
-}
-
-/**
- * Get unique topic names for a course.
- *
- * @param courseId Course ID
- * @returns Array of unique topic names
- */
-export async function getUniqueCourseTopics(courseId: string) {
-  const { data, success } = await safeQuery<{ section_title: string | null }[]>(
-    supabase
+    let query = supabase
       .from('note_chunks')
-      .select('section_title')
+      .select(
+        'id, created_at, course_id, course_name, section_title, chunk_order, content, status, last_synced_at, metadata, ai_logic'
+      )
       .eq('course_id', courseId)
-      .order('section_title'),
-    'getUniqueCourseTopics error',
-    { courseId }
-  );
+      .order('chunk_order', { ascending: true });
 
-  if (!success || !data) {
+    if (signal) {
+      query = (
+        query as typeof query & {
+          abortSignal: (s: AbortSignal) => typeof query;
+        }
+      ).abortSignal(signal);
+    }
+
+    const { data: chunks, success } = await safeQuery<
+      Record<string, unknown>[]
+    >(query, `${FUNC} error`, { courseId });
+
+    if (!success || !chunks) return [];
+
+    return chunks.map((c) => ({
+      ...c,
+      questionCount: 0,
+    })) as CourseTopic[];
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
     return [];
   }
-
-  // Deduplicate section titles
-  const titles = data.map((d) => d.section_title).filter(Boolean);
-  return Array.from(new Set(titles));
 }
 
 /**
- * Get the first chunk ID for a topic.
+ * Course slug bilgisinden course ID değerini bulur.
  *
- * @param courseId Course ID
- * @param topic Topic name
- * @returns First chunk ID or null
+ * @param slug - Kurs slug bilgisi (örn: "fizik-101")
+ * @returns Kurs UUID'si veya null
  */
-export async function getFirstChunkIdForTopic(courseId: string, topic: string) {
-  const { data, success } = await safeQuery<{ id: string }>(
-    supabase
-      .from('note_chunks')
+export async function getCourseIdBySlug(slug: string): Promise<string | null> {
+  const FUNC = 'getCourseIdBySlug';
+  try {
+    const query = supabase
+      .from('courses')
       .select('id')
-      .eq('course_id', courseId)
-      .eq('section_title', topic)
+      .eq('course_slug', slug)
       .limit(1)
-      .maybeSingle(),
-    'getFirstChunkIdForTopic error',
-    { courseId, topic }
-  );
+      .maybeSingle();
 
-  if (!success) {
+    const { data, success } = await safeQuery<{ id: string }>(
+      query,
+      'Course not found for slug',
+      { slug }
+    );
+
+    if (!success || !data) {
+      return null;
+    }
+    return data.id;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
     return null;
   }
-  return data?.id || null;
 }
 
 /**
- * Get all questions for a specific topic.
+ * Bir chunk ID için mastery (ustalık) bilgisini getirir.
+ * Kullanıcının bu ünitedeki ilerlemesini ve başarısını döner.
  *
- * @param courseId Course ID
- * @param topic Topic name
- * @returns Array of questions
+ * @param userId - Kullanıcı ID'si
+ * @param chunkId - Ünite ID'si
+ * @returns Mastery kaydı veya null
  */
-export async function getTopicQuestions(courseId: string, topic: string) {
-  const { data, success } = await safeQuery<unknown[]>(
-    supabase
-      .from('questions')
-      .select('*, course:courses(course_slug)')
-      .eq('course_id', courseId)
-      .eq('section_title', topic)
-      .order('created_at', { ascending: true }),
-    'getTopicQuestions error',
-    { courseId, topic }
-  );
-
-  if (!success) {
-    return [];
-  }
-
-  // Map to QuizQuestion type
-  return (data || []).map((q: unknown) => {
-    const qData = parseOrThrow(
-      QuizQuestionSchema,
-      (q as { question_data: Json }).question_data
-    );
-    const courseSlug = (q as { course?: { course_slug: string } | null }).course
-      ?.course_slug;
-
-    return {
-      q: qData.q,
-      o: qData.o,
-      a: qData.a,
-      exp: qData.exp,
-      img: qData.img,
-      imgPath:
-        qData.img && courseSlug ? `/notes/${courseSlug}/media/` : undefined,
-    };
-  });
-}
-
-export async function fetchCourseChunks(courseId: string) {
-  const { data } = await safeQuery<
-    { id: string; metadata: Json; ai_logic: Json; content: string }[]
-  >(
-    supabase
-      .from('note_chunks')
-      .select('id, metadata, ai_logic, content')
-      .eq('course_id', courseId)
-      .eq('status', 'COMPLETED'),
-    'fetchCourseChunks error',
-    { courseId }
-  );
-  return data || [];
-}
-
-export async function getUserQuestionStatus(
-  userId: string,
-  questionId: string
-): Promise<{
-  question_id: string;
-  status: string;
-  rep_count: number;
-  next_review_session: number | null;
-} | null> {
-  if (!isValidUuid(questionId)) return null;
-
-  const { data } = await safeQuery<{
-    question_id: string;
-    status: string;
-    rep_count: number | null;
-    next_review_session: number | null;
-  }>(
-    supabase
-      .from('user_question_status')
-      .select('question_id, status, rep_count, next_review_session')
-      .eq('user_id', userId)
-      .eq('question_id', questionId)
-      .maybeSingle(),
-    'getUserQuestionStatus error',
-    { userId, questionId }
-  );
-
-  if (!data) return null;
-
-  return {
-    question_id: data.question_id,
-    status: data.status,
-    rep_count: data.rep_count ?? 0,
-    next_review_session: data.next_review_session,
-  };
-}
-
 export async function getChunkMastery(
   userId: string,
   chunkId: string
 ): Promise<ChunkMasteryRow | null> {
-  if (!isValidUuid(chunkId)) return null;
-  const { data } = await safeQuery<{
-    chunk_id: string;
-    mastery_score: number;
-    last_full_review_at: string | null;
-    total_questions_seen: number | null;
-  }>(
-    supabase
-      .from('chunk_mastery')
-      .select(
-        'chunk_id, mastery_score, last_full_review_at, total_questions_seen'
-      )
-      .eq('user_id', userId)
-      .eq('chunk_id', chunkId)
-      .maybeSingle(),
-    'getChunkMastery error',
-    { userId, chunkId }
-  );
+  const FUNC = 'getChunkMastery';
+  try {
+    if (!isValidUuid(chunkId)) return null;
+    const { data } = await safeQuery<{
+      chunk_id: string;
+      mastery_score: number;
+      last_full_review_at: string | null;
+      total_questions_seen: number | null;
+    }>(
+      supabase
+        .from('chunk_mastery')
+        .select(
+          'chunk_id, mastery_score, last_full_review_at, total_questions_seen'
+        )
+        .eq('user_id', userId)
+        .eq('chunk_id', chunkId)
+        .maybeSingle(),
+      `${FUNC} error`,
+      { userId, chunkId }
+    );
 
-  if (!data) return null;
+    if (!data) return null;
 
-  return {
-    chunk_id: data.chunk_id,
-    user_id: userId,
-    mastery_score: data.mastery_score,
-    last_full_review_at: data.last_full_review_at,
-    streak: 0,
-    total_questions_seen: data.total_questions_seen ?? 0,
-  };
+    return {
+      chunk_id: data.chunk_id,
+      user_id: userId,
+      mastery_score: data.mastery_score,
+      last_full_review_at: data.last_full_review_at,
+      streak: 0,
+      total_questions_seen: data.total_questions_seen ?? 0,
+    };
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return null;
+  }
 }
 
-export async function getChunkMetadata(chunkId: string): Promise<{
-  course_id: string;
-  metadata: Json;
-  ai_logic: Json;
-  status: string;
-  content: string;
-} | null> {
-  if (!isValidUuid(chunkId)) return null;
-  const { data } = await safeQuery<{
-    course_id: string;
-    metadata: Json;
-    ai_logic: Json;
-    status: string;
-    content: string;
-  }>(
-    supabase
-      .from('note_chunks')
-      .select('course_id, metadata, ai_logic, status, content')
-      .eq('id', chunkId)
-      .single(),
-    'getChunkMetadata error',
-    { chunkId }
-  );
-  return data ?? null;
-}
-
+/**
+ * Bir chunk ID için içerik ve metadata bilgisini getirir.
+ *
+ * @param chunkId - Ünite ID'si
+ * @returns Onaylanmış ünite içeriği veya null
+ */
 export async function getChunkWithContent(
   chunkId: string
 ): Promise<ValidatedChunkWithContent | null> {
-  if (!isValidUuid(chunkId)) return null;
-  const { data } = await safeQuery<ValidatedChunkWithContent>(
-    supabase
-      .from('note_chunks')
-      .select(
-        'id, course_id, metadata, status, content, course_name, section_title, ai_logic'
-      )
-      .eq('id', chunkId)
-      .single(),
-    'getChunkWithContent error',
-    { chunkId }
-  );
+  const FUNC = 'getChunkWithContent';
+  try {
+    if (!isValidUuid(chunkId)) return null;
+    const { data } = await safeQuery<ValidatedChunkWithContent>(
+      supabase
+        .from('note_chunks')
+        .select(
+          'id, course_id, metadata, status, content, course_name, section_title, ai_logic'
+        )
+        .eq('id', chunkId)
+        .single(),
+      `${FUNC} error`,
+      { chunkId }
+    );
 
-  if (!data) return null;
-  return data;
+    if (!data) return null;
+    return data;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return null;
+  }
+}
+
+/**
+ * Belirli bir konu adı (section_title) için ilk chunk ID bilgisini getirir.
+ * Konu bazlı quiz başlatırken giriş noktası olarak kullanılır.
+ *
+ * @param courseId - Kurs ID'si
+ * @param topicName - Konu başlığı
+ * @returns Ünite ID'si veya null
+ */
+export async function getFirstChunkIdForTopic(
+  courseId: string,
+  topicName: string
+): Promise<string | null> {
+  const FUNC = 'getFirstChunkIdForTopic';
+  try {
+    const { data } = await safeQuery<{ id: string }>(
+      supabase
+        .from('note_chunks')
+        .select('id')
+        .eq('course_id', courseId)
+        .eq('section_title', topicName)
+        .order('chunk_order', { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+      `${FUNC} error`,
+      { courseId, topicName }
+    );
+    return data?.id || null;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return null;
+  }
 }

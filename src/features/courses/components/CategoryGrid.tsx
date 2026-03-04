@@ -1,20 +1,34 @@
+// ===========================
+// === IMPORTS ===
+// ===========================
+
 import { useState } from 'react';
 import { CategoryCard } from './CategoryCard';
-import { type Category } from '@/features/courses/types/courseTypes';
+import type { Category } from '@/features/courses/types/courseTypes';
 import { motion } from 'framer-motion';
 
-interface CategoryGridProps {
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
+export interface CategoryGridProps {
   categories: Category[];
   categoryProgress?: Record<
     string,
     {
       completedVideos: number;
       completedHours: number;
-      completedCourses?: number;
     }
   >;
 }
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * Renders a responsive grid of CategoryCards, managing their open/closed states.
+ */
 export function CategoryGrid({
   categories,
   categoryProgress = {},
@@ -61,7 +75,6 @@ export function CategoryGrid({
               courses={category.courses}
               completedVideos={stats?.completedVideos || 0}
               completedHours={stats?.completedHours || 0}
-              // completedCourses={stats?.completedCourses || 0}
               isOpen={expandedCategoryId === category.id}
               onToggle={() => handleToggle(category.id)}
             />

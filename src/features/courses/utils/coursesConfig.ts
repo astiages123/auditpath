@@ -1,3 +1,7 @@
+// ===========================
+// === IMPORTS ===
+// ===========================
+
 import {
   BadgeTurkishLira,
   Banknote,
@@ -20,7 +24,7 @@ import {
   IdCard,
   Languages,
   Library,
-  LucideIcon,
+  type LucideIcon,
   Map,
   Newspaper,
   Puzzle,
@@ -37,8 +41,11 @@ import {
   Vote,
 } from 'lucide-react';
 
-// --- Types ---
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
 
+/** Represents a daily block structure in the schedule */
 export interface DailyBlock {
   name: string; // "SABAH BLOK", "AKŞAM BLOK", "FİNAL BLOK"
   subject: string;
@@ -47,6 +54,7 @@ export interface DailyBlock {
   theme?: CourseTheme; // override
 }
 
+/** Represents a weekly schedule breakdown item */
 export interface WeeklyScheduleItem {
   id: number;
   dayIndex: number; // 0 = Sunday, 1 = Monday, etc.
@@ -55,6 +63,7 @@ export interface WeeklyScheduleItem {
   blocks: DailyBlock[];
 }
 
+/** Course theme variations for styling */
 export type CourseTheme =
   | 'emerald'
   | 'amber'
@@ -64,18 +73,21 @@ export type CourseTheme =
   | 'orange'
   | 'primary';
 
-// --- Constants ---
+// ===========================
+// === THEME CONFIGURATIONS ===
+// ===========================
 
+/** Styling configurations for every existing course theme */
 export const COURSE_THEME_CONFIG: Record<
   CourseTheme,
   {
-    bg: string; // Tailwind class
-    text: string; // Tailwind class
-    border: string; // Tailwind class
-    variable: string; // CSS variable name prefix
-    hoverBg: string; // Tailwind class
-    gradient: string; // Dark gradient for cards
-    hoverGradient: string; // Intensified gradient on hover
+    bg: string;
+    text: string;
+    border: string;
+    variable: string;
+    hoverBg: string;
+    gradient: string;
+    hoverGradient: string;
   }
 > = {
   emerald: {
@@ -150,6 +162,11 @@ export const COURSE_THEME_CONFIG: Record<
   },
 };
 
+// ===========================
+// === COURSE CATEGORY THEMES ===
+// ===========================
+
+/** Global default themes mapped to broad categories */
 export const CATEGORY_THEMES: Record<
   string,
   {
@@ -164,6 +181,7 @@ export const CATEGORY_THEMES: Record<
   SIYASAL_BILGILER: { Icon: BookText, theme: 'purple' },
 };
 
+/** Specific icon overrides for detailed topics */
 export const ICON_OVERRIDES: Record<string, LucideIcon> = {
   // GY_GK
   'sozel-mantik': Puzzle,
@@ -204,6 +222,11 @@ export const ICON_OVERRIDES: Record<string, LucideIcon> = {
   'uluslararasi-iliskiler-kuramlari': Brain,
 };
 
+// ===========================
+// === WEEKLY SCHEDULE ===
+// ===========================
+
+/** Standard weekly schedule distribution layout */
 export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [
   {
     id: 1,

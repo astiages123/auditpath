@@ -8,13 +8,31 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-interface ModalProps {
+// ==========================================
+// === TYPES / PROPS ===
+// ==========================================
+
+export interface EfficiencyModalProps {
   title: string;
   trigger: ReactNode;
   children: ReactNode;
 }
 
-export const EfficiencyModal = ({ title, trigger, children }: ModalProps) => {
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
+/**
+ * A reusable modal wrapper tailored for the Efficiency Dashboard charts and tables.
+ */
+export const EfficiencyModal = ({
+  title,
+  trigger,
+  children,
+}: EfficiencyModalProps) => {
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   return (
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>

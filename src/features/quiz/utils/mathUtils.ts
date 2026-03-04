@@ -1,6 +1,9 @@
+// === SECTION: String & Content Formatting ===
+
 /**
- * Cleans and prepares math content for KaTeX rendering.
- * Handles image patterns, number formatting, and escaping LaTeX special characters like '%'.
+ * Matematiksel içeriği temizler ve KaTeX render işlemi için hazırlar.
+ * @param content - Temizlenecek ham metin
+ * @returns KaTeX uyumlu temiz metin
  */
 export const cleanMathContent = (
   content: string | undefined | null
@@ -9,28 +12,29 @@ export const cleanMathContent = (
 
   return (
     content
-      // 1. Remove image markdown patterns (e.g., (image.webp))
+      // 1. Markdown görsel kalıplarını kaldır (örn: (image.webp))
       .replace(/\([\w-]+\.(webp|png|jpg|jpeg|gif)\)/gi, '')
-      // 2. Remove [GÖRSEL: X] patterns
+      // 2. [GÖRSEL: X] kalıplarını kaldır
       .replace(/\[GÖRSEL:\s*\d+\]/gi, '')
-      // 3. Normalize newlines
+      // 3. Satır sonlarını normalize et
       .replace(/\n\s*\n/g, '\n\n')
-      // 4. Format numbers:
-      // a. Remove spaces between digits (e.g., 1 000 000 -> 1000000)
+      // 4. Sayı formatlama:
+      // a. Basamaklar arası boşlukları kaldır (örn: 1 000 000 -> 1000000)
       .replace(/(\d)\s+(?=\d)/g, '$1')
-      // b. Add dots for thousands (e.g., 1000000 -> 1.000.000)
+      // b. Binlik ayırıcı ekle (örn: 1000000 -> 1.000.000)
       .replace(/\B(?=(\d{3})+(?!\d))/g, '.')
-      // 5. Escape percentage signs '%' that are not already escaped '\%'
-      // This prevents KaTeX from treating '%' as a comment.
-      // We look for '%' that is not preceded by '\'.
+      // 5. KaTeX yorumu sanılmaması için '%' işaretlerini kaçış karakteriyle koru
       .replace(/(?<!\\)%/g, '\\%')
       .trim()
   );
 };
 
+// === SECTION: Array Operations ===
+
 /**
- * Shuffles an array using the Fisher-Yates algorithm.
- * Provides unbiased randomization.
+ * Bir diziyi Fisher-Yates algoritması kullanarak karıştırır.
+ * @param array - Karıştırılacak dizi
+ * @returns Karıştırılmış yeni dizi
  */
 export function shuffle<T>(array: T[]): T[] {
   const result = [...array];

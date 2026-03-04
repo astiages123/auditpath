@@ -5,22 +5,49 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/utils/stringHelpers';
 
-interface NotesHeaderProps {
+// === BÖLÜM ADI: TİPLER (TYPES) ===
+// ===========================
+
+export interface CurrentChunkMetadata {
+  /** Bölüm Ana Başlığı */
+  section_title: string;
+  /** Bölüm Ham İçeriği (Kelime sayımı vs için) */
+  content: string;
+}
+
+export interface NotesHeaderProps {
+  /** Mobil panel (sol menü) açma fonksiyonu */
   onOpenMenu: () => void;
+  /** Seçili olan yığın belirteci kimliği */
   activeChunkId: string;
-  currentChunk?: {
-    section_title: string;
-    content: string;
-  };
+  /** Mevcut seçili olan konu meta verileri */
+  currentChunk?: CurrentChunkMetadata;
+  /** Güncel ders adı */
   courseName: string;
+  /** Kullanıcının scroll okuma ilerlemesinin anlık hesaplanması (%) */
   displayProgress: number;
+  /** Arama modal paneli açık mı? */
   isSearchOpen: boolean;
+  /** Mevcut değerlikli arama metni */
   searchQuery: string;
+  /** Arama metnini set etme işlevi */
   setSearchQuery: (val: string) => void;
+  /** Arama modunu Aç/Kapat */
   toggleSearch: () => void;
+  /** Egzersiz pop-up penceresini aç/kapat eylemi */
   setIsQuizDrawerOpen: (val: boolean) => void;
 }
 
+// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
+// ===========================
+
+/**
+ * Notlar sayfasının en üstünde yer alan durum başlığı, mobil hamburger menü
+ * giriş kapısı ile ilerleme barını (progress bar) bünyesinde barındırır.
+ *
+ * @param {NotesHeaderProps} props
+ * @returns {React.ReactElement}
+ */
 export const NotesHeader: FC<NotesHeaderProps> = ({
   onOpenMenu,
   activeChunkId,
@@ -32,14 +59,22 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
   setSearchQuery,
   toggleSearch,
   setIsQuizDrawerOpen,
-}) => {
+}: NotesHeaderProps): React.ReactElement => {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // === EFEKTLER (EFFECTS) ===
+
   useEffect(() => {
-    if (isSearchOpen) {
-      searchInputRef.current?.focus();
+    try {
+      if (isSearchOpen) {
+        searchInputRef.current?.focus();
+      }
+    } catch (error: unknown) {
+      console.error('[NotesHeader][searchFocusEffect] Hata:', error);
     }
   }, [isSearchOpen]);
+
+  // === UI RENDER ===
 
   return (
     <div
@@ -47,16 +82,19 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
       className="group flex flex-col border-b border-border/10 shrink-0 bg-card/80 backdrop-blur-md z-10 transition-all duration-300"
     >
       <div className="flex items-center gap-2 px-3 md:px-6 py-3 md:py-4">
-        {/* BookOpen ikonunun soluna ekle (sadece mobile): */}
+        {/* Mobil Menü Butonu */}
         <button
           className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
           onClick={onOpenMenu}
         >
           <Menu className="w-5 h-5" />
         </button>
+
         <div className="w-8 h-8 bg-primary/10 rounded-lg hidden lg:flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
           <BookOpen className="w-4 h-4" />
         </div>
+
+        {/* Ana Başlık Kapsayıcısı */}
         <div className="flex-1 min-w-0">
           <h3 className="text-base font-semibold text-foreground truncate">
             {activeChunkId === ''
@@ -85,6 +123,7 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
           </div>
         </div>
 
+        {/* Sağ Düğme / Aksiyon Grubu */}
         <div className="flex items-center gap-3">
           {currentChunk && (
             <div className="flex items-center gap-2">
@@ -123,7 +162,9 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
                       <Input
                         ref={searchInputRef}
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setSearchQuery(e.target.value)
+                        }
                         placeholder="Ara..."
                         className="h-9 w-[120px] sm:w-[170px] bg-background border-border rounded-sm text-[13px] border focus:ring-0 focus-visible:ring-0 focus:border-primary/50 transition-colors shadow-none"
                       />
@@ -140,6 +181,7 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
                       : 'text-muted-foreground hover:text-primary'
                   )}
                   onClick={toggleSearch}
+                  title="Arama Aç/Kapat"
                 >
                   {isSearchOpen ? (
                     <X className="w-5 h-5" />
@@ -153,7 +195,7 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
         </div>
       </div>
 
-      {/* Progress Bar */}
+      {/* Progress Bar Alt Çizgisi */}
       {currentChunk && (
         <div className="h-0.5 w-full bg-primary/5">
           <motion.div

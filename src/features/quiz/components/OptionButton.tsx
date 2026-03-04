@@ -4,15 +4,39 @@ import { Check, X } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 import { MathRenderer } from './QuizStatus';
 
+// === TYPES ===
+
 interface OptionButtonProps {
+  /** Seçenek metni */
   option: string;
+  /** Seçenek etiketi (A, B, C...) */
   label: string;
+  /** Görsel varyant */
   variant: 'default' | 'correct' | 'incorrect' | 'dimmed';
+  /** Seçili mi? */
   isSelected?: boolean;
+  /** Tıklama handlerı */
   onClick: () => void;
+  /** Devre dışı mı? */
   disabled: boolean;
 }
 
+// === LOGIC: HELPERS ===
+
+/**
+ * Seçenek metnindeki başlık harflerini ve noktalama işaretlerini temizler.
+ * @param text Temizlenecek metin
+ */
+const sanitizeOption = (text: string) => {
+  return text.replace(/^[A-Ea-e1-5][\s).:-]+/, '').trim();
+};
+
+// === COMPONENT ===
+
+/**
+ * Quiz soruları için etkileşimli seçenek butonu.
+ * Doğru/Yanlış durumlarını ve seçili olma halini görsel olarak temsil eder.
+ */
 const OptionButtonComponent = function OptionButton({
   option,
   label,
@@ -21,6 +45,8 @@ const OptionButtonComponent = function OptionButton({
   onClick,
   disabled,
 }: OptionButtonProps) {
+  // === RENDER LOGIC: STYLES ===
+
   let containerStyle =
     'border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10';
   let iconComponent = null;
@@ -59,9 +85,7 @@ const OptionButtonComponent = function OptionButton({
       break;
   }
 
-  const sanitizeOption = (text: string) => {
-    return text.replace(/^[A-Ea-e1-5][\s).:-]+/, '').trim();
-  };
+  // === RENDER ===
 
   return (
     <motion.button
@@ -75,6 +99,7 @@ const OptionButtonComponent = function OptionButton({
         !disabled && 'cursor-pointer'
       )}
     >
+      {/* SEÇENEK ETİKETİ (A, B...) */}
       <div
         className={cn(
           'w-7 h-7 min-w-[35px] rounded-lg flex items-center justify-center font-bold text-sm transition-colors',
@@ -83,9 +108,13 @@ const OptionButtonComponent = function OptionButton({
       >
         {label}
       </div>
+
+      {/* SEÇENEK METNİ */}
       <div className="flex-1 font-medium text-base text-foreground group-hover:text-white transition-colors">
         <MathRenderer content={sanitizeOption(option)} />
       </div>
+
+      {/* DURUM İKONU */}
       {iconComponent}
     </motion.button>
   );

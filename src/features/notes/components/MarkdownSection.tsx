@@ -8,12 +8,30 @@ import { slugify } from '@/utils/stringHelpers';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { markdownComponents } from './MarkdownComponents';
 
-interface MarkdownSectionProps {
+// === BÖLÜM ADI: TİPLER (TYPES) ===
+// ===========================
+
+export interface MarkdownSectionProps {
+  /** Eğitimin alt bölüm içerik objesi (Markdown yığını) */
   chunk: CourseTopic;
 }
 
-export const MarkdownSection = memo(({ chunk }: MarkdownSectionProps) => {
-  const sectionId = slugify(chunk.section_title);
+// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
+// ===========================
+
+/**
+ * Derse ait metin parçacıklarını (chunk) birer makale (prose) bloğu
+ * olarak çevirip sayfa içerisinde sergileyen Markdown işleyici bileşeni.
+ *
+ * @param {MarkdownSectionProps} props
+ * @returns {React.ReactElement}
+ */
+export const MarkdownSection = memo(function MarkdownSection({
+  chunk,
+}: MarkdownSectionProps): React.ReactElement {
+  const sectionId: string = slugify(chunk.section_title);
+
+  // === UI RENDER ===
 
   return (
     <div
@@ -30,6 +48,8 @@ export const MarkdownSection = memo(({ chunk }: MarkdownSectionProps) => {
           remarkPlugins={[remarkMath, remarkGfm]}
           rehypePlugins={[
             [rehypeKatex, { strict: false, throwOnError: false }],
+            // rehypeRaw kullanılıyor çünkü bazı HTML etiketlerine (örn: Mermaid, özel div'ler) ihtiyacımız var.
+            // Güvenlik, contentProcessor.ts içindeki DOMPurify ile sağlanmaktadır.
             rehypeRaw,
           ]}
           components={markdownComponents}
@@ -40,5 +60,3 @@ export const MarkdownSection = memo(({ chunk }: MarkdownSectionProps) => {
     </div>
   );
 });
-
-MarkdownSection.displayName = 'MarkdownSection';

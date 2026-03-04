@@ -1,12 +1,56 @@
 import { create } from 'zustand';
-import { DailyEfficiencySummary } from '@/features/efficiency/types/efficiencyTypes';
+import type { DailyEfficiencySummary } from '@/features/efficiency/types/efficiencyTypes';
 
-interface EfficiencyStore {
+// ==========================================
+// === STATE TYPES ===
+// ==========================================
+
+export interface EfficiencyState {
   efficiencySummary: DailyEfficiencySummary | null;
-  setEfficiencySummary: (summary: DailyEfficiencySummary) => void;
 }
 
-export const useEfficiencyStore = create<EfficiencyStore>((set) => ({
+export interface EfficiencyActions {
+  setEfficiencySummary: (summary: DailyEfficiencySummary) => void;
+  resetState: () => void;
+}
+
+export type EfficiencyStore = EfficiencyState & EfficiencyActions;
+
+// ==========================================
+// === INITIAL STATE ===
+// ==========================================
+
+const initialState: EfficiencyState = {
   efficiencySummary: null,
-  setEfficiencySummary: (summary) => set({ efficiencySummary: summary }),
+};
+
+// ==========================================
+// === STATE MANAGEMENT ===
+// ==========================================
+
+export const useEfficiencyStore = create<EfficiencyStore>((set) => ({
+  ...initialState,
+
+  // ==========================================
+  // === ACTIONS ===
+  // ==========================================
+
+  setEfficiencySummary: (summary: DailyEfficiencySummary) => {
+    try {
+      set({ efficiencySummary: summary });
+    } catch (error) {
+      console.error('[EfficiencyStore][setEfficiencySummary] Hata:', error);
+    }
+  },
+
+  resetState: () => {
+    set(initialState);
+  },
 }));
+
+// ==========================================
+// === SELECTORS ===
+// ==========================================
+
+export const selectEfficiencySummary = (state: EfficiencyStore) =>
+  state.efficiencySummary;

@@ -1,101 +1,121 @@
-import {
-  type QuizResponseType,
-  type SubmissionResult,
-} from '@/features/quiz/types';
+import { type QuizResults, type SubmissionResult } from '../types';
 
-// === SECTION: Rep Count & Status ===
+// === SECTION: SRS Algorithm & Scoring ===
 
 /**
- * Bir soruya verilen yanıta göre yeni rep_count ve status hesaplar.
- * rep=0 → active, rep=1|2 → reviewing, rep=3 → mastered
+ * Kullanıcı performansı ve mevcut sürece göre yeni tekrar sayısını hesaplar.
+ * @param currentRepCount - Mevcut başarılı tekrar sayısı
+ * @param responseType - Yanıt tipi ('correct', 'incorrect', 'blank')
+ * @returns Yeni tekrar sayısı
  */
-export function calculateRepResult(
-  repCount: number,
-  isCorrect: boolean
-): { newRepCount: number; newStatus: 'active' | 'reviewing' | 'mastered' } {
-  const newRepCount = isCorrect
-    ? Math.min(repCount + 1, 3)
-    : Math.max(repCount - 1, 0);
-
-  let newStatus: 'active' | 'reviewing' | 'mastered';
-  if (newRepCount === 0) {
-    newStatus = 'active';
-  } else if (newRepCount === 3) {
-    newStatus = 'mastered';
-  } else {
-    newStatus = 'reviewing';
+export function calculateNextRepCount(
+  currentRepCount: number,
+  responseType: 'correct' | 'incorrect' | 'blank'
+): number {
+  if (responseType === 'correct') {
+    // ADIM 1: Yanıt doğruysa, başarılı tekrar sayısını bir artır.
+    return currentRepCount + 1;
   }
-
-  return { newRepCount, newStatus };
+  // ADIM 2: Yanlış veya boş yanıtlarda tekrar sayısı SRS kuralı gereği sıfırlanır.
+  return 0;
 }
 
-// === SECTION: Next Session ===
-
 /**
- * Rep durumuna göre bir sonraki tekrar oturumunu hesaplar.
- * gaps[repCount] = kaç oturum sonra tekrar gösterilsin
+ * Bir sonraki inceleme oturumunun (session) ne zaman olacağını hesaplar.
+ * @param responseType - Yanıt tipi
+ * @param currentRepCount - Mevcut başarılı tekrar sayısı (yeni hesaplanan)
+ * @returns Kaç oturum sonra inceleneceği (session offset)
  */
 export function calculateNextSession(
-  currentSession: number,
-  newRepCount: number
+  responseType: 'correct' | 'incorrect' | 'blank',
+  currentRepCount: number
 ): number {
-  const gaps = [0, 1, 2, 5];
-  return currentSession + (gaps[newRepCount] ?? 5);
+  // ADIM 1: Yanıt yanlış veya boş ise, öğrenciye en kısa sürede (bir sonraki oturumda) tekrar sor.
+  if (responseType !== 'correct') return 1;
+
+  // ADIM 2: Yanıt doğruysa, başarılı tekrar sayısına göre aralığı logaritmik olarak artır.
+  // Bu, Spaced Repetition (Aralıklı Tekrar) metodunun temelidir.
+  // 0 -> 1 (ilk doğru cevap sonrası bir oturum ara)
+  // 1 -> 2
+  // 2 -> 4
+  // 3 -> 7
+  // 4+ -> 10 (maksimum 10 oturum aralık)
+  const sessionIntervals = [1, 2, 4, 7, 10];
+  const intervalIndex = Math.min(currentRepCount, sessionIntervals.length - 1);
+
+  return sessionIntervals[intervalIndex];
 }
 
-// === SECTION: Score Change ===
-
 /**
- * Yanıt tipine göre skor değişimini hesaplar.
- * Skor 0-100 aralığında tutulur.
+ * Yanıt tipine göre skor değişim miktarını hesaplar.
+ * @param responseType - Yanıt tipi
+ * @returns Skor değişim miktarı (delta)
  */
 export function calculateScoreChange(
-  responseType: QuizResponseType,
-  currentScore: number
-): { delta: number; newScore: number } {
-  const deltas: Record<QuizResponseType, number> = {
-    correct: 10,
-    incorrect: -5,
-    blank: -2,
-  };
-
-  const delta = deltas[responseType];
-  const newScore = Math.max(0, Math.min(100, currentScore + delta));
-
-  return { delta, newScore };
+  responseType: 'correct' | 'incorrect' | 'blank'
+): number {
+  switch (responseType) {
+    case 'correct':
+      // Doğru cevap: +10 puan
+      return 10;
+    case 'incorrect':
+      // Yanlış cevap: -5 puan
+      return -5;
+    case 'blank':
+      // Boş bırakılan: -2 puan
+      return -2;
+    default:
+      return 0;
+  }
 }
 
-// === SECTION: Quiz Result ===
-
 /**
- * Bir soru yanıtının tüm etkisini (SRS + skor) hesaplar ve SubmissionResult döner.
+ * Quiz sonuçlarını SRS sistemine göre işler ve sunulacak özeti hesaplar.
+ * @param results - Quiz sonuç verileri
+ * @returns TestResultSummary nesnesi
+ */
+export function processQuizResults(
+  results: QuizResults,
+  _totalToGenerate: number
+): {
+  percentage: number;
+  isSuccessful: boolean;
+} {
+  const total = results.correct + results.incorrect + results.blank;
+  const percentage = total > 0 ? (results.correct / total) * 100 : 0;
+
+  // SRS bazlı başarı kararı (%70 eşik değeri)
+  const isSuccessful = percentage >= 70;
+
+  return {
+    percentage,
+    isSuccessful,
+  };
+}
+/**
+ * Quiz sonucunu SRS sistemine göre hesaplar.
+ * @param currentStatus - Mevcut soru durumu
+ * @param responseType - Yanıt tipi
+ * @param currentMastery - Mevcut chunk mastery skoru
+ * @param sessionNumber - Mevcut oturum numarası
+ * @returns SubmissionResult nesnesi
  */
 export function calculateQuizResult(
   currentStatus: { rep_count: number } | null,
-  responseType: QuizResponseType,
-  currentScore: number,
+  responseType: 'correct' | 'incorrect' | 'blank',
+  _currentMastery: number,
   sessionNumber: number
 ): SubmissionResult {
-  const isCorrect = responseType === 'correct';
-
-  const repResult = calculateRepResult(
-    currentStatus?.rep_count ?? 0,
-    isCorrect
-  );
-
-  const nextReviewSession = calculateNextSession(
-    sessionNumber,
-    repResult.newRepCount
-  );
-
-  const scoreResult = calculateScoreChange(responseType, currentScore);
+  const currentRep = currentStatus?.rep_count ?? 0;
+  const newRepCount = calculateNextRepCount(currentRep, responseType);
+  const nextSessionOffset = calculateNextSession(responseType, newRepCount);
 
   return {
-    isCorrect,
-    scoreDelta: scoreResult.delta,
-    newMastery: scoreResult.newScore,
-    newStatus: repResult.newStatus,
-    nextReviewSession,
-    newRepCount: repResult.newRepCount,
+    newStatus: newRepCount >= 3 ? 'mastered' : 'reviewing',
+    newRepCount,
+    nextReviewSession: sessionNumber + nextSessionOffset,
+    scoreDelta: calculateScoreChange(responseType),
+    isCorrect: responseType === 'correct',
+    newMastery: 0,
   };
 }

@@ -4,19 +4,28 @@ import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { storage } from '@/shared/services/storageService';
 import { logger } from '@/utils/logger';
 
-interface UseNotesDataProps {
+// === BÖLÜM ADI: TİPLER (TYPES) ===
+// ===========================
+
+export interface UseNotesDataProps {
+  /** Kurs adlandırıcısı (URL path için, örn: ATA_584) */
   courseSlug: string;
+  /** Mevcut kullanıcının benzersiz ID değeri (opsiyonel) */
   userId?: string;
 }
 
-type NotesState = {
+export interface NotesState {
+  /** Yüklenen konu yığınları */
   chunks: CourseTopic[];
+  /** Veri yüklenme durumu */
   loading: boolean;
+  /** Hata mesajı (eğer varsa) */
   error: string | null;
+  /** Yüklenen dersin adı */
   courseName: string;
-};
+}
 
-type NotesAction =
+export type NotesAction =
   | { type: 'FETCH_START' }
   | {
       type: 'FETCH_SUCCESS';
@@ -25,6 +34,19 @@ type NotesAction =
     }
   | { type: 'FETCH_ERROR'; error: string }
   | { type: 'SET_LOADING'; loading: boolean };
+
+export interface NotesDataReturn extends NotesState {
+  /** UI tepkiselliği için hook'un beklemede (transition) olma durumu */
+  isPending: boolean;
+}
+
+export interface CachedNotesPayload {
+  data: CourseTopic[];
+  timestamp: number;
+}
+
+// === BÖLÜM ADI: YARDIMCI FONKSİYONLAR (HELPERS) ===
+// ===========================
 
 function notesReducer(state: NotesState, action: NotesAction): NotesState {
   switch (action.type) {
@@ -47,27 +69,33 @@ function notesReducer(state: NotesState, action: NotesAction): NotesState {
   }
 }
 
-export interface NotesData extends NotesState {
-  isPending: boolean;
-}
+// === BÖLÜM ADI: HOOK İŞ MANTIĞI ===
+// ===========================
 
+/**
+ * Belirli bir kursun not içeriklerini, önbelleği (cache) de kullaranak asenkron yükler.
+ *
+ * @param {UseNotesDataProps} props - Gerekli hook parametreleri
+ * @returns {NotesDataReturn} Veri yüklenme durumu ve not verilerini döner.
+ */
 export function useNotesData({
   courseSlug,
   userId,
-}: UseNotesDataProps): NotesData {
+}: UseNotesDataProps): NotesDataReturn {
   const [state, dispatch] = useReducer(notesReducer, {
     chunks: [],
     loading: true,
     error: null,
     courseName: '',
   });
+
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
+    const controller: AbortController = new AbortController();
+    const signal: AbortSignal = controller.signal;
 
-    async function fetchNotes() {
+    async function fetchData(): Promise<void> {
       if (!userId || !courseSlug) {
         dispatch({ type: 'SET_LOADING', loading: false });
         return;
@@ -75,46 +103,66 @@ export function useNotesData({
 
       try {
         dispatch({ type: 'FETCH_START' });
-        // Standardize cache key
-        const cacheKey = `cached_notes_v6_${courseSlug}`;
-        const cached = storage.get<{ data: CourseTopic[]; timestamp: number }>(
-          cacheKey
-        );
 
-        if (cached?.data) {
+        // Önbellek (Cache) Katmanı Okuma
+        const cacheKey: string = `cached_notes_v6_${courseSlug}`;
+        const cachedContent: CachedNotesPayload | null =
+          storage.get<CachedNotesPayload>(cacheKey, userId);
+
+        if (cachedContent?.data) {
           dispatch({
             type: 'FETCH_SUCCESS',
-            chunks: cached.data,
-            courseName: cached.data[0]?.course_name || '',
+            chunks: cachedContent.data,
+            courseName: cachedContent.data[0]?.course_name || '',
           });
         }
 
-        const result = await fetchCourseNotes(userId, courseSlug, signal);
+        // Uzak sunucudan (Supabase) yeni veri çekme işlemi
+        const fetchedResult = await fetchCourseNotes(
+          userId,
+          courseSlug,
+          signal
+        );
 
-        if (signal.aborted || !result) return;
+        if (signal.aborted || !fetchedResult) {
+          return;
+        }
 
-        if (result.chunks.length > 0) {
+        if (fetchedResult.chunks.length > 0) {
           startTransition(() => {
             dispatch({
               type: 'FETCH_SUCCESS',
-              chunks: result.chunks,
-              courseName: result.courseName || '',
+              chunks: fetchedResult.chunks,
+              courseName: fetchedResult.courseName || '',
             });
           });
 
-          storage.set(cacheKey, {
-            timestamp: Date.now(),
-            data: result.chunks,
-          });
-        } else if (!cached) {
+          // Güncel veriyi önbelleğe kaydet
+          storage.set(
+            cacheKey,
+            {
+              timestamp: Date.now(),
+              data: fetchedResult.chunks,
+            },
+            { userId }
+          );
+        } else if (!cachedContent) {
           dispatch({
             type: 'FETCH_ERROR',
             error: 'Bu ders için henüz içerik bulunmuyor.',
           });
         }
-      } catch (err) {
-        if (signal.aborted) return;
-        logger.error('Notes loading error', err as Error);
+      } catch (err: unknown) {
+        if (signal.aborted) {
+          return;
+        }
+        console.error('[useNotesData][fetchData] Hata:', err);
+        logger.error(
+          'useNotesData',
+          'fetchData',
+          'Notes loading error',
+          err as Error
+        );
         dispatch({
           type: 'FETCH_ERROR',
           error: 'Notlar yüklenirken bir hata oluştu.',
@@ -126,7 +174,7 @@ export function useNotesData({
       }
     }
 
-    fetchNotes();
+    fetchData();
 
     return () => {
       controller.abort();

@@ -1,39 +1,40 @@
 /**
- * Tarih ve zaman işlemleri için merkezi yardımcı fonksiyonlar.
- * Virtual Day Logic, Date Formatting ve Duration Formatting burada yönetilir.
- */
-
-// === DATE HELPERS ===
+// ===========================
+// === TARİH YARDIMCILARI ===
+// ===========================
+*/
 
 /**
  * Sanal gün mantığı: Gece 04:00'dan önce ise bir önceki güne ait sayılır.
  * Bu, gece geç saatlere kadar çalışan kullanıcıların aynı "gün" içinde kalmasını sağlar.
- * @param date - İşlenecek tarih
- * @returns Sanal gün olarak ayarlanmış Date nesnesi (mutate edilmez, yeni Date döner)
+ *
+ * @param date - İşlenecek tarih (varsayılan: şimdi)
+ * @returns Sanal gün olarak ayarlanmış Date nesnesi
+ * @example const virtual = getVirtualDate(new Date('2026-01-28 02:00:00')) // Hâlâ 27 Ocak sayılır (mantıksal olarak)
  */
 export function getVirtualDate(date: Date = new Date()): Date {
   return new Date(date);
 }
 
-function getVirtualDayStartInternal(date?: Date): Date {
+/**
+ * Bugünün sanal gün başlangıcını döner (04:00 AM).
+ * Genellikle veritabanı sorguları için tarih aralığı belirlemede kullanılır.
+ *
+ * @param date - Referans tarih (varsayılan: şimdi)
+ * @returns Bugünün 04:00'ındaki Date nesnesi
+ */
+export function getVirtualDayStart(date?: Date): Date {
   const now = date ? new Date(date) : new Date();
   now.setHours(0, 0, 0, 0);
   return now;
 }
 
 /**
- * Bugünün sanal gün başlangıcını döner (04:00 AM).
- * Genellikle veritabanı sorguları için kullanılır.
- * @returns Bugünün 04:00'ındaki Date nesnesi
- */
-export function getVirtualDayStart(date?: Date): Date {
-  return getVirtualDayStartInternal(date);
-}
-
-/**
- * Tarihi YYYY-MM-DD formatına çevirir.
+ * Tarihi 'YYYY-MM-DD' formatına çevirir.
+ *
  * @param date - Formatlanacak tarih
- * @returns "2026-01-28" gibi string
+ * @returns "2026-01-28" gibi string formatı
+ * @example formatDateKey(new Date()) // "2026-03-03"
  */
 export function formatDateKey(date: Date): string {
   const year = date.getFullYear();
@@ -43,10 +44,10 @@ export function formatDateKey(date: Date): string {
 }
 
 /**
- * Sanal gün mantığıyla YYYY-MM-DD key oluşturur.
- * Virtual day adjustment uygulanır, sonra format edilir.
- * @param date - İşlenecek tarih (default: şimdi)
- * @returns "2026-01-28" gibi string, sanal gün mantığıyla
+ * Sanal gün mantığıyla 'YYYY-MM-DD' formatında anahtar (key) oluşturur.
+ *
+ * @param date - İşlenecek tarih (varsayılan: şimdi)
+ * @returns Sanal gün mantığıyla "2026-01-28" formatında string
  */
 export function getVirtualDateKey(date?: Date): string {
   const virtualDate = getVirtualDate(date);
@@ -54,11 +55,12 @@ export function getVirtualDateKey(date?: Date): string {
 }
 
 /**
- * Tarihi kullanıcıya dost bir formatta döner.
- * Varsayılan: "28 Jan" veya "28 Ocak" (tr-TR).
- * @param date - Formatlanacak tarih (Date veya ISO string)
+ * Tarihi kullanıcıya dost (display) bir formatta döner.
+ *
+ * @param date - Formatlanacak tarih (Date, string veya timestamp)
  * @param options - Intl.DateTimeFormatOptions seçenekleri
  * @returns Formatlı tarih string'i
+ * @example formatDisplayDate(new Date()) // "3 Mar"
  */
 export function formatDisplayDate(
   date: Date | string | number,
@@ -74,12 +76,18 @@ export function formatDisplayDate(
   return d.toLocaleDateString('tr-TR', options);
 }
 
-// === FORMATTERS (TIME & DURATION) ===
+/**
+// ===========================
+// === SÜRE FORMATLAYICILAR ===
+// ===========================
+*/
 
 /**
  * Saniye cinsinden süreyi "Xsa Ydk" formatına çevirir.
- * 0 dakika ise sadece "0dk" döner.
- * @example formatTimeFromSeconds(3665) → "1sa 1dk"
+ *
+ * @param seconds - Toplam saniye
+ * @returns Okunabilir süre string'i
+ * @example formatTimeFromSeconds(3665) // "1sa 1dk"
  */
 export function formatTimeFromSeconds(seconds: number): string {
   if (seconds < 0) return '0dk';
@@ -92,7 +100,10 @@ export function formatTimeFromSeconds(seconds: number): string {
 
 /**
  * Ondalık saat cinsinden süreyi "X sa Y dk" formatına çevirir.
- * @example formatDuration(1.5) → "1 sa 30 dk"
+ *
+ * @param decimalHours - Saat (örn: 1.5)
+ * @returns "1 sa 30 dk" gibi string formatı
+ * @example formatDuration(1.5) // "1 sa 30 dk"
  */
 export function formatDuration(decimalHours: number): string {
   if (decimalHours < 0) return '0 sa 0 dk';
@@ -104,8 +115,11 @@ export function formatDuration(decimalHours: number): string {
 export { formatDuration as formatDurationFromHours };
 
 /**
- * Kısa format: "Xs Yd" (ProgressHeader vb. için).
- * @example formatDurationShort(1.5) → "1s 30d"
+ * Ondalık saat cinsinden süreyi kısa "Xs Yd" formatına çevirir.
+ *
+ * @param decimalHours - Saat (örn: 1.5)
+ * @returns "1s 30d" gibi kısa string formatı
+ * @example formatDurationShort(1.5) // "1s 30d"
  */
 export function formatDurationShort(decimalHours: number): string {
   if (decimalHours < 0) return '0s 0d';

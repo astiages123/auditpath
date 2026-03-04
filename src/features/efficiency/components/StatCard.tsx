@@ -1,13 +1,21 @@
 import { ElementType } from 'react';
 import { cn } from '@/utils/stringHelpers';
 
-interface StatCardProps {
+// ==========================================
+// === PROPS ===
+// ==========================================
+
+export interface StatCardProps {
   icon: ElementType;
-  iconBg: string;
-  iconColor: string;
+  iconBg?: string; // Made optional since there's a default in destructuring
+  iconColor?: string; // Made optional since there's a default in destructuring
   label: string;
-  value: string;
+  value: string | number;
 }
+
+// ==========================================
+// === COMPONENT ===
+// ==========================================
 
 export const StatCard = ({
   icon: Icon,
@@ -16,6 +24,9 @@ export const StatCard = ({
   label,
   value,
 }: StatCardProps) => (
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   <div className="p-4 rounded-xl bg-card border border-border flex flex-col items-center justify-center text-center">
     <div className={cn('p-2 rounded-lg mb-2', iconBg)}>
       <Icon className={cn('w-4 h-4', iconColor)} />

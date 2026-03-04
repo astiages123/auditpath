@@ -5,27 +5,43 @@ import { ProgressDots } from './QuizStatus';
 import { cn } from '@/utils/stringHelpers';
 import { Button } from '@/components/ui/button';
 
-// ============================================================================
-// Quiz Footer (Active Answering State)
-// ============================================================================
+// === TYPES: QUIZ FOOTER ===
 
 interface QuizFooterProps {
+  /** Sorunun cevaplanıp cevaplanmadığı */
   isAnswered: boolean;
+  /** Çözüm panelinin görünürlüğü */
   showExplanation: boolean;
+  /** Seçili seçeneğin indeksi */
   selectedAnswer: number | null;
+  /** İşlem (submit/next) devam ediyor mu? */
   isSubmitting: boolean;
+  /** Geçmiş (history) uzunluğu (Geri butonu için) */
   historyLength: number;
+  /** Geri butonuna tıklanınca tetiklenir */
   onPrev: () => void;
+  /** Sonraki butonuna tıklanınca tetiklenir */
   onNext: () => void;
+  /** Onayla butonuna tıklanınca tetiklenir */
   onConfirm: () => void;
+  /** Boş bırak butonuna tıklanınca tetiklenir */
   onBlank: () => void;
+  /** Çözümü aç/kapat tıklandığında tetiklenir */
   onToggleExplanation: () => void;
-  // Progress Dots props
+  /** Soru havuzu ID listesi (noktalar için) */
   progressQueue: string[];
+  /** Mevcut sorunun indeksi */
   progressIndex: number;
+  /** Soru sonuç haritası (başarı renkleri için) */
   questionResults: Record<string, 'correct' | 'incorrect' | 'blank'>;
 }
 
+// === COMPONENT: QUIZ FOOTER ===
+
+/**
+ * Aktif soru cevaplama ekranının alt çubuğu.
+ * İlerleme noktalarını, kontrol butonlarını ve çözüm panelini tetikleyen butonları içerir.
+ */
 export const QuizFooter: FC<QuizFooterProps> = ({
   isAnswered,
   showExplanation,
@@ -41,6 +57,8 @@ export const QuizFooter: FC<QuizFooterProps> = ({
   progressIndex,
   questionResults,
 }) => {
+  // === RENDER LOGIC ===
+
   const isNextActive = isAnswered || selectedAnswer !== null;
 
   const footerWrapperClass = cn(
@@ -56,8 +74,11 @@ export const QuizFooter: FC<QuizFooterProps> = ({
     isNextActive ? 'shadow-lg shadow-primary/10 hover:bg-primary/90' : ''
   );
 
+  // === RENDER ===
+
   return (
     <footer className={footerWrapperClass}>
+      {/* İlerleme Noktaları */}
       <ProgressDots
         progressQueue={progressQueue}
         progressIndex={progressIndex}
@@ -66,6 +87,7 @@ export const QuizFooter: FC<QuizFooterProps> = ({
       />
 
       <div className="flex items-center gap-2 md:gap-6 w-full md:w-auto justify-end md:justify-start">
+        {/* Geri Butonu (Sadece geçmiş varsa) */}
         {historyLength > 0 && (
           <Button
             variant="glass-subtle"
@@ -80,6 +102,7 @@ export const QuizFooter: FC<QuizFooterProps> = ({
           </Button>
         )}
 
+        {/* Çözümü Gör Butonu (Sadece cevaplandıktan sonra) */}
         <AnimatePresence mode="wait">
           {isAnswered && !showExplanation && (
             <motion.div
@@ -102,6 +125,7 @@ export const QuizFooter: FC<QuizFooterProps> = ({
           )}
         </AnimatePresence>
 
+        {/* Ana Aksiyon Butonu (Cevapla / Sonraki) */}
         <Button
           variant={isNextActive ? 'default' : 'glass-subtle'}
           onClick={
@@ -137,19 +161,28 @@ export const QuizFooter: FC<QuizFooterProps> = ({
   );
 };
 
-// ============================================================================
-// Quiz Action Footer (Transition/Batch Finished State)
-// ============================================================================
+// === TYPES: ACTION FOOTER ===
 
 interface QuizActionFooterProps {
+  /** Quiz ara yüzünde butonun görünürlüğü için durum */
   isAnswered: boolean;
+  /** İşlem devam ediyor mu? */
   isSubmitting: boolean;
+  /** Mevcut sıradaki soru sayısı */
   queueLength: number;
+  /** Mevcut set indeksi */
   currentBatchIndex: number;
+  /** Toplam set sayısı */
   totalBatches: number;
+  /** Sonraki butona basıldığında tetiklenir */
   onNext: () => void;
 }
 
+// === COMPONENT: ACTION FOOTER ===
+
+/**
+ * Geçiş ekranları veya set bitişleri için merkezi butonu temsil eder.
+ */
 export function QuizActionFooter({
   isAnswered,
   isSubmitting,
@@ -158,6 +191,8 @@ export function QuizActionFooter({
   totalBatches,
   onNext,
 }: QuizActionFooterProps) {
+  // === RENDER LOGIC ===
+
   if (!isAnswered) return null;
 
   const btnClass = cn(
@@ -167,6 +202,8 @@ export function QuizActionFooter({
       ? 'bg-primary/70 cursor-not-allowed'
       : 'bg-primary hover:bg-primary/90 active:scale-[0.98]'
   );
+
+  // === RENDER ===
 
   return (
     <div className="w-full max-w-3xl mx-auto">

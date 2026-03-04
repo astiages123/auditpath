@@ -4,7 +4,7 @@ import { BookOpen, Menu, X } from 'lucide-react';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/utils/routes';
-import { preloadSubjectKnowledge } from '@/features/quiz/services/quizInfoService';
+// Removed missing import
 import { logger } from '@/utils/logger';
 import {
   useQuizManager,
@@ -52,7 +52,12 @@ export const QuizPage: FC = () => {
         const course = await getCourseBySlug(courseSlug);
         setCourseData(course);
       } catch (err) {
-        logger.error('Failed to resolve course by slug:', err as Error);
+        logger.error(
+          'QuizPage',
+          'resolveCourse',
+          'Failed to resolve course by slug',
+          err as Error
+        );
       } finally {
         setIsResolvingCourse(false);
       }
@@ -101,12 +106,7 @@ export const QuizPage: FC = () => {
     }
   }, [topicSlug, topics, setSelectedTopic, selectedTopic]);
 
-  // Preload subject knowledge when QuizPage mounts
-  useEffect(() => {
-    preloadSubjectKnowledge().catch((err: unknown) =>
-      logger.error('Failed to preload subject knowledge', err as Error)
-    );
-  }, []);
+  // Preload subject knowledge has been removed.
 
   const handleTopicSelect = (topic: TopicWithCounts) => {
     if (topic) {

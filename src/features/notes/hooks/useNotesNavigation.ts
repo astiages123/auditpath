@@ -2,20 +2,59 @@ import { useEffect, useLayoutEffect, useRef } from 'react';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { useNotesStore } from '@/features/notes/store';
 
-// --- Constants & Types ---
-interface UseNotesNavigationProps {
+// === BÖLÜM ADI: TİPLER (TYPES) ===
+// ===========================
+
+export interface UseNotesNavigationProps {
+  /** Ders URL adlandırıcısı (slug) */
   courseSlug?: string;
+  /** İçerik durumu yüklemede mi? */
   loading: boolean;
+  /** Derse ait konu yığınları listesi */
   chunks: CourseTopic[];
+  /** Kullanıcının görüntülemekte olduğu mevcut chunk ID'si */
   activeChunkId: string;
 }
 
+export interface UseNotesNavigationReturn {
+  /** Metinlerin bulunduğu içerik container DOM noktası */
+  mainContentRef: React.MutableRefObject<HTMLDivElement | null>;
+  /** Kullanıcı tarafından tetiklenen scroll mu yoksa scrollTo/programlı kaydırma mı */
+  isProgrammaticScroll: React.MutableRefObject<boolean>;
+  /** Sayfa içi bağlantıya (id) doğru kaydırmayı sağlayan ana fonksiyon */
+  handleScrollToId: (
+    id: string,
+    setActiveSection?: (id: string) => void
+  ) => void;
+  /** Sayfa başına doğrudan yumuşak kaydırma fonksiyonu */
+  scrollToTop: () => void;
+}
+
+// === BÖLÜM ADI: YARDIMCI FONKSİYON VE REFERANSLAR ===
+// ===========================
+
+interface LatestParams {
+  lastRead: Record<
+    string,
+    { topicId: string; scrollPos: number; timestamp: number }
+  >;
+  courseSlug: string | undefined;
+  chunks: CourseTopic[];
+}
+
+// === BÖLÜM ADI: HOOK İŞ MANTIĞI ===
+// ===========================
+
+/**
+ * Notlar içerisindeki son okunan yeri hafızada tutma (store entegrasyonu),
+ * sayfa kaydırma, yumuşak geçişli yönlendirme (scrollTo) işlevlerinin ana merkezidir.
+ */
 export const useNotesNavigation = ({
   courseSlug,
   loading,
   chunks,
   activeChunkId,
-}: UseNotesNavigationProps) => {
+}: UseNotesNavigationProps): UseNotesNavigationReturn => {
   const mainContentRef = useRef<HTMLDivElement | null>(null);
   const isProgrammaticScroll = useRef<boolean>(false);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -24,25 +63,26 @@ export const useNotesNavigation = ({
   const lastRead = useNotesStore((state) => state.lastRead);
   const setLastReadTopic = useNotesStore((state) => state.setLastReadTopic);
 
-  // Latest values ref to avoid re-triggering the effect on every save
-  const latestParams = useRef({ lastRead, courseSlug, chunks });
+  // Güncel duruma hook useEffect re-rendering problemlerine
+  // girmeden erişmek için local latest (mutble) ref barındırıyoruz
+  const latestParams = useRef<LatestParams>({ lastRead, courseSlug, chunks });
 
   useLayoutEffect(() => {
     latestParams.current = { lastRead, courseSlug, chunks };
   }, [lastRead, courseSlug, chunks]);
 
-  // Helper to get scroll container
-  const getScrollContainer = () => {
-    const main = document.querySelector('main');
-    if (main) return main;
+  const getScrollContainer = (): Element | null => {
+    const mainElement: Element | null = document.querySelector('main');
+    if (mainElement) return mainElement;
+
     return (
       document.getElementById('notes-scroll-container') ||
       mainContentRef.current
     );
   };
 
-  // === SCROLL ORCHESTRATOR ===
-  // Priority: Saved Position > Reset to Top
+  // === 1. KAYDIRMA MOTORU YÖNETİMİ ===
+  // Öncelik: Kullanıcının kayıtlı scroll lokasyonunu bulmak, yoksa en tepede resetlemek.
   useEffect(() => {
     const {
       chunks: currentChunks,
@@ -52,96 +92,128 @@ export const useNotesNavigation = ({
 
     if (loading || currentChunks.length === 0 || !activeChunkId) return;
 
-    let cancelled = false;
+    let isCancelled: boolean = false;
 
-    const tryScroll = () => {
-      if (cancelled) return;
+    const attemptScroll = (): void => {
+      try {
+        if (isCancelled) return;
 
-      const scrollContainer = getScrollContainer();
+        const scrollContainer: Element | null = getScrollContainer();
 
-      if (!scrollContainer) {
-        scrollTimeout.current = setTimeout(tryScroll, 100);
-        return;
+        if (!scrollContainer) {
+          scrollTimeout.current = setTimeout(attemptScroll, 100);
+          return;
+        }
+
+        isProgrammaticScroll.current = true;
+
+        const savedPos: number =
+          currentSlug && currentLastRead[currentSlug]?.topicId === activeChunkId
+            ? currentLastRead[currentSlug].scrollPos
+            : 0;
+
+        scrollContainer.scrollTo({
+          top: !isNaN(savedPos) && savedPos > 0 ? savedPos : 0,
+          behavior: 'instant',
+        });
+
+        // Animasyon oturması ve frame gecikmelerine karşı koruma (Timeout ile devreden çıkarılır)
+        setTimeout(() => {
+          isProgrammaticScroll.current = false;
+        }, 1000);
+      } catch (error: unknown) {
+        console.error('[useNotesNavigation][attemptScroll] Hata:', error);
       }
-
-      isProgrammaticScroll.current = true;
-
-      // PRIORITY 1: Restore saved position; PRIORITY 2: Reset to top
-      const savedPos =
-        currentSlug && currentLastRead[currentSlug]?.topicId === activeChunkId
-          ? currentLastRead[currentSlug].scrollPos
-          : 0;
-
-      scrollContainer.scrollTo({
-        top: !isNaN(savedPos) && savedPos > 0 ? savedPos : 0,
-        behavior: 'instant',
-      });
-
-      // Release flag after transitions settle
-      setTimeout(() => {
-        isProgrammaticScroll.current = false;
-      }, 1000);
     };
 
-    scrollTimeout.current = setTimeout(tryScroll, 150);
+    scrollTimeout.current = setTimeout(attemptScroll, 150);
 
     return () => {
-      cancelled = true;
+      isCancelled = true;
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     };
-    // NOTE: lastRead, chunks, and courseSlug are accessed via latestParams ref to avoid re-triggering
   }, [loading, activeChunkId]);
 
-  // 2. Save scroll position listener
+  // === 2. KAYDIRMA KONUMUNU (SCROLL POSITION) KAYDETME YÖNETİMİ ===
   useEffect(() => {
-    const scrollContainer = getScrollContainer();
+    const scrollContainer: Element | null = getScrollContainer();
     if (!scrollContainer || !courseSlug || !activeChunkId) return;
 
-    const saveScroll = () => {
-      if (isProgrammaticScroll.current) return;
+    const saveScrollPosition = (): void => {
+      try {
+        // Eğer Javascript bazlı (kod ile) kaydırılmış ise kullanıcı tetiklememiştir, kaydetme
+        if (isProgrammaticScroll.current) return;
 
-      if (saveScrollTimeout.current) clearTimeout(saveScrollTimeout.current);
-      saveScrollTimeout.current = setTimeout(() => {
-        setLastReadTopic(courseSlug, activeChunkId, scrollContainer.scrollTop);
-      }, 500);
+        if (saveScrollTimeout.current) clearTimeout(saveScrollTimeout.current);
+
+        saveScrollTimeout.current = setTimeout(() => {
+          setLastReadTopic(
+            courseSlug,
+            activeChunkId,
+            scrollContainer.scrollTop
+          );
+        }, 500); // 500ms performans dostu gecikme payı
+      } catch (error: unknown) {
+        console.error('[useNotesNavigation][saveScrollPosition] Hata:', error);
+      }
     };
 
-    scrollContainer.addEventListener('scroll', saveScroll, { passive: true });
+    scrollContainer.addEventListener('scroll', saveScrollPosition, {
+      passive: true,
+    });
+
     return () => {
-      scrollContainer.removeEventListener('scroll', saveScroll);
+      scrollContainer.removeEventListener('scroll', saveScrollPosition);
       if (saveScrollTimeout.current) clearTimeout(saveScrollTimeout.current);
     };
   }, [courseSlug, activeChunkId, setLastReadTopic]);
 
+  // === 3. ID BAZLI YÖNTEMLER ===
+
   const handleScrollToId = (
     id: string,
     setActiveSection?: (id: string) => void
-  ) => {
-    const scrollContainer = getScrollContainer();
-    isProgrammaticScroll.current = true;
-    if (setActiveSection) setActiveSection(id);
+  ): void => {
+    try {
+      const scrollContainer: Element | null = getScrollContainer();
+      isProgrammaticScroll.current = true;
 
-    const element = document.getElementById(id);
-    if (element && scrollContainer) {
-      const containerRect = scrollContainer.getBoundingClientRect();
-      const elementRect = element.getBoundingClientRect();
-      const relativeTop = elementRect.top - containerRect.top;
-      const targetScrollTop = scrollContainer.scrollTop + relativeTop - 10;
+      // İçindekiler aktif objesini değiştirmek için (eğer aktarılmışsa)
+      if (setActiveSection) {
+        setActiveSection(id);
+      }
 
-      scrollContainer.scrollTo({
-        top: targetScrollTop,
-        behavior: 'smooth',
-      });
+      const element: HTMLElement | null = document.getElementById(id);
+      if (element && scrollContainer) {
+        const containerRect: DOMRect = scrollContainer.getBoundingClientRect();
+        const elementRect: DOMRect = element.getBoundingClientRect();
+        const relativeTop: number = elementRect.top - containerRect.top;
+
+        // Üst panel çakışması engellemek için 10px pay (buffer) bırakıldı
+        const targetScrollTop: number =
+          scrollContainer.scrollTop + relativeTop - 10;
+
+        scrollContainer.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth',
+        });
+      }
+
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+      scrollTimeout.current = setTimeout(() => {
+        isProgrammaticScroll.current = false;
+      }, 1500);
+    } catch (error: unknown) {
+      console.error('[useNotesNavigation][handleScrollToId] Hata:', error);
     }
-
-    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-    scrollTimeout.current = setTimeout(() => {
-      isProgrammaticScroll.current = false;
-    }, 1500);
   };
 
-  const scrollToTop = () => {
-    getScrollContainer()?.scrollTo({ top: 0, behavior: 'smooth' });
+  const scrollToTop = (): void => {
+    try {
+      getScrollContainer()?.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch (error: unknown) {
+      console.error('[useNotesNavigation][scrollToTop] Hata:', error);
+    }
   };
 
   return {

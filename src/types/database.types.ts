@@ -1,12 +1,62 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
+// ===========================
+// === (COMPOSITE) BİRLEŞİK TİPLER ===
+// ===========================
 
-export type Database = {
+/**
+ * Supabase veritabanındaki composite tipleri çıkarmak için kullanılır.
+ */
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema['CompositeTypes']
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+    : never;
+
+// ===========================
+// === VERİTABANI SABİTLERİ ===
+// ===========================
+
+/**
+ * Veritabanı enum değerlerinin uygulama içi kontrol sabitleri.
+ */
+export const Constants = {
+  public: {
+    Enums: {
+      bloom_level: ['knowledge', 'application', 'analysis'],
+      chunk_generation_status: [
+        'DRAFT',
+        'PENDING',
+        'PROCESSING',
+        'COMPLETED',
+        'FAILED',
+        'SYNCED',
+      ],
+      question_status: ['active', 'reviewing', 'mastered'],
+      question_usage_type: ['antrenman', 'deneme'],
+      quiz_response_type: ['correct', 'incorrect', 'blank'],
+      validation_status: ['PENDING', 'APPROVED', 'REJECTED'],
+    },
+  },
+} as const;
+
+// ===========================
+// === ANA VERİTABANI ŞEMASI ===
+// ===========================
+
+/**
+ * Tüm tabloları, view'ları, fonksiyonları ve enum'ları içeren ana veritabanı yapısı.
+ */
+export interface Database {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
@@ -901,7 +951,11 @@ export type Database = {
       [_ in never]: never;
     };
   };
-};
+}
+
+// ===========================
+// === YARDIMCI İÇ TİPLER (INTERNAL) ===
+// ===========================
 
 type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>;
 
@@ -910,6 +964,52 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<
   'public'
 >];
 
+// ===========================
+// === ENUM (SEÇENEK) TİPLERİ ===
+// ===========================
+
+/**
+ * Veritabanında tanımlı numaralandırılabilir (Enum) tiplerin çıkarımını sağlar.
+ */
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema['Enums']
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals;
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+    : never;
+
+// ===========================
+// === JSON ÇOK AMAÇLI TİPİ ===
+// ===========================
+
+/**
+ * Tablolarda bulunan jsonb/json kolonlarını güvenli tipte tutar.
+ */
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+// ===========================
+// === TABLO OKUMA VE YAZMA TİPLERİ ===
+// ===========================
+
+/**
+ * Belirtilen tablodaki 'Row' (okuma) veri yapısını döndürür.
+ */
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
@@ -939,6 +1039,9 @@ export type Tables<
       : never
     : never;
 
+/**
+ * Belirtilen tabloya eklenebilecek (Insert) veri yapısını döndürür.
+ */
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema['Tables']
@@ -964,6 +1067,9 @@ export type TablesInsert<
       : never
     : never;
 
+/**
+ * Belirtilen tablodaki güncellenebilir (Update) veri yapısını döndürür.
+ */
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema['Tables']
@@ -988,57 +1094,3 @@ export type TablesUpdate<
       ? U
       : never
     : never;
-
-export type Enums<
-  DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema['Enums']
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
-  }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
-    : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
-    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
-    : never;
-
-export type CompositeTypes<
-  PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema['CompositeTypes']
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
-  }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
-    : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
-}
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
-    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
-    : never;
-
-export const Constants = {
-  public: {
-    Enums: {
-      bloom_level: ['knowledge', 'application', 'analysis'],
-      chunk_generation_status: [
-        'DRAFT',
-        'PENDING',
-        'PROCESSING',
-        'COMPLETED',
-        'FAILED',
-        'SYNCED',
-      ],
-      question_status: ['active', 'reviewing', 'mastered'],
-      question_usage_type: ['antrenman', 'deneme'],
-      quiz_response_type: ['correct', 'incorrect', 'blank'],
-      validation_status: ['PENDING', 'APPROVED', 'REJECTED'],
-    },
-  },
-} as const;

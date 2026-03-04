@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AuthForms } from '../../features/auth/components/AuthForms';
 import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
+import type { AuthError, Session, User } from '@supabase/supabase-js';
 
 // Mock Supabase
 vi.mock('@/lib/supabase', () => ({
@@ -32,6 +32,9 @@ vi.mock('@/utils/logger', () => ({
 }));
 
 describe('AuthForms', () => {
+  const mockUser = { email: 'test@example.com' } as User;
+  const mockSession = {} as Session;
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -69,7 +72,7 @@ describe('AuthForms', () => {
   it('3. Başarılı email girişi akışını doğru çalıştırır', async () => {
     const onSuccess = vi.fn();
     vi.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
-      data: { user: { email: 'test@example.com' } as any, session: {} as any },
+      data: { user: mockUser, session: mockSession },
       error: null,
     });
 
@@ -102,9 +105,9 @@ describe('AuthForms', () => {
       count: null,
       status: 200,
       statusText: 'OK',
-    } as any);
+    } as Awaited<ReturnType<typeof supabase.rpc>>);
     vi.mocked(supabase.auth.signInWithPassword).mockResolvedValue({
-      data: { user: { email: 'test@example.com' } as any, session: {} as any },
+      data: { user: mockUser, session: mockSession },
       error: null,
     });
 
@@ -138,7 +141,7 @@ describe('AuthForms', () => {
         message: 'E-posta veya şifre hatalı.',
         name: 'AuthApiError',
         status: 400,
-      } as any,
+      } as AuthError,
     });
 
     render(<AuthForms />);

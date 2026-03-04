@@ -12,7 +12,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
 import { usePomodoro } from '../hooks/usePomodoro';
 
-interface MobilePomodoroBarProps {
+// ===========================
+// === PROPS DEFINITION ===
+// ===========================
+
+export interface MobilePomodoroBarProps {
   isWorking: boolean;
   status: string;
   progress: number;
@@ -20,6 +24,10 @@ interface MobilePomodoroBarProps {
   onDiscard: () => void;
   onSwitchMode: () => void;
 }
+
+// ===========================
+// === COMPONENT DEFINITION ===
+// ===========================
 
 export function MobilePomodoroBar({
   isWorking,

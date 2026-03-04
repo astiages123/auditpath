@@ -1,23 +1,34 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-interface Course {
+// ===========================
+// === STORE INTERFACE ===
+// ===========================
+
+export interface Course {
   id: string;
   name: string;
   category: string;
 }
 
-interface PomodoroUIState {
-  // UI state
+export interface PomodoroUIState {
+  // === STATE ===
   selectedCourse: Course | null;
   isWidgetOpen: boolean;
   courseName?: string;
 
-  // Actions
+  // === ACTIONS ===
+  /** Sets the currently selected course in the UI */
   setCourse: (course: Course | null) => void;
+  /** Toggles the Pomodoro widget open status */
   setWidgetOpen: (open: boolean) => void;
+  /** Resets UI specific states to defaults */
   resetUI: () => void;
 }
+
+// ===========================
+// === STORE IMPLEMENTATION ===
+// ===========================
 
 export const usePomodoroUIStore = create<PomodoroUIState>()(
   persist(

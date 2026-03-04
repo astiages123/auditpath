@@ -5,12 +5,31 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EfficiencyModal } from './EfficiencyModal';
 import { LearningLoadAnalysis as LearningLoadContent } from './LearningLoadAnalysis';
 import { CardHeader } from './CardElements';
-import { useEfficiencyTrends } from '../hooks/useEfficiencyTrends';
-import { useDailyMetrics } from '../hooks/useDailyMetrics';
 import { DAILY_GOAL_MINUTES as DEFAULT_DAILY_GOAL_MINUTES } from '../utils/constants';
 
-// Lazy load the chart component
+import type { LearningLoad } from '../types/efficiencyTypes';
+
+// ==========================================
+// === LAZY COMPONENTS ===
+// ==========================================
+
 const LearningLoadChart = lazy(() => import('./LearningLoadChart'));
+
+// ==========================================
+// === PROPS ===
+// ==========================================
+
+export interface LearningLoadCardProps {
+  loadWeek: LearningLoad[];
+  loadDay: LearningLoad[];
+  loadMonth: LearningLoad[];
+  loadAll: LearningLoad[];
+  dailyGoalMinutes: number;
+}
+
+// ==========================================
+// === COMPONENT: FALLBACK ===
+// ==========================================
 
 const ChartFallback = () => (
   <div className="w-full h-[230px] flex items-center justify-center bg-surface/5 rounded-xl border border-border/10">
@@ -18,43 +37,31 @@ const ChartFallback = () => (
   </div>
 );
 
-export const LearningLoadCard = () => {
-  const { loading, loadWeek, loadDay, loadMonth, loadAll } =
-    useEfficiencyTrends();
-  const { dailyGoalMinutes } = useDailyMetrics();
+// ==========================================
+// === COMPONENT ===
+// ==========================================
 
+export const LearningLoadCard = ({
+  loadWeek,
+  loadDay,
+  loadMonth,
+  loadAll,
+  dailyGoalMinutes,
+}: LearningLoadCardProps) => {
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
   const dailyGoal = dailyGoalMinutes || DEFAULT_DAILY_GOAL_MINUTES;
 
-  if (loading)
-    return (
-      <Card className="h-full flex flex-col p-6">
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-32 bg-surface" />
-              <Skeleton className="h-3 w-48 bg-surface" />
-            </div>
-          </div>
-        </div>
-        <div className="flex-1 w-full min-h-0 mt-4 flex items-end gap-2">
-          {[...Array(7)].map((_, i) => (
-            <Skeleton
-              key={`skeleton-bar-${i}`}
-              className="flex-1 rounded-t-lg bg-surface"
-              style={{ height: `${(((i + 1) * 117) % 60) + 20}%` }}
-            />
-          ))}
-        </div>
-      </Card>
-    );
-
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   return (
     <EfficiencyModal
       title="Odaklanma Trendi"
       trigger={
         <div className="h-full w-full cursor-pointer">
-          <Card className="h-full flex flex-col p-6">
+          <Card className="h-full flex flex-col p-6 hover:border-accent/40 transition-all duration-300">
             <CardHeader
               icon={BookOpen}
               iconColor="text-accent"

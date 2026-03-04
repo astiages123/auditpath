@@ -3,20 +3,32 @@ import { BookOpen, Clock, Maximize2 } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
-import { FocusPowerPoint } from '../types/efficiencyTypes';
 import { EfficiencyModal } from './EfficiencyModal';
 import { EfficiencyChartTab } from './EfficiencyChartTab';
 import { SessionListItem } from './SessionListItem';
 
-interface RecentActivitiesCardProps {
+import type { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
+import type { FocusPowerPoint } from '../types/efficiencyTypes';
+
+// ==========================================
+// === PROPS ===
+// ==========================================
+
+export interface RecentActivitiesCardProps {
   sessions: RecentSession[];
   focusPowerWeek: FocusPowerPoint[];
   focusPowerMonth: FocusPowerPoint[];
   focusPowerAll: FocusPowerPoint[];
 }
 
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
 export const RecentActivitiesCard = (props: RecentActivitiesCardProps) => {
+  // ==========================================
+  // === HOOKS & STATE ===
+  // ==========================================
   const { sessions } = props;
   const [scrollElement, setScrollElement] =
     React.useState<HTMLDivElement | null>(null);
@@ -29,8 +41,14 @@ export const RecentActivitiesCard = (props: RecentActivitiesCardProps) => {
     overscan: 5,
   });
 
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
   const displaySessions = sessions.slice(0, 5);
 
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   if (sessions.length === 0) {
     return (
       <Card className="p-8 flex flex-col items-center justify-center text-center space-y-4">
@@ -54,7 +72,7 @@ export const RecentActivitiesCard = (props: RecentActivitiesCardProps) => {
       title="Tüm Çalışma Geçmişi ve Analizler"
       trigger={
         <div className="h-full w-full">
-          <Card className="flex flex-col overflow-hidden relative group h-full cursor-pointer">
+          <Card className="flex flex-col overflow-hidden relative group h-full cursor-pointer hover:border-accent/40 transition-all duration-300">
             <div className="p-5 px-6 border-b border-white/5 flex justify-between items-start">
               <div className="flex items-center gap-4">
                 <div className="p-2.5 rounded-xl bg-sky-500/10">

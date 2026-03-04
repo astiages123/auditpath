@@ -8,12 +8,17 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
-import { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
-import { Session } from '../types/efficiencyTypes';
 import { EfficiencyModal } from './EfficiencyModal';
 import { SessionGanttChart } from './SessionGanttChart';
 import { StatCard } from './StatCard';
 import { formatDisplayDate } from '@/utils/dateUtils';
+
+import type { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
+import type { Session } from '../types/efficiencyTypes';
+
+// ==========================================
+// === HELPERS ===
+// ==========================================
 
 const convertToSession = (rs: RecentSession): Session => {
   const start = new Date(rs.date);
@@ -75,15 +80,26 @@ const convertToSession = (rs: RecentSession): Session => {
   };
 };
 
-interface SessionListItemProps {
+// ==========================================
+// === TYPES / PROPS ===
+// ==========================================
+
+export interface SessionListItemProps {
   session: RecentSession;
   disableModal?: boolean;
 }
+
+// ==========================================
+// === COMPONENT ===
+// ==========================================
 
 export const SessionListItem: FC<SessionListItemProps> = ({
   session,
   disableModal = false,
 }) => {
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
   const dateObj = new Date(session.date);
   const formattedDate = formatDisplayDate(dateObj, {
     day: 'numeric',
@@ -102,7 +118,13 @@ export const SessionListItem: FC<SessionListItemProps> = ({
   };
 
   const focusPower = session.efficiencyScore;
+  const workMins = Math.round(session.totalWorkTime / 60);
+  const breakMins = Math.round(session.totalBreakTime / 60);
+  const pauseMins = Math.round(session.totalPauseTime / 60);
 
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   const TriggerContent = (
     <button
       type="button"
@@ -150,10 +172,6 @@ export const SessionListItem: FC<SessionListItemProps> = ({
   if (disableModal) {
     return <div className="w-full">{TriggerContent}</div>;
   }
-
-  const workMins = Math.round(session.totalWorkTime / 60);
-  const breakMins = Math.round(session.totalBreakTime / 60);
-  const pauseMins = Math.round(session.totalPauseTime / 60);
 
   return (
     <EfficiencyModal

@@ -43,7 +43,12 @@ export class ErrorBoundary extends Component<Props, State> {
 
     // Log to console in development
     if (env.app.isDev) {
-      logger.error('ErrorBoundary caught an error:', error);
+      logger.error(
+        'UI',
+        'ErrorBoundary',
+        'ErrorBoundary caught an error',
+        error
+      );
     }
 
     // Error tracking service can be integrated here (e.g., Sentry)

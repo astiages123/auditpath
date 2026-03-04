@@ -7,30 +7,60 @@ import {
   getFocusTrend,
   getLearningLoadData,
 } from '../services/efficiencyDataService';
-import {
+
+import type {
   DayActivity,
   EfficiencyTrend,
+  FocusPowerPoint,
   FocusTrend,
+  LearningLoad,
 } from '@/features/efficiency/types/efficiencyTypes';
-import { FocusPowerPoint, LearningLoad } from '../types/efficiencyTypes';
-import { logger } from '@/utils/logger';
 
-export function useEfficiencyTrends() {
+// ==========================================
+// === TYPES ===
+// ==========================================
+
+export interface EfficiencyTrendsHook {
+  loading: boolean;
+  loadWeek: LearningLoad[];
+  loadDay: LearningLoad[];
+  loadMonth: LearningLoad[];
+  loadAll: LearningLoad[];
+  focusPowerWeek: FocusPowerPoint[];
+  focusPowerMonth: FocusPowerPoint[];
+  focusPowerAll: FocusPowerPoint[];
+  consistencyData: DayActivity[];
+  efficiencyTrend: EfficiencyTrend[];
+  focusTrend: FocusTrend[];
+}
+
+// ==========================================
+// === HOOK ===
+// ==========================================
+
+/**
+ * Fetches all trend-related arrays required by the dashboard efficiency charts.
+ * Leverages the Promise.all pattern to concurrently perform queries across the stats.
+ * Includes data spanning daily mapping to six month averages.
+ *
+ * @returns {EfficiencyTrendsHook} Contains all trend states mapped and structured array variants
+ */
+export function useEfficiencyTrends(): EfficiencyTrendsHook {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  // Initialize with empty arrays (safe defaults) -> No Zombie Renders!
-  const [trends, setTrends] = useState({
-    loadWeek: [] as LearningLoad[],
-    loadDay: [] as LearningLoad[],
-    loadMonth: [] as LearningLoad[],
-    loadAll: [] as LearningLoad[],
-    focusPowerWeek: [] as FocusPowerPoint[],
-    focusPowerMonth: [] as FocusPowerPoint[],
-    focusPowerAll: [] as FocusPowerPoint[],
-    consistencyData: [] as DayActivity[],
-    efficiencyTrend: [] as EfficiencyTrend[],
-    focusTrend: [] as FocusTrend[],
+  // Initialize with empty arrays to prevent mapping over null / Zombie states
+  const [trends, setTrends] = useState<Omit<EfficiencyTrendsHook, 'loading'>>({
+    loadWeek: [],
+    loadDay: [],
+    loadMonth: [],
+    loadAll: [],
+    focusPowerWeek: [],
+    focusPowerMonth: [],
+    focusPowerAll: [],
+    consistencyData: [],
+    efficiencyTrend: [],
+    focusTrend: [],
   });
 
   useEffect(() => {
@@ -39,6 +69,7 @@ export function useEfficiencyTrends() {
     async function fetchTrends() {
       if (!user?.id) return;
       setLoading(true);
+
       try {
         const [
           effTrend,
@@ -78,9 +109,9 @@ export function useEfficiencyTrends() {
           focusPowerAll: focusPowerAllData || [],
           consistencyData: consistency || [],
         });
-      } catch (error) {
+      } catch (err) {
         if (mounted) {
-          logger.error('Failed to fetch efficiency trends', error as Error);
+          console.error('[useEfficiencyTrends] Hata:', err);
         }
       } finally {
         if (mounted) {

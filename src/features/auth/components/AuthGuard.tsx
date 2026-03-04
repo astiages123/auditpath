@@ -1,12 +1,20 @@
+// === TYPES ===
 import { Outlet } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
+
 import { useAuth } from '../hooks/useAuth';
 import { AuthForms } from '@/features/auth/components/AuthForms';
-import { Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.svg';
 
+// === COMPONENTS ===
+/**
+ * Guard component that protects routes requiring authentication.
+ * If the user is not logged in, it renders the login forms.
+ */
 export function AuthGuard() {
   const { user, loading } = useAuth();
 
+  // === RENDER ===
   if (loading) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-background">

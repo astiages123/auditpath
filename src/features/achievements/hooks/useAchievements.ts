@@ -14,6 +14,10 @@ import type { Rank } from '@/types/auth';
 import { logger } from '@/utils/logger';
 import { getCategories } from '@/features/courses/services/courseService';
 
+// ===========================
+// === CONSTANTS & TYPES ===
+// ===========================
+
 export const achievementKeys = {
   all: ['achievements'] as const,
   uncelebrated: (userId: string) =>
@@ -26,177 +30,167 @@ interface SyncContext {
   queryClient: ReturnType<typeof useQueryClient>;
 }
 
-// Helper to keep the mutation function clean
+// ===========================
+// === SYNC LOGIC ===
+// ===========================
+
+/**
+ * Internal logic to synchronize unlocked achievements based on user activity and stats.
+ */
 async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
   if (!userId || !stats) return;
 
-  const categories = await getCategories();
+  try {
+    const categories = await getCategories();
 
-  // A. Gather Data
-  const totalActiveDays = await getTotalActiveDays(userId);
+    // Gather specific milestone metrics
+    const totalActiveDays = await getTotalActiveDays(userId);
+    const dailyMilestones = await getDailyVideoMilestones(userId);
+    const streakMilestones = await getStreakMilestones(userId);
 
-  // 2. Daily Video Milestones (5+ ve 10+ için ilk tarihler)
-  const dailyMilestones = await getDailyVideoMilestones(userId);
+    const activityLog = {
+      currentStreak: stats.streak,
+      totalActiveDays,
+      dailyVideosCompleted: dailyMilestones.maxCount,
+    };
 
-  // 3. Streak Milestones (7 gün seri için ilk tarih)
-  const streakMilestones = await getStreakMilestones(userId);
+    // Fetch previously unlocked achievements
+    const dbUnlocked = await getUnlockedAchievements(userId);
+    const dbIds = new Set<string>(dbUnlocked.map((x) => x.id));
 
-  const activityLog = {
-    currentStreak: stats.streak,
-    totalActiveDays,
-    dailyVideosCompleted: dailyMilestones.maxCount,
-  };
+    // Calculate currently eligible achievements
+    const eligibleIds = new Set<string>();
 
-  // C. Fetch Current DB State
-  const dbUnlocked = await getUnlockedAchievements(userId);
-  const dbIds = new Set<string>(dbUnlocked.map((x) => x.id));
+    // Step 1: Algorithmic standard achievements
+    const algoIds = calculateAchievements(stats, activityLog);
+    algoIds.forEach((id) => eligibleIds.add(id));
 
-  // B. Calculate Eligible IDs
-  const eligibleIds = new Set<string>();
+    // Step 2: Ranks
+    const currentRankId = stats.currentRank?.id;
+    const currentRankOrder =
+      (RANKS as Rank[]).find((r: Rank) => r.id === currentRankId)?.order ?? -1;
 
-  // 1. Algorithmic
-  const algoIds = calculateAchievements(stats, activityLog);
-  algoIds.forEach((id) => eligibleIds.add(id));
-
-  // 2. Rank
-  const currentRankId = stats.currentRank?.id;
-  const currentRankOrder =
-    (RANKS as Rank[]).find((r: Rank) => r.id === currentRankId)?.order ?? -1;
-
-  if (currentRankOrder >= 0) {
-    (RANKS as Rank[]).forEach((r: Rank) => {
-      if (r.order <= currentRankOrder) {
-        // Sürgün (Rank 1) is handled by algorithmic check (minimum_videos >= 1)
-        // We skip adding it here to avoid bypassing that check.
-        if (r.id === '1') return;
-
-        eligibleIds.add(`RANK_UP:${r.id}`);
-      }
-    });
-  }
-
-  // 3. Category/Group Completions (Using DB categories)
-  categories.forEach((cat) => {
-    const catSlug = cat.slug;
-    const catStats =
-      stats.categoryProgress[catSlug] ||
-      stats.categoryProgress[catSlug.toLowerCase()];
-
-    if (
-      catStats &&
-      catStats.completedVideos >= catStats.totalVideos &&
-      catStats.totalVideos > 0
-    ) {
-      eligibleIds.add(`CATEGORY_COMPLETION:${catSlug}`);
+    if (currentRankOrder >= 0) {
+      (RANKS as Rank[]).forEach((r: Rank) => {
+        if (r.order <= currentRankOrder) {
+          if (r.id === '1') return; // Rank 1 handled implicitly
+          eligibleIds.add(`RANK_UP:${r.id}`);
+        }
+      });
     }
-  });
 
-  // D. Determine Unlocks
-  const toUnlock = [...eligibleIds].filter((id) => !dbIds.has(id));
+    // Step 3: Category Completions
+    categories.forEach((cat) => {
+      const catSlug = cat.slug;
+      const catStats =
+        stats.categoryProgress[catSlug] ||
+        stats.categoryProgress[catSlug.toLowerCase()];
 
-  // E. Execute Updates (UNLOCKS)
-  if (toUnlock.length > 0) {
-    const updates = toUnlock.map((id) => {
-      // daily_progress başarımları için gerçek başarılma tarihini kullan
-      let unlockDate = new Date().toISOString();
-
-      // Gece Nöbetçisi (5+ video) - ilk kez 5+ video izlenen gün
-      if (id === 'special-01' && dailyMilestones.first5Date) {
-        unlockDate = new Date(dailyMilestones.first5Date).toISOString();
+      if (
+        catStats &&
+        catStats.completedVideos >= catStats.totalVideos &&
+        catStats.totalVideos > 0
+      ) {
+        eligibleIds.add(`CATEGORY_COMPLETION:${catSlug}`);
       }
-      // Zihinsel Maraton (10+ video) - ilk kez 10+ video izlenen gün
-      if (id === 'special-02' && dailyMilestones.first10Date) {
-        unlockDate = new Date(dailyMilestones.first10Date).toISOString();
-      }
-      // Sönmeyen Meşale (7 gün seri) - ilk kez 7 günlük streak tamamlandığı gün
-      if (id === 'special-03' && streakMilestones.first7DayStreakDate) {
-        unlockDate = new Date(
-          streakMilestones.first7DayStreakDate
-        ).toISOString();
-      }
-
-      return {
-        user_id: userId,
-        achievement_id: id,
-        unlocked_at: unlockDate,
-        is_celebrated: false,
-      };
     });
 
-    await safeQuery(
-      supabase.from('user_achievements').upsert(updates, {
-        onConflict: 'user_id,achievement_id',
-        ignoreDuplicates: true,
-      }),
-      'Error upserting unlocked achievements'
-    );
+    // Identify achievements that are eligible but not yet in the DB
+    const toUnlock = [...eligibleIds].filter((id) => !dbIds.has(id));
 
-    // Anlık kutlama tetiklemesi - 10 saniye beklemeye gerek yok
-    queryClient.invalidateQueries({
-      queryKey: achievementKeys.uncelebrated(userId),
-    });
-  }
+    // Execute Unlocks
+    if (toUnlock.length > 0) {
+      const updates = toUnlock.map((id) => {
+        let unlockDate = new Date().toISOString();
 
-  // F. Revoke Logic (SAFEGUARDED with isPermanent)
-  const hasDbAchievements = dbUnlocked.length > 0;
-  const isHydrated = !!stats.currentRank;
+        if (id === 'special-01' && dailyMilestones.first5Date) {
+          unlockDate = new Date(dailyMilestones.first5Date).toISOString();
+        }
+        if (id === 'special-02' && dailyMilestones.first10Date) {
+          unlockDate = new Date(dailyMilestones.first10Date).toISOString();
+        }
+        if (id === 'special-03' && streakMilestones.first7DayStreakDate) {
+          unlockDate = new Date(
+            streakMilestones.first7DayStreakDate
+          ).toISOString();
+        }
 
-  // Prevent revoking everything if stats are not fully loaded
-  const isIncompleteLoad = hasDbAchievements && !isHydrated;
+        return {
+          user_id: userId,
+          achievement_id: id,
+          unlocked_at: unlockDate,
+          is_celebrated: false,
+        };
+      });
 
-  if (!isIncompleteLoad) {
-    const toRevoke = [...dbIds].filter((id) => {
-      // 1. If currently eligible, keep it.
-      if (eligibleIds.has(id)) return false;
-
-      // 2. Check definition for isPermanent flag
-      const achievementDef = ACHIEVEMENTS.find((a) => a.id === id);
-
-      // If it has isPermanent: true, NEVER revoke it.
-      if (achievementDef?.isPermanent) return false;
-
-      // 3. Logic for dynamic/generated IDs (COURSE_COMPLETION, etc.)
-      // Rank achievements are now permanent (via ACHIEVEMENTS check or implicit rule)
-      // But if they are NOT in ACHIEVEMENTS (shouldn't happen for ranks), we might need safety.
-      // ACHIEVEMENTS array contains RANK_UP:1..4 with isPermanent: true.
-
-      // For COURSE/CATEGORY completions: they are NOT in ACHIEVEMENTS array generally?
-      // The file `achievements.ts` only lists badge-linked achievements.
-      // If COURSE_COMPLETION is not in the array, achievementDef is undefined.
-      // We need to decide if they are permanent.
-      // Usually valid-course-completion should be revocable if progress drops?
-      // "Sadece isPermanent: false olan (veya undefined) ve artık gereksinimi karşılamayan başarımları sil."
-
-      // Special handling for legacy/generated IDs that might not be in ACHIEVEMENTS:
-      // If it starts with RANK_UP, assume permanent if not found in list (Safety).
-      if (id.startsWith('RANK_UP:')) return false;
-
-      // Event based checks (Fallback if not in ACHIEVEMENTS list correctly)
-      const isEventBasedPrefix = [
-        'streak', // Not a prefix usually, but purely safe
-        // Add any other prefixes if needed.
-      ];
-      if (isEventBasedPrefix.some((p) => id.includes(p))) return false;
-
-      // Otherwise, if not eligible and neither permanent nor protected, revoke.
-      return true;
-    });
-
-    if (toRevoke.length > 0) {
       await safeQuery(
-        supabase
-          .from('user_achievements')
-          .delete()
-          .eq('user_id', userId)
-          .in('achievement_id', toRevoke),
-        'Error revoking achievements'
+        supabase.from('user_achievements').upsert(updates, {
+          onConflict: 'user_id,achievement_id',
+          ignoreDuplicates: true,
+        }),
+        'Error upserting unlocked achievements'
       );
-    }
-  }
 
-  return toUnlock.length > 0;
+      // Trigger celebration popups
+      queryClient.invalidateQueries({
+        queryKey: achievementKeys.uncelebrated(userId),
+      });
+    }
+
+    // Revoke Logic (For non-permanent achievements that no longer qualify)
+    const hasDbAchievements = dbUnlocked.length > 0;
+    const isHydrated = !!stats.currentRank;
+    const isIncompleteLoad = hasDbAchievements && !isHydrated;
+
+    if (!isIncompleteLoad) {
+      const toRevoke = [...dbIds].filter((id) => {
+        // If still eligible, do not revoke
+        if (eligibleIds.has(id)) return false;
+
+        // Check isPermanent definition flag
+        const achievementDef = ACHIEVEMENTS.find((a) => a.id === id);
+        if (achievementDef?.isPermanent) return false;
+
+        // Dynamic and legacy achievements handling
+        if (id.startsWith('RANK_UP:')) return false;
+
+        const isEventBasedPrefix = ['streak'];
+        if (isEventBasedPrefix.some((p) => id.includes(p))) return false;
+
+        return true;
+      });
+
+      if (toRevoke.length > 0) {
+        await safeQuery(
+          supabase
+            .from('user_achievements')
+            .delete()
+            .eq('user_id', userId)
+            .in('achievement_id', toRevoke),
+          'Error revoking achievements'
+        );
+      }
+    }
+
+    return toUnlock.length > 0;
+  } catch (error) {
+    logger.error(
+      'useAchievements',
+      'syncAchievements',
+      'Error during achievement sync:',
+      error
+    );
+    return false;
+  }
 }
 
+// ===========================
+// === EXPORTED HOOKS ===
+// ===========================
+
+/**
+ * Hook to implicitly synchronize user achievements upon progression.
+ */
 export function useSyncAchievementsMutation() {
   const queryClient = useQueryClient();
 
@@ -204,8 +198,6 @@ export function useSyncAchievementsMutation() {
     mutationFn: (context: Omit<SyncContext, 'queryClient'>) =>
       syncAchievements({ ...context, queryClient }),
     onSuccess: (hasNewUnlocks, variables) => {
-      // The immediate invalidation is now done inside syncAchievements
-      // This onSuccess is kept for backward compatibility but may be redundant
       if (hasNewUnlocks) {
         queryClient.invalidateQueries({
           queryKey: achievementKeys.uncelebrated(variables.userId),
@@ -213,17 +205,24 @@ export function useSyncAchievementsMutation() {
       }
     },
     onError: (err) => {
-      // Safe error logging
       const isAbort =
         err instanceof Error &&
         (err.name === 'AbortError' || err.message?.includes('AbortError'));
       if (!isAbort) {
-        logger.error('Achievement Sync Mutation Error:', err as Error);
+        logger.error(
+          'useAchievements',
+          'useSyncAchievementsMutation',
+          'Achievement Sync Mutation Error:',
+          err
+        );
       }
     },
   });
 }
 
+/**
+ * Hook to fetch unacknowledged/uncelebrated achievements to present popups.
+ */
 export function useUncelebratedQuery(userId: string | undefined) {
   return useQuery({
     queryKey: achievementKeys.uncelebrated(userId || 'guest'),
@@ -247,6 +246,9 @@ export function useUncelebratedQuery(userId: string | undefined) {
   });
 }
 
+/**
+ * Hook to retrieve the user's unlocked achievement list.
+ */
 export function useAchievements(userId: string) {
   return useQuery({
     queryKey: [...achievementKeys.all, 'list', userId],
@@ -265,16 +267,30 @@ export function useAchievements(userId: string) {
   });
 }
 
-export async function markAsCelebrated(userId: string, achievementId: string) {
-  const { success } = await safeQuery(
-    supabase
-      .from('user_achievements')
-      .update({ is_celebrated: true })
-      .eq('user_id', userId)
-      .eq('achievement_id', achievementId)
-      .eq('is_celebrated', false), // Concurrency safety
-    'Error marking achievement as celebrated'
-  );
+// ===========================
+// === MARK COMPLETION ===
+// ===========================
 
-  if (!success) throw new Error('Failed to mark as celebrated');
+/**
+ * Marks an achievement as celebrated to suppress future popups.
+ */
+export async function markAsCelebrated(
+  userId: string,
+  achievementId: string
+): Promise<void> {
+  try {
+    const { success } = await safeQuery(
+      supabase
+        .from('user_achievements')
+        .update({ is_celebrated: true })
+        .eq('user_id', userId)
+        .eq('achievement_id', achievementId)
+        .eq('is_celebrated', false),
+      'Error marking achievement as celebrated'
+    );
+
+    if (!success) throw new Error('Failed to mark as celebrated');
+  } catch (error) {
+    console.error('[useAchievements][markAsCelebrated] Error:', error);
+  }
 }

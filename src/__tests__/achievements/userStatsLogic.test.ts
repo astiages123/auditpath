@@ -18,6 +18,19 @@ vi.mock('@/lib/supabase', () => ({
   },
 }));
 
+vi.mock('@/utils/logger', () => ({
+  logger: {
+    withPrefix: vi.fn(() => ({
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    })),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
 interface MockCourse {
   id: string;
   type: string;

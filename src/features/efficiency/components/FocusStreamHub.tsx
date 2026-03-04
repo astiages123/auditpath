@@ -4,12 +4,28 @@ import { EfficiencyTrend, Session } from '../types/efficiencyTypes';
 import { DistractionDetails } from './DistractionDetails';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Lazy load the chart component
+// ==========================================
+// === LAZY COMPONENTS ===
+// ==========================================
+
 const EfficiencyTrendChart = lazy(() =>
   import('./EfficiencyTrendChart').then((m) => ({
     default: m.EfficiencyTrendChart,
   }))
 );
+
+// ==========================================
+// === PROPS ===
+// ==========================================
+
+export interface FocusStreamHubProps {
+  sessions: Session[];
+  trendData: EfficiencyTrend[];
+}
+
+// ==========================================
+// === COMPONENT: FALLBACK ===
+// ==========================================
 
 const ChartFallback = () => (
   <div className="w-full h-[400px] flex items-center justify-center bg-surface/5 rounded-xl border border-border/10">
@@ -17,15 +33,17 @@ const ChartFallback = () => (
   </div>
 );
 
-interface FocusStreamHubProps {
-  sessions: Session[];
-  trendData: EfficiencyTrend[];
-}
+// ==========================================
+// === COMPONENT ===
+// ==========================================
 
 export const FocusStreamHub = ({
   sessions,
   trendData,
 }: FocusStreamHubProps) => (
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   <Tabs defaultValue="analysis" className="w-full">
     <TabsList className="w-full grid grid-cols-2">
       <TabsTrigger value="analysis">Odaklanma Trendi</TabsTrigger>

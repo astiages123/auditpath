@@ -1,5 +1,10 @@
-import { FC } from 'react';
-import { Globe, Layers, Info, Building2 } from 'lucide-react';
+// ==========================================
+// IMPORTS
+// ==========================================
+
+import { FC, lazy, Suspense, useState } from 'react';
+import { Globe, Layers, Info, Building2, Maximize2 } from 'lucide-react';
+
 import { Card } from '@/components/ui/card';
 import {
   Tooltip,
@@ -7,18 +12,36 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/utils/stringHelpers';
+
 import { calculateScoreTypeProgress } from '../logic/scoreCalculations';
 import { CourseMastery } from '@/features/courses/types/courseTypes';
-import { cn } from '@/utils/stringHelpers';
 import { CardHeader } from '@/features/efficiency/components/CardElements';
+const ScoreTypeRadarModal = lazy(() =>
+  import('./ScoreTypeRadarModal').then((module) => ({
+    default: module.ScoreTypeRadarModal,
+  }))
+);
+
+// ==========================================
+// INTERFACES
+// ==========================================
 
 interface ScoreTypeProgressProps {
   masteries: CourseMastery[];
 }
 
+// ==========================================
+// COMPONENT
+// ==========================================
+
 export const ScoreTypeProgress: FC<ScoreTypeProgressProps> = ({
   masteries,
 }) => {
+  // === STATE ===
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // === CALCULATIONS ===
   const scores = calculateScoreTypeProgress(masteries);
 
   const scoreTypes = [
@@ -67,8 +90,12 @@ export const ScoreTypeProgress: FC<ScoreTypeProgressProps> = ({
     },
   ];
 
+  // === RENDER ===
   return (
-    <Card className="h-full flex flex-col p-6 overflow-hidden relative group">
+    <Card
+      className="h-full flex flex-col p-6 overflow-hidden relative group cursor-pointer hover:border-accent/40 transition-all duration-300"
+      onClick={() => setIsModalOpen(true)}
+    >
       <CardHeader
         icon={Layers}
         iconColor="text-accent"
@@ -79,13 +106,22 @@ export const ScoreTypeProgress: FC<ScoreTypeProgressProps> = ({
           <div className="flex items-center gap-2">
             <TooltipProvider>
               <Tooltip>
-                <TooltipTrigger>
+                <TooltipTrigger asChild>
                   <Info className="w-5 h-5 text-muted-foreground/30 hover:text-white transition-colors" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-[250px] text-[11px] leading-relaxed">
                   Puan türü oranları, Akıllı Müfredat Ustalığı'ndaki
                   ilerlemenizin ders ağırlıklarına göre harmanlanmasıyla
                   hesaplanır.
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Maximize2 className="w-5 h-5 text-muted-foreground/30 hover:text-white transition-colors" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-[250px] text-[11px] leading-relaxed">
+                  Puan türü analizi ve radarı görmek için tıklayın.
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -166,6 +202,20 @@ export const ScoreTypeProgress: FC<ScoreTypeProgressProps> = ({
           </div>
         ))}
       </div>
+
+      {isModalOpen && (
+        <Suspense fallback={null}>
+          <ScoreTypeRadarModal
+            open={isModalOpen}
+            onOpenChange={setIsModalOpen}
+            data={{
+              p30: scores.p30,
+              p35: scores.p35,
+              p48: scores.p48,
+            }}
+          />
+        </Suspense>
+      )}
     </Card>
   );
 };

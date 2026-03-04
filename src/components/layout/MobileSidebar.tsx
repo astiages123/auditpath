@@ -15,6 +15,7 @@ import type { NavItem } from './dashboard/nav-config';
 const GROUP_ORDER: NavItem['group'][] = ['navigation', 'action', 'meta'];
 
 export const MobileSidebar: FC = () => {
+  // === HOOKS ===
   const { user, signOut } = useAuth();
   const { setMobileMenuOpen } = useUIStore();
   const { setOpen: setPomodoroOpen } = usePomodoro();
@@ -22,6 +23,8 @@ export const MobileSidebar: FC = () => {
   const pathname = location.pathname;
 
   const groupedItems = getNavItemsByGroup();
+
+  // === HANDLERS ===
 
   const handleAction = (action: string) => {
     setMobileMenuOpen(false);
@@ -31,6 +34,8 @@ export const MobileSidebar: FC = () => {
       }
     }, 400);
   };
+
+  // === RENDER ===
 
   return (
     <div className="fixed inset-0 z-0 block lg:hidden overflow-hidden">

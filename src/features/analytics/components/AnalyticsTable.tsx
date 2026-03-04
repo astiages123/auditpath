@@ -1,5 +1,12 @@
+// ==========================================
+// IMPORTS
+// ==========================================
+
 import { FC } from 'react';
 import { History, ChevronDown } from 'lucide-react';
+import { format } from 'date-fns';
+import { tr } from 'date-fns/locale';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -11,19 +18,24 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
-import { tr } from 'date-fns/locale';
 import { type AiGenerationCost } from '@/features/analytics/logic/analyticsLogic';
+
+// ==========================================
+// INTERFACES
+// ==========================================
 
 interface AnalyticsTableProps {
   logs: AiGenerationCost[];
-  visibleCount: number;
-  deferredVisibleCount: number;
+  hasMore: boolean;
   isPending: boolean;
   rate: number;
   formatCurrency: (value: number) => string;
   onLoadMore: () => void;
 }
+
+// ==========================================
+// HELPER COMPONENTS
+// ==========================================
 
 const getUsageTypeBadge = (type: string | null) => {
   switch (type) {
@@ -68,15 +80,19 @@ const getUsageTypeBadge = (type: string | null) => {
   }
 };
 
+// ==========================================
+// COMPONENT
+// ==========================================
+
 export const AnalyticsTable: FC<AnalyticsTableProps> = ({
   logs,
-  visibleCount,
-  deferredVisibleCount,
+  hasMore,
   isPending,
   rate,
   formatCurrency,
   onLoadMore,
 }) => {
+  // === RENDER ===
   return (
     <Card className="bg-card/30 border-border shadow-lg">
       <CardHeader className="border-b border-border/40 bg-card/20 py-4 flex flex-row items-center justify-between">
@@ -90,7 +106,7 @@ export const AnalyticsTable: FC<AnalyticsTableProps> = ({
           variant="outline"
           className="text-[10px] uppercase font-bold tracking-tighter"
         >
-          Limit: 10,000 Kayıt
+          {logs.length} Kayıt Gösteriliyor
         </Badge>
       </CardHeader>
       <CardContent className="p-0">
@@ -126,7 +142,7 @@ export const AnalyticsTable: FC<AnalyticsTableProps> = ({
                   transition: 'opacity 200ms ease-in-out',
                 }}
               >
-                {logs.slice(0, visibleCount).map((log) => (
+                {logs.map((log) => (
                   <TableRow
                     key={log.id}
                     className="border-b border-border/20 hover:bg-muted/50 transition-colors group"
@@ -179,7 +195,7 @@ export const AnalyticsTable: FC<AnalyticsTableProps> = ({
 
         {/* Mobile Card List */}
         <div className="md:hidden divide-y divide-border/20">
-          {logs.slice(0, visibleCount).map((log) => (
+          {logs.map((log) => (
             <div
               key={log.id}
               className="p-4 space-y-3 hover:bg-muted/30 transition-colors"
@@ -226,17 +242,20 @@ export const AnalyticsTable: FC<AnalyticsTableProps> = ({
           ))}
         </div>
 
-        {logs.length > deferredVisibleCount && (
+        {hasMore && (
           <div className="p-6 border-t border-border/40 bg-card/10 flex justify-center">
             <Button
               variant="ghost"
               size="sm"
               onClick={onLoadMore}
+              disabled={isPending}
               className="group flex items-center gap-2 hover:bg-primary/10 hover:text-primary transition-all duration-300 rounded-full px-8"
             >
-              <ChevronDown className="size-4 group-hover:translate-y-1 transition-transform" />
+              <ChevronDown
+                className={`size-4 ${isPending ? 'animate-pulse' : 'group-hover:translate-y-1'} transition-transform`}
+              />
               <span className="font-heading font-bold uppercase tracking-widest text-[11px]">
-                Daha Fazla Yükle ({logs.length - visibleCount})
+                {isPending ? 'Yükleniyor...' : 'Daha Fazla Yükle'}
               </span>
             </Button>
           </div>

@@ -1,6 +1,8 @@
 import React from 'react';
 import { cn } from '@/utils/stringHelpers';
 
+// === PROPS ===
+
 interface PageContainerProps {
   isLoading?: boolean;
   error?: string | Error | null;
@@ -12,6 +14,8 @@ interface PageContainerProps {
   className?: string; // Additional classes for the container wrapper
 }
 
+// === COMPONENT ===
+
 export function PageContainer({
   isLoading = false,
   error = null,
@@ -22,6 +26,7 @@ export function PageContainer({
   children,
   className,
 }: PageContainerProps) {
+  // === RENDER ===
   if (isLoading) {
     return (
       <div className={cn('flex flex-col flex-1 h-full min-h-0', className)}>

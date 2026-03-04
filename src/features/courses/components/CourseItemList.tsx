@@ -1,41 +1,48 @@
+// ===========================
+// === IMPORTS ===
+// ===========================
+
 import { useEffect, useReducer } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
-import { logger } from '@/utils/logger';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CourseItem } from './CourseItem';
 import {
   useCourseItemActions,
-  CourseItemActionState,
+  type CourseItemActionState,
 } from '../hooks/useCourseItemActions';
 import {
   getItemProgressByCourse,
   getItemsByCourseId,
-  DatabaseItem,
+  type DatabaseItem,
 } from '@/features/courses/services/videoService';
 
-interface CourseItemListProps {
-  courseId: string; // The slug (e.g., 'iktisat-mikro')
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
+export interface CourseItemListProps {
+  courseId: string;
   dbCourseId: string;
-  categorySlug: string; // New prop for dynamic loading
+  categorySlug: string;
   _categoryColor?: string;
 }
 
-type StaticItem = {
+export interface StaticItem {
   id: string;
   itemNumber: number;
   title: string;
   duration: string;
   itemType: 'video' | 'reading';
-};
+}
 
-type CourseItemState = {
+export interface CourseItemState {
   items: CourseItemActionState[];
   staticItems: StaticItem[];
   loading: boolean;
-};
+}
 
-type CourseItemAction =
+export type CourseItemAction =
   | { type: 'START_LOADING' }
   | {
       type: 'SET_INITIAL_DATA';
@@ -44,6 +51,10 @@ type CourseItemAction =
   | { type: 'SET_PROGRESS'; payload: CourseItemActionState[] }
   | { type: 'FINISH_LOADING' }
   | { type: 'UPDATE_ITEMS'; payload: CourseItemActionState[] };
+
+// ===========================
+// === REDUCER ===
+// ===========================
 
 const initialState: CourseItemState = {
   items: [],
@@ -75,6 +86,14 @@ function courseItemReducer(
   }
 }
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * Handles the loading and rendering of a course's items (videos or readings),
+ * managing progress states and interactions.
+ */
 export function CourseItemList({
   courseId,
   dbCourseId,
@@ -119,7 +138,6 @@ export function CourseItemList({
 
       // Set initial state (not completed)
       if (isMounted) {
-        // Initial state update
         dispatch({
           type: 'SET_INITIAL_DATA',
           payload: { staticItems: staticData, items: initialItems },
@@ -143,7 +161,7 @@ export function CourseItemList({
               dispatch({ type: 'SET_PROGRESS', payload: updatedWithProgress });
             }
           } catch (error) {
-            logger.error('Failed to load progress', error as Error);
+            console.error('[CourseItemList][loadData] Hata:', error);
             toast.error('İlerleme yüklenemedi');
           }
         }

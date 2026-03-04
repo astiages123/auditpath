@@ -1,79 +1,132 @@
 import { supabase } from '@/lib/supabase';
+import { safeQuery } from '@/lib/supabaseHelpers';
+import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import {
   getCourseIdBySlug,
   getCourseTopics,
 } from '@/features/quiz/services/quizCoreService';
-import { processTopicContent } from '../logic/contentProcessor';
-import { type CourseTopic } from '@/features/courses/types/courseTypes';
-import { safeQuery } from '@/lib/supabaseHelpers';
 
+import { processTopicContent } from '../logic/contentProcessor';
+import { type TopicMetadata } from '../logic/contentProcessor';
+
+// === BÖLÜM ADI: TİPLER (TYPES) ===
+// ===========================
+
+/**
+ * Senkronizasyon işlemi sonucunda dönen istatistikleri tanımlar.
+ */
 export interface SyncStats {
+  /** Başarıyla senkronize edilen kayıt sayısı */
   synced: number;
+  /** Silinen kayıt sayısı */
   deleted: number;
+  /** Atlanan (değişiklik olmayan vb.) kayıt sayısı */
   skipped: number;
+  /** Hata alınan kayıt sayısı */
   errors: number;
 }
 
+/**
+ * Senkronizasyon servisi yanıt arayüzü.
+ */
 export interface SyncResponse {
+  /** İşlem başarısı durumu */
   success: boolean;
+  /** Detaylı senkronizasyon istatistikleri */
   stats?: SyncStats;
+  /** Olası hata durumunda dönen mesaj */
   error?: string;
 }
 
 /**
- * Fetches course notes and processes their content.
+ * fetchCourseNotes fonksiyonundan dönen yapı için arayüz.
+ */
+export interface CourseNotesData {
+  /** Dersin tam adı */
+  courseName: string;
+  /** Ders konularının işlenmiş hali */
+  chunks: CourseTopic[];
+}
+
+// === BÖLÜM ADI: İŞ MANTIĞI & SERVİSLER (LOGIC & SERVICES) ===
+// ===========================
+
+/**
+ * Verilen kurs adlandırıcıya göre ilgili konu parçalarını (chunks) veritabanından çeker,
+ * ardından ilgili metinlerin markdown işlemelerini yapar ve geriye döner.
  *
- * @param userId User ID
- * @param courseSlug Course slug
- * @param signal AbortSignal for cancellation
- * @returns Object with courseName and chunks, or null
+ * @param {string} userId - Dersi çeken kullanıcının benzersiz ID'si.
+ * @param {string} courseSlug - Dersin benzersiz url kısa adı.
+ * @param {AbortSignal} [signal] - İstek iptalini yönetmek için DOM AbortSignal objesi (opsiyonel).
+ * @returns {Promise<CourseNotesData | null>} - Ders adı ve işlenmiş konuları döner, iptal edilirse null döner.
  */
 export async function fetchCourseNotes(
   userId: string,
   courseSlug: string,
   signal?: AbortSignal
-): Promise<{
-  courseName: string;
-  chunks: CourseTopic[];
-} | null> {
-  const targetId = await getCourseIdBySlug(courseSlug, signal);
-  if (!targetId || (signal && signal.aborted)) return null;
+): Promise<CourseNotesData | null> {
+  try {
+    const targetCourseId: string | null = await getCourseIdBySlug(courseSlug);
 
-  const data = await getCourseTopics(userId, targetId, signal);
-  if (signal && signal.aborted) return null;
+    if (!targetCourseId || (signal && signal.aborted)) {
+      return null;
+    }
 
-  const processedData = data.map((chunk) => {
-    const metadata = chunk.metadata as { images?: string[] } | null;
+    const courseTopicsData: CourseTopic[] = await getCourseTopics(
+      userId,
+      targetCourseId,
+      signal
+    );
+
+    if (signal && signal.aborted) {
+      return null;
+    }
+
+    const processedData: CourseTopic[] = courseTopicsData.map(
+      (chunk: CourseTopic) => {
+        const metadata: TopicMetadata | null =
+          chunk.metadata as TopicMetadata | null;
+
+        return {
+          ...chunk,
+          content: processTopicContent(chunk.content, metadata),
+        };
+      }
+    );
+
     return {
-      ...chunk,
-      content: processTopicContent(chunk.content, metadata),
+      courseName: processedData[0]?.course_name || '',
+      chunks: processedData,
     };
-  });
-
-  return {
-    courseName: processedData[0]?.course_name || '',
-    chunks: processedData,
-  };
+  } catch (error: unknown) {
+    if (signal && signal.aborted) return null;
+    console.error('[noteService][fetchCourseNotes] Hata:', error);
+    throw error;
+  }
 }
 
 /**
- * Invokes the Notion sync Edge Function.
+ * Notion entegrasyonundan Supabase'e veri aktarımı yapan Edge Function'ı tetikler.
  *
- * @param curriculum Optional curriculum data to sync
- * @returns Sync response data
+ * @returns {Promise<SyncResponse>} Edge Function'dan dönen başarı durumu ve istatistikleri barındıran nesne.
  */
 export async function invokeNotionSync(): Promise<SyncResponse> {
-  const { data } = await safeQuery<SyncResponse>(
-    supabase.functions.invoke<SyncResponse>('notion-sync', {
-      method: 'POST',
-      body: {},
-    }) as PromiseLike<{ data: SyncResponse | null; error: unknown }>,
-    'invokeNotionSync error'
-  );
+  try {
+    const { data: syncData } = await safeQuery<SyncResponse>(
+      supabase.functions.invoke<SyncResponse>('notion-sync', {
+        method: 'POST',
+        body: {},
+      }) as PromiseLike<{ data: SyncResponse | null; error: unknown }>,
+      'invokeNotionSync error'
+    );
 
-  if (!data) {
-    throw new Error('Senkronizasyon servisinden yanıt alınamadı.');
+    if (!syncData) {
+      throw new Error('Senkronizasyon servisinden yanıt alınamadı.');
+    }
+
+    return syncData;
+  } catch (error: unknown) {
+    console.error('[noteService][invokeNotionSync] Hata:', error);
+    throw error;
   }
-
-  return data;
 }

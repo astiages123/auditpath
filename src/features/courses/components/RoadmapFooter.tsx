@@ -1,7 +1,15 @@
-import { FC } from 'react';
+// ===========================
+// === IMPORTS ===
+// ===========================
+
+import type { FC } from 'react';
 import { Trophy, Sparkles } from 'lucide-react';
 
-interface RoadmapFooterProps {
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
+export interface RoadmapFooterProps {
   nextMilestone?: {
     title: string;
     motto: string;
@@ -9,6 +17,14 @@ interface RoadmapFooterProps {
   toNext: number;
 }
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * Renders the footer of the roadmap, displaying the next milestone
+ * and progress remaining, or a completion message if at max rank.
+ */
 export const RoadmapFooter: FC<RoadmapFooterProps> = ({
   nextMilestone,
   toNext,

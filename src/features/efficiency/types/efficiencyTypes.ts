@@ -1,11 +1,32 @@
+import { z } from 'zod';
+
 import {
   DetailedSession,
+  PauseIntervalSchema,
   RecentSession,
+  TimelineEventSchema,
 } from '@/features/pomodoro/types/pomodoroTypes';
 import { BloomStats } from '@/features/quiz/types';
 
-export type { BloomStats, DetailedSession, RecentSession };
+// ==========================================
+// === RE-EXPORTS ===
+// ==========================================
 
+export type { BloomStats, DetailedSession, RecentSession };
+export { PauseIntervalSchema, TimelineEventSchema };
+
+// ==========================================
+// === ENUMS & LITERALS ===
+// ==========================================
+
+/** Flow state literal representing the user's learning state */
+export type FlowState = 'stuck' | 'deep' | 'optimal' | 'speed' | 'shallow';
+
+// ==========================================
+// === BASIC DATA INTERFACES ===
+// ==========================================
+
+/** Daily statistics for efficiency metrics */
 export interface DailyStats {
   totalWorkMinutes: number;
   totalBreakMinutes: number;
@@ -17,21 +38,23 @@ export interface DailyStats {
   dailyGoal: number;
   totalPauseMinutes: number;
   totalVideoMinutes: number;
-  totalReadingMinutes: number; // YENİ
-  pagesRead: number; // YENİ
+  totalReadingMinutes: number;
+  pagesRead: number;
   completedVideos: number;
   videoTrendPercentage: number;
   totalCycles: number;
 }
 
-export type DayActivity = {
+/** Represents a single day's activity level and intensity */
+export interface DayActivity {
   date: string;
   count: number;
   level: 0 | 1 | 2 | 3 | 4;
   intensity: number;
   totalMinutes: number;
-};
+}
 
+/** General efficiency data over a period */
 export interface EfficiencyData {
   efficiencyScore: number;
   trend: 'up' | 'down' | 'stable';
@@ -41,29 +64,34 @@ export interface EfficiencyData {
   quizMinutes: number;
 }
 
+/** Milestones for total videos watched */
 export interface DailyVideoMilestones {
-  maxCount: number; // Tüm zamanlardaki maksimum günlük video sayısı
-  first5Date: string | null; // İlk kez 5+ video izlenen gün
-  first10Date: string | null; // İlk kez 10+ video izlenen gün
+  maxCount: number;
+  first5Date: string | null;
+  first10Date: string | null;
 }
 
+/** Cumulative totals across all time */
 export interface CumulativeStats {
   totalWorkMinutes: number;
   totalVideoMinutes: number;
   ratio: number;
 }
 
+/** Pomodoro and video statistics for a specific historical date */
 export interface HistoryStats {
   date: string;
   pomodoro: number;
   video: number;
 }
 
+/** Trend data for focus time */
 export interface FocusTrend {
   date: string;
   minutes: number;
 }
 
+/** Trend data for efficiency score */
 export interface EfficiencyTrend {
   date: string;
   score: number;
@@ -71,15 +99,7 @@ export interface EfficiencyTrend {
   videoMinutes: number;
 }
 
-export interface EfficiencyTrendProps {
-  data: EfficiencyTrend[];
-}
-
-export interface FocusPowerTrendProps {
-  data: FocusPowerPoint[];
-  rangeLabel?: 'week' | 'month' | 'all';
-}
-
+/** Summary of a single day's efficiency */
 export interface DailyEfficiencySummary {
   efficiencyScore: number;
   totalCycles: number;
@@ -90,48 +110,58 @@ export interface DailyEfficiencySummary {
   sessions: DetailedSession[];
 }
 
-export type Session = {
+/** Basic session representing a single work block */
+export interface Session {
   id: string;
   lessonName: string;
-  date: string; // YYYY-MM-DD
-  startTime: string; // HH:mm
-  endTime: string; // HH:mm
-  duration: number; // minutes
-  timeline?: {
+  date: string;
+  startTime: string;
+  endTime: string;
+  duration: number;
+  timeline?: Array<{
     type: string;
     start: number;
     end: number;
     duration?: number;
-  }[];
-  pauseIntervals: { start: string; end: string }[]; // Pause times
-};
+  }>;
+  pauseIntervals: Array<{ start: string; end: string }>;
+}
 
-// BloomStats is now in quizTypes.ts
-
-export type LearningLoad = {
+/** Load and distribution of learning activities */
+export interface LearningLoad {
   day: string;
   videoMinutes: number;
-  readingMinutes?: number; // YENİ
-  extraStudyMinutes: number; // Test solving, reading etc.
+  readingMinutes?: number;
+  extraStudyMinutes: number;
   rawDate?: Date;
-};
+}
 
-export type FocusPowerPoint = {
-  date: string; // Day or Month label
-  originalDate: string; // ISO Date for sorting
+/** Data point for focus power calculation */
+export interface FocusPowerPoint {
+  date: string;
+  originalDate: string;
   score: number;
   workMinutes: number;
   breakMinutes: number;
   pauseMinutes: number;
-};
+}
 
-// efficiency trend already defined above
+/** Props for EfficiencyTrend component */
+export interface EfficiencyTrendProps {
+  data: EfficiencyTrend[];
+}
 
-// Activity already defined above
+/** Props for FocusPowerTrend component */
+export interface FocusPowerTrendProps {
+  data: FocusPowerPoint[];
+  rangeLabel?: 'week' | 'month' | 'all';
+}
 
-export type flowState = 'stuck' | 'deep' | 'optimal' | 'speed' | 'shallow';
+// ==========================================
+// === COMPOSITE INTERFACES ===
+// ==========================================
 
-// Card-specific EfficiencyData (moved from components/cards/types.ts)
+/** Data specifically formatted for dashboard card displays */
 export interface CardEfficiencyData {
   loading: boolean;
   currentWorkMinutes: number;
@@ -150,13 +180,13 @@ export interface CardEfficiencyData {
   loadMonth: LearningLoad[];
   loadAll: LearningLoad[];
   bloomStats: BloomStats[];
-  lessonMastery: {
+  lessonMastery: Array<{
     lessonId: string;
     title: string;
     mastery: number;
     videoProgress: number;
     questionProgress: number;
-  }[];
+  }>;
   consistencyData: DayActivity[];
   recentSessions: RecentSession[];
   focusPowerWeek: FocusPowerPoint[];
@@ -164,15 +194,11 @@ export interface CardEfficiencyData {
   focusPowerAll: FocusPowerPoint[];
 }
 
-// --- Zod Schemas ---
-import { z } from 'zod';
-import {
-  PauseIntervalSchema,
-  TimelineEventSchema,
-} from '@/features/pomodoro/types/pomodoroTypes';
+// ==========================================
+// === ZOD SCHEMAS ===
+// ==========================================
 
-export { PauseIntervalSchema, TimelineEventSchema };
-
+/** Schema validation for a regular session */
 export const SessionSchema = z.object({
   id: z.string(),
   lessonName: z.string(),
@@ -184,13 +210,14 @@ export const SessionSchema = z.object({
   pauseIntervals: z.array(PauseIntervalSchema),
 });
 
+/** Schema validation for a recent session */
 export const RecentSessionSchema = z.object({
   id: z.string(),
   courseName: z.string(),
   date: z.string(),
   durationMinutes: z.number(),
   efficiencyScore: z.number(),
-  timeline: z.array(TimelineEventSchema), // Enforce structure on Json
+  timeline: z.array(TimelineEventSchema),
   totalWorkTime: z.number(),
   totalBreakTime: z.number(),
   totalPauseTime: z.number(),

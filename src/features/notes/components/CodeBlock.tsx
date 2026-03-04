@@ -1,63 +1,102 @@
-import React, { useState } from 'react';
+import React, { lazy, Suspense, useState } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import { Copy, Check } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
-import { MermaidDiagram } from './MermaidDiagram';
 import { sanitizeHtml } from '@/shared/utils/sanitizers/htmlSanitizer';
 import { logger } from '@/utils/logger';
+const MermaidDiagram = lazy(() =>
+  import('./MermaidDiagram').then((module) => ({
+    default: module.MermaidDiagram,
+  }))
+);
 
-interface CodeBlockProps extends React.HTMLAttributes<HTMLElement> {
+// === BÖLÜM ADI: TİPLER (TYPES) ===
+// ===========================
+
+export interface CodeBlockProps extends React.HTMLAttributes<HTMLElement> {
+  /** Satır içi kod olup olmadığını belirtir */
   inline?: boolean;
 }
 
+// === BÖLÜM ADI: RENDER YARDIMCILARI ===
+// ===========================
+
+interface MathRenderResult {
+  html: string;
+  isDisplay: boolean;
+}
+
+// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
+// ===========================
+
+/**
+ * Markdown içindeki kod bloklarını ve matematiksel ifadeleri (KaTeX)
+ * veya Mermaid diyagramlarını render eden bileşen.
+ *
+ * @param {CodeBlockProps} props - React HTML Attribute props'ları ve ekstra `inline` bayrağı.
+ * @returns {React.ReactElement}
+ */
 export const CodeBlock = ({
   inline,
   className,
   children,
   ...props
-}: CodeBlockProps) => {
-  const match = /language-(\w+)/.exec(className || '');
-  const [copied, setCopied] = useState(false);
-  const code = String(children).replace(/\n$/, '');
+}: CodeBlockProps): React.ReactElement => {
+  const match: RegExpExecArray | null = /language-(\w+)/.exec(className || '');
+  const [copied, setCopied] = useState<boolean>(false);
+  const code: string = String(children).replace(/\n$/, '');
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  // === RENDER İŞ MANTIĞI ===
+
+  const handleCopy = (): void => {
+    try {
+      navigator.clipboard.writeText(code);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error: unknown) {
+      console.error('[CodeBlock][handleCopy] Hata:', error);
+    }
   };
 
-  // Handle math blocks
-  const isMath = !!(
+  const isMath: boolean = !!(
     className?.includes('math') ||
     (match && (match[1] === 'math' || match[1] === 'latex')) ||
     (code.trim().startsWith('$$') && code.trim().endsWith('$$')) ||
     (code.trim().startsWith('$') && code.trim().endsWith('$'))
   );
 
-  const sanitizedHtml = React.useMemo(() => {
+  const sanitizedHtml: MathRenderResult | null = React.useMemo(() => {
     if (!isMath) return null;
 
-    const isDisplay = !!(
+    const isDisplay: boolean = !!(
       code.trim().startsWith('$$') ||
       (match && (match[1] === 'math' || match[1] === 'latex'))
     );
-    const content = code
+    const content: string = code
       .trim()
       .replace(/^(\$\$|\\\[|\\\(|\$)/, '')
       .replace(/(\$\$|\\\]|\\\)|\$)$/, '');
 
     try {
-      const html = katex.renderToString(content, {
+      const html: string = katex.renderToString(content, {
         displayMode: isDisplay,
         throwOnError: false,
       });
       return { html: sanitizeHtml(html), isDisplay };
-    } catch (err) {
-      logger.error('KaTeX fallback render error:', err as Error);
+    } catch (error: unknown) {
+      console.error('[CodeBlock][sanitizedHtml] KaTeX render hatası:', error);
+      logger.error(
+        'CodeBlock',
+        'sanitizedHtml',
+        'KaTeX fallback render error:',
+        error as Error
+      );
       return null;
     }
   }, [code, isMath, match]);
+
+  // === UI RENDER ===
 
   if (isMath && sanitizedHtml) {
     if (sanitizedHtml.isDisplay) {
@@ -71,7 +110,6 @@ export const CodeBlock = ({
     return <span dangerouslySetInnerHTML={{ __html: sanitizedHtml.html }} />;
   }
 
-  // Handle inline code
   if (inline || !match) {
     return (
       <code
@@ -83,9 +121,18 @@ export const CodeBlock = ({
     );
   }
 
-  // Handle Mermaid diagrams
   if (match[1] === 'mermaid') {
-    return <MermaidDiagram code={code} />;
+    return (
+      <Suspense
+        fallback={
+          <div className="my-8 rounded-xl border border-border/50 bg-card p-8 text-center text-foreground/80">
+            Diyagram yükleniyor...
+          </div>
+        }
+      >
+        <MermaidDiagram code={code} />
+      </Suspense>
+    );
   }
 
   return (
@@ -104,6 +151,7 @@ export const CodeBlock = ({
         <button
           onClick={handleCopy}
           className="p-1.5 rounded-md hover:bg-white/10 text-white/90 hover:text-white transition-colors"
+          title="Kodu Kopyala"
         >
           {copied ? (
             <Check className="w-3.5 h-3.5" />

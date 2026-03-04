@@ -5,14 +5,30 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { EfficiencyModal } from './EfficiencyModal';
 import { PracticePerformanceRadar as PracticeCenterContent } from './PracticePerformanceRadar';
 import { CardHeader } from './CardElements';
-import { useCognitiveInsights } from '../hooks/useCognitiveInsights';
 
-// Lazy load the chart component
+import type { BloomStats } from '@/features/quiz/types';
+
+// ==========================================
+// === LAZY COMPONENTS ===
+// ==========================================
+
 const BloomKeyChart = lazy(() =>
   import('./BloomKeyChart').then((m) => ({
     default: m.BloomKeyChart,
   }))
 );
+
+// ==========================================
+// === TYPES / PROPS ===
+// ==========================================
+
+export interface PracticeCenterCardProps {
+  bloomStats: BloomStats[];
+}
+
+// ==========================================
+// === COMPONENT: FALLBACK ===
+// ==========================================
 
 const ChartFallback = () => (
   <div className="w-full h-full flex items-center justify-center min-h-[150px]">
@@ -20,33 +36,20 @@ const ChartFallback = () => (
   </div>
 );
 
-export const PracticeCenterCard = () => {
-  const { loadingBloom: loading, bloomStats } = useCognitiveInsights();
+// ==========================================
+// === COMPONENT ===
+// ==========================================
 
-  if (loading)
-    return (
-      <Card className="h-full flex flex-col p-6">
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-xl bg-surface" />
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-32 bg-surface" />
-              <Skeleton className="h-3 w-48 bg-surface" />
-            </div>
-          </div>
-        </div>
-        <div className="flex-1 w-full flex items-center justify-center">
-          <Skeleton className="h-48 w-48 rounded-full bg-surface" />
-        </div>
-      </Card>
-    );
-
+export const PracticeCenterCard = ({ bloomStats }: PracticeCenterCardProps) => {
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   return (
     <EfficiencyModal
       title="Pratik Merkezi İstatistikleri"
       trigger={
         <div className="h-full w-full cursor-pointer">
-          <Card className="h-full flex flex-col p-6">
+          <Card className="h-full flex flex-col p-6 hover:border-accent/40 transition-all duration-300">
             <CardHeader
               icon={Zap}
               iconColor="text-accent"

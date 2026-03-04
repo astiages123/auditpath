@@ -7,37 +7,44 @@ import { cn } from '@/utils/stringHelpers';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import logo from '@/assets/logo.svg';
 import { SidebarItem } from './SidebarItem';
-import { getNavItemsByGroup, NAV_GROUP_LABELS } from './nav-config';
+import {
+  getNavItemsByGroup,
+  NAV_GROUP_LABELS,
+  type NavGroup,
+} from './nav-config';
 import type { NavItem } from './nav-config';
 
 const GROUP_ORDER: NavItem['group'][] = ['navigation', 'action', 'meta'];
 
 export function Sidebar() {
+  // === HOOKS ===
   const isSidebarCollapsed = useUIStore((state) => state.isSidebarCollapsed);
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
   const { setOpen: setPomodoroOpen } = usePomodoro();
 
-  // Artık Notes sayfasında otomatik daraltmıyoruz
   const isCollapsed = isSidebarCollapsed;
-
   const groupedItems = getNavItemsByGroup();
 
-  // Desktop'ta sadece mobileOnly olmayanları göster
-  const filteredGroupedItems = Object.keys(groupedItems).reduce(
-    (acc, key) => {
-      acc[key as NavItem['group']] = groupedItems[
-        key as NavItem['group']
-      ].filter((item) => !item.mobileOnly);
-      return acc;
-    },
-    {} as Record<NavItem['group'], NavItem[]>
-  );
+  // === HANDLERS ===
 
   const handleAction = (action: string) => {
     if (action === 'pomodoro') {
       setPomodoroOpen(true);
     }
   };
+
+  // === RENDER ===
+
+  // Desktop'ta sadece mobileOnly olmayanları göster
+  const filteredGroupedItems = Object.keys(groupedItems).reduce(
+    (acc, key) => {
+      acc[key as NavGroup] = groupedItems[key as NavGroup].filter(
+        (item) => !item.mobileOnly
+      );
+      return acc;
+    },
+    {} as Record<NavGroup, NavItem[]>
+  );
 
   return (
     <aside

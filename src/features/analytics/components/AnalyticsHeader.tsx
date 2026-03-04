@@ -1,5 +1,10 @@
+// ==========================================
+// IMPORTS
+// ==========================================
+
 import { FC } from 'react';
 import { DollarSign, ShieldCheck } from 'lucide-react';
+
 import {
   Select,
   SelectContent,
@@ -8,12 +13,20 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
+// ==========================================
+// INTERFACES
+// ==========================================
+
 interface AnalyticsHeaderProps {
   rate: number;
-  selectedModel: string;
+  selectedModel: string | null;
   onModelChange: (model: string) => void;
   availableModels: string[];
 }
+
+// ==========================================
+// COMPONENT
+// ==========================================
 
 export const AnalyticsHeader: FC<AnalyticsHeaderProps> = ({
   rate,
@@ -21,6 +34,7 @@ export const AnalyticsHeader: FC<AnalyticsHeaderProps> = ({
   onModelChange,
   availableModels,
 }) => {
+  // === RENDER ===
   return (
     <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-border/40 pb-6">
       <div className="flex flex-wrap items-center gap-3">
@@ -40,7 +54,7 @@ export const AnalyticsHeader: FC<AnalyticsHeaderProps> = ({
         {/* Model Filtresi */}
         <div className="flex items-center gap-2 bg-card/50 pl-4 pr-2 py-2 rounded-lg border border-border shadow-sm">
           <div className="flex flex-col mr-2">
-            <Select value={selectedModel} onValueChange={onModelChange}>
+            <Select value={selectedModel ?? ''} onValueChange={onModelChange}>
               <SelectTrigger className="h-6 min-w-[120px] bg-transparent border-none p-0 text-sm font-medium text-white shadow-none focus:ring-0">
                 <SelectValue placeholder="Tüm Modeller" />
               </SelectTrigger>

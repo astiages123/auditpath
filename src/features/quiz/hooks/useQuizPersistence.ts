@@ -1,167 +1,138 @@
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { QuizPhase } from '@/features/quiz/hooks/useQuizManager';
 import { QuizResults, QuizState, SessionContext } from '@/features/quiz/types';
 import { TopicWithCounts } from '@/features/courses/types/courseTypes';
 import { logger } from '@/utils/logger';
+import { storage } from '@/shared/services/storageService';
+
+// ============================================================================
+// TYPES
+// ============================================================================
 
 export interface ManagerPersistedState {
+  /** Seçili konu */
   selectedTopic: TopicWithCounts | null;
+  /** Mevcut quiz evresi */
   phase: QuizPhase;
+  /** Sınav aktif mi? */
   isQuizActive: boolean;
-  savedAt: string; // ISO 8601
+  /** Kayıt zamanı (ISO 8601) */
+  savedAt: string;
 }
 
 export interface EnginePersistedState {
+  /** Quiz motor durumu */
   state: QuizState;
+  /** Oturum sonuçları */
   results: QuizResults;
+  /** Seans bağlamı */
   sessionContext: SessionContext | null;
-  savedAt: string; // ISO 8601
+  /** Kayıt zamanı (ISO 8601) */
+  savedAt: string;
 }
 
+// ============================================================================
+// HOOK
+// ============================================================================
+
+/**
+ * Quiz durumunu (manager ve engine) yerel depolamada (localStorage) saklayan ve yükleyen hook.
+ * Sayfa yenilemelerinde veya uygulama kapanıp açıldığında ilerlemeyi korur.
+ *
+ * @param courseId - Mevcut dersin kimliği
+ * @returns Veri saklama ve yükleme fonksiyonları
+ */
 export function useQuizPersistence(courseId: string) {
-  const getManagerKey = useCallback(
-    () => `auditpath-quiz-manager-${courseId}`,
-    [courseId]
-  );
-  const getEngineKey = useCallback(
-    () => `auditpath-quiz-engine-${courseId}`,
-    [courseId]
-  );
+  // === KEYS ===
+  const quizManagerKey = `quiz-manager-${courseId}`;
+  const quizEngineKey = `quiz-engine-${courseId}`;
 
-  const saveManagerTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const saveEngineTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // === MANAGER PERSISTENCE ===
 
+  /** Manager durumunu yerel depolamadan yükler */
   const loadManager = useCallback((): ManagerPersistedState | null => {
-    try {
-      if (!courseId) return null;
-      const item = localStorage.getItem(getManagerKey());
-      if (!item) return null;
+    return storage.get<ManagerPersistedState>(quizManagerKey);
+  }, [quizManagerKey]);
 
-      const parsed = JSON.parse(item) as ManagerPersistedState;
-
-      // Check if older than 24 hours
-      const savedTime = new Date(parsed.savedAt).getTime();
-      const now = new Date().getTime();
-      if (now - savedTime > 24 * 60 * 60 * 1000) {
-        localStorage.removeItem(getManagerKey());
-        return null;
-      }
-      return parsed;
-    } catch (error) {
-      logger.error('Failed to load manager quiz state', error as Error);
-      return null;
-    }
-  }, [courseId, getManagerKey]);
-
+  /** Manager durumunu kaydeder */
   const saveManager = useCallback(
     (
       selectedTopic: TopicWithCounts | null,
       phase: QuizPhase,
       isQuizActive: boolean
     ) => {
-      try {
-        if (!courseId) return;
-        if (saveManagerTimeoutRef.current) {
-          clearTimeout(saveManagerTimeoutRef.current);
-        }
-
-        saveManagerTimeoutRef.current = setTimeout(() => {
-          const stateToSave: ManagerPersistedState = {
-            selectedTopic,
-            phase,
-            isQuizActive,
-            savedAt: new Date().toISOString(),
-          };
-          localStorage.setItem(getManagerKey(), JSON.stringify(stateToSave));
-        }, 500);
-      } catch (error) {
-        logger.error('Failed to save manager quiz state', error as Error);
-      }
+      const stateToSave: ManagerPersistedState = {
+        selectedTopic,
+        phase,
+        isQuizActive,
+        savedAt: new Date().toISOString(),
+      };
+      storage.set(quizManagerKey, stateToSave);
     },
-    [courseId, getManagerKey]
+    [quizManagerKey]
   );
 
+  // === ENGINE PERSISTENCE ===
+
+  /** Engine durumunu yerel depolamadan yükler */
   const loadEngine = useCallback((): EnginePersistedState | null => {
-    try {
-      if (!courseId) return null;
-      const item = localStorage.getItem(getEngineKey());
-      if (!item) return null;
+    return storage.get<EnginePersistedState>(quizEngineKey);
+  }, [quizEngineKey]);
 
-      const parsed = JSON.parse(item) as EnginePersistedState;
-
-      const savedTime = new Date(parsed.savedAt).getTime();
-      const now = new Date().getTime();
-      if (now - savedTime > 24 * 60 * 60 * 1000) {
-        localStorage.removeItem(getEngineKey());
-        return null;
-      }
-      return parsed;
-    } catch (error) {
-      logger.error('Failed to load engine quiz state', error as Error);
-      return null;
-    }
-  }, [courseId, getEngineKey]);
-
+  /** Engine durumunu kaydeder */
   const saveEngine = useCallback(
     (
       state: QuizState,
       results: QuizResults,
       sessionContext: SessionContext | null
     ) => {
-      try {
-        if (!courseId || !state.hasStarted) return; // don't save empty state
-        if (saveEngineTimeoutRef.current) {
-          clearTimeout(saveEngineTimeoutRef.current);
-        }
-
-        saveEngineTimeoutRef.current = setTimeout(() => {
-          const stateToSave: EnginePersistedState = {
-            state,
-            results,
-            sessionContext,
-            savedAt: new Date().toISOString(),
-          };
-          localStorage.setItem(getEngineKey(), JSON.stringify(stateToSave));
-        }, 500);
-      } catch (error) {
-        logger.error('Failed to save engine quiz state', error as Error);
-      }
+      if (!state.hasStarted) return;
+      const stateToSave: EnginePersistedState = {
+        state,
+        results,
+        sessionContext,
+        savedAt: new Date().toISOString(),
+      };
+      storage.set(quizEngineKey, stateToSave);
     },
-    [courseId, getEngineKey]
+    [quizEngineKey]
   );
 
+  // === UTILS ===
+
+  /** Tüm kayıtlı durumları temizler */
   const clear = useCallback(() => {
     try {
-      if (!courseId) return;
-      if (saveManagerTimeoutRef.current) {
-        clearTimeout(saveManagerTimeoutRef.current);
-      }
-      if (saveEngineTimeoutRef.current) {
-        clearTimeout(saveEngineTimeoutRef.current);
-      }
-
-      localStorage.removeItem(getManagerKey());
-      localStorage.removeItem(getEngineKey());
-
-      // Also clear old format if it exists
-      localStorage.removeItem(`auditpath-quiz-${courseId}`);
+      storage.remove(quizManagerKey);
+      storage.remove(quizEngineKey);
+      storage.remove(`quiz-${courseId}`);
     } catch (error) {
-      logger.error('Failed to clear quiz state', error as Error);
+      console.error('[useQuizPersistence][clear] Hata:', error);
+      logger.error(
+        'QuizPersistence',
+        'clear',
+        'Temizleme hatası:',
+        error as Error
+      );
     }
-  }, [courseId, getManagerKey, getEngineKey]);
+  }, [courseId, quizManagerKey, quizEngineKey]);
 
+  /** Sadece engine durumunu yerel depolamadan temizler */
   const clearEngine = useCallback(() => {
     try {
-      if (!courseId) return;
-      if (saveEngineTimeoutRef.current) {
-        clearTimeout(saveEngineTimeoutRef.current);
-      }
-
-      localStorage.removeItem(getEngineKey());
+      storage.remove(quizEngineKey);
     } catch (error) {
-      logger.error('Failed to clear engine quiz state', error as Error);
+      console.error('[useQuizPersistence][clearEngine] Hata:', error);
+      logger.error(
+        'QuizPersistence',
+        'clearEngine',
+        'Temizleme hatası:',
+        error as Error
+      );
     }
-  }, [courseId, getEngineKey]);
+  }, [quizEngineKey]);
+
+  // === RETURN ===
 
   return {
     loadManager,

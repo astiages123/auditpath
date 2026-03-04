@@ -57,7 +57,7 @@ const adminClient = createClient(sbUrl, sbKey);
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders(req) });
   }
 
   const startTime = Date.now();
@@ -81,7 +81,7 @@ Deno.serve(async (req: Request) => {
         JSON.stringify({ error: 'Unauthorized', details: authError }),
         {
           status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         }
       );
     }
@@ -112,7 +112,7 @@ Deno.serve(async (req: Request) => {
         }),
         {
           status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         }
       );
     }
@@ -180,7 +180,7 @@ Deno.serve(async (req: Request) => {
         }),
         {
           status: response.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         }
       );
     }
@@ -211,7 +211,7 @@ Deno.serve(async (req: Request) => {
       });
       return new Response(JSON.stringify({ error: 'Invalid JSON response' }), {
         status: 502,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       });
     }
 
@@ -231,7 +231,7 @@ Deno.serve(async (req: Request) => {
     });
 
     return new Response(JSON.stringify(resultData), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
     });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
@@ -246,7 +246,7 @@ Deno.serve(async (req: Request) => {
     });
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
     });
   }
 });

@@ -1,8 +1,16 @@
-import { FC } from 'react';
+// ===========================
+// === IMPORTS ===
+// ===========================
+
+import type { FC } from 'react';
 import { Lock } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 
-interface Milestone {
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
+export interface Milestone {
   id: string;
   title: string;
   threshold: number;
@@ -11,12 +19,19 @@ interface Milestone {
   imagePath: string;
 }
 
-interface RoadmapPathProps {
+export interface RoadmapPathProps {
   milestones: Milestone[];
   progress: number;
   currentRankIndex: number;
 }
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * Renders a visual path connecting multiple milestones based on user progress.
+ */
 export const RoadmapPath: FC<RoadmapPathProps> = ({
   milestones,
   progress,

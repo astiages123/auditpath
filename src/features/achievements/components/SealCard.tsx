@@ -4,12 +4,24 @@ import type { Achievement } from '../types/achievementsTypes';
 import { cn } from '@/utils/stringHelpers';
 import { Card } from '@/components/ui/card';
 
+// ===========================
+// === TYPES ===
+// ===========================
+
 interface SealCardProps {
   achievement: Achievement;
   isUnlocked: boolean;
   onClick: () => void;
 }
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * SealCard Component
+ * Displays a single visual badge representation of an achievement.
+ */
 export function SealCard({ achievement, isUnlocked, onClick }: SealCardProps) {
   const guild = GUILDS[achievement.guild];
 
@@ -53,7 +65,7 @@ export function SealCard({ achievement, isUnlocked, onClick }: SealCardProps) {
           className={sealImageClass}
         />
 
-        {/* Lock icon overlay for locked achievements */}
+        {/* Lock overlay */}
         {!isUnlocked && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="bg-background/80 rounded-full p-2">
@@ -68,19 +80,18 @@ export function SealCard({ achievement, isUnlocked, onClick }: SealCardProps) {
         {achievement.title}
       </h3>
 
-      {/* Requirement Tooltip - shown on hover for locked */}
+      {/* Requirement Tooltip */}
       {!isUnlocked && (
         <div className={sealTooltipClass}>
           <p className="text-xs text-muted-foreground whitespace-nowrap">
             <span className="font-medium text-foreground">Gereksinim: </span>
             {getRequirementDescription(achievement.requirement)}
           </p>
-          {/* Tooltip arrow */}
           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-popover" />
         </div>
       )}
 
-      {/* Unlocked indicator glow */}
+      {/* Unlocked Glow Indicator */}
       {isUnlocked && (
         <div
           className="absolute inset-0 rounded-2xl opacity-10 pointer-events-none"

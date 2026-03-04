@@ -1,5 +1,16 @@
+// ==========================================
+// IMPORTS
+// ==========================================
+
 import { CourseMastery } from '@/features/courses/types/courseTypes';
 
+// ==========================================
+// TYPES
+// ==========================================
+
+/**
+ * Result structure for the different score types and their underlying category details.
+ */
 export interface ScoreTypeResult {
   p30: number; // İdari
   p35: number; // Diplomatik
@@ -11,28 +22,38 @@ export interface ScoreTypeResult {
   };
 }
 
+// ==========================================
+// LOGIC FUNCTIONS
+// ==========================================
+
 /**
- * Calculates completion ratios for P30, P35, and P48 point types based on course mastery scores.
+ * Calculates estimated completion percentage for P30, P35, and P48 point types
+ * based on the user's course mastery scores.
+ *
+ * It uses predefined weighting factors for each score type:
  *
  * P30 (Administrative) Weighting:
- * - GY: 10%
- * - GK: 10%
+ * - Genel Yetenek (GY): 10%
+ * - Genel Kültür (GK): 10%
  * - Hukuk: 30%
- * - Kamu Yönetimi (Siyasal Bilgiler filter): 50%
+ * - Kamu Yönetimi (Siyasal Bilgiler subset): 50%
  *
  * P35 (Diplomatic) Weighting:
- * - GY: 10%
- * - GK: 10%
+ * - Genel Yetenek (GY): 10%
+ * - Genel Kültür (GK): 10%
  * - Hukuk: 30%
- * - Uluslararası İlişkiler (Siyasal Bilgiler filter): 50%
+ * - Uluslararası İlişkiler (Siyasal Bilgiler subset): 50%
  *
  * P48 (General Field) Weighting:
- * - GY: 10%
- * - GK: 10%
+ * - Genel Yetenek (GY): 10%
+ * - Genel Kültür (GK): 10%
  * - Hukuk: 20%
  * - İktisat: 20%
  * - Maliye: 20%
  * - Muhasebe: 20%
+ *
+ * @param {CourseMastery[]} masteries - Array of course mastery data points
+ * @returns {ScoreTypeResult} Object containing final calculated scores and detailed breakdowns
  */
 export function calculateScoreTypeProgress(
   masteries: CourseMastery[]
@@ -48,15 +69,13 @@ export function calculateScoreTypeProgress(
     },
   };
 
-  if (!masteries.length) return result;
+  if (masteries.length === 0) return result;
 
-  // --- Manual Mapping based on Knowledge about the course structure ---
-  // In a real app, masteries should ideally include category info.
-  // Since we saw courseMasteryService.ts fetches 'type' but not 'category_name' in local type,
-  // we'll use string matches or we might need to update the service.
+  // --- Category Filters ---
 
-  const gyCourses = ['Matematik ve Geometri', 'Sözel Mantık', 'Türkçe']; // Türkçe was not in DB but expected
+  const gyCourses = ['Matematik ve Geometri', 'Sözel Mantık', 'Türkçe'];
   const gkCourses = ['Tarih', 'Coğrafya', 'Vatandaşlık', 'Sözel Mantık'];
+
   const hukukCourses = masteries
     .filter(
       (m) =>
@@ -78,13 +97,13 @@ export function calculateScoreTypeProgress(
   const maliyeCourses = ['Maliye'];
   const muhasebeCourses = ['Muhasebe'];
 
-  // Siyasal Bilgiler Split
   const kyCourses = [
     'Yönetim Bilimi',
     'Yerel Yönetimler',
     'Siyaset Bilimi',
     'Türk Siyasal Hayatı',
   ];
+
   const uiCourses = [
     'Uluslararası İlişkiler Kuramları',
     'Türk Dış Politikası',
@@ -93,69 +112,72 @@ export function calculateScoreTypeProgress(
     'Uluslararası Örgütler',
   ];
 
-  const getAvgByList = (names: string[]) => {
+  /**
+   * Helper to average mastery scores for a specific list of subjects.
+   */
+  const getAvgByList = (names: string[]): number => {
     const matches = masteries.filter((m) => names.includes(m.courseName));
-    return matches.length
-      ? matches.reduce((acc, curr) => acc + curr.masteryScore, 0) /
-          matches.length
-      : 0;
+    if (matches.length === 0) return 0;
+
+    const sum = matches.reduce((acc, curr) => acc + curr.masteryScore, 0);
+    return sum / matches.length;
   };
 
-  // P30 Calculation
-  const p30_gy = getAvgByList(gyCourses);
-  const p30_gk = getAvgByList(gkCourses);
-  const p30_hukuk = getAvgByList(hukukCourses);
-  const p30_ky = getAvgByList(kyCourses);
+  // --- Calculate P30 (Administrative) ---
+  const p30Gy = getAvgByList(gyCourses);
+  const p30Gk = getAvgByList(gkCourses);
+  const p30Hukuk = getAvgByList(hukukCourses);
+  const p30Ky = getAvgByList(kyCourses);
 
   result.p30 = Math.round(
-    p30_gy * 0.1 + p30_gk * 0.1 + p30_hukuk * 0.3 + p30_ky * 0.5
+    p30Gy * 0.1 + p30Gk * 0.1 + p30Hukuk * 0.3 + p30Ky * 0.5
   );
   result.details.p30 = {
-    gy: p30_gy,
-    gk: p30_gk,
-    hukuk: p30_hukuk,
-    ky: p30_ky,
+    gy: p30Gy,
+    gk: p30Gk,
+    hukuk: p30Hukuk,
+    ky: p30Ky,
   };
 
-  // P35 Calculation
-  const p35_gy = getAvgByList(gyCourses);
-  const p35_gk = getAvgByList(gkCourses);
-  const p35_hukuk = getAvgByList(hukukCourses);
-  const p35_ui = getAvgByList(uiCourses);
+  // --- Calculate P35 (Diplomatic) ---
+  const p35Gy = getAvgByList(gyCourses);
+  const p35Gk = getAvgByList(gkCourses);
+  const p35Hukuk = getAvgByList(hukukCourses);
+  const p35Ui = getAvgByList(uiCourses);
 
   result.p35 = Math.round(
-    p35_gy * 0.1 + p35_gk * 0.1 + p35_hukuk * 0.3 + p35_ui * 0.5
+    p35Gy * 0.1 + p35Gk * 0.1 + p35Hukuk * 0.3 + p35Ui * 0.5
   );
   result.details.p35 = {
-    gy: p35_gy,
-    gk: p35_gk,
-    hukuk: p35_hukuk,
-    ui: p35_ui,
+    gy: p35Gy,
+    gk: p35Gk,
+    hukuk: p35Hukuk,
+    ui: p35Ui,
   };
 
-  // P48 Calculation
-  const p48_gy = getAvgByList(gyCourses);
-  const p48_gk = getAvgByList(gkCourses);
-  const p48_hukuk = getAvgByList(hukukCourses);
-  const p48_iktisat = getAvgByList(iktisatCourses);
-  const p48_maliye = getAvgByList(maliyeCourses);
-  const p48_muhasebe = getAvgByList(muhasebeCourses);
+  // --- Calculate P48 (General Field) ---
+  const p48Gy = getAvgByList(gyCourses);
+  const p48Gk = getAvgByList(gkCourses);
+  const p48Hukuk = getAvgByList(hukukCourses);
+  const p48Iktisat = getAvgByList(iktisatCourses);
+  const p48Maliye = getAvgByList(maliyeCourses);
+  const p48Muhasebe = getAvgByList(muhasebeCourses);
 
   result.p48 = Math.round(
-    p48_gy * 0.1 +
-      p48_gk * 0.1 +
-      p48_hukuk * 0.2 +
-      p48_iktisat * 0.2 +
-      p48_maliye * 0.2 +
-      p48_muhasebe * 0.2
+    p48Gy * 0.1 +
+      p48Gk * 0.1 +
+      p48Hukuk * 0.2 +
+      p48Iktisat * 0.2 +
+      p48Maliye * 0.2 +
+      p48Muhasebe * 0.2
   );
   result.details.p48 = {
-    gy: p48_gy,
-    gk: p48_gk,
-    hukuk: p48_hukuk,
-    iktisat: p48_iktisat,
-    maliye: p48_maliye,
-    muhasebe: p48_muhasebe,
+    gy: p48Gy,
+    gk: p48Gk,
+    hukuk: p48Hukuk,
+    iktisat: p48Iktisat,
+    maliye: p48Maliye,
+    muhasebe: p48Muhasebe,
   };
 
   return result;

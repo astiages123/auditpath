@@ -1,4 +1,4 @@
-import {
+import React, {
   ReactNode,
   isValidElement,
   cloneElement,
@@ -12,78 +12,103 @@ import {
   TableHTMLAttributes,
   TdHTMLAttributes,
   ThHTMLAttributes,
+  useMemo,
 } from 'react';
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
 import 'katex/dist/katex.min.css';
+import { Lightbulb } from 'lucide-react';
 import { cn, slugify } from '@/utils/stringHelpers';
 import { CodeBlock } from './CodeBlock';
-import { Lightbulb } from 'lucide-react';
-import React, { useMemo } from 'react';
 
-// --- Helpers ---
+// === BÖLÜM ADI: YARDIMCI FONKSİYONLAR (HELPERS) ===
+// ===========================
 
+/**
+ * React öğesindeki bütün düz metni güvenli bir şekilde elde eder.
+ *
+ * @param {ReactNode} node
+ * @returns {string} Element içerisindeki metin
+ */
 export const getText = (node: ReactNode): string => {
-  if (!node) return '';
-  if (typeof node === 'string') return node;
-  if (typeof node === 'number') return String(node);
-  if (Array.isArray(node)) return node.map(getText).join('');
-  if (
-    typeof node === 'object' &&
-    node !== null &&
-    'props' in (node as { props?: { children?: ReactNode } }) &&
-    (node as { props: { children?: ReactNode } }).props?.children
-  ) {
-    return getText(
-      (node as { props: { children?: ReactNode } }).props.children
-    );
+  try {
+    if (!node) return '';
+    if (typeof node === 'string') return node;
+    if (typeof node === 'number') return String(node);
+    if (Array.isArray(node)) return node.map(getText).join('');
+    if (
+      typeof node === 'object' &&
+      node !== null &&
+      'props' in (node as { props?: { children?: ReactNode } }) &&
+      (node as { props: { children?: ReactNode } }).props?.children
+    ) {
+      return getText(
+        (node as { props: { children?: ReactNode } }).props.children
+      );
+    }
+  } catch (error: unknown) {
+    console.error('[MarkdownComponents][getText] Hata:', error);
   }
   return '';
 };
 
-// Helper to remove only the FIRST occurrence of the bulb emoji in the React tree
+/**
+ * Öğe ağacı içerisindeki ilk "💡" ifadesini temizler.
+ *
+ * @param {ReactNode} node
+ * @returns {ReactNode} Emojisiz, temizlenmiş öğe ağacı
+ */
 export const removeFirstBulb = (node: ReactNode): ReactNode => {
-  let found = false;
+  let found: boolean = false;
 
-  const process = (n: ReactNode): ReactNode => {
-    if (found) return n;
+  const processNode = (n: ReactNode): ReactNode => {
+    try {
+      if (found) return n;
 
-    if (typeof n === 'string') {
-      if (n.includes('💡')) {
-        found = true;
-        return n.replace('💡', '');
+      if (typeof n === 'string') {
+        if (n.includes('💡')) {
+          found = true;
+          return n.replace('💡', '');
+        }
+        return n;
       }
-      return n;
-    }
 
-    if (isValidElement(n)) {
-      const children = (n.props as { children?: ReactNode }).children;
-      if (children) {
-        return cloneElement(
-          n as ReactElement,
-          undefined,
-          Children.map(children, process)
-        );
+      if (isValidElement(n)) {
+        const childrenList: ReactNode | undefined = (
+          n.props as { children?: ReactNode }
+        ).children;
+        if (childrenList) {
+          return cloneElement(
+            n as ReactElement,
+            undefined,
+            Children.map(childrenList, processNode)
+          );
+        }
       }
-    }
 
-    if (Array.isArray(n)) {
-      return Children.map(n, process);
+      if (Array.isArray(n)) {
+        return Children.map(n, processNode);
+      }
+    } catch (error: unknown) {
+      console.error('[MarkdownComponents][removeFirstBulb] Hata:', error);
     }
-
     return n;
   };
 
-  return Children.map(node, process);
+  return Children.map(node, processNode);
 };
 
-// --- Custom Components ---
+// === BÖLÜM ADI: BİLEŞEN (COMPONENT) HARİTALAMASI ===
+// ===========================
 
+/**
+ * React-Markdown tarafından ayrıştırılan etiketlerin AuditPath'a özel CSS ve element mappingleri.
+ */
 export const markdownComponents = {
   h1: React.memo(
     ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
-      const text = useMemo(() => getText(children), [children]);
-      const subId = useMemo(() => slugify(text), [text]);
+      const text: string = useMemo(() => getText(children), [children]);
+      const subId: string = useMemo(() => slugify(text), [text]);
       return (
         <h3 id={subId} className="scroll-mt-28" {...props}>
           {children}
@@ -93,8 +118,8 @@ export const markdownComponents = {
   ),
   h2: React.memo(
     ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
-      const text = useMemo(() => getText(children), [children]);
-      const subId = useMemo(() => slugify(text), [text]);
+      const text: string = useMemo(() => getText(children), [children]);
+      const subId: string = useMemo(() => slugify(text), [text]);
       return (
         <h4 id={subId} className="scroll-mt-28" {...props}>
           {children}
@@ -104,8 +129,8 @@ export const markdownComponents = {
   ),
   h3: React.memo(
     ({ children, ...props }: HTMLAttributes<HTMLHeadingElement>) => {
-      const text = useMemo(() => getText(children), [children]);
-      const subId = useMemo(() => slugify(text), [text]);
+      const text: string = useMemo(() => getText(children), [children]);
+      const subId: string = useMemo(() => slugify(text), [text]);
       return (
         <h5 id={subId} className="scroll-mt-28" {...props}>
           {children}
@@ -120,10 +145,13 @@ export const markdownComponents = {
   }: {
     node?: { children?: { type: string; tagName?: string }[] };
   } & HTMLAttributes<HTMLParagraphElement>) => {
-    const hasImage = node?.children?.some(
-      (child) => child.type === 'element' && child.tagName === 'img'
-    );
-    const Component = hasImage ? 'div' : 'p';
+    const hasImage: boolean =
+      node?.children?.some(
+        (child) => child.type === 'element' && child.tagName === 'img'
+      ) || false;
+
+    // Fotoğraf bulunduran paragraflar block-level DIV'e çevrilir ki taşmalar önlensin.
+    const Component: React.ElementType = hasImage ? 'div' : 'p';
 
     return (
       <Component
@@ -134,43 +162,43 @@ export const markdownComponents = {
       </Component>
     );
   },
-  img: React.memo(({ ...props }: ImgHTMLAttributes<HTMLImageElement>) => (
+  img: React.memo(({ alt, ...props }: ImgHTMLAttributes<HTMLImageElement>) => (
     <span className="block my-1 mb-6 w-full text-center">
       <Zoom classDialog="custom-zoom-modal">
         <img
           {...props}
           className="rounded-xl border border-border/50 py-5 shadow-lg w-full max-h-[600px] object-contain bg-muted/50 hover:scale-[1.01] transition-transform duration-500 cursor-zoom-in"
           loading="lazy"
-          alt={props.alt || 'Görsel'}
+          alt={alt || 'Görsel'}
         />
       </Zoom>
-      {props.alt && props.alt !== 'Görsel' && (
-        <span className="image-caption">{props.alt}</span>
-      )}
+      {alt && alt !== 'Görsel' && <span className="image-caption">{alt}</span>}
     </span>
   )),
   blockquote: React.memo(
     ({ children, ...props }: BlockquoteHTMLAttributes<HTMLQuoteElement>) => {
-      const text = useMemo(() => getText(children), [children]);
-      const isCallout = useMemo(() => text.trim().startsWith('💡'), [text]);
-      const cleanChildren = useMemo(
+      const text: string = useMemo(() => getText(children), [children]);
+      const isCallout: boolean = useMemo(
+        () => text.trim().startsWith('💡'),
+        [text]
+      );
+      const cleanChildren: ReactNode = useMemo(
         () => removeFirstBulb(children),
         [children]
       );
 
       if (isCallout) {
         // Only pass through data-attributes to the div for indexing/scrolling
-        const dataProps = Object.keys(props)
-          .filter((key) => key.startsWith('data-'))
-          .reduce<Record<string, unknown>>((acc, key) => {
-            acc[key] = props[key as keyof typeof props];
+        const dataProps: Record<string, unknown> = Object.keys(props)
+          .filter((key: string) => key.startsWith('data-'))
+          .reduce<Record<string, unknown>>((acc, key: string) => {
+            acc[key] = (props as Record<string, unknown>)[key];
             return acc;
           }, {});
 
         return (
           <div className="not-prose my-6" {...dataProps}>
             <div className="callout-box">
-              {/* Sol kolon: ikon + dikey çizgi */}
               <div className="flex flex-col items-center gap-2 shrink-0">
                 <div className="callout-icon-wrapper">
                   <Lightbulb className="size-4 text-primary" />
@@ -178,7 +206,6 @@ export const markdownComponents = {
                 <div className="w-px flex-1 bg-primary/20" />
               </div>
 
-              {/* Sağ kolon: label + içerik */}
               <div className="flex-1 min-w-0 flex flex-col gap-2">
                 <div className="callout-label">ÖRNEK / SORU</div>
                 <div className="callout-content">{cleanChildren}</div>
@@ -208,9 +235,13 @@ export const markdownComponents = {
   ),
   code: CodeBlock,
   table: React.memo(({ ...props }: TableHTMLAttributes<HTMLTableElement>) => {
-    const propsRecord = props as Record<string, unknown>;
-    const dataBlockIndex = propsRecord['data-block-index'];
-    const dataHighlightIndex = propsRecord['data-highlight-index'];
+    const propsRecord: Record<string, unknown> = props as Record<
+      string,
+      unknown
+    >;
+    const dataBlockIndex: unknown = propsRecord['data-block-index'];
+    const dataHighlightIndex: unknown = propsRecord['data-highlight-index'];
+
     return (
       <div
         className="not-prose overflow-x-auto my-10 border border-primary/10 rounded-2xl shadow-xl shadow-primary/5 overflow-hidden bg-card/30 backdrop-blur-sm"
@@ -243,11 +274,8 @@ export const markdownComponents = {
   td: ({ ...props }: TdHTMLAttributes<HTMLTableCellElement>) => (
     <td className="px-6 py-4" {...props} />
   ),
-  // KaTeX Display Fix
   div: ({ className, ...props }: HTMLAttributes<HTMLDivElement>) => {
-    if (className?.includes('katex-display')) {
-      return <div className={className} {...props} />;
-    }
+    // KaTeX Display Fix (Sınıf geçirgenliği)
     return <div className={className} {...props} />;
   },
   pre: ({ ...props }: HTMLAttributes<HTMLPreElement>) => <pre {...props} />,

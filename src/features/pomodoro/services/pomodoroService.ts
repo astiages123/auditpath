@@ -1,347 +1,38 @@
 import { supabase } from '@/lib/supabase';
 import type { Json } from '@/types/database.types';
-import {
-  calculatePauseCount,
-  calculateSessionTotals,
-  getCycleCount,
-} from '@/features/pomodoro/logic/sessionMath';
-import { calculateFocusPower } from '@/features/efficiency/logic/metricsCalc';
+import { getCycleCount } from '@/features/pomodoro/logic/sessionMath';
 import type {
   RecentSession,
   TimelineBlock,
 } from '@/features/pomodoro/types/pomodoroTypes';
-import {
-  TimelineEventSchema,
-  type ValidatedTimelineEvent,
-} from '../types/pomodoroTypes';
-import { isValid, parseOrThrow } from '@/utils/validation';
 import { logger } from '@/utils/logger';
+import {
+  calculateSessionMetrics,
+  mapRowToRecentSession,
+  mapRowToTimelineBlock,
+  parseTimelineEventsFromJson,
+} from '../logic/pomodoroLogic';
+
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
 
 /**
- * Create or update a pomodoro session.
- *
- * @param session Session data
- * @param userId User ID
- * @returns Created/updated session data and error if any
+ * Parameters for upserting a pomodoro session to the database.
  */
-export async function upsertPomodoroSession(
-  session: {
-    id: string;
-    courseId: string;
-    courseName?: string | null;
-    timeline: Json[];
-    startedAt: string | number | Date;
-    isCompleted?: boolean;
-  },
-  userId: string
-) {
-  const totals = calculateSessionTotals(session.timeline);
-  const pauseCount = calculatePauseCount(session.timeline);
-
-  // Calculate Focus Power (Odak Gücü)
-  // Formula: (Work / [Break + Pause]) * 20
-  const efficiencyScore = calculateFocusPower(
-    totals.totalWork,
-    totals.totalBreak,
-    totals.totalPause
-  );
-
-  // Validate if courseId is a UUID
-  const uuidRegex =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  let finalCourseId: string | null = session.courseId;
-  let finalCourseName = session.courseName;
-
-  if (!uuidRegex.test(session.courseId)) {
-    // If not a UUID, it's likely a slug. Try to resolve it.
-    const { data: course } = await supabase
-      .from('courses')
-      .select('id, name')
-      .eq('course_slug', session.courseId)
-      .maybeSingle();
-
-    if (course) {
-      finalCourseId = course.id;
-      if (!finalCourseName) finalCourseName = course.name;
-    } else {
-      // If we can't find it, set to null to avoid Postgres 400 error
-      finalCourseId = null;
-    }
-  }
-
-  const { data, error } = await supabase
-    .from('pomodoro_sessions')
-    .upsert({
-      id: session.id,
-      user_id: userId,
-      course_id: uuidRegex.test(finalCourseId || '') ? finalCourseId : null,
-      course_name: finalCourseName,
-      timeline: session.timeline,
-      started_at: new Date(session.startedAt).toISOString(),
-      ended_at: new Date().toISOString(),
-      total_work_time: totals.totalWork,
-      total_break_time: totals.totalBreak,
-      total_pause_time: totals.totalPause,
-      pause_count: pauseCount,
-      efficiency_score: efficiencyScore,
-      last_active_at: new Date().toISOString(),
-      is_completed: session.isCompleted || false,
-    })
-    .select()
-    .single();
-
-  return { data, error: error?.message };
+export interface UpsertSessionParams {
+  id: string;
+  courseId: string;
+  courseName?: string | null;
+  timeline: Json[];
+  startedAt: string | number | Date;
+  isCompleted?: boolean;
 }
 
 /**
- * Get the latest active (not completed) session for a user.
- *
- * @param userId User ID
- * @returns Latest active session or null
+ * Partial data of a session payload for beacon API request.
  */
-export async function getLatestActiveSession(userId: string) {
-  const { data } = await supabase
-    .from('pomodoro_sessions')
-    .select('*, course:courses(*, category:categories(*))')
-    .eq('user_id', userId)
-    .order('started_at', { ascending: false })
-    .neq('is_completed', true)
-    .limit(1)
-    .maybeSingle();
-
-  return data;
-}
-
-/**
- * Delete a pomodoro session.
- *
- * @param sessionId Session ID to delete
- */
-export async function deletePomodoroSession(sessionId: string) {
-  const { error } = await supabase
-    .from('pomodoro_sessions')
-    .delete()
-    .eq('id', sessionId);
-
-  if (error) logger.error('Error deleting session:', error);
-}
-
-/**
- * Update the heartbeat timestamp for zombie session detection.
- * Should be called every 30 seconds during active sessions.
- *
- * @param sessionId Session ID
- * @param stats Optional efficiency and pause time stats
- */
-export async function updatePomodoroHeartbeat(
-  sessionId: string,
-  stats?: {
-    efficiency_score?: number;
-    total_paused_time?: number;
-  }
-): Promise<void> {
-  const { error } = await supabase
-    .from('pomodoro_sessions')
-    .update({
-      last_active_at: new Date().toISOString(),
-      ...(stats?.efficiency_score !== undefined
-        ? { efficiency_score: stats.efficiency_score }
-        : {}),
-      ...(stats?.total_paused_time !== undefined
-        ? { total_pause_time: stats.total_paused_time }
-        : {}),
-    })
-    .eq('id', sessionId);
-
-  if (error) {
-    // Heartbeat failed
-  }
-}
-
-/**
- * Get the count of pomodoro cycles completed today.
- * Uses virtual day logic (day starts at 04:00 AM).
- *
- * @param userId User ID
- * @returns Number of cycles completed today
- */
-export async function getDailySessionCount(userId: string) {
-  const now = new Date();
-  const today = new Date(now);
-
-  // Day starts at 00:00
-  today.setHours(0, 0, 0, 0);
-
-  const { data, error } = await supabase
-    .from('pomodoro_sessions')
-    .select('timeline')
-    .eq('user_id', userId)
-    .gte('started_at', today.toISOString());
-
-  if (error) {
-    return 0;
-  }
-
-  // Count work cycles in all sessions today
-  const totalCycles = (data || []).reduce(
-    (acc, s) => acc + getCycleCount(s.timeline),
-    0
-  );
-  return totalCycles;
-}
-
-/**
- * Get recent pomodoro sessions with timeline data.
- *
- * @param userId User ID
- * @param limit Maximum number of sessions to return
- * @returns Array of timeline blocks
- */
-export async function getRecentSessions(
-  userId: string,
-  limit: number = 20
-): Promise<TimelineBlock[]> {
-  const { data, error } = await supabase
-    .from('pomodoro_sessions')
-    .select(
-      'id, course_name, started_at, ended_at, total_work_time, total_break_time, total_pause_time, timeline'
-    )
-    .eq('user_id', userId)
-    .or('total_work_time.gte.60,total_break_time.gte.60') // Molaları da getir
-    .order('started_at', { ascending: false })
-    .limit(limit);
-
-  if (error || !data) {
-    logger.error('Error fetching recent sessions:', error);
-    return [];
-  }
-
-  return (
-    data as {
-      id: string;
-      course_name: string | null;
-      started_at: string;
-      ended_at: string;
-      total_work_time: number | null;
-      total_break_time: number | null;
-      total_pause_time: number | null;
-      timeline: Json;
-    }[]
-  ).map((s) => {
-    // Trust DB columns as the primary source of truth for finished sessions to match getDailyStats
-    const workTime = s.total_work_time || 0;
-    const breakTime = s.total_break_time || 0;
-    const pauseTime = s.total_pause_time || 0;
-
-    let timeline: Json[] = [];
-    if (Array.isArray(s.timeline)) {
-      timeline = s.timeline;
-    } else if (typeof s.timeline === 'string') {
-      try {
-        timeline = JSON.parse(s.timeline);
-      } catch (e) {
-        logger.error('Failed to parse timeline string:', e as Error);
-      }
-    }
-
-    const validatedTimeline = (timeline as Json[])
-      .map((e) => {
-        if (isValid(TimelineEventSchema, e)) {
-          return parseOrThrow(TimelineEventSchema, e);
-        }
-        return null;
-      })
-      .filter((e): e is ValidatedTimelineEvent => e !== null);
-
-    // Calculate true start/end from timeline if possible to avoid scaling issues in Gantt Chart
-    // especially when session was paused and resumed (which updates started_at)
-    let startTime = s.started_at;
-    let endTime = s.ended_at;
-
-    if (validatedTimeline.length > 0) {
-      const tStart = Math.min(...validatedTimeline.map((e) => e.start));
-      const tEnd = Math.max(...validatedTimeline.map((e) => e.end ?? e.start));
-
-      if (tStart < Infinity) {
-        startTime = new Date(
-          Math.min(new Date(s.started_at).getTime(), tStart)
-        ).toISOString();
-      }
-      if (tEnd > -Infinity) {
-        endTime = new Date(
-          Math.max(new Date(s.ended_at).getTime(), tEnd)
-        ).toISOString();
-      }
-    }
-
-    return {
-      id: s.id,
-      courseName: s.course_name || 'Bilinmeyen Ders',
-      startTime,
-      endTime,
-      durationSeconds: workTime,
-      totalDurationSeconds: workTime + breakTime + pauseTime,
-      pauseSeconds: pauseTime,
-      breakSeconds: breakTime,
-      type: breakTime > workTime ? 'break' : 'work',
-      timeline: validatedTimeline,
-    };
-  });
-}
-
-/**
- * Get recent activity sessions for dashboard.
- *
- * @param userId User ID
- * @param limit Maximum number of sessions to return
- * @returns Array of recent sessions
- */
-export async function getRecentActivitySessions(
-  userId: string,
-  limit: number = 5
-): Promise<RecentSession[]> {
-  const { data, error } = await supabase
-    .from('pomodoro_sessions')
-    .select(
-      'id, course_name, started_at, total_work_time, total_break_time, total_pause_time, pause_count, efficiency_score, timeline'
-    )
-    .eq('user_id', userId)
-    .or('total_work_time.gte.60,total_break_time.gte.60')
-    .order('started_at', { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    logger.error('Error fetching recent activity sessions:', error);
-    return [];
-  }
-
-  return (data || []).map((s) => {
-    const work = s.total_work_time || 0;
-    const brk = s.total_break_time || 0;
-    const pause = s.total_pause_time || 0;
-
-    // Use DB score if exists (> 0), otherwise calculate it on the fly
-    const eScore =
-      s.efficiency_score && s.efficiency_score > 0
-        ? s.efficiency_score
-        : calculateFocusPower(work, brk, pause);
-
-    return {
-      id: s.id,
-      courseName: s.course_name || 'Bilinmeyen Ders',
-      date: s.started_at,
-      durationMinutes: Math.round(work / 60),
-      efficiencyScore: eScore,
-      timeline: Array.isArray(s.timeline) ? (s.timeline as Json[]) : [],
-      totalWorkTime: work,
-      totalBreakTime: brk,
-      totalPauseTime: pause,
-      pauseCount: s.pause_count || 0,
-    };
-  });
-}
-
-interface PomodoroBeaconPayload {
+export interface PomodoroBeaconPayload {
   id: string;
   user_id: string;
   course_id: string | null;
@@ -353,6 +44,231 @@ interface PomodoroBeaconPayload {
   total_break_time: number;
   total_pause_time: number;
   is_completed: boolean;
+}
+
+/**
+ * Heartbeat stats parameter for updating the active session.
+ */
+export interface HeartbeatStats {
+  efficiency_score?: number;
+  total_paused_time?: number;
+}
+
+// ===========================
+// === SESSION CRUD SERVICES ===
+// ===========================
+
+/**
+ * Create or update a pomodoro session.
+ *
+ * @param session Session data mapped from memory
+ * @param userId User ID of the currently authenticated user
+ * @returns Created/updated session data and error if any
+ */
+export async function upsertPomodoroSession(
+  session: UpsertSessionParams,
+  userId: string
+) {
+  try {
+    const parsedTimeline = parseTimelineEventsFromJson(session.timeline);
+    const { totals, pauseCount, efficiencyScore } =
+      calculateSessionMetrics(parsedTimeline);
+
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+    let finalCourseId: string | null = session.courseId;
+    let finalCourseName = session.courseName;
+
+    if (!uuidRegex.test(session.courseId)) {
+      const { data: course, error: courseError } = await supabase
+        .from('courses')
+        .select('id, name')
+        .eq('course_slug', session.courseId)
+        .maybeSingle();
+
+      if (courseError) {
+        logger.error(
+          'PomodoroService',
+          'upsertPomodoroSession',
+          'Error finding course by slug',
+          courseError
+        );
+      }
+
+      if (course) {
+        finalCourseId = course.id;
+        if (!finalCourseName) finalCourseName = course.name;
+      } else {
+        finalCourseId = null;
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('pomodoro_sessions')
+      .upsert({
+        id: session.id,
+        user_id: userId,
+        course_id: uuidRegex.test(finalCourseId || '') ? finalCourseId : null,
+        course_name: finalCourseName,
+        timeline: session.timeline,
+        started_at: new Date(session.startedAt).toISOString(),
+        ended_at: new Date().toISOString(),
+        total_work_time: totals.totalWork,
+        total_break_time: totals.totalBreak,
+        total_pause_time: totals.totalPause,
+        pause_count: pauseCount,
+        efficiency_score: efficiencyScore,
+        last_active_at: new Date().toISOString(),
+        is_completed: session.isCompleted || false,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[pomodoroService][upsertPomodoroSession] Hata:', error);
+      logger.error(
+        'PomodoroService',
+        'upsertPomodoroSession',
+        'Error upserting session',
+        error
+      );
+      return { data: null, error: error.message };
+    }
+
+    return { data, error: null };
+  } catch (error: unknown) {
+    console.error('[pomodoroService][upsertPomodoroSession] Hata:', error);
+    logger.error(
+      'PomodoroService',
+      'upsertPomodoroSession',
+      'Unexpected error',
+      error as Error
+    );
+    return { data: null, error: (error as Error).message };
+  }
+}
+
+/**
+ * Get the latest active (not completed) session for a user.
+ *
+ * @param userId User ID
+ * @returns Latest active session or null
+ */
+export async function getLatestActiveSession(userId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('pomodoro_sessions')
+      .select('*, course:courses(*, category:categories(*))')
+      .eq('user_id', userId)
+      .order('started_at', { ascending: false })
+      .neq('is_completed', true)
+      .limit(1)
+      .maybeSingle();
+
+    if (error) {
+      console.error('[pomodoroService][getLatestActiveSession] Hata:', error);
+      logger.error(
+        'PomodoroService',
+        'getLatestActiveSession',
+        'Error fetching active session',
+        error
+      );
+      return null;
+    }
+
+    return data;
+  } catch (error: unknown) {
+    console.error('[pomodoroService][getLatestActiveSession] Hata:', error);
+    logger.error(
+      'PomodoroService',
+      'getLatestActiveSession',
+      'Unexpected error',
+      error as Error
+    );
+    return null;
+  }
+}
+
+/**
+ * Delete a pomodoro session.
+ *
+ * @param sessionId Session ID to delete
+ */
+export async function deletePomodoroSession(sessionId: string): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('pomodoro_sessions')
+      .delete()
+      .eq('id', sessionId);
+
+    if (error) {
+      console.error('[pomodoroService][deletePomodoroSession] Hata:', error);
+      logger.error(
+        'PomodoroService',
+        'deletePomodoroSession',
+        'Error deleting session',
+        error
+      );
+    }
+  } catch (error: unknown) {
+    console.error('[pomodoroService][deletePomodoroSession] Hata:', error);
+    logger.error(
+      'PomodoroService',
+      'deletePomodoroSession',
+      'Unexpected error',
+      error as Error
+    );
+  }
+}
+
+// ===========================
+// === HEARTBEAT & SYNC SERVICES ===
+// ===========================
+
+/**
+ * Update the heartbeat timestamp for zombie session detection.
+ * Should be called every 30 seconds during active sessions.
+ *
+ * @param sessionId Session ID
+ * @param stats Optional efficiency and pause time stats
+ */
+export async function updatePomodoroHeartbeat(
+  sessionId: string,
+  stats?: HeartbeatStats
+): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('pomodoro_sessions')
+      .update({
+        last_active_at: new Date().toISOString(),
+        ...(stats?.efficiency_score !== undefined
+          ? { efficiency_score: stats.efficiency_score }
+          : {}),
+        ...(stats?.total_paused_time !== undefined
+          ? { total_pause_time: stats.total_paused_time }
+          : {}),
+      })
+      .eq('id', sessionId);
+
+    if (error) {
+      console.error('[pomodoroService][updatePomodoroHeartbeat] Hata:', error);
+      logger.error(
+        'PomodoroService',
+        'updatePomodoroHeartbeat',
+        'Heartbeat failed',
+        error
+      );
+    }
+  } catch (error: unknown) {
+    console.error('[pomodoroService][updatePomodoroHeartbeat] Hata:', error);
+    logger.error(
+      'PomodoroService',
+      'updatePomodoroHeartbeat',
+      'Unexpected error',
+      error as Error
+    );
+  }
 }
 
 /**
@@ -368,16 +284,206 @@ export function saveSessionBeacon(
   supabaseUrl: string,
   supabaseKey: string,
   accessToken?: string
-) {
-  fetch(`${supabaseUrl}/rest/v1/pomodoro_sessions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      apikey: supabaseKey,
-      Authorization: `Bearer ${accessToken || supabaseKey}`,
-      Prefer: 'resolution=merge-duplicates',
-    },
-    body: JSON.stringify(payload),
-    keepalive: true,
-  }).catch((err: unknown) => logger.error('Beacon Error:', err as Error));
+): void {
+  try {
+    fetch(`${supabaseUrl}/rest/v1/pomodoro_sessions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: supabaseKey,
+        Authorization: `Bearer ${accessToken || supabaseKey}`,
+        Prefer: 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify(payload),
+      keepalive: true,
+    }).catch((error: unknown) => {
+      console.error('[pomodoroService][saveSessionBeacon] Hata:', error);
+      logger.error(
+        'PomodoroService',
+        'saveSessionBeacon',
+        'Beacon API request failed',
+        error as Error
+      );
+    });
+  } catch (error: unknown) {
+    console.error('[pomodoroService][saveSessionBeacon] Hata:', error);
+    logger.error(
+      'PomodoroService',
+      'saveSessionBeacon',
+      'Beacon initialization failed',
+      error as Error
+    );
+  }
+}
+
+// ===========================
+// === STATS & LIST SERVICES ===
+// ===========================
+
+/**
+ * Get the count of pomodoro cycles completed today.
+ * Uses virtual day logic (day starts at 04:00 AM conceptually, but queries from 00:00).
+ *
+ * @param userId User ID
+ * @returns Number of cycles completed today
+ */
+export async function getDailySessionCount(userId: string): Promise<number> {
+  try {
+    const now = new Date();
+    const today = new Date(now);
+
+    today.setHours(0, 0, 0, 0);
+
+    const { data, error } = await supabase
+      .from('pomodoro_sessions')
+      .select('timeline')
+      .eq('user_id', userId)
+      .gte('started_at', today.toISOString());
+
+    if (error) {
+      console.error('[pomodoroService][getDailySessionCount] Hata:', error);
+      logger.error(
+        'PomodoroService',
+        'getDailySessionCount',
+        'Error counting sessions',
+        error
+      );
+      return 0;
+    }
+
+    const totalCycles = (data || []).reduce((acc, s) => {
+      const parsedTimeline = Array.isArray(s.timeline)
+        ? parseTimelineEventsFromJson(s.timeline as Json[])
+        : [];
+      return acc + getCycleCount(parsedTimeline);
+    }, 0);
+    return totalCycles;
+  } catch (error: unknown) {
+    console.error('[pomodoroService][getDailySessionCount] Hata:', error);
+    logger.error(
+      'PomodoroService',
+      'getDailySessionCount',
+      'Unexpected error',
+      error as Error
+    );
+    return 0;
+  }
+}
+
+/**
+ * Get recent pomodoro sessions with formatting for the timeline.
+ *
+ * @param userId User ID
+ * @param limit Maximum number of sessions to return
+ * @returns Array of timeline blocks for display
+ */
+export async function getRecentSessions(
+  userId: string,
+  limit: number = 20
+): Promise<TimelineBlock[]> {
+  try {
+    const { data, error } = await supabase
+      .from('pomodoro_sessions')
+      .select(
+        'id, course_name, started_at, ended_at, total_work_time, total_break_time, total_pause_time, timeline'
+      )
+      .eq('user_id', userId)
+      .or('total_work_time.gte.60,total_break_time.gte.60') // Molaları da getir
+      .order('started_at', { ascending: false })
+      .limit(limit);
+
+    if (error || !data) {
+      console.error('[pomodoroService][getRecentSessions] Hata:', error);
+      logger.error(
+        'PomodoroService',
+        'getRecentSessions',
+        'Error fetching recent sessions',
+        error || new Error('No data')
+      );
+      return [];
+    }
+
+    return (
+      data as {
+        id: string;
+        course_name: string | null;
+        started_at: string;
+        ended_at: string;
+        total_work_time: number | null;
+        total_break_time: number | null;
+        total_pause_time: number | null;
+        timeline: Json;
+      }[]
+    ).map(mapRowToTimelineBlock);
+  } catch (error: unknown) {
+    console.error('[pomodoroService][getRecentSessions] Hata:', error);
+    logger.error(
+      'PomodoroService',
+      'getRecentSessions',
+      'Unexpected error',
+      error as Error
+    );
+    return [];
+  }
+}
+
+/**
+ * Get recent activity sessions for dashboard listing.
+ *
+ * @param userId User ID
+ * @param limit Maximum number of sessions to return
+ * @returns Array of recent sessions
+ */
+export async function getRecentActivitySessions(
+  userId: string,
+  limit: number = 5
+): Promise<RecentSession[]> {
+  try {
+    const { data, error } = await supabase
+      .from('pomodoro_sessions')
+      .select(
+        'id, course_name, started_at, total_work_time, total_break_time, total_pause_time, pause_count, efficiency_score, timeline'
+      )
+      .eq('user_id', userId)
+      .or('total_work_time.gte.60,total_break_time.gte.60')
+      .order('started_at', { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error(
+        '[pomodoroService][getRecentActivitySessions] Hata:',
+        error
+      );
+      logger.error(
+        'PomodoroService',
+        'getRecentActivitySessions',
+        'Error fetching recent activity sessions',
+        error
+      );
+      return [];
+    }
+
+    return (
+      data as {
+        id: string;
+        course_name: string | null;
+        started_at: string;
+        total_work_time: number | null;
+        total_break_time: number | null;
+        total_pause_time: number | null;
+        pause_count: number | null;
+        efficiency_score: number | null;
+        timeline: Json;
+      }[]
+    ).map(mapRowToRecentSession);
+  } catch (error: unknown) {
+    console.error('[pomodoroService][getRecentActivitySessions] Hata:', error);
+    logger.error(
+      'PomodoroService',
+      'getRecentActivitySessions',
+      'Unexpected error',
+      error as Error
+    );
+    return [];
+  }
 }

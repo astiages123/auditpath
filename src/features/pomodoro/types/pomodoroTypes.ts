@@ -1,7 +1,14 @@
+import { z } from 'zod';
 import { Json } from '@/types/common';
 import { QuizInsert } from '@/features/quiz/types';
-import { z } from 'zod';
 
+// ===========================
+// === ENUMS & SCHEMAS ===
+// ===========================
+
+/**
+ * Valid event types for the pomodoro timeline.
+ */
 export const TimelineEventSchema = z.object({
   type: z
     .enum([
@@ -16,8 +23,7 @@ export const TimelineEventSchema = z.object({
       'BREAK',
       'PAUSE',
     ])
-    .transform((val) => {
-      // Normalize to English
+    .transform((val: string): 'work' | 'break' | 'pause' => {
       const v = val.toLowerCase();
       if (v === 'çalışma') return 'work';
       if (v === 'mola') return 'break';
@@ -29,13 +35,24 @@ export const TimelineEventSchema = z.object({
   duration: z.number().optional(),
 });
 
+/** Validated form of a timeline event. */
 export type ValidatedTimelineEvent = z.infer<typeof TimelineEventSchema>;
 
+/**
+ * Schema for pause intervals within a session.
+ */
 export const PauseIntervalSchema = z.object({
   start: z.string(),
   end: z.string(),
 });
 
+// ===========================
+// === DATABASE INSERTS & UPSERTS ===
+// ===========================
+
+/**
+ * Data required to insert a new pomodoro session into the database.
+ */
 export interface PomodoroInsert {
   course_id: string;
   course_name?: string | null;
@@ -44,10 +61,13 @@ export interface PomodoroInsert {
   total_work_time?: number | null;
   total_break_time?: number | null;
   total_pause_time?: number | null;
-  timeline?: Json; // Matches Json type in DB
+  timeline?: Json;
   notes?: string;
 }
 
+/**
+ * Data required to upsert video progress.
+ */
 export interface VideoUpsert {
   video_id: string;
   course_id?: string;
@@ -57,8 +77,18 @@ export interface VideoUpsert {
   last_watched_at?: string;
 }
 
+/**
+ * Union type representing valid activity data formats.
+ */
 export type ActivityData = PomodoroInsert | VideoUpsert | QuizInsert;
 
+// ===========================
+// === UI / FRONTEND INTERFACES ===
+// ===========================
+
+/**
+ * Represents a single recent activity item to display to the user.
+ */
 export interface RecentActivity {
   id: string;
   type: 'pomodoro' | 'video' | 'quiz';
@@ -67,6 +97,9 @@ export interface RecentActivity {
   durationMinutes?: number;
 }
 
+/**
+ * Represents a discrete block of time within a pomodoro timeline view.
+ */
 export interface TimelineBlock {
   id: string;
   courseName: string;
@@ -80,6 +113,9 @@ export interface TimelineBlock {
   timeline?: Json[];
 }
 
+/**
+ * Detailed information for an individual session, often used for analytics.
+ */
 export interface DetailedSession {
   id: string;
   courseName: string;
@@ -91,10 +127,13 @@ export interface DetailedSession {
   startedAt: string;
 }
 
+/**
+ * Summary view of a recent pomodoro session.
+ */
 export interface RecentSession {
   id: string;
   courseName: string;
-  date: string; // ISO string
+  date: string;
   durationMinutes: number;
   efficiencyScore: number;
   timeline: Json[];

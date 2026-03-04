@@ -75,34 +75,11 @@ vi.mock('@/features/efficiency/hooks/useEfficiency', () => ({
   useEfficiencyLogic: vi.fn(),
 }));
 
-import { useDailyMetrics } from '@/features/efficiency/hooks/useDailyMetrics';
-import { useEfficiencyTrends } from '@/features/efficiency/hooks/useEfficiencyTrends';
 import { useEfficiencyLogic } from '@/features/efficiency/hooks/useEfficiency';
+import { type DailyMetrics } from '@/features/efficiency/hooks/useDailyMetrics';
+import { type DailyEfficiencySummary } from '@/features/efficiency/types/efficiencyTypes';
 
 // === Shared mock helper ===
-
-const mockDailyMetrics = (
-  overrides: Partial<ReturnType<typeof useDailyMetrics>> = {}
-) => {
-  (useDailyMetrics as ReturnType<typeof vi.fn>).mockReturnValue({
-    loading: false,
-    efficiencySummary: {
-      efficiencyScore: 85,
-      netWorkTimeSeconds: 3600, // 60 dakika = 3600 saniye
-      totalBreakTimeSeconds: 600,
-      totalPauseTimeSeconds: 0,
-      pauseCount: 0,
-      totalCycles: 4,
-      sessions: [],
-    },
-    dailyGoalMinutes: 200,
-    todayVideoMinutes: 30,
-    todayVideoCount: 2,
-    videoTrendPercentage: 10,
-    trendPercentage: 5,
-    ...overrides,
-  });
-};
 
 const mockEfficiencyLogic = (overrides = {}) => {
   (useEfficiencyLogic as ReturnType<typeof vi.fn>).mockReturnValue({
@@ -114,16 +91,6 @@ const mockEfficiencyLogic = (overrides = {}) => {
     currentMinutes: 60,
     formattedCurrentTime: '1sa 0dk',
     ...overrides,
-  });
-};
-
-const mockTrends = (loading = false) => {
-  (useEfficiencyTrends as ReturnType<typeof vi.fn>).mockReturnValue({
-    loading,
-    efficiencyTrend: [],
-    focusPowerWeek: [],
-    focusPowerMonth: [],
-    focusPowerAll: [],
   });
 };
 
@@ -384,35 +351,33 @@ describe('MasteryProgressNavigator — skor / renk mantığı', () => {
 // ============================================================
 
 describe('FocusHubCard', () => {
+  const defaultMetrics: DailyMetrics = {
+    efficiencySummary: {
+      efficiencyScore: 85,
+      netWorkTimeSeconds: 3600, // 3600 sn = 60 dk
+      totalBreakTimeSeconds: 600,
+      totalPauseTimeSeconds: 0,
+      pauseCount: 0,
+      totalCycles: 4,
+      sessions: [],
+    } as DailyEfficiencySummary,
+    dailyGoalMinutes: 200,
+    todayVideoMinutes: 30,
+    todayReadingMinutes: 0,
+    todayVideoCount: 2,
+    pagesRead: 0,
+    videoTrendPercentage: 10,
+    trendPercentage: 5,
+    loading: false,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockEfficiencyLogic();
-    mockTrends();
-  });
-
-  it('loading=true iken Skeleton render eder, "Günlük Odak" göstermez', () => {
-    mockDailyMetrics({ loading: true });
-
-    render(<FocusHubCard />);
-
-    // Yüklenme sırasında asıl içerik görünmez
-    expect(screen.queryByText('Günlük Odak')).not.toBeInTheDocument();
   });
 
   it('netWorkTimeSeconds=3600 → UI\'da "60" değeri "Günlük Odak" altında görünür', () => {
-    mockDailyMetrics({
-      efficiencySummary: {
-        efficiencyScore: 85,
-        netWorkTimeSeconds: 3600, // 3600 sn = 60 dk
-        totalBreakTimeSeconds: 600,
-        totalPauseTimeSeconds: 0,
-        pauseCount: 0,
-        totalCycles: 4,
-        sessions: [],
-      },
-    });
-
-    render(<FocusHubCard />);
+    render(<FocusHubCard dailyMetrics={defaultMetrics} efficiencyTrend={[]} />);
 
     // FocusHubCard: currentWorkMinutes = Math.round(3600/60) = 60
     // Bunu "Günlük Odak" bölümünde gösterir
@@ -421,19 +386,15 @@ describe('FocusHubCard', () => {
   });
 
   it('netWorkTimeSeconds=0 → UI\'da "0" değeri render edilir', () => {
-    mockDailyMetrics({
+    const metrics = {
+      ...defaultMetrics,
       efficiencySummary: {
-        efficiencyScore: 0,
+        ...defaultMetrics.efficiencySummary!,
         netWorkTimeSeconds: 0,
-        totalBreakTimeSeconds: 0,
-        totalPauseTimeSeconds: 0,
-        pauseCount: 0,
-        totalCycles: 0,
-        sessions: [],
       },
-    });
+    };
 
-    render(<FocusHubCard />);
+    render(<FocusHubCard dailyMetrics={metrics} efficiencyTrend={[]} />);
 
     expect(screen.getByText('Günlük Odak')).toBeInTheDocument();
     // 0/60 = 0
@@ -441,30 +402,27 @@ describe('FocusHubCard', () => {
   });
 
   it('netWorkTimeSeconds=5400 → UI\'da "90" değeri render edilir (1.5 saat = 90 dk)', () => {
-    mockDailyMetrics({
+    const metrics = {
+      ...defaultMetrics,
       efficiencySummary: {
-        efficiencyScore: 95,
-        netWorkTimeSeconds: 5400, // 5400 sn = 90 dk
-        totalBreakTimeSeconds: 0,
-        totalPauseTimeSeconds: 0,
-        pauseCount: 0,
-        totalCycles: 6,
-        sessions: [],
+        ...defaultMetrics.efficiencySummary!,
+        netWorkTimeSeconds: 5400,
       },
-    });
+    };
 
-    render(<FocusHubCard />);
+    render(<FocusHubCard dailyMetrics={metrics} efficiencyTrend={[]} />);
 
     expect(screen.getByText('90')).toBeInTheDocument();
   });
 
   it('Video İzleme verisini doğru render eder', () => {
-    mockDailyMetrics({
+    const metrics = {
+      ...defaultMetrics,
       todayVideoCount: 3,
       todayVideoMinutes: 45,
-    });
+    };
 
-    render(<FocusHubCard />);
+    render(<FocusHubCard dailyMetrics={metrics} efficiencyTrend={[]} />);
 
     expect(screen.getByText('Video İzleme')).toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument();
@@ -472,9 +430,12 @@ describe('FocusHubCard', () => {
   });
 
   it('goal miktarını "/ Xdk" formatında gösterir', () => {
-    mockDailyMetrics({ dailyGoalMinutes: 200 });
+    const metrics = {
+      ...defaultMetrics,
+      dailyGoalMinutes: 200,
+    };
 
-    render(<FocusHubCard />);
+    render(<FocusHubCard dailyMetrics={metrics} efficiencyTrend={[]} />);
 
     expect(screen.getByText('/ 200dk')).toBeInTheDocument();
   });

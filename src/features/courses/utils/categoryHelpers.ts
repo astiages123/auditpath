@@ -1,13 +1,12 @@
-/**
- * Category helper functions.
- * Provides utilities for category name normalization and slug handling.
- */
+// ===========================
+// === EXPORTS ===
+// ===========================
 
 /**
  * Normalize category names to database slugs for consistent matching.
  *
- * @param rawName Raw category name
- * @returns Normalized category slug
+ * @param rawName - Raw category name to be formatted
+ * @returns Normalized category slug string
  */
 export function normalizeCategorySlug(rawName: string): string {
   const slugMap: Record<string, string> = {

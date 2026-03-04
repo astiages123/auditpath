@@ -1,16 +1,15 @@
 import type { Rank } from '@/types/auth';
 import { RANKS } from './constants';
 
-/**
- * Rank helper functions.
- * Provides utilities for rank calculation and progression.
- */
+// ===========================
+// === RANK RESOLUTION ===
+// ===========================
 
 /**
- * Get the rank for a given progress percentage.
+ * Retrieves the appropriate rank for a given progress percentage.
  *
- * @param percentage Progress percentage (0-100)
- * @returns The appropriate rank for the percentage
+ * @param percentage - The user's progress percentage (0-100)
+ * @returns The Rank object corresponding to the progress
  */
 export function getRankForPercentage(percentage: number): Rank {
   const sortedRanks = [...RANKS].sort(
@@ -21,17 +20,17 @@ export function getRankForPercentage(percentage: number): Rank {
       return rank;
     }
   }
-  return RANKS[0];
+  return RANKS[0] as Rank;
 }
 
 /**
- * Get the next rank after the current rank.
+ * Retrieves the next progressive rank after the current one.
  *
- * @param currentRankId Current rank ID
- * @returns Next rank or null if already at max rank
+ * @param currentRankId - The ID of the user's current rank
+ * @returns The next Rank object, or null if the user is at the maximum rank
  */
 export function getNextRank(currentRankId: string): Rank | null {
   const currentIndex = RANKS.findIndex((r: Rank) => r.id === currentRankId);
   if (currentIndex === -1 || currentIndex === RANKS.length - 1) return null;
-  return RANKS[currentIndex + 1];
+  return RANKS[currentIndex + 1] as Rank;
 }

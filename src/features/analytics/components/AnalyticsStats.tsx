@@ -1,3 +1,7 @@
+// ==========================================
+// IMPORTS
+// ==========================================
+
 import { FC } from 'react';
 import {
   TrendingUp,
@@ -7,8 +11,13 @@ import {
   Database,
   PiggyBank,
 } from 'lucide-react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/utils/stringHelpers';
+
+// ==========================================
+// INTERFACES
+// ==========================================
 
 interface AnalyticsStatsProps {
   totalCostTry: number;
@@ -21,6 +30,10 @@ interface AnalyticsStatsProps {
   formatCurrency: (value: number) => string;
 }
 
+// ==========================================
+// COMPONENT
+// ==========================================
+
 export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
   totalCostTry,
   totalCostUsd,
@@ -31,7 +44,7 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
   totalCachedTokens,
   formatCurrency,
 }) => {
-  // --- HESAPLAMALAR ---
+  // === CALCULATIONS ===
   // Kullanıcının hissiyatını güçlendirmek için gerçekçi (matematiksel) bir tasarruf simülasyonu
   const isHighSavings = cacheHitRate > 50;
 
@@ -40,11 +53,11 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
   const safeHitRate = Math.min(cacheHitRate, 99.9); // %100 veya sonsuzluk hatasını önlemek için
   const costWithoutCache = totalCostTry / Math.max(0.01, 1 - safeHitRate / 100);
   const savedMoney = Math.max(0, costWithoutCache - totalCostTry);
-  // --- HESAPLAMALAR ---
 
+  // === RENDER ===
   return (
     <div className="grid gap-6 md:grid-cols-3">
-      <Card className="bento-card card-hover bg-card border-primary/20">
+      <Card className="bento-card bg-card border-primary/20 hover:border-accent/40 transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
             Toplam Harcama
@@ -82,7 +95,7 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
 
       <Card
         className={cn(
-          'bento-card card-hover bg-card border-primary/10 relative overflow-hidden',
+          'bento-card bg-card border-primary/10 relative overflow-hidden hover:border-accent/40 transition-all duration-300',
           isHighSavings && 'border-emerald-500/30'
         )}
       >

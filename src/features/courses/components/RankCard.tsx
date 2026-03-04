@@ -1,15 +1,20 @@
+// ===========================
+// === IMPORTS ===
+// ===========================
+
 import { ChevronRight, Target, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
-import { type Rank } from '@/types/auth';
 import type { Variants } from 'framer-motion';
 
-interface RankInfo extends Rank {
-  threshold?: number;
-}
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
 
-interface RankCardProps {
+import type { RankInfo } from '@/features/courses/types/courseTypes';
+
+export interface RankCardProps {
   currentRank: RankInfo | null;
   nextRank: RankInfo | null;
   rankProgress: number;
@@ -20,6 +25,14 @@ interface RankCardProps {
   variants: Variants;
 }
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * Displays the user's current rank, next rank target, progress bar,
+ * and an estimated time to reach the next rank.
+ */
 export function RankCard({
   currentRank,
   nextRank,
@@ -47,7 +60,7 @@ export function RankCard({
               {showSkeleton ? (
                 <Skeleton className="size-20 rounded-full bg-surface-hover" />
               ) : (
-                <div className="relative size-20 rounded-full overflow-hidden border-0 bg-transparent flex items-center justify-center">
+                <div className="relative size-25 rounded-full overflow-hidden border-0 bg-transparent flex items-center justify-center">
                   <img
                     src={currentRankImage}
                     alt={currentRank?.name}

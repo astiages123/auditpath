@@ -11,6 +11,7 @@ const NOTION_TOKEN = Deno.env.get('NOTION_TOKEN');
 const NOTION_DATABASE_ID = Deno.env.get('NOTION_DATABASE_ID');
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+const NOTION_SYNC_TOKEN = Deno.env.get('NOTION_SYNC_TOKEN');
 
 const MAX_CONCURRENT_PAGES = 3;
 const TOLERANCE_MS = 2000;
@@ -243,11 +244,40 @@ async function processPage(
 // --- MAIN ---
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+    return new Response('ok', { headers: corsHeaders(req) });
   }
 
   try {
     setupCalloutTransformer();
+
+    // --- AUTHORIZATION CHECK ---
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Missing Authorization header',
+        }),
+        {
+          status: 401,
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    const token = authHeader.replace(/^Bearer\s+/, '');
+    if (!NOTION_SYNC_TOKEN || token !== NOTION_SYNC_TOKEN) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Invalid or missing sync token',
+        }),
+        {
+          status: 403,
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     const { data: courses } = await supabase.from('courses').select('id, name');
     const courseLookup = new Map(courses?.map((c) => [c.name.trim(), c.id]));
@@ -334,14 +364,14 @@ serve(async (req) => {
     };
 
     return new Response(JSON.stringify({ success: true, stats }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
     });
   } catch (err) {
     return new Response(
       JSON.stringify({ success: false, error: String(err) }),
       {
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
       }
     );
   }

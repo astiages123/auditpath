@@ -58,8 +58,11 @@ describe('User Flow Integration', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(getSupabase).mockReturnValue(mockSupabase as any);
+
+    vi.mocked(getSupabase).mockReturnValue(
+      // eslint-disable-next-line no-restricted-syntax
+      mockSupabase as unknown as ReturnType<typeof getSupabase>
+    );
     mockSupabase.auth.getSession.mockResolvedValue({
       data: { session: null },
       error: null,

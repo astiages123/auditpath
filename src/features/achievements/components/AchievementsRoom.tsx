@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-// Siyasal Bilgiler ikonları eklendi: Scale (Hukuk), Coins (Ekonomi), Landmark (Muhasebe), Globe (Genel)
 import {
   Scroll,
   Sparkles,
@@ -12,14 +11,18 @@ import {
   Building,
 } from 'lucide-react';
 import { getUnlockedAchievements as getDbUnlocked } from '@/features/achievements/services/achievementService';
-import { type UnlockedAchievement } from '@/features/achievements/types/achievementsTypes';
+import type { UnlockedAchievement } from '@/features/achievements/types/achievementsTypes';
 import { GUILDS, getAchievementsByGuild } from '../logic/achievementsData';
-import { Achievement, GuildType } from '../types/achievementsTypes';
+import type { Achievement, GuildType } from '../types/achievementsTypes';
 import { useProgress } from '@/shared/hooks/useProgress';
 import { SealCard } from './SealCard';
 import { SealDetailModal } from './SealDetailModal';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { logger } from '@/utils/logger';
+
+// ===========================
+// === CONSTANTS ===
+// ===========================
 
 const GUILD_ORDER: GuildType[] = [
   'HUKUK',
@@ -32,22 +35,30 @@ const GUILD_ORDER: GuildType[] = [
   'SPECIAL',
 ];
 
-// Her lonca için tematik ikon haritası
 const GUILD_ICONS: Record<GuildType, React.ReactNode> = {
-  HUKUK: <Scale className="w-5 h-5" />, // Terazi (Adalet)
-  IKTISAT: <Coins className="w-5 h-5" />, // Sikkeler (Altın Akış)
-  MUHASEBE_MALIYE: <Landmark className="w-5 h-5" />, // Hazine Binası (Muhafızlar)
-  SIYASAL_BILGILER: <Building className="w-5 h-5" />, // Bina (Kamu & Strateji)
-  GY_GK: <Globe className="w-5 h-5" />, // Dünya Küresi (Yedi Diyar)
-  HYBRID: <Scroll className="w-5 h-5" />, // Parşömen (Kadim İlimler)
-  SPECIAL: <Sparkles className="w-5 h-5" />, // Işıltı (Büyü/Ustalık)
-  MASTERY: <Crown className="w-5 h-5" />, // Taç (Ustalık/Liderlik)
-  TITLES: <Award className="w-5 h-5" />, // Ödül/Madalya (Unvanlar)
+  HUKUK: <Scale className="w-5 h-5" />,
+  IKTISAT: <Coins className="w-5 h-5" />,
+  MUHASEBE_MALIYE: <Landmark className="w-5 h-5" />,
+  SIYASAL_BILGILER: <Building className="w-5 h-5" />,
+  GY_GK: <Globe className="w-5 h-5" />,
+  HYBRID: <Scroll className="w-5 h-5" />,
+  SPECIAL: <Sparkles className="w-5 h-5" />,
+  MASTERY: <Crown className="w-5 h-5" />,
+  TITLES: <Award className="w-5 h-5" />,
 };
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * AchievementsRoom Component
+ * Main view displaying grouped achievements by Guild and their unlock status.
+ */
 export function AchievementsRoom() {
   const { stats, isLoading } = useProgress();
   const { user } = useAuth();
+
   const [unlockedAchievements, setUnlockedAchievements] = useState<
     Map<string, string>
   >(new Map());
@@ -57,31 +68,40 @@ export function AchievementsRoom() {
 
   const achievementsByGuild = getAchievementsByGuild();
 
+  // Fetch Unlocked Achievements
   useEffect(() => {
     if (isLoading || !user || !stats) return;
 
     const fetchUnlockedAchievements = async () => {
       try {
         const dbUnlocked = await getDbUnlocked(user.id);
-
-        // Update state with achievements from database
-        // Using achievement_id as the key in the map
         setUnlockedAchievements(
           new Map(
             dbUnlocked.map((a: UnlockedAchievement) => [a.id, a.unlockedAt])
           )
         );
       } catch (error) {
-        logger.error('Bilgelik Arşivi veri çekme hatası:', error as Error);
+        logger.error(
+          'AchievementsRoom',
+          'fetchUnlockedAchievements',
+          'Bilgelik Arşivi veri çekme hatası:',
+          error
+        );
       }
     };
 
     fetchUnlockedAchievements();
   }, [stats, isLoading, user]);
 
+  // Handlers
   const handleSealClick = (achievement: Achievement) => {
     setSelectedAchievement(achievement);
     setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedAchievement(null);
   };
 
   return (
@@ -95,13 +115,11 @@ export function AchievementsRoom() {
 
           return (
             <section key={guildId} className="relative">
-              {/* Lonca Başlığı */}
+              {/* Guild Header */}
               <div className="flex items-center gap-4 mb-5 md:mb-8">
                 <div
                   className="w-1.5 h-10 rounded-full"
-                  style={{
-                    backgroundColor: guild.color,
-                  }}
+                  style={{ backgroundColor: guild.color }}
                 />
                 <div>
                   <h2 className="text-xl font-bold flex items-center gap-3">
@@ -116,6 +134,7 @@ export function AchievementsRoom() {
                 </div>
               </div>
 
+              {/* Achievements Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-6">
                 {achievements.map((achievement) => (
                   <SealCard
@@ -130,13 +149,11 @@ export function AchievementsRoom() {
           );
         })}
 
+        {/* Modal */}
         <SealDetailModal
           achievement={selectedAchievement}
           isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false);
-            setSelectedAchievement(null);
-          }}
+          onClose={closeModal}
           isUnlocked={
             selectedAchievement
               ? unlockedAchievements.has(selectedAchievement.id)
@@ -144,7 +161,7 @@ export function AchievementsRoom() {
           }
           unlockedAt={
             selectedAchievement
-              ? unlockedAchievements.get(selectedAchievement.id)
+              ? unlockedAchievements.get(selectedAchievement.id) || null
               : null
           }
         />

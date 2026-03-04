@@ -12,11 +12,22 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { GenerationLog, GenerationStep } from '@/features/quiz/types';
 
+// === TYPES ===
+
 interface MappingProgressViewProps {
+  /** Sınav üretim ilerlemesi (mevcut soru / toplam kota) */
   examProgress: { current: number; total: number };
+  /** Üretim sürecine ait teknik kayıtlar */
   examLogs: GenerationLog[];
 }
 
+// === LOGIC: HELPERS ===
+
+/**
+ * Teknik adım isimlerini kullanıcı dostu açıklamalara dönüştürür.
+ * @param step Mevcut üretim adımı
+ * @param msg Varsayılan teknik mesaj
+ */
 const getFriendlyMessage = (step: GenerationStep, msg: string) => {
   if (step === 'MAPPING')
     return 'Ders notlarındaki kritik kavramlar haritalandırılıyor...';
@@ -31,16 +42,27 @@ const getFriendlyMessage = (step: GenerationStep, msg: string) => {
   return msg;
 };
 
+// === COMPONENT ===
+
+/**
+ * Akıllı sınav üretim sürecindeki ilerlemeyi ve adımları gösteren görünüm.
+ */
 export function MappingProgressView({
   examProgress,
   examLogs,
 }: MappingProgressViewProps) {
+  // === STATE ===
+
   const [showLogs, setShowLogs] = useState(false);
+
+  // === RENDER LOGIC ===
+
   const hasError = examLogs.some((l) => l.step === 'ERROR');
   const isAllDone = examLogs.some((l) => l.step === 'COMPLETED');
   const latestLog = examLogs[0];
   const latestStep = latestLog?.step;
 
+  /** İlerleme çubuğu değerini hesaplar */
   const getProgressValue = () => {
     if (isAllDone) return 100;
     if (examProgress.current === 0) {
@@ -57,6 +79,8 @@ export function MappingProgressView({
   };
 
   const progressValue = getProgressValue();
+
+  /** Görsel akıştaki ana adımlar */
   const steps = [
     {
       id: 'prep',
@@ -83,9 +107,12 @@ export function MappingProgressView({
     },
   ];
 
+  // === RENDER ===
+
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">
       <div className="w-full max-w-md space-y-10 py-6 mx-auto my-auto">
+        {/* PROGRESS SECTION */}
         <div className="space-y-4">
           <div className="flex items-center justify-between text-sm font-semibold px-1">
             <span className="text-primary/90">Akademik Hazırlık Süreci</span>
@@ -101,6 +128,7 @@ export function MappingProgressView({
           />
         </div>
 
+        {/* STEPS TIMELINE SECTION */}
         <div className="space-y-8 relative">
           <div className="absolute left-[15px] top-2 bottom-2 w-[2px] bg-muted/30 -z-10" />
           {steps.map((step, i) => {
@@ -166,6 +194,7 @@ export function MappingProgressView({
           })}
         </div>
 
+        {/* LOGS SECTION */}
         <div className="pt-6 border-t border-border/10">
           <Button
             variant="ghost"

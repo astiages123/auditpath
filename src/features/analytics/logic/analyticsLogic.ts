@@ -1,28 +1,43 @@
+// ==========================================
+// IMPORTS
+// ==========================================
+
 import { eachDayOfInterval, format, startOfWeek } from 'date-fns';
 import { tr } from 'date-fns/locale';
+
 import { formatDateKey } from '@/utils/dateUtils';
-import { logger } from '@/utils/logger';
-
-// --- Constants ---
-
-// Use a scaling factor to perform integer arithmetic for currency to avoid floating point errors.
-// e.g. $0.0001 -> 1 (if factor is 10000)
-const CURRENCY_SCALING_FACTOR = 10000;
-
-// --- Zod Schemas ---
 
 import {
   AiGenerationCost,
   AiGenerationCostSchema,
 } from '../types/analyticsTypes';
 
+// ==========================================
+// EXPORTS & SCHEMAS
+// ==========================================
+
 export { type AiGenerationCost, AiGenerationCostSchema };
 
-// --- Helper Functions ---
+// ==========================================
+// CONSTANTS
+// ==========================================
+
+/**
+ * Use a scaling factor to perform integer arithmetic for currency to avoid floating point errors.
+ * e.g. $0.0001 -> 1 (if factor is 10000)
+ */
+const CURRENCY_SCALING_FACTOR = 10000;
+
+// ==========================================
+// LOGIC FUNCTIONS
+// ==========================================
 
 /**
  * Validates and sanitizes raw log data from Supabase.
- * Invalid entries are logged to console (in dev) and skipped.
+ * Invalid entries are logged to console and skipped.
+ *
+ * @param {unknown[]} rawLogs - The raw logs fetched from the database
+ * @returns {AiGenerationCost[]} Array of validated logs
  */
 export function validateLogs(rawLogs: unknown[]): AiGenerationCost[] {
   const validLogs: AiGenerationCost[] = [];
@@ -31,9 +46,7 @@ export function validateLogs(rawLogs: unknown[]): AiGenerationCost[] {
     if (result.success) {
       validLogs.push(result.data);
     } else {
-      logger.warn('Invalid analytics log entry skipped:', {
-        error: result.error,
-      });
+      console.warn('[analyticsLogic][validateLogs] Hata:', result.error);
     }
   });
   return validLogs;
@@ -43,11 +56,14 @@ export function validateLogs(rawLogs: unknown[]): AiGenerationCost[] {
  * Processes daily data for the chart using an optimized O(N) approach.
  * Aggregates costs by date using a Map to avoid nested loops.
  *
- * @param logs Validated logs
- * @param rate Current USD/TRY exchange rate
- * @returns Array of data points for the Recharts AreaChart
+ * @param {AiGenerationCost[]} logs - Validated costs logs
+ * @param {number} rate - Current USD/TRY exchange rate
+ * @returns {Array<{ date: string, cost: number, fullDate: string, timestamp: number }>} Array of data points for the Recharts AreaChart
  */
-export function processDailyData(logs: AiGenerationCost[], rate: number) {
+export function processDailyData(
+  logs: AiGenerationCost[],
+  rate: number
+): Array<{ date: string; cost: number; fullDate: string; timestamp: number }> {
   if (logs.length === 0) return [];
 
   // 1. Determine Date Range
@@ -105,7 +121,6 @@ export function processDailyData(logs: AiGenerationCost[], rate: number) {
       date: format(day, 'dd MMM', { locale: tr }),
       cost: parsedCost,
       fullDate: format(day, 'dd MMMM yyyy', { locale: tr }),
-      // original data structure required specific fields, keeping them:
       timestamp: day.getTime(),
     };
   });
@@ -113,6 +128,9 @@ export function processDailyData(logs: AiGenerationCost[], rate: number) {
 
 /**
  * Calculates total cost safely using integer math.
+ *
+ * @param {AiGenerationCost[]} logs - The AI generation cost logs
+ * @returns {number} Standardized total cost in USD
  */
 export function calculateTotalCostUsd(logs: AiGenerationCost[]): number {
   const totalScaled = logs.reduce((acc, log) => {
@@ -124,7 +142,10 @@ export function calculateTotalCostUsd(logs: AiGenerationCost[]): number {
 }
 
 /**
- * Calculates cache hit rate percentage.
+ * Calculates cache hit rate percentage based on cached vs prompt tokens for supported providers.
+ *
+ * @param {AiGenerationCost[]} logs - The AI generation cost logs
+ * @returns {number} The calculated cache hit rate as a percentage (0 to 100)
  */
 export function calculateCacheHitRate(logs: AiGenerationCost[]): number {
   // Sadece önbellek mekanizması olan modelleri hesaplamaya dahil et
@@ -144,5 +165,6 @@ export function calculateCacheHitRate(logs: AiGenerationCost[]): number {
     (acc, l) => acc + (l.cached_tokens || 0),
     0
   );
+
   return (totalCachedTokens / totalPromptTokens) * 100;
 }

@@ -38,7 +38,10 @@ const ROUTE_LABELS: Record<string, string> = {
   schedule: 'Çalışma Programı',
 };
 
+// === COMPONENT ===
+
 export function GlobalBreadcrumb() {
+  // === HOOKS ===
   const location = useLocation();
   const pathnames = location.pathname.split('/').filter((x) => x);
   const [data, setData] = useState<{
@@ -59,28 +62,37 @@ export function GlobalBreadcrumb() {
     isQuizPath || isNotesPath ? pathnames[courseSlugIdx] : null;
   const topicSlug = isQuizPath || isNotesPath ? pathnames[topicSlugIdx] : null;
 
+  // === EFFECTS ===
+
   useEffect(() => {
     async function resolveData() {
       if (courseSlug) {
-        const cData = await getCourseBySlug(courseSlug);
+        try {
+          const cData = await getCourseBySlug(courseSlug);
 
-        if (topicSlug && cData) {
-          // Fetch topic name by slugifying section_title
-          const { data: chunks } = await supabase
-            .from('note_chunks')
-            .select('section_title')
-            .eq('course_id', cData.id);
+          if (topicSlug && cData) {
+            // Fetch topic name by slugifying section_title
+            const { data: chunks, error } = await supabase
+              .from('note_chunks')
+              .select('section_title')
+              .eq('course_id', cData.id);
 
-          let foundTopic: string | null = topicSlug;
-          if (chunks) {
-            const found = chunks.find(
-              (c) => slugify(c.section_title) === topicSlug
-            );
-            foundTopic = found ? found.section_title : topicSlug;
+            if (error) throw error;
+
+            let foundTopic: string | null = topicSlug;
+            if (chunks) {
+              const found = (chunks as { section_title: string }[]).find(
+                (c) => slugify(c.section_title) === topicSlug
+              );
+              foundTopic = found ? found.section_title : topicSlug;
+            }
+            setData({ course: cData, topicName: foundTopic });
+          } else {
+            setData({ course: cData, topicName: null });
           }
-          setData({ course: cData, topicName: foundTopic });
-        } else {
-          setData({ course: cData, topicName: null });
+        } catch (error) {
+          console.error('[GlobalBreadcrumb][resolveData] Hata:', error);
+          setData({ course: null, topicName: null });
         }
       } else {
         setData({ course: null, topicName: null });
@@ -88,6 +100,8 @@ export function GlobalBreadcrumb() {
     }
     resolveData();
   }, [courseSlug, topicSlug]);
+
+  // === RENDER ===
 
   if (pathnames.length === 0) return null;
 

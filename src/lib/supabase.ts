@@ -2,23 +2,57 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database.types';
 import { env } from '@/utils/env';
 
+// ===========================
+// === TİP TANIMLAMALARI ===
+// ===========================
+
 export type { Database };
 export type { SupabaseClient };
 
-// Singleton instance
-let _supabase: SupabaseClient<Database> | null = null;
+// ===========================
+// === CLIENT YÖNETİMİ ===
+// ===========================
 
-export const getSupabase = (): SupabaseClient<Database> => {
-  if (!_supabase) {
-    if (!env.supabase.url || !env.supabase.anonKey) {
-      throw new Error(
-        'Supabase URL and Anon Key are required. Please check your environment variables.'
-      );
+/**
+ * Supabase client singleton örneği.
+ * Sadece getSupabase() fonksiyonu üzerinden erişilmelidir.
+ * @private
+ */
+let _supabaseInstance: SupabaseClient<Database> | null = null;
+
+/**
+ * Supabase client örneğini oluşturur ve döner.
+ * Eğer gerekli çevre değişkenleri eksikse hata fırlatır.
+ *
+ * @returns Yapılandırılmış SupabaseClient örneği
+ * @throws Çevre değişkenleri eksikse Error fırlatır
+ */
+export const initializeSupabase = (): SupabaseClient<Database> => {
+  if (!_supabaseInstance) {
+    const { url, anonKey } = env.supabase;
+
+    if (!url || !anonKey) {
+      const errorMsg =
+        '[Supabase] Bağlantı bilgileri (URL/AnonKey) eksik! Lütfen .env dosyasını kontrol edin.';
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
-    _supabase = createClient<Database>(env.supabase.url, env.supabase.anonKey);
+
+    _supabaseInstance = createClient<Database>(url, anonKey);
   }
-  return _supabase;
+
+  return _supabaseInstance;
 };
 
-// Export the singleton instance directly as well
-export const supabase = getSupabase();
+/**
+ * Uygulama genelinde kullanılacak olan Supabase istemci örneği.
+ * Not: Bu sabit initializeSupabase() çağrısıyla başlatılır.
+ */
+export const supabase: SupabaseClient<Database> = initializeSupabase();
+
+/**
+ * Singleton Supabase client erişimi sağlar.
+ *
+ * @returns Uygulama genelinde kullanılan Supabase istemcisi
+ */
+export const getSupabase = (): SupabaseClient<Database> => supabase;

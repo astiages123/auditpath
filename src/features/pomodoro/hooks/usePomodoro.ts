@@ -10,10 +10,24 @@ import { unlockAudio } from '../logic/audioUtils';
 import { usePomodoroWorker } from './usePomodoroWorker';
 import { usePomodoroSession } from './usePomodoroSession';
 
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
 export type PomodoroMode = 'work' | 'break';
 
+// ===========================
+// === HOOK DEFINITION ===
+// ===========================
+
+/**
+ * Main hook that bundles together all Pomodoro logic (timer, session, UI).
+ * Components should consume this hook instead of individual stores or partial hooks.
+ *
+ * @returns Combined Pomodoro state and control functions
+ */
 export function usePomodoro() {
-  // Timer state
+  // === STATE EXTRACTION ===
   const {
     timeLeft,
     isActive,

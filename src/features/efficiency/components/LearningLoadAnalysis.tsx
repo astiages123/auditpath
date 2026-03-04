@@ -1,10 +1,29 @@
 import { lazy, Suspense } from 'react';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { LearningLoad } from '../types/efficiencyTypes';
 import { Skeleton } from '@/components/ui/skeleton';
+import type { LearningLoad } from '../types/efficiencyTypes';
 
-// Lazy load the chart component
+// ==========================================
+// === LAZY COMPONENTS ===
+// ==========================================
+
 const LearningLoadChart = lazy(() => import('./LearningLoadChart'));
+
+// ==========================================
+// === TYPES / PROPS ===
+// ==========================================
+
+export interface LearningLoadAnalysisProps {
+  dayData: LearningLoad[];
+  weekData: LearningLoad[];
+  monthData: LearningLoad[];
+  allData: LearningLoad[];
+  targetMinutes?: number;
+}
+
+// ==========================================
+// === COMPONENT: FALLBACK ===
+// ==========================================
 
 const ChartFallback = () => (
   <div className="w-full h-[230px] flex items-center justify-center bg-surface/5 rounded-xl border border-border/10">
@@ -12,13 +31,9 @@ const ChartFallback = () => (
   </div>
 );
 
-interface LearningLoadAnalysisProps {
-  dayData: LearningLoad[];
-  weekData: LearningLoad[];
-  monthData: LearningLoad[];
-  allData: LearningLoad[];
-  targetMinutes?: number;
-}
+// ==========================================
+// === COMPONENT ===
+// ==========================================
 
 export const LearningLoadAnalysis = ({
   dayData,
@@ -27,6 +42,9 @@ export const LearningLoadAnalysis = ({
   allData,
   targetMinutes = 200,
 }: LearningLoadAnalysisProps) => (
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   <Tabs defaultValue="week" className="w-full">
     <TabsList className="w-full grid grid-cols-4">
       <TabsTrigger value="day">Gün</TabsTrigger>

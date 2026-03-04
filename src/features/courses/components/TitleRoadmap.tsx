@@ -1,12 +1,17 @@
+// ===========================
+// === IMPORTS ===
+// ===========================
+
 import { RANKS } from '@/features/achievements/utils/constants';
 import { calculateEstimatedDaysToNextRank } from '../logic/coursesLogic';
-
 import { RoadmapHero } from './RoadmapHero';
 import { RoadmapPath } from './RoadmapPath';
 
-export { RANKS };
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
 
-interface TitleRoadmapProps {
+export interface TitleRoadmapProps {
   watchedVideos: number;
   requiredVideos: number;
   dailyAverage?: number;
@@ -14,6 +19,14 @@ interface TitleRoadmapProps {
   totalHours?: number;
 }
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * Main container for the user's roadmap journey. Calculates current
+ * rank, next rank, and coordinates hero and path components.
+ */
 export default function TitleRoadmap({
   watchedVideos,
   requiredVideos,

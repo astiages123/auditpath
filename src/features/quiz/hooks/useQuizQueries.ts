@@ -10,13 +10,17 @@ import { generateForChunk } from '@/features/quiz/logic/quizParser';
 import { QuizResponseType, SessionContext } from '@/features/quiz/types';
 import { GeneratorCallbacks } from '@/features/quiz/types';
 
-export function useStartQuizSessionMutation() {
-  return useMutation({
-    mutationFn: ({ userId, courseId }: { userId: string; courseId: string }) =>
-      startQuizSession(userId, courseId),
-  });
-}
+// ============================================================================
+// QUERIES
+// ============================================================================
 
+/**
+ * Tekrar kuyruğunu (SRS) getirmek için query hook'u.
+ *
+ * @param ctx - Seans bağlamı
+ * @param limit - Getirilecek soru limiti
+ * @param targetChunkId - Hedef ünite ID'si (opsiyonel)
+ */
 export function useGetReviewQueueQuery(
   ctx: SessionContext | null,
   limit: number = 10,
@@ -31,11 +35,19 @@ export function useGetReviewQueueQuery(
       targetChunkId,
       limit,
     ],
-    queryFn: () => getReviewQueue(ctx!, limit, targetChunkId),
+    queryFn: () => {
+      if (!ctx) throw new Error('Seans bağlamı eksik');
+      return getReviewQueue(ctx, limit, targetChunkId);
+    },
     enabled: !!ctx,
   });
 }
 
+/**
+ * ID listesine göre soru verilerini getirmek için query hook'u.
+ *
+ * @param ids - Soru ID listesi
+ */
 export function useFetchQuestionsByIdsQuery(ids: string[]) {
   return useQuery({
     queryKey: ['quiz', 'questionsByIds', ids],
@@ -44,6 +56,13 @@ export function useFetchQuestionsByIdsQuery(ids: string[]) {
   });
 }
 
+/**
+ * Kurs bazlı rastgele sorular getirmek için query hook'u.
+ *
+ * @param courseId - Kurs ID'si
+ * @param limit - Soru limiti
+ * @param enabled - Sorgu aktif mi?
+ */
 export function useFetchQuestionsByCourseQuery(
   courseId: string,
   limit: number = 10,
@@ -56,9 +75,38 @@ export function useFetchQuestionsByCourseQuery(
   });
 }
 
+// ============================================================================
+// MUTATIONS
+// ============================================================================
+
+/**
+ * Quiz oturumu başlatmak için mutasyon hook'u.
+ */
+export function useStartQuizSessionMutation() {
+  return useMutation({
+    mutationFn: async ({
+      userId,
+      courseId,
+    }: {
+      userId: string;
+      courseId: string;
+    }) => {
+      try {
+        return await startQuizSession(userId, courseId);
+      } catch (err) {
+        console.error('[useQuizQueries][startQuizSession] Hata:', err);
+        throw err;
+      }
+    },
+  });
+}
+
+/**
+ * Yeni soru parçası (chunk) üretmek için mutasyon hook'u.
+ */
 export function useGenerateChunkMutation() {
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       chunkId,
       callbacks,
       options,
@@ -70,13 +118,23 @@ export function useGenerateChunkMutation() {
         usageType?: 'antrenman' | 'deneme';
         userId?: string;
       };
-    }) => generateForChunk(chunkId, callbacks, options),
+    }) => {
+      try {
+        return await generateForChunk(chunkId, callbacks, options);
+      } catch (err) {
+        console.error('[useQuizQueries][generateChunk] Hata:', err);
+        throw err;
+      }
+    },
   });
 }
 
+/**
+ * Soru cevabını kaydetmek için mutasyon hook'u.
+ */
 export function useSubmitAnswerMutation() {
   return useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       ctx,
       questionId,
       chunkId,
@@ -90,14 +148,20 @@ export function useSubmitAnswerMutation() {
       responseType: QuizResponseType;
       timeSpentMs: number;
       selectedAnswer: number | null;
-    }) =>
-      submitQuizAnswer(
-        ctx,
-        questionId,
-        chunkId,
-        responseType,
-        timeSpentMs,
-        selectedAnswer
-      ),
+    }) => {
+      try {
+        return await submitQuizAnswer(
+          ctx,
+          questionId,
+          chunkId,
+          responseType,
+          timeSpentMs,
+          selectedAnswer
+        );
+      } catch (err) {
+        console.error('[useQuizQueries][submitAnswer] Hata:', err);
+        throw err;
+      }
+    },
   });
 }

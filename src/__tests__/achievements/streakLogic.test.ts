@@ -89,13 +89,13 @@ describe('streakLogic - calculateStreakMilestones', () => {
     expect(result.maxStreak).toBe(3);
   });
 
-  it('izinli günler (Sal-Çar-Per) streak i bozmaz', () => {
+  it('hafta içi boşluklar (Sal-Çar-Per) streak i bozar', () => {
     const activeDays = [
       '2026-02-09', // Pzt
       '2026-02-13', // Cum
       '2026-02-14', // Cts
     ];
     const result = calculateStreakMilestones(activeDays);
-    expect(result.maxStreak).toBe(3);
+    expect(result.maxStreak).toBe(2); // 9'u yalnız kalır. 13-14 ardışık 2 olur.
   });
 });

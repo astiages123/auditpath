@@ -17,45 +17,78 @@ import {
   TrueFalseQuestion,
 } from '@/features/quiz/types';
 
+// ============================================================================
+// HOOK
+// ============================================================================
+
+/**
+ * Quiz motorunun veri katmanı ile iletişimini sağlayan API soyutlama hook'u.
+ * Tanstack Query mutasyonlarını ve direkt servis çağrılarını birleştirir.
+ */
 export function useQuizEngineApi() {
+  // === EXTERNAL HOOKS ===
   const queryClient = useQueryClient();
   const startSessionMutation = useStartQuizSessionMutation();
   const generateChunkMutation = useGenerateChunkMutation();
   const submitAnswerMutation = useSubmitAnswerMutation();
 
+  // === SESSION OPERATIONS ===
+
+  /** Yeni bir quiz oturumu başlatır */
   const startQuizSession = async (userId: string, courseId: string) => {
-    return await startSessionMutation.mutateAsync({ userId, courseId });
+    try {
+      return await startSessionMutation.mutateAsync({ userId, courseId });
+    } catch (err) {
+      console.error('[useQuizEngineApi][startQuizSession] Hata:', err);
+      throw err;
+    }
   };
 
+  // === QUESTION LOADING ===
+
+  /**
+   * Tekrar kuyruğundan (SRS) soruları yükler.
+   * Belirli bir üniteye (chunk) göre filtrelenebilir.
+   */
   const loadQuestionsFromQueue = async (
     session: SessionContext,
     chunkId?: string
   ): Promise<QuizQuestion[]> => {
-    const queue = await queryClient.fetchQuery({
-      queryKey: [
-        'quiz',
-        'reviewQueue',
-        session.userId,
-        session.courseId,
-        chunkId,
-        10,
-      ],
-      queryFn: () => getReviewQueue(session, 10, chunkId),
-    });
+    try {
+      const queue = await queryClient.fetchQuery({
+        queryKey: [
+          'quiz',
+          'reviewQueue',
+          session.userId,
+          session.courseId,
+          chunkId,
+          10,
+        ],
+        queryFn: () => getReviewQueue(session, 10, chunkId),
+      });
 
-    if (queue.length === 0) return [];
+      if (queue.length === 0) return [];
 
-    const questions = await queryClient.fetchQuery({
-      queryKey: ['quiz', 'questionsByIds', queue.map((i) => i.questionId)],
-      queryFn: () => fetchQuestionsByIds(queue.map((i) => i.questionId)),
-    });
+      const questions = await queryClient.fetchQuery({
+        queryKey: ['quiz', 'questionsByIds', queue.map((i) => i.questionId)],
+        queryFn: () => fetchQuestionsByIds(queue.map((i) => i.questionId)),
+      });
 
-    return questions.map((q) => {
-      const qd = q.question_data as TrueFalseQuestion | MultipleChoiceQuestion;
-      return { ...qd, id: q.id } as QuizQuestion;
-    });
+      return questions.map((q: { id: string; question_data: unknown }) => {
+        const qd = q.question_data as
+          | TrueFalseQuestion
+          | MultipleChoiceQuestion;
+        return { ...qd, id: q.id } as QuizQuestion;
+      });
+    } catch (err) {
+      console.error('[useQuizEngineApi][loadQuestionsFromQueue] Hata:', err);
+      throw err;
+    }
   };
 
+  /**
+   * Yeni sorular üretilirken ilerlemeyi raporlar ve tamamlandığında soruları döner.
+   */
   const generateAndLoadQuestions = async (
     userId: string,
     session: SessionContext,
@@ -75,31 +108,58 @@ export function useQuizEngineApi() {
                 const qs = await loadQuestionsFromQueue(session, chunkId);
                 resolve(qs);
               } catch (err) {
+                console.error(
+                  '[useQuizEngineApi][generateAndLoadQuestions][onComplete] Hata:',
+                  err
+                );
                 reject(err);
               }
             },
-            onError: (err: string) => reject(new Error(err)),
+            onError: (err: string) => {
+              console.error(
+                '[useQuizEngineApi][generateAndLoadQuestions][onError] Hata:',
+                err
+              );
+              reject(new Error(err));
+            },
           },
           options: { usageType: 'antrenman', userId },
         })
-        .catch(reject);
+        .catch((err) => {
+          console.error(
+            '[useQuizEngineApi][generateAndLoadQuestions] Hata:',
+            err
+          );
+          reject(err);
+        });
     });
   };
 
+  /** Belirli bir ders için rastgele sorular yükler */
   const loadRandomQuestions = async (
     courseId: string
   ): Promise<QuizQuestion[]> => {
-    const randomQs = await queryClient.fetchQuery({
-      queryKey: ['quiz', 'questionsByCourse', courseId, 10],
-      queryFn: () => fetchQuestionsByCourse(courseId, 10),
-    });
+    try {
+      const randomQs = (await queryClient.fetchQuery({
+        queryKey: ['quiz', 'questionsByCourse', courseId, 10],
+        queryFn: () => fetchQuestionsByCourse(courseId, 10),
+      })) as { id: string; question_data: unknown }[];
 
-    return randomQs.map((q) => {
-      const qd = q.question_data as TrueFalseQuestion | MultipleChoiceQuestion;
-      return { ...qd, id: q.id } as QuizQuestion;
-    });
+      return randomQs.map((q) => {
+        const qd = q.question_data as
+          | TrueFalseQuestion
+          | MultipleChoiceQuestion;
+        return { ...qd, id: q.id } as QuizQuestion;
+      });
+    } catch (err) {
+      console.error('[useQuizEngineApi][loadRandomQuestions] Hata:', err);
+      throw err;
+    }
   };
 
+  // === ANSWER OPERATIONS ===
+
+  /** Bir sorunun cevabını veritabanına gönderir */
   const submitAnswer = async (
     ctx: SessionContext,
     questionId: string,
@@ -108,15 +168,22 @@ export function useQuizEngineApi() {
     timeSpentMs: number,
     selectedAnswer: number | null
   ) => {
-    return await submitAnswerMutation.mutateAsync({
-      ctx,
-      questionId,
-      chunkId,
-      responseType,
-      timeSpentMs,
-      selectedAnswer,
-    });
+    try {
+      return await submitAnswerMutation.mutateAsync({
+        ctx,
+        questionId,
+        chunkId,
+        responseType,
+        timeSpentMs,
+        selectedAnswer,
+      });
+    } catch (err) {
+      console.error('[useQuizEngineApi][submitAnswer] Hata:', err);
+      throw err;
+    }
   };
+
+  // === RETURN ===
 
   return {
     startQuizSession,

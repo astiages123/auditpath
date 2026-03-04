@@ -1,7 +1,15 @@
-import { FC } from 'react';
+// ==========================================
+// IMPORTS
+// ==========================================
+
+import { FC, useState, useEffect } from 'react';
 import { TrendingUp } from 'lucide-react';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useState, useEffect } from 'react';
+
+// ==========================================
+// TYPES & INTERFACES
+// ==========================================
 
 type RechartsModule = typeof import('recharts');
 
@@ -10,16 +18,23 @@ interface AnalyticsChartProps {
   formatCurrency: (value: number) => string;
 }
 
+// ==========================================
+// COMPONENT
+// ==========================================
+
 export const AnalyticsChart: FC<AnalyticsChartProps> = ({
   dailyData,
   formatCurrency,
 }) => {
+  // === STATE ===
   const [Recharts, setRecharts] = useState<RechartsModule | null>(null);
 
+  // === EFFECTS ===
   useEffect(() => {
     import('recharts').then((mod) => setRecharts(mod));
   }, []);
 
+  // === RENDER ===
   if (!Recharts) {
     return (
       <Card className="bg-card/30 border-border shadow-2xl overflow-hidden">

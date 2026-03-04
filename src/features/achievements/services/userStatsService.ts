@@ -3,16 +3,60 @@ import { getNextRank, getRankForPercentage } from '../utils/rankHelpers';
 import { normalizeCategorySlug } from '@/features/courses/utils/categoryHelpers';
 import { getVirtualDateKey } from '@/utils/dateUtils';
 import type { Category } from '@/features/courses/types/courseTypes';
-
 import { calculateStreak } from '@/features/achievements/logic/streakLogic';
+
+// ===========================
+// === TYPES ===
+// ===========================
+
+export interface UserProgressData {
+  completedVideos: number;
+  completedReadings: number;
+  completedPages: number;
+  totalVideos: number;
+  totalReadings: number;
+  totalPages: number;
+  completedHours: number;
+  totalHours: number;
+  streak: number;
+  categoryProgress: Record<
+    string,
+    {
+      completedVideos: number;
+      completedHours: number;
+      completedReadings: number;
+      completedPages: number;
+      totalVideos: number;
+      totalReadings: number;
+      totalPages: number;
+      totalHours: number;
+    }
+  >;
+  courseProgress: Record<string, number>;
+  currentRank: ReturnType<typeof getRankForPercentage>;
+  nextRank: ReturnType<typeof getNextRank> | null;
+  rankProgress: number;
+  progressPercentage: number;
+  estimatedDays: number;
+  dailyAverage: number;
+  todayVideoCount: number;
+}
+
+// ===========================
+// === STATS AGGREGATION ===
+// ===========================
 
 /**
  * Get comprehensive user statistics including progress, streak, and rank.
+ *
+ * @param userId - The UUID of the user
+ * @param predefinedCategories - Optional pre-fetched categories array
+ * @returns User progress statistics or null on failure
  */
 export async function getUserStats(
   userId: string,
   predefinedCategories?: Category[]
-) {
+): Promise<UserProgressData | null> {
   try {
     let cats: Category[] = predefinedCategories ?? [];
 
@@ -251,12 +295,16 @@ export async function getUserStats(
           );
         }).length || 0,
     };
-  } catch {
+  } catch (error) {
+    console.error('[userStatsService][getUserStats] Error:', error);
     return null;
   }
 }
 
-// Re-export specialized services
+// ===========================
+// === RE-EXPORTS ===
+// ===========================
+
 export * from './courseMasteryService';
 export * from './streakService';
 export * from './activeDaysService';

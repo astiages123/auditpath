@@ -1,14 +1,32 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { cn } from '@/utils/stringHelpers';
-import { FocusPowerPoint } from '../types/efficiencyTypes';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Lazy load the chart component
+import type { FocusPowerPoint } from '../types/efficiencyTypes';
+
+// ==========================================
+// === LAZY COMPONENTS ===
+// ==========================================
+
 const FocusPowerTrendChart = lazy(() =>
   import('./FocusPowerTrendChart').then((m) => ({
     default: m.FocusPowerTrendChart,
   }))
 );
+
+// ==========================================
+// === PROPS ===
+// ==========================================
+
+export interface EfficiencyChartTabProps {
+  weekData: FocusPowerPoint[];
+  monthData: FocusPowerPoint[];
+  allData: FocusPowerPoint[];
+}
+
+// ==========================================
+// === COMPONENT: FALLBACK ===
+// ==========================================
 
 const ChartFallback = () => (
   <div className="w-full h-full min-h-[300px] flex items-center justify-center bg-surface/5 rounded-lg border border-white/5">
@@ -16,19 +34,27 @@ const ChartFallback = () => (
   </div>
 );
 
-interface EfficiencyChartTabProps {
-  weekData: FocusPowerPoint[];
-  monthData: FocusPowerPoint[];
-  allData: FocusPowerPoint[];
-}
+// ==========================================
+// === COMPONENT ===
+// ==========================================
 
+/**
+ * Controller component orchestrating data range selection for the focus power trend chart.
+ * Lazy loads Recharts visually while controlling its timeframe.
+ */
 export const EfficiencyChartTab: React.FC<EfficiencyChartTabProps> = ({
   weekData,
   monthData,
   allData,
 }) => {
+  // ==========================================
+  // === HOOKS & STATE ===
+  // ==========================================
   const [range, setRange] = useState<'week' | 'month' | 'all'>('week');
 
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
   const getData = () => {
     switch (range) {
       case 'week':
@@ -55,6 +81,9 @@ export const EfficiencyChartTab: React.FC<EfficiencyChartTabProps> = ({
     }
   };
 
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   return (
     <div className="space-y-4 bg-surface rounded-xl p-4 border border-white/5">
       <div className="flex items-center justify-between">

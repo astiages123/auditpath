@@ -1,8 +1,16 @@
+// ===========================
+// === IMPORTS ===
+// ===========================
+
 import { memo } from 'react';
 import { Check, Circle, Play, FileText } from 'lucide-react';
 
-interface CourseItemProps {
-  _id: string; // Changed from number to string (UUID)
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
+export interface CourseItemProps {
+  _id: string;
   itemNumber: number;
   title: string;
   duration: string;
@@ -11,6 +19,14 @@ interface CourseItemProps {
   onToggle: (itemNumber: number, isModifierPressed: boolean) => void;
 }
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * Renders an individual course item (video or reading) within a list,
+ * displaying its completion status, title, and duration.
+ */
 export const CourseItem = memo(function CourseItem({
   _id,
   itemNumber,

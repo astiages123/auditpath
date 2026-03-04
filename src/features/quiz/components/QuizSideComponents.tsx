@@ -12,18 +12,27 @@ import { Link } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 
 // ============================================================================
-// Topic Sidebar (formerly TopicSidebar.tsx)
+// TOPIC SIDEBAR
 // ============================================================================
 
 interface TopicSidebarProps {
+  /** Veri yüklenme durumu */
   loading: boolean;
+  /** Listelenecek konular */
   topics: TopicWithCounts[];
+  /** Seçili olan konu */
   selectedTopic: TopicWithCounts | null;
+  /** Konu seçim handlerı */
   onSelectTopic: (topic: TopicWithCounts) => void;
+  /** Karma deneme sınavı başlatma handlerı */
   onStartSmartExam: () => void;
+  /** Sınav üretim durumu */
   isGeneratingExam: boolean;
 }
 
+/**
+ * Quiz sayfasının yan panelinde konuları ve deneme sınavı butonunu listeleyen bileşen.
+ */
 export function TopicSidebar({
   loading,
   topics,
@@ -32,8 +41,11 @@ export function TopicSidebar({
   onStartSmartExam,
   isGeneratingExam,
 }: TopicSidebarProps) {
+  // === RENDER ===
+
   return (
     <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-1">
+      {/* KARMA DENEME SINAVI BUTONU */}
       <div className="mb-4">
         <Button
           variant="primary-soft"
@@ -60,6 +72,7 @@ export function TopicSidebar({
         </Button>
       </div>
 
+      {/* KONU LİSTESİ */}
       <div className="flex-1 space-y-1">
         {loading ? (
           <div className="flex items-center justify-center h-32 text-muted-foreground">
@@ -139,16 +152,22 @@ export function TopicSidebar({
 }
 
 // ============================================================================
-// Topic List (Standalone version if needed)
+// TOPIC LIST UNIT
 // ============================================================================
 
-export function TopicList({
-  topics,
-  onSelectTopic,
-}: {
+interface TopicListProps {
+  /** Listelenecek konular */
   topics: TopicWithCounts[];
+  /** Konu seçim handlerı */
   onSelectTopic: (topic: TopicWithCounts) => void;
-}) {
+}
+
+/**
+ * Konuların listelendiği daha yalın, bağımsız liste bileşeni.
+ */
+export function TopicList({ topics, onSelectTopic }: TopicListProps) {
+  // === RENDER ===
+
   return (
     <div className="space-y-1">
       {topics.map((topic) => (

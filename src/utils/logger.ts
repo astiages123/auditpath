@@ -1,102 +1,69 @@
-/* eslint-disable no-console */
 import { env } from '@/utils/env';
-import { LogMessage } from '@/types/common';
+
+// ===========================
+// === MERKEZİ LOG SİSTEMİ ===
+// ===========================
 
 /**
- * Professional Logger Utility
- *
- * Only logs in development environment to prevent sensitive data leakage in production.
- * All logs are prefixed with [AuditPath] for easy identification in console.
- */
-
-/**
- * Core logger object with environment-aware logging
+ * Uygulama genelinde kullanılacak merkezi loglama aracı.
+ * Geliştirme ortamında detaylı bilgi verirken, üretim ortamında (production) loglamayı kısıtlar.
  */
 export const logger = {
   /**
-   * Log informational messages (visible in dev only)
+   * Bilgi mesajlarını loglar.
+   * @param module - Logun ait olduğu modül/dosya adı
+   * @param func - Logun çağrıldığı fonksiyon adı
+   * @param message - Log mesajı
+   * @param data - İsteğe bağlı ek veri kabukları
+   * @example logger.info('QuizService', 'fetchQuestions', 'Sorular başarıyla getirildi', { count: 10 })
    */
-  info(message: string, details?: Record<string, unknown>): void {
+  info(module: string, func: string, message: string, data?: unknown): void {
     if (!env.app.isDev) return;
-    console.log(`[AuditPath] ${message}`, details || '');
+    console.info(`${this._getPrefix(module, func)} ${message}`, data ?? '');
   },
 
   /**
-   * Log warning messages (visible in dev only)
+   * Uyarı mesajlarını loglar.
+   * @param module - Logun ait olduğu modül/dosya adı
+   * @param func - Logun çağrıldığı fonksiyon adı
+   * @param message - Uyarı mesajı
+   * @param data - İsteğe bağlı ek veri kabukları
+   * @example logger.warn('Auth', 'login', 'Kullanıcı oturumu kapatılmak üzere')
    */
-  warn(message: string, details?: Record<string, unknown>): void {
+  warn(module: string, func: string, message: string, data?: unknown): void {
     if (!env.app.isDev) return;
-    console.warn(`[AuditPath] ⚠️ ${message}`, details || '');
+    console.warn(`${this._getPrefix(module, func)} ⚠️ ${message}`, data ?? '');
   },
 
   /**
-   * Log error messages (visible in dev only)
-   * Note: Critical errors should still be sent to error tracking services in production
+   * Hata mesajlarını loglar. Standart hata formatını takip eder.
+   * @param module - Logun ait olduğu modül/dosya adı
+   * @param func - Logun çağrıldığı fonksiyon adı
+   * @param message - Hata açıklama mesajı
+   * @param error - Hata nesnesi veya detayı
+   * @example logger.error('Database', 'saveResult', 'Veri kaydedilemedi', error)
    */
-  error(message: string, details?: Record<string, unknown> | Error): void {
+  error(module: string, func: string, message: string, error?: unknown): void {
     if (!env.app.isDev) return;
 
-    if (details instanceof Error) {
-      console.error(`[AuditPath] ❌ ${message}`, {
-        message: details.message,
-        stack: details.stack,
+    const prefix = this._getPrefix(module, func);
+    if (error instanceof Error) {
+      console.error(`${prefix} ❌ ${message}:`, {
+        message: error.message,
+        stack: error.stack,
       });
     } else {
-      console.error(`[AuditPath] ❌ ${message}`, details || '');
+      console.error(`${prefix} ❌ ${message}:`, error ?? '');
     }
   },
 
   /**
-   * Log debug messages with detailed information (visible in dev only)
-   * Use this for API responses, data inspection, etc.
+   * Loglar için standart öneki (prefix) oluşturur.
+   * Format: [2026-03-03 22:15:00][MODULE][FUNCTION]
+   * @private
    */
-  debug(message: string, details?: Record<string, unknown>): void {
-    if (!env.app.isDev) return;
-    console.debug(`[AuditPath] 🔍 ${message}`, details || '');
-  },
-
-  /**
-   * Internal method to create a log entry and handle reporting
-   */
-  _log(_logMessage: LogMessage): void {},
-
-  /**
-   * Create a namespaced logger for specific modules/components
-   */
-  withPrefix(prefix: string) {
-    const wrap =
-      (level: 'info' | 'warn' | 'error' | 'debug') =>
-      (message: string, details?: Record<string, unknown> | Error) => {
-        const fullMessage = `${prefix} ${message}`;
-
-        if (level === 'error') {
-          logger.error(fullMessage, details);
-        } else {
-          logger[level](fullMessage, details as Record<string, unknown>);
-        }
-
-        logger._log({
-          level,
-          message: fullMessage,
-          details:
-            details instanceof Error
-              ? { message: details.message, stack: details.stack }
-              : details,
-          timestamp: new Date().toISOString(),
-        });
-      };
-
-    return {
-      info: wrap('info'),
-      warn: wrap('warn'),
-      error: wrap('error'),
-      debug: wrap('debug'),
-    };
+  _getPrefix(module: string, func: string): string {
+    const timestamp = new Date().toISOString().replace('T', ' ').split('.')[0];
+    return `[${timestamp}][${module.toUpperCase()}][${func}]`;
   },
 };
-
-/**
- * Legacy compatibility export for systems expecting console-like interface
- */
-export const createLogger = (moduleName: string) =>
-  logger.withPrefix(`[${moduleName}]`);

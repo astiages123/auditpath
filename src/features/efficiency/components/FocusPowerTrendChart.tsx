@@ -1,18 +1,28 @@
 import { useState, useEffect } from 'react';
-import {
+import type {
   FocusPowerPoint,
   FocusPowerTrendProps,
 } from '../types/efficiencyTypes';
 
 type RechartsModule = typeof import('recharts');
 
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
 export const FocusPowerTrendChart = ({ data }: FocusPowerTrendProps) => {
+  // ==========================================
+  // === HOOKS & STATE ===
+  // ==========================================
   const [Recharts, setRecharts] = useState<RechartsModule | null>(null);
 
   useEffect(() => {
     import('recharts').then((mod) => setRecharts(mod));
   }, []);
 
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   if (!Recharts) {
     return (
       <div className="w-full h-full min-h-[300px] mt-4 animate-pulse bg-muted/20 rounded-xl" />
@@ -29,8 +39,6 @@ export const FocusPowerTrendChart = ({ data }: FocusPowerTrendProps) => {
     ResponsiveContainer,
   } = Recharts;
 
-  // Determine gradient depending on trend?
-  // Or just a beautiful emerald gradient since Focus Power is generally good.
   return (
     <div className="w-full h-full min-h-[300px] mt-4">
       <ResponsiveContainer width="100%" height={300}>

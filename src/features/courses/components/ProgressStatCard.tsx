@@ -1,10 +1,18 @@
-import { LucideIcon } from 'lucide-react';
+// ===========================
+// === IMPORTS ===
+// ===========================
+
+import type { LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Variants } from 'framer-motion';
 
-interface ProgressStatCardProps {
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
+export interface ProgressStatCardProps {
   icon: LucideIcon;
   bgIcon?: LucideIcon;
   label: string;
@@ -18,6 +26,14 @@ interface ProgressStatCardProps {
   children?: React.ReactNode;
 }
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * A highly reusable stat card that displays a single metric
+ * such as completed videos, study hours, or current streak.
+ */
 export function ProgressStatCard({
   icon: Icon,
   bgIcon: BgIcon,

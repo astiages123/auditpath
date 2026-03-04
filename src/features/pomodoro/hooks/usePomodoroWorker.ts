@@ -1,14 +1,86 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import type { TimerWorkerMessage } from '../logic/timerWorker';
+
+// ===========================
+// === SINGLETON MANAGER ===
+// ===========================
+
+/**
+ * Global singleton to manage the Timer Worker across the entire application.
+ * Prevents multiple workers from being created during re-renders or StrictMode.
+ */
+class PomodoroWorkerManager {
+  private static instance: PomodoroWorkerManager;
+  private worker: Worker | null = null;
+  private listeners: Set<() => void> = new Set();
+  private refCount: number = 0;
+
+  private constructor() {}
+
+  static getInstance(): PomodoroWorkerManager {
+    if (!PomodoroWorkerManager.instance) {
+      PomodoroWorkerManager.instance = new PomodoroWorkerManager();
+    }
+    return PomodoroWorkerManager.instance;
+  }
+
+  private initWorker() {
+    if (this.worker) return;
+
+    this.worker = new Worker(
+      new URL('../logic/timerWorker.ts', import.meta.url),
+      { type: 'module' }
+    );
+
+    this.worker.onmessage = (e: MessageEvent<string>) => {
+      if (e.data === 'TICK') {
+        this.listeners.forEach((onTick) => onTick());
+      }
+    };
+  }
+
+  subscribe(onTick: () => void) {
+    this.refCount++;
+    this.listeners.add(onTick);
+
+    if (!this.worker) {
+      this.initWorker();
+    }
+
+    return () => {
+      this.listeners.delete(onTick);
+      this.refCount--;
+
+      if (this.refCount <= 0) {
+        this.terminate();
+      }
+    };
+  }
+
+  postMessage(message: TimerWorkerMessage) {
+    this.worker?.postMessage(message);
+  }
+
+  terminate() {
+    this.worker?.terminate();
+    this.worker = null;
+  }
+}
+
+const workerManager = PomodoroWorkerManager.getInstance();
+
+// ===========================
+// === HOOK DEFINITION ===
+// ===========================
 
 /**
  * Hook to manage the specialized Pomodoro Timer Worker.
  * Ensures stable worker lifecycle and background timer accuracy.
  *
  * @param onTick Callback executed on every timer tick
- * @returns Object with control methods: start, pause, reset
+ * @returns Object with control methods: start, pause, reset, stop
  */
 export function usePomodoroWorker(onTick: () => void) {
-  const workerRef = useRef<Worker | null>(null);
   const onTickRef = useRef(onTick);
 
   useLayoutEffect(() => {
@@ -16,38 +88,23 @@ export function usePomodoroWorker(onTick: () => void) {
   }, [onTick]);
 
   useEffect(() => {
-    // Initialize Worker only once
-    const worker = new Worker(
-      new URL('../logic/timerWorker.ts', import.meta.url),
-      { type: 'module' }
-    );
-
-    workerRef.current = worker;
-
-    worker.onmessage = (e) => {
-      if (e.data === 'TICK') {
-        onTickRef.current();
-      }
-    };
+    const handleTick = () => onTickRef.current();
+    const unsubscribe = workerManager.subscribe(handleTick);
 
     return () => {
-      worker.terminate();
-      workerRef.current = null;
+      unsubscribe();
     };
   }, []);
 
-  const postMessage = useCallback(
-    (message: 'START' | 'PAUSE' | 'RESET' | 'STOP') => {
-      workerRef.current?.postMessage(message);
-    },
-    []
-  );
+  const postMessage = useCallback((message: TimerWorkerMessage) => {
+    workerManager.postMessage(message);
+  }, []);
 
   return {
     start: () => postMessage('START'),
-    pause: () => postMessage('PAUSE'),
-    reset: () => postMessage('RESET'),
+    pause: () => postMessage('STOP'),
+    reset: () => postMessage('STOP'),
     stop: () => postMessage('STOP'),
-    workerRef,
+    workerRef: workerManager, // Exposing the singleton manager or the worker instance
   };
 }

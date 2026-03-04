@@ -1,201 +1,289 @@
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/utils/logger';
+import { safeQuery } from '@/lib/supabaseHelpers';
+import { getCourseName, getCourseStatsAggregate } from './quizCoreService';
+import {
+  getMasteredQuestionsCount,
+  getTotalQuestionsInCourse,
+} from './quizQuestionService';
+import type { LandingCourseStats } from '../types/types';
 
-interface VideoProgressWithVideo {
-  video: {
-    course_id: string | null;
-    duration_minutes: number | null;
-  } | null;
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+const MODULE = 'QuizLandingService';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface ActivityItem {
+  /** Bölüm başlığı */
+  title: string;
+  /** Ustalık skoru (0-100) */
+  score: number;
+  /** Güncellenme tarihi */
+  date: string;
 }
 
-export interface LandingCourseStats {
-  courseId: string;
-  averageMastery: number;
-  videoProgress: number;
+export interface QuizLandingDashboardData {
+  /** Kurs adı */
+  courseName: string;
+  /** Toplam soru sayısı */
   totalQuestions: number;
-  lastStudyDate: string | null;
-  difficultSubject: string | null;
+  /** Çözülen toplam soru sayısı */
+  totalSolved: number;
+  /** Ustalaşılan soru sayısı */
+  masteredCount: number;
+  /** Toplam ustalık skoru (ortalama) */
+  masteryScore: number;
+  /** Son aktiviteler */
+  recentActivity: ActivityItem[];
+}
+
+export interface CourseQuizSummary {
+  /** Kurs ID'si */
+  id: string;
+  /** Başlık */
+  title: string;
+  /** URL slug */
+  slug: string;
+  /** Toplam süre metni */
+  duration: string;
+  /** Bölüm sayısı */
+  topicCount: number;
+  /** Soru sayısı */
+  questionCount: number;
+  /** Görsel URL'i */
+  image: string;
+}
+
+// ============================================================================
+// LANDING SERVICES
+// ============================================================================
+
+/**
+ * Kurs bazlı kütüphane istatistiklerini (tüm kurslar için) getirir.
+ *
+ * @param userId - Kullanıcı ID'si
+ * @returns Kurs ID'si bazlı istatistik nesnesi
+ */
+export async function getLandingLibraryStats(
+  userId: string
+): Promise<Record<string, LandingCourseStats>> {
+  const FUNC = 'getLandingLibraryStats';
+  try {
+    // Tüm kursların metriklerini getir (chunk_mastery üzerinden)
+    const { data: stats } = await safeQuery<
+      { course_id: string; mastery_score: number; updated_at: string | null }[]
+    >(
+      supabase
+        .from('chunk_mastery')
+        .select('course_id, mastery_score, updated_at')
+        .eq('user_id', userId),
+      `${FUNC} error`,
+      { userId }
+    );
+
+    if (!stats) return {};
+
+    const libraryStats: Record<
+      string,
+      LandingCourseStats & { masteryScores?: number[] }
+    > = {};
+
+    // Kurs bazlı grupla ve özetle
+    stats.forEach((row) => {
+      const cid = row.course_id;
+      if (!libraryStats[cid]) {
+        libraryStats[cid] = {
+          averageMastery: 0,
+          lastStudyDate: null,
+          difficultSubject: null,
+          totalSolved: 0,
+          masteryScores: [],
+        };
+      }
+
+      const cs = libraryStats[cid];
+      cs.masteryScores?.push(row.mastery_score);
+      cs.totalSolved = (cs.totalSolved || 0) + 1;
+
+      if (row.updated_at) {
+        if (
+          !cs.lastStudyDate ||
+          new Date(row.updated_at) > new Date(cs.lastStudyDate)
+        ) {
+          cs.lastStudyDate = row.updated_at;
+        }
+      }
+    });
+
+    // Ortalama hesapla
+    Object.keys(libraryStats).forEach((cid) => {
+      const cs = libraryStats[cid];
+      if (cs.masteryScores && cs.masteryScores.length > 0) {
+        cs.averageMastery = Math.round(
+          cs.masteryScores.reduce((a, b) => a + b, 0) / cs.masteryScores.length
+        );
+      }
+      delete cs.masteryScores;
+    });
+
+    return libraryStats;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return {};
+  }
 }
 
 /**
- * Fetches personalized statistics for all courses to be displayed on the Quiz Landing Page.
+ * Quiz ana sayfası (landing dashboard) için gerekli tüm özet verileri paralel olarak çeker.
+ *
+ * @param userId - Kullanıcı ID'si
+ * @param courseId - Kurs ID'si
+ * @returns Dashboard verileri veya null
  */
 export async function getLandingDashboardData(
-  userId: string
-): Promise<Record<string, LandingCourseStats>> {
+  userId: string,
+  courseId: string
+): Promise<QuizLandingDashboardData | null> {
+  const FUNC = 'getLandingDashboardData';
   try {
-    // 1. Fetch all mastery data joined with course info
-    const { data: masteryData, error: masteryError } = await supabase
-      .from('chunk_mastery')
-      .select(
-        `
-        mastery_score,
-        chunk_id,
-        note_chunks!inner(course_id, section_title)
-      `
-      )
-      .eq('user_id', userId);
+    const [stats, total, mastered, items, courseName] = await Promise.all([
+      getCourseStatsAggregate(userId, courseId),
+      getTotalQuestionsInCourse(courseId),
+      getMasteredQuestionsCount(userId, courseId),
+      getRecentChunkActivity(userId, courseId, 3),
+      getCourseName(courseId),
+    ]);
 
-    if (masteryError) throw masteryError;
+    // Aggregate Mastery: Chunk bazlı skorların ortalaması
+    const aggregateMastery =
+      stats && stats.length > 0
+        ? Math.round(
+            stats.reduce<number>(
+              (acc, curr) => acc + (curr.mastery_score || 0),
+              0
+            ) / stats.length
+          )
+        : 0;
 
-    // 2. Fetch last study activity for all courses
-    const { data: activityData, error: activityError } = await supabase
-      .from('user_quiz_progress')
-      .select('course_id, answered_at')
-      .eq('user_id', userId)
-      .order('answered_at', { ascending: false });
+    return {
+      courseName: courseName || 'Hukuk',
+      totalQuestions: total,
+      totalSolved:
+        stats?.reduce<number>(
+          (acc, curr) => acc + (curr.total_questions_seen || 0),
+          0
+        ) || 0,
+      masteredCount: mastered,
+      masteryScore: aggregateMastery,
+      recentActivity: items,
+    };
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return null;
+  }
+}
 
-    if (activityError) throw activityError;
+/**
+ * Kursa ait son ünite (chunk) aktivitelerini (mastery değişimleri) getirir.
+ *
+ * @param userId - Kullanıcı ID'si
+ * @param courseId - Kurs ID'si
+ * @param limit - Getirilecek aktivite sayısı
+ * @returns Aktivite listesi
+ */
+export async function getRecentChunkActivity(
+  userId: string,
+  courseId: string,
+  limit: number = 3
+): Promise<ActivityItem[]> {
+  const FUNC = 'getRecentChunkActivity';
+  try {
+    interface ActivityRow {
+      mastery_score: number;
+      updated_at: string | null;
+      chunk: { section_title: string } | null;
+    }
 
-    // 3. Fetch all completed video progress for this user
-    const { data: videoData, error: videoError } = await supabase
-      .from('video_progress')
-      .select('video:videos(duration_minutes, course_id)')
-      .eq('user_id', userId)
-      .eq('completed', true);
-
-    if (videoError) throw videoError;
-
-    // 4. Fetch all courses to get total hours
-    const { data: allCourses, error: coursesError } = await supabase
-      .from('courses')
-      .select('id, total_hours');
-
-    if (coursesError) throw coursesError;
-
-    // 4.5 Fetch all question counts efficiently
-    const { data: allQuestions } = await supabase
-      .from('questions')
-      .select('course_id')
-      .is('parent_question_id', null);
-
-    const questionCountsByCourse: Record<string, number> = {};
-    allQuestions?.forEach((q) => {
-      if (q.course_id) {
-        questionCountsByCourse[q.course_id] =
-          (questionCountsByCourse[q.course_id] || 0) + 1;
-      }
-    });
-
-    const stats: Record<string, LandingCourseStats> = {};
-
-    // 0. Initialize stats for ALL courses from the database
-    allCourses?.forEach((course) => {
-      stats[course.id] = {
-        courseId: course.id,
-        averageMastery: 0,
-        videoProgress: 0,
-        totalQuestions: 0,
-        lastStudyDate: null,
-        difficultSubject: null,
-      };
-    });
-
-    // Process Mastery & Difficult Subject
-    const courseGroups: Record<
-      string,
-      {
-        totalScore: number;
-        count: number;
-        subjects: Record<string, { total: number; count: number }>;
-      }
-    > = {};
-
-    masteryData?.forEach(
-      (item: {
-        mastery_score: number;
-        note_chunks: { course_id: string; section_title: string };
-      }) => {
-        const courseId = item.note_chunks.course_id;
-        const subject = item.note_chunks.section_title;
-        const score = item.mastery_score || 0;
-
-        if (!courseGroups[courseId]) {
-          courseGroups[courseId] = {
-            totalScore: 0,
-            count: 0,
-            subjects: {},
-          };
-        }
-
-        courseGroups[courseId].totalScore += score;
-        courseGroups[courseId].count += 1;
-
-        if (subject) {
-          if (!courseGroups[courseId].subjects[subject]) {
-            courseGroups[courseId].subjects[subject] = {
-              total: 0,
-              count: 0,
-            };
-          }
-          courseGroups[courseId].subjects[subject].total += score;
-          courseGroups[courseId].subjects[subject].count += 1;
-        }
-      }
+    const { data } = await safeQuery<ActivityRow[]>(
+      supabase
+        .from('chunk_mastery')
+        .select('mastery_score, updated_at, chunk:note_chunks(section_title)')
+        .eq('user_id', userId)
+        .eq('course_id', courseId)
+        .order('updated_at', { ascending: false })
+        .limit(limit),
+      `${FUNC} error`,
+      { userId, courseId }
     );
 
-    // 5. Finalize stats for all courses
-    const allCourseIds = Object.keys(stats);
-    allCourseIds.forEach((courseId) => {
-      // Calculate Mastery & Difficult Subject if exists
-      const data = courseGroups[courseId];
-      if (data) {
-        let difficultSubject = null;
-        let minScore = Infinity;
+    return (
+      data?.map((item) => ({
+        title: item.chunk?.section_title || 'İsimsiz Bölüm',
+        score: item.mastery_score,
+        date: item.updated_at || new Date().toISOString(),
+      })) || []
+    );
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return [];
+  }
+}
 
-        Object.entries(data.subjects).forEach(([subject, sData]) => {
-          const avg = sData.total / sData.count;
-          if (avg < minScore) {
-            minScore = avg;
-            difficultSubject = subject;
-          }
-        });
+/**
+ * Quiz kartı için kurs özet verilerini getirir.
+ * Kurs adı, süresi, ünite ve soru sayılarını içerir.
+ *
+ * @param courseId - Kurs ID'si
+ * @returns Kurs özeti veya null
+ */
+export async function getCourseQuizSummary(
+  courseId: string
+): Promise<CourseQuizSummary | null> {
+  const FUNC = 'getCourseQuizSummary';
+  try {
+    interface CourseSummaryRow {
+      id: string;
+      name: string;
+      course_slug: string;
+      total_hours: number | null;
+      note_chunks: { count: number }[];
+      questions: { count: number }[];
+    }
 
-        stats[courseId].averageMastery = Math.round(
-          data.totalScore / data.count
-        );
-        stats[courseId].difficultSubject =
-          minScore < 80 ? difficultSubject : null;
-      }
+    const { data: course } = await safeQuery<CourseSummaryRow>(
+      supabase
+        .from('courses')
+        .select(
+          'id, name, course_slug, total_hours, note_chunks(count), questions(count)'
+        )
+        .eq('id', courseId)
+        .single(),
+      `${FUNC} error`,
+      { courseId }
+    );
 
-      // Calculate Video Progress for EVERY course
-      const videosForCourse =
-        videoData?.filter(
-          (v: VideoProgressWithVideo) => v.video?.course_id === courseId
-        ) || [];
-      const completedMinutes = videosForCourse.reduce(
-        (acc: number, v: VideoProgressWithVideo) =>
-          acc + (v.video?.duration_minutes || 0),
-        0
-      );
-      const courseTotalHours =
-        allCourses?.find((c) => c.id === courseId)?.total_hours || 0;
+    if (!course) return null;
 
-      stats[courseId].videoProgress =
-        courseTotalHours > 0
-          ? Math.min(
-              100,
-              Math.round((completedMinutes / (courseTotalHours * 60)) * 100)
-            )
-          : 0;
-
-      // Assign Total Questions efficiently
-      stats[courseId].totalQuestions = questionCountsByCourse[courseId] || 0;
-    });
-
-    // 6. Map Last Study Date from Activity
-    activityData?.forEach((activity) => {
-      if (
-        stats[activity.course_id] &&
-        !stats[activity.course_id].lastStudyDate
-      ) {
-        stats[activity.course_id].lastStudyDate = activity.answered_at;
-      }
-    });
-
-    return stats;
-  } catch (err) {
-    logger.error('Error fetching landing dashboard data:', err as Error);
-    return {};
+    return {
+      id: course.id,
+      title: course.name,
+      slug: course.course_slug,
+      duration: `${course.total_hours || 0} Saat`,
+      topicCount: course.note_chunks?.[0]?.count || 0,
+      questionCount: course.questions?.[0]?.count || 0,
+      image: `/notes/${course.course_slug}/cover.webp`,
+    };
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return null;
   }
 }

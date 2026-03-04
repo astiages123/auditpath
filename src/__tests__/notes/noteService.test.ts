@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   fetchCourseNotes,
@@ -9,6 +8,7 @@ import {
   getCourseIdBySlug,
   getCourseTopics,
 } from '@/features/quiz/services/quizCoreService';
+import type { CourseTopic } from '@/features/courses/types/courseTypes';
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
@@ -28,6 +28,20 @@ vi.mock('../../features/notes/logic/contentProcessor', () => ({
 }));
 
 describe('noteService', () => {
+  const mockCourseTopic: CourseTopic = {
+    id: 't1',
+    course_id: 'c123',
+    course_name: 'Audit 101',
+    section_title: 'Introduction',
+    chunk_order: 1,
+    content: 'Test content',
+    metadata: {},
+    ai_logic: {},
+    status: 'COMPLETED',
+    created_at: new Date().toISOString(),
+    last_synced_at: null,
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -35,21 +49,7 @@ describe('noteService', () => {
   describe('fetchCourseNotes', () => {
     it('1. Geçerli bir kurs slugı ile verileri başarıyla çeker', async () => {
       vi.mocked(getCourseIdBySlug).mockResolvedValue('c123');
-      vi.mocked(getCourseTopics).mockResolvedValue([
-        {
-          id: 't1',
-          course_id: 'c123',
-          course_name: 'Audit 101',
-          section_title: 'Introduction',
-          chunk_order: 1,
-          content: 'Test content',
-          metadata: {},
-          ai_logic: {},
-          status: 'COMPLETED',
-          created_at: new Date().toISOString(),
-          last_synced_at: null,
-        } as any,
-      ]);
+      vi.mocked(getCourseTopics).mockResolvedValue([mockCourseTopic]);
 
       const result = await fetchCourseNotes('u1', 'audit-101');
 

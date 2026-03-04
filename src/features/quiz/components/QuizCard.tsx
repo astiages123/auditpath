@@ -1,29 +1,14 @@
 import { memo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, RefreshCw, Loader2, Lightbulb } from 'lucide-react';
-import { QuizQuestion } from '@/features/quiz/types';
-
+import { type QuizQuestion } from '@/features/quiz/types';
 import { MathRenderer } from './QuizStatus';
 import { OptionButton } from './OptionButton';
 import { ExplanationPanel } from './ExplanationPanel';
 
-// --- Main Component ---
+// === CONSTANTS ===
 
-interface QuizCardProps {
-  question: QuizQuestion | null;
-  selectedAnswer: number | null;
-  isAnswered: boolean;
-  isCorrect: boolean | null;
-  showExplanation: boolean;
-  isLoading: boolean;
-  error: string | null;
-  onSelectAnswer: (index: number) => void;
-  onToggleExplanation: () => void;
-  onRetry: () => void;
-  onBlank?: () => void;
-}
-
-const optionLabels = ['A', 'B', 'C', 'D', 'E'];
+const OPTION_LABELS = ['A', 'B', 'C', 'D', 'E'];
 
 const KEY_TO_INDEX: Record<string, number> = {
   '1': 0,
@@ -43,6 +28,37 @@ const KEY_TO_INDEX: Record<string, number> = {
   E: 4,
 };
 
+// === TYPES ===
+
+interface QuizCardProps {
+  /** Mevcut soru verisi */
+  question: QuizQuestion | null;
+  /** Kullanıcının seçtiği seçeneğin indeksi */
+  selectedAnswer: number | null;
+  /** Soru yanıtlandı mı? */
+  isAnswered: boolean;
+  /** Yanıt doğru mu? */
+  isCorrect: boolean | null;
+  /** Açıklama panelinin görünürlüğü */
+  showExplanation: boolean;
+  /** Yükleme durumu */
+  isLoading: boolean;
+  /** Hata mesajı */
+  error: string | null;
+  /** Seçenek seçme handler'ı */
+  onSelectAnswer: (index: number) => void;
+  /** Açıklama panelini açma/kapama handler'ı */
+  onToggleExplanation: () => void;
+  /** Yeniden deneme handler'ı */
+  onRetry: () => void;
+  /** Boş bırakma handler'ı (opsiyonel) */
+  onBlank?: () => void;
+}
+
+/**
+ * Quiz soru kartı bileşeni. Soruyu, seçenekleri ve (varsa) görseli/ipuclarını gösterir.
+ * Klavye kısayollarını (A-E veya 1-5) destekler.
+ */
 function QuizCardComponent({
   question,
   selectedAnswer,
@@ -56,12 +72,32 @@ function QuizCardComponent({
   onRetry,
   onBlank,
 }: QuizCardProps) {
+  // === REFS ===
   const explanationRef = useRef<HTMLDivElement>(null);
 
-  // Scroll into view when explanation is shown on mobile
+  // Klavye olayları için güncel state/props takibi
+  const stateRef = useRef({
+    question,
+    isAnswered,
+    onSelectAnswer,
+    onBlank,
+  });
+
+  // === SIDE EFFECTS ===
+
+  // Ref güncelleme
+  useEffect(() => {
+    stateRef.current = {
+      question,
+      isAnswered,
+      onSelectAnswer,
+      onBlank,
+    };
+  }, [question, isAnswered, onSelectAnswer, onBlank]);
+
+  // Mobil cihazlarda açıklama gösterildiğinde kaydırma
   useEffect(() => {
     if (isAnswered && showExplanation && window.innerWidth < 1024) {
-      // Small delay to allow AnimatePresence to complete entry animation
       const timer = setTimeout(() => {
         explanationRef.current?.scrollIntoView({
           behavior: 'smooth',
@@ -72,27 +108,9 @@ function QuizCardComponent({
     }
   }, [isAnswered, showExplanation]);
 
-  // Use a Ref to keep the event listener stable while still having access to latest state/props
-  const stateRef = useRef({
-    question,
-    isAnswered,
-    onSelectAnswer,
-    onBlank,
-  });
-
-  // Update ref when props change via useEffect to avoid updating ref during render
-  useEffect(() => {
-    stateRef.current = {
-      question,
-      isAnswered,
-      onSelectAnswer,
-      onBlank,
-    };
-  }, [question, isAnswered, onSelectAnswer, onBlank]);
-
+  // Klavye kısayolları dinleyicisi
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // 1. Don't trigger if user is typing in an input
       if (
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement
@@ -107,10 +125,8 @@ function QuizCardComponent({
         onBlank: currentOnBlank,
       } = stateRef.current;
 
-      // 2. Don't trigger if already answered or if modifier keys are pressed
       if (currentIsAnswered || e.ctrlKey || e.metaKey) return;
 
-      // 3. Handle Option selection (A-E or 1-5)
       const index = KEY_TO_INDEX[e.key];
       if (
         index !== undefined &&
@@ -122,7 +138,6 @@ function QuizCardComponent({
         return;
       }
 
-      // 4. Handle Blank (Escape)
       if (e.key === 'Escape' && currentOnBlank) {
         e.preventDefault();
         currentOnBlank();
@@ -131,7 +146,9 @@ function QuizCardComponent({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []); // Empty dependency array means this only runs once
+  }, []);
+
+  // === RENDER LOGIC ===
 
   if (isLoading) {
     return (
@@ -175,6 +192,7 @@ function QuizCardComponent({
     );
   }
 
+  // === RENDER ===
   return (
     <motion.div
       animate={{ maxWidth: isAnswered && showExplanation ? '1152px' : '896px' }}
@@ -182,9 +200,13 @@ function QuizCardComponent({
       className="w-full mx-auto py-1 md:py-2 flex flex-col h-full overflow-hidden"
     >
       <div
-        className={`flex flex-col lg:flex-row gap-4 md:gap-4 h-full min-h-0 ${isAnswered && showExplanation ? 'overflow-y-auto lg:overflow-hidden' : 'overflow-hidden'}`}
+        className={`flex flex-col lg:flex-row gap-4 md:gap-4 h-full min-h-0 ${
+          isAnswered && showExplanation
+            ? 'overflow-y-auto lg:overflow-hidden'
+            : 'overflow-hidden'
+        }`}
       >
-        {/* Question Side */}
+        {/* Soru Tarafı */}
         <motion.div
           layout
           initial={{ opacity: 0, scale: 0.98 }}
@@ -198,9 +220,14 @@ function QuizCardComponent({
         >
           <div className="bg-transparent flex flex-col h-full min-h-0 group">
             <div
-              className={`p-2 md:p-3 space-y-2 md:space-y-4 flex-1 min-h-0 ${isAnswered && showExplanation ? 'lg:overflow-y-auto' : 'overflow-y-auto'} custom-scrollbar`}
+              className={`p-2 md:p-3 space-y-2 md:space-y-4 flex-1 min-h-0 ${
+                isAnswered && showExplanation
+                  ? 'lg:overflow-y-auto'
+                  : 'overflow-y-auto'
+              } custom-scrollbar`}
             >
               <div className="space-y-3">
+                {/* İpucu (Varsa) */}
                 {question.insight && (
                   <motion.div
                     initial={{ opacity: 0, y: -8 }}
@@ -217,6 +244,7 @@ function QuizCardComponent({
                   </motion.div>
                 )}
 
+                {/* Görsel (Varsa) */}
                 {question.img !== undefined && question.img !== null && (
                   <div className="rounded-2xl overflow-hidden border border-white/5 bg-white/5">
                     <img
@@ -237,11 +265,13 @@ function QuizCardComponent({
                   </div>
                 )}
 
+                {/* Soru Metni */}
                 <div className="text-base md:text-lg font-medium text-white/90 leading-snug md:leading-relaxed font-sans">
                   <MathRenderer content={question.q} />
                 </div>
               </div>
 
+              {/* Seçenekler */}
               <div className="flex flex-col gap-1.5 md:gap-3">
                 {question.o.map((option, index) => {
                   const isSelected = selectedAnswer === index;
@@ -269,7 +299,7 @@ function QuizCardComponent({
                     <OptionButton
                       key={`opt-${index}-${option.slice(0, 10)}`}
                       option={option}
-                      label={optionLabels[index]}
+                      label={OPTION_LABELS[index]}
                       variant={variant}
                       isSelected={isSelected}
                       onClick={() => !isAnswered && onSelectAnswer(index)}
@@ -282,7 +312,7 @@ function QuizCardComponent({
           </div>
         </motion.div>
 
-        {/* Explanation Side */}
+        {/* Açıklama Tarafı */}
         <AnimatePresence>
           {isAnswered && showExplanation && (
             <motion.div
@@ -300,7 +330,7 @@ function QuizCardComponent({
                   isCorrect={isCorrect}
                   showExplanation={showExplanation}
                   onToggleExplanation={onToggleExplanation}
-                  optionLabels={optionLabels}
+                  optionLabels={OPTION_LABELS}
                 />
               </div>
             </motion.div>

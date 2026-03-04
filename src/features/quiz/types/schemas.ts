@@ -9,10 +9,12 @@ import { z } from 'zod';
  * - Local storage
  */
 
-// ============================================================================
-// Concept Map Schemas
-// ============================================================================
+// === SECTION: Concept Map Schemas ===
 
+/**
+ * Kavram haritası içindeki tek bir kavramın validasyon şeması.
+ * Basit nesne yapısını doğrular.
+ */
 export const ConceptMapItemSchema = z.object({
   baslik: z.string(),
   odak: z.string(),
@@ -23,12 +25,12 @@ export const ConceptMapItemSchema = z.object({
   prerequisites: z.array(z.string()).optional(),
 });
 
+/** Validasyonu yapılmış kavram haritası ögesi tipi */
 export type ValidatedConceptMapItem = z.infer<typeof ConceptMapItemSchema>;
 
-// ============================================================================
-// Quiz Question Schemas
-// ============================================================================
+// === SECTION: Quiz Question Schemas ===
 
+/** Tüm sorular için temel validasyon şeması */
 export const BaseQuestionSchema = z.object({
   id: z.string().optional(),
   q: z.string(),
@@ -44,31 +46,38 @@ export const BaseQuestionSchema = z.object({
   topicSlug: z.string().optional(),
 });
 
+/** Çoktan seçmeli soru validasyon şeması */
 export const MultipleChoiceQuestionSchema = BaseQuestionSchema.extend({
   type: z.literal('multiple_choice'),
   o: z.array(z.string()),
   a: z.number(),
 });
 
+/** Doğru-Yanlış soru validasyon şeması */
 export const TrueFalseQuestionSchema = BaseQuestionSchema.extend({
   type: z.literal('true_false'),
   o: z.tuple([z.string(), z.string()]).or(z.array(z.string()).length(2)),
   a: z.number().min(0).max(1),
 });
 
+/** Discriminated Union kullanılarak birleştirilmiş genel soru şeması */
 export const QuizQuestionSchema = z.discriminatedUnion('type', [
   MultipleChoiceQuestionSchema,
   TrueFalseQuestionSchema,
 ]);
 
+/** Validasyonu yapılmış genel quiz sorusu tipi */
 export type ValidatedQuizQuestion = z.infer<typeof QuizQuestionSchema>;
 
+/** Soru durumu (active, reviewing, mastered) validasyon şeması */
 export const QuestionStatusSchema = z.enum(['active', 'reviewing', 'mastered']);
 
-// ============================================================================
-// Chunk Metadata Schemas
-// ============================================================================
+// === SECTION: Chunk Logic & Metadata Schemas ===
 
+/**
+ * Yapay zeka analiz mantığını (difficulty, concepts, quotas) kapsayan şema.
+ * Supabase `ai_logic` sütunu için validasyon sağlar.
+ */
 export const AILogicSchema = z.object({
   difficulty_index: z.number().nullable().optional(),
   concept_map: z.array(ConceptMapItemSchema).nullable().optional(),
@@ -80,20 +89,22 @@ export const AILogicSchema = z.object({
     .nullable()
     .optional(),
   reasoning: z.string().nullable().optional(),
-  generated_at: z.string().nullable().optional(), // ISO date of analysis
-  invalidated_at: z.string().nullable().optional(), // ISO date if manually or automatically invalidated
+  generated_at: z.string().nullable().optional(), // Analiz tarihi (ISO)
+  invalidated_at: z.string().nullable().optional(), // Geçersiz kılınma tarihi (ISO)
 });
 
+/** Validasyonu yapılmış AI Logic tipi */
 export type ValidatedAILogic = z.infer<typeof AILogicSchema>;
 
+/** Chunk meta verileri için passthrough şema */
 export const ChunkMetadataSchema = z.object({}).passthrough();
 
+/** Validasyonu yapılmış Chunk Metadata tipi */
 export type ValidatedChunkMetadata = z.infer<typeof ChunkMetadataSchema>;
 
-// ============================================================================
-// Repository Row Schemas
-// ============================================================================
+// === SECTION: Repository Row Schemas ===
 
+/** Veritabanındaki `questions` tablosunun temel satır şeması */
 export const QuestionRowSchema = z.object({
   id: z.string(),
   chunk_id: z.string().nullable(),
@@ -102,6 +113,7 @@ export const QuestionRowSchema = z.object({
   question_data: z.unknown(),
 });
 
+/** Kısmi soru verisi (Repository sorguları için) */
 export const PartialQuestionRowSchema = z.object({
   id: z.string(),
   chunk_id: z.string(),
@@ -111,6 +123,7 @@ export const PartialQuestionRowSchema = z.object({
   usage_type: z.string().nullable(),
 });
 
+/** Durum bilgisi içeren soru satırı şeması */
 export const QuestionWithStatusRowSchema = z.object({
   question_id: z.string(),
   status: QuestionStatusSchema,
@@ -124,6 +137,7 @@ export const QuestionWithStatusRowSchema = z.object({
   }),
 });
 
+/** Follow-up (takip) sorusu satır şeması */
 export const FollowUpQuestionRowSchema = z.object({
   id: z.string(),
   chunk_id: z.string().nullable(),
@@ -133,26 +147,26 @@ export const FollowUpQuestionRowSchema = z.object({
   user_question_status: z.array(z.object({ status: z.string() })),
 });
 
+/** Validasyonu yapılmış follow-up sorusu tipi */
 export type ValidatedFollowUpQuestion = z.infer<
   typeof FollowUpQuestionRowSchema
 >;
 
-// ============================================================================
-// Exchange Rate Schema
-// ============================================================================
+// === SECTION: Core Reference Schemas ===
 
+/** Döviz kuru şeması (Para birimi dönüşümleri için) */
 export const ExchangeRateSchema = z.object({
   TRY: z.number(),
   EUR: z.number().optional(),
   GBP: z.number().optional(),
 });
 
+/** Validasyonu yapılmış döviz kuru tipi */
 export type ValidatedExchangeRate = z.infer<typeof ExchangeRateSchema>;
 
-// ============================================================================
-// Note Chunk Schemas
-// ============================================================================
+// === SECTION: Note & Content Schemas ===
 
+/** İçerik ve AI mantığı ile birlikte Chunk şeması */
 export const ChunkWithContentSchema = z.object({
   id: z.string(),
   course_id: z.string(),
@@ -164,6 +178,7 @@ export const ChunkWithContentSchema = z.object({
   ai_logic: z.unknown(),
 });
 
+/** Validasyonu yapılmış içerikli Chunk tipi */
 export type ValidatedChunkWithContent = z.infer<typeof ChunkWithContentSchema>;
 
 // ============================================================================
@@ -172,10 +187,12 @@ export type ValidatedChunkWithContent = z.infer<typeof ChunkWithContentSchema>;
 
 // Timeline schemas removed - no longer needed
 
-// ============================================================================
-// Quiz Engine Schemas
-// ============================================================================
+// === SECTION: Quiz Engine & Generation Schemas ===
 
+/**
+ * Üretim sürecinde kullanılan kavram haritası şeması.
+ * İşlem (preprocess) adımları ile farklı model yanıtlarını normalize eder.
+ */
 export const ConceptMapSchema = z.preprocess(
   (val: unknown) => {
     const item = val as Record<string, unknown>;
@@ -210,6 +227,7 @@ export const ConceptMapSchema = z.preprocess(
   })
 );
 
+/** Kavram haritası üretimi için dönen toplu yanıt şeması */
 export const ConceptMapResponseSchema = z.object({
   difficulty_index: z.preprocess((val) => {
     const num = Number(val);

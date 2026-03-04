@@ -1,3 +1,7 @@
+// ===========================
+// === IMPORTS ===
+// ===========================
+
 import {
   Clock,
   TrendingUp,
@@ -22,12 +26,13 @@ import { ProgressStatCard } from './ProgressStatCard';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 
-// Local helper for legacy props, but prefer importing shared type
-interface RankInfo extends Rank {
-  threshold?: number; // legacy compat
-}
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
 
-interface ProgressHeaderProps {
+import type { RankInfo } from '@/features/courses/types/courseTypes';
+
+export interface ProgressHeaderProps {
   currentRank: RankInfo | null;
   nextRank: RankInfo | null;
   rankProgress: number;
@@ -39,6 +44,14 @@ interface ProgressHeaderProps {
   estimatedDays: number;
 }
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * Renders the top dashboard header section containing
+ * summary statistics, ranks, streaks, and focus metrics.
+ */
 export function ProgressHeader({
   currentRank: initialCurrentRank,
   nextRank: initialNextRank,

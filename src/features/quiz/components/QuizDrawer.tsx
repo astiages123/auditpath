@@ -18,17 +18,28 @@ import { QuizContainer } from '@/features/quiz/components/QuizContainer';
 // === TYPES ===
 
 interface QuizDrawerProps {
+  /** Drawer'ın görünürlük durumu */
   isOpen: boolean;
+  /** Kapatma butonu tıklandığında tetiklenen handler */
   onClose: () => void;
+  /** Dersin benzersiz kimliği */
   courseId: string;
+  /** Dersin slug değeri (URL uyumlu isim) */
   courseSlug: string;
+  /** Dersin adı */
   courseName: string;
+  /** Opsiyonel: Başlangıçta seçilmesi istenen chunk ID */
   initialChunkId?: string;
+  /** Opsiyonel: Başlangıçta seçilmesi istenen konu adı */
   initialTopicName?: string;
 }
 
 // === COMPONENT ===
 
+/**
+ * Sınav Merkezi'nin ana kaplayıcısı (Drawer).
+ * Quiz akışını (konu seçimi, analiz, briefing ve quiz) yönetir.
+ */
 export function QuizDrawer({
   isOpen,
   onClose,
@@ -36,6 +47,8 @@ export function QuizDrawer({
   courseName,
   initialTopicName,
 }: QuizDrawerProps) {
+  // === HOOKS ===
+
   const {
     topics,
     selectedTopic,
@@ -53,7 +66,9 @@ export function QuizDrawer({
     resetState,
   } = useQuizManager({ isOpen, courseId, courseName });
 
-  // initialTopicName geldiğinde topics yüklendikten sonra otomatik seç
+  // === SIDE EFFECTS ===
+
+  // Belirli bir konu adı ile açıldığında otomatik seçim yap
   useEffect(() => {
     if (isOpen && initialTopicName && topics.length > 0) {
       const match = topics.find((t) => t.name === initialTopicName);
@@ -61,7 +76,7 @@ export function QuizDrawer({
     }
   }, [isOpen, topics, initialTopicName, setSelectedTopic]);
 
-  // Body scroll lock
+  // Arka plan kaydırmayı engelle (scroll lock)
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -73,20 +88,27 @@ export function QuizDrawer({
     };
   }, [isOpen]);
 
+  // === HANDLERS ===
+
+  /** Drawer'ı tamamen kapatır ve durumu sıfırlar */
   const handleClose = () => {
     resetState();
     setSelectedTopic(null);
     onClose();
   };
 
-  // Quiz bitince overlay'e geri dön (konu seçim state'ini koru)
+  /** Quiz bitince ana menüye döner */
   const handleBack = async () => {
     await handleFinishQuiz();
     setSelectedTopic(null);
     handleClose();
   };
 
+  // === RENDER LOGIC ===
+
   if (!isOpen) return null;
+
+  // === RENDER ===
 
   return (
     <div
@@ -95,9 +117,9 @@ export function QuizDrawer({
         'animate-in fade-in duration-200'
       )}
     >
-      {/* === TOP BAR === */}
+      {/* --- ÜST ÇUBUK (TOP BAR) --- */}
       <div className="shrink-0 flex items-center gap-3 px-6 py-3 border-b border-border/20 bg-background/95 backdrop-blur-md">
-        {/* Sol: geri */}
+        {/* Sol: Geri Dön butonu */}
         <button
           onClick={handleClose}
           className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors group"
@@ -106,7 +128,7 @@ export function QuizDrawer({
           <span className="hidden sm:inline">Notlara Dön</span>
         </button>
 
-        {/* Orta: konu / ders adı */}
+        {/* Orta: Mevcut Başlık */}
         <div className="flex-1 min-w-0 text-center">
           <p className="text-sm font-black uppercase tracking-wider text-foreground truncate">
             {selectedTopic ? selectedTopic.name : courseName}
@@ -116,7 +138,7 @@ export function QuizDrawer({
           </p>
         </div>
 
-        {/* Sağ: kapat */}
+        {/* Sağ: Kapat butonu */}
         <button
           onClick={handleClose}
           className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
@@ -125,7 +147,7 @@ export function QuizDrawer({
         </button>
       </div>
 
-      {/* === MAIN CONTENT — Tam genişlik, tek panel === */}
+      {/* --- ANA İÇERİK --- */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <div className="flex flex-col min-h-0 flex-1 bg-card rounded-xl border overflow-hidden h-full mx-2 lg:mx-4 my-4">
           <ErrorBoundary>
@@ -137,7 +159,7 @@ export function QuizDrawer({
               />
             ) : (
               <div className="flex flex-col flex-1 min-h-0">
-                {/* Sticky Header */}
+                {/* Alt Header (Seçili Konu Bilgisi) */}
                 <div className="group flex flex-col border-b border-border/10 shrink-0 bg-card/80 backdrop-blur-md z-10 transition-all duration-300">
                   <div className="flex items-center gap-3 px-6 py-4">
                     <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
@@ -154,15 +176,17 @@ export function QuizDrawer({
                   </div>
                 </div>
 
-                {/* Scroll Container */}
+                {/* İçerik Panel / Scroll Alanı */}
                 <div className="flex-1 min-h-0 p-4 lg:p-6 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar mx-auto w-full">
                   <div className="w-full flex-1 flex flex-col min-h-0 mx-auto transition-all duration-300 max-w-3xl">
                     {selectedTopic ? (
                       <div className="flex-1 flex flex-col min-h-0">
+                        {/* 1. FAZ: Başlangıç / Analiz Bekleme */}
                         {quizPhase === QUIZ_PHASE.NOT_ANALYZED && (
                           <InitialStateView onGenerate={handleGenerate} />
                         )}
 
+                        {/* 2. FAZ: Analiz / Haritalama Süreci */}
                         {quizPhase === QUIZ_PHASE.MAPPING && (
                           <MappingProgressView
                             examProgress={examProgress}
@@ -170,6 +194,7 @@ export function QuizDrawer({
                           />
                         )}
 
+                        {/* 3. FAZ: Briefing / Başlatma Öncesi */}
                         {quizPhase === QUIZ_PHASE.BRIEFING &&
                           completionStatus && (
                             <BriefingView
@@ -179,6 +204,7 @@ export function QuizDrawer({
                           )}
                       </div>
                     ) : (
+                      /* Konu Seçilmemişse: Kurs Genel Görünümü */
                       <CourseOverview
                         courseName={courseName}
                         progress={courseProgress}

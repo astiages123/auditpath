@@ -1,24 +1,39 @@
 /**
- * Global application constants.
- * Feature-specific constants have been moved to their respective feature directories.
+ * Uygulama genelinde kullanılan global sabitler.
+ * Özelliğe (feature) özel sabitler ilgili özellik klasörlerinde tutulmalıdır.
  */
 
-// Session validity duration (12 hours)
-// Used for JWT token expiration checks
+// ===========================
+// === OTURUM VE CACHE ===
+// ===========================
+
+/**
+ * Oturum geçerlilik süresi (12 saat).
+ * JWT token kontrolleri için kullanılır.
+ */
 export const SESSION_VALIDITY_DURATION_MS = 12 * 60 * 60 * 1000;
 
-// Default storage TTL (24 hours)
-// Used for localStorage cache expiration
+/**
+ * Varsayılan yerel depolama (localStorage) yaşam süresi (24 saat).
+ */
 export const DEFAULT_STORAGE_TTL_MS = 24 * 60 * 60 * 1000;
 
-// Offline queue TTL (7 days)
-// Used for pending operations that survive app restarts
+/**
+ * Çevrimdışı işlem kuyruğu ömrü (7 gün).
+ */
 export const OFFLINE_QUEUE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
-// Virtual day start hour (00:00 AM)
-// Users who study past midnight get counted toward previous day (disabled)
+// ===========================
+// === SİSTEM AYARLARI ===
+// ===========================
+
+/**
+ * Sanal gün başlangıç saati (Gece 00:00).
+ * Eğer kullanıcı gece yarısından sonra çalışıyorsa bir önceki güne sayılması için kullanılır.
+ */
 export const VIRTUAL_DAY_START_HOUR = 0;
 
-// LLM request timeout (90 seconds)
-// Prevents hanging on slow API responses
+/**
+ * Yapay Zeka (LLM) istek zaman aşımı süresi (90 saniye).
+ */
 export const LLM_TIMEOUT_MS = 90000;

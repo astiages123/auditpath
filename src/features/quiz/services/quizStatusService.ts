@@ -1,459 +1,447 @@
 import { supabase } from '@/lib/supabase';
+import { logger } from '@/utils/logger';
 import { safeQuery } from '@/lib/supabaseHelpers';
-import type {
-  TopicCompletionStats,
-  TopicWithCounts,
-} from '@/features/courses/types/courseTypes';
-import { getSubjectStrategy } from '@/features/quiz/logic/quizParser';
-import { AILogicSchema, type ConceptMapItem } from '@/features/quiz/types';
-import { isValid, parseOrThrow } from '@/utils/validation';
-import { QUIZ_CONFIG } from '../utils/constants';
+import { isValidUuid } from '@/utils/validation';
+import { type TopicCompletionStats } from '@/features/courses/types/courseTypes';
+import { type QuotaStatus } from '@/features/quiz/types';
 
-// --- Internal Helpers (formerly in quizStatusHelper) ---
+// ============================================================================
+// CONSTANTS
+// ============================================================================
 
-interface ChunkInput {
-  course_name: string | null;
-  metadata: unknown;
+const MODULE = 'QuizStatusService';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface ChunkTopicData {
+  id: string;
+  section_title: string;
   ai_logic: unknown;
 }
 
-interface TopicQuotaResult {
-  quota: { total: number; antrenman: number; deneme: number };
-  importance: 'high' | 'medium' | 'low';
-  concepts: ConceptMapItem[];
-  difficultyIndex: number | null;
-  aiLogic: {
-    suggested_quotas?: {
-      antrenman: number;
-      deneme: number;
-    };
-  } | null;
+interface TopicStatus {
+  id: string;
+  title: string;
+  mastery: number;
+  isCompleted: boolean;
 }
 
-function calculateTopicQuota(chunk: ChunkInput | null): TopicQuotaResult {
-  let quota = { total: 0, antrenman: 0, deneme: 0 };
-  let importance: 'high' | 'medium' | 'low' = 'medium';
-  let concepts: ConceptMapItem[] = [];
-  let difficultyIndex: number | null = null;
+interface CourseCompletionData {
+  total: number;
+  completed: number;
+  topics: TopicStatus[];
+}
 
-  if (chunk) {
-    const strategy = getSubjectStrategy(chunk.course_name || '');
-    const strategyImportance = strategy?.importance;
-    if (
-      strategyImportance === 'high' ||
-      strategyImportance === 'medium' ||
-      strategyImportance === 'low'
-    ) {
-      importance = strategyImportance;
+interface CourseTopicCount {
+  id: string;
+  title: string;
+  count: number;
+}
+
+// ============================================================================
+// STATUS & PROGRESS SERVICES
+// ============================================================================
+
+/**
+ * Kullanıcının konuya (topic) özgü kota sınırını ve ilerlemesini hesaplar.
+ *
+ * @param userId - Kullanıcı ID'si (opsiyonel)
+ * @param chunkId - Konu (chunk) ID'si
+ * @returns Kullanılan kota, toplam kota ve kavram sayısı
+ */
+export async function calculateTopicQuota(
+  userId: string | undefined,
+  chunkId: string
+): Promise<{ used: number; total: number; conceptCount: number }> {
+  const FUNC = 'calculateTopicQuota';
+  try {
+    if (!isValidUuid(chunkId)) return { used: 0, total: 0, conceptCount: 0 };
+
+    // 1. Chunk metriklerinden hedeflenen soru sayısını al
+    const { data: chunk } = await safeQuery<{
+      ai_logic: Record<string, unknown> | null;
+    }>(
+      supabase
+        .from('note_chunks')
+        .select('ai_logic')
+        .eq('id', chunkId)
+        .single(),
+      `${FUNC} chunk error`,
+      { chunkId }
+    );
+
+    const aiLogic = chunk?.ai_logic as
+      | {
+          suggested_quotas?: { antrenman?: number };
+          concept_map?: unknown[];
+        }
+      | undefined;
+    const targetTotal = aiLogic?.suggested_quotas?.antrenman || 10;
+    const conceptCount = aiLogic?.concept_map?.length || 0;
+
+    // 2. Kullanıcının bu chunk için çözdüğü benzersiz soru sayısını al
+    let count = 0;
+    if (userId) {
+      const { count: c } = await safeQuery(
+        supabase
+          .from('user_quiz_progress')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('chunk_id', chunkId),
+        `${FUNC} progress count error`,
+        { userId, chunkId }
+      );
+      count = c || 0;
     }
 
-    const aiLogic = isValid(AILogicSchema, chunk.ai_logic)
-      ? parseOrThrow(AILogicSchema, chunk.ai_logic)
-      : null;
-
-    const isInvalidated = !!aiLogic?.invalidated_at;
-    concepts = !isInvalidated ? aiLogic?.concept_map || [] : [];
-    difficultyIndex = !isInvalidated ? aiLogic?.difficulty_index || null : null;
-
-    const aiQuotas = !isInvalidated ? aiLogic?.suggested_quotas : null;
-
-    const defaultQuotas = QUIZ_CONFIG.DEFAULT_QUOTAS;
-    const antrenman = aiQuotas?.antrenman ?? defaultQuotas.antrenman;
-    const deneme = aiQuotas?.deneme ?? defaultQuotas.deneme;
-
-    quota = {
-      total: antrenman + deneme,
-      antrenman,
-      deneme,
+    return {
+      used: count,
+      total: targetTotal,
+      conceptCount,
     };
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return { used: 0, total: 10, conceptCount: 0 };
   }
-
-  return {
-    quota,
-    importance,
-    concepts,
-    difficultyIndex,
-    aiLogic:
-      quota.antrenman !== 0 || quota.deneme !== 0
-        ? {
-            suggested_quotas: {
-              antrenman: quota.antrenman,
-              deneme: quota.deneme,
-            },
-          }
-        : null,
-  };
 }
-
-async function fetchTopicQuestions(courseId: string, topic: string) {
-  const { data: questions } = await safeQuery<
-    {
-      id: string;
-      usage_type: string | null;
-      parent_question_id: string | null;
-    }[]
-  >(
-    supabase
-      .from('questions')
-      .select('id, usage_type, parent_question_id')
-      .eq('course_id', courseId)
-      .eq('section_title', topic),
-    'fetchTopicQuestions error',
-    { courseId, topic }
-  );
-
-  return questions || [];
-}
-
-// --- Public Service Functions ---
 
 /**
- * Get the number of questions for a specific topic.
+ * Kurs genelindeki konu bazlı tamamlama durumlarını getirir.
  *
- * @param courseId Course ID
- * @param topic Topic name
- * @returns Question count
+ * @param userId - Kullanıcı ID'si
+ * @param courseId - Kurs ID'si
+ * @returns Toplam konu, tamamlanan konu ve konu detayları
  */
-export async function getTopicQuestionCount(courseId: string, topic: string) {
-  const { count } = await safeQuery<unknown>(
-    supabase
-      .from('questions')
-      .select('*', { count: 'exact', head: true })
-      .eq('course_id', courseId)
-      .eq('section_title', topic)
-      .eq('usage_type', 'antrenman'),
-    'getTopicQuestionCount error',
-    { courseId, topic }
-  );
+export async function getCourseCompletionStatus(
+  userId: string,
+  courseId: string
+): Promise<CourseCompletionData> {
+  const FUNC = 'getCourseCompletionStatus';
+  try {
+    // 1. Kursun tüm konularını (chunks) al
+    const { data: chunks } = await safeQuery<ChunkTopicData[]>(
+      supabase
+        .from('note_chunks')
+        .select('id, section_title, ai_logic')
+        .eq('course_id', courseId),
+      `${FUNC} chunks error`,
+      { courseId }
+    );
 
-  return count || 0;
+    if (!chunks) return { total: 0, completed: 0, topics: [] };
+
+    // 2. Kullanıcının mastery skorlarını al
+    const { data: mastery } = await safeQuery<
+      { chunk_id: string; mastery_score: number }[]
+    >(
+      supabase
+        .from('chunk_mastery')
+        .select('chunk_id, mastery_score')
+        .eq('user_id', userId)
+        .eq('course_id', courseId),
+      `${FUNC} mastery error`,
+      { userId, courseId }
+    );
+
+    const masteryMap = new Map(
+      mastery?.map((m) => [m.chunk_id, m.mastery_score])
+    );
+
+    const topicStatus: TopicStatus[] = chunks.map((c) => {
+      const score = masteryMap.get(c.id) || 0;
+      return {
+        id: c.id,
+        title: c.section_title,
+        mastery: score,
+        isCompleted: score >= 80, // %80 başarı eşiği
+      };
+    });
+
+    return {
+      total: chunks.length,
+      completed: topicStatus.filter((t) => t.isCompleted).length,
+      topics: topicStatus,
+    };
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return { total: 0, completed: 0, topics: [] };
+  }
 }
 
 /**
- * Get the total number of questions in the pool for a course by usage type.
+ * Kurs genelindeki ilerlemeyi (total, solved, percentage) getirir.
  *
- * @param courseId Course ID
- * @param usageType Question usage type
- * @returns Total count of questions in the pool
+ * @param userId - Kullanıcı ID'si
+ * @param courseId - Kurs ID'si
+ * @returns İlerleme özeti objesi
  */
-export async function getCoursePoolCount(
-  courseId: string,
-  usageType: 'antrenman' | 'deneme'
-) {
-  const { count } = await safeQuery<unknown>(
-    supabase
-      .from('questions')
-      .select('*', { count: 'exact', head: true })
-      .eq('course_id', courseId)
-      .eq('usage_type', usageType),
-    'getCoursePoolCount error',
-    { courseId, usageType }
-  );
+export async function getCourseProgress(
+  userId: string,
+  courseId: string
+): Promise<{ total: number; solved: number; percentage: number } | null> {
+  const FUNC = 'getCourseProgress';
+  try {
+    const status = await getCourseCompletionStatus(userId, courseId);
+    const percentage =
+      status.total > 0
+        ? Math.round((status.completed / status.total) * 100)
+        : 0;
 
-  return count || 0;
+    return {
+      total: status.total,
+      solved: status.completed,
+      percentage,
+    };
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return null;
+  }
 }
 
 /**
- * Get completion status for a specific topic.
+ * Kursa ait konuları (chunks) ve her konudaki soru sayılarını getirir.
  *
- * @param userId User ID
- * @param courseId Course ID
- * @param topic Topic name
- * @returns Topic completion statistics
+ * @param courseId - Kurs ID'si
+ * @returns Konular ve soru sayıları
+ */
+export async function getCourseTopicsWithCounts(
+  courseId: string
+): Promise<CourseTopicCount[]> {
+  const FUNC = 'getCourseTopicsWithCounts';
+  try {
+    const { data } = await safeQuery<
+      { id: string; section_title: string; questions: { count: number }[] }[]
+    >(
+      supabase
+        .from('note_chunks')
+        .select('id, section_title, questions(count)')
+        .eq('course_id', courseId)
+        .order('created_at', { ascending: true }),
+      `${FUNC} error`,
+      { courseId }
+    );
+
+    return (
+      data?.map((c) => ({
+        id: c.id,
+        title: c.section_title,
+        count: c.questions?.[0]?.count || 0,
+      })) || []
+    );
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return [];
+  }
+}
+
+/**
+ * Belirli bir konunun (topic) detaylı tamamlama durumunu (kota, mevcut soru vb.) getirir.
+ *
+ * @param userId - Kullanıcı ID'si
+ * @param courseId - Kurs ID'si
+ * @param topicName - Konu başlığı
+ * @returns Konu tamamlama istatistikleri
  */
 export async function getTopicCompletionStatus(
   userId: string,
   courseId: string,
-  topic: string
+  topicName: string
 ): Promise<TopicCompletionStats> {
-  // 1. Get Chunk Info & Quotas
-  const { data: chunk } = await safeQuery<ChunkInput>(
-    supabase
-      .from('note_chunks')
-      .select('id, course_name, metadata, ai_logic')
-      .eq('course_id', courseId)
-      .eq('section_title', topic)
-      .limit(1)
-      .maybeSingle(),
-    'fetchTopicChunkInfo error',
-    { courseId, topic }
-  );
-
-  const { quota, importance, concepts, difficultyIndex, aiLogic } =
-    calculateTopicQuota(chunk ?? null);
-
-  // 2. Get Questions
-  const questions = await fetchTopicQuestions(courseId, topic);
-  if (questions.length === 0) {
-    return {
-      completed: false,
-      antrenman: {
-        solved: 0,
-        total: quota.antrenman,
-        quota: quota.antrenman,
-        existing: 0,
-      },
-      deneme: {
-        solved: 0,
-        total: quota.deneme,
-        quota: quota.deneme,
-        existing: 0,
-      },
-      mistakes: { solved: 0, total: 0, existing: 0 },
-      importance,
-    };
-  }
-
-  // 3. SRS Status (session tracking for future use)
-  // const currentSession = sessionCounter?.current_session || 1;
-
-  // 4. Calculate Existings
-  const existingCounts = { antrenman: 0, deneme: 0, mistakes: 0 };
-  const idToTypeMap = new Map<string, string>();
-
-  questions.forEach((q) => {
-    let type = q.parent_question_id ? 'mistakes' : q.usage_type || 'antrenman';
-    if (!['antrenman', 'deneme', 'mistakes'].includes(type)) {
-      type = 'antrenman';
-    }
-
-    idToTypeMap.set(q.id, type);
-    existingCounts[type as keyof typeof existingCounts]++;
-  });
-
-  // 5. Get User Progress
-  const { data: solvedData } = await supabase
-    .from('user_quiz_progress')
-    .select('question_id')
-    .eq('user_id', userId)
-    .eq('course_id', courseId)
-    .in(
-      'question_id',
-      questions.map((q) => q.id)
+  const FUNC = 'getTopicCompletionStatus';
+  try {
+    // 1. Konuya (chunk) ait metadata ve ai_logic bilgilerini al
+    const { data: chunk } = await safeQuery<{
+      id: string;
+      ai_logic: Record<string, unknown> | null;
+    }>(
+      supabase
+        .from('note_chunks')
+        .select('id, ai_logic')
+        .eq('course_id', courseId)
+        .eq('section_title', topicName)
+        .single(),
+      `${FUNC} chunk error`,
+      { courseId, topicName }
     );
 
-  const solvedCounts = { antrenman: 0, deneme: 0, mistakes: 0 };
-  const uniqueSolved = new Set(solvedData?.map((d) => d.question_id));
-  uniqueSolved.forEach((id) => {
-    const type = idToTypeMap.get(id);
-    if (type) solvedCounts[type as keyof typeof solvedCounts]++;
-  });
+    const chunkId = chunk?.id;
+    const aiLogic =
+      (chunk?.ai_logic as {
+        concept_map?: import('@/features/quiz/types').ConceptMapItem[];
+        suggested_quotas?: { antrenman?: number; deneme?: number };
+      }) || {};
+    const concepts = aiLogic?.concept_map || [];
+    const quotas = aiLogic?.suggested_quotas || { antrenman: 10, deneme: 5 };
+    const antrenmanQuota = quotas.antrenman || 10;
+    const denemeQuota = quotas.deneme || 5;
 
-  const antrenmanTotal = Math.max(quota.antrenman, existingCounts.antrenman);
-  const isCompleted =
-    antrenmanTotal > 0 && solvedCounts.antrenman >= antrenmanTotal;
+    // 2. Mevcut soru sayılarını (user_quiz_progress üzerinden) al
+    let antrenmanCount = 0;
+    let denemeCount = 0;
 
-  return {
-    completed: isCompleted,
-    antrenman: {
-      solved: solvedCounts.antrenman,
-      total: antrenmanTotal,
-      quota: quota.antrenman,
-      existing: existingCounts.antrenman,
-    },
-    deneme: {
-      solved: solvedCounts.deneme,
-      total: Math.max(quota.deneme, existingCounts.deneme),
-      quota: quota.deneme,
-      existing: existingCounts.deneme,
-    },
-    mistakes: {
-      solved: solvedCounts.mistakes,
-      total: existingCounts.mistakes,
-      existing: existingCounts.mistakes,
-    },
-    importance,
-    aiLogic,
-    concepts,
-    difficultyIndex,
-  };
+    if (chunkId) {
+      const { count: ac } = await safeQuery(
+        supabase
+          .from('user_quiz_progress')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('chunk_id', chunkId),
+        `${FUNC} antrenman count error`,
+        { userId, chunkId }
+      );
+
+      const { count: dc } = await safeQuery(
+        supabase
+          .from('questions')
+          .select('*', { count: 'exact', head: true })
+          .eq('chunk_id', chunkId)
+          .eq('usage_type', 'deneme'),
+        `${FUNC} deneme count error`,
+        { chunkId }
+      );
+
+      antrenmanCount = ac || 0;
+      denemeCount = dc || 0;
+    }
+
+    return {
+      completed: antrenmanCount >= antrenmanQuota,
+      antrenman: {
+        solved: antrenmanCount,
+        total: antrenmanQuota,
+        quota: antrenmanQuota,
+        existing: antrenmanCount,
+      },
+      deneme: {
+        solved: denemeCount,
+        total: denemeQuota,
+        quota: denemeQuota,
+        existing: denemeCount,
+      },
+      mistakes: {
+        solved: 0,
+        total: 0,
+        existing: 0,
+      },
+      aiLogic: aiLogic as Record<string, unknown>,
+      concepts,
+    };
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return {
+      completed: false,
+      antrenman: { solved: 0, total: 10, quota: 10, existing: 0 },
+      deneme: { solved: 0, total: 5, quota: 5, existing: 0 },
+      mistakes: { solved: 0, total: 0, existing: 0 },
+      aiLogic: {},
+      concepts: [],
+    };
+  }
 }
 
 /**
- * Get all topics for a course with question counts.
+ * Belirli bir chunk için kota durumunu (QuotaStatus) getirir.
  *
- * @param courseId Course ID
- * @returns Array of topics with counts and completion status
+ * @param chunkId - Konu (chunk) ID'si
+ * @param userId - Kullanıcı ID'si (opsiyonel)
+ * @returns Kota durumu nesnesi
  */
-export async function getCourseTopicsWithCounts(
-  courseId: string
-): Promise<TopicWithCounts[]> {
-  const { data: user } = await supabase.auth.getUser();
-  const userId = user.user?.id;
+export async function getChunkQuotaStatus(
+  chunkId: string,
+  userId?: string
+): Promise<QuotaStatus | null> {
+  const FUNC = 'getChunkQuotaStatus';
+  try {
+    const quota = await calculateTopicQuota(userId, chunkId);
 
-  // 1. Get topics from note_chunks sorted by chunk_order
-  const { data: chunks } = await safeQuery<
-    { section_title: string | null; chunk_order: number | null }[]
-  >(
-    supabase
-      .from('note_chunks')
-      .select('section_title, chunk_order')
-      .eq('course_id', courseId)
-      .order('chunk_order', { ascending: true }),
-    'getCourseTopicsWithCounts/chunks error',
-    { courseId }
-  );
+    // Status belirleme (basit mantık: soru varsa completed, yoksa pending)
+    let status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' = 'COMPLETED';
+    if (quota.used === 0) status = 'PENDING';
+    else if (quota.used < quota.total) status = 'PROCESSING';
 
-  if (!chunks) return [];
-
-  // Dedup maintaining order
-  const seen = new Set<string>();
-  const orderedTopics: string[] = [];
-  chunks?.forEach((c) => {
-    if (c.section_title && !seen.has(c.section_title)) {
-      seen.add(c.section_title);
-      orderedTopics.push(c.section_title);
-    }
-  });
-
-  if (orderedTopics.length === 0) return [];
-
-  // 2. Fetch all questions for this course to aggregate counts
-  const { data: questions } = await safeQuery<
-    {
-      id: string;
-      section_title: string | null;
-      usage_type: string | null;
-      parent_question_id: string | null;
-    }[]
-  >(
-    supabase
-      .from('questions')
-      .select('id, section_title, usage_type, parent_question_id')
-      .eq('course_id', courseId),
-    'getCourseTopicsWithCounts/questions error',
-    { courseId }
-  );
-
-  if (!questions) {
-    return orderedTopics.map((t) => ({
-      name: t,
-      isCompleted: false,
-      counts: { antrenman: 0, deneme: 0, total: 0 },
-    }));
+    return {
+      used: quota.used,
+      quota: { total: quota.total },
+      isFull: quota.used >= quota.total,
+      status: status,
+      conceptCount: quota.conceptCount,
+    };
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return null;
   }
+}
 
-  // 2.1 Fetch Solved Questions to determine isCompleted
-  const solvedIds = new Set<string>();
-  if (userId) {
-    const { data: solved } = await safeQuery<{ question_id: string }[]>(
+/**
+ * Kullanıcı için kurs bazlı oturum bilgilerini (mevcut oturum no vb.) getirir.
+ *
+ * @param userId - Kullanıcı ID'si
+ * @param courseId - Kurs ID'si
+ * @returns Oturum bilgisi nesnesi
+ */
+export async function getSessionInfo(
+  userId: string,
+  courseId: string
+): Promise<{
+  currentSession: number;
+  totalSessions: number;
+  courseId: string;
+} | null> {
+  const FUNC = 'getSessionInfo';
+  try {
+    const { data } = await safeQuery<{ current_session: number }>(
       supabase
-        .from('user_quiz_progress')
-        .select('question_id')
+        .from('course_session_counters')
+        .select('current_session')
         .eq('user_id', userId)
-        .eq('course_id', courseId),
-      'getCourseTopicsWithCounts/solved error',
+        .eq('course_id', courseId)
+        .maybeSingle(),
+      `${FUNC} error`,
       { userId, courseId }
     );
 
-    solved?.forEach((s) => solvedIds.add(s.question_id));
-  }
-
-  // 3. Aggregate counts & completion
-  // Map: Topic -> { antrenmanTotal: 0, antrenmanSolved: 0, ...others }
-  const topicStats: Record<
-    string,
-    {
-      antrenman: number;
-      deneme: number;
-      total: number;
-      antrenmanSolved: number;
-    }
-  > = {};
-
-  // Initialize
-  orderedTopics.forEach((t) => {
-    topicStats[t] = {
-      antrenman: 0,
-      deneme: 0,
-      total: 0,
-      antrenmanSolved: 0,
-    };
-  });
-
-  questions?.forEach((q) => {
-    const t = q.section_title;
-    if (t && topicStats[t]) {
-      topicStats[t].total += 1;
-      const type = q.usage_type as string;
-
-      if (q.parent_question_id) {
-        // Mistake question
-      } else {
-        if (type === 'antrenman') {
-          topicStats[t].antrenman += 1;
-          if (solvedIds.has(q.id)) {
-            topicStats[t].antrenmanSolved += 1;
-          }
-        } else if (type === 'deneme') topicStats[t].deneme += 1;
-      }
-    }
-  });
-
-  return orderedTopics.map((topic) => {
-    const s = topicStats[topic];
-    const isCompleted = s.antrenman > 0 && s.antrenmanSolved >= s.antrenman;
+    const currentSession = data?.current_session || 1;
 
     return {
-      name: topic,
-      isCompleted,
-      counts: {
-        antrenman: s.antrenman,
-        deneme: s.deneme,
-        total: s.total,
-      },
+      currentSession,
+      totalSessions: currentSession,
+      courseId,
     };
-  });
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return null;
+  }
 }
 
 /**
- * Get overall progress for a course (total questions vs solved).
+ * Kullanıcının kurstaki genel kota bilgilerini getirir.
  *
- * @param userId User ID
- * @param courseId Course ID
- * @returns Progress stats
+ * @param userId - Kullanıcı ID'si
+ * @param courseId - Kurs ID'si
+ * @returns Kota bilgisi nesnesi
  */
-export async function getCourseProgress(userId: string, courseId: string) {
-  // 1. Get total questions in course (Antrenman + Deneme + Arsiv)
-  // excluding mistake copies (parent_question_id is null)
-  const { count: totalQuestions } = await safeQuery<unknown>(
-    supabase
-      .from('questions')
-      .select('*', { count: 'exact', head: true })
-      .eq('course_id', courseId)
-      .is('parent_question_id', null),
-    'getCourseProgress/total error',
-    { courseId }
-  );
-
-  if (totalQuestions === null) {
-    return { total: 0, solved: 0, percentage: 0 };
+export async function getQuotaInfo(
+  _userId: string,
+  _courseId: string
+): Promise<{ reviewQuota: number } | null> {
+  const FUNC = 'getQuotaInfo';
+  try {
+    // Şimdilik sabit 10 dönüyoruz, ileride dinamik olabilir
+    return {
+      reviewQuota: 10,
+    };
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return { reviewQuota: 10 };
   }
-
-  // 2. Get unique solved questions for this course
-  const { data: solvedData } = await safeQuery<{ question_id: string }[]>(
-    supabase
-      .from('user_quiz_progress')
-      .select('question_id')
-      .eq('user_id', userId)
-      .eq('course_id', courseId),
-    'getCourseProgress/solved error',
-    { userId, courseId }
-  );
-
-  if (!solvedData) {
-    return { total: totalQuestions, solved: 0, percentage: 0 };
-  }
-
-  const solvedIds = new Set(solvedData?.map((s) => s.question_id));
-  const solvedCount = solvedIds.size;
-
-  const total = totalQuestions || 0;
-  const percentage = total > 0 ? Math.round((solvedCount / total) * 100) : 0;
-
-  return {
-    total,
-    solved: solvedCount,
-    percentage,
-  };
 }

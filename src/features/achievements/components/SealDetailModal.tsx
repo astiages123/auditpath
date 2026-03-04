@@ -4,6 +4,10 @@ import { GUILDS, getRequirementDescription } from '../logic/achievementsData';
 import { formatDisplayDate } from '@/utils/dateUtils';
 import type { Achievement } from '../types/achievementsTypes';
 
+// ===========================
+// === TYPES ===
+// ===========================
+
 interface SealDetailModalProps {
   achievement: Achievement | null;
   isOpen: boolean;
@@ -12,7 +16,14 @@ interface SealDetailModalProps {
   unlockedAt?: string | null;
 }
 
-const formatDate = (dateStr: string) => {
+// ===========================
+// === UTILS ===
+// ===========================
+
+/**
+ * Helper to format the achievement unlock date.
+ */
+const formatDate = (dateStr: string): string => {
   return formatDisplayDate(dateStr, {
     year: 'numeric',
     month: 'long',
@@ -20,6 +31,15 @@ const formatDate = (dateStr: string) => {
   });
 };
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * SealDetailModal Component
+ * Displays the detailed view of a specific achievement badge (seal),
+ * including its motto, unlocking requirements, and unlock date.
+ */
 export function SealDetailModal({
   achievement,
   isOpen,
@@ -35,7 +55,7 @@ export function SealDetailModal({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-sm bg-card border-border p-0 overflow-hidden">
-        {/* Header — guild rengi ile arka plan */}
+        {/* Header - Guild-themed background gradient */}
         <div
           className="px-6 pt-6 pb-4 text-center"
           style={{
@@ -60,7 +80,7 @@ export function SealDetailModal({
           </DialogTitle>
         </div>
 
-        {/* Resim — orta */}
+        {/* Seal Image */}
         <div className="flex justify-center py-4">
           <div className="relative w-32 h-32">
             <img
@@ -73,9 +93,9 @@ export function SealDetailModal({
           </div>
         </div>
 
-        {/* Alt bilgi — motto + gereksinim + tarih */}
+        {/* Footer info - Motto, Requirement, Date */}
         <div className="px-6 pb-6 space-y-3">
-          {/* Gereksinim */}
+          {/* Requirement */}
           <p className="text-center text-sm text-muted-foreground">
             {getRequirementDescription(achievement.requirement)}
           </p>
@@ -85,7 +105,7 @@ export function SealDetailModal({
             &ldquo;{achievement.motto}&rdquo;
           </blockquote>
 
-          {/* Tarih / Durum */}
+          {/* Status/Date */}
           <div className="pt-2 border-t border-border/40">
             {isUnlocked && unlockDate ? (
               <div className="flex items-center justify-center gap-2 text-sm text-primary">

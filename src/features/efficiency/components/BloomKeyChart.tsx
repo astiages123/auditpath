@@ -1,28 +1,44 @@
 import { useState, useEffect } from 'react';
-import { BloomStats } from '@/features/quiz/types';
+import type { BloomStats } from '@/features/quiz/types';
 
 type RechartsModule = typeof import('recharts');
 
-export const BloomKeyChart = ({ data }: { data: BloomStats[] }) => {
+// ==========================================
+// === PROPS ===
+// ==========================================
+
+export interface BloomKeyChartProps {
+  data: BloomStats[];
+}
+
+export interface FormattedChartData {
+  name: string;
+  score: number;
+  fill: string;
+}
+
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
+/**
+ * Renders a radial bar chart displaying the user's Bloom taxonomy statistics.
+ * Dynamically loads Recharts to avoid SSR/bundling issues.
+ */
+export const BloomKeyChart = ({ data }: BloomKeyChartProps) => {
+  // ==========================================
+  // === HOOKS & STATE ===
+  // ==========================================
   const [Recharts, setRecharts] = useState<RechartsModule | null>(null);
 
   useEffect(() => {
     import('recharts').then((mod) => setRecharts(mod));
   }, []);
 
-  if (!Recharts) {
-    return (
-      <div className="w-full h-[300px] animate-pulse bg-muted/20 rounded-xl" />
-    );
-  }
-
-  const { RadialBarChart, RadialBar, Legend, Tooltip, ResponsiveContainer } =
-    Recharts;
-
-  // We want to transform data to have specific colors for each level
-  // Order: Hatırla (Red) -> Anla (Orange) -> Uygula (Yellow) -> Analiz (Green) -> Değerlendir (Blue) -> Yarat (Violet)
-
-  const formattedData = data.map((d) => {
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
+  const formattedData: FormattedChartData[] = data.map((d) => {
     let fill = 'oklch(82.968% 0.0001 271.152)'; // muted-foreground
     switch (d.level) {
       case 'Bilgi':
@@ -41,6 +57,18 @@ export const BloomKeyChart = ({ data }: { data: BloomStats[] }) => {
       fill: fill,
     };
   });
+
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
+  if (!Recharts) {
+    return (
+      <div className="w-full h-[300px] animate-pulse bg-muted/20 rounded-xl" />
+    );
+  }
+
+  const { RadialBarChart, RadialBar, Legend, Tooltip, ResponsiveContainer } =
+    Recharts;
 
   return (
     <ResponsiveContainer width="100%" height={300} minHeight={0}>
@@ -63,7 +91,6 @@ export const BloomKeyChart = ({ data }: { data: BloomStats[] }) => {
             fill: 'oklch(92.19% 0 0deg)',
             fontSize: '10px',
             fontWeight: 'bold',
-            // Açık renkli barlarda beyaz rakamların kaybolmaması için ince bir dış kontur ekliyoruz
             stroke: 'oklch(20% 0 0deg / 0.4)',
             strokeWidth: 2,
             paintOrder: 'stroke',

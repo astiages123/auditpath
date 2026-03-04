@@ -1,3 +1,7 @@
+// ===========================
+// === IMPORTS ===
+// ===========================
+
 import {
   Dialog,
   DialogContent,
@@ -7,18 +11,29 @@ import {
 } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, Award, CheckCircle2, TrendingUp } from 'lucide-react';
-// COURSES_CONFIG removed if unused
 
-interface CourseStatsModalProps {
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
+export interface CourseStatsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   courseName: string;
   totalVideos: number;
   completedVideos: number;
   totalHours: number;
-  spentHours: number; // Pomodoro time
+  spentHours: number;
 }
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * Renders a modal displaying course-specific statistics such as completion,
+ * efficiency ratio, and weekly activity.
+ */
 export function CourseStatsModal({
   open,
   onOpenChange,

@@ -1,5 +1,21 @@
+// ===========================
+// === BAŞARI (ACHIEVEMENT) TİPLERİ ===
+// ===========================
+
 /**
- * Rank system types
+ * Kullanıcının açtığı bir başarıyı (achievement) temsil eder.
+ */
+export interface UnlockedAchievement {
+  achievement_id: string;
+  unlockedAt: string;
+}
+
+// ===========================
+// === RÜTBE (RANK) TİPLERİ ===
+// ===========================
+
+/**
+ * Kullanıcı rütbelerini (rank) ve özelliklerini tanımlar.
  */
 export interface Rank {
   id: string;
@@ -11,12 +27,14 @@ export interface Rank {
   order: number;
 }
 
-export interface UnlockedAchievement {
-  achievement_id: string;
-  unlockedAt: string;
-}
+// ===========================
+// === SERİ (STREAK) TİPLERİ ===
+// ===========================
 
+/**
+ * Kullanıcının seri (streak) dönüm noktalarını temsil eder.
+ */
 export interface StreakMilestones {
   maxStreak: number;
-  first7StreakDate: string | null; // İlk kez 7+ günlük streak tamamlandığı gün
+  first7StreakDate: string | null;
 }

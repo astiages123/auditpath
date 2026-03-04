@@ -4,13 +4,24 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 
+// === TYPES: LOADING DIALOG ===
+
 interface GenerationLoadingDialogProps {
+  /** Görünürlük durumu */
   open: boolean;
+  /** Mevcut üretim durumu (generating/saving vb.) */
   status: string;
+  /** İlerleme adım indeksi (0-3) */
   currentStep: number;
+  /** Canlı log listesi */
   logs: string[];
 }
 
+// === COMPONENT: LOADING DIALOG ===
+
+/**
+ * Soru üretimi sırasındaki teknik süreci gösteren bilgilendirme dialogu.
+ */
 export const GenerationLoadingDialog: FC<GenerationLoadingDialogProps> = ({
   open,
   status,
@@ -21,6 +32,7 @@ export const GenerationLoadingDialog: FC<GenerationLoadingDialogProps> = ({
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent className="sm:max-w-[500px] border-white/10 bg-[#0A0A0B]/95 backdrop-blur-2xl">
         <div className="space-y-6 py-4">
+          {/* Header */}
           <div className="flex flex-col items-center text-center space-y-2">
             <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center mb-2">
               <Sparkles className="h-7 w-7 text-primary animate-pulse" />
@@ -34,6 +46,7 @@ export const GenerationLoadingDialog: FC<GenerationLoadingDialogProps> = ({
             </p>
           </div>
 
+          {/* Progress Section */}
           <div className="space-y-4">
             <Progress value={(currentStep / 3) * 100} className="h-2" />
             <div className="flex justify-between text-[11px] font-medium uppercase tracking-wider text-zinc-500">
@@ -43,6 +56,7 @@ export const GenerationLoadingDialog: FC<GenerationLoadingDialogProps> = ({
             </div>
           </div>
 
+          {/* Log Panel */}
           <div className="bg-black/40 rounded-xl border border-white/5 p-4 h-[180px] overflow-y-auto font-mono text-[12px] leading-relaxed">
             {logs.map((log, i) => (
               <div
@@ -62,12 +76,22 @@ export const GenerationLoadingDialog: FC<GenerationLoadingDialogProps> = ({
   );
 };
 
+// === TYPES: SUCCESS DIALOG ===
+
 interface GenerationSuccessDialogProps {
+  /** Görünürlük durumu */
   open: boolean;
+  /** Kapatma handlerı */
   onClose: () => void;
+  /** Başarıyla kaydedilen soru sayısı */
   savedCount: number;
 }
 
+// === COMPONENT: SUCCESS DIALOG ===
+
+/**
+ * Üretim süreci başarıyla tamamlandığında gösterilen tebrik dialogu.
+ */
 export const GenerationSuccessDialog: FC<GenerationSuccessDialogProps> = ({
   open,
   onClose,

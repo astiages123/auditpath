@@ -12,26 +12,35 @@ import {
 } from '@/features/courses/types/courseTypes';
 import { CATEGORY_THEMES } from '@/features/courses/utils/coursesConfig';
 import { getCourseIcon } from '@/features/courses/logic/coursesLogic';
-import { type LandingCourseStats } from '@/features/quiz/services/quizLandingService';
+import { type LandingCourseStats } from '@/features/quiz/types';
+
+// === TYPES ===
 
 interface QuizLandingViewProps {
+  /** Kategorize edilmiş ders listesi */
   categories: Category[];
+  /** Ders bazlı istatistikler (ortalama ustalık, son çalışma vb.) */
   dashboardStats: Record<string, LandingCourseStats>;
+  /** Ders seçildiğinde tetiklenen handler */
   onCourseSelect: (course: Course) => void;
+  /** Yükleme durumu */
   isLoading: boolean;
 }
 
-/**
- * Helper to get dynamic icon for a course based on its name or slug.
- */
-// Local getCourseIcon removed to use centralized one.
+// === COMPONENT ===
 
+/**
+ * Sınav Merkezi'nin ana giriş ekranı.
+ * Kategorilere ayrılmış dersleri, her dersin ilerleme durumunu ve ustalık puanını görselleştirir.
+ */
 export const QuizLandingView: FC<QuizLandingViewProps> = ({
   categories,
   dashboardStats,
   onCourseSelect,
   isLoading,
 }) => {
+  // === RENDER LOGIC ===
+
   if (isLoading) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-12 space-y-4">
@@ -43,9 +52,10 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
     );
   }
 
+  // === RENDER ===
   return (
     <div className="flex-1 flex min-h-full">
-      {/* Table of Contents / Sidebar */}
+      {/* Yan Menü / İçindekiler */}
       {!isLoading && categories.length > 0 && (
         <aside className="hidden lg:flex w-72 flex-col border-r border-border/10 bg-card/20 py-10 px-6 overflow-hidden sticky top-0 h-screen">
           <div className="flex flex-col space-y-8">
@@ -95,9 +105,9 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
         </aside>
       )}
 
-      {/* Main Content Area */}
+      {/* Ana İçerik Alanı */}
       <div className="flex-1 flex flex-col p-6 lg:p-10 pt-0 space-y-12 scroll-smooth">
-        {/* Categorized Course Strips - Netflix Style */}
+        {/* Kategorilere Göre Ders Kartları */}
         {[...categories]
           .sort(
             (a, b) =>
@@ -140,7 +150,7 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                       (a.sort_order || 0) - (b.sort_order || 0) ||
                       a.name.localeCompare(b.name)
                   )
-                  .map((course, _index) => {
+                  .map((course) => {
                     const Icon = getCourseIcon(
                       course.name,
                       course.course_slug ?? course.id
@@ -207,7 +217,7 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                           </div>
                         </div>
 
-                        {/* Smart Footer */}
+                        {/* Akıllı Alt Bilgi */}
                         <div className="px-8 py-5 bg-secondary/30 border-t border-border/30 flex flex-col gap-3 group-hover:bg-primary/[0.03]">
                           <div className="flex items-center justify-between w-full">
                             <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground">
@@ -237,6 +247,7 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
             </section>
           ))}
 
+        {/* Kategorisiz Durumu */}
         {categories.length === 0 && !isLoading && (
           <div className="flex-1 flex flex-col items-center justify-center p-12 text-center space-y-4">
             <BookOpen className="w-16 h-16 text-muted-foreground/20" />

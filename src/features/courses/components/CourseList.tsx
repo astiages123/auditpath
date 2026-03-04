@@ -1,3 +1,7 @@
+// ===========================
+// === IMPORTS ===
+// ===========================
+
 import { useState, useEffect, lazy, Suspense } from 'react';
 import {
   ChevronDown,
@@ -16,29 +20,43 @@ import { formatDurationShort } from '@/utils/dateUtils';
 import { useProgress } from '@/shared/hooks/useProgress';
 import { useCelebration } from '@/shared/hooks/useCelebration';
 import { getCourseIcon } from '../logic/coursesLogic';
-import { type Course } from '@/features/courses/types/courseTypes';
+import type { Course } from '@/features/courses/types/courseTypes';
 import { cn } from '@/utils/stringHelpers';
 import { env } from '@/utils/env';
 
-// Lazy load CourseStatsModal
 const CourseStatsModal = lazy(() =>
   import('./CourseStatsModal').then((module) => ({
     default: module.CourseStatsModal,
   }))
 );
 
-interface CourseListProps {
+// ===========================
+// === TYPE DEFINITIONS ===
+// ===========================
+
+export interface CourseListProps {
   courses: Course[];
   categoryColor: string;
   categoryBgColor: string;
   categorySlug: string;
 }
 
-// Helper to remove instructor name (everything after " - ")
+// ===========================
+// === LOGIC & HELPERS ===
+// ===========================
+
 const cleanCourseName = (name: string) => {
   return name.split(' - ')[0];
 };
 
+// ===========================
+// === COMPONENT ===
+// ===========================
+
+/**
+ * Renders a list of courses under a specific category,
+ * handling expandable views, progress bars, and celebration hooks.
+ */
 export function CourseList({
   courses,
   categoryColor,

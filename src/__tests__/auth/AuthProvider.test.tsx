@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { AuthProvider } from '../../features/auth/components/AuthProvider';
 import { getSupabase } from '@/lib/supabase';
 import { useAuth } from '../../features/auth/hooks/useAuth';
@@ -40,18 +41,24 @@ describe('AuthProvider', () => {
   const mockSupabase = {
     auth: {
       getSession: vi.fn(),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      onAuthStateChange: vi.fn((_handler?: any) => ({
-        data: { subscription: { unsubscribe: vi.fn() } },
-      })),
+      onAuthStateChange: vi.fn(
+        (
+          _handler?: (event: AuthChangeEvent, session: Session | null) => void
+        ) => ({
+          data: { subscription: { unsubscribe: vi.fn() } },
+        })
+      ),
       signOut: vi.fn(),
     },
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (getSupabase as any).mockReturnValue(mockSupabase);
+
+    vi.mocked(getSupabase).mockReturnValue(
+      // eslint-disable-next-line no-restricted-syntax
+      mockSupabase as unknown as ReturnType<typeof getSupabase>
+    );
   });
 
   it('1. Başlangıçta oturumu doğru şekilde yükler', async () => {
@@ -119,10 +126,11 @@ describe('AuthProvider', () => {
   });
 
   it('4. Auth state değiştiğinde (onAuthStateChange) state güncellenir', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let authChangeHandler: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockSupabase.auth.onAuthStateChange.mockImplementation((handler: any) => {
+    let authChangeHandler:
+      | ((event: AuthChangeEvent, session: Session | null) => void)
+      | null
+      | undefined = null;
+    mockSupabase.auth.onAuthStateChange.mockImplementation((handler) => {
       authChangeHandler = handler;
       return { data: { subscription: { unsubscribe: vi.fn() } } };
     });
@@ -142,8 +150,13 @@ describe('AuthProvider', () => {
       expect(screen.getByTestId('user-email')).toHaveTextContent('no-user');
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    authChangeHandler('SIGNED_IN', { user: { email: 'new@test.com' } } as any);
+    const mockSession = {
+      user: { email: 'new@test.com' },
+    } as Session;
+    if (authChangeHandler) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (authChangeHandler as any)('SIGNED_IN', mockSession);
+    }
 
     await waitFor(() => {
       expect(screen.getByTestId('user-email')).toHaveTextContent(

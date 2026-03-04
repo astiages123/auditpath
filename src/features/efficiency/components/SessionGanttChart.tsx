@@ -1,98 +1,36 @@
+import { useMemo } from 'react';
 import { Play, Coffee, Pause } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
-import { Session } from '../types/efficiencyTypes';
+
+import type { Session } from '../types/efficiencyTypes';
+
+// ==========================================
+// === TYPES / PROPS ===
+// ==========================================
 
 export type TimelineEvent = NonNullable<Session['timeline']>[number];
 
-// --- Simple Gantt / Session Visualizer ---
 export interface SessionGanttProps {
   sessions: Session[];
   detailed?: boolean;
 }
 
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
 export const SessionGanttChart = ({
   sessions,
   detailed = false,
 }: SessionGanttProps) => {
-  // If we have only one session, we might want to zoom, but let's stick to the robust logic
-  // from DailyDetailedAnalysisModal which scans timelines for true boundaries.
-
-  // 1. Calculate Global Boundaries from Timeline Events
-  // This is critical because session.startTime might be "later" than actual work due to bugs
-  let globalMin = Infinity;
-  let globalMax = -Infinity;
-
-  // Use a local helper to parse timeline safely
+  // ==========================================
+  // === HELPERS ===
+  // ==========================================
   const getEvents = (s: Session) => {
     if (!s.timeline || !Array.isArray(s.timeline) || s.timeline.length === 0)
       return [];
     return s.timeline;
   };
-
-  sessions.forEach((s) => {
-    // Default to session metadata
-    let sStart = new Date(s.date + 'T' + s.startTime).getTime();
-    // Note: s.date is YYYY-MM-DD, s.startTime is HH:mm.
-    // BUT, better to trust the timeline if it exists.
-
-    // If s.startTime is just HH:mm, we need to be careful with dates.
-    // Let's rely purely on timestamp values in timeline if available.
-
-    const events = getEvents(s);
-    if (events.length > 0) {
-      const tStart = Math.min(...events.map((e: TimelineEvent) => e.start));
-      const tEnd = Math.max(
-        ...events.map((e: TimelineEvent) => e.end || e.start)
-      );
-      if (tStart < Infinity) sStart = tStart;
-      if (tEnd > -Infinity) {
-        if (tEnd > globalMax) globalMax = tEnd;
-      }
-      if (sStart < globalMin) globalMin = sStart;
-    } else {
-      // Fallback to string parsing if no timeline
-      // This is risky for "midnight crossing" but good enough for simple fallback
-      // This is risky for "midnight crossing" but good enough for simple fallback
-      const d = new Date(s.date);
-      const [h, m] = s.startTime.split(':').map(Number);
-      d.setHours(h, m, 0, 0);
-      if (d.getTime() < globalMin) globalMin = d.getTime();
-
-      const dEnd = new Date(d);
-      dEnd.setMinutes(dEnd.getMinutes() + s.duration);
-      if (dEnd.getTime() > globalMax) globalMax = dEnd.getTime();
-    }
-  });
-
-  if (globalMin === Infinity) {
-    // No data case
-    globalMin = new Date().setHours(4, 0, 0, 0);
-    globalMax = globalMin + 18 * 3600 * 1000;
-  }
-
-  // Add padding (30 mins before/after)
-  const padding = 30 * 60 * 1000;
-  const firstStart = globalMin - padding;
-  const lastEnd = globalMax + padding;
-  const totalSpan = lastEnd - firstStart;
-
-  const getPos = (time: number) => ((time - firstStart) / totalSpan) * 100;
-
-  // Generate markers
-  const markers: number[] = [];
-  const startTime = new Date(firstStart);
-  startTime.setMinutes(0, 0, 0);
-  // Add markers every 4 hours relative to the view
-  for (let t = startTime.getTime(); t <= lastEnd; t += 3600000) {
-    if (t >= firstStart) {
-      const h = new Date(t).getHours();
-      if (h % 4 === 0 || detailed) {
-        if (detailed || h % 4 === 0) {
-          markers.push(t);
-        }
-      }
-    }
-  }
 
   const getBlockStyles = (type: string) => {
     switch (type) {
@@ -107,12 +45,86 @@ export const SessionGanttChart = ({
     }
   };
 
+  // ==========================================
+  // === DERIVED STATE ===
+  // ==========================================
+
+  const { globalMin, globalMax, firstStart, totalSpan, markers } =
+    useMemo(() => {
+      let gMin = Infinity;
+      let gMax = -Infinity;
+
+      sessions.forEach((s) => {
+        let sStart = new Date(s.date + 'T' + s.startTime).getTime();
+        const events = getEvents(s);
+
+        if (events.length > 0) {
+          const tStart = Math.min(...events.map((e: TimelineEvent) => e.start));
+          const tEnd = Math.max(
+            ...events.map((e: TimelineEvent) => e.end || e.start)
+          );
+          if (tStart < Infinity) sStart = tStart;
+          if (tEnd > -Infinity) {
+            if (tEnd > gMax) gMax = tEnd;
+          }
+          if (sStart < gMin) gMin = sStart;
+        } else {
+          const d = new Date(s.date);
+          const [h, m] = s.startTime.split(':').map(Number);
+          d.setHours(h, m, 0, 0);
+          if (d.getTime() < gMin) gMin = d.getTime();
+
+          const dEnd = new Date(d);
+          dEnd.setMinutes(dEnd.getMinutes() + s.duration);
+          if (dEnd.getTime() > gMax) gMax = dEnd.getTime();
+        }
+      });
+
+      if (gMin === Infinity) {
+        gMin = new Date().setHours(4, 0, 0, 0);
+        gMax = gMin + 18 * 3600 * 1000;
+      }
+
+      const mPadding = 30 * 60 * 1000;
+      const mFirstStart = gMin - mPadding;
+      const mLastEnd = gMax + mPadding;
+      const mTotalSpan = mLastEnd - mFirstStart;
+
+      const mMarkers: number[] = [];
+      const startTime = new Date(mFirstStart);
+      startTime.setMinutes(0, 0, 0);
+
+      for (let t = startTime.getTime(); t <= mLastEnd; t += 3600000) {
+        if (t >= mFirstStart) {
+          const h = new Date(t).getHours();
+          if (h % 4 === 0 || detailed) {
+            if (detailed || h % 4 === 0) {
+              mMarkers.push(t);
+            }
+          }
+        }
+      }
+
+      return {
+        globalMin: gMin,
+        globalMax: gMax,
+        firstStart: mFirstStart,
+        totalSpan: mTotalSpan,
+        markers: mMarkers,
+      };
+    }, [sessions, detailed]);
+
+  const getPos = (time: number) => ((time - firstStart) / totalSpan) * 100;
+
   const ganttTooltipClass = cn(
     'tooltip-float',
     '-top-16 left-1/2 -translate-x-1/2 bg-surface border border-white/10 rounded-xl p-2.5 shadow-2xl z-50 pointer-events-none',
     'flex flex-col items-center gap-1 min-w-[140px] translate-y-1 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-200'
   );
 
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   return (
     <div className="w-full h-full min-h-[160px] relative mt-2 select-none">
       {/* Time markers */}

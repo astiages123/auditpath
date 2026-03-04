@@ -1,11 +1,22 @@
+// === TYPES ===
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { User, Session, AuthError } from '@supabase/supabase-js';
+import {
+  User,
+  Session,
+  AuthError,
+  AuthChangeEvent,
+} from '@supabase/supabase-js';
+
 import { getSupabase } from '@/lib/supabase';
 import { AuthContext } from '../hooks/useAuth';
 import { logger } from '@/utils/logger';
 import { toast } from 'sonner';
 
+/**
+ * Provides authentication state and methods to the application.
+ */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  // === STATE ===
   const [state, setState] = useState<{
     user: User | null;
     session: Session | null;
@@ -17,15 +28,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading: true,
     error: null,
   });
+
   const supabase = getSupabase();
 
+  // === HANDLERS ===
+  /**
+   * Clears the current authentication error.
+   */
   const clearError = useCallback(() => {
     setState((prev) => ({ ...prev, error: null }));
   }, []);
 
+  /**
+   * Signs out the current user.
+   */
+  const signOut = useCallback(async () => {
+    try {
+      const { error: signOutError } = await supabase.auth.signOut();
+      if (signOutError) throw signOutError;
+
+      setState({
+        user: null,
+        session: null,
+        loading: false,
+        error: null,
+      });
+    } catch (error: unknown) {
+      const authError = error as AuthError;
+      console.error('[AuthProvider][signOut] Hata:', authError);
+      logger.error('Auth', 'signOut', 'Sign out error', authError);
+
+      setState((prev) => ({ ...prev, error: authError }));
+      toast.error('Oturum kapatılamadı.', {
+        description: authError.message,
+      });
+    }
+  }, [supabase.auth]);
+
+  // === EFFECTS ===
   useEffect(() => {
     let mounted = true;
 
+    /**
+     * Initializes the authentication session.
+     */
     const initializeAuth = async () => {
       try {
         const {
@@ -43,9 +89,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             loading: false,
           }));
         }
-      } catch (err) {
-        const authError = err as AuthError;
-        logger.error('Auth initialization error', authError);
+      } catch (error: unknown) {
+        const authError = error as AuthError;
+        console.error('[AuthProvider][initializeAuth] Hata:', authError);
+        logger.error(
+          'Auth',
+          'initializeAuth',
+          'Auth initialization error',
+          authError
+        );
+
         if (mounted) {
           setState((prev) => ({
             ...prev,
@@ -63,16 +116,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, currentSession) => {
-      if (mounted) {
-        setState((prev) => ({
-          ...prev,
-          session: currentSession,
-          user: currentSession?.user ?? null,
-          loading: false,
-        }));
+    } = supabase.auth.onAuthStateChange(
+      async (
+        _event: AuthChangeEvent,
+        currentSession: Session | null
+      ): Promise<void> => {
+        if (mounted) {
+          setState((prev) => ({
+            ...prev,
+            session: currentSession,
+            user: currentSession?.user ?? null,
+            loading: false,
+          }));
+        }
       }
-    });
+    );
 
     return () => {
       mounted = false;
@@ -80,26 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [supabase.auth]);
 
-  const signOut = useCallback(async () => {
-    try {
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) throw signOutError;
-      setState({
-        user: null,
-        session: null,
-        loading: false,
-        error: null,
-      });
-    } catch (err) {
-      const authError = err as AuthError;
-      logger.error('Sign out error', authError);
-      setState((prev) => ({ ...prev, error: authError }));
-      toast.error('Oturum kapatılamadı.', {
-        description: authError.message,
-      });
-    }
-  }, [supabase.auth]);
-
+  // === RENDER ===
   const value = useMemo(
     () => ({
       user: state.user,

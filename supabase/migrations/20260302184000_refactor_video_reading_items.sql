@@ -17,7 +17,7 @@ ALTER TABLE public.videos ADD COLUMN IF NOT EXISTS item_type item_type_enum;
 
 -- Update item_type based on course type
 UPDATE public.videos v
-SET item_type = c.type::item_type_enum
+SET item_type = c.type::text::item_type_enum
 FROM public.courses c
 WHERE v.course_id = c.id;
 
@@ -53,6 +53,7 @@ ALTER TABLE public.courses ALTER COLUMN type SET NOT NULL;
 -- 6. Add CHECK constraints to courses
 -- Reading courses: total_videos should be null or represent sections (keeping as is but adding constraint logic)
 -- Video courses: total_pages should be null
+ALTER TABLE public.courses DROP CONSTRAINT IF EXISTS check_course_type_fields;
 ALTER TABLE public.courses ADD CONSTRAINT check_course_type_fields 
 CHECK (
     (type = 'video' AND total_pages IS NULL) OR 

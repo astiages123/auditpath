@@ -1,19 +1,48 @@
-import { Trophy, Target, BookOpen } from 'lucide-react';
+import { Trophy, Target, BookOpen, type LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
 
-interface NotesCourseOverviewProps {
+// === BÖLÜM ADI: TİPLER (TYPES) ===
+// ===========================
+
+export interface NotesCourseOverviewProps {
+  /** Kurs/Ders adı */
   courseName: string;
+  /** Yüzdelik toplam ilerleme durumu (Örn: 50) */
   totalProgress?: number;
+  /** Derse ait konu/makale yığınının (chunks) sayısı */
   totalTopics?: number;
 }
 
+export interface OverviewStat {
+  /** Gösterge başlığı */
+  label: string;
+  /** Gösterge değeri */
+  value: string;
+  /** Lucide ikon nesnesi */
+  icon: LucideIcon;
+  /** Renk sınıfı (CSS Tailwind) */
+  color: string;
+  /** Arkaplan sınıfı (CSS Tailwind) */
+  bg: string;
+}
+
+// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
+// ===========================
+
+/**
+ * Kullanıcı notlar sayfasında ilk olarak karşılaştığında karşılama (genel görünüm)
+ * bilgileri ile ders hakkındaki genel başarımı sunar.
+ *
+ * @param {NotesCourseOverviewProps} props
+ * @returns {React.ReactElement}
+ */
 export function NotesCourseOverview({
   courseName,
   totalProgress = 0,
   totalTopics = 0,
-}: NotesCourseOverviewProps) {
-  const stats = [
+}: NotesCourseOverviewProps): React.ReactElement {
+  const stats: OverviewStat[] = [
     {
       label: 'Genel İlerleme',
       value: `%${totalProgress}`,
@@ -29,6 +58,8 @@ export function NotesCourseOverview({
       bg: 'bg-blue-500/10',
     },
   ];
+
+  // === UI RENDER ===
 
   return (
     <div className="flex-col flex items-center justify-center p-8 h-full space-y-8 animate-in fade-in duration-500">
@@ -52,7 +83,7 @@ export function NotesCourseOverview({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-lg">
-        {stats.map((stat, index) => (
+        {stats.map((stat: OverviewStat, index: number) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, scale: 0.9 }}
@@ -78,7 +109,7 @@ export function NotesCourseOverview({
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
         className="w-full max-w-lg"
-      ></motion.div>
+      />
     </div>
   );
 }

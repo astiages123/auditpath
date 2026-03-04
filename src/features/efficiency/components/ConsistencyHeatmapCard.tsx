@@ -1,30 +1,31 @@
 import { Activity } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import { CardHeader } from './CardElements';
 import { EfficiencyHeatmap } from './EfficiencyHeatmap';
-import { useEfficiencyTrends } from '../hooks/useEfficiencyTrends';
 
-export const ConsistencyHeatmapCard = () => {
-  const { loading, consistencyData } = useEfficiencyTrends();
+import type { DayActivity } from '../types/efficiencyTypes';
 
-  if (loading)
-    return (
-      <Card className="h-full flex flex-col p-6">
-        <Skeleton className="h-6 w-48 mb-6 bg-surface" />
-        <div className="flex-1 w-full flex items-center justify-center">
-          <div className="grid grid-cols-7 gap-1.5">
-            {[...Array(49)].map((_, i) => (
-              <Skeleton
-                key={`heatmap-skel-${i}`}
-                className="h-3.5 w-3.5 rounded-sm bg-surface"
-              />
-            ))}
-          </div>
-        </div>
-      </Card>
-    );
+// ==========================================
+// === PROPS ===
+// ==========================================
 
+export interface ConsistencyHeatmapCardProps {
+  consistencyData: DayActivity[];
+}
+
+// ==========================================
+// === COMPONENT ===
+// ==========================================
+
+/**
+ * Displays a wrapper card for a heatmap showing daily consistency.
+ */
+export const ConsistencyHeatmapCard = ({
+  consistencyData,
+}: ConsistencyHeatmapCardProps) => {
+  // ==========================================
+  // === RENDER ===
+  // ==========================================
   return (
     <Card className="h-full flex flex-col p-6">
       <CardHeader
