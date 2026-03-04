@@ -96,12 +96,12 @@ AI anahtarları güvenlik için doğrudan Supabase Edge Function içinde tutulur
 src/
 ├── features/       # Her özellik kendi klasöründe
 │   ├── quiz/       # AI quiz motoru & SRS
-│   ├── efficiency/ # Verimlilik & metrikler
+│   ├── statistics/ # Öğrenme analizi & istatistikler
 │   ├── achievements/
 │   ├── courses/
 │   ├── notes/      # Notion entegrasyonlu notlar
 │   ├── pomodoro/
-│   ├── analytics/
+│   ├── costs/      # AI kullanım maliyet analizi
 │   └── auth/
 ├── pages/          # Sayfa bileşenleri
 ├── shared/         # Paylaşılan hook & bileşenler

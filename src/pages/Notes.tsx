@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NotebookPen, Layout, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ScoreTypeRadarModal } from '@/features/analytics/components/modals/ScoreTypeRadarModal';
+import { ScoreTypeRadarModal } from '@/features/statistics/components/modals/ScoreTypeRadarModal';
 import { useNotesPageLogic } from '@/features/notes/hooks/useNotesPageLogic';
 import { NotesLeftPanel } from '@/features/notes/components/layout/NotesLeftPanel';
 import { NotesMainContent } from '@/features/notes/components/layout/NotesMainContent';

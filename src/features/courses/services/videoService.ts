@@ -4,7 +4,7 @@
 
 import { supabase } from '@/lib/supabase';
 import { safeQuery } from '@/lib/supabaseHelpers';
-import type { DailyVideoMilestones } from '@/features/efficiency/types/efficiencyTypes';
+import type { DailyVideoMilestones } from '@/features/statistics/types/statisticsTypes';
 
 // ===========================
 // === TYPE DEFINITIONS ===

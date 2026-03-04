@@ -3,7 +3,7 @@ import {
   calculateSessionTotals,
   TimelineEvent,
 } from '@/features/pomodoro/logic/sessionMath';
-import { calculateFocusPower } from '@/features/efficiency/logic/metricsCalc';
+import { calculateFocusPower } from '@/features/statistics/logic/metricsCalc';
 import {
   TimelineEventSchema,
   ValidatedTimelineEvent,

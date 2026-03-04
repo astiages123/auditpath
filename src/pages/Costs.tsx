@@ -6,16 +6,16 @@ import {
   CardSkeleton,
 } from '@/shared/components/SkeletonTemplates';
 
-import { useAnalytics } from '@/features/analytics/hooks/useAnalytics';
+import { useAnalytics } from '@/features/costs/hooks/useAnalytics';
 
-import { AnalyticsHeader } from '@/features/analytics/components/layout/AnalyticsHeader';
-import { AnalyticsStats } from '@/features/analytics/components/layout/AnalyticsStats';
-import { AnalyticsTable } from '@/features/analytics/components/charts/AnalyticsTable';
+import { AnalyticsHeader } from '@/features/costs/components/layout/AnalyticsHeader';
+import { AnalyticsStats } from '@/features/costs/components/layout/AnalyticsStats';
+import { AnalyticsTable } from '@/features/costs/components/charts/AnalyticsTable';
 import { PageHeader } from '@/shared/components/PageHeader';
 
 // Lazy load the chart component
 const AnalyticsChart = lazy(() =>
-  import('@/features/analytics/components/charts/AnalyticsChart').then((m) => ({
+  import('@/features/costs/components/charts/AnalyticsChart').then((m) => ({
     default: m.AnalyticsChart,
   }))
 );

@@ -10,12 +10,12 @@ import {
   ConsistencyHeatmapCard,
   PracticeCenterCard,
   RecentActivitiesContainer,
-} from '@/features/efficiency/components';
-import { ScoreTypeProgress } from '@/features/analytics/components/layout/ScoreTypeProgress';
-import { useCognitiveInsights } from '@/features/efficiency/hooks/useCognitiveInsights';
-import { useEfficiencyTrends } from '@/features/efficiency/hooks/useEfficiencyTrends';
-import { useDailyMetrics } from '@/features/efficiency/hooks/useDailyMetrics';
-import { useMasteryChains } from '@/features/efficiency/hooks/useMasteryChains';
+} from '@/features/statistics/components';
+import { ScoreTypeProgress } from '@/features/statistics/components/layout/ScoreTypeProgress';
+import { useCognitiveInsights } from '@/features/statistics/hooks/useCognitiveInsights';
+import { useStatisticsTrends } from '@/features/statistics/hooks/useStatisticsTrends';
+import { useDailyMetrics } from '@/features/statistics/hooks/useDailyMetrics';
+import { useMasteryChains } from '@/features/statistics/hooks/useMasteryChains';
 
 const DashboardSkeleton = () => {
   return (
@@ -87,9 +87,9 @@ const DashboardSkeleton = () => {
   );
 };
 
-const EfficiencyDashboard = () => {
+const StatisticsDashboard = () => {
   const dailyMetrics = useDailyMetrics();
-  const efficiencyTrends = useEfficiencyTrends();
+  const efficiencyTrends = useStatisticsTrends();
   const {
     loadingCognitive,
     loadingBloom,
@@ -208,7 +208,7 @@ const EfficiencyDashboard = () => {
   );
 };
 
-const EfficiencyPage = () => {
+const StatisticsPage = () => {
   return (
     <ErrorBoundary>
       <div className="bg-background text-foreground">
@@ -216,10 +216,10 @@ const EfficiencyPage = () => {
           title="İstatistikler"
           subtitle="Çalışma performansını ve bilişsel yükünü analiz et."
         />
-        <EfficiencyDashboard />
+        <StatisticsDashboard />
       </div>
     </ErrorBoundary>
   );
 };
 
-export default EfficiencyPage;
+export default StatisticsPage;

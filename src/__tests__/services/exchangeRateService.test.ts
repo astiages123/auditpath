@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ExchangeRateService } from '@/features/analytics/services/exchangeRateService';
+import { ExchangeRateService } from '@/features/costs/services/exchangeRateService';
 import { supabase } from '@/lib/supabase';
 
 vi.mock('@/lib/supabase', () => ({

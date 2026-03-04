@@ -20,9 +20,8 @@ export const queryKeys = {
     stats: (userId: string) =>
       [...queryKeys.progress.user(userId), 'stats'] as const,
   },
-  analytics: {
-    all: ['analytics'] as const,
-    costs: (page: number) =>
-      [...queryKeys.analytics.all, 'costs', page] as const,
+  costs: {
+    all: ['costs'] as const,
+    costs: (page: number) => [...queryKeys.costs.all, 'costs', page] as const,
   },
 };
