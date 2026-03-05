@@ -107,6 +107,8 @@ describe('User Flow Integration Expansion', () => {
       summary: null,
       currentMastery: 0,
       lastSubmissionResult: null,
+      isReviewMode: false,
+      answeredQuestionIds: [],
     };
 
     const handlers = {

@@ -41,8 +41,23 @@ const INITIAL_QUIZ_STATE: QuizState = {
   summary: null,
   currentMastery: 0,
   lastSubmissionResult: null,
+  isReviewMode: false,
+  answeredQuestionIds: [],
   history: [],
 };
+
+const normalizeState = (
+  persistedState: QuizState | null | undefined
+): QuizState =>
+  persistedState
+    ? {
+        ...INITIAL_QUIZ_STATE,
+        ...persistedState,
+        isReviewMode: persistedState.isReviewMode ?? false,
+        answeredQuestionIds: persistedState.answeredQuestionIds ?? [],
+        history: persistedState.history ?? [],
+      }
+    : INITIAL_QUIZ_STATE;
 
 // ============================================================================
 // TYPES
@@ -97,7 +112,9 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
   // Initialize state from persistence if available
   const [state, setState] = useState<QuizState>(() => {
     const persisted = loadEngine();
-    return persisted?.state?.hasStarted ? persisted.state : INITIAL_QUIZ_STATE;
+    return persisted?.state?.hasStarted
+      ? normalizeState(persisted.state)
+      : INITIAL_QUIZ_STATE;
   });
 
   const [results, setResults] = useState<QuizResults>(() => {
@@ -137,6 +154,8 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
         generatedCount: questions.length,
         isLoading: false,
         hasStarted: true,
+        isReviewMode: false,
+        answeredQuestionIds: [],
       });
       startTimer();
     },
@@ -152,7 +171,7 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
     async (userId: string, courseIdParam: string, chunkId?: string) => {
       const persisted = loadEngine();
       if (persisted && persisted.state && persisted.state.hasStarted) {
-        setState(persisted.state);
+        setState(normalizeState(persisted.state));
         setResults(persisted.results);
         setSessionContext(persisted.sessionContext);
         startTimer();
@@ -226,6 +245,7 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
       const currentState = stateRef.current;
       if (
         currentState.isAnswered ||
+        currentState.isReviewMode ||
         !currentState.currentQuestion ||
         !sessionContext
       ) {
@@ -341,7 +361,13 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
   const selectAnswer = useCallback(
     (index: number) => {
       const currentState = stateRef.current;
-      if (currentState.isAnswered || !currentState.currentQuestion) return;
+      if (
+        currentState.isAnswered ||
+        currentState.isReviewMode ||
+        !currentState.currentQuestion
+      ) {
+        return;
+      }
       updateState({
         selectedAnswer: currentState.selectedAnswer === index ? null : index,
       });
@@ -358,20 +384,25 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
     updateState(patch);
 
     if (patch.queue) {
-      resetTimer();
-      startTimer();
+      if (patch.isReviewMode) {
+        stopTimer();
+      } else {
+        resetTimer();
+        startTimer();
+      }
     } else {
       clearEngine();
     }
-  }, [updateState, resetTimer, startTimer, clearEngine]);
+  }, [updateState, resetTimer, startTimer, stopTimer, clearEngine]);
 
   /** Bir önceki soruya döner */
   const previousQuestion = useCallback(() => {
     const patch = calculatePreviousQuestionState(stateRef.current);
     if (patch) {
+      stopTimer();
       updateState(patch);
     }
-  }, [updateState]);
+  }, [updateState, stopTimer]);
 
   /** Açıklama panelini açar/kapatır */
   const toggleExplanation = useCallback(() => {

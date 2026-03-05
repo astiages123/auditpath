@@ -212,10 +212,6 @@ export function useQuizEngineApi() {
       generateAndLoadQuestions,
       loadRandomQuestions,
       submitAnswer,
-      startSessionMutation,
-      generateChunkMutation,
-      submitAnswerMutation,
-      queryClient,
     ]
   );
 }

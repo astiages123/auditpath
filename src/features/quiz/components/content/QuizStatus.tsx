@@ -99,7 +99,7 @@ export const ProgressDots: React.FC<ProgressDotsProps> = ({
         const result = questionResults[id];
         const isActive = idx === progressIndex;
 
-        let dotColor = 'bg-white/10';
+        let dotColor = 'bg-zinc-300/70';
         if (result === 'correct') dotColor = 'bg-primary';
         else if (result === 'incorrect') dotColor = 'bg-red-500';
 
@@ -170,9 +170,9 @@ export const QuizProgress: React.FC<QuizProgressProps> = ({
   currentQuestionId,
   currentMastery = 0,
   lastSubmissionResult,
-  progressQueue = [],
-  questionResults = {},
-  selectedAnswer = null,
+  progressQueue: _progressQueue = [],
+  questionResults: _questionResults = {},
+  selectedAnswer: _selectedAnswer = null,
 }) => {
   // === CALCULATIONS ===
   const masteryDelta = lastSubmissionResult?.scoreDelta ?? null;
@@ -219,19 +219,6 @@ export const QuizProgress: React.FC<QuizProgressProps> = ({
             )}
           </div>
         </div>
-
-        {/* Küçük İlerleme Noktaları */}
-        {progressQueue.length > 0 && (
-          <>
-            <div className="w-px h-8 bg-border/20 mx-2" />
-            <ProgressDots
-              progressQueue={progressQueue}
-              progressIndex={currentReviewIndex}
-              questionResults={questionResults}
-              selectedAnswer={selectedAnswer}
-            />
-          </>
-        )}
       </div>
 
       {/* Soru Sayacı */}

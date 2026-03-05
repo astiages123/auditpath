@@ -305,6 +305,12 @@ export interface SubmissionResult {
   progressId?: string;
 }
 
+export type QuizHistoryItem = QuizQuestion & {
+  userAnswer: number | null;
+  isCorrect: boolean | null;
+  responseType: QuizResponseType;
+};
+
 // === SECTION: Application State Types ===
 
 /** Quiz bileşeni içindeki UI durumu */
@@ -323,10 +329,9 @@ export interface QuizState {
   summary: TestResultSummary | null;
   currentMastery: number;
   lastSubmissionResult: SubmissionResult | null;
-  history: (QuizQuestion & {
-    userAnswer: number | null;
-    isCorrect: boolean | null;
-  })[];
+  isReviewMode: boolean;
+  answeredQuestionIds: string[];
+  history: QuizHistoryItem[];
 }
 
 /** Test sonucu özeti */

@@ -7,7 +7,28 @@ import {
 import { QuizCard } from '@/features/quiz/components/content/QuizCard';
 import { QuizFooter } from '@/features/quiz/components/layout/QuizFooter';
 import { QuizResultsView } from '@/features/quiz/components/views/QuizResultsView';
-import type { QuizQuestion, QuizState } from '@/features/quiz/types';
+import type { QuizState } from '@/features/quiz/types';
+
+const buildQuestionResults = (state: QuizState) => {
+  const questionResults: Record<string, 'correct' | 'incorrect' | 'blank'> = {};
+
+  state.history.forEach((item) => {
+    if (item.id) {
+      questionResults[item.id] = item.responseType;
+    }
+  });
+
+  if (state.isAnswered && state.currentQuestion?.id) {
+    questionResults[state.currentQuestion.id] =
+      state.isCorrect === true
+        ? 'correct'
+        : state.selectedAnswer === null
+          ? 'blank'
+          : 'incorrect';
+  }
+
+  return questionResults;
+};
 
 // === TYPES ===
 
@@ -50,6 +71,16 @@ export function QuizView({
   onClose,
 }: QuizViewProps) {
   // === RENDER LOGIC ===
+  const questionResults = buildQuestionResults(state);
+  const progressQueue = Array.from(
+    new Set(
+      state.history
+        .map((h) => h.id)
+        .filter((id): id is string => !!id)
+        .concat(state.currentQuestion?.id ? [state.currentQuestion.id] : [])
+        .concat(state.queue.map((q) => q.id).filter((id): id is string => !!id))
+    )
+  );
 
   // Sınav bittiyse sonuç ekranını göster
   if (state.summary) {
@@ -105,6 +136,9 @@ export function QuizView({
                     currentQuestionId={state.currentQuestion?.id}
                     lastSubmissionResult={state.lastSubmissionResult}
                     currentMastery={state.currentMastery}
+                    progressQueue={progressQueue}
+                    questionResults={questionResults}
+                    selectedAnswer={state.selectedAnswer}
                   />
                 </ErrorBoundary>
 
@@ -153,21 +187,9 @@ export function QuizView({
                     onBlank={onBlank}
                     onToggleExplanation={onToggleExplanation}
                     historyLength={state.history.length}
-                    progressQueue={state.history
-                      .map((h) => (h as QuizQuestion).id)
-                      .filter((id): id is string => !!id)
-                      .concat(
-                        state.currentQuestion && state.currentQuestion.id
-                          ? [state.currentQuestion.id]
-                          : []
-                      )
-                      .concat(
-                        state.queue
-                          .map((q) => q.id)
-                          .filter((id): id is string => !!id)
-                      )}
+                    progressQueue={progressQueue}
                     progressIndex={progressIndex}
-                    questionResults={{}}
+                    questionResults={questionResults}
                   />
                 </ErrorBoundary>
               </div>

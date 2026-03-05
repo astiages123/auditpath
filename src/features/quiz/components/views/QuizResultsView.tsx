@@ -13,22 +13,12 @@ import {
 } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import {
-  type QuizQuestion,
+  type QuizHistoryItem,
   type ExamSubjectWeight,
 } from '@/features/quiz/types';
 import { calculateTestResults } from '@/features/quiz/logic/quizCoreLogic';
 import { getSubjectStrategy } from '@/features/quiz/logic/quizParser';
 import { cn } from '@/utils/stringHelpers';
-
-// === TYPES ===
-
-/** Yanıtlanan soruların geçmişindeki her bir öge */
-type QuizHistoryItem = QuizQuestion & {
-  /** Kullanıcının verdiği yanıtın indeksi */
-  userAnswer: number | null;
-  /** Yanıt doğru mu? */
-  isCorrect: boolean | null;
-};
 
 interface QuizResultsViewProps {
   /** Quiz sonuç verileri */
