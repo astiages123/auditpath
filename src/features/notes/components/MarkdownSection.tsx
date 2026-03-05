@@ -6,7 +6,7 @@ import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import { slugify } from '@/utils/stringHelpers';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
-import { markdownComponents } from '@/features/notes/components/content/MarkdownComponents';
+import { markdownComponents } from '@/features/notes/components/MarkdownComponents';
 
 // === BÖLÜM ADI: TİPLER (TYPES) ===
 // ===========================

@@ -2,7 +2,7 @@ import { memo, useRef, useEffect } from 'react';
 import { PanelRightClose } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 import { Button } from '@/components/ui/button';
-import { ToCTitleRenderer } from '@/features/notes/components/navigation/ToCTitleRenderer';
+import { ToCTitleRenderer } from '@/features/notes/components/ToCTitleRenderer';
 
 // === BÖLÜM ADI: TİPLER (TYPES) ===
 // ===========================
@@ -73,11 +73,11 @@ export const LocalToC = memo(function LocalToC({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+            className="group/close h-8 w-8 bg-transparent hover:bg-transparent transition-all shrink-0"
             onClick={onToggle}
             title="Paneli Kapat"
           >
-            <PanelRightClose className="w-4 h-4" />
+            <PanelRightClose className="w-4 h-4 text-muted-foreground group-hover/close:text-primary group-hover/close:scale-125 transition-all duration-300" />
           </Button>
         )}
       </div>

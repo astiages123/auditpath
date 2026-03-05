@@ -1,16 +1,17 @@
-export { CodeBlock } from './content/CodeBlock';
-export { markdownComponents } from './content/MarkdownComponents';
-export { MarkdownSection } from './content/MarkdownSection';
-export { MermaidDiagram } from './content/MermaidDiagram';
+export { CodeBlock } from './CodeBlock';
+export { markdownComponents } from './MarkdownComponents';
+export { MarkdownSection } from './MarkdownSection';
+export { MermaidDiagram } from './MermaidDiagram';
 
-export { NotesCourseOverview } from './layout/NotesCourseOverview';
-export { NotesHeader } from './layout/NotesHeader';
-export { NotesLeftPanel } from './layout/NotesLeftPanel';
-export { NotesMainContent } from './layout/NotesMainContent';
-export { NotesMobileTopics } from './layout/NotesMobileTopics';
+export { NotesCourseOverview } from './NotesCourseOverview';
+export { NotesHeader } from './NotesHeader';
+export { NotesLeftPanel } from './NotesLeftPanel';
+export { NotesMainContent } from './NotesMainContent';
+export { NotesMobileTopics } from './NotesMobileTopics';
 
-export { GlobalNavigation } from './navigation/GlobalNavigation';
-export { LocalToC } from './navigation/LocalToC';
-export { ScrollToTopButton } from './navigation/ScrollToTopButton';
-export { SearchResultsSidebar } from './navigation/SearchResultsSidebar';
-export { ToCTitleRenderer } from './navigation/ToCTitleRenderer';
+export { GlobalNavigation } from './GlobalNavigation';
+export { LocalToC } from './LocalToC';
+export type { LocalToCItem } from './LocalToC';
+export { ScrollToTopButton } from './ScrollToTopButton';
+export { SearchResultsSidebar } from './SearchResultsSidebar';
+export { ToCTitleRenderer } from './ToCTitleRenderer';

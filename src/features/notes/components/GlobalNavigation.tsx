@@ -2,69 +2,41 @@ import { memo, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { PanelLeftClose } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { cn, slugify } from '@/utils/stringHelpers';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { ROUTES } from '@/utils/routes';
-import { Button } from '@/components/ui/button';
-import { ToCTitleRenderer } from '@/features/notes/components/navigation/ToCTitleRenderer';
+import { ToCTitleRenderer } from '@/features/notes/components/ToCTitleRenderer';
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
-export interface GlobalNavigationProps {
-  /** Ders konu kümeleri */
+interface GlobalNavigationProps {
   chunks: CourseTopic[];
-  /** Açıkta olan (aktif) chunk'ın ID'si */
   activeChunkId: string | null;
-  /** Dersin veya eğitimin slug (adlandırma) başlığı */
   courseSlug: string;
-  /** Konuya tıklandığında tetiklenecek eylem (örneğin mobil menü kapama) */
   onItemClick?: () => void;
-  /** Sol menüyü açıp kapamak için (masaüstü gibi) toggle metodu */
   onToggle?: () => void;
 }
 
-// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
-// ===========================
-
-/**
- * Ders içindeki ana konu yığınlarını (chunks) sağlayan global gezinme menüsü.
- * Sol tarafta (Masaüstü) veya çekmecede (Mobil) gösterilir.
- *
- * @param {GlobalNavigationProps} props
- * @returns {React.ReactElement}
- */
 export const GlobalNavigation = memo(function GlobalNavigation({
   chunks,
   activeChunkId,
-  onItemClick,
   courseSlug,
+  onItemClick,
   onToggle,
-}: GlobalNavigationProps): React.ReactElement {
+}: GlobalNavigationProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // === YARDIMCI MANTIK & EFEKTLER ===
-
-  // Aktif olan öğeyi yan menü içinde görünecek şekilde kaydırma
+  // Auto-scroll the active item into view within the sidebar
   useEffect(() => {
-    try {
-      if (activeChunkId && scrollContainerRef.current) {
-        const activeItem: HTMLElement | null = document.getElementById(
-          `nav-item-${activeChunkId}`
-        );
-        if (activeItem) {
-          activeItem.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-          });
-        }
+    if (activeChunkId && scrollContainerRef.current) {
+      const activeItem = document.getElementById(`nav-item-${activeChunkId}`);
+      if (activeItem) {
+        activeItem.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        });
       }
-    } catch (error: unknown) {
-      console.error('[GlobalNavigation][scrollIntoView] Hata:', error);
     }
   }, [activeChunkId]);
-
-  // === UI RENDER ===
 
   return (
     <nav className="h-full flex flex-col">
@@ -76,11 +48,11 @@ export const GlobalNavigation = memo(function GlobalNavigation({
           <Button
             variant="ghost"
             size="icon"
-            className="hidden lg:flex h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+            className="group/close h-8 w-8 bg-transparent hover:bg-transparent transition-all shrink-0"
             onClick={onToggle}
-            title="Menüyü Kapat"
+            title="Paneli Kapat"
           >
-            <PanelLeftClose className="w-4 h-4" />
+            <PanelLeftClose className="w-4 h-4 text-muted-foreground group-hover/close:text-primary group-hover/close:scale-125 transition-all duration-300" />
           </Button>
         )}
       </div>
@@ -88,12 +60,10 @@ export const GlobalNavigation = memo(function GlobalNavigation({
         ref={scrollContainerRef}
         className="flex-1 min-h-0 overflow-y-auto custom-scrollbar p-2 space-y-1 pb-15"
       >
-        {chunks.map((chunk: CourseTopic, index: number) => {
-          const chunkId: string = slugify(chunk.section_title);
-          const isActive: boolean = activeChunkId === chunkId;
-          const url: string = `${ROUTES.NOTES}/${courseSlug}/${chunkId}`;
-          const weekMatch: RegExpMatchArray | null =
-            chunk.id.match(/hafta-(\d+)/);
+        {chunks.map((chunk, index) => {
+          const chunkId = slugify(chunk.section_title);
+          const isActive = activeChunkId === chunkId;
+          const url = `${ROUTES.NOTES}/${courseSlug}/${chunkId}`;
 
           return (
             <Link
@@ -121,13 +91,6 @@ export const GlobalNavigation = memo(function GlobalNavigation({
               </span>
 
               <div className="flex-1 min-w-0">
-                {courseSlug === 'ATA_584' && weekMatch && (
-                  <div className="mb-1">
-                    <span className="px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 text-[8px] font-black text-primary uppercase tracking-wider">
-                      {weekMatch[1]}. HAFTA
-                    </span>
-                  </div>
-                )}
                 <ToCTitleRenderer
                   title={
                     chunk.section_title.match(/^\d/)

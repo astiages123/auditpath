@@ -1,9 +1,20 @@
 import { FC, useRef, useEffect } from 'react';
-import { BookOpen, Clock, Brain, X, Search, Menu } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import {
+  BookOpen,
+  Clock,
+  Brain,
+  X,
+  Search,
+  Menu,
+  PanelLeftOpen,
+  PanelRightOpen,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/utils/stringHelpers';
+import { ROUTES } from '@/utils/routes';
 
 // === BÖLÜM ADI: TİPLER (TYPES) ===
 // ===========================
@@ -24,6 +35,8 @@ export interface NotesHeaderProps {
   currentChunk?: CurrentChunkMetadata;
   /** Güncel ders adı */
   courseName: string;
+  /** Güncel ders slug'ı */
+  courseSlug: string;
   /** Kullanıcının scroll okuma ilerlemesinin anlık hesaplanması (%) */
   displayProgress: number;
   /** Arama modal paneli açık mı? */
@@ -34,8 +47,10 @@ export interface NotesHeaderProps {
   setSearchQuery: (val: string) => void;
   /** Arama modunu Aç/Kapat */
   toggleSearch: () => void;
-  /** Egzersiz pop-up penceresini aç/kapat eylemi */
-  setIsQuizDrawerOpen: (val: boolean) => void;
+  isLeftPanelVisible?: boolean;
+  setIsLeftPanelVisible?: (visible: boolean) => void;
+  isRightPanelVisible?: boolean;
+  setIsRightPanelVisible?: (visible: boolean) => void;
 }
 
 // === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
@@ -53,13 +68,18 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
   activeChunkId,
   currentChunk,
   courseName,
+  courseSlug,
   displayProgress,
   isSearchOpen,
   searchQuery,
   setSearchQuery,
   toggleSearch,
-  setIsQuizDrawerOpen,
+  isLeftPanelVisible,
+  setIsLeftPanelVisible,
+  isRightPanelVisible,
+  setIsRightPanelVisible,
 }: NotesHeaderProps): React.ReactElement => {
+  const navigate = useNavigate();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // === EFEKTLER (EFFECTS) ===
@@ -89,6 +109,18 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
         >
           <Menu className="w-5 h-5" />
         </button>
+
+        {!isLeftPanelVisible && setIsLeftPanelVisible && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsLeftPanelVisible(true)}
+            className="hidden lg:flex h-9 w-9 p-0 bg-transparent hover:bg-transparent transition-all group/trigger shrink-0 shadow-none border-none"
+            title="Konuları Aç"
+          >
+            <PanelLeftOpen className="w-5 h-5 text-muted-foreground group-hover/trigger:text-primary group-hover/trigger:scale-125 transition-all duration-300" />
+          </Button>
+        )}
 
         <div className="w-8 h-8 bg-primary/10 rounded-lg hidden lg:flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
           <BookOpen className="w-4 h-4" />
@@ -139,7 +171,9 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
                 variant="outline"
                 size="sm"
                 className="shrink-0 gap-1.5 text-primary border-primary/30 hover:bg-primary/10 hover:border-primary/50 transition-colors font-black text-[11px] uppercase tracking-wider"
-                onClick={() => setIsQuizDrawerOpen(true)}
+                onClick={() =>
+                  navigate(`${ROUTES.QUIZ}/${courseSlug}/${activeChunkId}`)
+                }
               >
                 <Brain className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Sınava Gir</span>
@@ -190,6 +224,18 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
                   )}
                 </Button>
               </div>
+
+              {!isRightPanelVisible && setIsRightPanelVisible && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsRightPanelVisible(true)}
+                  className="hidden lg:flex h-9 w-9 p-0 bg-transparent hover:bg-transparent transition-all group/trigger shrink-0 shadow-none border-none"
+                  title="Bu Sayfada Aç"
+                >
+                  <PanelRightOpen className="w-5 h-5 text-muted-foreground group-hover/trigger:text-primary group-hover/trigger:scale-125 transition-all duration-300" />
+                </Button>
+              )}
             </>
           )}
         </div>

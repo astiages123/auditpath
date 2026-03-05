@@ -1,4 +1,3 @@
-import { PanelLeftOpen, PanelRightOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn, slugify } from '@/utils/stringHelpers';
 import {
@@ -30,9 +29,12 @@ interface NotesMainContentProps {
   searchQuery?: string;
   setSearchQuery?: (query: string) => void;
   toggleSearch?: () => void;
-  setIsQuizDrawerOpen?: (open: boolean) => void;
   transformedContent?: string;
   handleGlobalClick?: (id: string) => void;
+  currentChunkToC?: unknown[];
+  activeSection?: string;
+  setActiveSection?: (id: string) => void;
+  handleScrollToId?: (id: string, setActive: (id: string) => void) => void;
 }
 
 export function NotesMainContent(props: NotesMainContentProps) {
@@ -52,7 +54,6 @@ export function NotesMainContent(props: NotesMainContentProps) {
   const searchQuery = props.searchQuery || '';
   const setSearchQuery = props.setSearchQuery || (() => {});
   const toggleSearch = props.toggleSearch || (() => {});
-  const setIsQuizDrawerOpen = props.setIsQuizDrawerOpen || (() => {});
   const transformedContent = props.transformedContent || props.content;
   const handleGlobalClick = props.handleGlobalClick || (() => {});
 
@@ -63,12 +64,16 @@ export function NotesMainContent(props: NotesMainContentProps) {
         activeChunkId={activeChunkId}
         currentChunk={currentChunk}
         courseName={chunks[0]?.course_name || 'Ders Notları'}
+        courseSlug={props.courseTitle}
         displayProgress={displayProgress}
         isSearchOpen={isSearchOpen}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         toggleSearch={toggleSearch}
-        setIsQuizDrawerOpen={setIsQuizDrawerOpen}
+        isLeftPanelVisible={isLeftPanelVisible}
+        setIsLeftPanelVisible={setIsLeftPanelVisible}
+        isRightPanelVisible={isRightPanelVisible}
+        setIsRightPanelVisible={setIsRightPanelVisible}
       />
 
       <div
@@ -76,44 +81,17 @@ export function NotesMainContent(props: NotesMainContentProps) {
         id="notes-scroll-container"
         onScroll={handleScroll}
         className={cn(
-          'flex-1 min-h-0 p-4 lg:p-6 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar',
+          'flex-1 min-h-0 p-4 lg:p-6 flex flex-col overflow-y-auto custom-scrollbar',
           'mx-auto w-full'
         )}
       >
         <div className="relative w-full flex-1 flex flex-col min-h-0 mx-auto transition-all duration-300">
-          {/* Floating Side Triggers */}
-          {!isLeftPanelVisible && (
-            <div className="hidden lg:flex absolute -left-2 lg:-left-4 top-0 h-full items-start pt-4 z-30">
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-10 w-6 rounded-l-none rounded-r-xl border shadow-sm hover:w-8 transition-all group/trigger bg-card/80 backdrop-blur-sm"
-                onClick={() => setIsLeftPanelVisible(true)}
-              >
-                <PanelLeftOpen className="w-4 h-4 text-primary group-hover/trigger:scale-110 transition-transform" />
-              </Button>
-            </div>
-          )}
-
-          {!isRightPanelVisible && activeChunkId !== '' && (
-            <div className="hidden lg:flex absolute -right-2 lg:-right-4 top-0 h-full items-start pt-4 z-30">
-              <Button
-                variant="secondary"
-                size="icon"
-                className="h-10 w-6 rounded-r-none rounded-l-xl border shadow-sm hover:w-8 transition-all group/trigger bg-card/80 backdrop-blur-sm"
-                onClick={() => setIsRightPanelVisible(true)}
-              >
-                <PanelRightOpen className="w-4 h-4 text-primary group-hover/trigger:scale-110 transition-transform" />
-              </Button>
-            </div>
-          )}
-
           <div
             className={cn(
-              'w-full flex-1 flex flex-col min-h-0 mx-auto transition-all duration-300',
+              'w-full flex-1 flex flex-col min-h-0 transition-all duration-300',
               !isLeftPanelVisible && !isRightPanelVisible
                 ? 'max-w-full lg:px-8'
-                : 'max-w-6xl'
+                : 'max-w-6xl mx-auto'
             )}
           >
             {activeChunkId === '' ? (

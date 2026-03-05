@@ -2,14 +2,19 @@ import { ROUTES } from '@/utils/routes';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { NotebookPen, Layout, ChevronLeft, ChevronRight } from 'lucide-react';
+import { NotebookPen, Layout, ChevronLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ScoreTypeRadarModal } from '@/features/statistics/components/modals/ScoreTypeRadarModal';
 import { useNotesPageLogic } from '@/features/notes/hooks/useNotesPageLogic';
-import { NotesLeftPanel } from '@/features/notes/components/layout/NotesLeftPanel';
-import { NotesMainContent } from '@/features/notes/components/layout/NotesMainContent';
-import { NotesMobileTopics } from '@/features/notes/components/layout/NotesMobileTopics';
-import { QuizDrawer } from '@/features/quiz/components/layout/QuizDrawer';
+import {
+  NotesMainContent,
+  NotesLeftPanel,
+  NotesMobileTopics,
+  LocalToC,
+  type LocalToCItem,
+} from '@/features/notes/components';
+
+import { type CourseTopic } from '@/features/courses/types/courseTypes';
+import { cn } from '@/utils/stringHelpers';
 
 /**
  * Notlar Sayfası
@@ -30,8 +35,26 @@ export default function NotesPage() {
     setIsLeftPanelOpen,
     setIsMobileMenuOpen,
     setActiveTab,
+    activeChunkId,
+    currentChunk,
+    isRightPanelVisible,
+    setIsRightPanelVisible,
+    displayProgress,
+    totalProgress,
+    isSearchOpen,
+    searchQuery,
+    setSearchQuery,
+    toggleSearch,
+    handleScroll,
+    currentChunkToC,
+    activeSection,
+    setActiveSection,
+    handleScrollToId,
+    handleGlobalClick,
     handleTopicSelect,
     handleSearchResultClick,
+    debouncedQuery,
+    results,
   } = useNotesPageLogic();
 
   if (loading) {
@@ -46,7 +69,7 @@ export default function NotesPage() {
     );
   }
 
-  if (error || !selectedTopic) {
+  if (error || (!selectedTopic && activeChunkId !== '')) {
     return (
       <div className="flex h-screen flex-col items-center justify-center p-4 text-center">
         <NotebookPen className="mb-4 h-16 w-16 text-muted-foreground opacity-20" />
@@ -66,97 +89,114 @@ export default function NotesPage() {
 
   return (
     <ErrorBoundary>
-      <div className="flex h-screen flex-col bg-background text-foreground lg:flex-row">
-        {/* Sol Panel - Masaüstü */}
-        <NotesLeftPanel
-          topics={topics}
-          selectedTopicId={selectedTopic.id}
-          isLeftPanelOpen={isLeftPanelOpen}
-          courseTitle={courseTitle}
-          onTopicSelect={handleTopicSelect}
-          onSearchResultClick={handleSearchResultClick}
-          onTogglePanel={() => setIsLeftPanelOpen(!isLeftPanelOpen)}
-        />
-
-        {/* Ana İçerik */}
-        <div className="relative flex flex-1 flex-col overflow-hidden">
-          {/* Mobil Menü Kontrolü */}
-          <div className="flex items-center justify-between border-b p-4 lg:hidden">
-            <div className="flex items-center gap-3">
-              <Link to={ROUTES.HOME}>
-                <Button variant="ghost" size="icon">
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-              </Link>
-              <h1 className="text-lg font-bold truncate max-w-[200px]">
-                {courseTitle}
-              </h1>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              Konular
-            </Button>
-          </div>
-
-          {/* Konu Başlığı & Progress - Masaüstü */}
-          <div className="hidden items-center justify-between border-b px-6 py-4 bg-card/50 backdrop-blur-md lg:flex">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsLeftPanelOpen(!isLeftPanelOpen)}
-                className="hidden lg:flex"
-              >
-                {isLeftPanelOpen ? (
-                  <ChevronLeft className="h-5 w-5" />
-                ) : (
-                  <ChevronRight className="h-5 w-5" />
-                )}
+      <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
+        {/* Mobil Menü Kontrolü */}
+        <div className="flex items-center justify-between border-b p-4 lg:hidden">
+          <div className="flex items-center gap-3">
+            <Link to={ROUTES.HOME}>
+              <Button variant="ghost" size="icon">
+                <ChevronLeft className="h-5 w-5" />
               </Button>
-              <div>
-                <span className="text-sm font-medium text-foreground/80 truncate max-w-[150px]">
-                  {selectedTopic?.section_title}
-                </span>
-                <p className="text-xs text-muted-foreground">
-                  {courseTitle} • {topics.length} Konu
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <ScoreTypeRadarModal
-                open={false}
-                onOpenChange={() => {}}
-                data={{ p30: 0, p35: 0, p48: 0 }}
-              />
-              <QuizDrawer
-                isOpen={false}
-                onClose={() => {}}
-                courseId=""
-                courseSlug=""
-                courseName=""
-              />
-            </div>
+            </Link>
+            <h1 className="text-lg font-bold truncate max-w-[200px]">
+              {courseTitle}
+            </h1>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            Konular
+          </Button>
+        </div>
 
-          {/* İçerik Alanı */}
+        <div
+          className={cn(
+            'flex-1 min-h-0 flex flex-col lg:grid gap-4 px-2 py-4 lg:px-4 h-full transition-all duration-300 ease-in-out overflow-hidden',
+            activeChunkId !== ''
+              ? 'lg:grid-cols-[var(--left-panel-width)_1fr_var(--right-panel-width)]'
+              : 'lg:grid-cols-[var(--left-panel-width)_1fr]'
+          )}
+          style={
+            {
+              '--left-panel-width': isLeftPanelOpen ? '240px' : '0px',
+              '--right-panel-width': isRightPanelVisible ? '220px' : '0px',
+            } as React.CSSProperties
+          }
+        >
+          {/* Sol Panel - Masaüstü */}
+          <NotesLeftPanel
+            chunks={topics}
+            activeChunkId={selectedTopic?.id || activeChunkId}
+            isVisible={isLeftPanelOpen}
+            courseSlug={courseTitle}
+            debouncedQuery={debouncedQuery}
+            results={results}
+            onSearchResultClick={handleSearchResultClick}
+            onToggle={() => setIsLeftPanelOpen(!isLeftPanelOpen)}
+          />
+
+          {/* Ana İçerik */}
           <NotesMainContent
             content={content}
             activeTab={activeTab}
-            selectedTopic={selectedTopic}
+            selectedTopic={selectedTopic as CourseTopic}
             courseTitle={courseTitle}
             mainContentRef={mainContentRef}
             setActiveTab={setActiveTab}
+            isLeftPanelVisible={isLeftPanelOpen}
+            setIsLeftPanelVisible={setIsLeftPanelOpen}
+            isRightPanelVisible={isRightPanelVisible}
+            setIsRightPanelVisible={setIsRightPanelVisible}
+            activeChunkId={activeChunkId}
+            currentChunk={currentChunk}
+            chunks={topics}
+            displayProgress={displayProgress}
+            totalProgress={totalProgress}
+            isSearchOpen={isSearchOpen}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            toggleSearch={toggleSearch}
+            transformedContent={content}
+            handleGlobalClick={handleGlobalClick}
+            handleScroll={handleScroll}
+            currentChunkToC={currentChunkToC}
+            activeSection={activeSection}
+            setActiveSection={setActiveSection}
+            handleScrollToId={handleScrollToId}
           />
+
+          {/* Sağ Panel (LocalToC) */}
+          {activeChunkId !== '' && (
+            <aside
+              className={cn(
+                'hidden lg:flex flex-col shrink-0 border rounded-xl bg-card h-full overflow-hidden transition-all duration-300 ease-in-out',
+                !isRightPanelVisible &&
+                  'lg:w-0 lg:opacity-0 lg:border-none lg:pointer-events-none'
+              )}
+            >
+              <div className="min-w-[220px] h-full flex flex-col">
+                <LocalToC
+                  items={(currentChunkToC as LocalToCItem[]) || []}
+                  activeId={activeSection || ''}
+                  onItemClick={(id: string, e: React.MouseEvent) => {
+                    e.preventDefault();
+                    if (handleScrollToId && setActiveSection) {
+                      handleScrollToId(id, setActiveSection);
+                    }
+                  }}
+                  onToggle={() => setIsRightPanelVisible(false)}
+                />
+              </div>
+            </aside>
+          )}
         </div>
 
         {/* Mobil Konu Listesi Overlay */}
         <NotesMobileTopics
           topics={topics}
-          selectedTopicId={selectedTopic.id}
+          selectedTopicId={selectedTopic?.id || activeChunkId}
           isMobileMenuOpen={isMobileMenuOpen}
           onTopicSelect={(topic) => {
             handleTopicSelect(topic);

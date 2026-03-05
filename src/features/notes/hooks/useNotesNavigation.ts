@@ -72,9 +72,6 @@ export const useNotesNavigation = ({
   }, [lastRead, courseSlug, chunks]);
 
   const getScrollContainer = (): Element | null => {
-    const mainElement: Element | null = document.querySelector('main');
-    if (mainElement) return mainElement;
-
     return (
       document.getElementById('notes-scroll-container') ||
       mainContentRef.current
