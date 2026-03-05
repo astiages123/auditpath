@@ -51,7 +51,7 @@ export async function fetchCachedQuestion(
 }
 
 /** Belirli bir chunk ve kullanım tipi için üretilen soruları getirir */
-export async function fetchGeneratedQuestions(
+export async function fetchGeneratedQuestionsByChunk(
   chunkId: string,
   usageType: Database['public']['Enums']['question_usage_type'],
   limit: number
@@ -68,12 +68,40 @@ export async function fetchGeneratedQuestions(
           ascending: false,
         })
         .limit(limit),
-      'fetchGeneratedQuestions error',
+      'fetchGeneratedQuestionsByChunk error',
       { chunkId, usageType }
     );
     return data || [];
   } catch (error) {
-    logger.error(MODULE, 'fetchGeneratedQuestions', 'Hata:', error);
+    logger.error(MODULE, 'fetchGeneratedQuestionsByChunk', 'Hata:', error);
+    return [];
+  }
+}
+
+/** Belirli bir kurs ve kullanım tipi için üretilen soruları getirir */
+export async function fetchGeneratedQuestionsByCourse(
+  courseId: string,
+  usageType: Database['public']['Enums']['question_usage_type'],
+  limit: number
+) {
+  try {
+    if (!isValidUuid(courseId)) return [];
+    const { data } = await safeQuery<{ id: string; question_data: Json }[]>(
+      supabase
+        .from('questions')
+        .select('id, question_data')
+        .eq('course_id', courseId)
+        .eq('usage_type', usageType)
+        .order('created_at', {
+          ascending: false,
+        })
+        .limit(limit),
+      'fetchGeneratedQuestionsByCourse error',
+      { courseId, usageType }
+    );
+    return data || [];
+  } catch (error) {
+    logger.error(MODULE, 'fetchGeneratedQuestionsByCourse', 'Hata:', error);
     return [];
   }
 }

@@ -10,8 +10,7 @@ export * from './content/CourseList';
 
 export * from './layout/ProgressHeader';
 export * from './layout/RoadmapFooter';
-
-export * from './modals/CourseStatsModal';
+export * from './layout/CourseLibraryPageContent';
 
 export * from './views/RoadmapHero';
 export * from './views/RoadmapPath';

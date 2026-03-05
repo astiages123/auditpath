@@ -39,9 +39,9 @@ export const ExchangeRateService = {
    * 2. If stale or missing, fetches from the external API.
    * 3. Caches the new rate in Supabase.
    *
-   * @returns {Promise<number>} The USD to TRY exchange rate.
+   * @returns {Promise<number | null>} The USD to TRY exchange rate, if available.
    */
-  async getUsdToTryRate(): Promise<number> {
+  async getUsdToTryRate(): Promise<number | null> {
     try {
       // 1. Check Supabase for cached rate
       const { data, error } = await supabase
@@ -87,17 +87,10 @@ export const ExchangeRateService = {
       }
 
       // 2. Fetch from API if missing or extremely stale
-      const newRate = await this.refreshRateFromApi();
-      if (newRate) return newRate;
-
-      throw new Error('All exchange rate sources failed');
+      return await this.refreshRateFromApi();
     } catch (error) {
-      console.error(
-        '[ExchangeRateService][getUsdToTryRate] Final Fallback:',
-        error
-      );
-      // Hardcoded fallback as absolute last resort
-      return 35.0;
+      console.error('[ExchangeRateService][getUsdToTryRate] Hata:', error);
+      return null;
     }
   },
 

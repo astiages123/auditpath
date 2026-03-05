@@ -40,6 +40,19 @@ describe('quizParser - Testleri', () => {
       const input = '[{"id": 1}, {"id": 2}]';
       expect(parseJsonResponse(input, 'array')).toHaveLength(2);
     });
+
+    it('11. Türkçe anahtar ve değer içeren JSONu doğru ayrıştırır', () => {
+      const input = '{"başlık":"Vergi","seviye":"Analiz"}';
+      expect(parseJsonResponse(input, 'object')).toEqual({
+        başlık: 'Vergi',
+        seviye: 'Analiz',
+      });
+    });
+
+    it('12. Gerçekten bozuk Türkçe JSONda null döner', () => {
+      const input = '{"başlık":"Vergi", seviye: Analiz}';
+      expect(parseJsonResponse(input, 'object')).toBeNull();
+    });
   });
 
   describe('determineNodeStrategy', () => {

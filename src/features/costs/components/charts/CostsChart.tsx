@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 type RechartsModule = typeof import('recharts');
 
-interface AnalyticsChartProps {
+interface CostsChartProps {
   dailyData: { date: string; cost: number; fullDate?: string }[];
   formatCurrency: (value: number) => string;
 }
@@ -22,7 +22,7 @@ interface AnalyticsChartProps {
 // COMPONENT
 // ==========================================
 
-export const AnalyticsChart: FC<AnalyticsChartProps> = ({
+export const CostsChart: FC<CostsChartProps> = ({
   dailyData,
   formatCurrency,
 }) => {
@@ -84,11 +84,7 @@ export const AnalyticsChart: FC<AnalyticsChartProps> = ({
           }}
         >
           {dailyData.length > 0 && (
-            <ResponsiveContainer
-              key="analytics-chart"
-              width="100%"
-              height={350}
-            >
+            <ResponsiveContainer key="costs-chart" width="100%" height={350}>
               <AreaChart
                 data={dailyData}
                 margin={{ top: 10, right: 10, left: 0, bottom: 0 }}

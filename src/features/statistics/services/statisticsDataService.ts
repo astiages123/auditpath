@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { z } from 'zod';
-import { getVirtualDayStart } from '@/utils/dateUtils';
+import { getAppDayStart, getAppDayStartDaysAgo } from '@/utils/dateUtils';
 import { handleSupabaseError, safeQuery } from '@/lib/supabaseHelpers';
 import { generateDateRange } from '../logic/statisticsHelpers';
 import { performanceMonitor } from '@/utils/performance';
@@ -50,7 +50,7 @@ async function fetchSessionHistory<T = Record<string, unknown>>(
     if (options.startDate) {
       queryStartDate = options.startDate;
     } else {
-      queryStartDate = new Date();
+      queryStartDate = getAppDayStart();
       if (options.days) {
         queryStartDate.setDate(queryStartDate.getDate() - options.days);
       } else {
@@ -101,9 +101,7 @@ export async function getLearningLoadData({
   days,
 }: LearningLoadParams): Promise<LearningLoad[]> {
   try {
-    const queryStartDate = new Date();
-    queryStartDate.setDate(queryStartDate.getDate() - (days - 1));
-    queryStartDate.setHours(0, 0, 0, 0);
+    const queryStartDate = getAppDayStartDaysAgo(days - 1);
 
     const [sessionsData, videoData] = await Promise.all([
       fetchSessionHistory<{
@@ -124,7 +122,7 @@ export async function getLearningLoadData({
       sessionsData || [],
       videoData.data || [],
       days,
-      getVirtualDayStart()
+      getAppDayStart()
     );
   } catch (error) {
     console.error('[EfficiencyDataService][getLearningLoadData] Hata:', error);
@@ -140,9 +138,7 @@ export async function getComprehensiveHistory(
   days: number = 180
 ): Promise<{ sessions: RawSession[]; videos: RawVideo[] }> {
   try {
-    const queryStartDate = new Date();
-    queryStartDate.setDate(queryStartDate.getDate() - (days - 1));
-    queryStartDate.setHours(0, 0, 0, 0);
+    const queryStartDate = getAppDayStartDaysAgo(days - 1);
 
     const [sessions, videos] = await performanceMonitor.measurePromise(
       'EfficiencyDataService',
@@ -207,11 +203,7 @@ export async function getFocusPowerData({
       { days: daysToAssemble }
     );
 
-    return processFocusPowerData(
-      sessionsData || [],
-      range,
-      getVirtualDayStart()
-    );
+    return processFocusPowerData(sessionsData || [], range, getAppDayStart());
   } catch (error) {
     console.error('[EfficiencyDataService][getFocusPowerData] Hata:', error);
     return [];
@@ -238,11 +230,7 @@ export async function getConsistencyData({
       }),
     ]);
 
-    return processConsistencyData(
-      sessionsData || [],
-      days,
-      getVirtualDayStart()
-    );
+    return processConsistencyData(sessionsData || [], days, getAppDayStart());
   } catch (error) {
     console.error('[EfficiencyDataService][getConsistencyData] Hata:', error);
     return [];
@@ -328,7 +316,7 @@ export async function getDailyEfficiencySummary(
   userId: string
 ): Promise<DailyEfficiencySummary> {
   try {
-    const today = getVirtualDayStart();
+    const today = getAppDayStart();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 

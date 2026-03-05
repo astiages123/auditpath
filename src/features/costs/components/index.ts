@@ -1,5 +1,5 @@
-export * from './charts/AnalyticsChart';
-export * from './charts/AnalyticsTable';
+export * from './charts/CostsChart';
+export * from './charts/CostsTable';
 
-export * from './layout/AnalyticsHeader';
-export * from './layout/AnalyticsStats';
+export * from './layout/CostsHeader';
+export * from './layout/CostsStats';

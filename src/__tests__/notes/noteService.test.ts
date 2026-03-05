@@ -86,10 +86,36 @@ describe('noteService', () => {
       expect(result.stats?.synced).toBe(5);
     });
 
-    it('2. Senkronizasyon hatasında hata fırlatır', async () => {
+    it('2. success false dönen responseu olduğu gibi iletir', async () => {
+      const mockResponse = {
+        success: false,
+        error: 'Notion token invalid',
+      };
+      vi.mocked(supabase.functions.invoke).mockResolvedValue({
+        data: mockResponse,
+        error: null,
+      });
+
+      const result = await invokeNotionSync();
+
+      expect(result).toEqual(mockResponse);
+    });
+
+    it('3. Senkronizasyon hatasında hata fırlatır', async () => {
       vi.mocked(supabase.functions.invoke).mockResolvedValue({
         data: null,
         error: new Error('Sync failed'),
+      });
+
+      await expect(invokeNotionSync()).rejects.toThrow(
+        'Senkronizasyon servisinden yanıt alınamadı.'
+      );
+    });
+
+    it('4. response data null ise hata fırlatır', async () => {
+      vi.mocked(supabase.functions.invoke).mockResolvedValue({
+        data: null,
+        error: null,
       });
 
       await expect(invokeNotionSync()).rejects.toThrow(

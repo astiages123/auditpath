@@ -7,7 +7,30 @@ import {
 import { QuizCard } from '@/features/quiz/components/content/QuizCard';
 import { QuizFooter } from '@/features/quiz/components/layout/QuizFooter';
 import { QuizResultsView } from '@/features/quiz/components/views/QuizResultsView';
-import type { QuizState } from '@/features/quiz/types';
+import type { QuizResults, QuizState } from '@/features/quiz/types';
+
+const getCurrentQuestionResult = (
+  state: QuizState
+): 'correct' | 'incorrect' | 'blank' | null => {
+  if (!state.isAnswered || !state.currentQuestion) {
+    return null;
+  }
+
+  const currentQuestion =
+    state.currentQuestion as QuizState['currentQuestion'] & {
+      responseType?: 'correct' | 'incorrect' | 'blank';
+    };
+
+  if (currentQuestion.responseType) {
+    return currentQuestion.responseType;
+  }
+
+  return state.isCorrect === true
+    ? 'correct'
+    : state.selectedAnswer === null
+      ? 'blank'
+      : 'incorrect';
+};
 
 const buildQuestionResults = (state: QuizState) => {
   const questionResults: Record<string, 'correct' | 'incorrect' | 'blank'> = {};
@@ -18,13 +41,9 @@ const buildQuestionResults = (state: QuizState) => {
     }
   });
 
-  if (state.isAnswered && state.currentQuestion?.id) {
-    questionResults[state.currentQuestion.id] =
-      state.isCorrect === true
-        ? 'correct'
-        : state.selectedAnswer === null
-          ? 'blank'
-          : 'incorrect';
+  const currentQuestionResult = getCurrentQuestionResult(state);
+  if (currentQuestionResult && state.currentQuestion?.id) {
+    questionResults[state.currentQuestion.id] = currentQuestionResult;
   }
 
   return questionResults;
@@ -35,6 +54,8 @@ const buildQuestionResults = (state: QuizState) => {
 interface QuizViewProps {
   /** Mevcut quiz durumu */
   state: QuizState;
+  /** Biriken gerçek sonuç sayıları */
+  results: QuizResults;
   /** İlerleme indeksi */
   progressIndex: number;
   /** Onay handler */
@@ -60,6 +81,7 @@ interface QuizViewProps {
  */
 export function QuizView({
   state,
+  results,
   progressIndex,
   onConfirm,
   onBlank,
@@ -86,12 +108,7 @@ export function QuizView({
   if (state.summary) {
     return (
       <QuizResultsView
-        results={{
-          correct: state.summary.masteryScore,
-          incorrect: state.summary.pendingReview,
-          blank: 0,
-          totalTimeMs: 0,
-        }}
+        results={results}
         history={state.history}
         onClose={onClose}
       />

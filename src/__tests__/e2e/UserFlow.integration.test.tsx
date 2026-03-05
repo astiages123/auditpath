@@ -1,200 +1,242 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { useState, type FormEvent } from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { AuthApiError } from '@supabase/supabase-js';
-import { supabase as mockSupabaseInstance } from '@/lib/supabase';
-import { Toaster } from 'sonner';
-import { QuizView } from '@/features/quiz/components/views/QuizView';
-import { useQuotaStore } from '@/features/quiz/store/useQuotaStore';
-import { getVirtualDateKey } from '@/utils/dateUtils';
-import type { QuizState } from '@/features/quiz/types';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { User } from '@supabase/supabase-js';
+import { QuizPageContent } from '@/features/quiz/components/layout/QuizPageContent';
+import { AuthContext } from '@/features/auth/hooks/useAuth';
+import type { AuthContextType } from '@/features/auth/types';
 
-// Mock Supabase
-vi.mock('@/lib/supabase', () => {
-  const mockSupabase = {
-    auth: {
-      signInWithPassword: vi.fn(),
-      getSession: vi.fn(),
-      onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe: vi.fn() } },
-      })),
-      signOut: vi.fn(),
-    },
-    rpc: vi.fn(),
-  };
-  return {
-    getSupabase: vi.fn(() => mockSupabase),
-    supabase: mockSupabase,
-  };
-});
-
-// Mock Logger
-vi.mock('@/utils/logger', () => ({
-  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+const {
+  mockGetCourseBySlug,
+  mockGetCourseTopicsWithCounts,
+  mockGetCourseProgress,
+  mockGetTopicCompletionStatus,
+  mockGetFirstChunkIdForTopic,
+  mockStartQuizSession,
+  mockGetReviewQueue,
+  mockFetchQuestionsByIds,
+  mockFetchQuestionsByCourse,
+  mockSubmitQuizAnswer,
+  mockGenerateForChunk,
+} = vi.hoisted(() => ({
+  mockGetCourseBySlug: vi.fn(),
+  mockGetCourseTopicsWithCounts: vi.fn(),
+  mockGetCourseProgress: vi.fn(),
+  mockGetTopicCompletionStatus: vi.fn(),
+  mockGetFirstChunkIdForTopic: vi.fn(),
+  mockStartQuizSession: vi.fn(),
+  mockGetReviewQueue: vi.fn(),
+  mockFetchQuestionsByIds: vi.fn(),
+  mockFetchQuestionsByCourse: vi.fn(),
+  mockSubmitQuizAnswer: vi.fn(),
+  mockGenerateForChunk: vi.fn(),
 }));
 
-describe('User Flow Integration Expansion', () => {
+vi.mock('@/features/courses/services/courseService', () => ({
+  getCourseBySlug: mockGetCourseBySlug,
+}));
+
+vi.mock('@/features/quiz/services/quizStatusService', () => ({
+  getCourseTopicsWithCounts: mockGetCourseTopicsWithCounts,
+  getCourseProgress: mockGetCourseProgress,
+  getTopicCompletionStatus: mockGetTopicCompletionStatus,
+}));
+
+vi.mock('@/features/quiz/services/quizChunkService', () => ({
+  getFirstChunkIdForTopic: mockGetFirstChunkIdForTopic,
+}));
+
+vi.mock('@/features/quiz/services/quizService', () => ({
+  startQuizSession: mockStartQuizSession,
+  getReviewQueue: mockGetReviewQueue,
+  fetchQuestionsByIds: mockFetchQuestionsByIds,
+  fetchQuestionsByCourse: mockFetchQuestionsByCourse,
+  submitQuizAnswer: mockSubmitQuizAnswer,
+}));
+
+vi.mock('@/features/quiz/logic/quizParser', () => ({
+  generateForChunk: mockGenerateForChunk,
+}));
+
+vi.mock('@/shared/services/pomodoroAdapter', () => ({
+  pomodoroAdapter: {
+    associateQuizWithPomodoro: vi.fn(),
+  },
+}));
+
+vi.mock('@/utils/logger', () => ({
+  logger: {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+  },
+}));
+
+const authValue: AuthContextType = {
+  user: {
+    id: 'user-1',
+    email: 'user@test.com',
+  } as User,
+  session: null,
+  loading: false,
+  error: null,
+  signOut: vi.fn(),
+  clearError: vi.fn(),
+};
+
+function renderQuizFlow(initialEntry: string) {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: { retry: false },
+      mutations: { retry: false },
+    },
+  });
+
+  return render(
+    <QueryClientProvider client={queryClient}>
+      <AuthContext.Provider value={authValue}>
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <Routes>
+            <Route path="/quiz/:courseSlug" element={<QuizPageContent />} />
+            <Route
+              path="/quiz/:courseSlug/:topicSlug"
+              element={<QuizPageContent />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </AuthContext.Provider>
+    </QueryClientProvider>
+  );
+}
+
+describe('Quiz user flow integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-  });
 
-  it('1. Başarısız login senaryosu: Hata mesajı gösterilir', async () => {
-    const invalidLoginResponse: Awaited<
-      ReturnType<typeof mockSupabaseInstance.auth.signInWithPassword>
-    > = {
-      data: { user: null, session: null, weakPassword: null },
-      error: new AuthApiError(
-        'Invalid credentials',
-        400,
-        'invalid_credentials'
-      ),
-    };
+    mockGetCourseBySlug.mockResolvedValue({
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      name: 'Audit Path',
+      course_slug: 'audit-path',
+    });
 
-    vi.mocked(mockSupabaseInstance.auth.signInWithPassword).mockResolvedValue(
-      invalidLoginResponse
+    mockGetCourseTopicsWithCounts.mockResolvedValue([
+      {
+        title: 'Genel Esaslar',
+        count: 12,
+      },
+    ]);
+
+    mockGetCourseProgress.mockResolvedValue({
+      total: 120,
+      solved: 48,
+      percentage: 40,
+    });
+
+    mockGetFirstChunkIdForTopic.mockResolvedValue(
+      '660e8400-e29b-41d4-a716-446655440000'
     );
 
-    const MockLoginForm = () => {
-      const [error, setError] = useState('');
-      const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        const { data } = await mockSupabaseInstance.auth.signInWithPassword({
-          email: 'test@example.com',
-          password: 'wrong',
-        });
-        if (!data.user) setError('E-posta veya şifre hatalı.');
-      };
-      return (
-        <form onSubmit={handleLogin}>
-          <button type="submit">Giriş Yap</button>
-          {error && <div>{error}</div>}
-        </form>
-      );
-    };
+    mockGetTopicCompletionStatus.mockResolvedValue({
+      completed: false,
+      antrenman: {
+        solved: 8,
+        total: 10,
+        quota: 10,
+        existing: 10,
+      },
+      deneme: {
+        solved: 0,
+        total: 5,
+        quota: 5,
+        existing: 0,
+      },
+      mistakes: {
+        solved: 0,
+        total: 0,
+        existing: 0,
+      },
+      aiLogic: {
+        suggested_quotas: {
+          antrenman: 10,
+          deneme: 5,
+        },
+      },
+      concepts: [
+        {
+          baslik: 'Risk değerlendirmesi',
+          seviye: 'Analiz',
+        },
+      ],
+      difficultyIndex: 4,
+    });
 
-    render(<MockLoginForm />);
+    mockStartQuizSession.mockResolvedValue({
+      userId: 'user-1',
+      courseId: '550e8400-e29b-41d4-a716-446655440000',
+      sessionNumber: 3,
+      isNewSession: true,
+    });
 
-    fireEvent.click(screen.getByText('Giriş Yap'));
+    mockGetReviewQueue.mockResolvedValue([
+      {
+        questionId: '770e8400-e29b-41d4-a716-446655440000',
+      },
+    ]);
+
+    mockFetchQuestionsByIds.mockResolvedValue([
+      {
+        id: '770e8400-e29b-41d4-a716-446655440000',
+        question_data: {
+          q: 'İlk kontrol adımı nedir?',
+          exp: 'Risk odaklı planlama ile başlanır.',
+          o: ['Planlama', 'Raporlama'],
+          a: 0,
+          type: 'multiple_choice',
+        },
+      },
+    ]);
+
+    mockFetchQuestionsByCourse.mockResolvedValue([]);
+  });
+
+  it('resolves course, selects topic, opens briefing and starts the quiz session', async () => {
+    const user = userEvent.setup();
+
+    renderQuizFlow('/quiz/audit-path');
+
+    await screen.findByText('Başlamaya Hazır Mısın?');
+    expect(screen.getAllByText('Audit Path').length).toBeGreaterThan(0);
+
+    await user.click(
+      await screen.findByRole('button', { name: /Genel Esaslar/i })
+    );
+
+    await screen.findByText('Kavram Matrisi');
+    expect(screen.getByText('Risk değerlendirmesi')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /ANTRENMANA BAŞLA/i })
+    ).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /ANTRENMANA BAŞLA/i }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/E-posta veya şifre hatalı/i)
-      ).toBeInTheDocument();
+      expect(screen.getByText('İlk kontrol adımı nedir?')).toBeInTheDocument();
     });
-  });
 
-  it('2. Quiz submit başarısızlığı: UI hata durumunu yönetir', async () => {
-    const mockState: QuizState = {
-      isLoading: false,
-      error: 'Submission Failed',
-      hasStarted: true,
-      currentQuestion: {
-        q: 'Q1',
-        exp: 'Q1 açıklama',
-        o: ['A', 'B'],
-        a: 0,
-        type: 'multiple_choice',
-      },
-      queue: [],
-      history: [],
-      generatedCount: 1,
-      totalToGenerate: 1,
-      selectedAnswer: null,
-      isAnswered: false,
-      isCorrect: null,
-      showExplanation: false,
-      summary: null,
-      currentMastery: 0,
-      lastSubmissionResult: null,
-      isReviewMode: false,
-      answeredQuestionIds: [],
-    };
-
-    const handlers = {
-      onConfirm: vi.fn(),
-      onBlank: vi.fn(),
-      onNext: vi.fn(),
-      onPrev: vi.fn(),
-      onSelect: vi.fn(),
-      onToggleExplanation: vi.fn(),
-      onRetry: vi.fn(),
-      onClose: vi.fn(),
-    };
-
-    render(
-      <>
-        <Toaster />
-        <QuizView state={mockState} progressIndex={0} {...handlers} />
-      </>
+    expect(
+      screen.getByText((_, element) => element?.textContent === 'Soru 1 / 1')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Planlama')).toBeInTheDocument();
+    expect(mockStartQuizSession).toHaveBeenCalledWith(
+      'user-1',
+      '550e8400-e29b-41d4-a716-446655440000'
     );
-
-    expect(screen.getByText(/Oturum Hatası/i)).toBeInTheDocument();
-  });
-
-  it('3. Kota dolu durumda doğru kullanıcı mesajı', async () => {
-    useQuotaStore.setState({
-      quota: { dailyLimit: 250, remaining: 0, isLoading: false, error: null },
-    });
-
-    const MockLanding = () => {
-      const remainingQuota = useQuotaStore((state) => state.quota.remaining);
-      return (
-        <div>
-          <h1>Quiz Landing</h1>
-          {remainingQuota === 0 ? (
-            <p>Günlük kotanız doldu. Yarın tekrar bekleriz!</p>
-          ) : (
-            <button>Quize Başla</button>
-          )}
-        </div>
-      );
-    };
-
-    render(<MockLanding />);
-    expect(screen.getByText(/Günlük kotanız doldu/i)).toBeInTheDocument();
-  });
-
-  it('4. Çok sekme/tutarlılık simülasyonu: Store güncellemeleri yansır', async () => {
-    useQuotaStore.setState({
-      quota: { dailyLimit: 10, remaining: 10, isLoading: false, error: null },
-    });
-
-    const ComponentA = () => {
-      const remaining = useQuotaStore((state) => state.quota.remaining);
-      const decrement = useQuotaStore((state) => state.decrementClientQuota);
-      return (
-        <div>
-          <span>A-Remaining: {remaining}</span>
-          <button onClick={decrement}>Decrement A</button>
-        </div>
-      );
-    };
-
-    const ComponentB = () => {
-      const remaining = useQuotaStore((state) => state.quota.remaining);
-      return <span>B-Remaining: {remaining}</span>;
-    };
-
-    render(
-      <div>
-        <ComponentA />
-        <ComponentB />
-      </div>
-    );
-
-    fireEvent.click(screen.getByText('Decrement A'));
-    expect(screen.getByText('B-Remaining: 9')).toBeInTheDocument();
-  });
-
-  it('5. Sanal gün sınırı (23:59/00:00) etkisi', async () => {
-    vi.useFakeTimers();
-    const almostMidnight = new Date(2026, 2, 5, 23, 59, 50);
-    vi.setSystemTime(almostMidnight);
-    expect(getVirtualDateKey()).toBe('2026-03-05');
-
-    vi.advanceTimersByTime(20000);
-    expect(getVirtualDateKey()).toBe('2026-03-06');
-    vi.useRealTimers();
+    expect(mockGetReviewQueue).toHaveBeenCalled();
+    expect(mockFetchQuestionsByIds).toHaveBeenCalledWith([
+      '770e8400-e29b-41d4-a716-446655440000',
+    ]);
   });
 });

@@ -7,7 +7,7 @@ import { z } from 'zod';
 /**
  * Zod schema for validating raw AI generation cost logs from Supabase.
  */
-export const AiGenerationCostSchema = z.object({
+export const GenerationCostLogSchema = z.object({
   id: z.string(),
   created_at: z.string(),
   provider: z.string().nullable().optional(),
@@ -27,7 +27,7 @@ export const AiGenerationCostSchema = z.object({
 // ==========================================
 
 /**
- * Type inferred from the AiGenerationCostSchema.
+ * Type inferred from the GenerationCostLogSchema.
  * Represents an entry in the AI generation costs table.
  */
-export type AiGenerationCost = z.infer<typeof AiGenerationCostSchema>;
+export type GenerationCostLog = z.infer<typeof GenerationCostLogSchema>;

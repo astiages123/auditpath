@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { QuizPhase } from '@/features/quiz/hooks/useQuizManager';
+import { QuizPhase } from '@/features/quiz/hooks/quizManagerTypes';
 import { QuizResults, QuizState, SessionContext } from '@/features/quiz/types';
 import { TopicWithCounts } from '@/features/courses/types/courseTypes';
 import { logger } from '@/utils/logger';

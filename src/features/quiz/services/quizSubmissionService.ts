@@ -36,6 +36,22 @@ export interface GenericStatusResponse {
   error?: Error;
 }
 
+interface AtomicQuizSubmissionPayload {
+  userId: string;
+  questionId: string;
+  chunkId: string | null;
+  courseId: string;
+  responseType: QuizResponseType;
+  selectedAnswer: number | null;
+  sessionNumber: number;
+  timeSpentMs: number;
+  newStatus: Database['public']['Enums']['question_status'];
+  newRepCount: number;
+  nextReviewSession: number;
+  masteryScore?: number;
+  totalQuestionsSeen?: number;
+}
+
 // ============================================================================
 // SUBMISSION SERVICES
 // ============================================================================
@@ -111,24 +127,65 @@ export async function finishQuizSession(stats: {
 }): Promise<{ success: boolean; sessionComplete?: boolean; error?: Error }> {
   const FUNC = 'finishQuizSession';
   try {
-    const { success, error } = await safeQuery<null>(
-      supabase.from('course_session_counters').upsert(
-        {
-          course_id: stats.courseId,
-          user_id: stats.userId,
-          current_session: 1,
-          last_session_date: new Date().toISOString(),
-        },
-        {
-          onConflict: 'user_id,course_id',
-        }
-      ),
+    const { data, error } = await incrementCourseSession(
+      stats.userId,
+      stats.courseId
+    );
+
+    if (error || !data) {
+      return {
+        success: false,
+        error: error || new Error('Failed to increment course session counter'),
+      };
+    }
+
+    return { success: true, sessionComplete: true };
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return { success: false, error: error as Error };
+  }
+}
+
+async function applyQuizSubmissionTransaction(
+  payload: AtomicQuizSubmissionPayload
+): Promise<{ success: boolean; progressId?: string; error?: Error }> {
+  const FUNC = 'applyQuizSubmissionTransaction';
+  try {
+    const { success, data, error } = await safeQuery<{ progress_id: string }[]>(
+      supabase.rpc('apply_quiz_submission', {
+        p_user_id: payload.userId,
+        p_question_id: payload.questionId,
+        p_chunk_id: payload.chunkId,
+        p_course_id: payload.courseId,
+        p_response_type: payload.responseType,
+        p_selected_answer: payload.selectedAnswer,
+        p_session_number: payload.sessionNumber,
+        p_is_review_question: false,
+        p_time_spent_ms: payload.timeSpentMs,
+        p_status: payload.newStatus,
+        p_rep_count: payload.newRepCount,
+        p_next_review_session: payload.nextReviewSession,
+        p_mastery_score: payload.masteryScore ?? null,
+        p_total_questions_seen: payload.totalQuestionsSeen ?? null,
+        p_last_reviewed_session: payload.chunkId ? payload.sessionNumber : null,
+        p_updated_at: payload.chunkId ? new Date().toISOString() : null,
+      }),
       `${FUNC} error`,
-      { userId: stats.userId, courseId: stats.courseId }
+      { questionId: payload.questionId, chunkId: payload.chunkId }
     );
 
     if (!success) return { success: false, error: new Error(error) };
-    return { success: true, sessionComplete: true };
+
+    const progressId = data?.[0]?.progress_id;
+    if (!progressId) {
+      return {
+        success: false,
+        error: new Error('Atomic quiz submission returned no progress id'),
+      };
+    }
+
+    return { success: true, progressId };
   } catch (error) {
     console.error(`[${MODULE}][${FUNC}] Hata:`, error);
     logger.error(MODULE, FUNC, 'Hata:', error);
@@ -297,33 +354,8 @@ export async function submitQuizAnswer(
       ctx.sessionNumber
     );
 
-    // Güncelleme işlemlerini hazırla
-    const updates: Promise<{
-      success: boolean;
-      progressId?: string;
-      error?: Error;
-    }>[] = [
-      upsertUserQuestionStatus({
-        user_id: ctx.userId,
-        question_id: validated.questionId,
-        status: result.newStatus,
-        rep_count: result.newRepCount,
-        next_review_session: result.nextReviewSession,
-      }) as Promise<{ success: boolean; progressId?: string; error?: Error }>,
-      recordQuizProgress({
-        user_id: ctx.userId,
-        question_id: validated.questionId,
-        chunk_id: targetChunkId,
-        course_id: ctx.courseId,
-        response_type: validated.responseType,
-        selected_answer: validated.selectedAnswer,
-        session_number: ctx.sessionNumber,
-        is_review_question: false,
-        time_spent_ms: validated.timeSpentMs,
-      }),
-    ];
-
     // Mastery (Ustalık) hesaplaması ve güncellemesi
+    let totalQuestionsSeen: number | undefined;
     if (targetChunkId) {
       const REP_TO_SCORE: Record<number, number> = {
         0: 0,
@@ -349,41 +381,39 @@ export async function submitQuizAnswer(
       const newMastery =
         totalQuestions > 0 ? Math.round(newTotalScore / totalQuestions) : 0;
       const cappedMastery = Math.min(100, Math.max(0, newMastery));
-
-      updates.push(
-        upsertChunkMastery({
-          user_id: ctx.userId,
-          chunk_id: targetChunkId,
-          course_id: ctx.courseId,
-          mastery_score: cappedMastery,
-          total_questions_seen: totalQuestions,
-          last_reviewed_session: ctx.sessionNumber,
-          updated_at: new Date().toISOString(),
-        }) as Promise<{ success: boolean; progressId?: string; error?: Error }>
-      );
-
+      totalQuestionsSeen = totalQuestions;
       result.newMastery = cappedMastery;
     }
 
-    // Tüm veritabanı işlemlerini paralel çalıştır
-    const updateResults = await Promise.all(updates);
+    const submissionWrite = await applyQuizSubmissionTransaction({
+      userId: ctx.userId,
+      questionId: validated.questionId,
+      chunkId: targetChunkId,
+      courseId: ctx.courseId,
+      responseType: validated.responseType,
+      selectedAnswer: validated.selectedAnswer,
+      sessionNumber: ctx.sessionNumber,
+      timeSpentMs: validated.timeSpentMs,
+      newStatus: result.newStatus,
+      newRepCount: result.newRepCount,
+      nextReviewSession: result.nextReviewSession,
+      masteryScore: targetChunkId ? result.newMastery : undefined,
+      totalQuestionsSeen,
+    });
 
-    // Hata kontrolü
-    const failed = updateResults.find((r) => !r.success);
-
-    if (failed) {
-      console.error(`[${MODULE}][${FUNC}] Güncelleme başarısız:`, failed.error);
+    if (!submissionWrite.success) {
+      console.error(
+        `[${MODULE}][${FUNC}] Transactional submission failed:`,
+        submissionWrite.error
+      );
       throw (
-        failed.error ||
+        submissionWrite.error ||
         new Error('Yanıt veritabanına kaydedilirken bir hata oluştu')
       );
     }
 
-    // Progress ID (log kaydı ID) bilgisini sonuca ekle
-    const progressResult = updateResults.find((r) => r.progressId);
-
-    if (progressResult && progressResult.progressId) {
-      result.progressId = progressResult.progressId;
+    if (submissionWrite.progressId) {
+      result.progressId = submissionWrite.progressId;
     }
 
     return result;

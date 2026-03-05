@@ -53,7 +53,7 @@ export function QuizDrawer({
     topics,
     selectedTopic,
     setSelectedTopic,
-    targetChunkId,
+    chunkId,
     completionStatus,
     isQuizActive,
     quizPhase,
@@ -154,7 +154,7 @@ export function QuizDrawer({
           <ErrorBoundary>
             {isQuizActive && selectedTopic ? (
               <QuizContainer
-                chunkId={targetChunkId || undefined}
+                chunkId={chunkId || undefined}
                 courseId={courseId}
                 onClose={handleBack}
               />

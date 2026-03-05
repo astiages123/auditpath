@@ -15,16 +15,28 @@ export function getVirtualDate(date: Date = new Date()): Date {
 }
 
 /**
- * Bugünün başlangıcını döner (00:00 AM).
- * Genellikle veritabanı sorguları için tarih aralığı belirlemede kullanılır.
+ * Uygulamadaki tek gün sınırını döner: gün 00:00'da başlar.
  *
  * @param date - Referans tarih (varsayılan: şimdi)
- * @returns Bugünün 00:00'ındaki Date nesnesi
+ * @returns Referans günün 00:00'ındaki Date nesnesi
  */
-export function getVirtualDayStart(date?: Date): Date {
+export function getAppDayStart(date?: Date): Date {
   const now = date ? new Date(date) : new Date();
   now.setHours(0, 0, 0, 0);
   return now;
+}
+
+export function getAppDayStartDaysAgo(
+  days: number,
+  date: Date = new Date()
+): Date {
+  const start = getAppDayStart(date);
+  start.setDate(start.getDate() - days);
+  return start;
+}
+
+export function getVirtualDayStart(date?: Date): Date {
+  return getAppDayStart(date);
 }
 
 /**

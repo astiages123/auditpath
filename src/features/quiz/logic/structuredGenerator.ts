@@ -23,6 +23,25 @@ const DEFAULT_RETRY_PROMPT = `BİR ÖNCEKİ CEVABIN JSON ŞEMASINA UYMUYORDU.
 Lütfen cevabını SADECE geçerli bir JSON objesi olarak tekrar gönder. Markdown etiketi ( \`\`\`json ) kullanma.`;
 const GOOGLE_MODEL = 'gemini-3-flash-preview';
 
+function extractJsonPayload(content: string): string {
+  const cleaned = content
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/```json\s*/gi, '')
+    .replace(/```/g, '')
+    .trim();
+
+  const firstObject = cleaned.indexOf('{');
+  const firstArray = cleaned.indexOf('[');
+  const starts = [firstObject, firstArray].filter((i) => i >= 0);
+
+  if (starts.length === 0) {
+    return cleaned;
+  }
+
+  const firstStart = Math.min(...starts);
+  return cleaned.slice(firstStart).trim();
+}
+
 // === SECTION: Generator Logic ===
 
 /**
@@ -98,9 +117,7 @@ export async function generate<T>(
       }
 
       // JSON Ayıklama
-      let rawJson = response.content.trim();
-      // Markdown bloklarını temizle
-      rawJson = rawJson.replace(/^```json\s*/i, '').replace(/```\s*$/i, '');
+      const rawJson = extractJsonPayload(response.content);
 
       let parsedData: unknown;
       try {

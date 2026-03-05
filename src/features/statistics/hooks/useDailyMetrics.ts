@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getDailyEfficiencySummary } from '@/features/statistics/services/statisticsDataService';
 import { getDailyStats } from '@/features/statistics/services/activityService';
-import { useStatisticsStore } from '@/features/statistics/store/useStatisticsStore';
 
 import type { DailyEfficiencySummary } from '@/features/statistics/types/statisticsTypes';
 
@@ -61,9 +60,6 @@ export function useDailyMetrics(): DailyMetrics {
         ]);
 
         if (!mounted) return;
-
-        // Sync with Global Efficiency Store
-        useStatisticsStore.getState().setEfficiencySummary(summary);
 
         setMetrics({
           efficiencySummary: summary,

@@ -16,6 +16,5 @@ export * from './layout/QuizDrawer';
 export * from './layout/QuizFooter';
 export * from './layout/QuizSideComponents';
 
-export * from './controls/GenerateQuestionButton';
 export * from './modals/GenerationDialogs';
 export * from './modals/IntermissionScreen';

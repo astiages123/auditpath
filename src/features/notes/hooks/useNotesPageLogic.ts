@@ -1,7 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { slugify } from '@/utils/stringHelpers';
-import { CourseTopic } from '@/features/courses/types/courseTypes';
 import { useNotesData } from './useNotesData';
 import { useNotesPage } from './useNotesPage';
 import { useNotesUI } from './useNotesUI';
@@ -113,8 +112,5 @@ export function useNotesPageLogic() {
     setIsMobileMenuOpen: setIsLeftPanelVisible,
     activeTab: activeSection,
     setActiveTab: setActiveSection,
-    handleTopicSelect: (topic: CourseTopic) => {
-      handleScrollToId(slugify(topic.section_title), setActiveSection);
-    },
   };
 }

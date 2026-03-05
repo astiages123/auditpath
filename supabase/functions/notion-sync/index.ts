@@ -104,11 +104,63 @@ function setupCalloutTransformer() {
 }
 
 // --- HELPERS ---
+async function getAllCompletedPages(): Promise<NotionPage[]> {
+  const pages: NotionPage[] = [];
+  let nextCursor: string | undefined;
+
+  do {
+    const response = await notion.databases.query({
+      database_id: NOTION_DATABASE_ID!,
+      filter: { property: 'Durum', status: { equals: 'Tamamlandı' } },
+      page_size: 100,
+      start_cursor: nextCursor,
+    });
+
+    const batch = z
+      .array(NotionPageSchema)
+      .parse(response.results.filter((p) => 'properties' in p));
+    pages.push(...batch);
+
+    if (response.has_more && !response.next_cursor) {
+      throw new Error(
+        'Notion database pagination returned has_more=true without next_cursor'
+      );
+    }
+
+    nextCursor = response.has_more
+      ? (response.next_cursor ?? undefined)
+      : undefined;
+  } while (nextCursor);
+
+  return pages;
+}
+
 async function getBlocksWithChildren(blockId: string): Promise<NotionBlock[]> {
-  const response = await notion.blocks.children.list({ block_id: blockId });
-  const blocks = z
-    .array(NotionBlockSchema)
-    .parse(response.results) as NotionBlock[];
+  const blocks: NotionBlock[] = [];
+  let nextCursor: string | undefined;
+
+  do {
+    const response = await notion.blocks.children.list({
+      block_id: blockId,
+      page_size: 100,
+      start_cursor: nextCursor,
+    });
+
+    const batch = z
+      .array(NotionBlockSchema)
+      .parse(response.results) as NotionBlock[];
+    blocks.push(...batch);
+
+    if (response.has_more && !response.next_cursor) {
+      throw new Error(
+        `Notion block pagination returned has_more=true without next_cursor for block ${blockId}`
+      );
+    }
+
+    nextCursor = response.has_more
+      ? (response.next_cursor ?? undefined)
+      : undefined;
+  } while (nextCursor);
 
   await Promise.all(
     blocks.map(async (block) => {
@@ -304,14 +356,7 @@ serve(async (req) => {
       }
     });
 
-    const notionResp = await notion.databases.query({
-      database_id: NOTION_DATABASE_ID!,
-      filter: { property: 'Durum', status: { equals: 'Tamamlandı' } },
-    });
-
-    const pages = z
-      .array(NotionPageSchema)
-      .parse(notionResp.results.filter((p) => 'properties' in p));
+    const pages = await getAllCompletedPages();
 
     console.log(
       `[DEBUG] Notion'dan 'Tamamlandı' durumunda ${pages.length} sayfa bulundu.`

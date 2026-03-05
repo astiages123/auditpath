@@ -7,16 +7,13 @@ import { tr } from 'date-fns/locale';
 
 import { formatDateKey } from '@/utils/dateUtils';
 
-import {
-  AiGenerationCost,
-  AiGenerationCostSchema,
-} from '../types/analyticsTypes';
+import { GenerationCostLog, GenerationCostLogSchema } from '../types/costTypes';
 
 // ==========================================
 // EXPORTS & SCHEMAS
 // ==========================================
 
-export { type AiGenerationCost, AiGenerationCostSchema };
+export { type GenerationCostLog, GenerationCostLogSchema };
 
 // ==========================================
 // CONSTANTS
@@ -37,16 +34,16 @@ const CURRENCY_SCALING_FACTOR = 10000;
  * Invalid entries are logged to console and skipped.
  *
  * @param {unknown[]} rawLogs - The raw logs fetched from the database
- * @returns {AiGenerationCost[]} Array of validated logs
+ * @returns {GenerationCostLog[]} Array of validated logs
  */
-export function validateLogs(rawLogs: unknown[]): AiGenerationCost[] {
-  const validLogs: AiGenerationCost[] = [];
+export function validateLogs(rawLogs: unknown[]): GenerationCostLog[] {
+  const validLogs: GenerationCostLog[] = [];
   rawLogs.forEach((log) => {
-    const result = AiGenerationCostSchema.safeParse(log);
+    const result = GenerationCostLogSchema.safeParse(log);
     if (result.success) {
       validLogs.push(result.data);
     } else {
-      console.warn('[analyticsLogic][validateLogs] Hata:', result.error);
+      console.warn('[costsLogic][validateLogs] Hata:', result.error);
     }
   });
   return validLogs;
@@ -56,12 +53,12 @@ export function validateLogs(rawLogs: unknown[]): AiGenerationCost[] {
  * Processes daily data for the chart using an optimized O(N) approach.
  * Aggregates costs by date using a Map to avoid nested loops.
  *
- * @param {AiGenerationCost[]} logs - Validated costs logs
+ * @param {GenerationCostLog[]} logs - Validated costs logs
  * @param {number} rate - Current USD/TRY exchange rate
  * @returns {Array<{ date: string, cost: number, fullDate: string, timestamp: number }>} Array of data points for the Recharts AreaChart
  */
 export function processDailyData(
-  logs: AiGenerationCost[],
+  logs: GenerationCostLog[],
   rate: number
 ): Array<{ date: string; cost: number; fullDate: string; timestamp: number }> {
   if (logs.length === 0) return [];
@@ -129,10 +126,10 @@ export function processDailyData(
 /**
  * Calculates total cost safely using integer math.
  *
- * @param {AiGenerationCost[]} logs - The AI generation cost logs
+ * @param {GenerationCostLog[]} logs - The AI generation cost logs
  * @returns {number} Standardized total cost in USD
  */
-export function calculateTotalCostUsd(logs: AiGenerationCost[]): number {
+export function calculateTotalCostUsd(logs: GenerationCostLog[]): number {
   const totalScaled = logs.reduce((acc, log) => {
     const cost = log.cost_usd || 0;
     return acc + Math.round(cost * CURRENCY_SCALING_FACTOR);
@@ -144,10 +141,10 @@ export function calculateTotalCostUsd(logs: AiGenerationCost[]): number {
 /**
  * Calculates cache hit rate percentage based on cached vs prompt tokens for supported providers.
  *
- * @param {AiGenerationCost[]} logs - The AI generation cost logs
+ * @param {GenerationCostLog[]} logs - The AI generation cost logs
  * @returns {number} The calculated cache hit rate as a percentage (0 to 100)
  */
-export function calculateCacheHitRate(logs: AiGenerationCost[]): number {
+export function calculateCacheHitRate(logs: GenerationCostLog[]): number {
   // Sadece önbellek mekanizması olan modelleri hesaplamaya dahil et
   const eligibleLogs = logs.filter(
     (l) =>

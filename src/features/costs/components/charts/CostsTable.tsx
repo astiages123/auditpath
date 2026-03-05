@@ -18,17 +18,17 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { type AiGenerationCost } from '@/features/costs/logic/analyticsLogic';
+import type { GenerationCostLog } from '@/features/costs/logic/costsLogic';
 
 // ==========================================
 // INTERFACES
 // ==========================================
 
-interface AnalyticsTableProps {
-  logs: AiGenerationCost[];
+interface CostsTableProps {
+  logs: GenerationCostLog[];
   hasMore: boolean;
   isPending: boolean;
-  rate: number;
+  usdTryRate: number | null;
   formatCurrency: (value: number) => string;
   onLoadMore: () => void;
 }
@@ -84,11 +84,11 @@ const getUsageTypeBadge = (type: string | null) => {
 // COMPONENT
 // ==========================================
 
-export const AnalyticsTable: FC<AnalyticsTableProps> = ({
+export const CostsTable: FC<CostsTableProps> = ({
   logs,
   hasMore,
   isPending,
-  rate,
+  usdTryRate,
   formatCurrency,
   onLoadMore,
 }) => {
@@ -183,7 +183,9 @@ export const AnalyticsTable: FC<AnalyticsTableProps> = ({
                       >
                         {log.cost_usd === 0
                           ? 'Ücretsiz'
-                          : formatCurrency((log.cost_usd || 0) * rate)}
+                          : usdTryRate === null
+                            ? `$${(log.cost_usd || 0).toFixed(4)}`
+                            : formatCurrency((log.cost_usd || 0) * usdTryRate)}
                       </span>
                     </TableCell>
                   </TableRow>
@@ -219,7 +221,9 @@ export const AnalyticsTable: FC<AnalyticsTableProps> = ({
                 >
                   {log.cost_usd === 0
                     ? 'Ücretsiz'
-                    : formatCurrency((log.cost_usd || 0) * rate)}
+                    : usdTryRate === null
+                      ? `$${(log.cost_usd || 0).toFixed(4)}`
+                      : formatCurrency((log.cost_usd || 0) * usdTryRate)}
                 </span>
               </div>
               <div className="flex items-center justify-between text-[11px] font-mono text-muted-foreground bg-black/10 p-2 rounded-lg border border-border/10">

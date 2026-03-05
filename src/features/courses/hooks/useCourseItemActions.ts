@@ -28,13 +28,13 @@ export interface CourseItemActionState {
  * Hook for managing course item interaction and states like progressive completion.
  * Handles both single item and batch operations optimally.
  *
- * @param courseId - Identifying slug or ID of course context
- * @param dbCourseId - Real tracking database course ID
+ * @param courseSlug - Public course slug used by progress state
+ * @param courseId - Database course UUID used by persistence services
  * @returns Hook functionality mapping to be consumed by components
  */
 export function useCourseItemActions(
-  courseId: string,
-  dbCourseId: string
+  courseSlug: string,
+  courseId: string
 ): {
   handleToggleItem: (
     items: CourseItemActionState[],
@@ -112,7 +112,7 @@ export function useCourseItemActions(
     const deltaHours = deltaMinutes / 60;
 
     // 3. Optimistic Update in Progress Context
-    updateProgressOptimistically(courseId, deltaItems, deltaHours);
+    updateProgressOptimistically(courseSlug, deltaItems, deltaHours);
 
     // 4. Server Sync
     const userId = user?.id;
@@ -125,7 +125,7 @@ export function useCourseItemActions(
       if (itemIdListToUpdate.length === 1) {
         const itemNum = parseInt(itemIdListToUpdate[0]);
         if (!Number.isNaN(itemNum)) {
-          await toggleItemProgress(userId, dbCourseId, itemNum, newCompleted);
+          await toggleItemProgress(userId, courseId, itemNum, newCompleted);
         }
       } else if (itemIdListToUpdate.length > 1) {
         const itemNumbers = itemIdListToUpdate
@@ -135,7 +135,7 @@ export function useCourseItemActions(
         if (itemNumbers.length > 0) {
           await toggleItemProgressBatch(
             userId,
-            dbCourseId,
+            courseId,
             itemNumbers,
             newCompleted
           );
@@ -149,7 +149,7 @@ export function useCourseItemActions(
     } catch (error) {
       console.error('[useCourseItemActions][handleToggleItem] Hata:', error);
       // Revert optimistic update
-      updateProgressOptimistically(courseId, -deltaItems, -deltaHours);
+      updateProgressOptimistically(courseSlug, -deltaItems, -deltaHours);
       toast.error('İlerleme kaydedilemedi.');
       return previousItems;
     }

@@ -5,15 +5,16 @@ import {
   getDailyEfficiencySummary,
 } from '../services/statisticsDataService';
 import {
-  processConsistencyData,
-  processEfficiencyTrend,
-  processFocusPowerData,
-  processFocusTrend,
-  processLearningLoadData,
+  buildTrendDayAggregates,
+  processConsistencyDataFromAggregates,
+  processEfficiencyTrendFromAggregates,
+  processFocusPowerDataFromAggregates,
+  processFocusTrendFromAggregates,
+  processLearningLoadDataFromAggregates,
 } from '../services/statisticsCoreService';
 import { generateDateRange } from '../logic/statisticsHelpers';
 import { performanceMonitor } from '@/utils/performance';
-import { getVirtualDayStart } from '@/utils/dateUtils';
+import { getAppDayStart } from '@/utils/dateUtils';
 
 import type {
   DayActivity,
@@ -107,40 +108,68 @@ export function useStatisticsTrends(): EfficiencyTrendsHook {
 
             if (!mounted) return;
 
-            const anchorDate = getVirtualDayStart();
+            const anchorDate = getAppDayStart();
             const { sessions, videos } = historyResult;
-
-            // Client-side processing (Slicing/Filtering)
             const dateRange30 = generateDateRange(30);
+            const trendAggregates = buildTrendDayAggregates(sessions, videos);
 
             setTrends({
-              // Efficiency & Focus Trends (Last 30 days)
               efficiencyTrend:
-                processEfficiencyTrend(sessions, videos, dateRange30) || [],
-              focusTrend: processFocusTrend(sessions, dateRange30) || [],
-
-              // Learning Load (Different intervals)
-              loadDay:
-                processLearningLoadData(sessions, videos, 1, anchorDate) || [],
-              loadWeek:
-                processLearningLoadData(sessions, videos, 7, anchorDate) || [],
-              loadMonth:
-                processLearningLoadData(sessions, videos, 30, anchorDate) || [],
-              loadAll:
-                processLearningLoadData(sessions, videos, 180, anchorDate) ||
+                processEfficiencyTrendFromAggregates(
+                  trendAggregates,
+                  dateRange30
+                ) || [],
+              focusTrend:
+                processFocusTrendFromAggregates(trendAggregates, dateRange30) ||
                 [],
-
-              // Focus Power (Different scales)
+              loadDay:
+                processLearningLoadDataFromAggregates(
+                  trendAggregates,
+                  1,
+                  anchorDate
+                ) || [],
+              loadWeek:
+                processLearningLoadDataFromAggregates(
+                  trendAggregates,
+                  7,
+                  anchorDate
+                ) || [],
+              loadMonth:
+                processLearningLoadDataFromAggregates(
+                  trendAggregates,
+                  30,
+                  anchorDate
+                ) || [],
+              loadAll:
+                processLearningLoadDataFromAggregates(
+                  trendAggregates,
+                  180,
+                  anchorDate
+                ) || [],
               focusPowerWeek:
-                processFocusPowerData(sessions, 'week', anchorDate) || [],
+                processFocusPowerDataFromAggregates(
+                  trendAggregates,
+                  'week',
+                  anchorDate
+                ) || [],
               focusPowerMonth:
-                processFocusPowerData(sessions, 'month', anchorDate) || [],
+                processFocusPowerDataFromAggregates(
+                  trendAggregates,
+                  'month',
+                  anchorDate
+                ) || [],
               focusPowerAll:
-                processFocusPowerData(sessions, 'all', anchorDate) || [],
-
-              // Consistency Heatmap (30 days)
+                processFocusPowerDataFromAggregates(
+                  trendAggregates,
+                  'all',
+                  anchorDate
+                ) || [],
               consistencyData:
-                processConsistencyData(sessions, 30, anchorDate) || [],
+                processConsistencyDataFromAggregates(
+                  trendAggregates,
+                  30,
+                  anchorDate
+                ) || [],
             });
           }
         );

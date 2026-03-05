@@ -11,7 +11,8 @@ interface NotesMobileTopicsProps {
   selectedTopicId: string;
   courseSlug: string;
   isMobileMenuOpen: boolean;
-  onTopicSelect: (topic: CourseTopic) => void;
+  debouncedQuery?: string;
+  results?: SearchResult[];
   onSearchResultClick?: (result: SearchResult) => void;
   onClose: () => void;
 }
@@ -21,14 +22,14 @@ export function NotesMobileTopics({
   selectedTopicId,
   courseSlug,
   isMobileMenuOpen,
+  debouncedQuery = '',
+  results = [],
   onSearchResultClick,
   onClose,
 }: NotesMobileTopicsProps) {
   if (!isMobileMenuOpen) return null;
   const chunks = topics;
   const activeChunkId = selectedTopicId;
-  const debouncedQuery: string = '';
-  const results: SearchResult[] = [];
   const handleSearchResultClick = (result: SearchResult) => {
     if (onSearchResultClick) {
       onSearchResultClick(result);

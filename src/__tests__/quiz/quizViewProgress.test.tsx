@@ -2,7 +2,7 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { QuizView } from '@/features/quiz/components/views/QuizView';
-import type { QuizState } from '@/features/quiz/types';
+import type { QuizHistoryItem, QuizState } from '@/features/quiz/types';
 
 const handlers = {
   onConfirm: vi.fn(),
@@ -17,18 +17,23 @@ const handlers = {
 
 describe('QuizView progress dots', () => {
   it('keeps solved question colors for history and current question', () => {
+    const reviewedQuestion: QuizHistoryItem = {
+      id: 'q3',
+      q: 'Q3',
+      exp: 'Q3 explanation',
+      o: ['A', 'B'],
+      a: 0,
+      type: 'multiple_choice',
+      userAnswer: 0,
+      isCorrect: true,
+      responseType: 'correct',
+    };
+
     const state: QuizState = {
       isLoading: false,
       error: null,
       hasStarted: true,
-      currentQuestion: {
-        id: 'q3',
-        q: 'Q3',
-        exp: 'Q3 explanation',
-        o: ['A', 'B'],
-        a: 0,
-        type: 'multiple_choice',
-      },
+      currentQuestion: reviewedQuestion,
       queue: [
         {
           id: 'q4',
@@ -62,12 +67,13 @@ describe('QuizView progress dots', () => {
           isCorrect: false,
           responseType: 'incorrect',
         },
+        reviewedQuestion,
       ],
       generatedCount: 4,
       totalToGenerate: 4,
-      selectedAnswer: null,
+      selectedAnswer: 0,
       isAnswered: true,
-      isCorrect: null,
+      isCorrect: true,
       showExplanation: false,
       summary: null,
       currentMastery: 0,
@@ -77,7 +83,12 @@ describe('QuizView progress dots', () => {
     };
 
     const { container } = render(
-      <QuizView state={state} progressIndex={2} {...handlers} />
+      <QuizView
+        state={state}
+        results={{ correct: 2, incorrect: 1, blank: 0, totalTimeMs: 0 }}
+        progressIndex={2}
+        {...handlers}
+      />
     );
 
     // İlerleme noktalarını (progress dots) butonlardan ayırmak için .w-2.h-2.rounded-full
@@ -88,7 +99,7 @@ describe('QuizView progress dots', () => {
     ).toHaveLength(2);
     expect(
       container.querySelectorAll('.w-2.h-2.rounded-full.bg-red-500')
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(container.querySelectorAll('.animate-pulse')).toHaveLength(0);
   });
 });

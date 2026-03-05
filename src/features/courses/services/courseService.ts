@@ -63,12 +63,14 @@ export async function getAllCourses(): Promise<Course[]> {
 /**
  * Fetches a single course by its slug.
  */
-export async function getCourseBySlug(slug: string): Promise<Course | null> {
+export async function getCourseBySlug(
+  courseSlug: string
+): Promise<Course | null> {
   try {
     const { data, error } = await supabase
       .from('courses')
       .select('*')
-      .eq('course_slug', slug)
+      .eq('course_slug', courseSlug)
       .single();
 
     if (error) {

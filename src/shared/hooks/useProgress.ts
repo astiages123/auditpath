@@ -5,7 +5,6 @@ import { getUserStats } from '@/features/achievements/services/userStatsService'
 import type { Rank } from '@/types/auth';
 import { calculateStaticTotals } from '@/features/courses/logic/courseStats';
 import { useCategories } from '@/features/courses/hooks/useCategories';
-import type { Category } from '@/features/courses/types/courseTypes';
 
 // === TYPES ===
 
@@ -75,6 +74,18 @@ export function useProgress() {
   const { user } = useAuth();
   const userId = user?.id;
   const { data: categories } = useCategories();
+  const courseCategorySlugMap = useMemo(() => {
+    const map: Record<string, string> = {};
+
+    categories?.forEach((category) => {
+      category.courses.forEach((course) => {
+        map[course.course_slug] = category.slug;
+        map[course.id] = category.slug;
+      });
+    });
+
+    return map;
+  }, [categories]);
 
   const staticTotals = useMemo(() => {
     if (!categories) return null;
@@ -86,7 +97,7 @@ export function useProgress() {
     isLoading,
     refetch,
   } = useProgressQuery(userId, staticTotals);
-  const { updateProgress } = useOptimisticProgress(categories);
+  const { updateProgress } = useOptimisticProgress(courseCategorySlugMap);
 
   const refreshProgress = useCallback(() => {
     refetch();
@@ -94,7 +105,7 @@ export function useProgress() {
 
   const updateProgressOptimistically = useCallback(
     (
-      courseId: string,
+      courseSlug: string,
       deltaVideos: number,
       deltaHours: number,
       isReading: boolean = false,
@@ -103,7 +114,7 @@ export function useProgress() {
       if (userId) {
         updateProgress(
           userId,
-          courseId,
+          courseSlug,
           deltaVideos,
           deltaHours,
           isReading,
@@ -197,12 +208,14 @@ export function useProgressQuery(
   });
 }
 
-export function useOptimisticProgress(categories?: Category[]) {
+export function useOptimisticProgress(
+  courseCategorySlugMap: Record<string, string>
+) {
   const queryClient = useQueryClient();
 
   const updateProgress = (
     userId: string,
-    courseId: string,
+    courseSlug: string,
     deltaVideos: number,
     deltaHours: number,
     isReading: boolean = false,
@@ -213,17 +226,10 @@ export function useOptimisticProgress(categories?: Category[]) {
       (old) => {
         if (!old) return old;
 
-        const categoryData = categories?.find(
-          (cat) =>
-            courseId.startsWith(cat.slug.toLowerCase()) || cat.slug === courseId
-        );
+        const categorySlug = courseCategorySlugMap[courseSlug];
+        if (!categorySlug) return old;
 
-        if (!categoryData) return old;
-
-        const categoryName = categoryData.slug;
-
-        const currentCategoryProgress = old.categoryProgress;
-        const existingCatStats = currentCategoryProgress[categoryName] || {
+        const existingCategoryStats = old.categoryProgress[categorySlug] || {
           completedVideos: 0,
           completedHours: 0,
           totalVideos: 0,
@@ -234,29 +240,29 @@ export function useOptimisticProgress(categories?: Category[]) {
           totalPages: 0,
         };
 
-        const updatedCatStats = {
-          ...existingCatStats,
+        const updatedCategoryStats = {
+          ...existingCategoryStats,
           completedVideos: isReading
-            ? existingCatStats.completedVideos
-            : existingCatStats.completedVideos + deltaVideos,
+            ? existingCategoryStats.completedVideos
+            : existingCategoryStats.completedVideos + deltaVideos,
           completedHours: isReading
-            ? existingCatStats.completedHours
-            : existingCatStats.completedHours + deltaHours,
+            ? existingCategoryStats.completedHours
+            : existingCategoryStats.completedHours + deltaHours,
           completedReadings: isReading
-            ? existingCatStats.completedReadings + deltaVideos
-            : existingCatStats.completedReadings,
+            ? existingCategoryStats.completedReadings + deltaVideos
+            : existingCategoryStats.completedReadings,
           completedPages: isReading
-            ? existingCatStats.completedPages + deltaPages
-            : existingCatStats.completedPages,
+            ? existingCategoryStats.completedPages + deltaPages
+            : existingCategoryStats.completedPages,
         };
 
         if (isReading) {
-          updatedCatStats.completedHours += deltaHours;
+          updatedCategoryStats.completedHours += deltaHours;
         }
 
         const newCategoryProgress = {
           ...old.categoryProgress,
-          [categoryName]: updatedCatStats,
+          [categorySlug]: updatedCategoryStats,
         };
 
         const currentTodayCount = old.todayVideoCount || 0;
@@ -277,7 +283,7 @@ export function useOptimisticProgress(categories?: Category[]) {
           todayVideoCount: newTodayCount,
           courseProgress: {
             ...old.courseProgress,
-            [courseId]: (old.courseProgress[courseId] || 0) + deltaVideos,
+            [courseSlug]: (old.courseProgress[courseSlug] || 0) + deltaVideos,
           },
           categoryProgress: newCategoryProgress,
         };

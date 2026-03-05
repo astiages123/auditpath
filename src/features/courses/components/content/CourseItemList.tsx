@@ -22,8 +22,8 @@ import {
 // ===========================
 
 export interface CourseItemListProps {
+  courseSlug: string;
   courseId: string;
-  dbCourseId: string;
   categorySlug: string;
   _categoryColor?: string;
 }
@@ -95,8 +95,8 @@ function courseItemReducer(
  * managing progress states and interactions.
  */
 export function CourseItemList({
+  courseSlug,
   courseId,
-  dbCourseId,
   categorySlug,
   _categoryColor,
 }: CourseItemListProps) {
@@ -106,7 +106,7 @@ export function CourseItemList({
   const { user } = useAuth();
   const userId = user?.id;
 
-  const { handleToggleItem } = useCourseItemActions(courseId, dbCourseId);
+  const { handleToggleItem } = useCourseItemActions(courseSlug, courseId);
 
   useEffect(() => {
     let isMounted = true;
@@ -115,7 +115,7 @@ export function CourseItemList({
       dispatch({ type: 'START_LOADING' });
 
       // 1. Load item data from DB
-      const dbItems = await getItemsByCourseId(dbCourseId);
+      const dbItems = await getItemsByCourseId(courseId);
       if (!dbItems || dbItems.length === 0) {
         if (isMounted) dispatch({ type: 'FINISH_LOADING' });
         return;
@@ -149,7 +149,7 @@ export function CourseItemList({
             const itemNumbers = initialItems.map((v) => v.itemNumber);
             const progressMap = await getItemProgressByCourse(
               userId,
-              dbCourseId,
+              courseId,
               itemNumbers
             );
 
@@ -174,7 +174,7 @@ export function CourseItemList({
     return () => {
       isMounted = false;
     };
-  }, [courseId, dbCourseId, userId, categorySlug]);
+  }, [courseId, userId, categorySlug]);
 
   const onToggle = async (itemNumber: number, isModifierPressed: boolean) => {
     const updated = await handleToggleItem(

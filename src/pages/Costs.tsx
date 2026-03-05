@@ -6,27 +6,26 @@ import {
   CardSkeleton,
 } from '@/shared/components/SkeletonTemplates';
 
-import { useAnalytics } from '@/features/costs/hooks/useAnalytics';
+import { useCosts } from '@/features/costs/hooks/useCosts';
 
-import { AnalyticsHeader } from '@/features/costs/components/layout/AnalyticsHeader';
-import { AnalyticsStats } from '@/features/costs/components/layout/AnalyticsStats';
-import { AnalyticsTable } from '@/features/costs/components/charts/AnalyticsTable';
+import { CostsHeader } from '@/features/costs/components/layout/CostsHeader';
+import { CostsStats } from '@/features/costs/components/layout/CostsStats';
+import { CostsTable } from '@/features/costs/components/charts/CostsTable';
 import { PageHeader } from '@/shared/components/PageHeader';
 
-// Lazy load the chart component
-const AnalyticsChart = lazy(() =>
-  import('@/features/costs/components/charts/AnalyticsChart').then((m) => ({
-    default: m.AnalyticsChart,
+const CostsChart = lazy(() =>
+  import('@/features/costs/components/charts/CostsChart').then((m) => ({
+    default: m.CostsChart,
   }))
 );
 
-export default function AnalyticsPage() {
+export default function CostsPage() {
   const {
     logs,
     selectedModel,
     setSelectedModel,
     uniqueModels,
-    rate,
+    usdTryRate,
     loading,
     isPending,
     dailyData,
@@ -39,7 +38,7 @@ export default function AnalyticsPage() {
     totalCachedTokens,
     handleLoadMore,
     hasMore,
-  } = useAnalytics();
+  } = useCosts();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('tr-TR', {
@@ -66,18 +65,18 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       <PageHeader
-        title="Maliyet Analizi"
-        subtitle="AI model kullanım ve maliyet analizlerini takip et."
+        title="AI Maliyetleri"
+        subtitle="Model kullanım kayıtları ve oluşan maliyetleri takip et."
       />
       <div className="space-y-6">
-        <AnalyticsHeader
-          rate={rate}
+        <CostsHeader
+          usdTryRate={usdTryRate}
           selectedModel={selectedModel}
           onModelChange={setSelectedModel}
           availableModels={uniqueModels}
         />
 
-        <AnalyticsStats
+        <CostsStats
           totalCostTry={totalCostTry}
           totalCostUsd={totalCostUsd}
           totalRequests={totalRequests}
@@ -89,18 +88,15 @@ export default function AnalyticsPage() {
         />
 
         <Suspense fallback={<CardSkeleton className="h-[400px]" />}>
-          <AnalyticsChart
-            dailyData={dailyData}
-            formatCurrency={formatCurrency}
-          />
+          <CostsChart dailyData={dailyData} formatCurrency={formatCurrency} />
         </Suspense>
 
-        <AnalyticsTable
+        <CostsTable
           logs={logs}
           formatCurrency={formatCurrency}
           hasMore={hasMore}
           isPending={isPending}
-          rate={rate}
+          usdTryRate={usdTryRate}
           onLoadMore={handleLoadMore}
         />
       </div>

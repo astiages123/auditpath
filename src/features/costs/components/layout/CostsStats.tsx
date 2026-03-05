@@ -19,8 +19,8 @@ import { cn } from '@/utils/stringHelpers';
 // INTERFACES
 // ==========================================
 
-interface AnalyticsStatsProps {
-  totalCostTry: number;
+interface CostsStatsProps {
+  totalCostTry: number | null;
   totalCostUsd: number;
   totalRequests: number;
   cacheHitRate: number;
@@ -34,7 +34,7 @@ interface AnalyticsStatsProps {
 // COMPONENT
 // ==========================================
 
-export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
+export const CostsStats: FC<CostsStatsProps> = ({
   totalCostTry,
   totalCostUsd,
   totalRequests,
@@ -47,12 +47,15 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
   // === CALCULATIONS ===
   // Kullanıcının hissiyatını güçlendirmek için gerçekçi (matematiksel) bir tasarruf simülasyonu
   const isHighSavings = cacheHitRate > 50;
-
-  // Eğer sistem %76 başarı gösterdiyse, demek ki ödediğimiz fatura (totalCostTry) aslında faturanın %24'ü.
-  // Gerçek faturayı bulmak için: Ödenen / (1 - 0.76) = Ödenen / 0.24 = Gerçek Fatura
-  const safeHitRate = Math.min(cacheHitRate, 99.9); // %100 veya sonsuzluk hatasını önlemek için
-  const costWithoutCache = totalCostTry / Math.max(0.01, 1 - safeHitRate / 100);
-  const savedMoney = Math.max(0, costWithoutCache - totalCostTry);
+  const safeHitRate = Math.min(cacheHitRate, 99.9);
+  const costWithoutCache =
+    totalCostTry === null
+      ? null
+      : totalCostTry / Math.max(0.01, 1 - safeHitRate / 100);
+  const savedMoney =
+    totalCostTry === null || costWithoutCache === null
+      ? null
+      : Math.max(0, costWithoutCache - totalCostTry);
 
   // === RENDER ===
   return (
@@ -66,7 +69,7 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-heading font-black text-white">
-            {formatCurrency(totalCostTry)}
+            {totalCostTry === null ? '-' : formatCurrency(totalCostTry)}
           </div>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-xs text-muted-foreground font-mono">
@@ -139,7 +142,9 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
             >
               Önbellek olmasaydı:{' '}
               <span className="line-through">
-                {formatCurrency(costWithoutCache)}
+                {costWithoutCache === null
+                  ? '-'
+                  : formatCurrency(costWithoutCache)}
               </span>{' '}
               ödeyecektiniz.
             </p>
@@ -151,7 +156,8 @@ export const AnalyticsStats: FC<AnalyticsStatsProps> = ({
                   : 'bg-card border border-border'
               )}
             >
-              Net Tasarruf: {formatCurrency(savedMoney)}
+              Net Tasarruf:{' '}
+              {savedMoney === null ? '-' : formatCurrency(savedMoney)}
             </div>
           </div>
         </CardContent>

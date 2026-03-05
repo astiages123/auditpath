@@ -5,6 +5,7 @@ import type {
   RecentSession,
   TimelineBlock,
 } from '@/features/pomodoro/types/pomodoroTypes';
+import { getAppDayStart } from '@/utils/dateUtils';
 import { logger } from '@/utils/logger';
 import {
   calculateSessionMetrics,
@@ -420,17 +421,14 @@ export async function syncPendingSessions(userId: string): Promise<void> {
 
 /**
  * Get the count of pomodoro cycles completed today.
- * Uses standard day logic (day starts at 00:00 AM).
+ * Uses the shared app day boundary (day starts at 00:00).
  *
  * @param userId User ID
  * @returns Number of cycles completed today
  */
 export async function getDailySessionCount(userId: string): Promise<number> {
   try {
-    const now = new Date();
-    const today = new Date(now);
-
-    today.setHours(0, 0, 0, 0);
+    const today = getAppDayStart();
 
     const { data, error } = await supabase
       .from('pomodoro_sessions')

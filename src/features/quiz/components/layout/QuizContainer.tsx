@@ -27,6 +27,7 @@ export function QuizContainer({
   const { user } = useAuth();
   const {
     state,
+    results,
     progressIndex,
     startQuiz,
     selectAnswer,
@@ -55,6 +56,7 @@ export function QuizContainer({
   return (
     <QuizView
       state={state}
+      results={results}
       progressIndex={progressIndex}
       onConfirm={() => submitAnswer('correct')}
       onBlank={() => submitAnswer('blank')}

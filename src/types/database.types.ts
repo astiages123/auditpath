@@ -914,6 +914,29 @@ export interface Database {
     };
     Functions: {
       check_and_increment_quota: { Args: { p_user_id: string }; Returns: Json };
+      apply_quiz_submission: {
+        Args: {
+          p_chunk_id: string | null;
+          p_course_id: string;
+          p_is_review_question: boolean;
+          p_last_reviewed_session: number | null;
+          p_mastery_score: number | null;
+          p_next_review_session: number | null;
+          p_question_id: string;
+          p_rep_count: number;
+          p_response_type: 'correct' | 'incorrect' | 'blank';
+          p_selected_answer: number | null;
+          p_session_number: number;
+          p_status: 'active' | 'reviewing' | 'mastered';
+          p_time_spent_ms: number;
+          p_total_questions_seen: number | null;
+          p_updated_at: string | null;
+          p_user_id: string;
+        };
+        Returns: {
+          progress_id: string;
+        }[];
+      };
       get_course_content_version: {
         Args: { p_course_id: string };
         Returns: string;

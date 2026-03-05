@@ -32,6 +32,16 @@ trigger: always_on
 - `src/components/layout/`: Sayfa düzeni bileşenleri.
 - `src/__tests__/`: Tüm test dosyalarının bulunduğu merkezi dizin.
 
+## Katman Sınırları
+
+- **Sayfa Girişleri İnce Olmalı:** `src/pages/` altındaki dosyalar route entry katmanıdır. Varsayılan görevleri feature page content döndürmek, route guard sarmalamak veya en fazla çok hafif sayfa kabuğu oluşturmaktır.
+- **Page Logic Ayrımı:** Route parametreleri, `navigate`, query string senkronizasyonu, redirect ve sayfa seviyesindeki orkestrasyon `useXPageLogic` benzeri hook'larda tutulmalıdır.
+- **Bileşen Sorumluluğu:** `components/` altındaki dosyalar render ve UI etkileşimini taşır. Veri erişimi, yönlendirme kararı veya domain eşleştirme kuralı component içine gömülmemelidir.
+- **Service Sınırı:** `services/` sadece veri erişimi ve harici sistem çağrısı yapar. UI state, toast kararı, router kullanımı veya JSX bilgisi içermez.
+- **Logic Sınırı:** `logic/` sadece saf hesaplama, mapper ve türetim içerir. React hook, router veya Supabase client bağımlılığı içermez.
+- **Cross-Feature Erişim:** Bir feature başka bir feature'ın component veya local hook detayına bağlanmamalıdır. Gerekli erişim service, saf logic veya type yüzeyi üzerinden yapılmalıdır.
+- **Feature Yapısı Doğru Ama Yeterli Değil:** Özellik bazlı klasörleme tek başına yeterli sayılmaz; asıl kural katman sınırlarını feature içinde korumaktır.
+
 ## Test Yapısı
 
 - **Organizasyon:** Testler `src/__tests__/` altında özellik (feature) bazlı klasörlenmelidir.

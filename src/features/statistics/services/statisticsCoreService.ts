@@ -27,6 +27,15 @@ export type RawVideoSimple = {
   video_id: string | null;
 };
 
+type TrendDayAggregate = {
+  workSeconds: number;
+  breakSeconds: number;
+  pauseSeconds: number;
+  videoMinutes: number;
+  readingMinutes: number;
+  contentMinutes: number;
+};
+
 const parseTimelineEvents = (timeline: unknown): TimelineEvent[] => {
   if (!Array.isArray(timeline)) return [];
 
@@ -41,6 +50,114 @@ const parseTimelineEvents = (timeline: unknown): TimelineEvent[] => {
       (timelineItem): timelineItem is TimelineEvent => timelineItem !== null
     );
 };
+
+const getEmptyTrendAggregate = (): TrendDayAggregate => ({
+  workSeconds: 0,
+  breakSeconds: 0,
+  pauseSeconds: 0,
+  videoMinutes: 0,
+  readingMinutes: 0,
+  contentMinutes: 0,
+});
+
+const getOrCreateTrendAggregate = (
+  aggregates: Map<string, TrendDayAggregate>,
+  dateKey: string
+): TrendDayAggregate => {
+  const existing = aggregates.get(dateKey);
+  if (existing) {
+    return existing;
+  }
+
+  const created = getEmptyTrendAggregate();
+  aggregates.set(dateKey, created);
+  return created;
+};
+
+const getWeekendPairVisibility = <
+  T extends { rawDate: Date; totalMinutes: number },
+>(
+  items: T[]
+) => {
+  const weekendNoActivityStrDates = new Set<string>();
+
+  items.forEach((item) => {
+    const isWeekend =
+      item.rawDate.getDay() === 0 || item.rawDate.getDay() === 6;
+
+    if (isWeekend && item.totalMinutes === 0) {
+      weekendNoActivityStrDates.add(item.rawDate.toISOString().split('T')[0]);
+    }
+  });
+
+  return { weekendNoActivityStrDates };
+};
+
+const shouldKeepWeekendEntry = (
+  date: Date,
+  totalMinutes: number,
+  weekendNoActivityStrDates: Set<string>
+) => {
+  const dayOfWeek = date.getDay();
+
+  if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+    return true;
+  }
+
+  if (totalMinutes > 0) {
+    return true;
+  }
+
+  const msInDay = 24 * 60 * 60 * 1000;
+  const otherWeekendDayStr =
+    dayOfWeek === 6
+      ? new Date(date.getTime() + msInDay).toISOString().split('T')[0]
+      : new Date(date.getTime() - msInDay).toISOString().split('T')[0];
+
+  const otherDayAlsoZero = weekendNoActivityStrDates.has(otherWeekendDayStr);
+  return otherDayAlsoZero ? dayOfWeek === 0 : false;
+};
+
+export function buildTrendDayAggregates(
+  sessionsData: RawSession[],
+  videoData: RawVideo[]
+): Map<string, TrendDayAggregate> {
+  const aggregates = new Map<string, TrendDayAggregate>();
+
+  sessionsData.forEach((session) => {
+    const dateKey = getVirtualDateKey(new Date(session.started_at));
+    const entry = getOrCreateTrendAggregate(aggregates, dateKey);
+
+    entry.workSeconds += session.total_work_time || 0;
+    entry.breakSeconds += session.total_break_time || 0;
+    entry.pauseSeconds += session.total_pause_time || 0;
+  });
+
+  videoData.forEach((videoProgress) => {
+    if (!videoProgress.completed_at) {
+      return;
+    }
+
+    const dateKey = getVirtualDateKey(new Date(videoProgress.completed_at));
+    const entry = getOrCreateTrendAggregate(aggregates, dateKey);
+    const video = videoProgress.video as {
+      duration_minutes?: number | null;
+      duration?: string | null;
+    } | null;
+    const duration = video?.duration_minutes || 0;
+    const isReading = video?.duration?.includes('Sayfa');
+
+    entry.contentMinutes += duration;
+
+    if (isReading) {
+      entry.readingMinutes += duration;
+    } else {
+      entry.videoMinutes += duration;
+    }
+  });
+
+  return aggregates;
+}
 
 // ==========================================
 // === PROCESSING FUNCTIONS ===
@@ -161,44 +278,29 @@ export function processLearningLoadData(
   anchorDate: Date
 ): LearningLoad[] {
   try {
-    const dailyMap = new Map<
-      string,
-      { pomodoro: number; video: number; reading: number }
-    >();
+    return processLearningLoadDataFromAggregates(
+      buildTrendDayAggregates(sessionsData, videoData),
+      days,
+      anchorDate
+    );
+  } catch (error) {
+    console.error(
+      '[EfficiencyCoreService][processLearningLoadData] Hata:',
+      error
+    );
+    throw error;
+  }
+}
 
-    sessionsData.forEach((s) => {
-      const dateKey = getVirtualDateKey(new Date(s.started_at));
-      const mins = Math.round((s.total_work_time || 0) / 60);
-      const entry = dailyMap.get(dateKey) || {
-        pomodoro: 0,
-        video: 0,
-        reading: 0,
-      };
-      entry.pomodoro += mins;
-      dailyMap.set(dateKey, entry);
-    });
-
-    videoData.forEach((v) => {
-      if (!v.completed_at) return;
-      const dateKey = getVirtualDateKey(new Date(v.completed_at));
-      const video = v.video as {
-        duration_minutes?: number | null;
-        duration?: string | null;
-      };
-      const duration = video?.duration_minutes || 0;
-      const isReading = video?.duration?.includes('Sayfa');
-
-      const entry = dailyMap.get(dateKey) || {
-        pomodoro: 0,
-        video: 0,
-        reading: 0,
-      };
-      if (isReading) entry.reading += duration;
-      else entry.video += duration;
-      dailyMap.set(dateKey, entry);
-    });
-
-    const rawData: (LearningLoad & { rawDate: Date })[] = [];
+export function processLearningLoadDataFromAggregates(
+  aggregates: Map<string, TrendDayAggregate>,
+  days: number,
+  anchorDate: Date
+): LearningLoad[] {
+  try {
+    const rawData: Array<
+      LearningLoad & { rawDate: Date; totalMinutes: number }
+    > = [];
 
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(anchorDate);
@@ -207,58 +309,29 @@ export function processLearningLoadData(
 
       const dateKey = getVirtualDateKey(d);
       const dayName = i === 0 ? 'Bugün' : formatDisplayDate(d);
-      const stats = dailyMap.get(dateKey) || {
-        pomodoro: 0,
-        video: 0,
-        reading: 0,
-      };
+      const stats = aggregates.get(dateKey) || getEmptyTrendAggregate();
+      const pomodoroMinutes = Math.round(stats.workSeconds / 60);
+      const totalMinutes =
+        pomodoroMinutes + stats.videoMinutes + stats.readingMinutes;
 
       rawData.push({
         day: dayName,
-        videoMinutes: stats.video,
-        readingMinutes: stats.reading,
-        extraStudyMinutes: stats.pomodoro,
+        videoMinutes: stats.videoMinutes,
+        readingMinutes: stats.readingMinutes,
+        extraStudyMinutes: pomodoroMinutes,
         rawDate: new Date(d),
+        totalMinutes,
       });
     }
 
-    const weekendNoActivityStrDates = new Set<string>();
-    rawData.forEach((item) => {
-      const d = item.rawDate;
-      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-      const totalContent = item.videoMinutes + (item.readingMinutes || 0);
-      const totalMins = item.extraStudyMinutes + totalContent;
-      if (isWeekend && totalMins === 0) {
-        weekendNoActivityStrDates.add(d.toISOString().split('T')[0]);
-      }
-    });
+    const { weekendNoActivityStrDates } = getWeekendPairVisibility(rawData);
 
     return rawData.filter((item) => {
-      const d = item.rawDate;
-      const dayOfWeek = d.getDay();
-      const totalContent = item.videoMinutes + (item.readingMinutes || 0);
-      const totalMins = item.extraStudyMinutes + totalContent;
-
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        if (totalMins > 0) return true;
-        const msInDay = 24 * 60 * 60 * 1000;
-        let otherWeekendDayStr = '';
-        if (dayOfWeek === 6) {
-          const sundayDate = new Date(d.getTime() + msInDay);
-          otherWeekendDayStr = sundayDate.toISOString().split('T')[0];
-        } else if (dayOfWeek === 0) {
-          const saturdayDate = new Date(d.getTime() - msInDay);
-          otherWeekendDayStr = saturdayDate.toISOString().split('T')[0];
-        }
-        const otherDayAlsoZero =
-          weekendNoActivityStrDates.has(otherWeekendDayStr);
-        if (otherDayAlsoZero) {
-          return dayOfWeek === 0;
-        } else {
-          return false;
-        }
-      }
-      return true;
+      return shouldKeepWeekendEntry(
+        item.rawDate,
+        item.totalMinutes,
+        weekendNoActivityStrDates
+      );
     });
   } catch (error) {
     console.error(
@@ -278,109 +351,70 @@ export function processFocusPowerData(
   anchorDate: Date
 ): FocusPowerPoint[] {
   try {
-    const focusPowerAggMap = new Map<
-      string,
-      { work: number; breakTime: number; pause: number }
-    >();
-
-    sessionsData.forEach((s) => {
-      const dateKey = getVirtualDateKey(new Date(s.started_at));
-      const workSec = s.total_work_time || 0;
-      const breakSec = s.total_break_time || 0;
-      const pauseSec = s.total_pause_time || 0;
-
-      if (!focusPowerAggMap.has(dateKey)) {
-        focusPowerAggMap.set(dateKey, {
-          work: 0,
-          breakTime: 0,
-          pause: 0,
-        });
-      }
-      const entry = focusPowerAggMap.get(dateKey)!;
-      entry.work += workSec;
-      entry.breakTime += breakSec;
-      entry.pause += pauseSec;
-    });
-
-    const assembleData = (targetCount: number) => {
-      const result: FocusPowerPoint[] = [];
-
-      for (let i = targetCount - 1; i >= 0; i--) {
-        const d = new Date(anchorDate);
-        d.setDate(d.getDate() - i);
-        d.setHours(12, 0, 0, 0);
-        const dateKey = getVirtualDateKey(d);
-
-        const agg = focusPowerAggMap.get(dateKey) || {
-          work: 0,
-          breakTime: 0,
-          pause: 0,
-        };
-
-        let score = 0;
-        if (agg.work > 0) {
-          score = calculateFocusPower(agg.work, agg.breakTime, agg.pause);
-        }
-
-        const dayName = formatDisplayDate(d);
-
-        result.push({
-          date: dayName,
-          originalDate: d.toISOString(),
-          score: score,
-          workMinutes: Math.round(agg.work / 60),
-          breakMinutes: Math.round(agg.breakTime / 60),
-          pauseMinutes: Math.round(agg.pause / 60),
-        });
-      }
-      return result;
-    };
-
-    const daysToAssemble = range === 'week' ? 7 : range === 'month' ? 30 : 180;
-    const result = assembleData(daysToAssemble);
-
-    const weekendNoActivityStrDates = new Set<string>();
-    result.forEach((item) => {
-      const d = new Date(item.originalDate);
-      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-      if (isWeekend && item.workMinutes === 0) {
-        weekendNoActivityStrDates.add(d.toISOString().split('T')[0]);
-      }
-    });
-
-    return result.filter((item) => {
-      const d = new Date(item.originalDate);
-      const dayOfWeek = d.getDay();
-      const hasActivity = item.workMinutes > 0;
-
-      if (dayOfWeek === 0 || dayOfWeek === 6) {
-        if (hasActivity) return true;
-
-        const msInDay = 24 * 60 * 60 * 1000;
-        let otherWeekendDayStr = '';
-        if (dayOfWeek === 6) {
-          const sundayDate = new Date(d.getTime() + msInDay);
-          otherWeekendDayStr = sundayDate.toISOString().split('T')[0];
-        } else if (dayOfWeek === 0) {
-          const saturdayDate = new Date(d.getTime() - msInDay);
-          otherWeekendDayStr = saturdayDate.toISOString().split('T')[0];
-        }
-
-        const otherDayAlsoZero =
-          weekendNoActivityStrDates.has(otherWeekendDayStr);
-
-        if (otherDayAlsoZero) {
-          return dayOfWeek === 0;
-        } else {
-          return false;
-        }
-      }
-
-      return true;
-    });
+    return processFocusPowerDataFromAggregates(
+      buildTrendDayAggregates(sessionsData, []),
+      range,
+      anchorDate
+    );
   } catch (error) {
     console.error(
       '[EfficiencyCoreService][processFocusPowerData] Hata:',
+      error
+    );
+    throw error;
+  }
+}
+
+export function processFocusPowerDataFromAggregates(
+  aggregates: Map<string, TrendDayAggregate>,
+  range: 'week' | 'month' | 'all',
+  anchorDate: Date
+): FocusPowerPoint[] {
+  try {
+    const daysToAssemble = range === 'week' ? 7 : range === 'month' ? 30 : 180;
+    const result: Array<
+      FocusPowerPoint & { rawDate: Date; totalMinutes: number }
+    > = [];
+
+    for (let i = daysToAssemble - 1; i >= 0; i--) {
+      const d = new Date(anchorDate);
+      d.setDate(d.getDate() - i);
+      d.setHours(12, 0, 0, 0);
+
+      const dateKey = getVirtualDateKey(d);
+      const agg = aggregates.get(dateKey) || getEmptyTrendAggregate();
+
+      result.push({
+        date: formatDisplayDate(d),
+        originalDate: d.toISOString(),
+        score:
+          agg.workSeconds > 0
+            ? calculateFocusPower(
+                agg.workSeconds,
+                agg.breakSeconds,
+                agg.pauseSeconds
+              )
+            : 0,
+        workMinutes: Math.round(agg.workSeconds / 60),
+        breakMinutes: Math.round(agg.breakSeconds / 60),
+        pauseMinutes: Math.round(agg.pauseSeconds / 60),
+        rawDate: new Date(d),
+        totalMinutes: Math.round(agg.workSeconds / 60),
+      });
+    }
+
+    const { weekendNoActivityStrDates } = getWeekendPairVisibility(result);
+
+    return result.filter((item) =>
+      shouldKeepWeekendEntry(
+        item.rawDate,
+        item.totalMinutes,
+        weekendNoActivityStrDates
+      )
+    );
+  } catch (error) {
+    console.error(
+      '[EfficiencyCoreService][processFocusPowerDataFromAggregates] Hata:',
       error
     );
     throw error;
@@ -396,21 +430,35 @@ export function processConsistencyData(
   anchorDate: Date
 ): DayActivity[] {
   try {
-    const dailyMap = new Map<string, number>();
-    sessionsData.forEach((s) => {
-      const dateKey = getVirtualDateKey(new Date(s.started_at));
-      const mins = Math.round((s.total_work_time || 0) / 60);
-      dailyMap.set(dateKey, (dailyMap.get(dateKey) || 0) + mins);
-    });
+    return processConsistencyDataFromAggregates(
+      buildTrendDayAggregates(sessionsData, []),
+      days,
+      anchorDate
+    );
+  } catch (error) {
+    console.error(
+      '[EfficiencyCoreService][processConsistencyData] Hata:',
+      error
+    );
+    throw error;
+  }
+}
 
+export function processConsistencyDataFromAggregates(
+  aggregates: Map<string, TrendDayAggregate>,
+  days: number,
+  anchorDate: Date
+): DayActivity[] {
+  try {
     const heatmap: DayActivity[] = [];
+
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(anchorDate);
       d.setDate(d.getDate() - i);
       d.setHours(12, 0, 0, 0);
 
       const dateKey = getVirtualDateKey(d);
-      const val = dailyMap.get(dateKey) || 0;
+      const val = Math.round((aggregates.get(dateKey)?.workSeconds || 0) / 60);
 
       heatmap.push({
         date: dateKey,
@@ -424,7 +472,7 @@ export function processConsistencyData(
     return heatmap;
   } catch (error) {
     console.error(
-      '[EfficiencyCoreService][processConsistencyData] Hata:',
+      '[EfficiencyCoreService][processConsistencyDataFromAggregates] Hata:',
       error
     );
     throw error;
@@ -439,20 +487,25 @@ export function processFocusTrend(
   dateRange: string[]
 ): FocusTrend[] {
   try {
-    const dailyMap = new Map<string, number>();
-    dateRange.forEach((date: string) => dailyMap.set(date, 0));
+    return processFocusTrendFromAggregates(
+      buildTrendDayAggregates(sessionsData, []),
+      dateRange
+    );
+  } catch (error) {
+    console.error('[EfficiencyCoreService][processFocusTrend] Hata:', error);
+    throw error;
+  }
+}
 
-    sessionsData.forEach((s) => {
-      const day = getVirtualDateKey(new Date(s.started_at));
-      if (dailyMap.has(day)) {
-        dailyMap.set(day, (dailyMap.get(day) || 0) + (s.total_work_time || 0));
-      }
-    });
-
-    return Array.from(dailyMap.entries())
-      .map(([date, seconds]) => ({
+export function processFocusTrendFromAggregates(
+  aggregates: Map<string, TrendDayAggregate>,
+  dateRange: string[]
+): FocusTrend[] {
+  try {
+    return dateRange
+      .map((date) => ({
         date,
-        minutes: Math.round(seconds / 60),
+        minutes: Math.round((aggregates.get(date)?.workSeconds || 0) / 60),
       }))
       .filter((item) => {
         const d = new Date(item.date);
@@ -465,7 +518,10 @@ export function processFocusTrend(
       })
       .sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
-    console.error('[EfficiencyCoreService][processFocusTrend] Hata:', error);
+    console.error(
+      '[EfficiencyCoreService][processFocusTrendFromAggregates] Hata:',
+      error
+    );
     throw error;
   }
 }
@@ -479,57 +535,33 @@ export function processEfficiencyTrend(
   dateRange: string[]
 ): EfficiencyTrend[] {
   try {
-    const dailyMap = new Map<
-      string,
-      { workSeconds: number; videoMinutes: number }
-    >();
-
-    dateRange.forEach((date: string) =>
-      dailyMap.set(date, { workSeconds: 0, videoMinutes: 0 })
+    return processEfficiencyTrendFromAggregates(
+      buildTrendDayAggregates(sessionsData, videoProgress),
+      dateRange
     );
+  } catch (error) {
+    console.error(
+      '[EfficiencyCoreService][processEfficiencyTrend] Hata:',
+      error
+    );
+    throw error;
+  }
+}
 
-    sessionsData.forEach((s) => {
-      const day = getVirtualDateKey(new Date(s.started_at));
-      if (dailyMap.has(day)) {
-        const entry = dailyMap.get(day)!;
-        entry.workSeconds += s.total_work_time || 0;
-      }
-    });
-
-    videoProgress.forEach((vp) => {
-      if (!vp.completed_at) return;
-      const day = getVirtualDateKey(new Date(vp.completed_at));
-
-      const videoData = vp.video;
-      const videoObj = Array.isArray(videoData) ? videoData[0] : videoData;
-
-      const durationSchema = z
-        .object({
-          duration_minutes: z.number().nullable(),
-        })
-        .nullable();
-
-      const parsed = durationSchema.safeParse(videoObj);
-      const duration = parsed.success
-        ? (parsed.data?.duration_minutes ?? 0)
-        : 0;
-
-      if (dailyMap.has(day)) {
-        const entry = dailyMap.get(day)!;
-        entry.videoMinutes += duration;
-      }
-    });
-
-    return Array.from(dailyMap.entries())
-      .map(([date, stats]) => {
+export function processEfficiencyTrendFromAggregates(
+  aggregates: Map<string, TrendDayAggregate>,
+  dateRange: string[]
+): EfficiencyTrend[] {
+  try {
+    return dateRange
+      .map((date) => {
+        const stats = aggregates.get(date) || getEmptyTrendAggregate();
         const workMinutes = stats.workSeconds / 60;
-        const videoMinutes = stats.videoMinutes;
-
-        const score = calculateEfficiencyScore(videoMinutes, workMinutes);
+        const videoMinutes = stats.contentMinutes;
 
         return {
           date,
-          score,
+          score: calculateEfficiencyScore(videoMinutes, workMinutes),
           workMinutes: Math.round(workMinutes),
           videoMinutes: Math.round(videoMinutes),
         };
@@ -546,7 +578,7 @@ export function processEfficiencyTrend(
       .sort((a, b) => a.date.localeCompare(b.date));
   } catch (error) {
     console.error(
-      '[EfficiencyCoreService][processEfficiencyTrend] Hata:',
+      '[EfficiencyCoreService][processEfficiencyTrendFromAggregates] Hata:',
       error
     );
     throw error;

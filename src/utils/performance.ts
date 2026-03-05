@@ -1,5 +1,12 @@
 import { logger } from './logger';
 
+const getNow = (): (() => number) | null => {
+  const performanceApi = globalThis.performance;
+  return typeof performanceApi?.now === 'function'
+    ? () => performanceApi.now()
+    : null;
+};
+
 /**
  * Performance measurement utilities for AuditPath.
  * Helps track execution time of sync and async operations.
@@ -19,15 +26,18 @@ export const performanceMonitor = {
     promiseFactory: () => Promise<T>,
     extraInfo?: string
   ): Promise<T> {
-    const start = window.performance.now();
+    const now = getNow();
+    const start = now?.();
     try {
       const result = await promiseFactory();
-      const end = window.performance.now();
-      logger.metrics(module, funcName, end - start, 'ok', extraInfo);
+      if (now && start !== undefined) {
+        logger.metrics(module, funcName, now() - start, 'ok', extraInfo);
+      }
       return result;
     } catch (error) {
-      const end = window.performance.now();
-      logger.metrics(module, funcName, end - start, 'error', extraInfo);
+      if (now && start !== undefined) {
+        logger.metrics(module, funcName, now() - start, 'error', extraInfo);
+      }
       throw error;
     }
   },
@@ -41,15 +51,18 @@ export const performanceMonitor = {
     fn: () => T,
     extraInfo?: string
   ): T {
-    const start = window.performance.now();
+    const now = getNow();
+    const start = now?.();
     try {
       const result = fn();
-      const end = window.performance.now();
-      logger.metrics(module, funcName, end - start, 'ok', extraInfo);
+      if (now && start !== undefined) {
+        logger.metrics(module, funcName, now() - start, 'ok', extraInfo);
+      }
       return result;
     } catch (error) {
-      const end = window.performance.now();
-      logger.metrics(module, funcName, end - start, 'error', extraInfo);
+      if (now && start !== undefined) {
+        logger.metrics(module, funcName, now() - start, 'error', extraInfo);
+      }
       throw error;
     }
   },

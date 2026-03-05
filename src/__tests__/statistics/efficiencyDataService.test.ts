@@ -245,7 +245,7 @@ describe('statisticsDataService - Day Filtering Logic', () => {
         },
         {
           completed_at: mockToday.toISOString(),
-          video: [{ duration_minutes: 20 }], // Tests the array-wrapping schema capability
+          video: { duration_minutes: 20 },
         },
       ];
 

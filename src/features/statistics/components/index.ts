@@ -36,3 +36,4 @@ export * from './cards/RecentActivitiesCard';
 export * from './cards/StatisticsCard';
 export * from './cards/StatsMetricCard';
 export * from './content/RecentActivitiesContainer';
+export * from './layout/StatisticsPageContent';

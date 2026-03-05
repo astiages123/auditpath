@@ -12,7 +12,8 @@ Yeni bir özellik (feature) eklenirken şu sıra izlenmelidir:
 4. Supabase üzerinde yeni tablo gerekiyorsa `supabase/migrations` içine SQL dosyasını hazırla. (Bkz: `convention.md` - Migration Naming)
 5. Mantıksal işleri `logic/` içine, yardımcıları ve sabitleri `utils/` içine kurgula.
 6. React hook'larını `hooks/` içinde oluştur. Context gerekiyorsa doğrudan `hooks/` altına koy — ayrı bir `context/` alt klasörü açılmamalıdır. (Bkz: `architecture.md`)
-7. Zustand store gerekiyorsa `store/` altında `useSomethingStore.ts` oluştur.
+7. State ihtiyacını değerlendir: tek ekran veya tek oturum akışıysa önce local hook tasarla; gerçekten global ihtiyaç varsa `store/` altında `useSomethingStore.ts` oluştur.
 8. Servis dosyalarını `services/` altında `somethingService.ts` olarak oluştur.
 9. Görsel arayüzü `components/` içinde (mantıksel bölümlere ayırmak için alt klasörler kullanılabilir), mevcut UI kütüphanesini (`src/components/ui/`) kullanarak oluştur.
-10. `src/pages/` altında yeni bir sayfa oluştur ve `src/utils/routes.ts` üzerinden yönlendirmesini yap.
+10. Sayfa gerekiyorsa önce feature içinde `XPageContent` ve gerekiyorsa `useXPageLogic` oluştur; `src/pages/` altındaki route dosyası bu feature page content'i döndüren ince wrapper olmalıdır.
+11. Route veya URL alanı taşıyan feature'larda kimlik sözlüğünü baştan kur: DB kimliği için `*Id`, public kimlik için `*Slug`.

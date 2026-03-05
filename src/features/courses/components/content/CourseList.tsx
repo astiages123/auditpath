@@ -2,7 +2,7 @@
 // === IMPORTS ===
 // ===========================
 
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import {
   ChevronDown,
   ChevronUp,
@@ -23,14 +23,6 @@ import { getCourseIcon } from '@/features/courses/logic/coursesLogic';
 import type { Course } from '@/features/courses/types/courseTypes';
 import { cn } from '@/utils/stringHelpers';
 import { env } from '@/utils/env';
-
-const CourseStatsModal = lazy(() =>
-  import('@/features/courses/components/modals/CourseStatsModal').then(
-    (module) => ({
-      default: module.CourseStatsModal,
-    })
-  )
-);
 
 // ===========================
 // === TYPE DEFINITIONS ===
@@ -67,9 +59,6 @@ export function CourseList({
 }: CourseListProps) {
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
   const { stats } = useProgress();
-  const [selectedStatsCourse, setSelectedStatsCourse] = useState<Course | null>(
-    null
-  );
 
   // No local hydration needed, useProgress handles loading state if necessary
 
@@ -323,8 +312,8 @@ export function CourseList({
             {expandedCourse === course.id && (
               <div className="border-t border-border/50">
                 <CourseItemList
-                  courseId={course.course_slug}
-                  dbCourseId={course.id}
+                  courseSlug={course.course_slug}
+                  courseId={course.id}
                   categorySlug={categorySlug}
                   _categoryColor={categoryColor}
                 />
@@ -333,25 +322,6 @@ export function CourseList({
           </div>
         );
       })}
-
-      {/* Stats Modal */}
-      <Suspense
-        fallback={<div className="fixed inset-0 bg-transparent z-9999" />}
-      >
-        {selectedStatsCourse && (
-          <CourseStatsModal
-            open={!!selectedStatsCourse}
-            onOpenChange={(open: boolean) =>
-              !open && setSelectedStatsCourse(null)
-            }
-            courseName={selectedStatsCourse.name}
-            totalVideos={selectedStatsCourse.total_videos || 0}
-            completedVideos={0}
-            totalHours={selectedStatsCourse.total_hours || 0}
-            spentHours={0}
-          />
-        )}
-      </Suspense>
     </div>
   );
 }
