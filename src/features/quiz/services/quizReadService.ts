@@ -65,6 +65,9 @@ export async function getTopicQuestions(
         a: qData.a,
         exp: qData.exp,
         img: qData.img,
+        diagnosis: qData.diagnosis,
+        insight: qData.insight,
+        evidence: qData.evidence,
         imgPath:
           qData.img && courseSlug ? `/notes/${courseSlug}/media/` : undefined,
       } as QuizQuestion;

@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
 import { env } from '@/utils/env';
 import { calculateSessionTotals } from '../logic/sessionMath';
-import { saveSessionBeacon } from '../services/pomodoroService';
+import {
+  saveSessionBeacon,
+  saveSessionToLocalQueue,
+} from '../services/pomodoroService';
 
 // ===========================
 // === TYPE DEFINITIONS ===
@@ -69,7 +72,11 @@ export function useTimerPersistence({
         const supabaseUrl = env.supabase.url;
         const supabaseKey = env.supabase.anonKey;
 
-        saveSessionBeacon(payload, supabaseUrl, supabaseKey, accessToken);
+        if (accessToken) {
+          saveSessionBeacon(payload, supabaseUrl, supabaseKey, accessToken);
+        } else {
+          saveSessionToLocalQueue(payload);
+        }
       }
     };
 

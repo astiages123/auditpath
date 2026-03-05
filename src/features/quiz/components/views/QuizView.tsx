@@ -104,6 +104,7 @@ export function QuizView({
                     timerIsRunning={!state.isAnswered && !state.isLoading}
                     currentQuestionId={state.currentQuestion?.id}
                     lastSubmissionResult={state.lastSubmissionResult}
+                    currentMastery={state.currentMastery}
                   />
                 </ErrorBoundary>
 

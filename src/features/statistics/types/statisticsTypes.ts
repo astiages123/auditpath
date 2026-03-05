@@ -146,6 +146,30 @@ export interface FocusPowerPoint {
   pauseMinutes: number;
 }
 
+/**
+ * Raw session payload selected from the pomodoro sessions table.
+ */
+export interface RawSession {
+  started_at: string;
+  total_work_time: number | null;
+  total_break_time?: number | null;
+  total_pause_time?: number | null;
+  course_name?: string | null;
+  course_id?: string | null;
+  id?: string;
+  pause_count?: number | null;
+  efficiency_score?: number | null;
+  timeline?: unknown;
+}
+
+/**
+ * Raw video payload selected from video progress joins.
+ */
+export interface RawVideo {
+  completed_at?: string | null;
+  video: unknown;
+}
+
 /** Props for EfficiencyTrend component */
 export interface EfficiencyTrendProps {
   data: EfficiencyTrend[];

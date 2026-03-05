@@ -5,23 +5,21 @@
 */
 
 /**
- * Sanal gün mantığı: Gece 04:00'dan önce ise bir önceki güne ait sayılır.
- * Bu, gece geç saatlere kadar çalışan kullanıcıların aynı "gün" içinde kalmasını sağlar.
+ * Standart gün mantığı: Mevcut tarih ve saati temel alır.
  *
  * @param date - İşlenecek tarih (varsayılan: şimdi)
- * @returns Sanal gün olarak ayarlanmış Date nesnesi
- * @example const virtual = getVirtualDate(new Date('2026-01-28 02:00:00')) // Hâlâ 27 Ocak sayılır (mantıksal olarak)
+ * @returns Date nesnesi
  */
 export function getVirtualDate(date: Date = new Date()): Date {
   return new Date(date);
 }
 
 /**
- * Bugünün sanal gün başlangıcını döner (04:00 AM).
+ * Bugünün başlangıcını döner (00:00 AM).
  * Genellikle veritabanı sorguları için tarih aralığı belirlemede kullanılır.
  *
  * @param date - Referans tarih (varsayılan: şimdi)
- * @returns Bugünün 04:00'ındaki Date nesnesi
+ * @returns Bugünün 00:00'ındaki Date nesnesi
  */
 export function getVirtualDayStart(date?: Date): Date {
   const now = date ? new Date(date) : new Date();
@@ -44,10 +42,10 @@ export function formatDateKey(date: Date): string {
 }
 
 /**
- * Sanal gün mantığıyla 'YYYY-MM-DD' formatında anahtar (key) oluşturur.
+ * Standart gün mantığıyla 'YYYY-MM-DD' formatında anahtar (key) oluşturur.
  *
  * @param date - İşlenecek tarih (varsayılan: şimdi)
- * @returns Sanal gün mantığıyla "2026-01-28" formatında string
+ * @returns "2026-01-28" formatında string
  */
 export function getVirtualDateKey(date?: Date): string {
   const virtualDate = getVirtualDate(date);

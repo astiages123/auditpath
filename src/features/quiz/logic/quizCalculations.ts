@@ -1,4 +1,4 @@
-import { DAILY_QUOTA, MASTERY_THRESHOLD } from '../utils/constants';
+import { MASTERY_THRESHOLD } from '../utils/constants';
 import { type QuizResults, type TestResultSummary } from '../types';
 
 // === SECTION: Score & Mastery Calculations ===
@@ -115,15 +115,15 @@ export function calculateQuotas(concepts: { length: number }): {
 /**
  * Günlük kota doluluk oranını hesaplar.
  */
-export const calculateQuotaStatus = (usedCount: number) => {
-  const remaining = Math.max(0, DAILY_QUOTA - usedCount);
-  const percentage = calculatePercentage(usedCount, DAILY_QUOTA);
+export const calculateQuotaStatus = (usedCount: number, totalQuota: number) => {
+  const remaining = Math.max(0, totalQuota - usedCount);
+  const percentage = calculatePercentage(usedCount, totalQuota);
 
   return {
     used: usedCount,
-    total: DAILY_QUOTA,
+    total: totalQuota,
     remaining,
     percentage,
-    isLimitReached: usedCount >= DAILY_QUOTA,
+    isLimitReached: usedCount >= totalQuota,
   };
 };

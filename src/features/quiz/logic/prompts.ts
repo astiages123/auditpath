@@ -168,8 +168,8 @@ Yanıtını aşağıdaki şemaya BİREBİR uygun, geçerli bir JSON objesi olara
   "a": <doğru cevabın 0-4 arası indeksi>,
   "exp": "<doğru cevabın açıklaması>",
   "evidence": "<metinden dayanak cümlesi>",
-  "diagnosis": "<öğrencinin olası hata noktası>",
-  "insight": "<kavramsal çıkarım notu>"
+  "diagnosis": "<öğrencinin olası hata noktası/nedeni>",
+  "insight": "<kavramsal çıkarım/mentor notu>"
 }`;
 }
 
@@ -210,6 +210,7 @@ Yanıtını aşağıdaki şemaya BİREBİR uygun, geçerli bir JSON objesi olara
   ]
 }`;
 }
+
 /**
  * Takip (follow-up) soruları için prompt oluşturur.
  */
@@ -236,5 +237,15 @@ ${
     : ''
 }
 
-SADECE JSON döndür.`;
+### ZORUNLU JSON FORMATI
+Yanıtını aşağıdaki şemaya BİREBİR uygun, geçerli bir JSON objesi olarak döndür. Markdown etiketi kullanma.
+{
+  "q": "<yeni takip sorusu metni>",
+  "o": ["<A seçeneği>", "<B seçeneği>", "<C seçeneği>", "<D seçeneği>", "<E seçeneği>"],
+  "a": <doğru cevabın 0-4 arası indeksi>,
+  "exp": "<doğru cevabın açıklaması>",
+  "evidence": "<metinden dayanak cümlesi>",
+  "diagnosis": "<kullanıcının orijinal sorudaki hatasının teknik teşhisi>",
+  "insight": "<bu kavramı pekiştirecek mentor notu>"
+}`;
 }

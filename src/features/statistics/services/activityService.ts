@@ -6,8 +6,11 @@ import type {
   PomodoroInsert,
   VideoUpsert,
 } from '@/features/pomodoro/types/pomodoroTypes';
-import type { DailyStats } from '@/features/statistics/types/statisticsTypes';
-import { processDailyStats, type RawVideo } from './statisticsCoreService';
+import type {
+  DailyStats,
+  RawVideo,
+} from '@/features/statistics/types/statisticsTypes';
+import { processDailyStats } from './statisticsCoreService';
 
 // ==========================================
 // === TYPES ===

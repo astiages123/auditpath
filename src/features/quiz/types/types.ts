@@ -118,9 +118,9 @@ export interface BaseQuestion {
   img?: number | null; // imageUrls içindeki görsel indeksi
   imageUrls?: string[]; // Chunk ile ilişkili tüm görsel URL'leri
   imgPath?: string | null; // Geriye dönük uyumluluk için yol
-  diagnosis?: string; // Yapay zeka teşhisi
-  insight?: string; // Yapay zeka mentor notu
-  evidence?: string; // Doğrulayıcı metin alıntısı
+  diagnosis?: string | null; // Yapay zeka teşhisi
+  insight?: string | null; // Yapay zeka mentor notu
+  evidence?: string | null; // Doğrulayıcı metin alıntısı
   chunk_id?: string;
   courseSlug?: string;
   topicSlug?: string;
@@ -149,6 +149,9 @@ export interface GeneratedQuestion extends Omit<BaseQuestion, 'id'> {
   a: number;
   bloomLevel: string;
   concept: string;
+  diagnosis?: string | null;
+  insight?: string | null;
+  evidence?: string | null;
 }
 
 /** Quiz oturum bağlamı */
@@ -318,6 +321,7 @@ export interface QuizState {
   isCorrect: boolean | null;
   hasStarted: boolean;
   summary: TestResultSummary | null;
+  currentMastery: number;
   lastSubmissionResult: SubmissionResult | null;
   history: (QuizQuestion & {
     userAnswer: number | null;

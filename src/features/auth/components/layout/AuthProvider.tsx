@@ -90,7 +90,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }));
         }
       } catch (error: unknown) {
+        if (!mounted) return;
+
         const authError = error as AuthError;
+
+        // AbortError is expected during unmount, no need to log as error
+        if (authError.message?.includes('signal is aborted')) {
+          console.warn(
+            '[AuthProvider][initializeAuth] Initialization aborted (likely unmount)'
+          );
+          return;
+        }
+
         console.error('[AuthProvider][initializeAuth] Hata:', authError);
         logger.error(
           'Auth',
@@ -99,16 +110,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           authError
         );
 
-        if (mounted) {
-          setState((prev) => ({
-            ...prev,
-            error: authError,
-            loading: false,
-          }));
-          toast.error('Oturum başlatılamadı.', {
-            description: authError.message,
-          });
-        }
+        setState((prev) => ({
+          ...prev,
+          error: authError,
+          loading: false,
+        }));
+        toast.error('Oturum başlatılamadı.', {
+          description: authError.message,
+        });
       }
     };
 

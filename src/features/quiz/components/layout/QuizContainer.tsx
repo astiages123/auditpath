@@ -38,10 +38,18 @@ export function QuizContainer({
 
   // === SIDE EFFECTS ===
   useEffect(() => {
-    if (user?.id && courseId) {
+    // Sadece kullanıcı/kurs varsa VE henüz başlamamış/yüklenmiyorsa başlat
+    if (user?.id && courseId && !state.hasStarted && !state.isLoading) {
       startQuiz(user.id, courseId, chunkId);
     }
-  }, [user?.id, courseId, chunkId, startQuiz]);
+  }, [
+    user?.id,
+    courseId,
+    chunkId,
+    startQuiz,
+    state.hasStarted,
+    state.isLoading,
+  ]);
 
   // === RENDER ===
   return (

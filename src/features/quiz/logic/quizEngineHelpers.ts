@@ -45,6 +45,7 @@ export const calculateNextQuestionState = (
     isAnswered: false,
     showExplanation: false,
     isCorrect: null,
+    lastSubmissionResult: null,
   };
 };
 
@@ -71,8 +72,8 @@ export const calculatePreviousQuestionState = (
     queue: newQueue,
     history,
     selectedAnswer: lastItem.userAnswer,
-    isAnswered: true,
-    showExplanation: true,
-    isCorrect: lastItem.isCorrect,
+    isAnswered: false,
+    showExplanation: false,
+    isCorrect: null,
   };
 };

@@ -33,11 +33,16 @@ export function useAnalytics() {
     rate: 34.0,
   });
 
+  const [selectedModel, setSelectedModelState] = useState<string>('all');
+  const [visibleCount, setVisibleCount] = useState<number>(10);
+  const [allLogs, setAllLogs] = useState<AiGenerationCost[]>([]);
+
   const fetchAnalytics = useCallback(async () => {
     if (!user?.id) return;
     try {
       const data = await AnalyticsService.getDashboardData(user.id);
       if (data) {
+        setAllLogs(data.dailyProgress);
         setState((prev) => ({
           ...prev,
           quizStatus: data.quizStatus,
@@ -70,21 +75,39 @@ export function useAnalytics() {
     const models = new Set<string>();
     state.dailyProgress.forEach((day: AiGenerationCost) => {
       if (day.provider) models.add(day.provider);
-      // We also look for other potential fields that might be considered "models" in charts
-      // but based on analyticsLogic.ts, we usually group by provider or date.
     });
     return Array.from(models);
   }, [state.dailyProgress]);
 
+  // Filter logs based on selected model
+  const filteredLogs = useMemo(() => {
+    if (selectedModel === 'all') return allLogs;
+    return allLogs.filter((log) => log.provider === selectedModel);
+  }, [allLogs, selectedModel]);
+
+  // Paginated/Visible logs for the table
+  const visibleLogs = useMemo(() => {
+    return filteredLogs.slice(0, visibleCount);
+  }, [filteredLogs, visibleCount]);
+
   const cacheHitRate = useMemo(
-    () => calculateCacheHitRate(state.dailyProgress),
-    [state.dailyProgress]
+    () => calculateCacheHitRate(filteredLogs),
+    [filteredLogs]
   );
 
   const totalCost = useMemo(
-    () => calculateTotalCostUsd(state.dailyProgress),
-    [state.dailyProgress]
+    () => calculateTotalCostUsd(filteredLogs),
+    [filteredLogs]
   );
+
+  const handleLoadMore = useCallback(() => {
+    setVisibleCount((prev) => prev + 10);
+  }, []);
+
+  const setSelectedModel = useCallback((model: string) => {
+    setSelectedModelState(model);
+    setVisibleCount(10);
+  }, []);
 
   return {
     ...state,
@@ -94,32 +117,32 @@ export function useAnalytics() {
     totalCostTry: totalCost * state.rate,
     progress,
     refresh: fetchAnalytics,
-    logs: state.dailyProgress, // Mapping dailyProgress to logs for the table
+    logs: visibleLogs,
     totalCostUsd: totalCost,
-    totalRequests: state.dailyProgress.length,
-    totalInputTokens: state.dailyProgress.reduce(
+    totalRequests: filteredLogs.length,
+    totalInputTokens: filteredLogs.reduce(
       (acc, curr) => acc + (curr.prompt_tokens || 0),
       0
     ),
-    totalOutputTokens: state.dailyProgress.reduce(
+    totalOutputTokens: filteredLogs.reduce(
       (acc, curr) => acc + (curr.completion_tokens || 0),
       0
     ),
-    totalCachedTokens: state.dailyProgress.reduce(
+    totalCachedTokens: filteredLogs.reduce(
       (acc, curr) => acc + (curr.cached_tokens || 0),
       0
     ),
-    selectedModel: state.dailyProgress[0]?.provider || '',
-    setSelectedModel: () => {}, // Default
-    visibleCount: 10, // Default
-    deferredVisibleCount: 10, // Default
-    isPending: false, // Default
-    hasMore: false, // Default
-    dailyData: state.dailyProgress.map((d) => ({
+    selectedModel,
+    setSelectedModel,
+    visibleCount,
+    deferredVisibleCount: visibleCount,
+    isPending: false, // Could be linked to a fetching state if doing remote pagination
+    hasMore: visibleCount < filteredLogs.length,
+    dailyData: filteredLogs.map((d) => ({
       date: d.created_at ? new Date(d.created_at).toLocaleDateString() : '',
       cost: (d.cost_usd || 0) * state.rate,
       fullDate: d.created_at ? new Date(d.created_at).toLocaleString() : '',
     })),
-    handleLoadMore: () => {}, // Default
+    handleLoadMore,
   };
 }

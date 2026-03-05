@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   getCourseProgress,
   getCourseTopicsWithCounts,
@@ -99,11 +99,13 @@ export function useQuizTopics({
   }, [isOpen, loadTopics]);
 
   // === RETURN ===
-
-  return {
-    topics,
-    loading,
-    courseProgress,
-    refreshTopics: loadTopics,
-  };
+  return useMemo(
+    () => ({
+      topics,
+      loading,
+      courseProgress,
+      refreshTopics: loadTopics,
+    }),
+    [topics, loading, courseProgress, loadTopics]
+  );
 }

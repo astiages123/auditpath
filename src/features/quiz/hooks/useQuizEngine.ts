@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   QuizQuestion,
   QuizResponseType,
@@ -39,6 +39,7 @@ const INITIAL_QUIZ_STATE: QuizState = {
   isCorrect: null,
   hasStarted: false,
   summary: null,
+  currentMastery: 0,
   lastSubmissionResult: null,
   history: [],
 };
@@ -158,6 +159,8 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
         return;
       }
 
+      if (state.isLoading || state.hasStarted) return;
+
       updateState({ isLoading: true, error: null });
 
       try {
@@ -204,7 +207,15 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
         updateState({ isLoading: false, error: error.message });
       }
     },
-    [updateState, loadQuestionsIntoState, loadEngine, startTimer, api]
+    [
+      updateState,
+      loadQuestionsIntoState,
+      loadEngine,
+      startTimer,
+      api,
+      state.isLoading,
+      state.hasStarted,
+    ]
   );
 
   /**
@@ -256,7 +267,10 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
           currentState.selectedAnswer
         );
 
-        updateState({ lastSubmissionResult: result });
+        updateState({
+          lastSubmissionResult: result,
+          currentMastery: result.newMastery,
+        });
 
         // Yanlış cevap durumunda follow-up üretimi (Arka planda)
         if (actualType === 'incorrect' && result.progressId) {
@@ -385,17 +399,30 @@ export function useQuizEngine(courseId: string): UseQuizEngineReturn {
     state.generatedCount - state.queue.length - (state.currentQuestion ? 1 : 0);
 
   // === RETURN ===
-
-  return {
-    state,
-    results,
-    progressIndex,
-    startQuiz,
-    selectAnswer,
-    submitAnswer,
-    nextQuestion,
-    previousQuestion,
-    toggleExplanation,
-    resetState,
-  };
+  return useMemo(
+    () => ({
+      state,
+      results,
+      progressIndex,
+      startQuiz,
+      selectAnswer,
+      submitAnswer,
+      nextQuestion,
+      previousQuestion,
+      toggleExplanation,
+      resetState,
+    }),
+    [
+      state,
+      results,
+      progressIndex,
+      startQuiz,
+      selectAnswer,
+      submitAnswer,
+      nextQuestion,
+      previousQuestion,
+      toggleExplanation,
+      resetState,
+    ]
+  );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useQuizTimerStore } from '@/features/quiz/store';
 
 // ============================================================================
@@ -56,10 +56,12 @@ export function useQuizTimer() {
   }, []);
 
   // === RETURN ===
-
-  return {
-    startTimer,
-    stopTimer,
-    resetTimer,
-  };
+  return useMemo(
+    () => ({
+      startTimer,
+      stopTimer,
+      resetTimer,
+    }),
+    [startTimer, stopTimer, resetTimer]
+  );
 }

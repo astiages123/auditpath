@@ -36,7 +36,7 @@ export function NotesLeftPanel({
   return (
     <aside
       className={cn(
-        'flex flex-col shrink-0 border rounded-xl bg-card h-[400px] lg:h-full z-20 overflow-hidden transition-all duration-300 ease-in-out',
+        'hidden lg:flex flex-col shrink-0 border rounded-xl bg-card h-[400px] lg:h-full z-20 overflow-hidden transition-all duration-300 ease-in-out',
         !isVisible &&
           'lg:w-0 lg:opacity-0 lg:border-none lg:pointer-events-none'
       )}

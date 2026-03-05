@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
 import { useCelebration } from '@/shared/hooks/useCelebration';
@@ -6,6 +6,7 @@ import { useCelebrationStore } from '@/features/achievements/store/useCelebratio
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useUIStore } from '@/shared/store/useUIStore';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
+import { syncPendingSessions } from '@/features/pomodoro/services/pomodoroService';
 import { MobileSidebar } from '../MobileSidebar';
 import { Sidebar } from './Sidebar';
 import { DashHeader } from './Header';
@@ -49,6 +50,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   usePomodoro();
 
   const location = useLocation();
+
+  // === EFFECTS ===
+  useEffect(() => {
+    if (user?.id) {
+      syncPendingSessions(user.id);
+    }
+  }, [user?.id]);
 
   // === HANDLERS ===
 

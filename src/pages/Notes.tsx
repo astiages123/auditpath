@@ -2,7 +2,7 @@ import { ROUTES } from '@/utils/routes';
 import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { NotebookPen, Layout, ChevronLeft } from 'lucide-react';
+import { NotebookPen, Layout } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useNotesPageLogic } from '@/features/notes/hooks/useNotesPageLogic';
 import {
@@ -24,7 +24,7 @@ export default function NotesPage() {
   const {
     loading,
     error,
-    courseTitle,
+    courseName,
     topics,
     selectedTopic,
     content,
@@ -90,27 +90,6 @@ export default function NotesPage() {
   return (
     <ErrorBoundary>
       <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
-        {/* Mobil Menü Kontrolü */}
-        <div className="flex items-center justify-between border-b p-4 lg:hidden">
-          <div className="flex items-center gap-3">
-            <Link to={ROUTES.HOME}>
-              <Button variant="ghost" size="icon">
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-            </Link>
-            <h1 className="text-lg font-bold truncate max-w-[200px]">
-              {courseTitle}
-            </h1>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            Konular
-          </Button>
-        </div>
-
         <div
           className={cn(
             'flex-1 min-h-0 flex flex-col lg:grid gap-4 px-2 py-4 lg:px-4 h-full transition-all duration-300 ease-in-out overflow-hidden',
@@ -130,7 +109,7 @@ export default function NotesPage() {
             chunks={topics}
             activeChunkId={selectedTopic?.id || activeChunkId}
             isVisible={isLeftPanelOpen}
-            courseSlug={courseTitle}
+            courseSlug={courseName}
             debouncedQuery={debouncedQuery}
             results={results}
             onSearchResultClick={handleSearchResultClick}
@@ -142,7 +121,7 @@ export default function NotesPage() {
             content={content}
             activeTab={activeTab}
             selectedTopic={selectedTopic as CourseTopic}
-            courseTitle={courseTitle}
+            courseTitle={courseName}
             mainContentRef={mainContentRef}
             setActiveTab={setActiveTab}
             isLeftPanelVisible={isLeftPanelOpen}
@@ -197,6 +176,7 @@ export default function NotesPage() {
         <NotesMobileTopics
           topics={topics}
           selectedTopicId={selectedTopic?.id || activeChunkId}
+          courseSlug={courseName}
           isMobileMenuOpen={isMobileMenuOpen}
           onTopicSelect={(topic) => {
             handleTopicSelect(topic);

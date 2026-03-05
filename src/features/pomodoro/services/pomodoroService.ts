@@ -283,7 +283,7 @@ export function saveSessionBeacon(
   payload: PomodoroBeaconPayload,
   supabaseUrl: string,
   supabaseKey: string,
-  accessToken?: string
+  accessToken: string
 ): void {
   try {
     fetch(`${supabaseUrl}/rest/v1/pomodoro_sessions`, {
@@ -291,7 +291,7 @@ export function saveSessionBeacon(
       headers: {
         'Content-Type': 'application/json',
         apikey: supabaseKey,
-        Authorization: `Bearer ${accessToken || supabaseKey}`,
+        Authorization: `Bearer ${accessToken}`,
         Prefer: 'resolution=merge-duplicates',
       },
       body: JSON.stringify(payload),
@@ -316,13 +316,111 @@ export function saveSessionBeacon(
   }
 }
 
+/**
+ * Save podomoro session to local storage as a fail-safe.
+ *
+ * @param payload Session data to save locally
+ */
+export function saveSessionToLocalQueue(payload: PomodoroBeaconPayload): void {
+  try {
+    const PENDING_KEY = 'pomodoro_pending_sessions';
+    const existing = localStorage.getItem(PENDING_KEY);
+    const sessions: PomodoroBeaconPayload[] = existing
+      ? JSON.parse(existing)
+      : [];
+
+    // Avoid duplicates
+    if (!sessions.some((s) => s.id === payload.id)) {
+      sessions.push(payload);
+      localStorage.setItem(PENDING_KEY, JSON.stringify(sessions));
+      logger.info(
+        'PomodoroService',
+        'saveSessionToLocalQueue',
+        'Session saved to local storage',
+        { sessionId: payload.id }
+      );
+    }
+  } catch (error) {
+    logger.error(
+      'PomodoroService',
+      'saveSessionToLocalQueue',
+      'Failed to save to local storage',
+      error as Error
+    );
+  }
+}
+
+/**
+ * Sync pending sessions from local storage to the database.
+ *
+ * @param userId User ID for ownership validation
+ */
+export async function syncPendingSessions(userId: string): Promise<void> {
+  const PENDING_KEY = 'pomodoro_pending_sessions';
+  try {
+    const existing = localStorage.getItem(PENDING_KEY);
+    if (!existing) return;
+
+    const sessions: PomodoroBeaconPayload[] = JSON.parse(existing);
+    if (sessions.length === 0) return;
+
+    logger.info(
+      'PomodoroService',
+      'syncPendingSessions',
+      `Syncing ${sessions.length} pending sessions`
+    );
+
+    const successfulIds: string[] = [];
+
+    for (const session of sessions) {
+      if (session.user_id !== userId) continue;
+
+      const upsertParams: UpsertSessionParams = {
+        id: session.id,
+        courseId: session.course_id || '',
+        courseName: session.course_name,
+        timeline: session.timeline,
+        startedAt: session.started_at,
+        isCompleted: session.is_completed,
+      };
+
+      const { error } = await upsertPomodoroSession(upsertParams, userId);
+
+      if (!error) {
+        successfulIds.push(session.id);
+      }
+    }
+
+    if (successfulIds.length > 0) {
+      const remaining = sessions.filter((s) => !successfulIds.includes(s.id));
+      if (remaining.length > 0) {
+        localStorage.setItem(PENDING_KEY, JSON.stringify(remaining));
+      } else {
+        localStorage.removeItem(PENDING_KEY);
+      }
+      logger.info(
+        'PomodoroService',
+        'syncPendingSessions',
+        `Synced ${successfulIds.length} sessions`
+      );
+    }
+  } catch (error) {
+    logger.error(
+      'PomodoroService',
+      'syncPendingSessions',
+      'Failed to sync pending sessions',
+      error as Error
+    );
+  }
+}
+
 // ===========================
 // === STATS & LIST SERVICES ===
 // ===========================
 
 /**
  * Get the count of pomodoro cycles completed today.
- * Uses virtual day logic (day starts at 04:00 AM conceptually, but queries from 00:00).
+ * Uses standard day logic (day starts at 00:00 AM).
  *
  * @param userId User ID
  * @returns Number of cycles completed today

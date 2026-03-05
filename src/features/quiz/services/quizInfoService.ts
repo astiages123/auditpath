@@ -5,7 +5,6 @@ import {
   type LLMErrorCode,
   UnifiedLLMClient as BaseLLMClient,
 } from '@/lib/unified-llm';
-import { RateLimitService } from '@/shared/services/rateLimitService';
 
 // ============================================================================
 // CONSTANTS
@@ -25,8 +24,7 @@ const MODULE = 'QuizInfoService';
  * @returns Özel yönerge metni
  */
 export async function getSubjectGuidelines(
-  courseName: string,
-  _sectionTitle?: string
+  courseName: string
 ): Promise<string> {
   const FUNC = 'getSubjectGuidelines';
   try {
@@ -51,30 +49,6 @@ export async function getSubjectGuidelines(
     return '';
   }
 }
-
-/**
- * Hız sınırlayıcı (Rate Limiter) servisine erişim sağlar.
- */
-export const QuizRateLimiter = {
-  /**
-   * Belirli bir anahtar için isteğin sınırda olup olmadığını kontrol eder.
-   *
-   * @param key - Limit kontrolü için benzersiz anahtar
-   * @param limit - Maksimum istek sayısı
-   * @param windowMs - Süre penceresi (milisaniye)
-   * @returns Limite ulaşılıp ulaşılmadığını belirten boolean (true: engellendi, false: izin verildi)
-   */
-  async check(key: string, limit: number, windowMs: number): Promise<boolean> {
-    const FUNC = 'QuizRateLimiter.check';
-    try {
-      return await RateLimitService.checkLimit(key, limit, windowMs);
-    } catch (error) {
-      console.error(`[${MODULE}][${FUNC}] Hata:`, error);
-      logger.error(MODULE, 'QuizRateLimiter.check', 'Hata:', error);
-      return true; // Hata durumunda güvenli tarafta kalıp limit dolmuş gibi davran
-    }
-  },
-};
 
 /**
  * Quiz modülü için özelleştirilmiş Unified LLM istemcisi.

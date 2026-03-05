@@ -25,18 +25,6 @@ const MODULE = 'FollowUpService';
 // ============================================================================
 
 /**
- * Represents the structure of question data stored in the database,
- * specifically for follow-up questions.
- */
-interface FollowUpQuestionData {
-  q: string;
-  o: string[];
-  a: number;
-  exp: string;
-  evidence?: string;
-}
-
-/**
  * Type definition for the AI-generated question result,
  * inferred from the GeneratedQuestionSchema.
  */
@@ -85,14 +73,10 @@ export async function generateFollowUpForWrongAnswer(
       return;
     }
 
-    // question_data'nın Json tipinden FollowUpQuestionData tipine güvenli dönüşümü
-    const questionDataParseResult = GeneratedQuestionSchema.pick({
-      q: true,
-      o: true,
-      a: true,
-      exp: true,
-      evidence: true,
-    }).safeParse(originalQuestionData.question_data);
+    // question_data'nın Json tipinden FollowUpQuestionData tipine güvenli dönüşümü (SSoT: Sadece JSONB'den besleniyoruz)
+    const questionDataParseResult = GeneratedQuestionSchema.safeParse(
+      originalQuestionData.question_data
+    );
 
     if (!questionDataParseResult.success) {
       console.warn(
@@ -113,7 +97,7 @@ export async function generateFollowUpForWrongAnswer(
       );
       return;
     }
-    const questionData: FollowUpQuestionData = questionDataParseResult.data;
+    const questionData: GeneratedQuestionResult = questionDataParseResult.data;
 
     let chunk: ValidatedChunkWithContent | null = null;
     if (originalQuestionData.chunk_id) {
@@ -131,6 +115,7 @@ export async function generateFollowUpForWrongAnswer(
     }
 
     // 3. AI Prompt hazırla ve üretim yap
+    // SSoT: Kanıt öncelikle JSON içindeki 'evidence' alanından, yoksa 'exp' alanından alınır.
     const evidence = questionData.evidence || questionData.exp;
     const taskPrompt = buildFollowUpPrompt(
       evidence,
@@ -177,7 +162,7 @@ export async function generateFollowUpForWrongAnswer(
     // 4. Teşhis ve yeni soruyu kaydet
     const updates: Promise<unknown>[] = [];
 
-    // 4a. Mevcut progress kaydına AI teşhisini ekle
+    // 4a. Mevcut progress kaydına AI teşhisini ekle (DB Sütunları ile SSoT eşleşmesi)
     if (generatedQuestion.diagnosis || generatedQuestion.insight) {
       updates.push(
         safeQuery(
@@ -195,6 +180,7 @@ export async function generateFollowUpForWrongAnswer(
     }
 
     // 4b. Yeni takip sorusunu questions tablosuna ekle
+    // SSoT: 'evidence' artık sadece 'question_data' JSON içinde tutulur, ayrı sütuna yazılmaz.
     const insertData: QuestionInsert = {
       chunk_id: originalQuestionData.chunk_id,
       course_id: courseId,

@@ -281,48 +281,63 @@ export async function getTopicCompletionStatus(
     const antrenmanQuota = quotas.antrenman || 10;
     const denemeQuota = quotas.deneme || 5;
 
-    // 2. Mevcut soru sayılarını (user_quiz_progress üzerinden) al
-    let antrenmanCount = 0;
-    let denemeCount = 0;
+    // 2. Mevcut soru sayılarını (pool ve user progress) al
+    let antrenmanSolved = 0;
+    let antrenmanPool = 0;
+    let denemePool = 0;
 
     if (chunkId) {
-      const { count: ac } = await safeQuery(
+      // Kullanıcının çözdüğü antrenman soruları
+      const { count: as } = await safeQuery(
         supabase
           .from('user_quiz_progress')
           .select('*', { count: 'exact', head: true })
           .eq('user_id', userId)
           .eq('chunk_id', chunkId),
-        `${FUNC} antrenman count error`,
+        `${FUNC} antrenman solved count error`,
         { userId, chunkId }
       );
 
-      const { count: dc } = await safeQuery(
+      // Havuzdaki mevcut antrenman soruları
+      const { count: ap } = await safeQuery(
+        supabase
+          .from('questions')
+          .select('*', { count: 'exact', head: true })
+          .eq('chunk_id', chunkId)
+          .eq('usage_type', 'antrenman'),
+        `${FUNC} antrenman pool count error`,
+        { chunkId }
+      );
+
+      // Havuzdaki mevcut deneme soruları
+      const { count: dp } = await safeQuery(
         supabase
           .from('questions')
           .select('*', { count: 'exact', head: true })
           .eq('chunk_id', chunkId)
           .eq('usage_type', 'deneme'),
-        `${FUNC} deneme count error`,
+        `${FUNC} deneme pool count error`,
         { chunkId }
       );
 
-      antrenmanCount = ac || 0;
-      denemeCount = dc || 0;
+      antrenmanSolved = as || 0;
+      antrenmanPool = ap || 0;
+      denemePool = dp || 0;
     }
 
     return {
-      completed: antrenmanCount >= antrenmanQuota,
+      completed: antrenmanSolved >= antrenmanQuota,
       antrenman: {
-        solved: antrenmanCount,
+        solved: antrenmanSolved,
         total: antrenmanQuota,
         quota: antrenmanQuota,
-        existing: antrenmanCount,
+        existing: antrenmanPool,
       },
       deneme: {
-        solved: denemeCount,
+        solved: 0, // Deneme için bireysel progress takibi şimdilik yok
         total: denemeQuota,
         quota: denemeQuota,
-        existing: denemeCount,
+        existing: denemePool,
       },
       mistakes: {
         solved: 0,

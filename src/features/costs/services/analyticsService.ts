@@ -23,9 +23,10 @@ export const AnalyticsService = {
       page?: number;
       pageSize?: number;
       startDate?: Date;
+      model?: string;
     } = {}
   ): Promise<AiGenerationCost[]> {
-    const { page = 1, pageSize = 50, startDate } = options;
+    const { page = 1, pageSize = 50, startDate, model } = options;
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
@@ -38,6 +39,11 @@ export const AnalyticsService = {
 
       if (startDate) {
         query = query.gte('created_at', startDate.toISOString());
+      }
+
+      if (model && model !== 'all') {
+        // 'provider' column is used for model identification based on useAnalytics uniqueModels logic
+        query = query.eq('provider', model);
       }
 
       const { data, error } = await query;
@@ -67,6 +73,7 @@ export const AnalyticsService = {
     scoreTypeAnalytics: unknown[];
   } | null> {
     try {
+      // Fetch more data for the dashboard summary to ensure charts are accurate
       const costs = await this.fetchGenerationCosts({ pageSize: 1000 });
       return {
         quizStatus: {}, // Placeholder

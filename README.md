@@ -17,14 +17,14 @@ Farklı AI modelleri görev bazlı çalışır:
 | Görev                     | Model               |
 | ------------------------- | ------------------- |
 | Soru analizi              | Google Gemini Flash |
-| Kalite doğrulama          | Mimo v2 Flash       |
+| Kalite doğrulama          | gpt-oss-120b        |
 | Açıklama & takip soruları | DeepSeek Chat       |
 
 Sorular çok aşamalı bir üretim hattından geçer: **Analiz → Taslak → Doğrulama → Revizyon.** Zod ile runtime şema kontrolü yapılır, yanlış ama mantıklı çeldirici şıklar üretilir.
 
 ### 🔁 Akıllı Tekrar Sistemi (SRS)
 
-Yanlış cevaplanan sorular unutulmaz. Fibonacci aralıklarıyla tekrar planlanır: `[1, 2, 5, 10, 20]` gün. 3 ardışık doğru cevap sonrası soru arşive geçer.
+Yanlış cevaplanan sorular unutulmaz. Fibonacci aralıklarıyla tekrar planlanır: `[1, 2, 4, 7, 10]` oturum. 3 ardışık doğru cevap sonrası soru arşive geçer (mastered).
 
 ### 🔗 Mastery Zinciri
 
@@ -33,10 +33,6 @@ Kavramlar arasındaki bağımlılıklar modellenir. Bir kavramda ustalaşmak iç
 ### ⏱️ Pomodoro Zamanlayıcı
 
 Web Worker tabanlı — sekme arka planda olsa bile sapmasız çalışır. Favicon üzerinde canlı geri sayım gösterimi ve oturum bazlı ders takibi yapar.
-
-### 🌙 Sanal Gün Sistemi
-
-Gün başlangıcı 04:00 olarak ayarlanmıştır. Gece geç saate kadar yapılan çalışmalar doğru güne sayılır.
 
 ### 📚 Notlar & Notion Entegrasyonu
 
@@ -54,15 +50,15 @@ Günlük/haftalık çalışma metrikleri, Bloom Taksonomisi bazlı bilişsel yü
 
 ## Teknoloji Yığını
 
-| Katman    | Teknoloji                                     |
-| --------- | --------------------------------------------- |
-| Frontend  | React 19, TypeScript, Vite                    |
-| UI        | Radix UI, Tailwind CSS v4, Framer Motion      |
-| State     | Zustand, TanStack Query                       |
-| Backend   | Supabase (PostgreSQL + Auth + Edge Functions) |
-| Grafikler | Recharts, Mermaid                             |
-| Test      | Vitest, Testing Library                       |
-| AI        | Google Gemini, DeepSeek, Mimo                 |
+| Katman    | Teknoloji                                        |
+| --------- | ------------------------------------------------ |
+| Frontend  | React 19, TypeScript, Vite                       |
+| UI        | Radix UI, Tailwind CSS v4, Framer Motion         |
+| State     | Zustand, TanStack Query                          |
+| Backend   | Supabase (PostgreSQL + Auth + Edge Functions)    |
+| Grafikler | Recharts, Mermaid                                |
+| Test      | Vitest, Testing Library                          |
+| AI        | Google Gemini, DeepSeek, Cerebras (gpt-oss-120b) |
 
 ---
 

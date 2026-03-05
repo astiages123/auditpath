@@ -4,6 +4,7 @@ import {
   getRecentCognitiveInsights,
   getRecentQuizSessions,
 } from '@/features/quiz/services/quizHistoryService';
+import { getBloomStats } from '@/features/quiz/services/quizAnalyticsService';
 import { getRecentActivitySessions } from '@/features/pomodoro/services/pomodoroService';
 
 import type { CognitiveInsight } from '@/features/quiz/types';
@@ -67,9 +68,13 @@ export function useCognitiveInsights(): CognitiveInsightsHook {
 
   // --- QUERIES ---
 
-  const { isLoading: loadingBloom, error: bloomError } = useQuery({
+  const {
+    data: bloomData,
+    isLoading: loadingBloom,
+    error: bloomError,
+  } = useQuery({
     queryKey: ['bloomStats', userId],
-    queryFn: () => Promise.resolve([] as BloomStats[]),
+    queryFn: () => getBloomStats(userId!),
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
   });
@@ -112,12 +117,15 @@ export function useCognitiveInsights(): CognitiveInsightsHook {
   const error = bloomError || sessionsError || quizzesError || cognitiveError;
 
   const order = ['Bilgi', 'Analiz', 'Uygula'];
-  const bloomRadarData = order.map((levelText: string) => ({
-    level: levelText,
-    score: 0,
-    questionsSolved: 0,
-    correct: 0,
-  }));
+  const bloomRadarData = order.map((levelText: string) => {
+    const stat = bloomData?.find((s: BloomStats) => s.level === levelText);
+    return {
+      level: levelText,
+      score: stat?.score || 0,
+      questionsSolved: stat?.questionsSolved || 0,
+      correct: stat?.correct || 0,
+    };
+  });
 
   const cognitiveAnalysis = (() => {
     if (!cognitiveInsights || !cognitiveInsights.length) return null;

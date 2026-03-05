@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { generateForChunk } from '@/features/quiz/logic/quizParser';
 import { GenerationLog, type GenerationStep } from '@/features/quiz/types';
 import { logger } from '@/utils/logger';
@@ -217,12 +217,20 @@ export function useQuizGeneration() {
   }, []);
 
   // === RETURN ===
-
-  return {
-    generation,
-    startGeneration,
-    stopGeneration,
-    resetGeneration,
-    createGenerationCallbacks,
-  };
+  return useMemo(
+    () => ({
+      generation,
+      startGeneration,
+      stopGeneration,
+      resetGeneration,
+      createGenerationCallbacks,
+    }),
+    [
+      generation,
+      startGeneration,
+      stopGeneration,
+      resetGeneration,
+      createGenerationCallbacks,
+    ]
+  );
 }

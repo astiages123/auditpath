@@ -9,6 +9,7 @@ import { SearchResult } from '@/features/notes/types';
 interface NotesMobileTopicsProps {
   topics: CourseTopic[];
   selectedTopicId: string;
+  courseSlug: string;
   isMobileMenuOpen: boolean;
   onTopicSelect: (topic: CourseTopic) => void;
   onSearchResultClick?: (result: SearchResult) => void;
@@ -18,6 +19,7 @@ interface NotesMobileTopicsProps {
 export function NotesMobileTopics({
   topics,
   selectedTopicId,
+  courseSlug,
   isMobileMenuOpen,
   onSearchResultClick,
   onClose,
@@ -25,7 +27,6 @@ export function NotesMobileTopics({
   if (!isMobileMenuOpen) return null;
   const chunks = topics;
   const activeChunkId = selectedTopicId;
-  const courseSlug = '';
   const debouncedQuery: string = '';
   const results: SearchResult[] = [];
   const handleSearchResultClick = (result: SearchResult) => {

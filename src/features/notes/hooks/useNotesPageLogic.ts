@@ -103,7 +103,7 @@ export function useNotesPageLogic() {
     handleSearchResultClick,
     toggleSearch,
     transformedContent,
-    courseTitle: courseSlug || 'Ders Notları',
+    courseName: courseSlug || 'Ders Notları',
     topics: chunks,
     selectedTopic: currentChunk,
     content: transformedContent,

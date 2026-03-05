@@ -1,8 +1,5 @@
 // === SECTION: Application Limits ===
 
-/** Günlük soru çözme limiti */
-export const DAILY_QUOTA = 50;
-
 /** Bir konunun ustalık sayılması için gereken başarı puanı (%) */
 export const MASTERY_THRESHOLD = 80;
 
@@ -18,7 +15,6 @@ export const QUIZ_CONFIG = {
   /** Ustalık seviyesi eşikleri */
   MASTERY_THRESHOLDS: { EXCELLENT: 80, GOOD: 50 },
   /** Uygulama genel limitleri */
-  DAILY_LIMIT: 50,
   /** Bir kavram haritasında kavram başına düşen soru hedefi */
   QUESTIONS_PER_CONCEPT: 3,
 } as const;

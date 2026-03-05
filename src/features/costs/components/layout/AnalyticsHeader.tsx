@@ -19,7 +19,7 @@ import {
 
 interface AnalyticsHeaderProps {
   rate: number;
-  selectedModel: string | null;
+  selectedModel: string | 'all';
   onModelChange: (model: string) => void;
   availableModels: string[];
 }

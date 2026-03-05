@@ -10,14 +10,20 @@ import {
 } from 'lucide-react';
 import { TopicCompletionStats } from '@/features/courses/types/courseTypes';
 import { Badge } from '@/components/ui/badge';
-
-// === TYPES ===
+import { Wand2 } from 'lucide-react';
+import { injectMicroeconomicsMockData } from '@/features/quiz/services/mockQuizService';
+import { toast } from 'sonner';
+import { useState } from 'react';
 
 interface BriefingViewProps {
   /** Konu tamamlama ve kota istatistikleri */
   completionStatus: TopicCompletionStats;
   /** Quiz başlatma/hazırlama butonuna tıklanınca tetiklenir */
   onStartQuiz: () => void;
+  /** Opsiyonel: Mock verileri yüklemek için gerekli ID'ler */
+  userId?: string;
+  courseId?: string;
+  chunkId?: string;
 }
 
 // === CONSTANTS: ANIMATION VARIANTS ===
@@ -44,11 +50,48 @@ const itemVariants = {
 export function BriefingView({
   completionStatus,
   onStartQuiz,
+  userId,
+  courseId,
+  chunkId,
 }: BriefingViewProps) {
+  // === STATE ===
+  const [isInjecting, setIsInjecting] = useState(false);
+
   // === RENDER LOGIC ===
 
   const isReady =
     completionStatus.antrenman.existing >= completionStatus.antrenman.quota;
+
+  /** Mock verileri manuel olarak yükler */
+  const handleInjectMock = async () => {
+    if (!userId || !courseId || !chunkId) {
+      toast.error('Gerekli bilgiler eksik, mock yüklenemedi.');
+      return;
+    }
+
+    setIsInjecting(true);
+    try {
+      const result = await injectMicroeconomicsMockData(
+        userId,
+        courseId,
+        chunkId
+      );
+      if (result.success) {
+        toast.success(result.message || 'Mock veriler hazır!');
+        // Sayfayı yenilemek için onStartQuiz çağrılabilir veya
+        // kullanıcı manuel olarak quizi başlatabilir.
+        setTimeout(() => {
+          window.location.reload(); // En temiz yöntem şimdilik bu
+        }, 1000);
+      } else {
+        toast.error('Mock yüklenirken hata oluştu.');
+      }
+    } catch {
+      toast.error('Bir hata meydana geldi.');
+    } finally {
+      setIsInjecting(false);
+    }
+  };
 
   // === RENDER ===
 
@@ -59,17 +102,31 @@ export function BriefingView({
       animate="visible"
       className="w-full h-full flex flex-col gap-3 py-2 min-h-0"
     >
-      {/* BAŞLAT BUTONU */}
-      <motion.div variants={itemVariants} className="shrink-0">
+      {/* BAŞLAT VE MOCK BUTONLARI */}
+      <motion.div variants={itemVariants} className="shrink-0 space-y-2">
         <button
           onClick={onStartQuiz}
-          className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold transition-all flex items-center justify-center gap-3 shadow-sm active:scale-[0.98] border border-primary/20"
+          disabled={isInjecting}
+          className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold transition-all flex items-center justify-center gap-3 shadow-sm active:scale-[0.98] border border-primary/20 disabled:opacity-50"
         >
           <Play className="w-5 h-5 fill-current" />
           <span className="text-lg">
             {isReady ? 'ANTRENMANA BAŞLA' : 'SORULARI HAZIRLA'}
           </span>
         </button>
+
+        {!isReady && (
+          <button
+            onClick={handleInjectMock}
+            disabled={isInjecting}
+            className="w-full h-10 border border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5 text-muted-foreground hover:text-primary rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <Wand2 className="w-4 h-4" />
+            <span>
+              {isInjecting ? 'YÜKLENİYOR...' : 'MOCK SORU YÜKLE (DEMO)'}
+            </span>
+          </button>
+        )}
       </motion.div>
 
       {/* İSTATİSTİK PANELLERİ */}
@@ -208,18 +265,20 @@ export function BriefingView({
                 Soru Dağılımı
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-2 relative z-10">
+            <div className="grid grid-cols-2 gap-2 relative z-10 max-w-md mx-auto w-full">
               {[
                 {
                   label: 'Antrenman',
-                  value: completionStatus.antrenman.quota,
+                  existing: completionStatus.antrenman.existing,
+                  quota: completionStatus.antrenman.quota,
                   icon: Zap,
                   color: 'text-blue-500',
                   bg: 'bg-blue-500/10',
                 },
                 {
                   label: 'Deneme',
-                  value: completionStatus.deneme.quota,
+                  existing: completionStatus.deneme.existing,
+                  quota: completionStatus.deneme.quota,
                   icon: Target,
                   color: 'text-purple-500',
                   bg: 'bg-purple-500/10',
@@ -235,7 +294,11 @@ export function BriefingView({
                     <d.icon size={22} className={`${d.color}`} />
                   </div>
                   <div className="text-3xl font-black leading-none mb-1">
-                    {d.value}
+                    {d.existing}
+                    <span className="text-base text-muted-foreground">
+                      {' '}
+                      / {d.quota}
+                    </span>
                   </div>
                   <div className="text-[11px] font-black text-muted-foreground uppercase tracking-tight">
                     {d.label}

@@ -105,7 +105,7 @@ describe('Zero-Value Timezone Leak in getFocusPowerData', () => {
     vi.useRealTimers();
   });
 
-  it('should leak data (Zero-Value) if session falls on the edge of the range and shifts to previous Virtual Day', async () => {
+  it('should leak data (Zero-Value) if session falls on the edge of the range and shifts to previous Day', async () => {
     // Current local time: 2024-05-21 14:00:00 (Tuesday)
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2024-05-21T11:00:00Z')); // 14:00:00 TRT

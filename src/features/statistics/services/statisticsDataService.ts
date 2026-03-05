@@ -1,7 +1,9 @@
 import { supabase } from '@/lib/supabase';
+import { z } from 'zod';
 import { getVirtualDayStart } from '@/utils/dateUtils';
 import { handleSupabaseError, safeQuery } from '@/lib/supabaseHelpers';
 import { generateDateRange } from '../logic/statisticsHelpers';
+import { performanceMonitor } from '@/utils/performance';
 import {
   processConsistencyData,
   processDailyEfficiencySummary,
@@ -18,7 +20,16 @@ import type {
   FocusPowerPoint,
   FocusTrend,
   LearningLoad,
+  RawSession,
+  RawVideo,
 } from '@/features/statistics/types/statisticsTypes';
+
+const rawVideoSchema = z.object({
+  completed_at: z.string().nullable().optional(),
+  video: z.unknown(),
+});
+
+const rawVideoArraySchema = z.array(rawVideoSchema);
 
 // ==========================================
 // === DB FETCH HELPERS ===
@@ -118,6 +129,52 @@ export async function getLearningLoadData({
   } catch (error) {
     console.error('[EfficiencyDataService][getLearningLoadData] Hata:', error);
     return [];
+  }
+}
+
+/**
+ * Fetch comprehensive raw data for all charts (Consolidated optimization).
+ */
+export async function getComprehensiveHistory(
+  userId: string,
+  days: number = 180
+): Promise<{ sessions: RawSession[]; videos: RawVideo[] }> {
+  try {
+    const queryStartDate = new Date();
+    queryStartDate.setDate(queryStartDate.getDate() - (days - 1));
+    queryStartDate.setHours(0, 0, 0, 0);
+
+    const [sessions, videos] = await performanceMonitor.measurePromise(
+      'EfficiencyDataService',
+      'getComprehensiveHistory',
+      () =>
+        Promise.all([
+          fetchSessionHistory<RawSession>(
+            userId,
+            'started_at, total_work_time, total_break_time, total_pause_time, course_id, id, pause_count, efficiency_score, timeline',
+            'getComprehensiveHistory sessions error',
+            { days }
+          ),
+          supabase
+            .from('video_progress')
+            .select('completed_at, video:videos(duration_minutes, duration)')
+            .eq('user_id', userId)
+            .eq('completed', true)
+            .gte('completed_at', queryStartDate.toISOString()),
+        ])
+    );
+    const parsedVideos = rawVideoArraySchema.safeParse(videos.data);
+
+    return {
+      sessions: sessions || [],
+      videos: parsedVideos.success ? parsedVideos.data : [],
+    };
+  } catch (error) {
+    console.error(
+      '[EfficiencyDataService][getComprehensiveHistory] Hata:',
+      error
+    );
+    return { sessions: [], videos: [] };
   }
 }
 
@@ -275,16 +332,24 @@ export async function getDailyEfficiencySummary(
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const { data: todaySessions, error } = await supabase
-      .from('pomodoro_sessions')
-      .select(
-        'id, course_name, course_id, started_at, total_work_time, total_break_time, total_pause_time, pause_count, efficiency_score, timeline'
-      )
-      .eq('user_id', userId)
-      .gte('started_at', today.toISOString())
-      .lt('started_at', tomorrow.toISOString())
-      .or('total_work_time.gte.60,total_break_time.gte.60')
-      .order('started_at', { ascending: true });
+    const { data: todaySessions, error } =
+      await performanceMonitor.measurePromise(
+        'EfficiencyDataService',
+        'getDailyEfficiencySummary',
+        async () => {
+          const response = await supabase
+            .from('pomodoro_sessions')
+            .select(
+              'id, course_name, course_id, started_at, total_work_time, total_break_time, total_pause_time, pause_count, efficiency_score, timeline'
+            )
+            .eq('user_id', userId)
+            .gte('started_at', today.toISOString())
+            .lt('started_at', tomorrow.toISOString())
+            .or('total_work_time.gte.60,total_break_time.gte.60')
+            .order('started_at', { ascending: true });
+          return response;
+        }
+      );
 
     if (error) {
       await handleSupabaseError(error, 'getDailyEfficiencySummary');

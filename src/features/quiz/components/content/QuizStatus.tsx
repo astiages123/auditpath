@@ -145,6 +145,8 @@ interface QuizProgressProps {
   timerIsRunning: boolean;
   /** Mevcut soru ID'si */
   currentQuestionId?: string;
+  /** Mevcut ustalık skoru */
+  currentMastery?: number;
   /** Son yapılan puan/ustalık değişimi */
   lastSubmissionResult?: {
     scoreDelta: number;
@@ -166,6 +168,7 @@ export const QuizProgress: React.FC<QuizProgressProps> = ({
   totalQueueLength,
   timerIsRunning,
   currentQuestionId,
+  currentMastery = 0,
   lastSubmissionResult,
   progressQueue = [],
   questionResults = {},
@@ -173,7 +176,7 @@ export const QuizProgress: React.FC<QuizProgressProps> = ({
 }) => {
   // === CALCULATIONS ===
   const masteryDelta = lastSubmissionResult?.scoreDelta ?? null;
-  const mastery = lastSubmissionResult?.newMastery ?? 0;
+  const mastery = currentMastery || (lastSubmissionResult?.newMastery ?? 0);
 
   // === RENDER ===
   return (
@@ -190,7 +193,7 @@ export const QuizProgress: React.FC<QuizProgressProps> = ({
         {/* Puan / Başarı Durumu */}
         <div className="flex flex-col">
           <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-            Başarı
+            Puan
           </span>
           <div className="flex items-center gap-1.5">
             <span className="text-base font-bold text-emerald-500">

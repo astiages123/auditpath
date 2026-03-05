@@ -42,8 +42,8 @@ interface QuotaStore {
  */
 export const useQuotaStore = create<QuotaStore>()((set) => ({
   quota: {
-    dailyLimit: 50,
-    remaining: 50,
+    dailyLimit: 0,
+    remaining: 0,
     isLoading: false,
     error: null,
   },
@@ -65,8 +65,8 @@ export const useQuotaStore = create<QuotaStore>()((set) => ({
 
       // Gelen veriyi Zod ile doğrula
       const QuotaSchema = z.object({
-        daily_limit: z.number().optional().default(50),
-        remaining: z.number().optional().default(50),
+        daily_limit: z.number().optional().default(250),
+        remaining: z.number().optional().default(250),
       });
 
       const parsedQuota = QuotaSchema.safeParse(data);

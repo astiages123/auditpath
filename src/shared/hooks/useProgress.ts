@@ -209,7 +209,7 @@ export function useOptimisticProgress(categories?: Category[]) {
     deltaPages: number = 0
   ) => {
     queryClient.setQueryData<ProgressStats>(
-      progressKeys.user(userId),
+      [...progressKeys.user(userId), true],
       (old) => {
         if (!old) return old;
 

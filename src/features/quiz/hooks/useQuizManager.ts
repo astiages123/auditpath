@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import {
   type GenerationLog,
@@ -94,7 +94,7 @@ export interface UseQuizManagerReturn {
   /** Quizi başlatır */
   handleStartQuiz: () => void;
   /** Soru üretimini başlatır */
-  handleGenerate: (mappingOnly?: boolean) => Promise<void>;
+  handleGenerate: () => Promise<void>;
   /** Soru üretimini durdurur */
   handleStopGeneration: () => void;
   /** Konu listesine geri döner */
@@ -233,31 +233,27 @@ export function useQuizManager({
 
   // === ACTIONS ===
 
-  /** Konu için soru üretimini başlatır */
-  const handleGenerate = useCallback(
-    async (_mappingOnly = true) => {
-      if (!targetChunkId) return;
-      try {
-        await startGeneration(
-          targetChunkId,
-          async () => {
-            if (selectedTopic && user) {
-              const newStatus = await getTopicCompletionStatus(
-                user.id,
-                courseId,
-                selectedTopic.name
-              );
-              setCompletionStatus(newStatus);
-            }
-          },
-          user?.id
-        );
-      } catch (err) {
-        console.error('[useQuizManager][handleGenerate] Hata:', err);
-      }
-    },
-    [targetChunkId, user, selectedTopic, courseId, startGeneration]
-  );
+  const handleGenerate = useCallback(async () => {
+    if (!targetChunkId) return;
+    try {
+      await startGeneration(
+        targetChunkId,
+        async () => {
+          if (selectedTopic && user) {
+            const newStatus = await getTopicCompletionStatus(
+              user.id,
+              courseId,
+              selectedTopic.name
+            );
+            setCompletionStatus(newStatus);
+          }
+        },
+        user?.id
+      );
+    } catch (err) {
+      console.error('[useQuizManager][handleGenerate] Hata:', err);
+    }
+  }, [targetChunkId, user, selectedTopic, courseId, startGeneration]);
 
   /** Soru üretimini durdurur (kullanıcı isteğiyle) */
   const handleStopGeneration = useCallback(() => {
@@ -270,7 +266,7 @@ export function useQuizManager({
       completionStatus &&
       completionStatus.antrenman.existing < completionStatus.antrenman.quota
     ) {
-      handleGenerate(false);
+      handleGenerate();
       return;
     }
     setExistingQuestions([]);
@@ -449,28 +445,51 @@ export function useQuizManager({
   }, [selectedTopic, quizPhase, isQuizActive, saveManager]);
 
   // === RETURN ===
-
-  return {
-    user,
-    topics,
-    selectedTopic,
-    setSelectedTopic,
-    targetChunkId,
-    loading: topicsLoading,
-    completionStatus,
-    existingQuestions,
-    isQuizActive,
-    isGeneratingExam,
-    quizPhase,
-    examLogs: generation.logs,
-    examProgress: generation.progress,
-    courseProgress,
-    handleStartQuiz,
-    handleGenerate,
-    handleStopGeneration,
-    handleBackToTopics,
-    handleFinishQuiz,
-    handleStartSmartExam,
-    resetState,
-  };
+  return useMemo(
+    () => ({
+      user,
+      topics,
+      selectedTopic,
+      setSelectedTopic,
+      targetChunkId,
+      loading: topicsLoading,
+      completionStatus,
+      existingQuestions,
+      isQuizActive,
+      isGeneratingExam,
+      quizPhase,
+      examLogs: generation.logs,
+      examProgress: generation.progress,
+      courseProgress,
+      handleStartQuiz,
+      handleGenerate,
+      handleStopGeneration,
+      handleBackToTopics,
+      handleFinishQuiz,
+      handleStartSmartExam,
+      resetState,
+    }),
+    [
+      user,
+      topics,
+      selectedTopic,
+      targetChunkId,
+      topicsLoading,
+      completionStatus,
+      existingQuestions,
+      isQuizActive,
+      isGeneratingExam,
+      quizPhase,
+      generation.logs,
+      generation.progress,
+      courseProgress,
+      handleStartQuiz,
+      handleGenerate,
+      handleStopGeneration,
+      handleBackToTopics,
+      handleFinishQuiz,
+      handleStartSmartExam,
+      resetState,
+    ]
+  );
 }

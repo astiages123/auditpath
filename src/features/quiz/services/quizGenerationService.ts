@@ -169,19 +169,30 @@ async function fetchNullQuestionsFromChunks(
     'fetchNullQuestionsFromChunks error',
     { chunkIds }
   );
-  return (data || []).map((q) => ({
-    question_id: q.id,
-    status: 'active',
-    next_review_session: null,
-    questions: {
-      id: q.id,
-      chunk_id: q.chunk_id || '00000000-0000-0000-0000-000000000000',
-      course_id: q.course_id,
-      parent_question_id: q.parent_question_id,
-      question_data: {
-        ...(q.question_data as Record<string, unknown>),
-        type: 'multiple_choice',
-      } as QuizQuestion,
-    },
-  })) as QuestionWithStatus[];
+  return (data || []).map((q) => {
+    const qData = q.question_data as Record<string, unknown>;
+    return {
+      question_id: q.id,
+      status: 'active',
+      next_review_session: null,
+      questions: {
+        id: q.id,
+        chunk_id: q.chunk_id || '00000000-0000-0000-0000-000000000000',
+        course_id: q.course_id,
+        parent_question_id: q.parent_question_id,
+        question_data: {
+          ...qData,
+          type: 'multiple_choice',
+          q: qData.q || '',
+          o: qData.o || [],
+          a: qData.a ?? 0,
+          exp: qData.exp || '',
+          img: qData.img ?? null,
+          diagnosis: qData.diagnosis || qData.ai_diagnosis || '',
+          insight: qData.insight || qData.ai_insight || '',
+          evidence: qData.evidence || '',
+        } as QuizQuestion,
+      },
+    };
+  }) as QuestionWithStatus[];
 }

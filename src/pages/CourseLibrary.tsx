@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, CheckCircle2, FileText, Pencil } from 'lucide-react';
+import { Brain, CheckCircle2, FileText } from 'lucide-react';
 import type { Course } from '@/features/courses/types/courseTypes';
 import {
   CATEGORY_THEMES,
@@ -210,7 +210,7 @@ function CourseRow({
           }}
           className="flex items-center gap-1.5 px-3 h-8 rounded-xl text-[11px] font-black uppercase tracking-wide transition-all duration-200 shrink-0 bg-primary/10 text-foreground border border-primary/20 hover:bg-primary/20 hover:border-primary/40 hover:scale-[1.04]"
         >
-          <Pencil className="size-3" />
+          <Brain className="size-3" />
           <span className="hidden sm:inline">Sınava Gir</span>
         </button>
       </div>

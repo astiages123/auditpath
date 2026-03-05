@@ -236,24 +236,71 @@ export const ConceptMapResponseSchema = z.object({
   concepts: z.array(ConceptMapSchema).nonempty(),
 });
 
-export const GeneratedQuestionSchema = z.object({
-  q: z.string().min(10, 'Soru metni çok kısa'),
-  o: z.array(z.string()).length(5, 'Tam olarak 5 seçenek olmalı'),
-  a: z.number().int().min(0).max(4),
-  exp: z.string().min(10, 'Açıklama metni çok kısa'),
-  evidence: z.string().optional(),
-  img: z.preprocess((val) => {
-    if (val === null || val === undefined || val === '') return null;
-    if (typeof val === 'string') {
-      if (val.toLowerCase() === 'null') return null;
-      const n = parseInt(val, 10);
-      return isNaN(n) ? null : n;
+export const GeneratedQuestionSchema = z.preprocess(
+  (data: unknown) => {
+    if (typeof data !== 'object' || data === null) return data;
+    const item = data as Record<string, unknown>;
+
+    // Sin Source of Truth (SSoT) ve LLM mapping katmanı
+    const mapped: Record<string, unknown> = { ...item };
+
+    // Soru Metni
+    if (!mapped.q && (item.yeni_soru || item.soru || item.question)) {
+      mapped.q = item.yeni_soru || item.soru || item.question;
     }
-    return val;
-  }, z.number().nullable().optional()),
-  diagnosis: z.string().max(500).optional(),
-  insight: z.string().max(500).nullable().optional(),
-});
+    // Seçenekler
+    if (!mapped.o && (item.secenekler || item.options || item.choices)) {
+      mapped.o = item.secenekler || item.options || item.choices;
+    }
+    // Doğru Cevap (0-4)
+    if (mapped.a === undefined) {
+      const aVal = item.dogru_cevap ?? item.answer ?? item.correct_answer;
+      if (aVal !== undefined) mapped.a = aVal;
+    }
+    // Açıklama
+    if (!mapped.exp && (item.aciklama || item.explanation || item.exp)) {
+      mapped.exp = item.aciklama || item.explanation || item.exp;
+    }
+    // Kanıt (Evidence) - DB: evidence, JSON: evidence
+    if (!mapped.evidence && (item.dayanak || item.kanit || item.source)) {
+      mapped.evidence = item.dayanak || item.kanit || item.source;
+    }
+    // Teşhis (Diagnosis) - DB: ai_diagnosis, JSON: diagnosis
+    if (
+      !mapped.diagnosis &&
+      (item.ai_diagnosis || item.teshis || item.hatade_teshis)
+    ) {
+      mapped.diagnosis = item.ai_diagnosis || item.teshis || item.hatade_teshis;
+    }
+    // İçgörü (Insight) - DB: ai_insight, JSON: insight
+    if (
+      !mapped.insight &&
+      (item.ai_insight || item.icgoru || item.mentor_notu)
+    ) {
+      mapped.insight = item.ai_insight || item.icgoru || item.mentor_notu;
+    }
+
+    return mapped;
+  },
+  z.object({
+    q: z.string().min(10, 'Soru metni çok kısa'),
+    o: z.array(z.string()).length(5, 'Tam olarak 5 seçenek olmalı'),
+    a: z.number().int().min(0).max(4),
+    exp: z.string().min(10, 'Açıklama metni çok kısa'),
+    evidence: z.string().optional().default(''),
+    img: z.preprocess((val) => {
+      if (val === null || val === undefined || val === '') return null;
+      if (typeof val === 'string') {
+        if (val.toLowerCase() === 'null') return null;
+        const n = parseInt(val, 10);
+        return isNaN(n) ? null : n;
+      }
+      return val;
+    }, z.number().nullable().optional().default(null)),
+    diagnosis: z.string().max(1000).optional().default(''),
+    insight: z.string().max(1000).nullable().optional().default(''),
+  })
+);
 
 export type GeneratedQuestionResult = z.infer<typeof GeneratedQuestionSchema>;
 

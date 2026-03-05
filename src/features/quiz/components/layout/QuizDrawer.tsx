@@ -65,6 +65,7 @@ export function QuizDrawer({
     handleFinishQuiz,
     courseProgress,
     resetState,
+    user,
   } = useQuizManager({ isOpen, courseId, courseName });
 
   // === SIDE EFFECTS ===
@@ -184,7 +185,12 @@ export function QuizDrawer({
                       <div className="flex-1 flex flex-col min-h-0">
                         {/* 1. FAZ: Başlangıç / Analiz Bekleme */}
                         {quizPhase === QUIZ_PHASE.NOT_ANALYZED && (
-                          <InitialStateView onGenerate={handleGenerate} />
+                          <InitialStateView
+                            onGenerate={handleGenerate}
+                            userId={user?.id}
+                            courseId={courseId}
+                            chunkId={targetChunkId || undefined}
+                          />
                         )}
 
                         {/* 2. FAZ: Analiz / Haritalama Süreci */}
@@ -202,6 +208,9 @@ export function QuizDrawer({
                             <BriefingView
                               completionStatus={completionStatus}
                               onStartQuiz={handleStartQuiz}
+                              userId={user?.id}
+                              courseId={courseId}
+                              chunkId={targetChunkId || undefined}
                             />
                           )}
                       </div>

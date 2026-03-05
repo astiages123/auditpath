@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { QuizPhase } from '@/features/quiz/hooks/useQuizManager';
 import { QuizResults, QuizState, SessionContext } from '@/features/quiz/types';
 import { TopicWithCounts } from '@/features/courses/types/courseTypes';
@@ -133,13 +133,15 @@ export function useQuizPersistence(courseId: string) {
   }, [quizEngineKey]);
 
   // === RETURN ===
-
-  return {
-    loadManager,
-    saveManager,
-    loadEngine,
-    saveEngine,
-    clear,
-    clearEngine,
-  };
+  return useMemo(
+    () => ({
+      loadManager,
+      saveManager,
+      loadEngine,
+      saveEngine,
+      clear,
+      clearEngine,
+    }),
+    [loadManager, saveManager, loadEngine, saveEngine, clear, clearEngine]
+  );
 }

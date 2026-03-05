@@ -58,6 +58,34 @@ export const logger = {
   },
 
   /**
+   * Performans metriklerini loglar.
+   * @param module - Logun ait olduğu modül
+   * @param func - İlgili fonksiyon
+   * @param durationMs - Milisaniye cinsinden süre
+   * @param status - 'ok' | 'error'
+   * @param extra - Ekstra bilgi
+   */
+  metrics(
+    module: string,
+    func: string,
+    durationMs: number,
+    status: 'ok' | 'error',
+    extra?: string
+  ): void {
+    if (!env.app.isDev) return;
+    const icon = status === 'ok' ? '⏱️' : '⚠️⏱️';
+    const durationStr = `${durationMs.toFixed(2)}ms`;
+    console.log(
+      `${this._getPrefix(
+        module,
+        func
+      )} ${icon} [${status.toUpperCase()}] ${durationStr}${
+        extra ? ` - ${extra}` : ''
+      }`
+    );
+  },
+
+  /**
    * Loglar için standart öneki (prefix) oluşturur.
    * Format: [2026-03-03 22:15:00][MODULE][FUNCTION]
    * @private

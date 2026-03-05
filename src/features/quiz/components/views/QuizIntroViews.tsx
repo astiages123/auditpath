@@ -1,4 +1,4 @@
-import { useEffect, useRef, FC, ReactNode } from 'react';
+import { useEffect, useRef, FC, ReactNode, useState } from 'react';
 import {
   Target,
   Trophy,
@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { injectMicroeconomicsMockData } from '@/features/quiz/services/mockQuizService';
 import { Progress } from '@/components/ui/progress';
 import { GenerationLog, GenerationStep } from '@/features/quiz/types';
 import { cn } from '@/utils/stringHelpers';
@@ -235,12 +237,22 @@ export const QuotaDisplay: FC<QuotaDisplayProps> = ({
 interface InitialStateViewProps {
   /** "Analiz Et" butonuna tıklanınca tetiklenir */
   onGenerate: () => void;
+  /** Mock verileri yüklemek için gerekli ID'ler */
+  userId?: string;
+  courseId?: string;
+  chunkId?: string;
 }
 
 /**
  * Konu hakkında henüz veri yoksa gösterilen "keşfedilmemiş" durum ekranı.
  */
-export function InitialStateView({ onGenerate }: InitialStateViewProps) {
+export function InitialStateView({
+  onGenerate,
+  userId,
+  courseId,
+  chunkId,
+}: InitialStateViewProps) {
+  const [isInjecting, setIsInjecting] = useState(false);
   return (
     <div className="flex-1 flex flex-col items-center justify-center w-full min-h-full">
       <div className="w-full max-w-md space-y-6 flex flex-col items-center text-center">
@@ -258,14 +270,50 @@ export function InitialStateView({ onGenerate }: InitialStateViewProps) {
             </p>
           </div>
         </div>
-        {/* AKSİYON BUTONU */}
-        <Button
-          size="lg"
-          className="w-full h-14 text-lg font-bold gap-2 shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]"
-          onClick={onGenerate}
-        >
-          <Sparkles className="w-5 h-5" /> Analiz Et ve Soruları Hazırla
-        </Button>
+        {/* AKSİYON BUTONLARI */}
+        <div className="w-full space-y-3">
+          <Button
+            size="lg"
+            className="w-full h-14 text-lg font-bold gap-2 shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]"
+            onClick={onGenerate}
+          >
+            <Sparkles className="w-5 h-5" /> Analiz Et ve Soruları Hazırla
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={isInjecting}
+            className="w-full h-10 text-xs font-semibold gap-2 border-dashed border-muted-foreground/30 text-muted-foreground hover:text-primary hover:border-primary transition-all"
+            onClick={async () => {
+              if (!userId || !courseId || !chunkId) {
+                onGenerate();
+                return;
+              }
+              setIsInjecting(true);
+              try {
+                const result = await injectMicroeconomicsMockData(
+                  userId,
+                  courseId,
+                  chunkId
+                );
+                if (result.success) {
+                  toast.success(result.message);
+                  setTimeout(() => window.location.reload(), 1000);
+                } else {
+                  toast.error('Mock yüklenemedi.');
+                }
+              } catch {
+                toast.error('Hata oluştu.');
+              } finally {
+                setIsInjecting(false);
+              }
+            }}
+          >
+            <Wand2 className="w-4 h-4" />{' '}
+            {isInjecting ? 'Yükleniyor...' : 'Mock Soru Yükle (Demo)'}
+          </Button>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,11 @@
 import { supabase } from '@/lib/supabase';
 import { safeQuery } from '@/lib/supabaseHelpers';
 import { logger } from '@/utils/logger';
-import { type QuizResults, type SRSStats } from '@/features/quiz/types';
+import {
+  type BloomStats,
+  type QuizResults,
+  type SRSStats,
+} from '@/features/quiz/types';
 
 // ============================================================================
 // CONSTANTS
@@ -219,5 +223,81 @@ export async function getCourseStats(
     console.error(`[${MODULE}][${FUNC}] Hata:`, error);
     logger.error(MODULE, FUNC, 'Hata:', error);
     return { totalQuestionsSolved: 0 };
+  }
+}
+/**
+ * Kullanıcının Bloom taksonomisi seviyelerine göre istatistiklerini getirir.
+ * Her seviye için toplam soru, doğru sayısı ve başarı skorunu hesaplar.
+ *
+ * @param userId - Kullanıcı ID'si
+ * @returns Bloom istatistikleri listesi (BloomStats[])
+ */
+export async function getBloomStats(userId: string): Promise<BloomStats[]> {
+  const FUNC = 'getBloomStats';
+  try {
+    // user_quiz_progress tablosundan kullanıcının tüm yanıtlarını ve soruların bloom seviyelerini getir
+    const { data } = await safeQuery<
+      {
+        response_type: string;
+        questions: {
+          bloom_level: string | null;
+        } | null;
+      }[]
+    >(
+      supabase
+        .from('user_quiz_progress')
+        .select(
+          `
+          response_type,
+          questions!inner(bloom_level)
+        `
+        )
+        .eq('user_id', userId),
+      `${FUNC} error`,
+      { userId }
+    );
+
+    const bloomMap: Record<
+      string,
+      { correct: number; total: number; score: number }
+    > = {
+      knowledge: { correct: 0, total: 0, score: 0 },
+      application: { correct: 0, total: 0, score: 0 },
+      analysis: { correct: 0, total: 0, score: 0 },
+    };
+
+    data?.forEach((row) => {
+      const level = row.questions?.bloom_level || 'knowledge';
+      if (!bloomMap[level]) {
+        bloomMap[level] = { correct: 0, total: 0, score: 0 };
+      }
+
+      bloomMap[level].total++;
+      if (row.response_type === 'correct') {
+        bloomMap[level].correct++;
+      }
+    });
+
+    const displayMap: Record<string, string> = {
+      knowledge: 'Bilgi',
+      application: 'Uygula',
+      analysis: 'Analiz',
+    };
+
+    const results: BloomStats[] = Object.entries(bloomMap).map(
+      ([level, stats]) => ({
+        level: displayMap[level] || level,
+        correct: stats.correct,
+        questionsSolved: stats.total,
+        score:
+          stats.total > 0 ? Math.round((stats.correct / stats.total) * 100) : 0,
+      })
+    );
+
+    return results;
+  } catch (error) {
+    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
+    logger.error(MODULE, FUNC, 'Hata:', error);
+    return [];
   }
 }
