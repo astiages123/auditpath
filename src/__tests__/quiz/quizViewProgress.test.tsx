@@ -80,6 +80,9 @@ describe('QuizView progress dots', () => {
       <QuizView state={state} progressIndex={2} {...handlers} />
     );
 
+    // İlerleme noktalarını (progress dots) butonlardan ayırmak için .w-2.h-2.rounded-full
+    // sınıf kombinasyonunu kullanıyoruz. Bu sınıflar sadece noktalara özeldir.
+    // .bg-primary ve .bg-red-500 sınıfları butonlarda da olabildiği için bu ek sınıflar kritik.
     expect(
       container.querySelectorAll('.w-2.h-2.rounded-full.bg-primary')
     ).toHaveLength(2);
