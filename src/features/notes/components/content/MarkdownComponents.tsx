@@ -19,7 +19,7 @@ import 'react-medium-image-zoom/dist/styles.css';
 import 'katex/dist/katex.min.css';
 import { Lightbulb } from 'lucide-react';
 import { cn, slugify } from '@/utils/stringHelpers';
-import { CodeBlock } from '@/features/notes/components/CodeBlock';
+import { CodeBlock } from '@/features/notes/components/content/CodeBlock';
 
 // === BÖLÜM ADI: YARDIMCI FONKSİYONLAR (HELPERS) ===
 // ===========================

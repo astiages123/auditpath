@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { cn, slugify } from '@/utils/stringHelpers';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { ROUTES } from '@/utils/routes';
-import { ToCTitleRenderer } from '@/features/notes/components/ToCTitleRenderer';
+import { ToCTitleRenderer } from '@/features/notes/components/controls/ToCTitleRenderer';
 
 interface GlobalNavigationProps {
   chunks: CourseTopic[];

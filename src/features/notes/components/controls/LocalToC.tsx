@@ -2,7 +2,7 @@ import { memo, useRef, useEffect } from 'react';
 import { PanelRightClose } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 import { Button } from '@/components/ui/button';
-import { ToCTitleRenderer } from '@/features/notes/components/ToCTitleRenderer';
+import { ToCTitleRenderer } from '@/features/notes/components/controls/ToCTitleRenderer';
 
 // === BÖLÜM ADI: TİPLER (TYPES) ===
 // ===========================
