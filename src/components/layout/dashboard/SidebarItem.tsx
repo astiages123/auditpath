@@ -7,18 +7,13 @@ import {
 } from '@/components/ui/tooltip';
 import { type NavItem } from './nav-config';
 
-// === PROPS ===
-
 interface SidebarItemProps {
   item: NavItem;
   isCollapsed: boolean;
   onAction?: (action: string) => void;
 }
 
-// === COMPONENT ===
-
 export function SidebarItem({ item, isCollapsed, onAction }: SidebarItemProps) {
-  // === HOOKS ===
   const { pathname } = useLocation();
   const isActive = item.href
     ? item.href === '/'
@@ -61,8 +56,6 @@ export function SidebarItem({ item, isCollapsed, onAction }: SidebarItemProps) {
       {inner}
     </button>
   );
-
-  // === RENDER ===
 
   if (isCollapsed) {
     return (

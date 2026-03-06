@@ -10,11 +10,6 @@ import {
 } from '@/features/quiz/types';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 
-// ============================================================================
-// CONSTANTS & MAPPINGS
-// ============================================================================
-
-/** Log basamaklarının UI basamaklarına (0-3) eşleşmesi */
 const simplifiedStepMap: Record<LogStep, number> = {
   INIT: 0,
   MAPPING: 0,
@@ -26,7 +21,6 @@ const simplifiedStepMap: Record<LogStep, number> = {
   ERROR: 0,
 };
 
-/** Log basamaklarının yüzde bazlı ilerleme değerleri */
 const stepProgress: Record<LogStep, number> = {
   INIT: 5,
   MAPPING: 20,
@@ -38,92 +32,62 @@ const stepProgress: Record<LogStep, number> = {
   ERROR: 0,
 };
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
 export interface UseQuestionGenerationProps {
-  /** Hedef ünite ID'si */
   chunkId: string;
-  /** İşlem tamamlandığında tetiklenecek callback */
   onComplete?: () => void;
-  /** Dialog/Görünüm açık mı? */
   open: boolean;
 }
 
 export interface GenerationProgressState {
-  /** İşlem devam ediyor mu? */
   loading: boolean;
-  /** Mevcut durum */
   status: 'idle' | 'generating' | 'saving' | 'success' | 'error';
-  /** Basit metin logları */
   logs: string[];
-  /** Yapısal log akışı */
   liveStreamLogs: GenerationLog[];
-  /** Mevcut adım indeksi (0-3) */
   currentStep: number;
-  /** Üretilen/Kaydedilen soru sayısı */
   savedCount: number;
 }
 
-// ============================================================================
-// HOOK
-// ============================================================================
-
-/**
- * Belirli bir konu parçası (chunk) için yeni soru üretim sürecini yöneten hook.
- * Üretim durumunu, ilerlemeyi ve kota bilgilerini takip eder.
- *
- * @param {UseQuestionGenerationProps} props - Hook parametreleri
- * @returns {Object} Üretim durumu ve kontrol fonksiyonları
- */
 export function useQuestionGeneration({
   chunkId,
   onComplete,
-  open,
+  open: isOpen,
 }: UseQuestionGenerationProps) {
-  // === STATE ===
-
-  const [genState, setGenState] = useState<GenerationProgressState>({
-    loading: false,
-    status: 'idle',
-    logs: [],
-    liveStreamLogs: [],
-    currentStep: 0,
-    savedCount: 0,
-  });
+  const [generationState, setGenerationState] =
+    useState<GenerationProgressState>({
+      loading: false,
+      status: 'idle',
+      logs: [],
+      liveStreamLogs: [],
+      currentStep: 0,
+      savedCount: 0,
+    });
 
   const [status, setStatus] = useState<QuotaStatus | null>(null);
-  const [initializing, setInitializing] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
   const { user } = useAuth();
 
-  // === HANDLERS ===
-
-  /** Kota bilgisini ve üretim durumunu günceller */
   const refreshStatus = useCallback(async () => {
     try {
-      const newStatus = await getChunkQuotaStatus(chunkId, user?.id);
-      if (newStatus) {
-        setStatus(newStatus);
+      const nextStatus = await getChunkQuotaStatus(chunkId, user?.id);
+      if (nextStatus) {
+        setStatus(nextStatus);
       }
-    } catch (e) {
-      console.error('[useQuestionGeneration][refreshStatus] Hata:', e);
+    } catch (caughtError) {
       logger.error(
         'QuestionGeneration',
         'refreshStatus',
         'Kota bilgisi alınamadı:',
-        e as Error
+        caughtError as Error
       );
       toast.error('Kota bilgisi alınamadı.');
     }
   }, [chunkId, user]);
 
-  /** Soru üretim sürecini başlatır */
   const handleGenerate = async () => {
     if (!status) return;
 
-    setGenState((prev) => ({
-      ...prev,
+    setGenerationState((previousState) => ({
+      ...previousState,
       loading: true,
       status: 'generating',
       logs: ['Yapay zeka motoru başlatılıyor...'],
@@ -138,40 +102,43 @@ export function useQuestionGeneration({
         {
           onTotalTargetCalculated: () => {},
           onLog: (log: GenerationLog) => {
-            setGenState((prev) => ({
-              ...prev,
-              liveStreamLogs: [...prev.liveStreamLogs, log],
+            setGenerationState((previousState) => ({
+              ...previousState,
+              liveStreamLogs: [...previousState.liveStreamLogs, log],
               currentStep: simplifiedStepMap[log.step] || 0,
-              logs: [...prev.logs, log.message],
+              logs: [...previousState.logs, log.message],
             }));
 
             if (log.step === 'MAPPING' && log.details?.conceptCount) {
-              setStatus((prev) =>
-                prev
+              setStatus((previousStatus) =>
+                previousStatus
                   ? {
-                      ...prev,
+                      ...previousStatus,
                       conceptCount:
-                        Number(log.details?.conceptCount) || prev.conceptCount,
+                        Number(log.details?.conceptCount) ||
+                        previousStatus.conceptCount,
                     }
-                  : prev
+                  : previousStatus
               );
             }
           },
           onQuestionSaved: (count: number) => {
-            setGenState((prev) => ({
-              ...prev,
+            setGenerationState((previousState) => ({
+              ...previousState,
               savedCount: count,
             }));
-            setStatus((prev) =>
-              prev ? { ...prev, used: prev.used + 1 } : prev
+            setStatus((previousStatus) =>
+              previousStatus
+                ? { ...previousStatus, used: previousStatus.used + 1 }
+                : previousStatus
             );
           },
           onComplete: (result: { success: boolean; generated: number }) => {
-            setGenState((prev) => ({
-              ...prev,
+            setGenerationState((previousState) => ({
+              ...previousState,
               loading: false,
               status: result.success ? 'success' : 'error',
-              currentStep: result.success ? 3 : prev.currentStep,
+              currentStep: result.success ? 3 : previousState.currentStep,
             }));
             refreshStatus();
             onComplete?.();
@@ -180,66 +147,59 @@ export function useQuestionGeneration({
               toast.success(`${result.generated} soru başarıyla üretildi!`);
             }
           },
-          onError: (error: unknown) => {
-            console.error(
-              '[useQuestionGeneration][handleGenerate][onError] Hata:',
-              error
-            );
-            setGenState((prev) => ({
-              ...prev,
+          onError: (caughtError: unknown) => {
+            setGenerationState((previousState) => ({
+              ...previousState,
               loading: false,
               status: 'error',
             }));
-            toast.error(String(error));
+            toast.error(String(caughtError));
           },
         },
         { userId: user?.id }
       );
-    } catch (err: unknown) {
-      console.error(
-        '[useQuestionGeneration][handleGenerate] Kritik Hata:',
-        err
-      );
+    } catch (caughtError: unknown) {
       logger.error(
         'QuestionGeneration',
         'handleGenerate',
         'Kritik üretim hatası:',
-        err as Error
+        caughtError as Error
       );
       const errorMessage =
-        err instanceof Error ? err.message : 'Bilinmeyen bir hata oluştu';
-      setGenState((prev) => ({
-        ...prev,
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Bilinmeyen bir hata oluştu';
+      setGenerationState((previousState) => ({
+        ...previousState,
         status: 'error',
         loading: false,
-        logs: [...prev.logs, `Hata: ${errorMessage}`],
+        logs: [...previousState.logs, `Hata: ${errorMessage}`],
       }));
       toast.error(
-        err instanceof Error ? err.message : 'Beklenmeyen bir hata oluştu.'
+        caughtError instanceof Error
+          ? caughtError.message
+          : 'Beklenmeyen bir hata oluştu.'
       );
     }
   };
 
-  /** Durumu sıfırlar */
   const resetStatus = useCallback(() => {
-    setGenState((prev) => ({ ...prev, status: 'idle' }));
+    setGenerationState((previousState) => ({
+      ...previousState,
+      status: 'idle',
+    }));
   }, []);
 
-  // === DERIVED STATE ===
-
-  /** Mevcut üretim aşaması ve yüzde bilgisini hesaplar */
   const currentStepInfo = useMemo(() => {
-    if (genState.liveStreamLogs.length === 0) return undefined;
-    const lastLog = genState.liveStreamLogs[genState.liveStreamLogs.length - 1];
+    if (generationState.liveStreamLogs.length === 0) return undefined;
+    const lastLog =
+      generationState.liveStreamLogs[generationState.liveStreamLogs.length - 1];
     return {
       step: lastLog.step as LogStep,
       progress: stepProgress[lastLog.step as LogStep] || 0,
     };
-  }, [genState.liveStreamLogs]);
+  }, [generationState.liveStreamLogs]);
 
-  // === EFFECTS ===
-
-  /** Kota bilgisini periyodik olarak kontrol eder */
   useEffect(() => {
     const timer = setTimeout(() => {
       refreshStatus();
@@ -255,36 +215,41 @@ export function useQuestionGeneration({
     return () => clearInterval(interval);
   }, [refreshStatus, status?.status]);
 
-  /** Dialog açıldığında durumu hazırlar */
   useEffect(() => {
-    if (open) {
-      const initialize = async () => {
-        // Ensure state updates happen after initial render to satisfy React Compiler / strictly linted effects
-        await Promise.resolve();
-        setGenState({
-          loading: false,
-          status: 'idle',
-          logs: [],
-          liveStreamLogs: [],
-          currentStep: 0,
-          savedCount: 0,
+    if (isOpen) {
+      let isCancelled = false;
+      const timer = setTimeout(() => {
+        if (!isCancelled) {
+          setIsInitializing(true);
+        }
+        refreshStatus().finally(() => {
+          if (!isCancelled) {
+            setIsInitializing(false);
+          }
         });
-        setInitializing(true);
-        await refreshStatus();
-        setInitializing(false);
-      };
-      initialize();
-    }
-  }, [open, refreshStatus]);
+      }, 0);
 
-  // === RETURN ===
+      return () => {
+        isCancelled = true;
+        clearTimeout(timer);
+      };
+    }
+
+    const timer = setTimeout(() => {
+      setIsInitializing(false);
+      resetStatus();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [isOpen, refreshStatus, resetStatus]);
 
   return {
-    genState,
-    status,
-    initializing,
+    ...generationState,
+    statusInfo: status,
+    refreshStatus,
     handleGenerate,
-    currentStepInfo,
     resetStatus,
+    currentStepInfo,
+    initializing: isInitializing,
   };
 }

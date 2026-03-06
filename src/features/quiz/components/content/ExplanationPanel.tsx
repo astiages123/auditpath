@@ -9,8 +9,6 @@ import {
 import { QuizQuestion } from '@/features/quiz/types';
 import { MathRenderer } from '@/features/quiz/components/content/QuizStatus';
 
-// === TYPES ===
-
 interface ExplanationPanelProps {
   /** Mevcut soru verisi */
   question: QuizQuestion;
@@ -24,8 +22,6 @@ interface ExplanationPanelProps {
   optionLabels: string[];
 }
 
-// === COMPONENT ===
-
 /**
  * Sorunun çözümünü, doğruluğunu ve varsa metin dayanağını (evidence) gösteren panel.
  */
@@ -36,21 +32,22 @@ export function ExplanationPanel({
   onToggleExplanation,
   optionLabels,
 }: ExplanationPanelProps) {
-  // === RENDER ===
+  const handleToggleExplanationKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>
+  ) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      onToggleExplanation();
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-transparent">
-      {/* Panel Başlığı / Tetikleyici */}
       <div
         onClick={onToggleExplanation}
         className="w-full px-6 py-4 flex items-center justify-between bg-black/10 hover:bg-black/20 transition-all cursor-pointer border-b border-white/5"
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            onToggleExplanation();
-          }
-        }}
+        onKeyDown={handleToggleExplanationKeyDown}
       >
         <div className="flex items-center gap-2 text-primary">
           <Brain className="w-5 h-5" />

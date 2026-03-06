@@ -1,9 +1,5 @@
 import type { ZodError, ZodSchema } from 'zod';
 
-// ===========================
-// === TİP TANIMLAMALARI ===
-// ===========================
-
 /**
  * Başarılı ayrıştırma (parsing) sonucu.
  */
@@ -27,10 +23,6 @@ export interface ParseError {
  * Güvenli ayrıştırma işlemlerinin dönebileceği ortak tip.
  */
 export type SafeParseResult<T> = ParseResult<T> | ParseError;
-
-// ===========================
-// === DOĞRULAMA (VALIDATION) YARDIMCILARI ===
-// ===========================
 
 /**
  * Veriyi verilen Zod şemasına göre güvenli şekilde doğrular.

@@ -1,7 +1,3 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { useEffect, useReducer } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -16,10 +12,6 @@ import {
   getItemsByCourseId,
   type DatabaseItem,
 } from '@/features/courses/services/videoService';
-
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
 
 export interface CourseItemListProps {
   courseSlug: string;
@@ -52,10 +44,6 @@ export type CourseItemAction =
   | { type: 'FINISH_LOADING' }
   | { type: 'UPDATE_ITEMS'; payload: CourseItemActionState[] };
 
-// ===========================
-// === REDUCER ===
-// ===========================
-
 const initialState: CourseItemState = {
   items: [],
   staticItems: [],
@@ -85,10 +73,6 @@ function courseItemReducer(
       return state;
   }
 }
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * Handles the loading and rendering of a course's items (videos or readings),
@@ -122,18 +106,18 @@ export function CourseItemList({
       }
 
       // Map static data from DB
-      const initialItems = dbItems.map((v: DatabaseItem) => ({
-        itemNumber: v.video_number,
+      const initialItems = dbItems.map((databaseItem: DatabaseItem) => ({
+        itemNumber: databaseItem.video_number,
         completed: false,
-        durationMinutes: v.duration_minutes,
+        durationMinutes: databaseItem.duration_minutes,
       }));
 
-      const staticData = dbItems.map((v: DatabaseItem) => ({
-        id: v.id,
-        itemNumber: v.video_number,
-        title: v.title,
-        duration: v.duration,
-        itemType: v.item_type,
+      const staticData = dbItems.map((databaseItem: DatabaseItem) => ({
+        id: databaseItem.id,
+        itemNumber: databaseItem.video_number,
+        title: databaseItem.title,
+        duration: databaseItem.duration,
+        itemType: databaseItem.item_type,
       }));
 
       // Set initial state (not completed)
@@ -146,7 +130,7 @@ export function CourseItemList({
         // 2. Fetch Progress (if logged in)
         if (userId) {
           try {
-            const itemNumbers = initialItems.map((v) => v.itemNumber);
+            const itemNumbers = initialItems.map((item) => item.itemNumber);
             const progressMap = await getItemProgressByCourse(
               userId,
               courseId,
@@ -154,14 +138,13 @@ export function CourseItemList({
             );
 
             if (isMounted) {
-              const updatedWithProgress = initialItems.map((v) => ({
-                ...v,
-                completed: !!progressMap[v.itemNumber.toString()],
+              const updatedWithProgress = initialItems.map((item) => ({
+                ...item,
+                completed: !!progressMap[item.itemNumber.toString()],
               }));
               dispatch({ type: 'SET_PROGRESS', payload: updatedWithProgress });
             }
-          } catch (error) {
-            console.error('[CourseItemList][loadData] Hata:', error);
+          } catch {
             toast.error('İlerleme yüklenemedi');
           }
         }

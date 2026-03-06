@@ -94,8 +94,8 @@ export function useQuizManager({
         },
         user?.id
       );
-    } catch (err) {
-      console.error('[useQuizManager][handleGenerate] Hata:', err);
+    } catch {
+      // Üretim hataları alt hook içinde ele alınıyor; burada fazladan işlem yapılmıyor.
     }
   }, [chunkId, startGeneration, selectedTopic, user, refreshSelectedTopicData]);
 

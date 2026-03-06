@@ -23,26 +23,15 @@ import type {
 
 type TimelineEvent = NonNullable<Session['timeline']>[number];
 
-// ==========================================
-// === TYPES / PROPS ===
-// ==========================================
-
 export interface FocusHubCardProps {
   dailyMetrics: Omit<DailyMetrics, 'loading'>;
   efficiencyTrend: EfficiencyTrend[];
 }
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 export const FocusHubCard = ({
   dailyMetrics,
   efficiencyTrend,
 }: FocusHubCardProps) => {
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
   const {
     efficiencySummary,
     dailyGoalMinutes,
@@ -166,9 +155,6 @@ export const FocusHubCard = ({
 
   const dailyGoal = dailyGoalMinutes || DEFAULT_DAILY_GOAL_MINUTES;
 
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   return (
     <StatisticsModal
       title="Öğrenme Akışı Analizi"

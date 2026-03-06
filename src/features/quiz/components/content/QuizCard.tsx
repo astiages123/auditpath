@@ -6,8 +6,6 @@ import { MathRenderer } from '@/features/quiz/components/content/QuizStatus';
 import { OptionButton } from '@/features/quiz/components/controls/OptionButton';
 import { ExplanationPanel } from '@/features/quiz/components/content/ExplanationPanel';
 
-// === CONSTANTS ===
-
 const OPTION_LABELS = ['A', 'B', 'C', 'D', 'E'];
 
 const KEY_TO_INDEX: Record<string, number> = {
@@ -27,8 +25,6 @@ const KEY_TO_INDEX: Record<string, number> = {
   e: 4,
   E: 4,
 };
-
-// === TYPES ===
 
 interface QuizCardProps {
   /** Mevcut soru verisi */
@@ -72,7 +68,6 @@ function QuizCardComponent({
   onRetry,
   onBlank,
 }: QuizCardProps) {
-  // === REFS ===
   const explanationRef = useRef<HTMLDivElement>(null);
 
   // Klavye olayları için güncel state/props takibi
@@ -82,8 +77,6 @@ function QuizCardComponent({
     onSelectAnswer,
     onBlank,
   });
-
-  // === SIDE EFFECTS ===
 
   // Ref güncelleme
   useEffect(() => {
@@ -148,7 +141,9 @@ function QuizCardComponent({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // === RENDER LOGIC ===
+  const handleImageError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    event.currentTarget.style.display = 'none';
+  };
 
   if (isLoading) {
     return (
@@ -192,7 +187,6 @@ function QuizCardComponent({
     );
   }
 
-  // === RENDER ===
   return (
     <motion.div
       animate={{ maxWidth: isAnswered && showExplanation ? '1152px' : '896px' }}
@@ -258,9 +252,7 @@ function QuizCardComponent({
                       }
                       alt="Soru Görseli"
                       className="w-full max-h-[160px] object-contain mx-auto"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
+                      onError={handleImageError}
                     />
                   </div>
                 )}

@@ -9,17 +9,9 @@ import { DAILY_GOAL_MINUTES as DEFAULT_DAILY_GOAL_MINUTES } from '@/features/sta
 
 import type { LearningLoad } from '@/features/statistics/types/statisticsTypes';
 
-// ==========================================
-// === LAZY COMPONENTS ===
-// ==========================================
-
 const LearningLoadChart = lazy(
   () => import('@/features/statistics/components/charts/LearningLoadChart')
 );
-
-// ==========================================
-// === PROPS ===
-// ==========================================
 
 export interface LearningLoadCardProps {
   loadWeek: LearningLoad[];
@@ -29,19 +21,11 @@ export interface LearningLoadCardProps {
   dailyGoalMinutes: number;
 }
 
-// ==========================================
-// === COMPONENT: FALLBACK ===
-// ==========================================
-
 const ChartFallback = () => (
   <div className="w-full h-[230px] flex items-center justify-center bg-surface/5 rounded-xl border border-border/10">
     <Skeleton className="w-[90%] h-[180px] bg-surface/20" />
   </div>
 );
-
-// ==========================================
-// === COMPONENT ===
-// ==========================================
 
 export const LearningLoadCard = ({
   loadWeek,
@@ -50,14 +34,8 @@ export const LearningLoadCard = ({
   loadAll,
   dailyGoalMinutes,
 }: LearningLoadCardProps) => {
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
   const dailyGoal = dailyGoalMinutes || DEFAULT_DAILY_GOAL_MINUTES;
 
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   return (
     <StatisticsModal
       title="Odaklanma Trendi"

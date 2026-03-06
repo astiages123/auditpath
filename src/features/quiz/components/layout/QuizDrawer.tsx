@@ -15,8 +15,6 @@ import { MappingProgressView } from '@/features/quiz/components/views/MappingPro
 import { BriefingView } from '@/features/quiz/components/views/BriefingView';
 import { QuizContainer } from '@/features/quiz/components/layout/QuizContainer';
 
-// === TYPES ===
-
 interface QuizDrawerProps {
   /** Drawer'ın görünürlük durumu */
   isOpen: boolean;
@@ -34,8 +32,6 @@ interface QuizDrawerProps {
   initialTopicName?: string;
 }
 
-// === COMPONENT ===
-
 /**
  * Sınav Merkezi'nin ana kaplayıcısı (Drawer).
  * Quiz akışını (konu seçimi, analiz, briefing ve quiz) yönetir.
@@ -47,8 +43,6 @@ export function QuizDrawer({
   courseName,
   initialTopicName,
 }: QuizDrawerProps) {
-  // === HOOKS ===
-
   const {
     topics,
     selectedTopic,
@@ -67,12 +61,10 @@ export function QuizDrawer({
     resetState,
   } = useQuizManager({ isOpen, courseId, courseName });
 
-  // === SIDE EFFECTS ===
-
   // Belirli bir konu adı ile açıldığında otomatik seçim yap
   useEffect(() => {
     if (isOpen && initialTopicName && topics.length > 0) {
-      const match = topics.find((t) => t.name === initialTopicName);
+      const match = topics.find((topic) => topic.name === initialTopicName);
       if (match) setSelectedTopic(match);
     }
   }, [isOpen, topics, initialTopicName, setSelectedTopic]);
@@ -89,8 +81,6 @@ export function QuizDrawer({
     };
   }, [isOpen]);
 
-  // === HANDLERS ===
-
   /** Drawer'ı tamamen kapatır ve durumu sıfırlar */
   const handleClose = () => {
     resetState();
@@ -105,11 +95,7 @@ export function QuizDrawer({
     handleClose();
   };
 
-  // === RENDER LOGIC ===
-
   if (!isOpen) return null;
-
-  // === RENDER ===
 
   return (
     <div
@@ -118,7 +104,6 @@ export function QuizDrawer({
         'animate-in fade-in duration-200'
       )}
     >
-      {/* --- ÜST ÇUBUK (TOP BAR) --- */}
       <div className="shrink-0 flex items-center gap-3 px-6 py-3 border-b border-border/20 bg-background/95 backdrop-blur-md">
         {/* Sol: Geri Dön butonu */}
         <button
@@ -148,7 +133,6 @@ export function QuizDrawer({
         </button>
       </div>
 
-      {/* --- ANA İÇERİK --- */}
       <div className="flex-1 min-h-0 overflow-hidden">
         <div className="flex flex-col min-h-0 flex-1 bg-card rounded-xl border overflow-hidden h-full mx-2 lg:mx-4 my-4">
           <ErrorBoundary>

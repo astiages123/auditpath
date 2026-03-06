@@ -12,8 +12,6 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { GenerationLog, GenerationStep } from '@/features/quiz/types';
 
-// === TYPES ===
-
 interface MappingProgressViewProps {
   /** Sınav üretim ilerlemesi (mevcut soru / toplam kota) */
   examProgress: { current: number; total: number };
@@ -22,8 +20,6 @@ interface MappingProgressViewProps {
   /** Soru üretim işlemini durdurma fonskiyonu */
   onCancel?: () => void;
 }
-
-// === LOGIC: HELPERS ===
 
 /**
  * Teknik adım isimlerini kullanıcı dostu açıklamalara dönüştürür.
@@ -44,8 +40,6 @@ const getFriendlyMessage = (step: GenerationStep, msg: string) => {
   return msg;
 };
 
-// === COMPONENT ===
-
 /**
  * Akıllı sınav üretim sürecindeki ilerlemeyi ve adımları gösteren görünüm.
  */
@@ -54,11 +48,7 @@ export function MappingProgressView({
   examLogs,
   onCancel,
 }: MappingProgressViewProps) {
-  // === STATE ===
-
   const [showLogs, setShowLogs] = useState(false);
-
-  // === RENDER LOGIC ===
 
   const hasError = examLogs.some((l) => l.step === 'ERROR');
   const isAllDone = examLogs.some((l) => l.step === 'COMPLETED');
@@ -109,8 +99,6 @@ export function MappingProgressView({
       ] as GenerationStep[],
     },
   ];
-
-  // === RENDER ===
 
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-y-auto overflow-x-hidden">

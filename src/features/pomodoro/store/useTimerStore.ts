@@ -5,12 +5,7 @@ import {
   POMODORO_WORK_DURATION_SECONDS,
 } from '../utils/constants';
 
-// ===========================
-// === STORE INTERFACE ===
-// ===========================
-
 export interface TimerState {
-  // === STATE ===
   timeLeft: number;
   isActive: boolean;
   isBreak: boolean;
@@ -19,7 +14,6 @@ export interface TimerState {
   endTime: number | null;
   pauseStartTime: number | null;
 
-  // === ACTIONS ===
   /** Begins the countdown timer */
   startTimer: () => void;
   /** Pauses the current timer */
@@ -42,13 +36,9 @@ export interface TimerState {
   ) => void;
 }
 
-// ===========================
-// === STORE IMPLEMENTATION ===
-// ===========================
-
 export const useTimerStore = create<TimerState>()(
   persist(
-    (set, _get) => ({
+    (set) => ({
       timeLeft: POMODORO_WORK_DURATION_SECONDS,
       isActive: false,
       isBreak: false,

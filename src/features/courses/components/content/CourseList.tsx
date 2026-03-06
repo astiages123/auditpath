@@ -1,7 +1,3 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { useState, useEffect } from 'react';
 import {
   ChevronDown,
@@ -24,10 +20,6 @@ import type { Course } from '@/features/courses/types/courseTypes';
 import { cn } from '@/utils/stringHelpers';
 import { env } from '@/utils/env';
 
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
-
 export interface CourseListProps {
   courses: Course[];
   categoryColor: string;
@@ -35,17 +27,9 @@ export interface CourseListProps {
   categorySlug: string;
 }
 
-// ===========================
-// === LOGIC & HELPERS ===
-// ===========================
-
 const cleanCourseName = (name: string) => {
   return name.split(' - ')[0];
 };
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * Renders a list of courses under a specific category,
@@ -65,6 +49,40 @@ export function CourseList({
   // Celebration Hook
   const { triggerCourseCelebration, revokeCourseCelebration } =
     useCelebration();
+
+  const handleCourseToggle = (courseId: string) => {
+    setExpandedCourse(expandedCourse === courseId ? null : courseId);
+  };
+
+  const handleCourseKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    courseId: string
+  ) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      handleCourseToggle(courseId);
+    }
+  };
+
+  const handlePdfOpen = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    courseSlug: string,
+    part?: number
+  ) => {
+    event.stopPropagation();
+    const suffix = part ? `-${part}` : '';
+    window.open(
+      `${env.supabase.url}/storage/v1/object/public/pdfs/${courseSlug}${suffix}.pdf`,
+      '_blank'
+    );
+  };
+
+  const handlePlaylistOpen = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    playlistUrl: string
+  ) => {
+    event.stopPropagation();
+    window.open(playlistUrl, '_blank');
+  };
 
   // Check for course completions/un-completions
   useEffect(() => {
@@ -135,18 +153,8 @@ export function CourseList({
               className="flex items-center gap-2 sm:gap-4 p-3 sm:p-5 cursor-pointer relative"
               role="button"
               tabIndex={0}
-              onClick={() =>
-                setExpandedCourse(
-                  expandedCourse === course.id ? null : course.id
-                )
-              }
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  setExpandedCourse(
-                    expandedCourse === course.id ? null : course.id
-                  );
-                }
-              }}
+              onClick={() => handleCourseToggle(course.id)}
+              onKeyDown={(event) => handleCourseKeyDown(event, course.id)}
             >
               {/* Column 1: Icon */}
               <div className={iconContainerClass}>
@@ -213,13 +221,9 @@ export function CourseList({
                       <button
                         type="button"
                         className="flex flex-col items-center gap-0.5 text-blue-400 hover:text-blue-300 transition-colors p-0.5"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(
-                            `${env.supabase.url}/storage/v1/object/public/pdfs/${course.course_slug}-1.pdf`,
-                            '_blank'
-                          );
-                        }}
+                        onClick={(event) =>
+                          handlePdfOpen(event, course.course_slug, 1)
+                        }
                       >
                         <BookOpenText className="size-[18px]" />
                         <span className="text-[9px] font-bold leading-none mt-0.5">
@@ -229,13 +233,9 @@ export function CourseList({
                       <button
                         type="button"
                         className="flex flex-col items-center gap-0.5 text-blue-400 hover:text-blue-300 transition-colors p-0.5"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          window.open(
-                            `${env.supabase.url}/storage/v1/object/public/pdfs/${course.course_slug}-2.pdf`,
-                            '_blank'
-                          );
-                        }}
+                        onClick={(event) =>
+                          handlePdfOpen(event, course.course_slug, 2)
+                        }
                       >
                         <BookOpenText className="size-[18px]" />
                         <span className="text-[9px] font-bold leading-none mt-0.5">
@@ -247,13 +247,9 @@ export function CourseList({
                     <button
                       type="button"
                       className="text-blue-400 hover:text-blue-300 transition-colors p-0.5"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window.open(
-                          `${env.supabase.url}/storage/v1/object/public/pdfs/${course.course_slug}.pdf`,
-                          '_blank'
-                        );
-                      }}
+                      onClick={(event) =>
+                        handlePdfOpen(event, course.course_slug)
+                      }
                     >
                       <BookOpenText className="size-5" />
                     </button>
@@ -262,10 +258,9 @@ export function CourseList({
                   <button
                     type="button"
                     className="text-red-400 hover:text-red-300 transition-colors p-0.5"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.open(course.playlist_url!, '_blank');
-                    }}
+                    onClick={(event) =>
+                      handlePlaylistOpen(event, course.playlist_url!)
+                    }
                   >
                     <Youtube className="size-5" />
                   </button>

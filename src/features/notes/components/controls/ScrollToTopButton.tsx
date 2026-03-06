@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChevronUp } from 'lucide-react';
 
-// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
-// ===========================
-
 /**
  * Sayfa belirli bir miktar aşağı kaydırıldığında görünen ve tıklandığında
  * sayfayı en üste yumuşak bir şekilde (smooth scroll) kaydıran yardımcı buton.
@@ -12,8 +9,6 @@ import { ChevronUp } from 'lucide-react';
  */
 export function ScrollToTopButton(): React.ReactElement {
   const [isVisible, setIsVisible] = useState<boolean>(false);
-
-  // === EFEKTLER (EFFECTS) ===
 
   useEffect(() => {
     const container: HTMLElement | null = document.getElementById(
@@ -27,8 +22,8 @@ export function ScrollToTopButton(): React.ReactElement {
           container.scrollTop /
           (container.scrollHeight - container.clientHeight);
         setIsVisible(scrollPercent > 0.2);
-      } catch (error: unknown) {
-        console.error('[ScrollToTopButton][handleScroll] Hata:', error);
+      } catch {
+        // Scroll yüzdesi hesaplanamazsa görünürlük bir sonraki event'te tekrar değerlendirilecektir.
       }
     };
 
@@ -36,19 +31,15 @@ export function ScrollToTopButton(): React.ReactElement {
     return () => container.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // === RENDER İŞ MANTIĞI ===
-
   const scrollToTop = (): void => {
     try {
       document
         .getElementById('notes-scroll-container')
         ?.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (error: unknown) {
-      console.error('[ScrollToTopButton][scrollToTop] Hata:', error);
+    } catch {
+      // Yumuşak kaydırma desteklenmeyen ortamlarda sessizce devam edilir.
     }
   };
-
-  // === UI RENDER ===
 
   return (
     <button

@@ -1,9 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
 /**
  * Kullanıcının en son okuduğu konunun bilgilerini tutan arayüz.
  */
@@ -36,9 +33,6 @@ export interface NotesStore {
   ) => void;
 }
 
-// === BÖLÜM ADI: STORE (MANTIKSAL DURUM YÖNETİMİ) ===
-// ===========================
-
 /**
  * Notlar özelliğine dair kullanıcının görüntüleme tercihlerini ve kaldığı yeri saklayan global store.
  * Bu veriler `localStorage` tabanlı kalıcı (persist) depolama kullanılarak tarayıcıda saklanır.
@@ -46,10 +40,8 @@ export interface NotesStore {
 export const useNotesStore = create<NotesStore>()(
   persist(
     (set) => ({
-      // Başlangıç değerleri (Initial State)
       lastRead: {},
 
-      // Aksiyonlar (Actions)
       setLastReadTopic: (
         courseSlug: string,
         topicId: string,
@@ -68,9 +60,7 @@ export const useNotesStore = create<NotesStore>()(
       },
     }),
     {
-      // Persist Middleware Ayarları
       name: 'notes-store',
-      // Sadece 'lastRead' objesini tarayıcı önbelleğine aktarıyoruz
       partialize: (state: NotesStore) => ({ lastRead: state.lastRead }),
     }
   )

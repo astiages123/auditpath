@@ -1,7 +1,3 @@
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
-
 /**
  * Represents a single event in the Pomodoro timeline.
  */
@@ -19,10 +15,6 @@ export interface SessionTotals {
   totalBreak: number;
   totalPause: number;
 }
-
-// ===========================
-// === PURE CALCULATIONS ===
-// ===========================
 
 /**
  * Calculates the total duration for each activity type in seconds.
@@ -48,8 +40,16 @@ export function calculateSessionTotals(
 
   // Sort timeline by start time to ensure sequential processing
   const sortedTimeline = [...timeline]
-    .filter((e) => e && e.start !== undefined && e.start !== null)
-    .sort((a, b) => a.start - b.start);
+    .filter(
+      (timelineEvent) =>
+        timelineEvent &&
+        timelineEvent.start !== undefined &&
+        timelineEvent.start !== null
+    )
+    .sort(
+      (leftTimelineEvent, rightTimelineEvent) =>
+        leftTimelineEvent.start - rightTimelineEvent.start
+    );
 
   let workMs = 0;
   let breakMs = 0;
@@ -147,8 +147,16 @@ export function getCycleCount(timeline: TimelineEvent[]): number {
   let inWorkBlock = false;
 
   const sortedTimeline = [...timeline]
-    .filter((e) => e && e.start !== undefined && e.start !== null)
-    .sort((a, b) => a.start - b.start);
+    .filter(
+      (timelineEvent) =>
+        timelineEvent &&
+        timelineEvent.start !== undefined &&
+        timelineEvent.start !== null
+    )
+    .sort(
+      (leftTimelineEvent, rightTimelineEvent) =>
+        leftTimelineEvent.start - rightTimelineEvent.start
+    );
 
   for (const event of sortedTimeline) {
     const type = (event.type || '').toLowerCase();

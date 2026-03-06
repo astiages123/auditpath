@@ -4,10 +4,6 @@ import { cn } from '@/utils/stringHelpers';
 
 import type { Session } from '@/features/statistics/types/statisticsTypes';
 
-// ==========================================
-// === TYPES / PROPS ===
-// ==========================================
-
 export type TimelineEvent = NonNullable<Session['timeline']>[number];
 
 export interface SessionGanttProps {
@@ -15,17 +11,10 @@ export interface SessionGanttProps {
   detailed?: boolean;
 }
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 export const SessionGanttChart = ({
   sessions,
   detailed = false,
 }: SessionGanttProps) => {
-  // ==========================================
-  // === HELPERS ===
-  // ==========================================
   const getEvents = (s: Session) => {
     if (!s.timeline || !Array.isArray(s.timeline) || s.timeline.length === 0)
       return [];
@@ -39,15 +28,11 @@ export const SessionGanttChart = ({
       case 'break':
         return 'bg-sky-900 border-sky-800/50 text-sky-200';
       case 'pause':
-        return 'bg-zinc-900 border-zinc-800/50 text-zinc-200';
+        return 'bg-gray-700 border-gray-800/50 text-gray-200';
       default:
         return 'bg-primary/20 border-primary/40 text-primary';
     }
   };
-
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
 
   const { globalMin, globalMax, firstStart, totalSpan, markers } =
     useMemo(() => {
@@ -122,9 +107,6 @@ export const SessionGanttChart = ({
     'flex flex-col items-center gap-1 min-w-[140px] translate-y-1 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 transition-all duration-200'
   );
 
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   return (
     <div className="w-full h-full min-h-[160px] relative mt-2 select-none">
       {/* Time markers */}

@@ -7,27 +7,15 @@ import { PracticePerformanceRadar as PracticeCenterContent } from '@/features/st
 
 import type { BloomStats } from '@/features/quiz/types';
 
-// ==========================================
-// === LAZY COMPONENTS ===
-// ==========================================
-
 const BloomKeyChart = lazy(() =>
   import('@/features/statistics/components/charts/BloomKeyChart').then((m) => ({
     default: m.BloomKeyChart,
   }))
 );
 
-// ==========================================
-// === TYPES / PROPS ===
-// ==========================================
-
 export interface PracticeCenterCardProps {
   bloomStats: BloomStats[];
 }
-
-// ==========================================
-// === COMPONENT: FALLBACK ===
-// ==========================================
 
 const ChartFallback = () => (
   <div className="w-full h-full flex items-center justify-center min-h-[150px]">
@@ -35,14 +23,7 @@ const ChartFallback = () => (
   </div>
 );
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 export const PracticeCenterCard = ({ bloomStats }: PracticeCenterCardProps) => {
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   return (
     <StatisticsModal
       title="Pratik Merkezi İstatistikleri"

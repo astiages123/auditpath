@@ -7,10 +7,6 @@ import {
 import { formatDisplayDate } from '@/utils/dateUtils';
 import type { Achievement } from '@/features/achievements/types/achievementsTypes';
 
-// ===========================
-// === TYPES ===
-// ===========================
-
 interface SealDetailModalProps {
   achievement: Achievement | null;
   isOpen: boolean;
@@ -18,10 +14,6 @@ interface SealDetailModalProps {
   isUnlocked: boolean;
   unlockedAt?: string | null;
 }
-
-// ===========================
-// === UTILS ===
-// ===========================
 
 /**
  * Helper to format the achievement unlock date.
@@ -33,10 +25,6 @@ const formatDate = (dateStr: string): string => {
     day: 'numeric',
   });
 };
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * SealDetailModal Component
@@ -54,9 +42,14 @@ export function SealDetailModal({
 
   const guild = GUILDS[achievement.guild];
   const unlockDate = isUnlocked ? unlockedAt : null;
+  const handleOpenChange = (isDialogOpen: boolean) => {
+    if (!isDialogOpen) {
+      onClose();
+    }
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-sm bg-card border-border p-0 overflow-hidden">
         {/* Header - Guild-themed background gradient */}
         <div

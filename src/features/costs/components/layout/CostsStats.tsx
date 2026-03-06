@@ -1,6 +1,4 @@
-// ==========================================
 // IMPORTS
-// ==========================================
 
 import { FC } from 'react';
 import {
@@ -15,9 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/utils/stringHelpers';
 
-// ==========================================
 // INTERFACES
-// ==========================================
 
 interface CostsStatsProps {
   totalCostTry: number | null;
@@ -30,9 +26,7 @@ interface CostsStatsProps {
   formatCurrency: (value: number) => string;
 }
 
-// ==========================================
 // COMPONENT
-// ==========================================
 
 export const CostsStats: FC<CostsStatsProps> = ({
   totalCostTry,
@@ -44,7 +38,6 @@ export const CostsStats: FC<CostsStatsProps> = ({
   totalCachedTokens,
   formatCurrency,
 }) => {
-  // === CALCULATIONS ===
   // Kullanıcının hissiyatını güçlendirmek için gerçekçi (matematiksel) bir tasarruf simülasyonu
   const isHighSavings = cacheHitRate > 50;
   const safeHitRate = Math.min(cacheHitRate, 99.9);
@@ -57,21 +50,21 @@ export const CostsStats: FC<CostsStatsProps> = ({
       ? null
       : Math.max(0, costWithoutCache - totalCostTry);
 
-  // === RENDER ===
   return (
     <div className="grid gap-6 md:grid-cols-3">
-      <Card className="bento-card bg-card border-primary/20 hover:border-accent/40 transition-all duration-300">
+      {/* 1. KART */}
+      <Card className="flex flex-col relative overflow-hidden bento-card bg-card border-primary/10 hover:border-primary/20 hover:shadow-lg transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
             Toplam Harcama
           </CardTitle>
           <TrendingUp className="w-4 h-4 text-primary" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col flex-1">
           <div className="text-3xl font-heading font-black text-white">
             {totalCostTry === null ? '-' : formatCurrency(totalCostTry)}
           </div>
-          <div className="flex items-center gap-2 mt-1">
+          <div className="flex items-center gap-2 mt-auto pt-2">
             <span className="text-xs text-muted-foreground font-mono">
               ≈ ${totalCostUsd.toFixed(4)} USD
             </span>
@@ -79,27 +72,31 @@ export const CostsStats: FC<CostsStatsProps> = ({
         </CardContent>
       </Card>
 
-      <Card className="bento-card card-hover bg-card border-primary/10">
+      {/* 2. KART */}
+      <Card className="flex flex-col relative overflow-hidden bento-card bg-card border-primary/10 hover:border-primary/20 hover:shadow-lg transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
             Toplam İstek
           </CardTitle>
           <Cpu className="w-4 h-4 text-blue-400" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col flex-1">
           <div className="text-3xl font-heading font-black text-white">
             {totalRequests.toLocaleString()}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Aktif çalışma süresince toplam çağrı
-          </p>
+          <div className="flex items-center gap-2 mt-auto pt-2">
+            <p className="text-xs text-muted-foreground">
+              Aktif çalışma süresince toplam çağrı
+            </p>
+          </div>
         </CardContent>
       </Card>
 
+      {/* 3. KART */}
       <Card
         className={cn(
-          'bento-card bg-card border-primary/10 relative overflow-hidden hover:border-accent/40 transition-all duration-300',
-          isHighSavings && 'border-emerald-500/30'
+          'flex flex-col relative overflow-hidden bento-card bg-card border-primary/10 hover:border-primary/20 hover:shadow-lg transition-all duration-300',
+          isHighSavings && 'border-emerald-500/30 hover:border-emerald-500/50'
         )}
       >
         {/* Background glow for high savings */}
@@ -123,7 +120,7 @@ export const CostsStats: FC<CostsStatsProps> = ({
             )}
           />
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col flex-1">
           <div
             className={cn(
               'text-3xl font-heading font-black',
@@ -133,85 +130,82 @@ export const CostsStats: FC<CostsStatsProps> = ({
             %{cacheHitRate.toFixed(1)}
           </div>
 
-          <div className="mt-2 space-y-1">
-            <p
+          <div className="flex flex-row items-center justify-between gap-2 mt-auto pt-2">
+            <span
               className={cn(
-                'text-[11px] leading-tight font-medium',
+                'text-xs font-medium',
                 isHighSavings ? 'text-emerald-500' : 'text-muted-foreground'
-              )}
-            >
-              Önbellek olmasaydı:{' '}
-              <span className="line-through">
-                {costWithoutCache === null
-                  ? '-'
-                  : formatCurrency(costWithoutCache)}
-              </span>{' '}
-              ödeyecektiniz.
-            </p>
-            <div
-              className={cn(
-                'text-xs font-bold px-2 py-1 rounded inline-flex',
-                isHighSavings
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                  : 'bg-card border border-border'
               )}
             >
               Net Tasarruf:{' '}
               {savedMoney === null ? '-' : formatCurrency(savedMoney)}
-            </div>
+            </span>
+            <span className="text-[11px] text-muted-foreground line-through">
+              {costWithoutCache === null
+                ? '-'
+                : formatCurrency(costWithoutCache)}
+            </span>
           </div>
         </CardContent>
       </Card>
 
-      {/* Token Stats Row */}
-      <Card className="bento-card card-hover bg-card border-primary/10">
+      {/* 4. KART */}
+      <Card className="flex flex-col relative overflow-hidden bento-card bg-card border-primary/10 hover:border-primary/20 hover:shadow-lg transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
-            Toplam Girdi (Prompt)
+            Toplam Girdi
           </CardTitle>
           <Activity className="w-4 h-4 text-emerald-400" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col flex-1">
           <div className="text-3xl font-heading font-black text-white">
             {totalInputTokens.toLocaleString()}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Tüm analizlerde gönderilen kelime
-          </p>
+          <div className="flex items-center gap-2 mt-auto pt-2">
+            <p className="text-xs text-muted-foreground">
+              Tüm analizlerde gönderilen kelime
+            </p>
+          </div>
         </CardContent>
       </Card>
 
-      <Card className="bento-card card-hover bg-card border-primary/10">
+      {/* 5. KART */}
+      <Card className="flex flex-col relative overflow-hidden bento-card bg-card border-primary/10 hover:border-primary/20 hover:shadow-lg transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
-            Toplam Çıktı (Completion)
+            Toplam Çıktı
           </CardTitle>
           <Database className="w-4 h-4 text-purple-400" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col flex-1">
           <div className="text-3xl font-heading font-black text-white">
             {totalOutputTokens.toLocaleString()}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Yapay zekanın ürettiği kelime
-          </p>
+          <div className="flex items-center gap-2 mt-auto pt-2">
+            <p className="text-xs text-muted-foreground">
+              Yapay zekanın ürettiği kelime
+            </p>
+          </div>
         </CardContent>
       </Card>
 
-      <Card className="bento-card card-hover bg-card border-primary/10">
+      {/* 6. KART */}
+      <Card className="flex flex-col relative overflow-hidden bento-card bg-card border-primary/10 hover:border-primary/20 hover:shadow-lg transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-sm font-heading font-bold text-muted-foreground uppercase tracking-widest">
-            Toplam Cache (Tasarruf)
+            Toplam Cache
           </CardTitle>
           <HardDrive className="w-4 h-4 text-amber-400" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col flex-1">
           <div className="text-3xl font-heading font-black text-white">
             {totalCachedTokens.toLocaleString()}
           </div>
-          <p className="text-xs text-muted-foreground mt-1">
-            Önbellekten ücretsiz sayılan kelime
-          </p>
+          <div className="flex items-center gap-2 mt-auto pt-2">
+            <p className="text-xs text-muted-foreground">
+              Önbellekten ücretsiz sayılan kelime
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>

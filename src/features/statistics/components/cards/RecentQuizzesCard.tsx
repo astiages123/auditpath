@@ -8,20 +8,12 @@ import { formatDisplayDate } from '@/utils/dateUtils';
 
 import type { RecentQuizSession } from '@/features/quiz/types';
 
-// ==========================================
-// === HELPERS ===
-// ==========================================
-
 const formatDate = (dateStr: string) => {
   return formatDisplayDate(dateStr, {
     day: 'numeric',
     month: 'long',
   });
 };
-
-// ==========================================
-// === INTERNAL COMPONENTS ===
-// ==========================================
 
 const ScoreBoard = ({
   correct,
@@ -113,29 +105,15 @@ const QuizHistoryContent = ({ quizzes }: { quizzes: RecentQuizSession[] }) => (
   </div>
 );
 
-// ==========================================
-// === PROPS ===
-// ==========================================
-
 export interface RecentQuizzesCardProps {
   recentQuizzes: RecentQuizSession[];
 }
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 export const RecentQuizzesCard = ({
   recentQuizzes,
 }: RecentQuizzesCardProps) => {
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
   const displayQuizzes = recentQuizzes.slice(0, 5);
 
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   return (
     <StatisticsModal
       title="Quiz Geçmişi"

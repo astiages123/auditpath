@@ -3,10 +3,6 @@ import type { BloomStats } from '@/features/quiz/types';
 
 type RechartsModule = typeof import('recharts');
 
-// ==========================================
-// === PROPS ===
-// ==========================================
-
 export interface BloomKeyChartProps {
   data: BloomStats[];
 }
@@ -17,27 +13,17 @@ export interface FormattedChartData {
   fill: string;
 }
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 /**
  * Renders a radial bar chart displaying the user's Bloom taxonomy statistics.
  * Dynamically loads Recharts to avoid SSR/bundling issues.
  */
 export const BloomKeyChart = ({ data }: BloomKeyChartProps) => {
-  // ==========================================
-  // === HOOKS & STATE ===
-  // ==========================================
   const [Recharts, setRecharts] = useState<RechartsModule | null>(null);
 
   useEffect(() => {
     import('recharts').then((mod) => setRecharts(mod));
   }, []);
 
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
   const formattedData: FormattedChartData[] = data.map((d) => {
     let fill = 'oklch(82.968% 0.0001 271.152)'; // muted-foreground
     switch (d.level) {
@@ -58,9 +44,6 @@ export const BloomKeyChart = ({ data }: BloomKeyChartProps) => {
     };
   });
 
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   if (!Recharts) {
     return (
       <div className="w-full h-[300px] animate-pulse bg-muted/20 rounded-xl" />

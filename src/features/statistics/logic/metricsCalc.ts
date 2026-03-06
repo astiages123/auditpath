@@ -1,9 +1,5 @@
 import { SessionTotals } from '@/features/pomodoro/logic/sessionMath';
 
-// ==========================================
-// === METRIC CALCULATIONS ===
-// ==========================================
-
 /**
  * Calculates the Focus Power score.
  * Formula: (Work / [Break + Pause]) * 20

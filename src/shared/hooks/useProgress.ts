@@ -6,8 +6,6 @@ import type { Rank } from '@/types/auth';
 import { calculateStaticTotals } from '@/features/courses/logic/courseStats';
 import { useCategories } from '@/features/courses/hooks/useCategories';
 
-// === TYPES ===
-
 export interface CategoryProgress {
   completedVideos: number;
   completedHours: number;
@@ -47,8 +45,6 @@ export interface ProgressStats {
   dailyAverage?: number;
 }
 
-// === CONSTANTS ===
-
 const progressKeys = {
   all: ['progress'] as const,
   user: (userId: string) => [...progressKeys.all, userId] as const,
@@ -68,23 +64,21 @@ export const defaultStats: ProgressStats = {
   courseProgress: {},
 };
 
-// === HOOKS ===
-
 export function useProgress() {
   const { user } = useAuth();
   const userId = user?.id;
   const { data: categories } = useCategories();
   const courseCategorySlugMap = useMemo(() => {
-    const map: Record<string, string> = {};
+    const categorySlugMap: Record<string, string> = {};
 
     categories?.forEach((category) => {
       category.courses.forEach((course) => {
-        map[course.course_slug] = category.slug;
-        map[course.id] = category.slug;
+        categorySlugMap[course.course_slug] = category.slug;
+        categorySlugMap[course.id] = category.slug;
       });
     });
 
-    return map;
+    return categorySlugMap;
   }, [categories]);
 
   const staticTotals = useMemo(() => {
@@ -155,29 +149,30 @@ export function useProgressQuery(
       const dbStats = await getUserStats(userId);
       if (!dbStats) return defaultStats;
 
-      // Merge Logic
       const mergedCategoryProgress: Record<string, CategoryProgress> = {
         ...staticTotals.categoryStats,
       };
 
       if (dbStats.categoryProgress) {
-        Object.entries(dbStats.categoryProgress).forEach(([catName, stats]) => {
-          const catStats = stats as {
-            completedVideos: number;
-            completedHours: number;
-            completedReadings?: number;
-            completedPages?: number;
-          };
-          if (mergedCategoryProgress[catName]) {
-            mergedCategoryProgress[catName] = {
-              ...mergedCategoryProgress[catName],
-              completedVideos: catStats.completedVideos || 0,
-              completedHours: catStats.completedHours || 0,
-              completedReadings: catStats.completedReadings || 0,
-              completedPages: catStats.completedPages || 0,
+        Object.entries(dbStats.categoryProgress).forEach(
+          ([categoryName, categoryStats]) => {
+            const typedCategoryStats = categoryStats as {
+              completedVideos: number;
+              completedHours: number;
+              completedReadings?: number;
+              completedPages?: number;
+            };
+            if (!mergedCategoryProgress[categoryName]) return;
+
+            mergedCategoryProgress[categoryName] = {
+              ...mergedCategoryProgress[categoryName],
+              completedVideos: typedCategoryStats.completedVideos || 0,
+              completedHours: typedCategoryStats.completedHours || 0,
+              completedReadings: typedCategoryStats.completedReadings || 0,
+              completedPages: typedCategoryStats.completedPages || 0,
             };
           }
-        });
+        );
       }
 
       return {

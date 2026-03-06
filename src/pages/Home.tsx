@@ -8,7 +8,7 @@ import {
 import { PageContainer } from '@/components/layout/PageContainer';
 
 export default function HomePage() {
-  const { categories, stats, loading, error } = useHomeData();
+  const { categories, stats, loading: isLoading, error } = useHomeData();
 
   useEffect(() => {
     document.title = 'AuditPath';
@@ -21,7 +21,7 @@ export default function HomePage() {
     }
   }, []);
 
-  const isInitialLoading = loading && categories.length === 0;
+  const isInitialLoading = isLoading && categories.length === 0;
 
   return (
     <PageContainer

@@ -4,8 +4,6 @@ import type { ConceptMapItem, MasteryNode } from '../types';
 // Standartlara uygun SRP: Hesaplamaları dışarıdan al ve birleştir.
 export * from './quizCalculations';
 
-// === SECTION: Mastery Nodes & Atlas Processing ===
-
 /**
  * Kavram listesini ve kullanıcı skorlarını kullanarak bir ustalık grafiği oluşturur.
  * @param concepts - Dersin kavram listesi
@@ -43,7 +41,7 @@ export function calculateMasteryChains(
 
   // Performans için lookup map oluştur
   const nodeMap = new Map<string, MasteryNode>();
-  nodes.forEach((n) => nodeMap.set(n.label, n));
+  nodes.forEach((node) => nodeMap.set(node.label, node));
 
   /** Düğüm derinliğini özyinelemeli (recursive) hesaplar */
   const calculateDepth = (
@@ -81,7 +79,7 @@ export function processGraphForAtlas(nodes: MasteryNode[]): {
 } {
   const edges: { source: string; target: string; isStrong: boolean }[] = [];
   const nodeMap = new Map<string, MasteryNode>();
-  nodes.forEach((n) => nodeMap.set(n.label, n));
+  nodes.forEach((node) => nodeMap.set(node.label, node));
 
   // Kenarları (edges) oluştur
   nodes.forEach((node) => {
@@ -107,9 +105,9 @@ export function processGraphForAtlas(nodes: MasteryNode[]): {
     if (visited.has(nodeId)) return;
     visited.add(nodeId);
     edges
-      .filter((e) => e.source === nodeId || e.target === nodeId)
-      .forEach((e) => {
-        visitNode(e.source === nodeId ? e.target : e.source);
+      .filter((edge) => edge.source === nodeId || edge.target === nodeId)
+      .forEach((edge) => {
+        visitNode(edge.source === nodeId ? edge.target : edge.source);
       });
   };
 

@@ -1,7 +1,3 @@
-// ===========================
-// === HOOK EXPORTS ===
-// ===========================
-
 export * from './useAllCourses';
 export * from './useCategories';
 export * from './useCourseItemActions';

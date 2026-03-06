@@ -3,10 +3,6 @@ import { RecentActivitiesCard } from '@/features/statistics/components/cards/Rec
 import type { FocusPowerPoint } from '@/features/statistics/types/statisticsTypes';
 import type { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
 
-// ==========================================
-// === PROPS ===
-// ==========================================
-
 export interface RecentActivitiesContainerProps {
   recentSessions: RecentSession[];
   focusPowerWeek: FocusPowerPoint[];
@@ -14,19 +10,12 @@ export interface RecentActivitiesContainerProps {
   focusPowerAll: FocusPowerPoint[];
 }
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 export const RecentActivitiesContainer = ({
   recentSessions,
   focusPowerWeek,
   focusPowerMonth,
   focusPowerAll,
 }: RecentActivitiesContainerProps) => {
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   return (
     <div className="h-full w-full">
       <RecentActivitiesCard

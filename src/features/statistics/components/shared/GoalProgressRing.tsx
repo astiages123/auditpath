@@ -1,25 +1,14 @@
-// ==========================================
-// === PROPS ===
-// ==========================================
-
 export interface GoalRingProps {
   progress: number; // 0-100
   size?: number;
   strokeWidth?: number;
 }
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 export const GoalProgressRing = ({
   progress,
   size = 120,
   strokeWidth = 10,
 }: GoalRingProps) => {
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const offset =
@@ -32,9 +21,6 @@ export const GoalProgressRing = ({
     return 'oklch(82.968% 0.0001 271.152)'; // muted-foreground
   };
 
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   return (
     <div className="relative flex items-center justify-center">
       <svg width={size} height={size} className="transform -rotate-90">

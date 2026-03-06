@@ -11,10 +11,6 @@ import type { CognitiveInsight } from '@/features/quiz/types';
 import type { BloomStats, RecentQuizSession } from '@/features/quiz/types';
 import type { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
 
-// ==========================================
-// === TYPES ===
-// ==========================================
-
 export interface ConfusedConcept {
   text: string;
   count: number;
@@ -51,10 +47,6 @@ export interface CognitiveInsightsHook {
   cognitiveAnalysis: CognitiveAnalysis | null;
 }
 
-// ==========================================
-// === HOOK ===
-// ==========================================
-
 /**
  * Fetches and processes the user's cognitive insights, including
  * bloom statistics, recent session activity, quiz sessions, and creates
@@ -66,11 +58,9 @@ export function useCognitiveInsights(): CognitiveInsightsHook {
   const { user } = useAuth();
   const userId = user?.id;
 
-  // --- QUERIES ---
-
   const {
     data: bloomData,
-    isLoading: loadingBloom,
+    isLoading: isLoadingBloom,
     error: bloomError,
   } = useQuery({
     queryKey: ['bloomStats', userId],
@@ -81,7 +71,7 @@ export function useCognitiveInsights(): CognitiveInsightsHook {
 
   const {
     data: recentSessions,
-    isLoading: loadingSessions,
+    isLoading: isLoadingSessions,
     error: sessionsError,
   } = useQuery({
     queryKey: ['recentSessions', userId],
@@ -92,7 +82,7 @@ export function useCognitiveInsights(): CognitiveInsightsHook {
 
   const {
     data: recentQuizzes,
-    isLoading: loadingQuizzes,
+    isLoading: isLoadingQuizzes,
     error: quizzesError,
   } = useQuery({
     queryKey: ['recentQuizzes', userId],
@@ -103,7 +93,7 @@ export function useCognitiveInsights(): CognitiveInsightsHook {
 
   const {
     data: cognitiveInsights,
-    isLoading: loadingCognitive,
+    isLoading: isLoadingCognitive,
     error: cognitiveError,
   } = useQuery({
     queryKey: ['cognitiveInsights', userId],
@@ -112,18 +102,19 @@ export function useCognitiveInsights(): CognitiveInsightsHook {
     staleTime: 5 * 60 * 1000,
   });
 
-  // --- DERIVED STATE ---
-
-  const error = bloomError || sessionsError || quizzesError || cognitiveError;
+  const hasError =
+    bloomError || sessionsError || quizzesError || cognitiveError;
 
   const order = ['Bilgi', 'Analiz', 'Uygula'];
   const bloomRadarData = order.map((levelText: string) => {
-    const stat = bloomData?.find((s: BloomStats) => s.level === levelText);
+    const levelStats = bloomData?.find(
+      (bloomStat: BloomStats) => bloomStat.level === levelText
+    );
     return {
       level: levelText,
-      score: stat?.score || 0,
-      questionsSolved: stat?.questionsSolved || 0,
-      correct: stat?.correct || 0,
+      score: levelStats?.score || 0,
+      questionsSolved: levelStats?.questionsSolved || 0,
+      correct: levelStats?.correct || 0,
     };
   });
 
@@ -135,16 +126,18 @@ export function useCognitiveInsights(): CognitiveInsightsHook {
     let totalConsecutiveFails = 0;
     const confusedConceptsMap = new Map<string, number>();
 
-    cognitiveInsights.forEach((c: CognitiveInsight) => {
+    cognitiveInsights.forEach((insight: CognitiveInsight) => {
       totalAttempts++;
-      if (c.responseType === 'correct') {
+      if (insight.responseType === 'correct') {
         totalCorrect++;
       }
-      totalConsecutiveFails += c.consecutiveFails;
+      totalConsecutiveFails += insight.consecutiveFails;
 
-      if (c.diagnosis) {
-        const diag: string = c.diagnosis;
-        confusedConceptsMap.set(diag, (confusedConceptsMap.get(diag) || 0) + 1);
+      if (insight.diagnosis) {
+        confusedConceptsMap.set(
+          insight.diagnosis,
+          (confusedConceptsMap.get(insight.diagnosis) || 0) + 1
+        );
       }
     });
 
@@ -156,24 +149,24 @@ export function useCognitiveInsights(): CognitiveInsightsHook {
     const topConfused: ConfusedConcept[] = Array.from(
       confusedConceptsMap.entries()
     )
-      .sort((a, b) => b[1] - a[1])
+      .sort((leftEntry, rightEntry) => rightEntry[1] - leftEntry[1])
       .slice(0, 5)
       .map(([text, count]) => ({ text, count }));
 
     const recentInsights: string[] = Array.from(
       new Set(
         cognitiveInsights
-          .map((c: CognitiveInsight) => c.insight)
-          .filter((val): val is string => Boolean(val))
+          .map((insight: CognitiveInsight) => insight.insight)
+          .filter((insightText): insightText is string => Boolean(insightText))
       )
     ).slice(0, 5);
 
     const criticalTopics: CriticalTopic[] = cognitiveInsights
-      .filter((c: CognitiveInsight) => c.consecutiveFails >= 2)
-      .map((c: CognitiveInsight) => ({
-        id: c.questionId,
-        fails: c.consecutiveFails,
-        diagnosis: c.diagnosis,
+      .filter((insight: CognitiveInsight) => insight.consecutiveFails >= 2)
+      .map((insight: CognitiveInsight) => ({
+        id: insight.questionId,
+        fails: insight.consecutiveFails,
+        diagnosis: insight.diagnosis,
       }))
       .slice(0, 3);
 
@@ -186,14 +179,12 @@ export function useCognitiveInsights(): CognitiveInsightsHook {
     };
   })();
 
-  // --- RETURN ---
-
   return {
-    loadingBloom,
-    loadingSessions,
-    loadingQuizzes,
-    loadingCognitive,
-    error,
+    loadingBloom: isLoadingBloom,
+    loadingSessions: isLoadingSessions,
+    loadingQuizzes: isLoadingQuizzes,
+    loadingCognitive: isLoadingCognitive,
+    error: hasError,
     bloomStats: bloomRadarData,
     recentSessions: recentSessions || [],
     recentQuizzes: recentQuizzes || [],

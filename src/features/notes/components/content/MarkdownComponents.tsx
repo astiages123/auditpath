@@ -21,9 +21,6 @@ import { Lightbulb } from 'lucide-react';
 import { cn, slugify } from '@/utils/stringHelpers';
 import { CodeBlock } from '@/features/notes/components/content/CodeBlock';
 
-// === BÖLÜM ADI: YARDIMCI FONKSİYONLAR (HELPERS) ===
-// ===========================
-
 /**
  * React öğesindeki bütün düz metni güvenli bir şekilde elde eder.
  *
@@ -46,8 +43,8 @@ export const getText = (node: ReactNode): string => {
         (node as { props: { children?: ReactNode } }).props.children
       );
     }
-  } catch (error: unknown) {
-    console.error('[MarkdownComponents][getText] Hata:', error);
+  } catch {
+    // Geçersiz React düğümlerinde boş metin döndürmek güvenlidir.
   }
   return '';
 };
@@ -89,17 +86,14 @@ export const removeFirstBulb = (node: ReactNode): ReactNode => {
       if (Array.isArray(n)) {
         return Children.map(n, processNode);
       }
-    } catch (error: unknown) {
-      console.error('[MarkdownComponents][removeFirstBulb] Hata:', error);
+    } catch {
+      // Başlık ağacını temizleme başarısız olursa mevcut düğüm korunur.
     }
     return n;
   };
 
   return Children.map(node, processNode);
 };
-
-// === BÖLÜM ADI: BİLEŞEN (COMPONENT) HARİTALAMASI ===
-// ===========================
 
 /**
  * React-Markdown tarafından ayrıştırılan etiketlerin AuditPath'a özel CSS ve element mappingleri.

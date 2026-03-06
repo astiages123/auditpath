@@ -5,10 +5,6 @@ import { getDailyStats } from '@/features/statistics/services/activityService';
 
 import type { DailyEfficiencySummary } from '@/features/statistics/types/statisticsTypes';
 
-// ==========================================
-// === TYPES ===
-// ==========================================
-
 export interface DailyMetrics {
   dailyGoalMinutes: number;
   todayVideoMinutes: number;
@@ -21,10 +17,6 @@ export interface DailyMetrics {
   loading: boolean;
 }
 
-// ==========================================
-// === HOOK ===
-// ==========================================
-
 /**
  * Fetches and aggregates the user's daily efficiency stats.
  * Uses both activity and summary data to construct a view-ready daily metrics object.
@@ -34,7 +26,7 @@ export interface DailyMetrics {
  */
 export function useDailyMetrics(): DailyMetrics {
   const { user } = useAuth();
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [metrics, setMetrics] = useState<Omit<DailyMetrics, 'loading'>>({
     efficiencySummary: null,
     dailyGoalMinutes: 200,
@@ -47,19 +39,22 @@ export function useDailyMetrics(): DailyMetrics {
   });
 
   useEffect(() => {
-    let mounted = true;
+    let isMounted = true;
 
     async function fetchDailyMetrics() {
-      if (!user?.id) return;
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
 
-      setLoading(true);
+      setIsLoading(true);
       try {
         const [summary, daily] = await Promise.all([
           getDailyEfficiencySummary(user.id),
           getDailyStats(user.id),
         ]);
 
-        if (!mounted) return;
+        if (!isMounted) return;
 
         setMetrics({
           efficiencySummary: summary,
@@ -71,11 +66,9 @@ export function useDailyMetrics(): DailyMetrics {
           videoTrendPercentage: daily?.videoTrendPercentage ?? 0,
           trendPercentage: daily?.trendPercentage ?? 0,
         });
-      } catch (error) {
-        console.error('[useDailyMetrics] Hata:', error);
       } finally {
-        if (mounted) {
-          setLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
         }
       }
     }
@@ -83,12 +76,12 @@ export function useDailyMetrics(): DailyMetrics {
     fetchDailyMetrics();
 
     return () => {
-      mounted = false;
+      isMounted = false;
     };
   }, [user?.id]);
 
   return {
     ...metrics,
-    loading,
+    loading: isLoading,
   };
 }

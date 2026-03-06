@@ -2,10 +2,6 @@ import { create } from 'zustand';
 import { z } from 'zod';
 import { supabase } from '@/lib/supabase';
 
-// ============================================================================
-// STATE TYPES
-// ============================================================================
-
 /**
  * Kullanıcı kota bilgilerini temsil eden arayüz.
  */
@@ -32,9 +28,10 @@ interface QuotaStore {
   decrementClientQuota: () => void;
 }
 
-// ============================================================================
-// INITIAL STATE & STORE
-// ============================================================================
+const QuotaSchema = z.object({
+  daily_limit: z.number().optional().default(250),
+  remaining: z.number().optional().default(250),
+});
 
 /**
  * Kullanıcının günlük soru limitlerini ve kalan haklarını takip eden store.
@@ -48,26 +45,15 @@ export const useQuotaStore = create<QuotaStore>()((set) => ({
     error: null,
   },
 
-  // ============================================================================
-  // ACTIONS
-  // ============================================================================
-
   fetchQuota: async () => {
     set((state) => ({
       quota: { ...state.quota, isLoading: true, error: null },
     }));
 
     try {
-      // Supabase üzerinden RPC çağrısı yap
       const { data, error } = await supabase.rpc('get_user_quota_info');
 
       if (error) throw error;
-
-      // Gelen veriyi Zod ile doğrula
-      const QuotaSchema = z.object({
-        daily_limit: z.number().optional().default(250),
-        remaining: z.number().optional().default(250),
-      });
 
       const parsedQuota = QuotaSchema.safeParse(data);
       if (parsedQuota.success) {

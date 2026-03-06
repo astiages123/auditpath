@@ -48,8 +48,6 @@ export {
   validateBatch,
 };
 
-// === SECTION: Orchestration Logic ===
-
 /**
  * Belirli bir chunk için kotaları garanti eder.
  */
@@ -106,10 +104,11 @@ async function ensureQuotas(
     chunkId,
     quotaAILogic
   );
-
   if (quotaUpdateError) {
-    console.error(
-      '[ParserLogic][ensureQuotas] Kotas Hatası:',
+    logger.error(
+      'ParserLogic',
+      'ensureQuotas',
+      'Kota güncelleme hatası',
       quotaUpdateError
     );
   }
@@ -144,203 +143,200 @@ export async function generateForChunk(
     });
   };
 
-  try {
-    log('INIT', 'Ders materyalleri kütüphaneden alınıyor...');
-    await updateChunkStatus(chunkId, 'PROCESSING');
-    const rawChunk = await getChunkWithContent(chunkId);
-    if (!rawChunk) throw new Error(`Chunk (ID: ${chunkId}) bulunamadı.`);
+  log('INIT', 'Ders materyalleri kütüphaneden alınıyor...');
+  await updateChunkStatus(chunkId, 'PROCESSING');
+  const rawChunk = await getChunkWithContent(chunkId);
+  if (!rawChunk) throw new Error(`Chunk (ID: ${chunkId}) bulunamadı.`);
 
-    const chunk = parseOrThrow(ChunkWithContentSchema, rawChunk);
+  const chunk = parseOrThrow(ChunkWithContentSchema, rawChunk);
+  const { concepts } = await ensureConcepts(chunkId, chunk, log);
+  const quotas = await ensureQuotas(chunkId, chunk, concepts, log);
 
-    const { concepts } = await ensureConcepts(chunkId, chunk, log);
-    const quotas = await ensureQuotas(chunkId, chunk, concepts, log);
+  const usageTypes: ('antrenman' | 'deneme')[] = options.usageType
+    ? [options.usageType]
+    : ['antrenman', 'deneme'];
 
-    const usageTypes: ('antrenman' | 'deneme')[] = options.usageType
-      ? [options.usageType]
-      : ['antrenman', 'deneme'];
-
-    const totalTarget =
-      options.targetCount ||
-      usageTypes.reduce(
-        (acc, type) => acc + (quotas[type as keyof typeof quotas] || 0),
-        0
-      );
-
-    callbacks.onTotalTargetCalculated(totalTarget);
-
-    const guidelines = await getSubjectGuidelines(chunk.course_name || '');
-    const cleanContent = PromptArchitect.cleanReferenceImages(chunk.content);
-    const sharedContext = PromptArchitect.buildContext(
-      cleanContent,
-      chunk.course_name || '',
-      chunk.section_title || '',
-      guidelines || undefined
+  const totalTarget =
+    options.targetCount ||
+    usageTypes.reduce(
+      (accumulator, usageType) =>
+        accumulator + (quotas[usageType as keyof typeof quotas] || 0),
+      0
     );
 
-    let totalGeneratedCount = 0;
-    for (const type of usageTypes) {
-      const typeQuotas =
-        options.targetCount || quotas[type as keyof typeof quotas];
-      const targetConcepts =
-        type === 'antrenman'
-          ? concepts
-          : shuffle([...concepts]).slice(0, typeQuotas);
+  callbacks.onTotalTargetCalculated(totalTarget);
 
-      let draftingBuffer: { index: number; concept: ConceptMapItem }[] = [];
-      const BATCH_SIZE = 3;
+  const guidelines = await getSubjectGuidelines(chunk.course_name || '');
+  const cleanContent = PromptArchitect.cleanReferenceImages(chunk.content);
+  const sharedContext = PromptArchitect.buildContext(
+    cleanContent,
+    chunk.course_name || '',
+    chunk.section_title || '',
+    guidelines || undefined
+  );
 
-      for (
-        let i = 0;
-        i < targetConcepts.length && totalGeneratedCount < totalTarget;
-        i++
-      ) {
+  let totalGeneratedCount = 0;
+  for (const usageType of usageTypes) {
+    const typeQuotas =
+      options.targetCount || quotas[usageType as keyof typeof quotas];
+    const targetConcepts =
+      usageType === 'antrenman'
+        ? concepts
+        : shuffle([...concepts]).slice(0, typeQuotas);
+
+    let draftingBuffer: { index: number; concept: ConceptMapItem }[] = [];
+    const batchSize = 3;
+
+    for (
+      let i = 0;
+      i < targetConcepts.length && totalGeneratedCount < totalTarget;
+      i++
+    ) {
+      if (options.signal?.aborted) {
+        throw new Error('İşlem kullanıcı tarafından durduruldu.');
+      }
+
+      const concept = targetConcepts[i];
+      const cached = await fetchCachedQuestion(
+        chunk.id,
+        usageType,
+        concept.baslik
+      );
+
+      if (cached) {
+        totalGeneratedCount++;
+        callbacks.onQuestionSaved(totalGeneratedCount);
+        continue;
+      }
+
+      const nodeStrategy = determineNodeStrategy(
+        i,
+        concept,
+        chunk.course_name || ''
+      );
+      if (!nodeStrategy) {
+        log(
+          'GENERATING',
+          `"${concept.baslik}" grafik gerektiriyor, atlanıyor.`
+        );
+        continue;
+      }
+
+      draftingBuffer.push({ index: i, concept });
+
+      const isLastIteration =
+        i === targetConcepts.length - 1 ||
+        draftingBuffer.length + totalGeneratedCount >= totalTarget;
+
+      if (draftingBuffer.length < batchSize && !isLastIteration) {
+        continue;
+      }
+
+      log(
+        'GENERATING',
+        `${draftingBuffer.length} adet kavram için soru tasarlanıyor...`
+      );
+
+      const draftedBatchResult = await draftBatch({
+        concepts: draftingBuffer,
+        courseName: chunk.course_name || '',
+        usageType,
+        sharedContextPrompt: sharedContext,
+      });
+
+      if (!draftedBatchResult) {
+        draftingBuffer = [];
+        continue;
+      }
+
+      log(
+        'VALIDATING',
+        `${draftedBatchResult.length} soruluk bir grup doğrulanıyor...`
+      );
+      const validationResponse = await validateBatch(
+        draftedBatchResult,
+        cleanContent
+      );
+
+      for (let j = 0; j < draftedBatchResult.length; j++) {
         if (options.signal?.aborted) {
           throw new Error('İşlem kullanıcı tarafından durduruldu.');
         }
-        const concept = targetConcepts[i];
-        const cached = await fetchCachedQuestion(
-          chunk.id,
-          type,
-          concept.baslik
-        );
 
-        if (cached) {
+        const bufferItem = draftingBuffer[j];
+        if (!bufferItem) continue;
+
+        let question = draftedBatchResult[j];
+        const validation =
+          validationResponse?.results[j] ??
+          validationResponse?.results.find(
+            (validationResult) => validationResult.index === j
+          );
+
+        if (!validation || validation.decision === 'REJECTED') {
+          log(
+            'REVISION',
+            `${bufferItem.concept.baslik} sorusu için revizyon yapılıyor...`
+          );
+          const revised = await reviseQuestion(
+            question,
+            validation || {
+              index: j,
+              total_score: 0,
+              decision: 'REJECTED',
+              critical_faults: ['Batch validation error'],
+              improvement_suggestion: 'Soru formatı tamamen hatalı.',
+            },
+            sharedContext
+          );
+
+          if (!revised) {
+            log(
+              'REVISION',
+              `Revizyon başarısız, kavram atlanıyor: ${bufferItem.concept.baslik}`
+            );
+            continue;
+          }
+
+          question = revised;
+        }
+
+        log('SAVING', `${bufferItem.concept.baslik} kütüphaneye ekleniyor...`);
+        const { error: saveError } = await createQuestion({
+          chunk_id: chunk.id,
+          course_id: chunk.course_id,
+          section_title: chunk.section_title || 'Genel',
+          usage_type: usageType,
+          bloom_level: (question.bloomLevel || 'knowledge') as
+            | 'knowledge'
+            | 'analysis'
+            | 'application'
+            | null,
+          created_by: options.userId,
+          question_data: {
+            q: question.q,
+            o: question.o,
+            a: question.a,
+            exp: question.exp,
+            img: question.img,
+            evidence: question.evidence,
+            diagnosis: question.diagnosis,
+            insight: question.insight,
+          } as Json,
+          concept_title: bufferItem.concept.baslik,
+        });
+
+        if (!saveError) {
           totalGeneratedCount++;
           callbacks.onQuestionSaved(totalGeneratedCount);
-          continue;
-        }
-
-        const nodeStrategy = determineNodeStrategy(
-          i,
-          concept,
-          chunk.course_name || ''
-        );
-        if (!nodeStrategy) {
-          log(
-            'GENERATING',
-            `"${concept.baslik}" grafik gerektiriyor, atlanıyor.`
-          );
-          continue;
-        }
-
-        draftingBuffer.push({ index: i, concept });
-
-        const isLastIteration =
-          i === targetConcepts.length - 1 ||
-          draftingBuffer.length + totalGeneratedCount >= totalTarget;
-
-        if (
-          draftingBuffer.length >= BATCH_SIZE ||
-          (isLastIteration && draftingBuffer.length > 0)
-        ) {
-          log(
-            'GENERATING',
-            `${draftingBuffer.length} adet kavram için soru tasarlanıyor...`
-          );
-
-          const draftedBatchResult = await draftBatch({
-            concepts: draftingBuffer,
-            courseName: chunk.course_name || '',
-            usageType: type,
-            sharedContextPrompt: sharedContext,
-          });
-
-          if (draftedBatchResult) {
-            log(
-              'VALIDATING',
-              `${draftedBatchResult.length} soruluk bir grup doğrulanıyor...`
-            );
-            const validationResponse = await validateBatch(
-              draftedBatchResult,
-              cleanContent
-            );
-
-            for (let j = 0; j < draftedBatchResult.length; j++) {
-              if (options.signal?.aborted) {
-                throw new Error('İşlem kullanıcı tarafından durduruldu.');
-              }
-              const bufferItem = draftingBuffer[j];
-              if (!bufferItem) continue;
-
-              let question = draftedBatchResult[j];
-              const validation =
-                validationResponse?.results[j] ??
-                validationResponse?.results.find((r) => r.index === j);
-
-              if (!validation || validation.decision === 'REJECTED') {
-                log(
-                  'REVISION',
-                  `${bufferItem.concept.baslik} sorusu için revizyon yapılıyor...`
-                );
-                const revised = await reviseQuestion(
-                  question,
-                  validation || {
-                    index: j,
-                    total_score: 0,
-                    decision: 'REJECTED',
-                    critical_faults: ['Batch validation error'],
-                    improvement_suggestion: 'Soru formatı tamamen hatalı.',
-                  },
-                  sharedContext
-                );
-
-                if (!revised) {
-                  log(
-                    'REVISION',
-                    `Revizyon başarısız, kavram atlanıyor: ${bufferItem.concept.baslik}`
-                  );
-                  continue;
-                }
-                question = revised;
-              }
-
-              log(
-                'SAVING',
-                `${bufferItem.concept.baslik} kütüphaneye ekleniyor...`
-              );
-              const { error: saveErr } = await createQuestion({
-                chunk_id: chunk.id,
-                course_id: chunk.course_id,
-                section_title: chunk.section_title || 'Genel',
-                usage_type: type,
-                bloom_level: (question.bloomLevel || 'knowledge') as
-                  | 'knowledge'
-                  | 'analysis'
-                  | 'application'
-                  | null,
-                created_by: options.userId,
-                question_data: {
-                  q: question.q,
-                  o: question.o,
-                  a: question.a,
-                  exp: question.exp,
-                  img: question.img,
-                  evidence: question.evidence,
-                  diagnosis: question.diagnosis,
-                  insight: question.insight,
-                } as Json,
-                concept_title: bufferItem.concept.baslik,
-              });
-
-              if (!saveErr) {
-                totalGeneratedCount++;
-                callbacks.onQuestionSaved(totalGeneratedCount);
-              }
-            }
-          }
-          draftingBuffer = [];
         }
       }
-    }
 
-    await updateChunkStatus(chunkId, 'COMPLETED');
-    log('COMPLETED', 'Tüm işlemler başarıyla tamamlandı!');
-    callbacks.onComplete({ success: true, generated: totalGeneratedCount });
-  } catch (e: unknown) {
-    const error = e as Error;
-    logger.error('ParserLogic', 'generateForChunk', 'Üretim hatası', error);
-    log('ERROR', `Hata oluştu: ${error.message}`);
-    callbacks.onError(error.message || 'Error occurred during generation.');
-    await updateChunkStatus(chunkId, 'FAILED');
+      draftingBuffer = [];
+    }
   }
+
+  await updateChunkStatus(chunkId, 'COMPLETED');
+  log('COMPLETED', 'Tüm işlemler başarıyla tamamlandı!');
+  callbacks.onComplete({ success: true, generated: totalGeneratedCount });
 }

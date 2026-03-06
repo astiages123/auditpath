@@ -11,8 +11,6 @@ import {
 } from 'lucide-react';
 import { ROUTES } from '@/utils/routes';
 
-// === TYPES ===
-
 export type NavGroup = 'navigation' | 'action' | 'meta';
 export type NavAction = 'pomodoro' | 'program';
 
@@ -25,18 +23,13 @@ export interface NavItem {
   mobileOnly?: boolean;
 }
 
-// === CONSTANTS ===
-
 export const NAV_GROUP_LABELS: Record<NavGroup, string> = {
   navigation: 'Ana Yörünge',
   action: 'Derin Çalışma',
   meta: 'Gelişim ve İçgörü',
 };
 
-// === CONFIG ===
-
 export const navItems: NavItem[] = [
-  // === ANA YÖRÜNGE (Navigation Zone) ===
   { label: 'Anasayfa', href: ROUTES.HOME, icon: Home, group: 'navigation' },
   {
     label: 'Yolculuk',
@@ -51,7 +44,6 @@ export const navItems: NavItem[] = [
     group: 'navigation',
   },
 
-  // === DERİN ÇALIŞMA (Action Zone) ===
   {
     label: 'Çalışma Merkezi',
     href: ROUTES.LIBRARY,
@@ -65,7 +57,6 @@ export const navItems: NavItem[] = [
     group: 'action',
   },
 
-  // === GELİŞİM VE İÇGÖRÜ (Meta Zone) ===
   {
     label: 'Başarılar',
     href: ROUTES.ACHIEVEMENTS,
@@ -86,8 +77,6 @@ export const navItems: NavItem[] = [
     group: 'meta',
   },
 ];
-
-// === FUNCTIONS ===
 
 export function getNavItemsByGroup(): Record<NavGroup, NavItem[]> {
   return {

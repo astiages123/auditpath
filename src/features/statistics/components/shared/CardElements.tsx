@@ -3,10 +3,6 @@ import { TrendingUp, TrendingDown, Info } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// ==========================================
-// === TYPES / PROPS ===
-// ==========================================
-
 export interface TrendBadgeProps {
   percentage: number;
 }
@@ -30,15 +26,10 @@ export interface StatCardProps {
   loading?: boolean;
 }
 
-// ==========================================
-// === COMPONENT: TREND BADGE ===
-// ==========================================
-
 /**
  * Reusable component showing an upward or downward trend badge based on percentage.
  */
 export const TrendBadge = ({ percentage }: TrendBadgeProps) => {
-  // === RENDER ===
   if (percentage === 0) return null;
 
   const isPositive = percentage > 0;
@@ -59,10 +50,6 @@ export const TrendBadge = ({ percentage }: TrendBadgeProps) => {
   );
 };
 
-// ==========================================
-// === COMPONENT: CARD HEADER ===
-// ==========================================
-
 /**
  * Reusable header component maintaining consistent styling across stat cards.
  */
@@ -76,7 +63,6 @@ export const CardHeader = memo(
     badge,
     action,
   }: CardHeaderProps) => {
-    // === RENDER ===
     return (
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-4">
@@ -148,10 +134,6 @@ export const StatCard = ({
     </div>
   );
 };
-
-// ==========================================
-// === COMPONENT: COMMON EMPTY STATE ===
-// ==========================================
 
 export interface CommonEmptyStateProps {
   message?: string;

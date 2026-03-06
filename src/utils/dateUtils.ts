@@ -1,10 +1,4 @@
 /**
-// ===========================
-// === TARİH YARDIMCILARI ===
-// ===========================
-*/
-
-/**
  * Standart gün mantığı: Mevcut tarih ve saati temel alır.
  *
  * @param date - İşlenecek tarih (varsayılan: şimdi)
@@ -79,18 +73,12 @@ export function formatDisplayDate(
     month: 'short',
   }
 ): string {
-  const d =
+  const targetDate =
     typeof date === 'string' || typeof date === 'number'
       ? new Date(date)
       : date;
-  return d.toLocaleDateString('tr-TR', options);
+  return targetDate.toLocaleDateString('tr-TR', options);
 }
-
-/**
-// ===========================
-// === SÜRE FORMATLAYICILAR ===
-// ===========================
-*/
 
 /**
  * Saniye cinsinden süreyi "Xsa Ydk" formatına çevirir.
@@ -102,10 +90,10 @@ export function formatDisplayDate(
 export function formatTimeFromSeconds(seconds: number): string {
   if (seconds < 0) return '0dk';
   const totalMinutes = Math.round(seconds / 60);
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  if (h > 0) return `${h}sa ${m}dk`;
-  return `${m}dk`;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours > 0) return `${hours}sa ${minutes}dk`;
+  return `${minutes}dk`;
 }
 
 /**

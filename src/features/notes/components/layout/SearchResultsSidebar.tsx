@@ -6,9 +6,6 @@ import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
 import { type SearchResult } from '@/features/notes/types';
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
 export interface SearchResultsSidebarProps {
   /** Bulunan arama sonuçları dizisi */
   results: SearchResult[];
@@ -17,9 +14,6 @@ export interface SearchResultsSidebarProps {
   /** Mevcut arama sorgusu (sadece sonuç bulunamadı mesajı için) */
   query: string;
 }
-
-// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
-// ===========================
 
 /**
  * Arama yapıldığında sağ tarafta veya modal içinde arama sonuçlarını (vurgulu özetleriyle)
@@ -33,8 +27,6 @@ export const SearchResultsSidebar = memo(function SearchResultsSidebar({
   onResultClick,
   query,
 }: SearchResultsSidebarProps): React.ReactElement {
-  // === UI RENDER ===
-
   return (
     <nav className="h-full flex flex-col bg-card select-none">
       <div className="p-4 border-b border-border/30 flex items-center justify-between bg-primary/5">

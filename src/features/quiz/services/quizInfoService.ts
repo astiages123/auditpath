@@ -6,15 +6,13 @@ import {
   UnifiedLLMClient as BaseLLMClient,
 } from '@/lib/unified-llm';
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
 const MODULE = 'QuizInfoService';
 
-// ============================================================================
-// INFO & UTILITY SERVICES
-// ============================================================================
+function throwQueryError(func: string, error: string | undefined): never {
+  const errorObject = new Error(error || `${func} failed`);
+  logger.error(MODULE, func, 'Hata:', errorObject);
+  throw errorObject;
+}
 
 /**
  * Konu başlıkları için özel yönergeleri (subject guidelines) getirir.
@@ -27,27 +25,22 @@ export async function getSubjectGuidelines(
   courseName: string
 ): Promise<string> {
   const FUNC = 'getSubjectGuidelines';
-  try {
-    // Caching logic can be added here
-    const { data, success } = await safeQuery<{ instruction?: string }>(
-      supabase
-        .from('subject_guidelines')
-        .select('instruction')
-        .eq('subject_name', courseName)
-        .maybeSingle(),
-      `${FUNC} error`,
-      { courseName }
-    );
 
-    if (success && data?.instruction) {
-      return data.instruction;
-    }
-    return '';
-  } catch (error) {
-    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
-    logger.error(MODULE, FUNC, 'Hata:', error);
-    return '';
+  const result = await safeQuery<{ instruction?: string }>(
+    supabase
+      .from('subject_guidelines')
+      .select('instruction')
+      .eq('subject_name', courseName)
+      .maybeSingle(),
+    `${FUNC} error`,
+    { courseName }
+  );
+
+  if (!result.success) {
+    throwQueryError(FUNC, result.error);
   }
+
+  return result.data?.instruction || '';
 }
 
 /**
@@ -70,38 +63,29 @@ export const UnifiedLLMClient = {
       onLog?: (msg: string, details?: Record<string, unknown>) => void;
     }
   ): Promise<{ content: string | null; errorCode?: LLMErrorCode }> {
-    const FUNC = 'UnifiedLLMClient.generate';
-    try {
-      // BaseLLMClient options structure includes provider as Enum or String
-      // Casting provider to any to match BaseLLMClient expected union type easily
-      const response = await BaseLLMClient.complete({
-        messages: messages as {
-          role: 'user' | 'system' | 'assistant';
-          content: string;
-        }[],
-        provider: (options?.provider || 'google') as
-          | 'google'
-          | 'openai'
-          | 'anthropic'
-          | 'deepseek'
-          | 'mimo'
-          | 'cerebras',
-        model: options?.model,
-        temperature: options?.temperature,
+    const response = await BaseLLMClient.complete({
+      messages: messages as {
+        role: 'user' | 'system' | 'assistant';
+        content: string;
+      }[],
+      provider: (options?.provider || 'google') as
+        | 'google'
+        | 'openai'
+        | 'anthropic'
+        | 'deepseek'
+        | 'mimo'
+        | 'cerebras',
+      model: options?.model,
+      temperature: options?.temperature,
+    });
+
+    if (options?.onLog) {
+      options.onLog('LLM yanıtı alındı', {
+        provider: options.provider,
+        length: response.content?.length,
       });
-
-      if (options?.onLog) {
-        options.onLog('LLM yanıtı alındı', {
-          provider: options.provider,
-          length: response.content?.length,
-        });
-      }
-
-      return { content: response.content, errorCode: response.errorCode };
-    } catch (error) {
-      console.error(`[${MODULE}][${FUNC}] Hata:`, error);
-      logger.error(MODULE, FUNC, 'LLM Üretim Hatası:', error);
-      return { content: null };
     }
+
+    return { content: response.content, errorCode: response.errorCode };
   },
 };

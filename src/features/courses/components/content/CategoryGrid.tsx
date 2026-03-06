@@ -1,15 +1,7 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { useState } from 'react';
 import { CategoryCard } from '@/features/courses/components/cards/CategoryCard';
 import type { Category } from '@/features/courses/types/courseTypes';
 import { motion } from 'framer-motion';
-
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
 
 export interface CategoryGridProps {
   categories: Category[];
@@ -21,10 +13,6 @@ export interface CategoryGridProps {
     }
   >;
 }
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * Renders a responsive grid of CategoryCards, managing their open/closed states.

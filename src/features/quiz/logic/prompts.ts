@@ -8,8 +8,6 @@ import {
   type Message,
 } from '../types';
 
-// === SECTION: Global AI Personality & Rules ===
-
 /** Uygulama genelindeki yapay zeka sistem talimatı */
 export const GLOBAL_AI_SYSTEM_PROMPT =
   'Sen KPSS formatında, akademik dille soru yazan uzman bir yapay zekasın. SADECE JSON formatında çıktı ver. Cevabın dışında hiçbir metin, yorum veya markdown karakteri bulunmamalıdır.';
@@ -38,8 +36,6 @@ export const BLOOM_INSTRUCTIONS: Record<string, string> = {
   Analiz:
     'Parçalar arasındaki ilişkileri, yapıyı veya karmaşık senaryoların arka planını sorgula.',
 };
-
-// === SECTION: Prompt Architect Class ===
 
 /**
  * Prompt yönetimi için merkezi mimari sınıfı.
@@ -96,8 +92,6 @@ export class PromptArchitect {
   static batchValidationPrompt = buildBatchValidationPrompt;
 }
 
-// === SECTION: Dynamic Prompt Builders ===
-
 /**
  * İçerik analizi için prompt oluşturur.
  */
@@ -143,7 +137,9 @@ export function buildDraftingPrompt(
   previousDiagnoses?: string[],
   courseName: string = ''
 ): string {
-  const conceptTitles = concepts.map((c) => c.baslik).join(', ');
+  const conceptTitles = concepts
+    .map((conceptItem) => conceptItem.baslik)
+    .join(', ');
   return `### GÖREV: SORU ÜRETİMİ
 Ders: ${courseName}
 Tür: ${usageType}
@@ -181,9 +177,9 @@ export function buildBatchValidationPrompt(
 ): string {
   const questionList = questions
     .map(
-      (q, i) =>
-        `### Soru ${i}:\n${JSON.stringify(
-          { q: q.q, o: q.o, a: q.a, exp: q.exp },
+      (question, index) =>
+        `### Soru ${index}:\n${JSON.stringify(
+          { q: question.q, o: question.o, a: question.a, exp: question.exp },
           null,
           2
         )}`

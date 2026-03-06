@@ -1,7 +1,5 @@
 import { FC } from 'react';
 
-// === PROPS ===
-
 interface CircularProgressProps {
   progress: number;
   size?: number;
@@ -9,15 +7,12 @@ interface CircularProgressProps {
   fontSize?: string;
 }
 
-// === COMPONENT ===
-
 export const CircularProgress: FC<CircularProgressProps> = ({
   progress,
   size = 120,
   strokeWidth = 7,
   fontSize = 'text-2xl',
 }) => {
-  // === RENDER ===
   const radius = 52;
   const circumference = 2 * Math.PI * radius;
   const strokeDashoffset = circumference - (progress / 100) * circumference;

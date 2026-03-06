@@ -11,24 +11,15 @@ const MermaidDiagram = lazy(() =>
   }))
 );
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
 export interface CodeBlockProps extends React.HTMLAttributes<HTMLElement> {
   /** Satır içi kod olup olmadığını belirtir */
   inline?: boolean;
 }
 
-// === BÖLÜM ADI: RENDER YARDIMCILARI ===
-// ===========================
-
 interface MathRenderResult {
   html: string;
   isDisplay: boolean;
 }
-
-// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
-// ===========================
 
 /**
  * Markdown içindeki kod bloklarını ve matematiksel ifadeleri (KaTeX)
@@ -47,15 +38,13 @@ export const CodeBlock = ({
   const [copied, setCopied] = useState<boolean>(false);
   const code: string = String(children).replace(/\n$/, '');
 
-  // === RENDER İŞ MANTIĞI ===
-
   const handleCopy = (): void => {
     try {
       navigator.clipboard.writeText(code);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch (error: unknown) {
-      console.error('[CodeBlock][handleCopy] Hata:', error);
+    } catch {
+      // Clipboard erişimi başarısız olursa kopyalama durumu güncellenmez.
     }
   };
 
@@ -85,7 +74,6 @@ export const CodeBlock = ({
       });
       return { html: sanitizeHtml(html), isDisplay };
     } catch (error: unknown) {
-      console.error('[CodeBlock][sanitizedHtml] KaTeX render hatası:', error);
       logger.error(
         'CodeBlock',
         'sanitizedHtml',
@@ -95,8 +83,6 @@ export const CodeBlock = ({
       return null;
     }
   }, [code, isMath, match]);
-
-  // === UI RENDER ===
 
   if (isMath && sanitizedHtml) {
     if (sanitizedHtml.isDisplay) {

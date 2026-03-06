@@ -7,10 +7,6 @@ import { MasteryProgressNavigator as MasteryNavigatorContent } from '@/features/
 import { CardHeader } from '@/features/statistics/components/shared/CardElements';
 import { useMasteryChains } from '@/features/statistics/hooks/useMasteryChains';
 
-// ==========================================
-// === TYPES / PROPS ===
-// ==========================================
-
 export interface MasteryItem {
   lessonId: string;
   title: string;
@@ -20,20 +16,10 @@ export interface MasteryItem {
   questionProgress: number;
 }
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 export const MasteryNavigatorCard = () => {
-  // ==========================================
-  // === HOOKS ===
-  // ==========================================
   const { lessonMastery } = useMasteryChains();
 
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
-  const loading = !lessonMastery || lessonMastery.length === 0;
+  const isLoading = !lessonMastery || lessonMastery.length === 0;
 
   // Sort by mastery score (DESC) and then by title (ASC), exclude 100%
   const displayNodes: MasteryItem[] = useMemo(() => {
@@ -46,10 +32,7 @@ export const MasteryNavigatorCard = () => {
       .slice(0, 4);
   }, [lessonMastery]);
 
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
-  if (loading) {
+  if (isLoading) {
     return (
       <Card className="h-full flex flex-col p-6">
         <Skeleton className="h-6 w-48 mb-6 bg-surface" />

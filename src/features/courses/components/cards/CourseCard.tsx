@@ -1,16 +1,8 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { cn } from '@/utils/stringHelpers';
 import { Play, Clock, FileText, BookOpen } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDuration } from '@/utils/dateUtils';
-
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
 
 export interface CourseCardProps {
   id: string;
@@ -25,10 +17,6 @@ export interface CourseCardProps {
   type?: string;
   totalPages?: number;
 }
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * Display card for an individual course, detailing statistics and completion.

@@ -1,7 +1,3 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { toast } from 'sonner';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useProgress } from '@/shared/hooks/useProgress';
@@ -9,20 +5,13 @@ import {
   toggleItemProgress,
   toggleItemProgressBatch,
 } from '../services/videoService';
-
-// ===========================
-// === INTERFACES ===
-// ===========================
+import { logger } from '@/utils/logger';
 
 export interface CourseItemActionState {
   completed: boolean;
   itemNumber: number;
   durationMinutes: number;
 }
-
-// ===========================
-// === HOOK ===
-// ===========================
 
 /**
  * Hook for managing course item interaction and states like progressive completion.
@@ -50,72 +39,74 @@ export function useCourseItemActions(
     targetItemNumber: number,
     isModifierPressed: boolean
   ): Promise<CourseItemActionState[]> => {
-    const targetItem = items.find((v) => v.itemNumber === targetItemNumber);
+    const targetItem = items.find(
+      (item) => item.itemNumber === targetItemNumber
+    );
     if (!targetItem) return items;
 
     const newCompleted = !targetItem.completed;
     const previousItems = [...items];
 
-    // 1. Calculate new state (Optimistic)
     let updatedItems = [...items];
     let itemIdListToUpdate: string[] = [];
 
     if (isModifierPressed) {
-      // Toggle only specific item
-      updatedItems = updatedItems.map((v) =>
-        v.itemNumber === targetItemNumber
-          ? { ...v, completed: newCompleted }
-          : v
+      updatedItems = updatedItems.map((item) =>
+        item.itemNumber === targetItemNumber
+          ? { ...item, completed: newCompleted }
+          : item
       );
       itemIdListToUpdate = [targetItemNumber.toString()];
+    } else if (newCompleted) {
+      updatedItems = updatedItems.map((item) =>
+        item.itemNumber <= targetItemNumber
+          ? { ...item, completed: true }
+          : item
+      );
+      itemIdListToUpdate = items
+        .filter(
+          (item) => item.itemNumber <= targetItemNumber && !item.completed
+        )
+        .map((item) => item.itemNumber.toString());
     } else {
-      // Recursive/Batch logic
-      if (newCompleted) {
-        // Complete all previous
-        updatedItems = updatedItems.map((v) =>
-          v.itemNumber <= targetItemNumber ? { ...v, completed: true } : v
-        );
-        itemIdListToUpdate = items
-          .filter((v) => v.itemNumber <= targetItemNumber && !v.completed)
-          .map((v) => v.itemNumber.toString());
-      } else {
-        // Uncomplete all next
-        updatedItems = updatedItems.map((v) =>
-          v.itemNumber >= targetItemNumber ? { ...v, completed: false } : v
-        );
-        itemIdListToUpdate = items
-          .filter((v) => v.itemNumber >= targetItemNumber && v.completed)
-          .map((v) => v.itemNumber.toString());
-      }
+      updatedItems = updatedItems.map((item) =>
+        item.itemNumber >= targetItemNumber
+          ? { ...item, completed: false }
+          : item
+      );
+      itemIdListToUpdate = items
+        .filter((item) => item.itemNumber >= targetItemNumber && item.completed)
+        .map((item) => item.itemNumber.toString());
     }
 
-    // 2. Calculate Stats Changes
     let newlyCompletedCount = 0;
     let newlyRemovedCount = 0;
     let deltaMinutes = 0;
 
-    updatedItems.forEach((v) => {
-      const oldV = previousItems.find((pv) => pv.itemNumber === v.itemNumber);
-      if (!oldV) return;
+    updatedItems.forEach((item) => {
+      const previousItem = previousItems.find(
+        (candidateItem) => candidateItem.itemNumber === item.itemNumber
+      );
+      if (!previousItem) return;
 
-      if (v.completed && !oldV.completed) {
+      if (item.completed && !previousItem.completed) {
         newlyCompletedCount++;
-        deltaMinutes += v.durationMinutes;
+        deltaMinutes += item.durationMinutes;
       }
-      if (!v.completed && oldV.completed) {
+
+      if (!item.completed && previousItem.completed) {
         newlyRemovedCount++;
-        deltaMinutes -= v.durationMinutes;
+        deltaMinutes -= item.durationMinutes;
       }
     });
 
     const deltaItems = newlyCompletedCount - newlyRemovedCount;
     const deltaHours = deltaMinutes / 60;
 
-    // 3. Optimistic Update in Progress Context
     updateProgressOptimistically(courseSlug, deltaItems, deltaHours);
 
-    // 4. Server Sync
     const userId = user?.id;
+
     try {
       if (!userId) {
         toast.error('İlerleme durumunun kaydedilmesi için giriş yapmalısınız.');
@@ -123,14 +114,14 @@ export function useCourseItemActions(
       }
 
       if (itemIdListToUpdate.length === 1) {
-        const itemNum = parseInt(itemIdListToUpdate[0]);
-        if (!Number.isNaN(itemNum)) {
-          await toggleItemProgress(userId, courseId, itemNum, newCompleted);
+        const itemNumber = parseInt(itemIdListToUpdate[0]);
+        if (!Number.isNaN(itemNumber)) {
+          await toggleItemProgress(userId, courseId, itemNumber, newCompleted);
         }
       } else if (itemIdListToUpdate.length > 1) {
         const itemNumbers = itemIdListToUpdate
-          .map((id) => parseInt(id))
-          .filter((n) => !Number.isNaN(n));
+          .map((itemId) => parseInt(itemId))
+          .filter((itemNumber) => !Number.isNaN(itemNumber));
 
         if (itemNumbers.length > 0) {
           await toggleItemProgressBatch(
@@ -142,13 +133,15 @@ export function useCourseItemActions(
         }
       }
 
-      // Background refresh to ensure consistency
       refreshProgress();
-
       return updatedItems;
-    } catch (error) {
-      console.error('[useCourseItemActions][handleToggleItem] Hata:', error);
-      // Revert optimistic update
+    } catch (caughtError) {
+      logger.error(
+        'useCourseItemActions',
+        'handleToggleItem',
+        'İlerleme kaydedilemedi',
+        caughtError as Error
+      );
       updateProgressOptimistically(courseSlug, -deltaItems, -deltaHours);
       toast.error('İlerleme kaydedilemedi.');
       return previousItems;

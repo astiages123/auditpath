@@ -15,7 +15,6 @@ import type { NavItem } from './dashboard/nav-config';
 const GROUP_ORDER: NavItem['group'][] = ['navigation', 'action', 'meta'];
 
 export const MobileSidebar: FC = () => {
-  // === HOOKS ===
   const { user, signOut } = useAuth();
   const { setMobileMenuOpen } = useUIStore();
   const { setOpen: setPomodoroOpen } = usePomodoro();
@@ -23,8 +22,6 @@ export const MobileSidebar: FC = () => {
   const pathname = location.pathname;
 
   const groupedItems = getNavItemsByGroup();
-
-  // === HANDLERS ===
 
   const handleAction = (action: string) => {
     setMobileMenuOpen(false);
@@ -35,7 +32,14 @@ export const MobileSidebar: FC = () => {
     }, 400);
   };
 
-  // === RENDER ===
+  const handleCloseMenu = () => {
+    setMobileMenuOpen(false);
+  };
+
+  const handleSignOut = () => {
+    signOut();
+    setMobileMenuOpen(false);
+  };
 
   return (
     <div className="fixed inset-0 z-0 block lg:hidden overflow-hidden">
@@ -114,7 +118,7 @@ export const MobileSidebar: FC = () => {
                         <Link
                           key={item.label}
                           to={item.href}
-                          onClick={() => setMobileMenuOpen(false)}
+                          onClick={handleCloseMenu}
                         >
                           {content}
                         </Link>
@@ -150,17 +154,14 @@ export const MobileSidebar: FC = () => {
                 />
                 <Link
                   to={ROUTES.COSTS}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={handleCloseMenu}
                   className="size-11 rounded-2xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white flex items-center justify-center transition-all"
                   title="Harcama Analizi"
                 >
                   <Banknote className="size-5 transition-colors" />
                 </Link>
                 <button
-                  onClick={() => {
-                    signOut();
-                    setMobileMenuOpen(false);
-                  }}
+                  onClick={handleSignOut}
                   className="size-11 rounded-2xl bg-white/5 hover:bg-white/10 text-white/70 hover:text-white flex items-center justify-center transition-all active:scale-90"
                   aria-label="Çıkış Yap"
                 >
@@ -172,7 +173,7 @@ export const MobileSidebar: FC = () => {
             <Button
               variant="outline"
               className="w-full h-12 rounded-2xl font-black shadow-lg shadow-primary/20 border-white/10 text-white/70"
-              onClick={() => setMobileMenuOpen(false)}
+              onClick={handleCloseMenu}
             >
               Vazgeç
             </Button>

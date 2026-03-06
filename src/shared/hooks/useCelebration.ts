@@ -9,7 +9,6 @@ import { useUncelebratedQuery } from '@/features/achievements/hooks/useAchieveme
 import { logger } from '@/utils/logger';
 
 export function useCelebration() {
-  // === HOOKS ===
   const { stats, isLoading } = useProgress();
   const { user } = useAuth();
   const enqueue = useCelebrationStore((state) => state.enqueueCelebration);
@@ -23,8 +22,6 @@ export function useCelebration() {
 
   // 2. Sync Mutation
   const { mutate: syncAchievements } = useSyncAchievementsMutation();
-
-  // === EFFECTS ===
 
   // 3. Queue Processor
   // When 'uncelebrated' data changes (from query), process them
@@ -45,12 +42,12 @@ export function useCelebration() {
           const handleClose = async () => {
             try {
               await markAsCelebrated(user.id, id);
-            } catch (e) {
+            } catch (caughtError) {
               logger.error(
                 'useCelebration',
                 'handleClose',
                 `Failed to mark achievement ${id} as celebrated`,
-                e
+                caughtError
               );
             } finally {
               processingIds.current.delete(id);
@@ -95,8 +92,6 @@ export function useCelebration() {
       syncAchievements({ stats, userId: user.id });
     }
   }, [stats, isLoading, user, syncAchievements]);
-
-  // === HANDLERS ===
 
   // Exposed helpers for manual triggers if needed
   const triggerManualSync = useCallback(() => {

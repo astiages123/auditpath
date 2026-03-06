@@ -159,10 +159,6 @@ export function buildTrendDayAggregates(
   return aggregates;
 }
 
-// ==========================================
-// === PROCESSING FUNCTIONS ===
-// ==========================================
-
 /**
  * Calculates raw daily statistics from fetched database rows.
  *
@@ -178,94 +174,101 @@ export function processDailyStats(
   todayVideos: RawVideo[],
   yesterdayVideos: RawVideoSimple[]
 ): DailyStats {
-  try {
-    const totalWorkSeconds =
-      todaySessions.reduce((acc, s) => acc + (s.total_work_time || 0), 0) || 0;
-    const totalBreakSeconds =
-      todaySessions.reduce((acc, s) => acc + (s.total_break_time || 0), 0) || 0;
-    const totalPauseSeconds =
-      todaySessions.reduce((acc, s) => acc + (s.total_pause_time || 0), 0) || 0;
-
-    const totalCycles = todaySessions.reduce(
-      (acc, s) => acc + getCycleCount(parseTimelineEvents(s.timeline)),
+  const totalWorkSeconds =
+    todaySessions.reduce(
+      (acc, session) => acc + (session.total_work_time || 0),
       0
+    ) || 0;
+  const totalBreakSeconds =
+    todaySessions.reduce(
+      (acc, session) => acc + (session.total_break_time || 0),
+      0
+    ) || 0;
+  const totalPauseSeconds =
+    todaySessions.reduce(
+      (acc, session) => acc + (session.total_pause_time || 0),
+      0
+    ) || 0;
+
+  const totalCycles = todaySessions.reduce(
+    (acc, session) =>
+      acc + getCycleCount(parseTimelineEvents(session.timeline)),
+    0
+  );
+
+  const totalWorkMinutes = Math.round(totalWorkSeconds / 60);
+  const totalBreakMinutes = Math.round(totalBreakSeconds / 60);
+  const totalPauseMinutes = Math.round(totalPauseSeconds / 60);
+
+  const yesterdayWorkSeconds =
+    yesterdaySessions.reduce(
+      (acc, session) => acc + (session.total_work_time || 0),
+      0
+    ) || 0;
+  const yesterdayWorkMinutes = Math.round(yesterdayWorkSeconds / 60);
+
+  let trendPercentage = 0;
+  if (yesterdayWorkMinutes === 0) {
+    trendPercentage = totalWorkMinutes > 0 ? 100 : 0;
+  } else {
+    trendPercentage = Math.round(
+      ((totalWorkMinutes - yesterdayWorkMinutes) / yesterdayWorkMinutes) * 100
     );
-
-    const totalWorkMinutes = Math.round(totalWorkSeconds / 60);
-    const totalBreakMinutes = Math.round(totalBreakSeconds / 60);
-    const totalPauseMinutes = Math.round(totalPauseSeconds / 60);
-
-    const yesterdayWorkSeconds =
-      yesterdaySessions.reduce((acc, s) => acc + (s.total_work_time || 0), 0) ||
-      0;
-    const yesterdayWorkMinutes = Math.round(yesterdayWorkSeconds / 60);
-
-    let trendPercentage = 0;
-    if (yesterdayWorkMinutes === 0) {
-      trendPercentage = totalWorkMinutes > 0 ? 100 : 0;
-    } else {
-      trendPercentage = Math.round(
-        ((totalWorkMinutes - yesterdayWorkMinutes) / yesterdayWorkMinutes) * 100
-      );
-    }
-
-    const totalVideoMinutesData = todayVideos.reduce(
-      (acc, vp) => {
-        const video = vp.video as {
-          duration_minutes?: number | null;
-          duration?: string | null;
-        } | null;
-        const duration = video?.duration_minutes || 0;
-        const isReading = video?.duration?.includes('Sayfa');
-        return {
-          minutes: acc.minutes + (isReading ? 0 : duration),
-          readingMinutes: acc.readingMinutes + (isReading ? duration : 0),
-          pages: acc.pages + (isReading ? parseInt(video?.duration || '0') : 0),
-        };
-      },
-      { minutes: 0, readingMinutes: 0, pages: 0 }
-    );
-
-    const completedVideosCount = todayVideos.length || 0;
-    const yesterdayVideoCount = yesterdayVideos.length || 0;
-
-    let videoTrendPercentage = 0;
-    if (yesterdayVideoCount === 0) {
-      videoTrendPercentage = completedVideosCount > 0 ? 100 : 0;
-    } else {
-      videoTrendPercentage = Math.round(
-        ((completedVideosCount - yesterdayVideoCount) / yesterdayVideoCount) *
-          100
-      );
-    }
-
-    const goalMinutes = EFFICIENCY_CONFIG.DAILY_GOAL_MINUTES;
-    const progress = Math.min(
-      100,
-      Math.round((totalWorkMinutes / goalMinutes) * 100)
-    );
-
-    return {
-      totalWorkMinutes,
-      totalBreakMinutes,
-      sessionCount: totalCycles,
-      goalMinutes,
-      progress,
-      goalPercentage: progress,
-      trendPercentage,
-      dailyGoal: goalMinutes,
-      totalPauseMinutes,
-      totalVideoMinutes: Math.round(totalVideoMinutesData.minutes),
-      totalReadingMinutes: Math.round(totalVideoMinutesData.readingMinutes),
-      pagesRead: totalVideoMinutesData.pages,
-      completedVideos: completedVideosCount,
-      videoTrendPercentage,
-      totalCycles,
-    };
-  } catch (error) {
-    console.error('[EfficiencyCoreService][processDailyStats] Hata:', error);
-    throw error;
   }
+
+  const totalVideoMinutesData = todayVideos.reduce(
+    (acc, videoProgress) => {
+      const video = videoProgress.video as {
+        duration_minutes?: number | null;
+        duration?: string | null;
+      } | null;
+      const duration = video?.duration_minutes || 0;
+      const isReading = video?.duration?.includes('Sayfa');
+
+      return {
+        minutes: acc.minutes + (isReading ? 0 : duration),
+        readingMinutes: acc.readingMinutes + (isReading ? duration : 0),
+        pages: acc.pages + (isReading ? parseInt(video?.duration || '0') : 0),
+      };
+    },
+    { minutes: 0, readingMinutes: 0, pages: 0 }
+  );
+
+  const completedVideosCount = todayVideos.length || 0;
+  const yesterdayVideoCount = yesterdayVideos.length || 0;
+
+  let videoTrendPercentage = 0;
+  if (yesterdayVideoCount === 0) {
+    videoTrendPercentage = completedVideosCount > 0 ? 100 : 0;
+  } else {
+    videoTrendPercentage = Math.round(
+      ((completedVideosCount - yesterdayVideoCount) / yesterdayVideoCount) * 100
+    );
+  }
+
+  const goalMinutes = EFFICIENCY_CONFIG.DAILY_GOAL_MINUTES;
+  const progress = Math.min(
+    100,
+    Math.round((totalWorkMinutes / goalMinutes) * 100)
+  );
+
+  return {
+    totalWorkMinutes,
+    totalBreakMinutes,
+    sessionCount: totalCycles,
+    goalMinutes,
+    progress,
+    goalPercentage: progress,
+    trendPercentage,
+    dailyGoal: goalMinutes,
+    totalPauseMinutes,
+    totalVideoMinutes: Math.round(totalVideoMinutesData.minutes),
+    totalReadingMinutes: Math.round(totalVideoMinutesData.readingMinutes),
+    pagesRead: totalVideoMinutesData.pages,
+    completedVideos: completedVideosCount,
+    videoTrendPercentage,
+    totalCycles,
+  };
 }
 
 /**
@@ -277,19 +280,11 @@ export function processLearningLoadData(
   days: number,
   anchorDate: Date
 ): LearningLoad[] {
-  try {
-    return processLearningLoadDataFromAggregates(
-      buildTrendDayAggregates(sessionsData, videoData),
-      days,
-      anchorDate
-    );
-  } catch (error) {
-    console.error(
-      '[EfficiencyCoreService][processLearningLoadData] Hata:',
-      error
-    );
-    throw error;
-  }
+  return processLearningLoadDataFromAggregates(
+    buildTrendDayAggregates(sessionsData, videoData),
+    days,
+    anchorDate
+  );
 }
 
 export function processLearningLoadDataFromAggregates(
@@ -297,49 +292,40 @@ export function processLearningLoadDataFromAggregates(
   days: number,
   anchorDate: Date
 ): LearningLoad[] {
-  try {
-    const rawData: Array<
-      LearningLoad & { rawDate: Date; totalMinutes: number }
-    > = [];
+  const rawData: Array<LearningLoad & { rawDate: Date; totalMinutes: number }> =
+    [];
 
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(anchorDate);
-      d.setDate(d.getDate() - i);
-      d.setHours(12, 0, 0, 0);
+  for (let dayIndex = days - 1; dayIndex >= 0; dayIndex--) {
+    const date = new Date(anchorDate);
+    date.setDate(date.getDate() - dayIndex);
+    date.setHours(12, 0, 0, 0);
 
-      const dateKey = getVirtualDateKey(d);
-      const dayName = i === 0 ? 'Bugün' : formatDisplayDate(d);
-      const stats = aggregates.get(dateKey) || getEmptyTrendAggregate();
-      const pomodoroMinutes = Math.round(stats.workSeconds / 60);
-      const totalMinutes =
-        pomodoroMinutes + stats.videoMinutes + stats.readingMinutes;
+    const dateKey = getVirtualDateKey(date);
+    const dayName = dayIndex === 0 ? 'Bugün' : formatDisplayDate(date);
+    const stats = aggregates.get(dateKey) || getEmptyTrendAggregate();
+    const pomodoroMinutes = Math.round(stats.workSeconds / 60);
+    const totalMinutes =
+      pomodoroMinutes + stats.videoMinutes + stats.readingMinutes;
 
-      rawData.push({
-        day: dayName,
-        videoMinutes: stats.videoMinutes,
-        readingMinutes: stats.readingMinutes,
-        extraStudyMinutes: pomodoroMinutes,
-        rawDate: new Date(d),
-        totalMinutes,
-      });
-    }
-
-    const { weekendNoActivityStrDates } = getWeekendPairVisibility(rawData);
-
-    return rawData.filter((item) => {
-      return shouldKeepWeekendEntry(
-        item.rawDate,
-        item.totalMinutes,
-        weekendNoActivityStrDates
-      );
+    rawData.push({
+      day: dayName,
+      videoMinutes: stats.videoMinutes,
+      readingMinutes: stats.readingMinutes,
+      extraStudyMinutes: pomodoroMinutes,
+      rawDate: new Date(date),
+      totalMinutes,
     });
-  } catch (error) {
-    console.error(
-      '[EfficiencyCoreService][processLearningLoadData] Hata:',
-      error
-    );
-    throw error;
   }
+
+  const { weekendNoActivityStrDates } = getWeekendPairVisibility(rawData);
+
+  return rawData.filter((item) => {
+    return shouldKeepWeekendEntry(
+      item.rawDate,
+      item.totalMinutes,
+      weekendNoActivityStrDates
+    );
+  });
 }
 
 /**

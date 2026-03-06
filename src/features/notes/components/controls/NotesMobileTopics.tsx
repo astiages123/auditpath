@@ -30,10 +30,16 @@ export function NotesMobileTopics({
   if (!isMobileMenuOpen) return null;
   const chunks = topics;
   const activeChunkId = selectedTopicId;
+
   const handleSearchResultClick = (result: SearchResult) => {
     if (onSearchResultClick) {
       onSearchResultClick(result);
     }
+  };
+
+  const handleResultClick = (result: SearchResult) => {
+    handleSearchResultClick(result);
+    onClose();
   };
 
   return (
@@ -52,10 +58,7 @@ export function NotesMobileTopics({
           <SearchResultsSidebar
             results={results}
             query={debouncedQuery}
-            onResultClick={(id) => {
-              handleSearchResultClick(id);
-              onClose();
-            }}
+            onResultClick={handleResultClick}
           />
         ) : (
           <GlobalNavigation

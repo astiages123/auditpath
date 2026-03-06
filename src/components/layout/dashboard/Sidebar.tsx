@@ -17,7 +17,6 @@ import type { NavItem } from './nav-config';
 const GROUP_ORDER: NavItem['group'][] = ['navigation', 'action', 'meta'];
 
 export function Sidebar() {
-  // === HOOKS ===
   const isSidebarCollapsed = useUIStore((state) => state.isSidebarCollapsed);
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
   const { setOpen: setPomodoroOpen } = usePomodoro();
@@ -25,26 +24,27 @@ export function Sidebar() {
   const isCollapsed = isSidebarCollapsed;
   const groupedItems = getNavItemsByGroup();
 
-  // === HANDLERS ===
-
   const handleAction = (action: string) => {
     if (action === 'pomodoro') {
       setPomodoroOpen(true);
     }
   };
 
-  // === RENDER ===
-
   // Desktop'ta sadece mobileOnly olmayanları göster
   const filteredGroupedItems = Object.keys(groupedItems).reduce(
-    (acc, key) => {
-      acc[key as NavGroup] = groupedItems[key as NavGroup].filter(
-        (item) => !item.mobileOnly
-      );
-      return acc;
+    (groupMap, groupKey) => {
+      groupMap[groupKey as NavGroup] = groupedItems[
+        groupKey as NavGroup
+      ].filter((item) => !item.mobileOnly);
+      return groupMap;
     },
     {} as Record<NavGroup, NavItem[]>
   );
+
+  const handleToggleSidebar = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    toggleSidebar();
+  };
 
   return (
     <aside
@@ -53,7 +53,6 @@ export function Sidebar() {
         isCollapsed ? 'w-16' : 'w-[260px]'
       )}
     >
-      {/* === BRAND AREA === */}
       <Link
         to={ROUTES.HOME}
         className={cn(
@@ -81,7 +80,6 @@ export function Sidebar() {
         )}
       </Link>
 
-      {/* === NAV GROUPS === */}
       <nav className="flex-1 overflow-y-auto py-5 px-3 custom-scrollbar">
         <TooltipProvider>
           {GROUP_ORDER.map((groupKey, groupIndex) => {
@@ -112,13 +110,9 @@ export function Sidebar() {
         </TooltipProvider>
       </nav>
 
-      {/* === FOOTER: COLLAPSE TOGGLE === */}
       <div className="shrink-0 border-t border-border/10 p-3">
         <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleSidebar();
-          }}
+          onClick={handleToggleSidebar}
           className={cn(
             'flex items-center gap-3 w-full rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent/50 hover:text-foreground transition-all',
             isCollapsed && 'justify-center px-2'

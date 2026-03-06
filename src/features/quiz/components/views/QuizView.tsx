@@ -49,8 +49,6 @@ const buildQuestionResults = (state: QuizState) => {
   return questionResults;
 };
 
-// === TYPES ===
-
 interface QuizViewProps {
   /** Mevcut quiz durumu */
   state: QuizState;
@@ -92,15 +90,18 @@ export function QuizView({
   onRetry,
   onClose,
 }: QuizViewProps) {
-  // === RENDER LOGIC ===
   const questionResults = buildQuestionResults(state);
   const progressQueue = Array.from(
     new Set(
       state.history
-        .map((h) => h.id)
+        .map((historyItem) => historyItem.id)
         .filter((id): id is string => !!id)
         .concat(state.currentQuestion?.id ? [state.currentQuestion.id] : [])
-        .concat(state.queue.map((q) => q.id).filter((id): id is string => !!id))
+        .concat(
+          state.queue
+            .map((queuedQuestion) => queuedQuestion.id)
+            .filter((id): id is string => !!id)
+        )
     )
   );
 
@@ -115,7 +116,6 @@ export function QuizView({
     );
   }
 
-  // === RENDER ===
   return (
     <ErrorBoundary>
       <div className="flex flex-col h-full overflow-hidden">

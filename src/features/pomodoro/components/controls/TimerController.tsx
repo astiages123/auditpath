@@ -26,10 +26,6 @@ import {
 import { usePomodoroWorker } from '@/features/pomodoro/hooks/usePomodoroWorker';
 import { logger } from '@/utils/logger';
 
-// ===========================
-// === COMPONENT DEFINITION ===
-// ===========================
-
 export function TimerController() {
   // Timer state
   const { isActive, timeLeft, isBreak, duration, startTime } = useTimerStore();
@@ -145,7 +141,6 @@ export function TimerController() {
                     });
                   }
 
-                  // --- RESTORE TIMER STATE FROM TIMELINE ---
                   const timelineArray =
                     (activeSession.timeline as {
                       type: 'work' | 'break' | 'pause';
@@ -215,7 +210,6 @@ export function TimerController() {
                 }
               }
             } catch (error: unknown) {
-              console.error('[TimerController][loadData] Hata:', error);
               logger.error(
                 'TimerController',
                 'loadData',
@@ -230,7 +224,6 @@ export function TimerController() {
           }
         }
       } catch (error: unknown) {
-        console.error('[TimerController][loadData] Hata:', error);
         logger.error(
           'TimerController',
           'loadData',

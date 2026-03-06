@@ -1,15 +1,7 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { RANKS } from '@/features/achievements/utils/constants';
 import { calculateEstimatedDaysToNextRank } from '@/features/courses/logic/coursesLogic';
 import { RoadmapHero } from '@/features/courses/components/views/RoadmapHero';
 import { RoadmapPath } from '@/features/courses/components/views/RoadmapPath';
-
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
 
 export interface TitleRoadmapProps {
   watchedVideos: number;
@@ -18,10 +10,6 @@ export interface TitleRoadmapProps {
   completedHours?: number;
   totalHours?: number;
 }
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * Main container for the user's roadmap journey. Calculates current

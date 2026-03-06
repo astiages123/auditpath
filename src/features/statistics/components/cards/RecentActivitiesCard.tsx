@@ -11,10 +11,6 @@ import { SessionListItem } from '@/features/statistics/components/content/Sessio
 import type { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
 import type { FocusPowerPoint } from '@/features/statistics/types/statisticsTypes';
 
-// ==========================================
-// === PROPS ===
-// ==========================================
-
 export interface RecentActivitiesCardProps {
   sessions: RecentSession[];
   focusPowerWeek: FocusPowerPoint[];
@@ -22,14 +18,7 @@ export interface RecentActivitiesCardProps {
   focusPowerAll: FocusPowerPoint[];
 }
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 export const RecentActivitiesCard = (props: RecentActivitiesCardProps) => {
-  // ==========================================
-  // === HOOKS & STATE ===
-  // ==========================================
   const { sessions } = props;
   const [scrollElement, setScrollElement] =
     React.useState<HTMLDivElement | null>(null);
@@ -42,14 +31,8 @@ export const RecentActivitiesCard = (props: RecentActivitiesCardProps) => {
     overscan: 5,
   });
 
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
   const displaySessions = sessions.slice(0, 5);
 
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   return (
     <StatisticsModal
       title="Tüm Çalışma Geçmişi ve Analizler"

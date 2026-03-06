@@ -5,18 +5,12 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import { cn } from '@/utils/stringHelpers';
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
 export interface ToCTitleRendererProps {
   /** İçindekiler tablosunda gösterilecek başlık metni */
   title: string;
   /** Ek CSS sınıfları (esneklik için) */
   className?: string;
 }
-
-// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
-// ===========================
 
 /**
  * İçindekiler (ToC) listesindeki başlıkları güvenli bir şekilde render eden
@@ -30,13 +24,9 @@ export const ToCTitleRenderer = memo(function ToCTitleRenderer({
   title,
   className,
 }: ToCTitleRendererProps): React.ReactElement {
-  // === RENDER İŞ MANTIĞI ===
-
   // Rakam sonrası gelen noktaları (1., 2.) markdown syntaxından kaçırıyoruz ki
   // siparişli liste (ordered list) elemanı olarak algılanmasın.
   const escapedTitle: string = title.replace(/(\d+)\./g, '$1\\.');
-
-  // === UI RENDER ===
 
   return (
     <div className={cn('whitespace-normal wrap-break-word', className)}>

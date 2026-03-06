@@ -2,9 +2,6 @@ import { Trophy, Target, BookOpen, type LucideIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
 export interface NotesCourseOverviewProps {
   /** Kurs/Ders adı */
   courseName: string;
@@ -26,9 +23,6 @@ export interface OverviewStat {
   /** Arkaplan sınıfı (CSS Tailwind) */
   bg: string;
 }
-
-// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
-// ===========================
 
 /**
  * Kullanıcı notlar sayfasında ilk olarak karşılaştığında karşılama (genel görünüm)
@@ -58,8 +52,6 @@ export function NotesCourseOverview({
       bg: 'bg-blue-500/10',
     },
   ];
-
-  // === UI RENDER ===
 
   return (
     <div className="flex-col flex items-center justify-center p-8 h-full space-y-8 animate-in fade-in duration-500">

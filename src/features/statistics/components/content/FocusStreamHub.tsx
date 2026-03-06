@@ -8,10 +8,6 @@ import { DistractionDetails } from '@/features/statistics/components/content/Dis
 import { Skeleton } from '@/components/ui/skeleton';
 import { CommonEmptyState } from '@/features/statistics/components/shared/CardElements';
 
-// ==========================================
-// === LAZY COMPONENTS ===
-// ==========================================
-
 const StatisticsTrendChart = lazy(() =>
   import('@/features/statistics/components/charts/StatisticsTrendChart').then(
     (m) => ({
@@ -20,28 +16,16 @@ const StatisticsTrendChart = lazy(() =>
   )
 );
 
-// ==========================================
-// === PROPS ===
-// ==========================================
-
 export interface FocusStreamHubProps {
   sessions: Session[];
   trendData: EfficiencyTrend[];
 }
-
-// ==========================================
-// === COMPONENT: FALLBACK ===
-// ==========================================
 
 const ChartFallback = () => (
   <div className="w-full h-[400px] flex items-center justify-center bg-surface/5 rounded-xl border border-border/10">
     <Skeleton className="w-[90%] h-[300px] bg-surface/20" />
   </div>
 );
-
-// ==========================================
-// === COMPONENT ===
-// ==========================================
 
 export const FocusStreamHub = ({
   sessions,

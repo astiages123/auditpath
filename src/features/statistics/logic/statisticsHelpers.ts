@@ -3,10 +3,6 @@ import { getVirtualDateKey } from '@/utils/dateUtils';
 import { EFFICIENCY_THRESHOLDS } from '../utils/constants';
 import { FlowState } from '../types';
 
-// ==========================================
-// === INTERFACES ===
-// ==========================================
-
 /** Metrics for calculating learning flow */
 export interface EfficiencyMetrics {
   totalVideoTime: number;
@@ -20,10 +16,6 @@ export interface LearningFlowResult {
   state: FlowState;
 }
 
-// ==========================================
-// === UTILITY FUNCTIONS ===
-// ==========================================
-
 /**
  * Generates an array of date strings for the last N days.
  *
@@ -31,18 +23,15 @@ export interface LearningFlowResult {
  * @returns Array of date strings (YYYY-MM-DD)
  */
 export function generateDateRange(days: number): string[] {
-  try {
-    const dates: string[] = [];
-    for (let i = 0; i < days; i++) {
-      const currentDate = new Date();
-      currentDate.setDate(currentDate.getDate() - i);
-      dates.push(getVirtualDateKey(currentDate));
-    }
-    return dates;
-  } catch (error) {
-    console.error('[statisticsHelpers][generateDateRange] Hata:', error);
-    return [];
+  const dates: string[] = [];
+
+  for (let dayIndex = 0; dayIndex < days; dayIndex++) {
+    const currentDate = new Date();
+    currentDate.setDate(currentDate.getDate() - dayIndex);
+    dates.push(getVirtualDateKey(currentDate));
   }
+
+  return dates;
 }
 
 /**
@@ -52,19 +41,11 @@ export function generateDateRange(days: number): string[] {
  * @returns Formatted time string
  */
 export function formatEfficiencyTime(totalMinutes: number): string {
-  try {
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    return `${hours}sa ${minutes}dk`;
-  } catch (error) {
-    console.error('[statisticsHelpers][formatEfficiencyTime] Hata:', error);
-    return '0sa 0dk';
-  }
-}
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
 
-// ==========================================
-// === CALCULATION FUNCTIONS ===
-// ==========================================
+  return `${hours}sa ${minutes}dk`;
+}
 
 /**
  * Calculates the raw efficiency score (Video / Pomodoro ratio).
@@ -77,14 +58,12 @@ export function calculateEfficiencyScore(
   videoMinutes: number,
   workMinutes: number
 ): number {
-  try {
-    if (workMinutes <= 0) return 0;
-    const ratio = videoMinutes / workMinutes;
-    return Number(ratio.toFixed(2));
-  } catch (error) {
-    console.error('[statisticsHelpers][calculateEfficiencyScore] Hata:', error);
+  if (workMinutes <= 0) {
     return 0;
   }
+
+  const ratio = videoMinutes / workMinutes;
+  return Number(ratio.toFixed(2));
 }
 
 /**
@@ -96,37 +75,34 @@ export function calculateEfficiencyScore(
 export function calculateLearningFlow(
   metrics: EfficiencyMetrics
 ): LearningFlowResult {
-  try {
-    const totalContentTime =
-      metrics.totalVideoTime + (metrics.totalReadingTime || 0);
-    const score = calculateEfficiencyScore(
-      totalContentTime,
-      metrics.totalPomodoroTime
-    );
+  const totalContentTime =
+    metrics.totalVideoTime + (metrics.totalReadingTime || 0);
+  const score = calculateEfficiencyScore(
+    totalContentTime,
+    metrics.totalPomodoroTime
+  );
 
-    if (metrics.totalPomodoroTime === 0) {
-      return { score: 0, state: 'stuck' };
-    }
-
-    let state: FlowState;
-
-    if (score < EFFICIENCY_THRESHOLDS.STUCK) {
-      state = 'stuck';
-    } else if (score < EFFICIENCY_THRESHOLDS.DEEP) {
-      state = 'deep';
-    } else if (score <= EFFICIENCY_THRESHOLDS.OPTIMAL_MAX) {
-      state = 'optimal';
-    } else if (score <= EFFICIENCY_THRESHOLDS.SPEED) {
-      state = 'speed';
-    } else {
-      state = 'shallow';
-    }
-
-    return { score, state };
-  } catch (error) {
-    console.error('[statisticsHelpers][calculateLearningFlow] Hata:', error);
+  if (metrics.totalPomodoroTime === 0) {
     return { score: 0, state: 'stuck' };
   }
+
+  if (score < EFFICIENCY_THRESHOLDS.STUCK) {
+    return { score, state: 'stuck' };
+  }
+
+  if (score < EFFICIENCY_THRESHOLDS.DEEP) {
+    return { score, state: 'deep' };
+  }
+
+  if (score <= EFFICIENCY_THRESHOLDS.OPTIMAL_MAX) {
+    return { score, state: 'optimal' };
+  }
+
+  if (score <= EFFICIENCY_THRESHOLDS.SPEED) {
+    return { score, state: 'speed' };
+  }
+
+  return { score, state: 'shallow' };
 }
 
 /**
@@ -140,11 +116,9 @@ export function calculateGoalProgress(
   currentMinutes: number,
   goalMinutes: number
 ): number {
-  try {
-    if (goalMinutes <= 0) return 0;
-    return Math.min(Math.round((currentMinutes / goalMinutes) * 100), 100);
-  } catch (error) {
-    console.error('[statisticsHelpers][calculateGoalProgress] Hata:', error);
+  if (goalMinutes <= 0) {
     return 0;
   }
+
+  return Math.min(Math.round((currentMinutes / goalMinutes) * 100), 100);
 }

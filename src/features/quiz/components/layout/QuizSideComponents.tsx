@@ -11,9 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 
-// ============================================================================
 // TOPIC SIDEBAR
-// ============================================================================
 
 interface TopicSidebarProps {
   /** Veri yüklenme durumu */
@@ -41,8 +39,6 @@ export function TopicSidebar({
   onStartSmartExam,
   isGeneratingExam,
 }: TopicSidebarProps) {
-  // === RENDER ===
-
   return (
     <div className="flex-1 overflow-y-auto custom-scrollbar p-3 flex flex-col gap-1">
       {/* KARMA DENEME SINAVI BUTONU */}
@@ -151,9 +147,7 @@ export function TopicSidebar({
   );
 }
 
-// ============================================================================
 // TOPIC LIST UNIT
-// ============================================================================
 
 interface TopicListProps {
   /** Listelenecek konular */
@@ -166,8 +160,6 @@ interface TopicListProps {
  * Konuların listelendiği daha yalın, bağımsız liste bileşeni.
  */
 export function TopicList({ topics, onSelectTopic }: TopicListProps) {
-  // === RENDER ===
-
   return (
     <div className="space-y-1">
       {topics.map((topic) => (

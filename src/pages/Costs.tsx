@@ -11,7 +11,6 @@ import { useCosts } from '@/features/costs/hooks/useCosts';
 import { CostsHeader } from '@/features/costs/components/layout/CostsHeader';
 import { CostsStats } from '@/features/costs/components/layout/CostsStats';
 import { CostsTable } from '@/features/costs/components/charts/CostsTable';
-import { PageHeader } from '@/shared/components/PageHeader';
 
 const CostsChart = lazy(() =>
   import('@/features/costs/components/charts/CostsChart').then((m) => ({
@@ -26,7 +25,7 @@ export default function CostsPage() {
     setSelectedModel,
     uniqueModels,
     usdTryRate,
-    loading,
+    loading: isLoading,
     isPending,
     dailyData,
     totalCostUsd,
@@ -48,7 +47,7 @@ export default function CostsPage() {
     }).format(value);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
         <div className="flex justify-between items-center mb-6">
@@ -63,13 +62,11 @@ export default function CostsPage() {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <PageHeader
-        title="AI Maliyetleri"
-        subtitle="Model kullanım kayıtları ve oluşan maliyetleri takip et."
-      />
+    <div className="space-y-8 animate-fade-in pt-4 md:pt-8">
       <div className="space-y-6">
         <CostsHeader
+          title="AI Maliyetleri"
+          subtitle="Model kullanım kayıtları ve oluşan maliyetleri takip et."
           usdTryRate={usdTryRate}
           selectedModel={selectedModel}
           onModelChange={setSelectedModel}

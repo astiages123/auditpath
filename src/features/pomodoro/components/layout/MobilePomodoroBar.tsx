@@ -12,10 +12,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
-// ===========================
-// === PROPS DEFINITION ===
-// ===========================
-
 export interface MobilePomodoroBarProps {
   isWorking: boolean;
   status: string;
@@ -24,10 +20,6 @@ export interface MobilePomodoroBarProps {
   onDiscard: () => void;
   onSwitchMode: () => void;
 }
-
-// ===========================
-// === COMPONENT DEFINITION ===
-// ===========================
 
 export function MobilePomodoroBar({
   isWorking,
@@ -40,22 +32,36 @@ export function MobilePomodoroBar({
   const { minutes, seconds, selectedCourse, start, pause } = usePomodoro();
   const [showActions, setShowActions] = useState(false);
   const isRunning = status === 'running';
+  const handleSwitchMode = () => {
+    onSwitchMode();
+    setShowActions(false);
+  };
+
+  const handleFinishDay = () => {
+    onFinishDay();
+    setShowActions(false);
+  };
+
+  const handleBackdropClick = () => {
+    setShowActions(false);
+  };
+
+  const handleActionsToggle = () => {
+    setShowActions(!showActions);
+  };
 
   return (
     <div className="sm:hidden w-full pointer-events-auto relative">
-      {/* Action Sheet */}
       <AnimatePresence>
         {showActions && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-40 bg-black/40"
-              onClick={() => setShowActions(false)}
+              onClick={handleBackdropClick}
             />
-            {/* Sheet */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -69,10 +75,7 @@ export function MobilePomodoroBar({
                 )}
               >
                 <button
-                  onClick={() => {
-                    onSwitchMode();
-                    setShowActions(false);
-                  }}
+                  onClick={handleSwitchMode}
                   className="w-full flex items-center gap-3 px-5 py-4 text-white/80 hover:text-white hover:bg-white/5 transition-colors text-sm font-semibold"
                 >
                   {isWorking ? (
@@ -87,10 +90,7 @@ export function MobilePomodoroBar({
                 </button>
                 <div className="h-px bg-white/5" />
                 <button
-                  onClick={() => {
-                    onFinishDay();
-                    setShowActions(false);
-                  }}
+                  onClick={handleFinishDay}
                   className="w-full flex items-center gap-3 px-5 py-4 text-emerald-400 hover:bg-white/5 transition-colors text-sm font-semibold"
                 >
                   <CheckCircle2 className="w-4 h-4" /> Günü Bitir & Kaydet
@@ -101,7 +101,6 @@ export function MobilePomodoroBar({
         )}
       </AnimatePresence>
 
-      {/* Pill */}
       <motion.div
         layout
         className={cn(
@@ -114,7 +113,6 @@ export function MobilePomodoroBar({
               : 'bg-amber-950'
         )}
       >
-        {/* Progress line */}
         <div className="absolute top-0 left-0 right-0 h-[2px] bg-white/5">
           <motion.div
             className={cn(
@@ -126,12 +124,10 @@ export function MobilePomodoroBar({
           />
         </div>
 
-        {/* Course name */}
         <span className="flex-1 min-w-0 text-xs font-bold text-white/70 truncate">
           {selectedCourse?.name}
         </span>
 
-        {/* Timer */}
         <span
           className={cn(
             'font-mono font-black text-xl tabular-nums tracking-wider text-white shrink-0',
@@ -141,7 +137,6 @@ export function MobilePomodoroBar({
           {minutes}:{seconds}
         </span>
 
-        {/* Play/Pause */}
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={isRunning ? pause : start}
@@ -157,16 +152,14 @@ export function MobilePomodoroBar({
           )}
         </motion.button>
 
-        {/* More */}
         <motion.button
           whileTap={{ scale: 0.9 }}
-          onClick={() => setShowActions(!showActions)}
+          onClick={handleActionsToggle}
           className="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 text-white/60 shrink-0"
         >
           <MoreHorizontal size={16} />
         </motion.button>
 
-        {/* Close */}
         <motion.button
           whileTap={{ scale: 0.9 }}
           onClick={onDiscard}

@@ -1,7 +1,3 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import {
   TvMinimalPlay,
   Clock,
@@ -20,10 +16,6 @@ import { normalizeCategorySlug } from '@/features/courses/utils/categoryHelpers'
 import { CATEGORY_THEMES } from '@/features/courses/utils/coursesConfig';
 import type { Course } from '@/features/courses/types/courseTypes';
 
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
-
 export interface CategoryCardProps {
   id: string;
   name: string;
@@ -35,10 +27,6 @@ export interface CategoryCardProps {
   isOpen: boolean;
   onToggle: () => void;
 }
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * Renders a collapsible category card displaying aggregated progress

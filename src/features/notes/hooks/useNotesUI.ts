@@ -1,9 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
 export interface UseNotesUIProps {
   /** Ders yığınları listesi (scroll vs ilerleme oranlaması için) */
   chunks: CourseTopic[];
@@ -34,9 +31,6 @@ export interface UseNotesUIReturn {
   handleScroll: (e: React.UIEvent<HTMLDivElement>) => void;
 }
 
-// === BÖLÜM ADI: HOOK İŞ MANTIĞI ===
-// ===========================
-
 /**
  * Notlar özelliğinin arayüz durumu kancasıdır.
  * Progress bardaki yüzdelenmeleri hesaplar ve ekran panellerinin boyut/görünürlük ayarlamalarını tetikler.
@@ -48,22 +42,15 @@ export function useNotesUI({
   chunks,
   activeChunkId,
 }: UseNotesUIProps): UseNotesUIReturn {
-  // === 1. PANEL GÖRÜNÜRLÜK (VISIBILITY) ===
   const [isLeftPanelVisible, setIsLeftPanelVisible] = useState<boolean>(() => {
-    // Sıkı tip denetiminde window her zaman var olmayabileceğinden
-    // window kontrolü yapılır (Sistematik Next.JS ve Vercel build esnekliği de dahil edilmiş olur).
     if (typeof window !== 'undefined') {
       return window.innerWidth >= 1024;
     }
-    return true; // Varsayılan masaüstü açık (SSR vs fallback)
+    return true;
   });
 
   const [isRightPanelVisible, setIsRightPanelVisible] = useState<boolean>(true);
-
-  // === 2. MODAL VE ÇEKMECELER (DRAWERS) ===
   const [isQuizDrawerOpen, setIsQuizDrawerOpen] = useState<boolean>(false);
-
-  // === 3. BAŞARI (PROGRESS) LOGIC ===
   const [localProgress, setLocalProgress] = useState<number>(0);
 
   const totalProgress: number = useMemo(() => {
@@ -74,24 +61,20 @@ export function useNotesUI({
   const displayProgress: number = activeChunkId !== '' ? localProgress : 0;
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>): void => {
-    try {
-      const container: HTMLDivElement = e.currentTarget;
-      if (!container) return;
+    const container: HTMLDivElement = e.currentTarget;
+    if (!container) return;
 
-      const scrollHeight: number =
-        container.scrollHeight - container.clientHeight;
+    const scrollHeight: number =
+      container.scrollHeight - container.clientHeight;
 
-      if (scrollHeight <= 0) return;
+    if (scrollHeight <= 0) return;
 
-      const currentProgress: number = Math.min(
-        100,
-        Math.round((container.scrollTop / scrollHeight) * 100)
-      );
+    const currentProgress: number = Math.min(
+      100,
+      Math.round((container.scrollTop / scrollHeight) * 100)
+    );
 
-      setLocalProgress(currentProgress);
-    } catch (error: unknown) {
-      console.error('[useNotesUI][handleScroll] Hata:', error);
-    }
+    setLocalProgress(currentProgress);
   }, []);
 
   return {

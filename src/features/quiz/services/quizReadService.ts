@@ -12,29 +12,37 @@ import {
 
 const MODULE = 'QuizReadService';
 
+function throwQueryError(func: string, error: string | undefined): never {
+  const errorObject = new Error(error || `${func} failed`);
+  logger.error(MODULE, func, 'Hata:', errorObject);
+  throw errorObject;
+}
+
 /** Kurstaki toplam soru sayısını getirir */
 export async function getTotalQuestionsInCourse(
   courseId: string
 ): Promise<number> {
   const FUNC = 'getTotalQuestionsInCourse';
-  try {
-    if (!isValidUuid(courseId)) return 0;
-    const { count } = await safeQuery(
-      supabase
-        .from('questions')
-        .select('*', {
-          count: 'exact',
-          head: true,
-        })
-        .eq('course_id', courseId),
-      `${FUNC} error`,
-      { courseId }
-    );
-    return count || 0;
-  } catch (error) {
-    logger.error(MODULE, FUNC, 'Hata:', error);
-    return 0;
+
+  if (!isValidUuid(courseId)) return 0;
+
+  const result = await safeQuery(
+    supabase
+      .from('questions')
+      .select('*', {
+        count: 'exact',
+        head: true,
+      })
+      .eq('course_id', courseId),
+    `${FUNC} error`,
+    { courseId }
+  );
+
+  if (!result.success) {
+    throwQueryError(FUNC, result.error);
   }
+
+  return result.count || 0;
 }
 
 /** Belirli bir konuya (topic/chunk) ait tüm soruları getirir */
@@ -43,39 +51,46 @@ export async function getTopicQuestions(
   topic: string
 ): Promise<QuizQuestion[]> {
   const FUNC = 'getTopicQuestions';
-  try {
-    const { data, success } = await safeQuery<RepositoryQuestion[]>(
-      supabase
-        .from('questions')
-        .select('*, course:courses(course_slug)')
-        .eq('course_id', courseId)
-        .eq('section_title', topic)
-        .order('created_at', { ascending: true }),
-      `${FUNC} error`,
-      { courseId, topic }
-    );
-    if (!success || !data) return [];
-    return data.map((q) => {
-      const qData = parseOrThrow(QuizQuestionSchema, q.question_data);
-      const courseSlug = q.course?.course_slug;
-      return {
-        type: 'multiple_choice',
-        q: qData.q,
-        o: qData.o,
-        a: qData.a,
-        exp: qData.exp,
-        img: qData.img,
-        diagnosis: qData.diagnosis,
-        insight: qData.insight,
-        evidence: qData.evidence,
-        imgPath:
-          qData.img && courseSlug ? `/notes/${courseSlug}/media/` : undefined,
-      } as QuizQuestion;
-    });
-  } catch (error) {
-    logger.error(MODULE, FUNC, 'Hata:', error);
-    return [];
+
+  const result = await safeQuery<RepositoryQuestion[]>(
+    supabase
+      .from('questions')
+      .select('*, course:courses(course_slug)')
+      .eq('course_id', courseId)
+      .eq('section_title', topic)
+      .order('created_at', { ascending: true }),
+    `${FUNC} error`,
+    { courseId, topic }
+  );
+
+  if (!result.success) {
+    throwQueryError(FUNC, result.error);
   }
+
+  if (!result.data) return [];
+
+  return result.data.map((question) => {
+    const questionData = parseOrThrow(
+      QuizQuestionSchema,
+      question.question_data
+    );
+    const courseSlug = question.course?.course_slug;
+    return {
+      type: 'multiple_choice',
+      q: questionData.q,
+      o: questionData.o,
+      a: questionData.a,
+      exp: questionData.exp,
+      img: questionData.img,
+      diagnosis: questionData.diagnosis,
+      insight: questionData.insight,
+      evidence: questionData.evidence,
+      imgPath:
+        questionData.img && courseSlug
+          ? `/notes/${courseSlug}/media/`
+          : undefined,
+    } as QuizQuestion;
+  });
 }
 
 /** Kullanıcının belirli bir sorudaki durum bilgisini getirir */
@@ -84,57 +99,62 @@ export async function getUserQuestionStatus(
   questionId: string
 ) {
   const FUNC = 'getUserQuestionStatus';
-  try {
-    if (!isValidUuid(questionId)) return null;
-    const { data } = await safeQuery<{
-      question_id: string;
-      status: 'active' | 'reviewing' | 'mastered';
-      rep_count: number;
-      next_review_session: number | null;
-    }>(
-      supabase
-        .from('user_question_status')
-        .select('question_id, status, rep_count, next_review_session')
-        .eq('user_id', userId)
-        .eq('question_id', questionId)
-        .maybeSingle(),
-      `${FUNC} error`,
-      { userId, questionId }
-    );
-    if (!data) return null;
-    return {
-      question_id: data.question_id,
-      status: data.status,
-      rep_count: data.rep_count ?? 0,
-      next_review_session: data.next_review_session,
-    };
-  } catch (error) {
-    logger.error(MODULE, FUNC, 'Hata:', error);
-    return null;
+
+  if (!isValidUuid(questionId)) return null;
+
+  const result = await safeQuery<{
+    question_id: string;
+    status: 'active' | 'reviewing' | 'mastered';
+    rep_count: number;
+    next_review_session: number | null;
+  }>(
+    supabase
+      .from('user_question_status')
+      .select('question_id, status, rep_count, next_review_session')
+      .eq('user_id', userId)
+      .eq('question_id', questionId)
+      .maybeSingle(),
+    `${FUNC} error`,
+    { userId, questionId }
+  );
+
+  if (!result.success) {
+    throwQueryError(FUNC, result.error);
   }
+
+  if (!result.data) return null;
+
+  return {
+    question_id: result.data.question_id,
+    status: result.data.status,
+    rep_count: result.data.rep_count ?? 0,
+    next_review_session: result.data.next_review_session,
+  };
 }
 
 /** Belirli bir chunk için üretilmiş toplam soru sayısını getirir */
 export async function getChunkQuestionCount(chunkId: string): Promise<number> {
   const FUNC = 'getChunkQuestionCount';
-  try {
-    if (!isValidUuid(chunkId)) return 0;
-    const { count } = await safeQuery(
-      supabase
-        .from('questions')
-        .select('*', {
-          count: 'exact',
-          head: true,
-        })
-        .eq('chunk_id', chunkId),
-      `${FUNC} error`,
-      { chunkId }
-    );
-    return count || 0;
-  } catch (error) {
-    logger.error(MODULE, FUNC, 'Hata:', error);
-    return 0;
+
+  if (!isValidUuid(chunkId)) return 0;
+
+  const result = await safeQuery(
+    supabase
+      .from('questions')
+      .select('*', {
+        count: 'exact',
+        head: true,
+      })
+      .eq('chunk_id', chunkId),
+    `${FUNC} error`,
+    { chunkId }
+  );
+
+  if (!result.success) {
+    throwQueryError(FUNC, result.error);
   }
+
+  return result.count || 0;
 }
 
 /** Durum bazlı soruları getirir */
@@ -146,33 +166,37 @@ export async function fetchQuestionsByStatus(
   limit: number
 ): Promise<QuestionWithStatus[]> {
   const FUNC = 'fetchQuestionsByStatus';
-  try {
-    let query = supabase
-      .from('user_question_status')
-      .select(
-        `question_id, status, next_review_session, questions!inner (id, chunk_id, course_id, parent_question_id, question_data)`
-      )
-      .eq('user_id', userId)
-      .eq('questions.course_id', courseId)
-      .eq('status', status)
-      .eq('questions.usage_type', 'antrenman');
-    if (maxSession !== null) {
-      query = query.lte('next_review_session', maxSession);
-    }
-    query = query.order('updated_at', { ascending: true }).limit(limit);
-    const { data } = await safeQuery<unknown[]>(query, `${FUNC} error`, {
-      userId,
-      courseId,
-      status,
-    });
-    return parseArray(
-      QuestionWithStatusRowSchema,
-      data || []
-    ) as QuestionWithStatus[];
-  } catch (error) {
-    logger.error(MODULE, FUNC, 'Hata:', error);
-    return [];
+
+  let query = supabase
+    .from('user_question_status')
+    .select(
+      `question_id, status, next_review_session, questions!inner (id, chunk_id, course_id, parent_question_id, question_data)`
+    )
+    .eq('user_id', userId)
+    .eq('questions.course_id', courseId)
+    .eq('status', status)
+    .eq('questions.usage_type', 'antrenman');
+
+  if (maxSession !== null) {
+    query = query.lte('next_review_session', maxSession);
   }
+
+  query = query.order('updated_at', { ascending: true }).limit(limit);
+
+  const result = await safeQuery<unknown[]>(query, `${FUNC} error`, {
+    userId,
+    courseId,
+    status,
+  });
+
+  if (!result.success) {
+    throwQueryError(FUNC, result.error);
+  }
+
+  return parseArray(
+    QuestionWithStatusRowSchema,
+    result.data || []
+  ) as QuestionWithStatus[];
 }
 
 /** Belirli soru ID listesine göre soru verilerini getirir */
@@ -180,23 +204,25 @@ export async function fetchQuestionsByIds(
   ids: string[]
 ): Promise<RepositoryQuestion[]> {
   const FUNC = 'fetchQuestionsByIds';
-  try {
-    if (ids.length === 0) return [];
-    const { data } = await safeQuery<RepositoryQuestion[]>(
-      supabase
-        .from('questions')
-        .select(
-          'id, chunk_id, question_data, bloom_level, concept_title, usage_type, course:courses(course_slug), chunk:note_chunks(section_title)'
-        )
-        .in('id', ids),
-      `${FUNC} error`,
-      { ids }
-    );
-    return data || [];
-  } catch (error) {
-    logger.error(MODULE, FUNC, 'Hata:', error);
-    return [];
+
+  if (ids.length === 0) return [];
+
+  const result = await safeQuery<RepositoryQuestion[]>(
+    supabase
+      .from('questions')
+      .select(
+        'id, chunk_id, question_data, bloom_level, concept_title, usage_type, course:courses(course_slug), chunk:note_chunks(section_title)'
+      )
+      .in('id', ids),
+    `${FUNC} error`,
+    { ids }
+  );
+
+  if (!result.success) {
+    throwQueryError(FUNC, result.error);
   }
+
+  return result.data || [];
 }
 
 /** Tek bir sorunun verisini getirir */
@@ -204,24 +230,26 @@ export async function getQuestionData(
   questionId: string
 ): Promise<RepositoryQuestion | null> {
   const FUNC = 'getQuestionData';
-  try {
-    if (!isValidUuid(questionId)) return null;
-    const { data } = await safeQuery<RepositoryQuestion>(
-      supabase
-        .from('questions')
-        .select(
-          'id, chunk_id, question_data, bloom_level, concept_title, usage_type'
-        )
-        .eq('id', questionId)
-        .single(),
-      `${FUNC} error`,
-      { questionId }
-    );
-    return data ?? null;
-  } catch (error) {
-    logger.error(MODULE, FUNC, 'Hata:', error);
-    return null;
+
+  if (!isValidUuid(questionId)) return null;
+
+  const result = await safeQuery<RepositoryQuestion>(
+    supabase
+      .from('questions')
+      .select(
+        'id, chunk_id, question_data, bloom_level, concept_title, usage_type'
+      )
+      .eq('id', questionId)
+      .single(),
+    `${FUNC} error`,
+    { questionId }
+  );
+
+  if (!result.success) {
+    throwQueryError(FUNC, result.error);
   }
+
+  return result.data ?? null;
 }
 
 /** Kullanıcının belirli bir kursta ustalaştığı soru sayısını getirir */
@@ -230,23 +258,25 @@ export async function getMasteredQuestionsCount(
   courseId: string
 ): Promise<number> {
   const FUNC = 'getMasteredQuestionsCount';
-  try {
-    if (!isValidUuid(courseId)) return 0;
-    const { count } = await safeQuery(
-      supabase
-        .from('user_question_status')
-        .select('question_id', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('status', 'mastered')
-        .eq('questions.course_id', courseId),
-      `${FUNC} error`,
-      { userId, courseId }
-    );
-    return count || 0;
-  } catch (error) {
-    logger.error(MODULE, FUNC, 'Hata:', error);
-    return 0;
+
+  if (!isValidUuid(courseId)) return 0;
+
+  const result = await safeQuery(
+    supabase
+      .from('user_question_status')
+      .select('question_id', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('status', 'mastered')
+      .eq('questions.course_id', courseId),
+    `${FUNC} error`,
+    { userId, courseId }
+  );
+
+  if (!result.success) {
+    throwQueryError(FUNC, result.error);
   }
+
+  return result.count || 0;
 }
 
 /** Henüz çözülmemiş (yeni seans için bekleyen) takip sorularını getirir */
@@ -255,22 +285,24 @@ export async function fetchNewFollowups(
   limit: number
 ): Promise<unknown[]> {
   const FUNC = 'fetchNewFollowups';
-  try {
-    if (!isValidUuid(courseId)) return [];
-    const { data } = await safeQuery<unknown[]>(
-      supabase
-        .from('questions')
-        .select('*')
-        .eq('course_id', courseId)
-        .not('parent_question_id', 'is', null)
-        .order('created_at', { ascending: false })
-        .limit(limit),
-      `${FUNC} error`,
-      { courseId }
-    );
-    return data || [];
-  } catch (error) {
-    logger.error(MODULE, FUNC, 'Hata:', error);
-    return [];
+
+  if (!isValidUuid(courseId)) return [];
+
+  const result = await safeQuery<unknown[]>(
+    supabase
+      .from('questions')
+      .select('*')
+      .eq('course_id', courseId)
+      .not('parent_question_id', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(limit),
+    `${FUNC} error`,
+    { courseId }
+  );
+
+  if (!result.success) {
+    throwQueryError(FUNC, result.error);
   }
+
+  return result.data || [];
 }

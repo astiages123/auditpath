@@ -18,84 +18,56 @@ import {
   TrueFalseQuestion,
 } from '@/features/quiz/types';
 
-// ============================================================================
-// HOOK
-// ============================================================================
-
-/**
- * Quiz motorunun veri katmanı ile iletişimini sağlayan API soyutlama hook'u.
- * Tanstack Query mutasyonlarını ve direkt servis çağrılarını birleştirir.
- */
 export function useQuizEngineApi() {
-  // === EXTERNAL HOOKS ===
   const queryClient = useQueryClient();
   const startSessionMutation = useStartQuizSessionMutation();
   const generateChunkMutation = useGenerateChunkMutation();
   const submitAnswerMutation = useSubmitAnswerMutation();
 
-  // === SESSION OPERATIONS ===
-
-  /** Yeni bir quiz oturumu başlatır */
   const startQuizSession = useCallback(
     async (userId: string, courseId: string) => {
-      try {
-        return await startSessionMutation.mutateAsync({ userId, courseId });
-      } catch (err) {
-        console.error('[useQuizEngineApi][startQuizSession] Hata:', err);
-        throw err;
-      }
+      return await startSessionMutation.mutateAsync({ userId, courseId });
     },
     [startSessionMutation]
   );
 
-  // === QUESTION LOADING ===
-
-  /**
-   * Tekrar kuyruğundan (SRS) soruları yükler.
-   * Belirli bir üniteye (chunk) göre filtrelenebilir.
-   */
   const loadQuestionsFromQueue = useCallback(
     async (
       session: SessionContext,
       chunkId?: string
     ): Promise<QuizQuestion[]> => {
-      try {
-        const queue = await queryClient.fetchQuery({
-          queryKey: [
-            'quiz',
-            'reviewQueue',
-            session.userId,
-            session.courseId,
-            chunkId,
-            10,
-          ],
-          queryFn: () => getReviewQueue(session, 10, chunkId),
-        });
+      const queue = await queryClient.fetchQuery({
+        queryKey: [
+          'quiz',
+          'reviewQueue',
+          session.userId,
+          session.courseId,
+          chunkId,
+          10,
+        ],
+        queryFn: () => getReviewQueue(session, 10, chunkId),
+      });
 
-        if (queue.length === 0) return [];
+      if (queue.length === 0) return [];
 
-        const questions = await queryClient.fetchQuery({
-          queryKey: ['quiz', 'questionsByIds', queue.map((i) => i.questionId)],
-          queryFn: () => fetchQuestionsByIds(queue.map((i) => i.questionId)),
-        });
+      const questionIds = queue.map((queueItem) => queueItem.questionId);
+      const questions = await queryClient.fetchQuery({
+        queryKey: ['quiz', 'questionsByIds', questionIds],
+        queryFn: () => fetchQuestionsByIds(questionIds),
+      });
 
-        return questions.map((q: { id: string; question_data: unknown }) => {
-          const qd = q.question_data as
+      return questions.map(
+        (question: { id: string; question_data: unknown }) => {
+          const questionData = question.question_data as
             | TrueFalseQuestion
             | MultipleChoiceQuestion;
-          return { ...qd, id: q.id } as QuizQuestion;
-        });
-      } catch (err) {
-        console.error('[useQuizEngineApi][loadQuestionsFromQueue] Hata:', err);
-        throw err;
-      }
+          return { ...questionData, id: question.id } as QuizQuestion;
+        }
+      );
     },
     [queryClient]
   );
 
-  /**
-   * Yeni sorular üretilirken ilerlemeyi raporlar ve tamamlandığında soruları döner.
-   */
   const generateAndLoadQuestions = useCallback(
     async (
       userId: string,
@@ -112,65 +84,41 @@ export function useQuizEngineApi() {
               onTotalTargetCalculated: () => {},
               onQuestionSaved: onProgress,
               onComplete: async () => {
-                try {
-                  const qs = await loadQuestionsFromQueue(session, chunkId);
-                  resolve(qs);
-                } catch (err) {
-                  console.error(
-                    '[useQuizEngineApi][generateAndLoadQuestions][onComplete] Hata:',
-                    err
-                  );
-                  reject(err);
-                }
-              },
-              onError: (err: string) => {
-                console.error(
-                  '[useQuizEngineApi][generateAndLoadQuestions][onError] Hata:',
-                  err
+                const loadedQuestions = await loadQuestionsFromQueue(
+                  session,
+                  chunkId
                 );
-                reject(new Error(err));
+                resolve(loadedQuestions);
+              },
+              onError: (errorMessage: string) => {
+                reject(new Error(errorMessage));
               },
             },
             options: { usageType: 'antrenman', userId },
           })
-          .catch((err) => {
-            console.error(
-              '[useQuizEngineApi][generateAndLoadQuestions] Hata:',
-              err
-            );
-            reject(err);
-          });
+          .catch(reject);
       });
     },
     [generateChunkMutation, loadQuestionsFromQueue]
   );
 
-  /** Belirli bir ders için rastgele sorular yükler */
   const loadRandomQuestions = useCallback(
     async (courseId: string): Promise<QuizQuestion[]> => {
-      try {
-        const randomQs = (await queryClient.fetchQuery({
-          queryKey: ['quiz', 'questionsByCourse', courseId, 10],
-          queryFn: () => fetchQuestionsByCourse(courseId, 10),
-        })) as { id: string; question_data: unknown }[];
+      const randomQuestions = (await queryClient.fetchQuery({
+        queryKey: ['quiz', 'questionsByCourse', courseId, 10],
+        queryFn: () => fetchQuestionsByCourse(courseId, 10),
+      })) as { id: string; question_data: unknown }[];
 
-        return randomQs.map((q) => {
-          const qd = q.question_data as
-            | TrueFalseQuestion
-            | MultipleChoiceQuestion;
-          return { ...qd, id: q.id } as QuizQuestion;
-        });
-      } catch (err) {
-        console.error('[useQuizEngineApi][loadRandomQuestions] Hata:', err);
-        throw err;
-      }
+      return randomQuestions.map((question) => {
+        const questionData = question.question_data as
+          | TrueFalseQuestion
+          | MultipleChoiceQuestion;
+        return { ...questionData, id: question.id } as QuizQuestion;
+      });
     },
     [queryClient]
   );
 
-  // === ANSWER OPERATIONS ===
-
-  /** Bir sorunun cevabını veritabanına gönderir */
   const submitAnswer = useCallback(
     async (
       ctx: SessionContext,
@@ -180,24 +128,18 @@ export function useQuizEngineApi() {
       timeSpentMs: number,
       selectedAnswer: number | null
     ) => {
-      try {
-        return await submitAnswerMutation.mutateAsync({
-          ctx,
-          questionId,
-          chunkId,
-          responseType,
-          timeSpentMs,
-          selectedAnswer,
-        });
-      } catch (err) {
-        console.error('[useQuizEngineApi][submitAnswer] Hata:', err);
-        throw err;
-      }
+      return await submitAnswerMutation.mutateAsync({
+        ctx,
+        questionId,
+        chunkId,
+        responseType,
+        timeSpentMs,
+        selectedAnswer,
+      });
     },
     [submitAnswerMutation]
   );
 
-  // === RETURN ===
   return useMemo(
     () => ({
       startQuizSession,

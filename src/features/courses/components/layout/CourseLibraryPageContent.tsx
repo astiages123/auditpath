@@ -4,10 +4,7 @@ import { Brain, CheckCircle2, FileText } from 'lucide-react';
 import type { Course } from '@/features/courses/types/courseTypes';
 import { getCourseIcon } from '@/features/courses/logic/coursesLogic';
 import { normalizeCategorySlug } from '@/features/courses/utils/categoryHelpers';
-import {
-  CATEGORY_THEMES,
-  COURSE_THEME_CONFIG,
-} from '@/features/courses/utils/coursesConfig';
+import { CATEGORY_THEMES } from '@/features/courses/utils/coursesConfig';
 import type { CourseLibraryStats } from '@/features/courses/hooks/useCourseLibraryData';
 import { useCourseLibraryPageLogic } from '@/features/courses/hooks/useCourseLibraryPageLogic';
 import { PageHeader } from '@/shared/components/PageHeader';
@@ -16,11 +13,11 @@ import { cn } from '@/utils/stringHelpers';
 
 const formatDuration = (hours: number | null): string => {
   if (!hours) return '—';
-  const h = Math.floor(hours);
-  const m = Math.round((hours - h) * 60);
+  const wholeHours = Math.floor(hours);
+  const remainingMinutes = Math.round((hours - wholeHours) * 60);
   const parts = [];
-  if (h > 0) parts.push(`${h} sa`);
-  if (m > 0) parts.push(`${m} dk`);
+  if (wholeHours > 0) parts.push(`${wholeHours} sa`);
+  if (remainingMinutes > 0) parts.push(`${remainingMinutes} dk`);
   return parts.join(' ') || '—';
 };
 
@@ -126,6 +123,15 @@ function CourseRow({
 }) {
   const videoProgress = stats?.videoProgress ?? 0;
   const mastery = stats?.averageMastery ?? 0;
+  const handleNotesClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onNotes(course);
+  };
+
+  const handleQuizClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onQuiz(course);
+  };
 
   return (
     <motion.div
@@ -176,10 +182,7 @@ function CourseRow({
 
       <div className="flex items-center gap-2 shrink-0">
         <button
-          onClick={(event) => {
-            event.stopPropagation();
-            onNotes(course);
-          }}
+          onClick={handleNotesClick}
           className="flex items-center gap-1.5 px-3 h-8 rounded-xl text-[11px] font-black uppercase tracking-wide transition-all duration-200 shrink-0 border border-border/40 bg-primary/10 text-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/5 hover:scale-[1.04]"
         >
           <FileText className="size-3" />
@@ -187,10 +190,7 @@ function CourseRow({
         </button>
 
         <button
-          onClick={(event) => {
-            event.stopPropagation();
-            onQuiz(course);
-          }}
+          onClick={handleQuizClick}
           className="flex items-center gap-1.5 px-3 h-8 rounded-xl text-[11px] font-black uppercase tracking-wide transition-all duration-200 shrink-0 bg-primary/10 text-foreground border border-primary/20 hover:bg-primary/20 hover:border-primary/40 hover:scale-[1.04]"
         >
           <Brain className="size-3" />
@@ -205,7 +205,7 @@ export function CourseLibraryPageContent() {
   const {
     categories,
     dashboardStats,
-    loading,
+    loading: isLoading,
     activeCategoryIndex,
     setActiveCategoryIndex,
     activeCategory,
@@ -217,7 +217,7 @@ export function CourseLibraryPageContent() {
   } = useCourseLibraryPageLogic();
 
   return (
-    <PageContainer isLoading={loading} loadingFallback={<PageSkeleton />}>
+    <PageContainer isLoading={isLoading} loadingFallback={<PageSkeleton />}>
       <div className="flex flex-col min-h-full overflow-y-auto custom-scrollbar px-4 lg:px-6">
         <div className="shrink-0">
           <PageHeader
@@ -242,8 +242,6 @@ export function CourseLibraryPageContent() {
               CATEGORY_THEMES[category.name.toUpperCase()] ||
               Object.values(CATEGORY_THEMES)[0];
             const CatIcon = theme?.Icon ?? Brain;
-            const themeConfig =
-              COURSE_THEME_CONFIG[theme.theme] || COURSE_THEME_CONFIG.primary;
             const isActive = idx === activeCategoryIndex;
 
             return (
@@ -252,28 +250,23 @@ export function CourseLibraryPageContent() {
                 onClick={() => setActiveCategoryIndex(idx)}
                 className={cn(
                   'flex flex-col items-center justify-center gap-2 shrink-0 min-w-[100px] lg:min-w-0',
-                  'px-4 py-4 rounded-2xl border transition-all duration-300',
+                  'px-4 py-4 rounded-2xl transition-all duration-300',
                   'text-center group',
                   isActive
-                    ? cn(
-                        themeConfig.bg,
-                        themeConfig.border,
-                        themeConfig.text,
-                        'shadow-xs scale-[1.02]'
-                      )
-                    : 'bg-card/20 border-border/10 text-muted-foreground/70 hover:bg-card hover:border-border/20'
+                    ? 'bg-card text-foreground'
+                    : 'bg-card/40 text-foreground hover:bg-card hover:text-foreground/80'
                 )}
               >
                 <CatIcon
                   className={cn(
                     'size-6 transition-colors',
-                    isActive ? themeConfig.text : 'text-foreground/80'
+                    isActive ? 'text-foreground' : 'text-foreground'
                   )}
                 />
                 <span
                   className={cn(
                     'text-[11px] font-bold uppercase tracking-widest leading-tight',
-                    isActive ? themeConfig.text : 'text-foreground/80'
+                    isActive ? 'text-foreground' : 'text-foreground'
                   )}
                 >
                   {category.name}
@@ -281,7 +274,7 @@ export function CourseLibraryPageContent() {
                 <span
                   className={cn(
                     'text-[10px] font-medium tabular-nums',
-                    isActive ? themeConfig.text : 'text-foreground/80'
+                    isActive ? 'text-foreground' : 'text-foreground'
                   )}
                 >
                   {category.courses.length} ders
@@ -297,12 +290,12 @@ export function CourseLibraryPageContent() {
               {activeTheme && (
                 <div
                   className={cn(
-                    'w-8 h-8 rounded-xl flex items-center justify-center',
+                    'size-10 rounded-xl flex items-center justify-center',
                     activeThemeConfig.bg
                   )}
                 >
                   <activeTheme.Icon
-                    className={cn('size-4', activeThemeConfig.text)}
+                    className={cn('size-5', activeThemeConfig.text)}
                   />
                 </div>
               )}

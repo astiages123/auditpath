@@ -116,7 +116,6 @@ export function useQuizEngineSession(courseId: string) {
           updateState({ isLoading: false, error: 'Soru bulunamadı.' });
         }
       } catch (error) {
-        console.error('[useQuizEngineSession][startQuiz] Hata:', error);
         logger.error(
           'QuizEngineSession',
           'startQuiz',

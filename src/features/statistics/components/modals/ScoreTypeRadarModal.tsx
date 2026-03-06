@@ -1,6 +1,4 @@
-// ==========================================
 // IMPORTS
-// ==========================================
 
 import { FC, lazy, Suspense } from 'react';
 import { Info, Crosshair, Loader2 } from 'lucide-react';
@@ -33,9 +31,7 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
-// ==========================================
 // INTERFACES
-// ==========================================
 
 interface ScoreTypeRadarModalProps {
   open: boolean;
@@ -47,16 +43,13 @@ interface ScoreTypeRadarModalProps {
   };
 }
 
-// ==========================================
 // COMPONENT
-// ==========================================
 
 export const ScoreTypeRadarModal: FC<ScoreTypeRadarModalProps> = ({
   open,
   onOpenChange,
   data,
 }) => {
-  // === CALCULATIONS & CONSTANTS ===
   const chartData = [
     { subject: 'P30', value: data.p30, fullMark: 100 },
     { subject: 'P35', value: data.p35, fullMark: 100 },
@@ -84,7 +77,6 @@ export const ScoreTypeRadarModal: FC<ScoreTypeRadarModalProps> = ({
     },
   ];
 
-  // === RENDER ===
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-border shadow-2xl p-6 gap-0 scrollbar-hide">

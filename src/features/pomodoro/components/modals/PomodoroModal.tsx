@@ -7,19 +7,11 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { upsertPomodoroSession } from '@/features/pomodoro/services/pomodoroService';
 import { Json } from '@/types/database.types';
 
-// ===========================
-// === SUB-COMPONENTS ===
-// ===========================
-
 import { CourseSelector } from '@/features/pomodoro/components/controls/CourseSelector';
 import { TimerDisplay } from '@/features/pomodoro/components/layout/TimerDisplay';
 import { TimerControls } from '@/features/pomodoro/components/controls/TimerControls';
 import { PomodoroAlerts } from '@/features/pomodoro/components/feedback/PomodoroAlerts';
 import { MobilePomodoroBar } from '@/features/pomodoro/components/layout/MobilePomodoroBar';
-
-// ===========================
-// === COMPONENT DEFINITION ===
-// ===========================
 
 export function PomodoroModal() {
   const {

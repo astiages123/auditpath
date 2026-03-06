@@ -4,8 +4,6 @@ import { UnifiedLLMClient } from '@/features/quiz/services/quizInfoService';
 import { logger } from '@/utils/logger';
 import { type AITask, getTaskConfig } from '@/utils/aiConfig';
 
-// === SECTION: Types & Constants ===
-
 /** Yapılandırılmış üretim seçenekleri */
 export interface StructuredOptions<T> {
   schema: z.ZodSchema<T>;
@@ -41,8 +39,6 @@ function extractJsonPayload(content: string): string {
   const firstStart = Math.min(...starts);
   return cleaned.slice(firstStart).trim();
 }
-
-// === SECTION: Generator Logic ===
 
 /**
  * LLM'den belirli bir Zod şemasına uygun, yapılandırılmış çıktı üreten yardımcı fonksiyon.

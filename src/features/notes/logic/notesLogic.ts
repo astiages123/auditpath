@@ -3,9 +3,6 @@ import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { slugify } from '@/utils/stringHelpers';
 import { type LocalToCItem } from '@/features/notes/components';
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
 /**
  * İçindekiler tablosu (Table of Contents) öğesini temsil eder.
  * Ek olarak ait olduğu yığın (chunk) bilgisini barındırır.
@@ -14,9 +11,6 @@ export interface ExtendedToCItem extends LocalToCItem {
   /** İlgili konu yığınının (chunk) benzersiz kimliği */
   chunkId: string;
 }
-
-// === BÖLÜM ADI: İŞ MANTIĞI (LOGIC) ===
-// ===========================
 
 /**
  * Ders konu yığınlarından (chunks) bir "İçindekiler" listesi (Table of Contents) oluşturur.
@@ -32,64 +26,60 @@ export const generateTOCFromContent = (
     return [];
   }
 
-  try {
-    const tableOfContentsItems: ExtendedToCItem[] = [];
+  const tableOfContentsItems: ExtendedToCItem[] = [];
 
-    chunks.forEach((chunk: CourseTopic) => {
-      const chunkId: string = slugify(chunk.section_title);
+  chunks.forEach((chunk: CourseTopic) => {
+    const chunkId: string = slugify(chunk.section_title);
 
-      // Ana başlığı (Level 1) her zaman ekliyoruz
-      if (chunk.section_title) {
-        tableOfContentsItems.push({
-          id: chunkId,
-          title: chunk.section_title,
-          level: 1,
-          chunkId: chunkId,
-        });
+    if (chunk.section_title) {
+      tableOfContentsItems.push({
+        id: chunkId,
+        title: chunk.section_title,
+        level: 1,
+        chunkId,
+      });
+    }
+
+    const contentLines: string[] = chunk.content.split('\n');
+
+    contentLines.forEach((line: string) => {
+      const levelOneMatch: RegExpMatchArray | null = line.match(/^#\s+(.+)$/);
+      const levelTwoMatch: RegExpMatchArray | null = line.match(/^##\s+(.+)$/);
+      const levelThreeMatch: RegExpMatchArray | null =
+        line.match(/^###\s+(.+)$/);
+
+      let currentLevel: number = 0;
+      let currentTitle: string = '';
+
+      if (levelOneMatch) {
+        currentTitle = levelOneMatch[1].trim();
+        currentLevel = 2;
+      } else if (levelTwoMatch) {
+        currentTitle = levelTwoMatch[1].trim();
+        currentLevel = 3;
+      } else if (levelThreeMatch) {
+        currentTitle = levelThreeMatch[1].trim();
+        currentLevel = 4;
       }
 
-      // İçeriği satır satır bölerek alt başlıkları (Level 2, 3, 4) buluyoruz
-      const contentLines: string[] = chunk.content.split('\n');
+      if (currentLevel === 0) {
+        return;
+      }
 
-      contentLines.forEach((line: string) => {
-        const h1Match: RegExpMatchArray | null = line.match(/^#\s+(.+)$/);
-        const h2Match: RegExpMatchArray | null = line.match(/^##\s+(.+)$/);
-        const h3Match: RegExpMatchArray | null = line.match(/^###\s+(.+)$/);
-
-        let currentLevel: number = 0;
-        let currentTitle: string = '';
-
-        if (h1Match) {
-          currentTitle = h1Match[1].trim();
-          currentLevel = 2; // Görüntü bazında Level 2 yapıyoruz
-        } else if (h2Match) {
-          currentTitle = h2Match[1].trim();
-          currentLevel = 3;
-        } else if (h3Match) {
-          currentTitle = h3Match[1].trim();
-          currentLevel = 4;
-        }
-
-        if (currentLevel > 0) {
-          tableOfContentsItems.push({
-            id: slugify(currentTitle),
-            title: currentTitle,
-            level: currentLevel,
-            chunkId: chunkId,
-          });
-        }
+      tableOfContentsItems.push({
+        id: slugify(currentTitle),
+        title: currentTitle,
+        level: currentLevel,
+        chunkId,
       });
     });
+  });
 
-    // Filtreleme (Deduplication): Aynı ID'ye sahip öğeleri filtreliyoruz ki menüde çift görünmesin
-    const uniqueItems: ExtendedToCItem[] = tableOfContentsItems.filter(
-      (item: ExtendedToCItem, index: number, selfArray: ExtendedToCItem[]) =>
-        index === selfArray.findIndex((t: ExtendedToCItem) => t.id === item.id)
-    );
-
-    return uniqueItems;
-  } catch (error: unknown) {
-    console.error('[notesLogic][generateTOCFromContent] Hata:', error);
-    return [];
-  }
+  return tableOfContentsItems.filter(
+    (item: ExtendedToCItem, index: number, items: ExtendedToCItem[]) =>
+      index ===
+      items.findIndex((tableOfContentsItem: ExtendedToCItem) => {
+        return tableOfContentsItem.id === item.id;
+      })
+  );
 };

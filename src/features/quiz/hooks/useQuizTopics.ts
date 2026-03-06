@@ -6,10 +6,6 @@ import {
 import { TopicWithCounts } from '@/features/courses/types/courseTypes';
 import { logger } from '@/utils/logger';
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
 export interface UseQuizTopicsProps {
   /** Modül/Drawer açık mı? */
   isOpen: boolean;
@@ -28,10 +24,6 @@ export interface QuizProgress {
   percentage: number;
 }
 
-// ============================================================================
-// HOOK
-// ============================================================================
-
 /**
  * Quiz modülü için konu listesini ve ders ilerlemesini yöneten hook.
  * Ünite bazlı soru sayılarını ve kullanıcının genel çözüm istatistiklerini getirir.
@@ -44,30 +36,28 @@ export function useQuizTopics({
   courseId,
   userId,
 }: UseQuizTopicsProps) {
-  // === STATE ===
-
   const [topics, setTopics] = useState<TopicWithCounts[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [courseProgress, setCourseProgress] = useState<QuizProgress | null>(
     null
   );
 
-  // === HANDLERS ===
-
   /** Konuları ve ilerleme durumunu sunucudan yükler */
   const loadTopics = useCallback(async () => {
-    if (!courseId) return;
-    setLoading(true);
+    if (!courseId) {
+      return;
+    }
+
+    setIsLoading(true);
     try {
       const data = await getCourseTopicsWithCounts(courseId);
-      // Map CourseTopicCount[] to TopicWithCounts[]
-      const mappedTopics: TopicWithCounts[] = data.map((t) => ({
-        name: t.title,
-        isCompleted: false, // Default value, will be updated by progress if needed
+      const mappedTopics: TopicWithCounts[] = data.map((topic) => ({
+        name: topic.title,
+        isCompleted: false,
         counts: {
-          antrenman: t.count,
-          deneme: 0, // Not provided by getCourseTopicsWithCounts
-          total: t.count,
+          antrenman: topic.count,
+          deneme: 0,
+          total: topic.count,
         },
       }));
       setTopics(mappedTopics);
@@ -77,7 +67,6 @@ export function useQuizTopics({
         setCourseProgress(progress);
       }
     } catch (error) {
-      console.error('[useQuizTopics][loadTopics] Hata:', error);
       logger.error(
         'QuizTopics',
         'loadTopics',
@@ -85,11 +74,9 @@ export function useQuizTopics({
         error as Error
       );
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }, [courseId, userId]);
-
-  // === EFFECTS ===
 
   /** Drawer açıldığında verileri otomatik tazeler */
   useEffect(() => {
@@ -98,14 +85,13 @@ export function useQuizTopics({
     }
   }, [isOpen, loadTopics]);
 
-  // === RETURN ===
   return useMemo(
     () => ({
       topics,
-      loading,
+      loading: isLoading,
       courseProgress,
       refreshTopics: loadTopics,
     }),
-    [topics, loading, courseProgress, loadTopics]
+    [topics, isLoading, courseProgress, loadTopics]
   );
 }

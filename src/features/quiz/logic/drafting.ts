@@ -10,16 +10,25 @@ import { GLOBAL_AI_SYSTEM_PROMPT, PromptArchitect } from './prompts';
 import { generate } from './structuredGenerator';
 import { determineNodeStrategy } from './quizParserStrategy';
 
-/**
- * Belirli bir kavram için soru tasarlar.
- */
-export async function draftQuestion(input: {
+type DraftQuestionInput = {
   concept: ConceptMapItem;
   index: number;
   courseName: string;
   usageType: 'antrenman' | 'deneme';
   sharedContextPrompt: string;
-}) {
+};
+
+type DraftBatchInput = {
+  concepts: { concept: ConceptMapItem; index: number }[];
+  courseName: string;
+  usageType: 'antrenman' | 'deneme';
+  sharedContextPrompt: string;
+};
+
+/**
+ * Belirli bir kavram için soru tasarlar.
+ */
+export async function draftQuestion(input: DraftQuestionInput) {
   const strategy = determineNodeStrategy(
     input.index,
     input.concept,
@@ -66,12 +75,9 @@ export async function draftQuestion(input: {
 /**
  * Toplu soru tasarımı yapar.
  */
-export async function draftBatch(input: {
-  concepts: { concept: ConceptMapItem; index: number }[];
-  courseName: string;
-  usageType: 'antrenman' | 'deneme';
-  sharedContextPrompt: string;
-}): Promise<GeneratedQuestion[] | null> {
+export async function draftBatch(
+  input: DraftBatchInput
+): Promise<GeneratedQuestion[] | null> {
   if (input.concepts.length === 0) return [];
 
   const firstConcept = input.concepts[0];
@@ -83,7 +89,7 @@ export async function draftBatch(input: {
   if (!strategy) return null;
 
   const taskPrompt = PromptArchitect.draftingPrompt(
-    input.concepts.map((c) => c.concept),
+    input.concepts.map((conceptEntry) => conceptEntry.concept),
     strategy,
     input.usageType,
     undefined,
@@ -110,19 +116,20 @@ export async function draftBatch(input: {
 
   if (!result) return null;
 
-  return result.questions.map((q, i) => {
-    const inputConcept = input.concepts[i] || input.concepts[0];
+  return result.questions.map((generatedQuestion, index) => {
+    const inputConcept = input.concepts[index] || input.concepts[0];
     const itemStrategy = determineNodeStrategy(
       inputConcept.index,
       inputConcept.concept,
       input.courseName
     );
+
     return {
-      ...q,
+      ...generatedQuestion,
       bloomLevel: itemStrategy?.bloomLevel || 'knowledge',
-      img: q.img ?? null,
+      img: generatedQuestion.img ?? null,
       concept: inputConcept.concept.baslik,
-      insight: q.insight ?? undefined,
+      insight: generatedQuestion.insight ?? undefined,
     } satisfies GeneratedQuestion;
   });
 }

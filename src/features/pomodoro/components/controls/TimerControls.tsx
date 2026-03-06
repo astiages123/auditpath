@@ -3,20 +3,12 @@ import { motion } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
-// ===========================
-// === PROPS DEFINITION ===
-// ===========================
-
 export interface TimerControlsProps {
   isExpanded: boolean;
   onSwitchMode: () => void;
   onFinishDay: () => void;
   onDiscard: () => void;
 }
-
-// ===========================
-// === COMPONENT DEFINITION ===
-// ===========================
 
 export function TimerControls({
   onSwitchMode,
@@ -33,7 +25,6 @@ export function TimerControls({
       {/* Divider */}
       <div className="h-8 w-px bg-white/10 shrink-0 hidden sm:block" />
 
-      {/* === RIGHT BLOCK: Actions === */}
       <div className="flex items-center gap-5 shrink-0">
         {/* Session Counter */}
         <div className="hidden sm:flex flex-col items-center justify-center w-12 text-center">

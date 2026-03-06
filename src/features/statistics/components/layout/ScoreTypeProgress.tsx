@@ -1,6 +1,4 @@
-// ==========================================
 // IMPORTS
-// ==========================================
 
 import { FC, lazy, Suspense, useState } from 'react';
 import { Globe, Layers, Info, Building2, Maximize2 } from 'lucide-react';
@@ -24,25 +22,19 @@ const ScoreTypeRadarModal = lazy(() =>
   )
 );
 
-// ==========================================
 // INTERFACES
-// ==========================================
 
 interface ScoreTypeProgressProps {
   masteries: CourseMastery[];
 }
 
-// ==========================================
 // COMPONENT
-// ==========================================
 
 export const ScoreTypeProgress: FC<ScoreTypeProgressProps> = ({
   masteries,
 }) => {
-  // === STATE ===
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // === CALCULATIONS ===
   const scores = calculateScoreTypeProgress(masteries);
 
   const scoreTypes = [
@@ -91,7 +83,6 @@ export const ScoreTypeProgress: FC<ScoreTypeProgressProps> = ({
     },
   ];
 
-  // === RENDER ===
   return (
     <StatisticsCard
       title="Hedef Puan Türleri"

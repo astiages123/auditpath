@@ -36,7 +36,7 @@ export function useNotesPageLogic() {
   });
 
   const currentChunk = chunks.find(
-    (c) => slugify(c.section_title) === activeChunkId
+    (chunk) => slugify(chunk.section_title) === activeChunkId
   );
 
   const {

@@ -1,7 +1,3 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -10,10 +6,6 @@ import { getLandingLibraryStats } from '@/features/quiz/services/quizLandingServ
 import type { LandingCourseStats } from '@/features/quiz/types/types';
 import { updateCategoryCache } from '../logic/coursesLogic';
 import type { Category } from '../types/courseTypes';
-
-// ===========================
-// === INTERFACES ===
-// ===========================
 
 export interface CourseLibraryStats extends LandingCourseStats {
   videoProgress?: number;
@@ -25,10 +17,6 @@ export interface CourseLibraryDataResult {
   loading: boolean;
 }
 
-// ===========================
-// === HOOK ===
-// ===========================
-
 /**
  * Hook to retrieve and format data needed for the course library view.
  * Computes category cache relationships and fetches relevant user dashboard stats.
@@ -36,19 +24,22 @@ export interface CourseLibraryDataResult {
  * @returns Resulting categories and related loading/dashboard statistics
  */
 export function useCourseLibraryData(): CourseLibraryDataResult {
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: isAuthLoading } = useAuth();
   const userId = user?.id;
 
-  const { data: categoriesRaw, isLoading: catsLoading } = useCategories();
+  const { data: categoriesRaw, isLoading: isCategoriesLoading } =
+    useCategories();
 
   const categories = useMemo(() => {
     if (!categoriesRaw) return [];
 
     // Update logic cache for icons/themes
-    categoriesRaw.forEach((cat) => {
+    categoriesRaw.forEach((category) => {
       updateCategoryCache(
-        cat.slug || cat.name.toLowerCase().replace(/\\s+/g, '-'),
-        cat.courses.map((c) => c.course_slug).filter(Boolean) as string[]
+        category.slug || category.name.toLowerCase().replace(/\\s+/g, '-'),
+        category.courses
+          .map((course) => course.course_slug)
+          .filter(Boolean) as string[]
       );
     });
 
@@ -59,7 +50,7 @@ export function useCourseLibraryData(): CourseLibraryDataResult {
     );
   }, [categoriesRaw]);
 
-  const { data: dashboardStats, isLoading: statsLoading } = useQuery({
+  const { data: dashboardStats, isLoading: isStatsLoading } = useQuery({
     queryKey: ['landingDashboardData', userId],
     queryFn: async () => {
       if (!userId) {
@@ -76,6 +67,6 @@ export function useCourseLibraryData(): CourseLibraryDataResult {
   return {
     categories: categories as Category[],
     dashboardStats: dashboardStats || {},
-    loading: authLoading || catsLoading || statsLoading,
+    loading: isAuthLoading || isCategoriesLoading || isStatsLoading,
   };
 }

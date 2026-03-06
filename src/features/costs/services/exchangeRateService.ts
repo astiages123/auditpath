@@ -1,14 +1,5 @@
-// ==========================================
-// IMPORTS
-// ==========================================
-
 import { z } from 'zod';
-import { supabase } from '@/lib/supabase';
 import { isValid, parseOrThrow } from '@/utils/validation';
-
-// ==========================================
-// SCHEMAS
-// ==========================================
 
 const ExchangeRateApiResponseSchema = z.object({
   rates: z.record(z.string(), z.number()),
@@ -20,105 +11,84 @@ const ExchangeRateSchema = z.object({
   updated_at: z.string(),
 });
 
-// ==========================================
-// CONSTANTS
-// ==========================================
+type ExchangeRate = z.infer<typeof ExchangeRateSchema>;
 
 const EXCHANGE_RATE_API = 'https://api.exchangerate-api.com/v4/latest/USD';
 const PAIR_USD_TRY = 'USD-TRY';
-
-// ==========================================
-// SERVICE
-// ==========================================
+const STORAGE_KEY = 'auditpath_exchange_rate_usd_try';
 
 export const ExchangeRateService = {
   /**
    * Fetches the current USD to TRY exchange rate.
-   * Uses a caching strategy:
-   * 1. Checks Supabase for a cached rate (valid for 24 hours).
+   * Uses a caching strategy with localStorage:
+   * 1. Checks localStorage for a cached rate (valid for 24 hours).
    * 2. If stale or missing, fetches from the external API.
-   * 3. Caches the new rate in Supabase.
+   * 3. Caches the new rate in localStorage.
    *
    * @returns {Promise<number | null>} The USD to TRY exchange rate, if available.
    */
   async getUsdToTryRate(): Promise<number | null> {
-    try {
-      // 1. Check Supabase for cached rate
-      const { data, error } = await supabase
-        .from('exchange_rates')
-        .select('*')
-        .eq('currency_pair', PAIR_USD_TRY)
-        .maybeSingle();
+    const cachedString = localStorage.getItem(STORAGE_KEY);
 
-      const cachedData = isValid(ExchangeRateSchema, data)
-        ? (parseOrThrow(ExchangeRateSchema, data) as {
-            rate: number;
-            updated_at: string;
-          })
-        : null;
+    if (cachedString) {
+      try {
+        const data = JSON.parse(cachedString);
 
-      if (cachedData && !error) {
-        const lastUpdated = new Date(cachedData.updated_at).getTime();
-        const now = Date.now();
-        const oneDayMs = 24 * 60 * 60 * 1000;
-        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+        if (isValid(ExchangeRateSchema, data)) {
+          const cachedData = parseOrThrow(ExchangeRateSchema, data);
+          const lastUpdated = new Date(cachedData.updated_at).getTime();
+          const now = Date.now();
+          const oneDayMs = 24 * 60 * 60 * 1000;
+          const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
 
-        // If fresh (under 24h), return immediately
-        if (now - lastUpdated < oneDayMs) {
-          return Number(cachedData.rate);
-        }
-
-        // If stale but under 7 days, try to refresh but keep as fallback
-        try {
-          const freshRate = await this.refreshRateFromApi();
-          if (freshRate) return freshRate;
-        } catch {
-          console.warn(
-            '[ExchangeRateService] Refresh failed, using stale cached rate:',
-            cachedData.rate,
-            'Age (days):',
-            Math.floor((now - lastUpdated) / (24 * 3600 * 1000))
-          );
-          // Still return stale rate if it's not too old (e.g., under 7 days)
-          if (now - lastUpdated < sevenDaysMs) {
+          if (now - lastUpdated < oneDayMs) {
             return Number(cachedData.rate);
           }
-        }
-      }
 
-      // 2. Fetch from API if missing or extremely stale
-      return await this.refreshRateFromApi();
-    } catch (error) {
-      console.error('[ExchangeRateService][getUsdToTryRate] Hata:', error);
-      return null;
+          if (now - lastUpdated < sevenDaysMs) {
+            // Background refresh attempt, but return cached if it fails
+            const freshRate = await this.refreshRateFromApi().catch(() => null);
+            return freshRate ?? Number(cachedData.rate);
+          }
+        }
+      } catch (e) {
+        console.error('Error parsing cached exchange rate:', e);
+        // Fall through to refresh
+      }
     }
+
+    return await this.refreshRateFromApi();
   },
 
   /**
-   * Internal helper to refresh rate from API and cache it.
+   * Internal helper to refresh rate from API and cache it in localStorage.
    */
   async refreshRateFromApi(): Promise<number | null> {
-    const response = await fetch(EXCHANGE_RATE_API);
-    if (!response.ok) {
-      throw new Error(`API returned status: ${response.status}`);
-    }
+    try {
+      const response = await fetch(EXCHANGE_RATE_API);
+      if (!response.ok) {
+        throw new Error(`API returned status: ${response.status}`);
+      }
 
-    const rawApiData = await response.json();
-    const apiData = ExchangeRateApiResponseSchema.parse(rawApiData);
-    const newRate = apiData.rates['TRY'];
+      const rawApiData = await response.json();
+      const apiData = ExchangeRateApiResponseSchema.parse(rawApiData);
+      const newRate = apiData.rates['TRY'];
 
-    if (!newRate) return null;
+      if (!newRate) return null;
 
-    // Cache to Supabase
-    await supabase.from('exchange_rates').upsert(
-      {
+      const rateData: ExchangeRate = {
         currency_pair: PAIR_USD_TRY,
         rate: newRate,
         updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'currency_pair' }
-    );
+      };
 
-    return newRate;
+      // Cache to localStorage
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(rateData));
+
+      return newRate;
+    } catch (error) {
+      console.error('Failed to refresh exchange rate:', error);
+      return null;
+    }
   },
 };

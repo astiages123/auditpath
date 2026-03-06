@@ -34,7 +34,7 @@ trigger: always_on
 - **Kimlik Sözlüğü:** Aksi ispat edilmedikçe `courseId`/`categoryId`/`chunkId` gibi `*Id` alanları DB kimliği (çoğunlukla UUID) taşır. Public URL alanları `courseSlug`, `categorySlug`, `topicSlug` olarak adlandırılmalıdır.
 - **Alias Yasağı:** Aynı akışta aynı varlık için `courseId`, `dbCourseId`, `courseSlug` gibi belirsiz isimler birlikte kullanılmamalıdır. Gerekirse açık sözlük kurulmalı: `courseId` = DB UUID, `courseSlug` = URL slug.
 - **Dosya Boyutu:**
-  - **Servis ve Logic dosyaları (`.ts`):** Fonksiyonlar birbirinden bağımsız ve `// === SECTION ===` yorumlarıyla ayrılmış olduğu sürece **1000 satıra kadar** kabul edilebilir. Bu dosyalarda AI yalnızca ilgili fonksiyonu okur, tüm dosyayı kavramak gerekmez. Bölmek ortak import/tip tekrarına yol açacağı için tercih edilmez.
+  - **Servis ve Logic dosyaları (`.ts`):** Fonksiyonlar birbirinden bağımsız olduğu sürece **1000 satıra kadar** kabul edilebilir. Bölümler arasında boş satır bırakılır; `// === SECTION ===` banner comment'leri kullanılmaz. Bu dosyalarda AI yalnızca ilgili fonksiyonu okur, tüm dosyayı kavramak gerekmez. Bölmek ortak import/tip tekrarına yol açacağı için tercih edilmez.
   - **Component dosyaları (`.tsx`):** İçinde **birbirinden bağımsız** component'lar varsa (ortak state veya helper paylaşmıyorlarsa) her component kendi dosyasına ayrılmalıdır. Ortak state veya helper paylaşan component'lar aynı dosyada kalabilir.
   - **Veri dosyaları:** Sabit veri listeleri (`definitions.ts`, `config.ts` gibi) satır sınırına tabi değildir.
 

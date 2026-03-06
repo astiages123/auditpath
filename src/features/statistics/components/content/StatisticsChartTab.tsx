@@ -5,10 +5,6 @@ import { CommonEmptyState } from '@/features/statistics/components/shared/CardEl
 
 import type { FocusPowerPoint } from '@/features/statistics/types/statisticsTypes';
 
-// ==========================================
-// === LAZY COMPONENTS ===
-// ==========================================
-
 const FocusPowerTrendChart = lazy(() =>
   import('@/features/statistics/components/charts/FocusPowerTrendChart').then(
     (m) => ({
@@ -17,29 +13,17 @@ const FocusPowerTrendChart = lazy(() =>
   )
 );
 
-// ==========================================
-// === PROPS ===
-// ==========================================
-
 export interface StatisticsChartTabProps {
   weekData: FocusPowerPoint[];
   monthData: FocusPowerPoint[];
   allData: FocusPowerPoint[];
 }
 
-// ==========================================
-// === COMPONENT: FALLBACK ===
-// ==========================================
-
 const ChartFallback = () => (
   <div className="w-full h-full min-h-[300px] flex items-center justify-center bg-surface/5 rounded-lg border border-white/5">
     <Skeleton className="w-[90%] h-[250px] bg-surface/20" />
   </div>
 );
-
-// ==========================================
-// === COMPONENT ===
-// ==========================================
 
 /**
  * Controller component orchestrating data range selection for the focus power trend chart.
@@ -50,14 +34,8 @@ export const StatisticsChartTab: React.FC<StatisticsChartTabProps> = ({
   monthData,
   allData,
 }) => {
-  // ==========================================
-  // === HOOKS & STATE ===
-  // ==========================================
   const [range, setRange] = useState<'week' | 'month' | 'all'>('week');
 
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
   const getData = () => {
     switch (range) {
       case 'week':
@@ -84,9 +62,6 @@ export const StatisticsChartTab: React.FC<StatisticsChartTabProps> = ({
     }
   };
 
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   const data = getData();
   const isEmpty = data.length === 0;
 

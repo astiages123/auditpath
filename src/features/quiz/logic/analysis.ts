@@ -14,63 +14,62 @@ import { GLOBAL_AI_SYSTEM_PROMPT, PromptArchitect } from './prompts';
 import { generate, type StructuredOptions } from './structuredGenerator';
 import { updateChunkAILogic } from '../services/quizSubmissionService';
 
+type AnalysisLogCallback = (
+  message: string,
+  details?: Record<string, unknown>
+) => void;
+
 /**
  * Bir içerik parçasını (chunk) analiz eder ve kavram haritası oluşturur.
  */
 export async function analyzeNoteChunk(
   text: string,
-  onLog?: (msg: string, details?: Record<string, unknown>) => void
-): Promise<ValidatedAILogic | null> {
+  onLog?: AnalysisLogCallback
+): Promise<ValidatedAILogic> {
   onLog?.('Chunk analizi başlatılıyor...', { contentLength: text.length });
 
-  try {
-    const context = PromptArchitect.buildContext(text);
-    const task = PromptArchitect.analysisPrompt(
-      'Bilinmeyen Bölüm',
-      'Genel Ders'
-    );
-    const messages = PromptArchitect.assemble(
-      GLOBAL_AI_SYSTEM_PROMPT,
-      context,
-      task
-    );
+  const context = PromptArchitect.buildContext(text);
+  const task = PromptArchitect.analysisPrompt('Bilinmeyen Bölüm', 'Genel Ders');
+  const messages = PromptArchitect.assemble(
+    GLOBAL_AI_SYSTEM_PROMPT,
+    context,
+    task
+  );
 
-    const options: StructuredOptions<z.infer<typeof ConceptMapResponseSchema>> =
-      {
-        task: 'analysis',
-        schema: ConceptMapResponseSchema,
-        onLog: (m: string, d?: Record<string, unknown>) => onLog?.(m, d),
-      };
+  const options: StructuredOptions<z.infer<typeof ConceptMapResponseSchema>> = {
+    task: 'analysis',
+    schema: ConceptMapResponseSchema,
+    onLog: (message: string, details?: Record<string, unknown>) =>
+      onLog?.(message, details),
+  };
 
-    const result = await generate<z.infer<typeof ConceptMapResponseSchema>>(
-      messages,
-      options
-    );
+  const result = await generate<z.infer<typeof ConceptMapResponseSchema>>(
+    messages,
+    options
+  );
 
-    if (!result) {
-      throw new Error('Yapay zeka analiz raporu oluşturamadı.');
-    }
-
-    onLog?.('Analiz tamamlandı.', {
-      difficulty: result.difficulty_index,
-      conceptCount: result.concepts.length,
-    });
-
-    return {
-      difficulty_index: result.difficulty_index,
-      concept_map: result.concepts,
-      generated_at: new Date().toISOString(),
-    };
-  } catch (error) {
-    onLog?.('Analiz sırasında hata!', { error: String(error) });
+  if (!result) {
+    const analysisError = new Error('Yapay zeka analiz raporu oluşturamadı.');
+    onLog?.('Analiz sırasında hata!', { error: String(analysisError) });
     logger.error(
       'ParserLogic',
       'analyzeNoteChunk',
       'Analiz hatası',
-      error as Error
+      analysisError
     );
-    return null;
+    throw analysisError;
   }
+
+  onLog?.('Analiz tamamlandı.', {
+    difficulty: result.difficulty_index,
+    conceptCount: result.concepts.length,
+  });
+
+  return {
+    difficulty_index: result.difficulty_index,
+    concept_map: result.concepts,
+    generated_at: new Date().toISOString(),
+  };
 }
 
 /**
@@ -101,15 +100,10 @@ export async function ensureConcepts(
   }
 
   log('MAPPING', 'Konunun kritik noktaları belirleniyor...');
-  const analysisResult = await analyzeNoteChunk(chunk.content, (m, d) =>
-    log('MAPPING', m, d)
+  const analysisResult = await analyzeNoteChunk(
+    chunk.content,
+    (message, details) => log('MAPPING', message, details)
   );
-
-  if (!analysisResult) {
-    throw new Error(
-      'Kavram haritası oluşturulamadı. Sistem yoğun olabilir, lütfen tekrar deneyin.'
-    );
-  }
 
   const updatedAILogic = {
     ...(chunk.ai_logic !== null && typeof chunk.ai_logic === 'object'
@@ -122,15 +116,13 @@ export async function ensureConcepts(
   };
 
   log('SAVING', 'Kavram haritası kaydediliyor...');
-  const { error: analysisUpdateError } = await updateChunkAILogic(
-    chunkId,
-    updatedAILogic
-  );
-
-  if (analysisUpdateError) {
-    console.error(
-      '[ParserLogic][ensureConcepts] Güncelleme Hatası:',
-      analysisUpdateError
+  const updateResult = await updateChunkAILogic(chunkId, updatedAILogic);
+  if (updateResult.error) {
+    logger.error(
+      'ParserLogic',
+      'ensureConcepts',
+      'Güncelleme Hatası',
+      updateResult.error
     );
   }
 

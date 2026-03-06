@@ -10,10 +10,6 @@ import { generateForChunk } from '@/features/quiz/logic/quizParser';
 import { QuizResponseType, SessionContext } from '@/features/quiz/types';
 import { GeneratorCallbacks } from '@/features/quiz/types';
 
-// ============================================================================
-// QUERIES
-// ============================================================================
-
 /**
  * Tekrar kuyruğunu (SRS) getirmek için query hook'u.
  *
@@ -75,10 +71,6 @@ export function useFetchQuestionsByCourseQuery(
   });
 }
 
-// ============================================================================
-// MUTATIONS
-// ============================================================================
-
 /**
  * Quiz oturumu başlatmak için mutasyon hook'u.
  */
@@ -91,12 +83,7 @@ export function useStartQuizSessionMutation() {
       userId: string;
       courseId: string;
     }) => {
-      try {
-        return await startQuizSession(userId, courseId);
-      } catch (err) {
-        console.error('[useQuizQueries][startQuizSession] Hata:', err);
-        throw err;
-      }
+      return await startQuizSession(userId, courseId);
     },
   });
 }
@@ -119,12 +106,7 @@ export function useGenerateChunkMutation() {
         userId?: string;
       };
     }) => {
-      try {
-        return await generateForChunk(chunkId, callbacks, options);
-      } catch (err) {
-        console.error('[useQuizQueries][generateChunk] Hata:', err);
-        throw err;
-      }
+      return await generateForChunk(chunkId, callbacks, options);
     },
   });
 }
@@ -149,19 +131,14 @@ export function useSubmitAnswerMutation() {
       timeSpentMs: number;
       selectedAnswer: number | null;
     }) => {
-      try {
-        return await submitQuizAnswer(
-          ctx,
-          questionId,
-          chunkId,
-          responseType,
-          timeSpentMs,
-          selectedAnswer
-        );
-      } catch (err) {
-        console.error('[useQuizQueries][submitAnswer] Hata:', err);
-        throw err;
-      }
+      return await submitQuizAnswer(
+        ctx,
+        questionId,
+        chunkId,
+        responseType,
+        timeSpentMs,
+        selectedAnswer
+      );
     },
   });
 }

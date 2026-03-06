@@ -96,16 +96,12 @@ export function useQuizEngineResults({
                 sessionContext.sessionNumber
               ).catch(() => {});
             })
-            .catch((err) => {
-              console.error(
-                '[useQuizEngineResults][submitAnswer] Follow-up yükleme hatası:',
-                err
-              );
+            .catch((caughtError) => {
               logger.error(
                 'QuizEngineResults',
                 'submitAnswer',
                 'Failed to load followUpService',
-                err
+                caughtError
               );
             });
         }
@@ -123,13 +119,12 @@ export function useQuizEngineResults({
         }
 
         useQuotaStore.getState().decrementClientQuota();
-      } catch (err) {
-        console.error('[useQuizEngineResults][submitAnswer] Hata:', err);
+      } catch (error) {
         logger.error(
           'QuizEngineResults',
           'submitAnswer',
           'Hata:',
-          err as Error
+          error as Error
         );
         updateState({
           error: 'Soru gönderilirken bir hata oluştu. Lütfen tekrar deneyin.',

@@ -3,9 +3,6 @@ import { Loader2, AlertCircle } from 'lucide-react';
 import { sanitizeHtml } from '@/shared/utils/sanitizers/htmlSanitizer';
 import { logger } from '@/utils/logger';
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
 export interface MermaidDiagramProps {
   /** Mermaid şema kodu (Ham metin) */
   code: string;
@@ -19,9 +16,6 @@ export interface MermaidDiagramState {
   /** Yüklenme durumu */
   isLoading: boolean;
 }
-
-// === BÖLÜM ADI: SİSTEM YARDIMCILARI (SINGLETON LOGIC) ===
-// ===========================
 
 // Mermaid'i bir kere başlat, her render'da tekrar başlatma
 let mermaidInitialized: boolean = false;
@@ -58,9 +52,6 @@ async function getMermaid() {
   return mermaid;
 }
 
-// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
-// ===========================
-
 /**
  * Notlar içerisindeki Mermaid şema kalıplarını dinamik olarak import edip işleyen
  * ve güvenle (XSS denetimi vs) ekrana basan bileşen.
@@ -77,8 +68,6 @@ export const MermaidDiagram = memo(function MermaidDiagram({
     error: null,
     isLoading: true,
   });
-
-  // === EFEKTLER (EFFECTS) ===
 
   useEffect(() => {
     const renderDiagram = async (): Promise<void> => {
@@ -101,7 +90,6 @@ export const MermaidDiagram = memo(function MermaidDiagram({
 
         setState({ svg: sanitizedSvg, error: null, isLoading: false });
       } catch (err: unknown) {
-        console.error('[MermaidDiagram][renderDiagram] Hata:', err);
         logger.error(
           'MermaidDiagram',
           'renderDiagram',
@@ -118,8 +106,6 @@ export const MermaidDiagram = memo(function MermaidDiagram({
 
     renderDiagram();
   }, [code]);
-
-  // === UI RENDER ===
 
   if (state.isLoading) {
     return (

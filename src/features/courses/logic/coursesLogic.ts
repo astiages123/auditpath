@@ -1,7 +1,3 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { BookOpen, FileText, type LucideIcon } from 'lucide-react';
 import { storage } from '@/shared/services/storageService';
 import {
@@ -10,10 +6,6 @@ import {
   type CourseTheme,
   ICON_OVERRIDES,
 } from '../utils/coursesConfig';
-
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
 
 export interface CategoryIndexEntry {
   id: string;
@@ -55,16 +47,8 @@ export interface VideoProgressData {
   updatedAt: number;
 }
 
-// ===========================
-// === STATE & CACHE ===
-// ===========================
-
 /** Memory cache for category identification (courseSlug -> categorySlug) */
 const categoryMapCache = new Map<string, string>();
-
-// ===========================
-// === CATEGORY & THEME LOGIC ===
-// ===========================
 
 /**
  * Finds the category associated with a given ID or slug.
@@ -112,16 +96,14 @@ export function getCourseIcon(
   const queryId = courseSlug || courseName;
   if (!queryId) return BookOpen;
 
-  // 1. Check for specific icon overrides
   if (ICON_OVERRIDES[queryId]) return ICON_OVERRIDES[queryId];
 
-  // 2. Check category icon
   const categoryId = getCategoryId(queryId);
   if (categoryId && CATEGORY_THEMES[categoryId]) {
     return CATEGORY_THEMES[categoryId].Icon;
   }
 
-  return FileText; // Default fallback icon
+  return FileText;
 }
 
 /**
@@ -176,10 +158,6 @@ export function getCourseIconColor(
   return COURSE_THEME_CONFIG[theme].text;
 }
 
-// ===========================
-// === VIDEO PROGRESS LOGIC ===
-// ===========================
-
 const STORAGE_KEY_PREFIX = 'video-progress-';
 
 /** Creates the unique local storage key for a course */
@@ -190,26 +168,23 @@ function getStorageKey(courseId: string): string {
 /** Loads video progress for a completed course from local storage */
 function loadProgress(courseId: string): Set<number> {
   if (typeof window === 'undefined') return new Set();
-  try {
-    const data = storage.get<VideoProgressData>(getStorageKey(courseId));
-    return data ? new Set(data.completedVideos) : new Set();
-  } catch (error) {
-    console.error('[coursesLogic][loadProgress] Hata:', error);
+
+  const data = storage.get<VideoProgressData>(getStorageKey(courseId));
+  if (!data) {
     return new Set();
   }
+
+  return new Set(data.completedVideos);
 }
 
 /** Saves updated video progress to local storage */
 function saveProgress(courseId: string, completedVideos: Set<number>): void {
   if (typeof window === 'undefined') return;
-  try {
-    storage.set(getStorageKey(courseId), {
-      completedVideos: Array.from(completedVideos),
-      updatedAt: Date.now(),
-    });
-  } catch (error) {
-    console.error('[coursesLogic][saveProgress] Hata:', error);
-  }
+
+  storage.set(getStorageKey(courseId), {
+    completedVideos: Array.from(completedVideos),
+    updatedAt: Date.now(),
+  });
 }
 
 /** Retrieves the user's completed video progress for a course */
@@ -244,10 +219,6 @@ export function toggleVideoProgress(
   return progress;
 }
 
-// ===========================
-// === STATISTICS LOGIC ===
-// ===========================
-
 /**
  * Calculates raw completion statistics for a course or general tracking.
  *
@@ -259,11 +230,18 @@ export function calculateCourseStats(
   completedCount: number,
   totalVideos: number
 ): { completedCount: number; totalVideos: number; percentage: number } {
+  if (totalVideos <= 0) {
+    return {
+      completedCount,
+      totalVideos,
+      percentage: 0,
+    };
+  }
+
   return {
     completedCount,
     totalVideos,
-    percentage:
-      totalVideos > 0 ? Math.round((completedCount / totalVideos) * 100) : 0,
+    percentage: Math.round((completedCount / totalVideos) * 100),
   };
 }
 
@@ -281,12 +259,19 @@ export function calculateRankProgress(
   next?: number
 ): number {
   if (min === undefined || next === undefined) {
-    return current >= 100 ? 100 : current;
+    if (current >= 100) {
+      return 100;
+    }
+
+    return current;
   }
+
   const diff = next - min;
-  return diff <= 0
-    ? 100
-    : Math.min(100, Math.max(0, Math.round(((current - min) / diff) * 100)));
+  if (diff <= 0) {
+    return 100;
+  }
+
+  return Math.min(100, Math.max(0, Math.round(((current - min) / diff) * 100)));
 }
 
 /** Alias for calculating category progress bounded between min and next */
@@ -319,10 +304,6 @@ export function calculateEstimatedDaysToNextRank(
   return Math.max(0, daysNeeded);
 }
 
-// ===========================
-// === NAVIGATION LOGIC ===
-// ===========================
-
 /**
  * Gets the next contiguous video in the sequence relative to current ID
  *
@@ -335,8 +316,13 @@ export function getNextVideo(
   currentId: number
 ): number | null {
   if (!videos) return null;
-  const idx = videos.findIndex((v) => v.id === currentId);
-  return idx === -1 || idx === videos.length - 1 ? null : videos[idx + 1].id;
+  const currentIndex = videos.findIndex((video) => video.id === currentId);
+
+  if (currentIndex === -1 || currentIndex === videos.length - 1) {
+    return null;
+  }
+
+  return videos[currentIndex + 1].id;
 }
 
 /**
@@ -351,6 +337,11 @@ export function getPreviousVideo(
   currentId: number
 ): number | null {
   if (!videos) return null;
-  const idx = videos.findIndex((v) => v.id === currentId);
-  return idx <= 0 ? null : videos[idx - 1].id;
+  const currentIndex = videos.findIndex((video) => video.id === currentId);
+
+  if (currentIndex <= 0) {
+    return null;
+  }
+
+  return videos[currentIndex - 1].id;
 }

@@ -28,10 +28,13 @@ interface UseQuizExamSessionOptions {
   refreshTopics: () => void;
 }
 
-const normalizeStoredQuestion = (q: { id: string; question_data: unknown }) =>
+const normalizeStoredQuestion = (questionRow: {
+  id: string;
+  question_data: unknown;
+}) =>
   ({
-    ...(parseOrThrow(QuizQuestionSchema, q.question_data) as object),
-    id: q.id,
+    ...(parseOrThrow(QuizQuestionSchema, questionRow.question_data) as object),
+    id: questionRow.id,
   }) as QuizQuestion;
 
 export function useQuizExamSession({
@@ -62,7 +65,6 @@ export function useQuizExamSession({
         return poolResult.map(normalizeStoredQuestion);
       }
     } catch (error) {
-      console.error('[useQuizExamSession][startExamFromPool] Hata:', error);
       logger.error(
         'QuizExamSession',
         'startExamFromPool',
@@ -84,7 +86,6 @@ export function useQuizExamSession({
         }
       }
     } catch (error) {
-      console.error('[useQuizExamSession][generateAndFetchExam] Hata:', error);
       logger.error(
         'QuizExamSession',
         'generateAndFetchExam',
@@ -160,23 +161,24 @@ export function useQuizExamSession({
             );
             setCompletionStatus(finalStatus);
           },
-          onError: (err) => {
-            console.error(
-              '[useQuizExamSession][handleFinishQuiz][generateForChunk] Hata:',
-              err
-            );
+          onError: (generationError) => {
             logger.error(
               'QuizExamSession',
               'handleFinishQuiz',
               'Arka plan üretim hatası:',
-              { message: err }
+              { message: generationError }
             );
           },
         },
         { usageType: 'deneme', userId }
       );
-    } catch (err) {
-      console.error('[useQuizExamSession][handleFinishQuiz] Hata:', err);
+    } catch (error) {
+      logger.error(
+        'QuizExamSession',
+        'handleFinishQuiz',
+        'Sınav sonrası durum güncellenemedi:',
+        error as Error
+      );
     }
   }, [
     selectedTopic,
@@ -220,8 +222,13 @@ export function useQuizExamSession({
         });
         setIsQuizActive(true);
       }
-    } catch (err) {
-      console.error('[useQuizExamSession][handleStartSmartExam] Hata:', err);
+    } catch (error) {
+      logger.error(
+        'QuizExamSession',
+        'handleStartSmartExam',
+        'Karma deneme başlatılamadı:',
+        error as Error
+      );
     }
   }, [
     userId,

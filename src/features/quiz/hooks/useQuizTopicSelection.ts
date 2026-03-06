@@ -41,10 +41,6 @@ export function useQuizTopicSelection({
       setChunkId(chunkId);
       setCompletionStatus(status);
     } catch (error) {
-      console.error(
-        '[useQuizTopicSelection][refreshSelectedTopicData] Hata:',
-        error
-      );
       logger.error(
         'QuizTopicSelection',
         'refreshSelectedTopicData',

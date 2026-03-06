@@ -1,12 +1,4 @@
-// ==========================================
-// IMPORTS
-// ==========================================
-
 import { CourseMastery } from '@/features/courses/types/courseTypes';
-
-// ==========================================
-// TYPES
-// ==========================================
 
 /**
  * Result structure for the different score types and their underlying category details.
@@ -21,10 +13,6 @@ export interface ScoreTypeResult {
     p48: Record<string, number>;
   };
 }
-
-// ==========================================
-// LOGIC FUNCTIONS
-// ==========================================
 
 /**
  * Calculates estimated completion percentage for P30, P35, and P48 point types
@@ -71,28 +59,26 @@ export function calculateScoreTypeProgress(
 
   if (masteries.length === 0) return result;
 
-  // --- Category Filters ---
-
   const gyCourses = ['Matematik ve Geometri', 'Sözel Mantık', 'Türkçe'];
   const gkCourses = ['Tarih', 'Coğrafya', 'Vatandaşlık', 'Sözel Mantık'];
 
   const hukukCourses = masteries
     .filter(
-      (m) =>
-        m.courseName.toLowerCase().includes('hukuku') ||
-        m.courseName === 'Anayasa Hukuku' ||
-        m.courseName === 'İdare Hukuku'
+      (mastery) =>
+        mastery.courseName.toLowerCase().includes('hukuku') ||
+        mastery.courseName === 'Anayasa Hukuku' ||
+        mastery.courseName === 'İdare Hukuku'
     )
-    .map((m) => m.courseName);
+    .map((mastery) => mastery.courseName);
 
   const iktisatCourses = masteries
     .filter(
-      (m) =>
-        m.courseName.toLowerCase().includes('iktisat') ||
-        m.courseName.includes('Ekonomisi') ||
-        m.courseName.includes('Para, Banka')
+      (mastery) =>
+        mastery.courseName.toLowerCase().includes('iktisat') ||
+        mastery.courseName.includes('Ekonomisi') ||
+        mastery.courseName.includes('Para, Banka')
     )
-    .map((m) => m.courseName);
+    .map((mastery) => mastery.courseName);
 
   const maliyeCourses = ['Maliye'];
   const muhasebeCourses = ['Muhasebe'];
@@ -115,15 +101,20 @@ export function calculateScoreTypeProgress(
   /**
    * Helper to average mastery scores for a specific list of subjects.
    */
-  const getAvgByList = (names: string[]): number => {
-    const matches = masteries.filter((m) => names.includes(m.courseName));
-    if (matches.length === 0) return 0;
+  const getAvgByList = (courseNames: string[]): number => {
+    const matchedMasteries = masteries.filter((mastery) =>
+      courseNames.includes(mastery.courseName)
+    );
+    if (matchedMasteries.length === 0) return 0;
 
-    const sum = matches.reduce((acc, curr) => acc + curr.masteryScore, 0);
-    return sum / matches.length;
+    const totalMasteryScore = matchedMasteries.reduce(
+      (accumulator, currentMastery) =>
+        accumulator + currentMastery.masteryScore,
+      0
+    );
+    return totalMasteryScore / matchedMasteries.length;
   };
 
-  // --- Calculate P30 (Administrative) ---
   const p30Gy = getAvgByList(gyCourses);
   const p30Gk = getAvgByList(gkCourses);
   const p30Hukuk = getAvgByList(hukukCourses);
@@ -139,7 +130,6 @@ export function calculateScoreTypeProgress(
     ky: p30Ky,
   };
 
-  // --- Calculate P35 (Diplomatic) ---
   const p35Gy = getAvgByList(gyCourses);
   const p35Gk = getAvgByList(gkCourses);
   const p35Hukuk = getAvgByList(hukukCourses);
@@ -155,7 +145,6 @@ export function calculateScoreTypeProgress(
     ui: p35Ui,
   };
 
-  // --- Calculate P48 (General Field) ---
   const p48Gy = getAvgByList(gyCourses);
   const p48Gk = getAvgByList(gkCourses);
   const p48Hukuk = getAvgByList(hukukCourses);

@@ -6,37 +6,21 @@ import { CommonEmptyState } from '@/features/statistics/components/shared/CardEl
 
 import type { BloomStats } from '@/features/quiz/types/types';
 
-// ==========================================
-// === LAZY COMPONENTS ===
-// ==========================================
-
 const BloomKeyChart = lazy(() =>
   import('./BloomKeyChart').then((m) => ({
     default: m.BloomKeyChart,
   }))
 );
 
-// ==========================================
-// === PROPS ===
-// ==========================================
-
 export interface PracticePerformanceRadarProps {
   data: BloomStats[];
 }
-
-// ==========================================
-// === COMPONENT: FALLBACK ===
-// ==========================================
 
 const ChartFallback = () => (
   <div className="w-full flex items-center justify-center min-h-[300px]">
     <Skeleton className="h-60 w-60 rounded-full bg-surface/20" />
   </div>
 );
-
-// ==========================================
-// === COMPONENT ===
-// ==========================================
 
 export const PracticePerformanceRadar = ({
   data,

@@ -4,17 +4,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { LearningLoad } from '@/features/statistics/types/statisticsTypes';
 import { CommonEmptyState } from '@/features/statistics/components/shared/CardElements';
 
-// ==========================================
-// === LAZY COMPONENTS ===
-// ==========================================
-
 const LearningLoadChart = lazy(
   () => import('@/features/statistics/components/charts/LearningLoadChart')
 );
-
-// ==========================================
-// === TYPES / PROPS ===
-// ==========================================
 
 export interface LearningLoadAnalysisProps {
   dayData: LearningLoad[];
@@ -24,19 +16,11 @@ export interface LearningLoadAnalysisProps {
   targetMinutes?: number;
 }
 
-// ==========================================
-// === COMPONENT: FALLBACK ===
-// ==========================================
-
 const ChartFallback = () => (
   <div className="w-full h-[230px] flex items-center justify-center bg-surface/5 rounded-xl border border-border/10">
     <Skeleton className="w-[90%] h-[180px] bg-surface/20" />
   </div>
 );
-
-// ==========================================
-// === COMPONENT ===
-// ==========================================
 
 export const LearningLoadAnalysis = ({
   dayData,

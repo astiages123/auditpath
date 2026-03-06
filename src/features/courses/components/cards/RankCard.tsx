@@ -1,16 +1,8 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { ChevronRight, Target, Calendar } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Variants } from 'framer-motion';
-
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
 
 import type { RankInfo } from '@/features/courses/types/courseTypes';
 
@@ -24,10 +16,6 @@ export interface RankCardProps {
   onOpenJourney: () => void;
   variants: Variants;
 }
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * Displays the user's current rank, next rank target, progress bar,

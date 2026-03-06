@@ -1,13 +1,5 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { memo } from 'react';
 import { Check, Circle, Play, FileText } from 'lucide-react';
-
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
 
 export interface CourseItemProps {
   _id: string;
@@ -18,10 +10,6 @@ export interface CourseItemProps {
   itemType: 'video' | 'reading';
   onToggle: (itemNumber: number, isModifierPressed: boolean) => void;
 }
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * Renders an individual course item (video or reading) within a list,

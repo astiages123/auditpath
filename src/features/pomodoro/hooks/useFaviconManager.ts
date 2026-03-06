@@ -2,21 +2,6 @@ import { useCallback, useEffect, useRef } from 'react';
 import { logger } from '@/utils/logger';
 import faviconIco from '@/assets/favicon.ico';
 
-// ===========================
-// === HOOK DEFINITION ===
-// ===========================
-
-/**
- * Dinamik favicon ve sayfa başlığı yönetimi sağlayan hook.
- * - Favicon üzerine ilerleme halkası çizer.
- * - Sayfa başlığını zamanlayıcı durumuna göre günceller.
- *
- * @param timeLeft - Saniye cinsinden kalan süre
- * @param totalTime - Saniye cinsinden toplam süre (ilerleme halkası için)
- * @param isActive - Zamanlayıcının çalışıp çalışmadığı
- * @param mode - 'work' (odak) veya 'break' (mola) veya 'pause'
- * @param enabled - Favicon yöneticisinin etkin olup olmadığı
- */
 export function useFaviconManager(
   timeLeft: number,
   totalTime: number,
@@ -38,7 +23,6 @@ export function useFaviconManager(
 
   const getColors = useCallback(() => {
     const style = getComputedStyle(document.documentElement);
-
     const destructive =
       style.getPropertyValue('--destructive') || '0.6368 0.2078 25.3313';
     const primary =
@@ -55,10 +39,10 @@ export function useFaviconManager(
 
   const drawFavicon = useCallback(() => {
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
+    const context = canvas?.getContext('2d');
+    if (!canvas || !context) return;
 
-    ctx.clearRect(0, 0, 64, 64);
+    context.clearRect(0, 0, 64, 64);
 
     const colors = getColors();
     let strokeColor = mode === 'work' ? colors.work : colors.break;
@@ -68,23 +52,15 @@ export function useFaviconManager(
     }
 
     if (imageRef.current) {
-      try {
-        const size = 48;
-        const offset = (64 - size) / 2;
+      const size = 48;
+      const offset = (64 - size) / 2;
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(32, 32, size / 2, 0, 2 * Math.PI);
-        ctx.clip();
-
-        ctx.drawImage(imageRef.current, offset, offset, size, size);
-        ctx.restore();
-      } catch (e: unknown) {
-        console.error('[useFaviconManager][drawFavicon] Hata:', e);
-        logger.warn('UseFaviconManager', 'drawFavicon', 'Favicon draw error', {
-          error: String(e),
-        });
-      }
+      context.save();
+      context.beginPath();
+      context.arc(32, 32, size / 2, 0, 2 * Math.PI);
+      context.clip();
+      context.drawImage(imageRef.current, offset, offset, size, size);
+      context.restore();
     }
 
     const progress = totalTime > 0 ? timeLeft / totalTime : 0;
@@ -94,13 +70,12 @@ export function useFaviconManager(
     const startAngle = -0.5 * Math.PI;
     const endAngle = startAngle + 2 * Math.PI * progress;
 
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = 4;
-    ctx.lineCap = 'round';
-
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, startAngle, endAngle, false);
-    ctx.stroke();
+    context.strokeStyle = strokeColor;
+    context.lineWidth = 4;
+    context.lineCap = 'round';
+    context.beginPath();
+    context.arc(centerX, centerY, radius, startAngle, endAngle, false);
+    context.stroke();
 
     if (faviconRef.current) {
       faviconRef.current.href = canvas.toDataURL('image/png');
@@ -109,10 +84,9 @@ export function useFaviconManager(
 
   const updateTitle = useCallback(() => {
     const isOvertime = timeLeft < 0;
-    const absTime = Math.abs(timeLeft);
-    const minutes = Math.floor(absTime / 60);
-    const seconds = Math.floor(absTime % 60);
-
+    const absoluteTime = Math.abs(timeLeft);
+    const minutes = Math.floor(absoluteTime / 60);
+    const seconds = Math.floor(absoluteTime % 60);
     const timeSign = isOvertime ? '+' : '';
     const formattedTime = `${timeSign}${minutes
       .toString()
@@ -153,14 +127,14 @@ export function useFaviconManager(
     }
 
     if (!imageRef.current) {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = faviconIco;
+      const image = new Image();
+      image.crossOrigin = 'anonymous';
+      image.src = faviconIco;
 
-      img.onload = () => {
-        imageRef.current = img;
+      image.onload = () => {
+        imageRef.current = image;
       };
-      img.onerror = () => {
+      image.onerror = () => {
         logger.warn(
           'UseFaviconManager',
           'useEffect',
@@ -182,9 +156,10 @@ export function useFaviconManager(
     if (enabled) {
       drawFavicon();
       updateTitle();
-    } else {
-      resetToDefault();
+      return;
     }
+
+    resetToDefault();
   }, [
     timeLeft,
     totalTime,

@@ -38,12 +38,11 @@ const ROUTE_LABELS: Record<string, string> = {
   schedule: 'Çalışma Programı',
 };
 
-// === COMPONENT ===
-
 export function GlobalBreadcrumb() {
-  // === HOOKS ===
   const location = useLocation();
-  const pathnames = location.pathname.split('/').filter((x) => x);
+  const pathnames = location.pathname
+    .split('/')
+    .filter((pathSegment) => pathSegment);
   const [data, setData] = useState<{
     course: Course | null;
     topicName: string | null;
@@ -61,8 +60,6 @@ export function GlobalBreadcrumb() {
   const courseSlug =
     isQuizPath || isNotesPath ? pathnames[courseSlugIdx] : null;
   const topicSlug = isQuizPath || isNotesPath ? pathnames[topicSlugIdx] : null;
-
-  // === EFFECTS ===
 
   useEffect(() => {
     async function resolveData() {
@@ -82,7 +79,7 @@ export function GlobalBreadcrumb() {
             let foundTopic: string | null = topicSlug;
             if (chunks) {
               const found = (chunks as { section_title: string }[]).find(
-                (c) => slugify(c.section_title) === topicSlug
+                (chunk) => slugify(chunk.section_title) === topicSlug
               );
               foundTopic = found ? found.section_title : topicSlug;
             }
@@ -90,8 +87,7 @@ export function GlobalBreadcrumb() {
           } else {
             setData({ course: cData, topicName: null });
           }
-        } catch (error) {
-          console.error('[GlobalBreadcrumb][resolveData] Hata:', error);
+        } catch {
           setData({ course: null, topicName: null });
         }
       } else {
@@ -100,8 +96,6 @@ export function GlobalBreadcrumb() {
     }
     resolveData();
   }, [courseSlug, topicSlug]);
-
-  // === RENDER ===
 
   if (pathnames.length === 0) return null;
 

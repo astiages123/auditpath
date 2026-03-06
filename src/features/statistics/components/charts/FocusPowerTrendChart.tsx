@@ -6,23 +6,13 @@ import type {
 
 type RechartsModule = typeof import('recharts');
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 export const FocusPowerTrendChart = ({ data }: FocusPowerTrendProps) => {
-  // ==========================================
-  // === HOOKS & STATE ===
-  // ==========================================
   const [Recharts, setRecharts] = useState<RechartsModule | null>(null);
 
   useEffect(() => {
     import('recharts').then((mod) => setRecharts(mod));
   }, []);
 
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   if (!Recharts) {
     return (
       <div className="w-full h-full min-h-[300px] mt-4 animate-pulse bg-muted/20 rounded-xl" />

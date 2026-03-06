@@ -6,8 +6,6 @@ import { toast } from 'sonner';
 import { cn } from '@/utils/stringHelpers';
 import { Button } from '@/components/ui/button';
 
-// === PROPS ===
-
 interface SyncButtonProps {
   className?: string;
   onSyncComplete?: () => void;
@@ -15,15 +13,12 @@ interface SyncButtonProps {
   iconClassName?: string;
 }
 
-// === COMPONENT ===
-
 export function SyncButton({
   className,
   onSyncComplete,
   showLabel = true,
   iconClassName,
 }: SyncButtonProps) {
-  // === HOOKS ===
   const [isSyncing, setIsSyncing] = useState(false);
   const { data: categories = [] } = useCategories();
 
@@ -41,7 +36,6 @@ export function SyncButton({
     });
 
     try {
-      // 1. Notion Sync
       const notionData = await invokeNotionSync();
 
       if (!notionData.success) {
@@ -84,8 +78,6 @@ export function SyncButton({
       setIsSyncing(false);
     }
   };
-
-  // === RENDER ===
 
   return (
     <Button

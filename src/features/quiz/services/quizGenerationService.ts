@@ -1,5 +1,4 @@
 import { supabase } from '@/lib/supabase';
-import { logger } from '@/utils/logger';
 import { safeQuery } from '@/lib/supabaseHelpers';
 import { isValidUuid, parseArray } from '@/utils/validation';
 import type { Json } from '@/types/database.types';
@@ -11,23 +10,16 @@ import {
 import { MASTERY_THRESHOLD } from '@/features/quiz/utils/constants';
 import { fetchQuestionsByCourse } from './quizRepository';
 
-const MODULE = 'QuizGenerationService';
-
 /** Akıllı sınav (Smart Exam) üretimi için soru listesi hazırlar */
 export async function generateSmartExam(
   courseId: string,
   _userId: string
 ): Promise<{ success: boolean; questionIds: string[] }> {
-  try {
-    const questions = await fetchQuestionsByCourse(courseId, 20);
-    return {
-      success: true,
-      questionIds: (questions as { id: string }[]).map((q) => q.id),
-    };
-  } catch (error) {
-    logger.error(MODULE, 'generateSmartExam', 'Hata:', error);
-    return { success: false, questionIds: [] };
-  }
+  const questions = await fetchQuestionsByCourse(courseId, 20);
+  return {
+    success: true,
+    questionIds: (questions as { id: string }[]).map((question) => question.id),
+  };
 }
 
 /** Waterfall (akışkan) eğitim sorularını getirir */
@@ -37,67 +29,68 @@ export async function fetchWaterfallTrainingQuestions(
   targetChunkId: string,
   limit: number
 ): Promise<QuestionWithStatus[]> {
-  try {
-    const allChunkIds: string[] = [];
-    if (isValidUuid(targetChunkId)) allChunkIds.push(targetChunkId);
+  const allChunkIds: string[] = [];
+  if (isValidUuid(targetChunkId)) allChunkIds.push(targetChunkId);
 
-    const { data: weakChunks } = await safeQuery<{ chunk_id: string }[]>(
-      supabase
-        .from('chunk_mastery')
-        .select('chunk_id')
-        .eq('user_id', userId)
-        .eq('course_id', courseId)
-        .filter(
-          'chunk_id',
-          'neq',
-          isValidUuid(targetChunkId)
-            ? targetChunkId
-            : '00000000-0000-0000-0000-000000000000'
-        )
-        .lt('mastery_score', MASTERY_THRESHOLD)
-        .order('updated_at', {
-          ascending: false,
-        }),
-      'fetchWaterfallTrainingQuestions weakChunks error',
-      { userId, courseId }
-    );
-    if (weakChunks) allChunkIds.push(...weakChunks.map((c) => c.chunk_id));
-    if (allChunkIds.length === 0) return [];
+  const { data: weakChunks } = await safeQuery<{ chunk_id: string }[]>(
+    supabase
+      .from('chunk_mastery')
+      .select('chunk_id')
+      .eq('user_id', userId)
+      .eq('course_id', courseId)
+      .filter(
+        'chunk_id',
+        'neq',
+        isValidUuid(targetChunkId)
+          ? targetChunkId
+          : '00000000-0000-0000-0000-000000000000'
+      )
+      .lt('mastery_score', MASTERY_THRESHOLD)
+      .order('updated_at', {
+        ascending: false,
+      }),
+    'fetchWaterfallTrainingQuestions weakChunks error',
+    { userId, courseId }
+  );
+  if (weakChunks)
+    allChunkIds.push(...weakChunks.map((chunk) => chunk.chunk_id));
+  if (allChunkIds.length === 0) return [];
 
-    const [activeQuestions, nullQuestions] = await Promise.all([
-      fetchActiveQuestionsFromChunks(userId, allChunkIds, limit),
-      fetchNullQuestionsFromChunks(allChunkIds, limit),
-    ]);
+  const [activeQuestions, nullQuestions] = await Promise.all([
+    fetchActiveQuestionsFromChunks(userId, allChunkIds, limit),
+    fetchNullQuestionsFromChunks(allChunkIds, limit),
+  ]);
 
-    const activeByChunk = new Map<string, QuestionWithStatus[]>();
-    activeQuestions.forEach((q) => {
-      const cid = q.questions.chunk_id as string;
-      if (!activeByChunk.has(cid)) activeByChunk.set(cid, []);
-      activeByChunk.get(cid)!.push(q);
-    });
+  const activeByChunk = new Map<string, QuestionWithStatus[]>();
+  activeQuestions.forEach((question) => {
+    const chunkId = question.questions.chunk_id as string;
+    if (!activeByChunk.has(chunkId)) activeByChunk.set(chunkId, []);
+    activeByChunk.get(chunkId)!.push(question);
+  });
 
-    const nullByChunk = new Map<string, QuestionWithStatus[]>();
-    nullQuestions.forEach((q) => {
-      const cid = q.questions.chunk_id as string;
-      if (!nullByChunk.has(cid)) nullByChunk.set(cid, []);
-      nullByChunk.get(cid)!.push(q);
-    });
+  const nullByChunk = new Map<string, QuestionWithStatus[]>();
+  nullQuestions.forEach((question) => {
+    const chunkId = question.questions.chunk_id as string;
+    if (!nullByChunk.has(chunkId)) nullByChunk.set(chunkId, []);
+    nullByChunk.get(chunkId)!.push(question);
+  });
 
-    const results: QuestionWithStatus[] = [];
-    for (const chunkId of allChunkIds) {
-      const remaining = limit - results.length;
-      if (remaining <= 0) break;
-      const active = activeByChunk.get(chunkId) || [];
-      const nulls = nullByChunk.get(chunkId) || [];
-      results.push(...active.slice(0, remaining));
-      const stillNeeded = limit - results.length;
-      if (stillNeeded > 0) results.push(...nulls.slice(0, stillNeeded));
+  const results: QuestionWithStatus[] = [];
+  for (const chunkId of allChunkIds) {
+    const remaining = limit - results.length;
+    if (remaining <= 0) break;
+
+    const active = activeByChunk.get(chunkId) || [];
+    const nulls = nullByChunk.get(chunkId) || [];
+    results.push(...active.slice(0, remaining));
+
+    const stillNeeded = limit - results.length;
+    if (stillNeeded > 0) {
+      results.push(...nulls.slice(0, stillNeeded));
     }
-    return results.slice(0, limit);
-  } catch (error) {
-    logger.error(MODULE, 'fetchWaterfallTrainingQuestions', 'Hata:', error);
-    return [];
   }
+
+  return results.slice(0, limit);
 }
 
 /** Yardımcı: Çoklu chunk ID listesinden aktif soruları getirir */

@@ -87,29 +87,38 @@ export const mapRowToTimelineBlock = (s: {
   }
 
   const validatedTimeline = timeline
-    .map((e) => {
-      if (isValid(TimelineEventSchema, e)) {
-        return parseOrThrow(TimelineEventSchema, e);
+    .map((timelineEntry) => {
+      if (isValid(TimelineEventSchema, timelineEntry)) {
+        return parseOrThrow(TimelineEventSchema, timelineEntry);
       }
       return null;
     })
-    .filter((e): e is ValidatedTimelineEvent => e !== null);
+    .filter(
+      (timelineEntry): timelineEntry is ValidatedTimelineEvent =>
+        timelineEntry !== null
+    );
 
   let startTime = s.started_at;
   let endTime = s.ended_at;
 
   if (validatedTimeline.length > 0) {
-    const tStart = Math.min(...validatedTimeline.map((e) => e.start));
-    const tEnd = Math.max(...validatedTimeline.map((e) => e.end ?? e.start));
+    const timelineStart = Math.min(
+      ...validatedTimeline.map((timelineEntry) => timelineEntry.start)
+    );
+    const timelineEnd = Math.max(
+      ...validatedTimeline.map(
+        (timelineEntry) => timelineEntry.end ?? timelineEntry.start
+      )
+    );
 
-    if (tStart < Infinity) {
+    if (timelineStart < Infinity) {
       startTime = new Date(
-        Math.min(new Date(s.started_at).getTime(), tStart)
+        Math.min(new Date(s.started_at).getTime(), timelineStart)
       ).toISOString();
     }
-    if (tEnd > -Infinity) {
+    if (timelineEnd > -Infinity) {
       endTime = new Date(
-        Math.max(new Date(s.ended_at).getTime(), tEnd)
+        Math.max(new Date(s.ended_at).getTime(), timelineEnd)
       ).toISOString();
     }
   }
@@ -142,25 +151,25 @@ export const mapRowToRecentSession = (s: {
   efficiency_score: number | null;
   timeline: Json;
 }): RecentSession => {
-  const work = s.total_work_time || 0;
-  const brk = s.total_break_time || 0;
-  const pause = s.total_pause_time || 0;
+  const workSeconds = s.total_work_time || 0;
+  const breakSeconds = s.total_break_time || 0;
+  const pauseSeconds = s.total_pause_time || 0;
 
-  const eScore =
+  const efficiencyScore =
     s.efficiency_score && s.efficiency_score > 0
       ? s.efficiency_score
-      : calculateFocusPower(work, brk, pause);
+      : calculateFocusPower(workSeconds, breakSeconds, pauseSeconds);
 
   return {
     id: s.id,
     courseName: s.course_name || 'Bilinmeyen Ders',
     date: s.started_at,
-    durationMinutes: Math.round(work / 60),
-    efficiencyScore: eScore,
+    durationMinutes: Math.round(workSeconds / 60),
+    efficiencyScore,
     timeline: Array.isArray(s.timeline) ? (s.timeline as Json[]) : [],
-    totalWorkTime: work,
-    totalBreakTime: brk,
-    totalPauseTime: pause,
+    totalWorkTime: workSeconds,
+    totalBreakTime: breakSeconds,
+    totalPauseTime: pauseSeconds,
     pauseCount: s.pause_count || 0,
   };
 };

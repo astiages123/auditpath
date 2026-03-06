@@ -2,8 +2,6 @@ import { Loader2 } from 'lucide-react';
 import { GenerationLog } from '@/features/quiz/types';
 import { cn } from '@/utils/stringHelpers';
 
-// === TYPES ===
-
 interface SmartExamViewProps {
   /** Karma sınav üretim ilerlemesi */
   examProgress: { current: number; total: number };
@@ -11,15 +9,11 @@ interface SmartExamViewProps {
   examLogs: GenerationLog[];
 }
 
-// === COMPONENT ===
-
 /**
  * Kullanıcıya özel hazırlanan karma "Smart Exam" (Deneme Sınavı) üretim ekranı.
  * İlerlemeyi ve teknik logları görsel olarak gösterir.
  */
 export function SmartExamView({ examProgress, examLogs }: SmartExamViewProps) {
-  // === RENDER LOGIC ===
-
   const progressPercentage = Math.round(
     (examProgress.current / (examProgress.total || 1)) * 100
   );
@@ -39,8 +33,6 @@ export function SmartExamView({ examProgress, examLogs }: SmartExamViewProps) {
       color: 'bg-emerald-400/10 text-emerald-400 border-emerald-400/20',
     },
   };
-
-  // === RENDER ===
 
   return (
     <div className="flex flex-col items-center justify-center min-h-0 w-full max-w-2xl mx-auto space-y-8 p-6 overflow-y-auto h-full">

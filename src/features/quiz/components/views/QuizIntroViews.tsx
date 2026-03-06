@@ -22,8 +22,6 @@ import { Progress } from '@/components/ui/progress';
 import { GenerationLog, GenerationStep } from '@/features/quiz/types';
 import { cn } from '@/utils/stringHelpers';
 
-// === CONSTANTS: PRODUCTION STEP CONFIGS ===
-
 const stepIcons: Record<GenerationStep, ReactNode> = {
   INIT: <Coffee className="w-3.5 h-3.5" />,
   MAPPING: <MapIcon className="w-3.5 h-3.5" />,
@@ -57,9 +55,7 @@ const stepLabels: Record<GenerationStep, string> = {
   ERROR: 'Aksaklık',
 };
 
-// ============================================================================
 // COURSE OVERVIEW
-// ============================================================================
 
 interface CourseOverviewProps {
   /** Dersin tam adı */
@@ -76,8 +72,6 @@ interface CourseOverviewProps {
  * Kullanıcıya seçtiği dersin genel durumunu ve ilerlemesini gösteren başlangıç kartı.
  */
 export function CourseOverview({ courseName, progress }: CourseOverviewProps) {
-  // === RENDER LOGIC ===
-
   const stats = [
     {
       label: 'Ders İlerlemesi',
@@ -94,8 +88,6 @@ export function CourseOverview({ courseName, progress }: CourseOverviewProps) {
       bg: 'bg-blue-500/10',
     },
   ];
-
-  // === RENDER ===
 
   return (
     <div className="flex-col flex items-center justify-center p-8 h-full space-y-8 animate-in fade-in duration-500">
@@ -143,9 +135,7 @@ export function CourseOverview({ courseName, progress }: CourseOverviewProps) {
   );
 }
 
-// ============================================================================
 // QUOTA DISPLAY
-// ============================================================================
 
 interface QuotaDisplayProps {
   /** Kullanılmış kota miktarı */
@@ -228,9 +218,7 @@ export const QuotaDisplay: FC<QuotaDisplayProps> = ({
   </div>
 );
 
-// ============================================================================
 // INITIAL STATE VIEW
-// ============================================================================
 
 interface InitialStateViewProps {
   /** "Analiz Et" butonuna tıklanınca tetiklenir */
@@ -273,9 +261,7 @@ export function InitialStateView({ onGenerate }: InitialStateViewProps) {
   );
 }
 
-// ============================================================================
 // GENERATION LIVE STREAM
-// ============================================================================
 
 interface GenerationLiveStreamProps {
   /** Süreçteki tüm log kayıtları */
@@ -288,8 +274,6 @@ interface GenerationLiveStreamProps {
 export const GenerationLiveStream: FC<GenerationLiveStreamProps> = ({
   logs,
 }) => {
-  // === HOOKS & REFS ===
-
   const logContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -297,8 +281,6 @@ export const GenerationLiveStream: FC<GenerationLiveStreamProps> = ({
       logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [logs]);
-
-  // === RENDER ===
 
   if (logs.length === 0) return null;
 

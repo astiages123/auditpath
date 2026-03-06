@@ -7,19 +7,11 @@ import type { Achievement } from '@/features/achievements/types/achievementsType
 import { cn } from '@/utils/stringHelpers';
 import { Card } from '@/components/ui/card';
 
-// ===========================
-// === TYPES ===
-// ===========================
-
 interface SealCardProps {
   achievement: Achievement;
   isUnlocked: boolean;
   onClick: () => void;
 }
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * SealCard Component

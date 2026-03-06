@@ -18,7 +18,7 @@ import { cn } from '@/utils/stringHelpers';
 
 export function NotesPageContent() {
   const {
-    loading,
+    loading: isLoading,
     error,
     courseSlug,
     courseName,
@@ -53,7 +53,21 @@ export function NotesPageContent() {
     results,
   } = useNotesPageLogic();
 
-  if (loading) {
+  const handleTocItemClick = (itemId: string, event: MouseEvent) => {
+    event.preventDefault();
+    if (handleScrollToId && setActiveSection) {
+      handleScrollToId(itemId, setActiveSection);
+    }
+  };
+
+  const handleMobileSearchResultClick = (
+    result: Parameters<typeof handleSearchResultClick>[0]
+  ) => {
+    handleSearchResultClick(result);
+    setIsMobileMenuOpen(false);
+  };
+
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center space-x-4">
         <Skeleton className="h-12 w-12 rounded-full" />
@@ -152,12 +166,7 @@ export function NotesPageContent() {
                 <LocalToC
                   items={(currentChunkToC as LocalToCItem[]) || []}
                   activeId={activeSection || ''}
-                  onItemClick={(id: string, e: MouseEvent) => {
-                    e.preventDefault();
-                    if (handleScrollToId && setActiveSection) {
-                      handleScrollToId(id, setActiveSection);
-                    }
-                  }}
+                  onItemClick={handleTocItemClick}
                   onToggle={() => setIsRightPanelVisible(false)}
                 />
               </div>
@@ -172,10 +181,7 @@ export function NotesPageContent() {
           isMobileMenuOpen={isMobileMenuOpen}
           debouncedQuery={debouncedQuery}
           results={results}
-          onSearchResultClick={(result) => {
-            handleSearchResultClick(result);
-            setIsMobileMenuOpen(false);
-          }}
+          onSearchResultClick={handleMobileSearchResultClick}
           onClose={() => setIsMobileMenuOpen(false)}
         />
       </div>

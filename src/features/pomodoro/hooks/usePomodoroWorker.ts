@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
 import type { TimerWorkerMessage } from '../logic/timerWorker';
 
-// ===========================
-// === SINGLETON MANAGER ===
-// ===========================
-
 /**
  * Global singleton to manage the Timer Worker across the entire application.
  * Prevents multiple workers from being created during re-renders or StrictMode.
@@ -32,8 +28,8 @@ class PomodoroWorkerManager {
       { type: 'module' }
     );
 
-    this.worker.onmessage = (e: MessageEvent<string>) => {
-      if (e.data === 'TICK') {
+    this.worker.onmessage = (event: MessageEvent<string>) => {
+      if (event.data === 'TICK') {
         this.listeners.forEach((onTick) => onTick());
       }
     };
@@ -68,10 +64,6 @@ class PomodoroWorkerManager {
 }
 
 const workerManager = PomodoroWorkerManager.getInstance();
-
-// ===========================
-// === HOOK DEFINITION ===
-// ===========================
 
 /**
  * Hook to manage the specialized Pomodoro Timer Worker.

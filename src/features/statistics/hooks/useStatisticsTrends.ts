@@ -15,6 +15,7 @@ import {
 import { generateDateRange } from '../logic/statisticsHelpers';
 import { performanceMonitor } from '@/utils/performance';
 import { getAppDayStart } from '@/utils/dateUtils';
+import { logger } from '@/utils/logger';
 
 import type {
   DayActivity,
@@ -23,10 +24,6 @@ import type {
   FocusTrend,
   LearningLoad,
 } from '@/features/statistics/types/statisticsTypes';
-
-// ==========================================
-// === TYPES ===
-// ==========================================
 
 export interface EfficiencyTrendsHook {
   loading: boolean;
@@ -42,10 +39,6 @@ export interface EfficiencyTrendsHook {
   focusTrend: FocusTrend[];
 }
 
-// ==========================================
-// === HOOK ===
-// ==========================================
-
 /**
  * Fetches all trend-related arrays required by the dashboard efficiency charts.
  * Leverages the Promise.allSettled pattern to concurrently perform queries across the stats.
@@ -55,9 +48,8 @@ export interface EfficiencyTrendsHook {
  */
 export function useStatisticsTrends(): EfficiencyTrendsHook {
   const { user } = useAuth();
-  const [loading, setLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Initialize with empty arrays to prevent mapping over null / Zombie states
   const [trends, setTrends] = useState<Omit<EfficiencyTrendsHook, 'loading'>>({
     loadWeek: [],
     loadDay: [],
@@ -72,11 +64,11 @@ export function useStatisticsTrends(): EfficiencyTrendsHook {
   });
 
   useEffect(() => {
-    let mounted = true;
+    let isMounted = true;
 
     async function fetchTrends() {
       if (!user?.id) return;
-      setLoading(true);
+      setIsLoading(true);
 
       try {
         await performanceMonitor.measurePromise(
@@ -94,19 +86,24 @@ export function useStatisticsTrends(): EfficiencyTrendsHook {
                 : { sessions: [], videos: [] };
 
             if (results[0].status === 'rejected') {
-              console.error(
-                '[useStatisticsTrends] History fetch failed:',
-                results[0].reason
-              );
-            }
-            if (results[1].status === 'rejected') {
-              console.error(
-                '[useStatisticsTrends] Daily summary fetch failed:',
-                results[1].reason
+              logger.error(
+                'useStatisticsTrends',
+                'fetchTrends',
+                'History fetch failed',
+                results[0].reason as Error
               );
             }
 
-            if (!mounted) return;
+            if (results[1].status === 'rejected') {
+              logger.error(
+                'useStatisticsTrends',
+                'fetchTrends',
+                'Daily summary fetch failed',
+                results[1].reason as Error
+              );
+            }
+
+            if (!isMounted) return;
 
             const anchorDate = getAppDayStart();
             const { sessions, videos } = historyResult;
@@ -173,13 +170,18 @@ export function useStatisticsTrends(): EfficiencyTrendsHook {
             });
           }
         );
-      } catch (err) {
-        if (mounted) {
-          console.error('[useStatisticsTrends] Beklenmedik hata:', err);
-        }
+      } catch (fetchError) {
+        if (!isMounted) return;
+
+        logger.error(
+          'useStatisticsTrends',
+          'fetchTrends',
+          'Beklenmedik hata',
+          fetchError as Error
+        );
       } finally {
-        if (mounted) {
-          setLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
         }
       }
     }
@@ -187,12 +189,12 @@ export function useStatisticsTrends(): EfficiencyTrendsHook {
     fetchTrends();
 
     return () => {
-      mounted = false;
+      isMounted = false;
     };
   }, [user?.id]);
 
   return {
-    loading,
+    loading: isLoading,
     ...trends,
   };
 }

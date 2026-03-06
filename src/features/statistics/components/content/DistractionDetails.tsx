@@ -8,10 +8,6 @@ import type { Session } from '@/features/statistics/types/statisticsTypes';
 
 type TimelineEvent = NonNullable<Session['timeline']>[number];
 
-// ==========================================
-// === TYPES / PROPS ===
-// ==========================================
-
 export interface DistractionDetailsProps {
   sessions: Session[];
 }
@@ -21,18 +17,10 @@ export interface TimelinePause extends TimelineEvent {
   timeLabel?: string;
 }
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 /**
  * Extracts and visualizes distraction and pause timelines from standard sessions.
  */
 export const DistractionDetails = ({ sessions }: DistractionDetailsProps) => {
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
-
   const { totalPauses, totalPauseMinutes, focusPower, allPauses } =
     useMemo(() => {
       const pauses = sessions.reduce((acc, s) => {
@@ -94,18 +82,11 @@ export const DistractionDetails = ({ sessions }: DistractionDetailsProps) => {
       };
     }, [sessions]);
 
-  // ==========================================
-  // === HELPERS ===
-  // ==========================================
   const getStabilityColor = (score: number) => {
     if (score >= 100) return 'text-emerald-400';
     if (score >= 70) return 'text-primary';
     return 'text-rose-400';
   };
-
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
 
   return (
     <div className="space-y-6">

@@ -35,7 +35,6 @@ const TimerController = lazy(() =>
 );
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  // === HOOKS ===
   const { user } = useAuth();
   useCelebration();
 
@@ -51,14 +50,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const location = useLocation();
 
-  // === EFFECTS ===
   useEffect(() => {
     if (user?.id) {
       syncPendingSessions(user.id);
     }
   }, [user?.id]);
-
-  // === HANDLERS ===
 
   const handleComplete = async () => {
     if (current && current.onClose) {
@@ -67,7 +63,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     closeCelebration();
   };
 
-  // === RENDER ===
+  const handleMobileOverlayClose = () => {
+    setMobileMenuOpen(false);
+  };
+
+  const handleMobileOverlayKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>
+  ) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      setMobileMenuOpen(false);
+    }
+  };
 
   const isFullWidthPage =
     location.pathname.startsWith(ROUTES.NOTES) ||
@@ -140,12 +146,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             role="button"
             tabIndex={0}
             aria-label="Menüyü kapat"
-            onClick={() => setMobileMenuOpen(false)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                setMobileMenuOpen(false);
-              }
-            }}
+            onClick={handleMobileOverlayClose}
+            onKeyDown={handleMobileOverlayKeyDown}
           />
         )}
       </div>

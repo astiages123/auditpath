@@ -1,13 +1,5 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import type { FC } from 'react';
 import { Trophy, Sparkles } from 'lucide-react';
-
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
 
 export interface RoadmapFooterProps {
   nextMilestone?: {
@@ -16,10 +8,6 @@ export interface RoadmapFooterProps {
   };
   toNext: number;
 }
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * Renders the footer of the roadmap, displaying the next milestone

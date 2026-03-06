@@ -16,55 +16,54 @@ import { formatDisplayDate } from '@/utils/dateUtils';
 import type { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
 import type { Session } from '@/features/statistics/types/statisticsTypes';
 
-// ==========================================
-// === HELPERS ===
-// ==========================================
+const convertToSession = (recentSession: RecentSession): Session => {
+  const start = new Date(recentSession.date);
+  const end = new Date(start.getTime() + recentSession.durationMinutes * 60000);
 
-const convertToSession = (rs: RecentSession): Session => {
-  const start = new Date(rs.date);
-  const end = new Date(start.getTime() + rs.durationMinutes * 60000);
-
-  const timeline = ((rs.timeline as Record<string, unknown>[]) || [])
-    .map((t) => {
-      const bStart = t.start
-        ? new Date(t.start as string | number | Date).getTime()
+  const timeline = ((recentSession.timeline as Record<string, unknown>[]) || [])
+    .map((timelineEvent) => {
+      const blockStart = timelineEvent.start
+        ? new Date(timelineEvent.start as string | number | Date).getTime()
         : null;
-      let bEnd = t.end
-        ? new Date(t.end as string | number | Date).getTime()
+      let blockEnd = timelineEvent.end
+        ? new Date(timelineEvent.end as string | number | Date).getTime()
         : null;
 
-      if (!bStart || isNaN(bStart)) return null;
+      if (!blockStart || isNaN(blockStart)) return null;
 
       // If end is missing or invalid, default to start + 1 min or current time if it's the last event
-      if (!bEnd || isNaN(bEnd)) {
-        bEnd = bStart + 60000;
+      if (!blockEnd || isNaN(blockEnd)) {
+        blockEnd = blockStart + 60000;
       }
 
       return {
-        type: (t.type as string)?.toLowerCase() || 'work',
-        start: bStart,
-        end: bEnd,
-        duration: Math.round((bEnd - bStart) / 1000 / 60),
+        type: (timelineEvent.type as string)?.toLowerCase() || 'work',
+        start: blockStart,
+        end: blockEnd,
+        duration: Math.round((blockEnd - blockStart) / 1000 / 60),
       };
     })
-    .filter((t): t is NonNullable<typeof t> => t !== null);
+    .filter(
+      (timelineEvent): timelineEvent is NonNullable<typeof timelineEvent> =>
+        timelineEvent !== null
+    );
 
   const pauseIntervals = timeline
-    .filter((t) => t.type === 'pause')
-    .map((t) => ({
-      start: new Date(t.start).toLocaleTimeString('tr-TR', {
+    .filter((timelineEvent) => timelineEvent.type === 'pause')
+    .map((timelineEvent) => ({
+      start: new Date(timelineEvent.start).toLocaleTimeString('tr-TR', {
         hour: '2-digit',
         minute: '2-digit',
       }),
-      end: new Date(t.end).toLocaleTimeString('tr-TR', {
+      end: new Date(timelineEvent.end).toLocaleTimeString('tr-TR', {
         hour: '2-digit',
         minute: '2-digit',
       }),
     }));
 
   return {
-    id: rs.id,
-    lessonName: rs.courseName,
+    id: recentSession.id,
+    lessonName: recentSession.courseName,
     date: start.toISOString().split('T')[0],
     startTime: start.toLocaleTimeString('tr-TR', {
       hour: '2-digit',
@@ -74,32 +73,21 @@ const convertToSession = (rs: RecentSession): Session => {
       hour: '2-digit',
       minute: '2-digit',
     }),
-    duration: rs.durationMinutes,
+    duration: recentSession.durationMinutes,
     timeline: timeline,
     pauseIntervals,
   };
 };
-
-// ==========================================
-// === TYPES / PROPS ===
-// ==========================================
 
 export interface SessionListItemProps {
   session: RecentSession;
   disableModal?: boolean;
 }
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 export const SessionListItem: FC<SessionListItemProps> = ({
   session,
   disableModal = false,
 }) => {
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
   const dateObj = new Date(session.date);
   const formattedDate = formatDisplayDate(dateObj, {
     day: 'numeric',
@@ -122,9 +110,6 @@ export const SessionListItem: FC<SessionListItemProps> = ({
   const breakMins = Math.round(session.totalBreakTime / 60);
   const pauseMins = Math.round(session.totalPauseTime / 60);
 
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   const TriggerContent = (
     <button
       type="button"

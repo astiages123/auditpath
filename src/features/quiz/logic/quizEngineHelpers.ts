@@ -5,8 +5,6 @@ import {
 } from '../types';
 import { calculateTestResults } from './quizCalculations';
 
-// === SECTION: State Transition Helpers ===
-
 /**
  * Bir sonraki soruya geçiş için durumu günceller.
  */
@@ -35,28 +33,28 @@ export const calculateNextQuestionState = (
       (item) => item.id === nextQuestion.id
     );
 
-    if (historyEntry) {
+    if (!historyEntry) {
       return {
-        currentQuestion: historyEntry,
+        currentQuestion: nextQuestion,
         queue: remainingQueue,
-        selectedAnswer: historyEntry.userAnswer,
-        isAnswered: true,
-        showExplanation: historyEntry.responseType !== 'blank',
-        isCorrect: historyEntry.isCorrect,
+        selectedAnswer: null,
+        isAnswered: false,
+        showExplanation: false,
+        isCorrect: null,
         lastSubmissionResult: null,
-        isReviewMode: true,
+        isReviewMode: false,
       };
     }
 
     return {
-      currentQuestion: nextQuestion,
+      currentQuestion: historyEntry,
       queue: remainingQueue,
-      selectedAnswer: null,
-      isAnswered: false,
-      showExplanation: false,
-      isCorrect: null,
+      selectedAnswer: historyEntry.userAnswer,
+      isAnswered: true,
+      showExplanation: historyEntry.responseType !== 'blank',
+      isCorrect: historyEntry.isCorrect,
       lastSubmissionResult: null,
-      isReviewMode: false,
+      isReviewMode: true,
     };
   }
 
@@ -124,9 +122,8 @@ export const calculatePreviousQuestionState = (
       1
     : state.history.length - 1;
 
-  const lastItem = state.history[previousHistoryIndex];
-
-  if (!lastItem) return {};
+  const lastHistoryItem = state.history[previousHistoryIndex];
+  if (!lastHistoryItem) return {};
 
   // Mevcut soruyu kuyruğa geri ekle (eğer varsa)
   const newQueue = state.currentQuestion
@@ -134,13 +131,13 @@ export const calculatePreviousQuestionState = (
     : state.queue;
 
   return {
-    currentQuestion: lastItem,
+    currentQuestion: lastHistoryItem,
     queue: newQueue,
     history: state.history,
-    selectedAnswer: lastItem.userAnswer,
+    selectedAnswer: lastHistoryItem.userAnswer,
     isAnswered: true,
-    showExplanation: lastItem.responseType !== 'blank',
-    isCorrect: lastItem.isCorrect,
+    showExplanation: lastHistoryItem.responseType !== 'blank',
+    isCorrect: lastHistoryItem.isCorrect,
     isReviewMode: true,
   };
 };

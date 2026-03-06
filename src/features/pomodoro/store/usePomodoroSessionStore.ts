@@ -1,10 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-// ===========================
-// === STORE INTERFACE ===
-// ===========================
-
 export interface TimelineEvent {
   type: 'work' | 'break' | 'pause';
   start: number;
@@ -12,7 +8,6 @@ export interface TimelineEvent {
 }
 
 export interface PomodoroSessionState {
-  // === STATE ===
   sessionId: string | null;
   associatedQuizSessionId: string | null;
   sessionCount: number;
@@ -20,7 +15,6 @@ export interface PomodoroSessionState {
   timeline: TimelineEvent[];
   hasRestored: boolean;
 
-  // === ACTIONS ===
   /** Sets the current session ID */
   setSessionId: (id: string | null) => void;
   /** Sets the associated quiz session ID */
@@ -36,16 +30,11 @@ export interface PomodoroSessionState {
   /** Resets the entire session back to initial values */
   resetSession: () => void;
   /** Sets whether state restoration from storage has succeeded */
-  setHasRestored: (val: boolean) => void;
+  setHasRestored: (hasRestored: boolean) => void;
 
-  // === SELECTORS / COMPUTED ===
   /** Calculates the total time spent paused in the current session */
   getPauseDuration: () => number;
 }
-
-// ===========================
-// === STORE IMPLEMENTATION ===
-// ===========================
 
 export const usePomodoroSessionStore = create<PomodoroSessionState>()(
   persist(
@@ -94,16 +83,16 @@ export const usePomodoroSessionStore = create<PomodoroSessionState>()(
           hasRestored: true,
         })),
 
-      setHasRestored: (val) => set({ hasRestored: val }),
+      setHasRestored: (hasRestored) => set({ hasRestored }),
 
       getPauseDuration: () => {
         const state = get();
-        return state.timeline.reduce((acc, event) => {
+        return state.timeline.reduce((totalPauseDuration, event) => {
           if (event.type === 'pause') {
             const end = event.end || Date.now();
-            return acc + (end - event.start);
+            return totalPauseDuration + (end - event.start);
           }
-          return acc;
+          return totalPauseDuration;
         }, 0);
       },
     }),

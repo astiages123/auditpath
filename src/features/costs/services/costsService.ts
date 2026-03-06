@@ -1,61 +1,53 @@
-// ==========================================
-// IMPORTS
-// ==========================================
-
 import { supabase } from '@/lib/supabase';
 import type { GenerationCostLog } from '../types/costTypes';
 import { validateLogs } from '../logic/costsLogic';
 
-// ==========================================
-// SERVICE
-// ==========================================
-
 export const CostsService = {
-  async fetchAvailableProviders(startDate?: Date): Promise<string[]> {
-    const pageSize = 250;
-    const providers = new Set<string>();
+  async fetchAvailableModels(startDate?: Date): Promise<string[]> {
+    const pageSize = 500;
+    const items = new Set<string>();
     let page = 1;
 
-    try {
-      while (true) {
-        const from = (page - 1) * pageSize;
-        const to = from + pageSize - 1;
+    while (true) {
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
 
-        let query = supabase
-          .from('ai_generation_costs')
-          .select('provider')
-          .order('created_at', { ascending: false })
-          .range(from, to);
+      // Hem provider hem model alanlarini cekip benzersizleri listeliyoruz
+      // Cunku farkli donemlerde farkli alanlar kullanilmis olabilir
+      let query = supabase
+        .from('ai_generation_costs')
+        .select('provider, model')
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
-        if (startDate) {
-          query = query.gte('created_at', startDate.toISOString());
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-          throw error;
-        }
-
-        const rows = data || [];
-        rows.forEach((row) => {
-          if (typeof row.provider === 'string' && row.provider.length > 0) {
-            providers.add(row.provider);
-          }
-        });
-
-        if (rows.length < pageSize) {
-          break;
-        }
-
-        page += 1;
+      if (startDate) {
+        query = query.gte('created_at', startDate.toISOString());
       }
 
-      return Array.from(providers).sort((a, b) => a.localeCompare(b));
-    } catch (error) {
-      console.error('[costsService][fetchAvailableProviders] Hata:', error);
-      throw error;
+      const { data, error } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      const rows = data || [];
+      rows.forEach((row) => {
+        if (typeof row.provider === 'string' && row.provider.length > 0) {
+          items.add(row.provider);
+        }
+        if (typeof row.model === 'string' && row.model.length > 0) {
+          items.add(row.model);
+        }
+      });
+
+      if (rows.length < pageSize) {
+        break;
+      }
+
+      page += 1;
     }
+
+    return Array.from(items).sort((left, right) => left.localeCompare(right));
   },
 
   async fetchGenerationCostSummary(
@@ -68,28 +60,23 @@ export const CostsService = {
     const allLogs: GenerationCostLog[] = [];
     let page = 1;
 
-    try {
-      while (true) {
-        const batch = await this.fetchGenerationCosts({
-          ...options,
-          page,
-          pageSize,
-        });
+    while (true) {
+      const batch = await this.fetchGenerationCosts({
+        ...options,
+        page,
+        pageSize,
+      });
 
-        allLogs.push(...batch);
+      allLogs.push(...batch);
 
-        if (batch.length < pageSize) {
-          break;
-        }
-
-        page += 1;
+      if (batch.length < pageSize) {
+        break;
       }
 
-      return allLogs;
-    } catch (error) {
-      console.error('[costsService][fetchGenerationCostSummary] Hata:', error);
-      throw error;
+      page += 1;
     }
+
+    return allLogs;
   },
 
   /**
@@ -112,32 +99,33 @@ export const CostsService = {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    try {
-      let query = supabase
-        .from('ai_generation_costs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .range(from, to);
+    let query = supabase
+      .from('ai_generation_costs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .range(from, to);
 
-      if (startDate) {
-        query = query.gte('created_at', startDate.toISOString());
+    if (startDate) {
+      query = query.gte('created_at', startDate.toISOString());
+    }
+
+    if (model && model !== 'all') {
+      if (model === 'none') {
+        query = query.or(
+          'provider.is.null,provider.eq."",model.is.null,model.eq.""'
+        );
+      } else {
+        // Hem provider hem model kolonunda arama yapiyoruz
+        query = query.or(`provider.eq."${model}",model.eq."${model}"`);
       }
+    }
 
-      if (model && model !== 'all') {
-        // Provider alanini maliyet ekranindaki model filtresi icin kullaniyoruz
-        query = query.eq('provider', model);
-      }
+    const { data, error } = await query;
 
-      const { data, error } = await query;
-
-      if (error) {
-        throw error;
-      }
-
-      return validateLogs(data || []);
-    } catch (error) {
-      console.error('[costsService][fetchGenerationCosts] Hata:', error);
+    if (error) {
       throw error;
     }
+
+    return validateLogs(data || []);
   },
 };

@@ -10,15 +10,7 @@ import { unlockAudio } from '../logic/audioUtils';
 import { usePomodoroWorker } from './usePomodoroWorker';
 import { usePomodoroSession } from './usePomodoroSession';
 
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
-
 export type PomodoroMode = 'work' | 'break';
-
-// ===========================
-// === HOOK DEFINITION ===
-// ===========================
 
 /**
  * Main hook that bundles together all Pomodoro logic (timer, session, UI).
@@ -27,7 +19,6 @@ export type PomodoroMode = 'work' | 'break';
  * @returns Combined Pomodoro state and control functions
  */
 export function usePomodoro() {
-  // === STATE EXTRACTION ===
   const {
     timeLeft,
     isActive,
@@ -42,7 +33,6 @@ export function usePomodoro() {
     tick: storeTick,
   } = useTimerStore();
 
-  // Session state from store
   const {
     sessionId,
     sessionCount,
@@ -56,35 +46,24 @@ export function usePomodoro() {
     resetSession,
   } = usePomodoroSessionStore();
 
-  // UI state
   const { selectedCourse, setCourse, isWidgetOpen, setWidgetOpen, resetUI } =
     usePomodoroUIStore();
 
   const { user } = useAuth();
   const userId = user?.id;
 
-  // --- Specialized Sub-Hooks ---
   const worker = usePomodoroWorker(storeTick);
   const { initializeSession } = usePomodoroSession(userId);
-
-  // --- Logic ---
   const handleStart = async () => {
     if (!selectedCourse) return;
 
-    // 1. Session Persistence
     await initializeSession();
-
-    // 2. Notification Permission
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (Notification.permission === 'default') {
         Notification.requestPermission();
       }
     }
-
-    // 3. Audio Warmup
     unlockAudio();
-
-    // 4. Timer Controls
     const lastEvent = timeline[timeline.length - 1];
     if (lastEvent && lastEvent.type === 'pause') {
       closeLastTimelineEvent();
@@ -95,41 +74,39 @@ export function usePomodoro() {
     startTimer();
   };
 
-  // --- 3. DİĞER YARDIMCI FONKSİYONLAR ---
   const getDisplayTime = useCallback(() => {
     const isOvertime = timeLeft < 0;
     const totalSeconds = isOvertime ? duration + Math.abs(timeLeft) : timeLeft;
 
     const format = (sec: number) => {
-      const m = Math.floor(sec / 60)
+      const minutes = Math.floor(sec / 60)
         .toString()
         .padStart(2, '0');
-      const s = (sec % 60).toString().padStart(2, '0');
-      return { m, s };
+      const seconds = (sec % 60).toString().padStart(2, '0');
+      return { minutes, seconds };
     };
 
-    const main = format(Math.max(0, totalSeconds));
-    const over = isOvertime ? format(Math.abs(timeLeft)) : null;
+    const mainTime = format(Math.max(0, totalSeconds));
+    const overtime = isOvertime ? format(Math.abs(timeLeft)) : null;
 
     return {
-      minutes: main.m,
-      seconds: main.s,
-      overtimeMinutes: over?.m,
-      overtimeSeconds: over?.s,
+      minutes: mainTime.minutes,
+      seconds: mainTime.seconds,
+      overtimeMinutes: overtime?.minutes,
+      overtimeSeconds: overtime?.seconds,
     };
   }, [timeLeft, duration]);
 
   const {
-    minutes: m,
-    seconds: s,
-    overtimeMinutes: om,
-    overtimeSeconds: os,
+    minutes: displayMinutes,
+    seconds: displaySeconds,
+    overtimeMinutes: displayOvertimeMinutes,
+    overtimeSeconds: displayOvertimeSeconds,
   } = getDisplayTime();
 
   const switchMode = useCallback(() => {
     const newMode = isBreak ? 'work' : 'break';
 
-    // Close current event and start new mode event
     closeLastTimelineEvent();
     addTimelineEvent({ type: newMode, start: Date.now() });
 
@@ -139,7 +116,6 @@ export function usePomodoro() {
       incrementSession();
     }
 
-    // Reset worker for new cycle
     worker.start();
     startTimer();
   }, [
@@ -166,8 +142,8 @@ export function usePomodoro() {
   return {
     mode: isBreak ? 'break' : 'work',
     status: isActive ? 'running' : 'paused',
-    minutes: m,
-    seconds: s,
+    minutes: displayMinutes,
+    seconds: displaySeconds,
     isActive,
     startTime,
     totalPaused: getPauseDuration(),
@@ -187,8 +163,8 @@ export function usePomodoro() {
     resetAndClose,
     switchMode,
     setCourse,
-    overtimeMinutes: om,
-    overtimeSeconds: os,
+    overtimeMinutes: displayOvertimeMinutes,
+    overtimeSeconds: displayOvertimeSeconds,
     isOvertime: timeLeft < 0,
     totalElapsed: duration - timeLeft,
     activeDuration: (duration - timeLeft) * 1000,

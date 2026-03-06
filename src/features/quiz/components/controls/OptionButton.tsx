@@ -4,8 +4,6 @@ import { Check, X } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 import { MathRenderer } from '@/features/quiz/components/content/QuizStatus';
 
-// === TYPES ===
-
 interface OptionButtonProps {
   /** Seçenek metni */
   option: string;
@@ -21,8 +19,6 @@ interface OptionButtonProps {
   disabled: boolean;
 }
 
-// === LOGIC: HELPERS ===
-
 /**
  * Seçenek metnindeki başlık harflerini ve noktalama işaretlerini temizler.
  * @param text Temizlenecek metin
@@ -30,8 +26,6 @@ interface OptionButtonProps {
 const sanitizeOption = (text: string) => {
   return text.replace(/^[A-Ea-e1-5][\s).:-]+/, '').trim();
 };
-
-// === COMPONENT ===
 
 /**
  * Quiz soruları için etkileşimli seçenek butonu.
@@ -45,8 +39,6 @@ const OptionButtonComponent = function OptionButton({
   onClick,
   disabled,
 }: OptionButtonProps) {
-  // === RENDER LOGIC: STYLES ===
-
   let containerStyle =
     'border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10';
   let iconComponent = null;
@@ -84,8 +76,6 @@ const OptionButtonComponent = function OptionButton({
     default:
       break;
   }
-
-  // === RENDER ===
 
   return (
     <motion.button

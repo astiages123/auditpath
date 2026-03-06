@@ -4,10 +4,6 @@ import {
   type GuildType,
 } from '../types/achievementsTypes';
 
-// ===========================
-// === GUILD DEFINITIONS ===
-// ===========================
-
 /**
  * Definitions for all available guilds in the system.
  */
@@ -68,10 +64,6 @@ export const GUILDS: Record<GuildType, GuildInfo> = {
     color: 'oklch(0.75 0.18 120)',
   },
 };
-
-// ===========================
-// === ACHIEVEMENT DEFINITIONS ===
-// ===========================
 
 /**
  * Achievements related to the Law (Hukuk) category.
@@ -615,10 +607,6 @@ export const TITLE_ACHIEVEMENTS: Achievement[] = [
     isPermanent: true,
   },
 ];
-
-// ===========================
-// === ALL ACHIEVEMENTS EXPORT ===
-// ===========================
 
 /**
  * A combined array of all available achievements.

@@ -1,7 +1,3 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { Clock, TrendingUp, CalendarDays } from 'lucide-react';
 import { useProgress } from '@/shared/hooks/useProgress';
 import {
@@ -18,10 +14,6 @@ import { ProgressStatCard } from '@/features/courses/components/cards/ProgressSt
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
-
 import type { RankInfo } from '@/features/courses/types/courseTypes';
 
 export interface ProgressHeaderProps {
@@ -35,10 +27,6 @@ export interface ProgressHeaderProps {
   progressPercentage: number;
   estimatedDays: number;
 }
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * Renders the top dashboard header section containing

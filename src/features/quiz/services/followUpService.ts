@@ -14,31 +14,17 @@ import { generate as generateStructured } from '../logic/structuredGenerator';
 import { getChunkWithContent, getRecentDiagnoses } from './quizCoreService';
 import { getQuestionData } from './quizQuestionService';
 
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
 const MODULE = 'FollowUpService';
 
-// ============================================================================
-// TYPES
-// ============================================================================
-
-/**
- * Type definition for the AI-generated question result,
- * inferred from the GeneratedQuestionSchema.
- */
 type GeneratedQuestionResult = z.infer<typeof GeneratedQuestionSchema>;
 
-/**
- * Type definition for the insert object used when adding a new question
- * to the 'questions' table.
- */
 type QuestionInsert = Database['public']['Tables']['questions']['Insert'];
 
-// ============================================================================
-// FOLLOW-UP SERVICES
-// ============================================================================
+function throwQueryError(func: string, error: string | undefined): never {
+  const errorObject = new Error(error || `${func} failed`);
+  logger.error(MODULE, func, 'Hata oluştu', errorObject);
+  throw errorObject;
+}
 
 /**
  * Yanlış cevaplanan bir soru için AI destekli takip (follow-up) sorusu üretir
@@ -62,156 +48,130 @@ export async function generateFollowUpForWrongAnswer(
 ): Promise<void> {
   const FUNC = 'generateFollowUpForWrongAnswer';
 
-  try {
-    // 1. Orijinal soruyu ve chunk bilgisini çek
-    const originalQuestionData = await getQuestionData(questionId);
-    if (!originalQuestionData || !originalQuestionData.question_data) {
-      console.warn(`[${MODULE}][${FUNC}] Orijinal soru bulunamadı:`, {
-        questionId,
-      });
-      logger.warn(MODULE, FUNC, 'Orijinal soru bulunamadı', { questionId });
-      return;
-    }
+  const originalQuestionData = await getQuestionData(questionId);
+  if (!originalQuestionData || !originalQuestionData.question_data) {
+    logger.warn(MODULE, FUNC, 'Orijinal soru bulunamadı', { questionId });
+    return;
+  }
 
-    // question_data'nın Json tipinden FollowUpQuestionData tipine güvenli dönüşümü (SSoT: Sadece JSONB'den besleniyoruz)
-    const questionDataParseResult = GeneratedQuestionSchema.safeParse(
-      originalQuestionData.question_data
-    );
+  const questionDataParseResult = GeneratedQuestionSchema.safeParse(
+    originalQuestionData.question_data
+  );
 
-    if (!questionDataParseResult.success) {
-      console.warn(
-        `[${MODULE}][${FUNC}] Orijinal soru verisi beklenen formatta değil:`,
-        {
-          questionId,
-          error: questionDataParseResult.error,
-        }
-      );
-      logger.warn(
-        MODULE,
-        FUNC,
-        'Orijinal soru verisi beklenen formatta değil',
-        {
-          questionId,
-          error: questionDataParseResult.error,
-        }
-      );
-      return;
-    }
-    const questionData: GeneratedQuestionResult = questionDataParseResult.data;
-
-    let chunk: ValidatedChunkWithContent | null = null;
-    if (originalQuestionData.chunk_id) {
-      chunk = await getChunkWithContent(originalQuestionData.chunk_id);
-    }
-
-    // 2. Geçmiş teşhisleri çek (AI bağlamı için)
-    let previousDiagnoses: string[] = [];
-    if (originalQuestionData.chunk_id) {
-      previousDiagnoses = await getRecentDiagnoses(
-        userId,
-        originalQuestionData.chunk_id,
-        3
-      );
-    }
-
-    // 3. AI Prompt hazırla ve üretim yap
-    // SSoT: Kanıt öncelikle JSON içindeki 'evidence' alanından, yoksa 'exp' alanından alınır.
-    const evidence = questionData.evidence || questionData.exp;
-    const taskPrompt = buildFollowUpPrompt(
-      evidence,
-      {
-        ...questionData,
-        bloomLevel: 'Uygulama',
-        concept: originalQuestionData.concept_title || '',
-      },
-      selectedAnswer ?? -1,
-      questionData.a,
-      'Uygulama',
-      '',
-      previousDiagnoses
-    );
-
-    const config = getTaskConfig('followup');
-    const messages: Message[] = [
-      {
-        role: 'system' as const,
-        content: config.systemPromptPrefix || 'Sen bir öğretmen asistanısın.',
-      },
-      { role: 'user' as const, content: taskPrompt },
-    ];
-
-    const result = await generateStructured(messages, {
-      schema: GeneratedQuestionSchema,
-      task: 'followup',
+  if (!questionDataParseResult.success) {
+    logger.warn(MODULE, FUNC, 'Orijinal soru verisi beklenen formatta değil', {
+      questionId,
+      error: questionDataParseResult.error,
     });
+    return;
+  }
 
-    if (!result) {
-      console.warn(
-        `[${MODULE}][${FUNC}] LLM geçerli bir follow-up sorusu üretemedi:`,
-        { questionId }
-      );
-      logger.warn(MODULE, FUNC, 'LLM geçerli bir follow-up sorusu üretemedi', {
-        questionId,
-      });
-      return;
-    }
+  const questionData: GeneratedQuestionResult = questionDataParseResult.data;
 
-    // AI üretim sonucunu tiplendir
-    const generatedQuestion: GeneratedQuestionResult = result;
+  let chunk: ValidatedChunkWithContent | null = null;
+  if (originalQuestionData.chunk_id) {
+    chunk = await getChunkWithContent(originalQuestionData.chunk_id);
+  }
 
-    // 4. Teşhis ve yeni soruyu kaydet
-    const updates: Promise<unknown>[] = [];
+  let previousDiagnoses: string[] = [];
+  if (originalQuestionData.chunk_id) {
+    previousDiagnoses = await getRecentDiagnoses(
+      userId,
+      originalQuestionData.chunk_id,
+      3
+    );
+  }
 
-    // 4a. Mevcut progress kaydına AI teşhisini ekle (DB Sütunları ile SSoT eşleşmesi)
-    if (generatedQuestion.diagnosis || generatedQuestion.insight) {
-      updates.push(
-        safeQuery(
-          supabase
-            .from('user_quiz_progress')
-            .update({
-              ai_diagnosis: generatedQuestion.diagnosis || null,
-              ai_insight: generatedQuestion.insight || null,
-            })
-            .eq('id', progressId),
-          `${FUNC} update diagnosis error`,
-          { progressId }
-        )
-      );
-    }
+  const evidence = questionData.evidence || questionData.exp;
+  const taskPrompt = buildFollowUpPrompt(
+    evidence,
+    {
+      ...questionData,
+      bloomLevel: 'Uygulama',
+      concept: originalQuestionData.concept_title || '',
+    },
+    selectedAnswer ?? -1,
+    questionData.a,
+    'Uygulama',
+    '',
+    previousDiagnoses
+  );
 
-    // 4b. Yeni takip sorusunu questions tablosuna ekle
-    // SSoT: 'evidence' artık sadece 'question_data' JSON içinde tutulur, ayrı sütuna yazılmaz.
-    const insertData: QuestionInsert = {
-      chunk_id: originalQuestionData.chunk_id,
-      course_id: courseId,
-      section_title: chunk?.section_title || '',
-      usage_type: 'antrenman' as const,
-      bloom_level: 'application' as const,
-      parent_question_id: questionId,
-      created_by: userId,
-      question_data: {
-        q: generatedQuestion.q,
-        o: generatedQuestion.o,
-        a: generatedQuestion.a,
-        exp: generatedQuestion.exp,
-        img: generatedQuestion.img ?? null,
-        diagnosis: generatedQuestion.diagnosis,
-        insight: generatedQuestion.insight,
-        evidence: generatedQuestion.evidence || '',
-      } as Json,
-    };
+  const config = getTaskConfig('followup');
+  const messages: Message[] = [
+    {
+      role: 'system' as const,
+      content: config.systemPromptPrefix || 'Sen bir öğretmen asistanısın.',
+    },
+    { role: 'user' as const, content: taskPrompt },
+  ];
 
+  const result = await generateStructured(messages, {
+    schema: GeneratedQuestionSchema,
+    task: 'followup',
+  });
+
+  if (!result) {
+    logger.warn(MODULE, FUNC, 'LLM geçerli bir follow-up sorusu üretemedi', {
+      questionId,
+    });
+    return;
+  }
+
+  const generatedQuestion: GeneratedQuestionResult = result;
+  const updates: Promise<unknown>[] = [];
+
+  if (generatedQuestion.diagnosis || generatedQuestion.insight) {
     updates.push(
       safeQuery(
-        supabase.from('questions').insert(insertData),
-        `${FUNC} insert follow-up error`,
-        { insertData }
-      )
+        supabase
+          .from('user_quiz_progress')
+          .update({
+            ai_diagnosis: generatedQuestion.diagnosis || null,
+            ai_insight: generatedQuestion.insight || null,
+          })
+          .eq('id', progressId),
+        `${FUNC} update diagnosis error`,
+        { progressId }
+      ).then((queryResult) => {
+        if (!queryResult.success) {
+          throwQueryError(FUNC, queryResult.error);
+        }
+      })
     );
-
-    await Promise.allSettled(updates);
-  } catch (error) {
-    console.error(`[${MODULE}][${FUNC}] Hata:`, error);
-    logger.error(MODULE, FUNC, 'Hata oluştu', error);
   }
+
+  const insertData: QuestionInsert = {
+    chunk_id: originalQuestionData.chunk_id,
+    course_id: courseId,
+    section_title: chunk?.section_title || '',
+    usage_type: 'antrenman' as const,
+    bloom_level: 'application' as const,
+    parent_question_id: questionId,
+    created_by: userId,
+    question_data: {
+      q: generatedQuestion.q,
+      o: generatedQuestion.o,
+      a: generatedQuestion.a,
+      exp: generatedQuestion.exp,
+      img: generatedQuestion.img ?? null,
+      diagnosis: generatedQuestion.diagnosis,
+      insight: generatedQuestion.insight,
+      evidence: generatedQuestion.evidence || '',
+    } as Json,
+  };
+
+  updates.push(
+    safeQuery(
+      supabase.from('questions').insert(insertData),
+      `${FUNC} insert follow-up error`,
+      { insertData }
+    ).then((queryResult) => {
+      if (!queryResult.success) {
+        throwQueryError(FUNC, queryResult.error);
+      }
+    })
+  );
+
+  await Promise.all(updates);
 }

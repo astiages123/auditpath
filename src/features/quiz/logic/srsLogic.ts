@@ -1,7 +1,5 @@
 import { type QuizResults, type SubmissionResult } from '../types';
 
-// === SECTION: SRS Algorithm & Scoring ===
-
 /**
  * Kullanıcı performansı ve mevcut sürece göre yeni tekrar sayısını hesaplar.
  * @param currentRepCount - Mevcut başarılı tekrar sayısı

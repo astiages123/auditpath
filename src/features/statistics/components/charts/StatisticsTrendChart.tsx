@@ -10,36 +10,21 @@ import type {
 
 type RechartsModule = typeof import('recharts');
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 /**
  * Renders the Efficiency Trend diverging bar chart, mapping items against standard multiplier thresholds.
  */
 export const StatisticsTrendChart = ({ data }: EfficiencyTrendProps) => {
-  // ==========================================
-  // === HOOKS & STATE ===
-  // ==========================================
   const [Recharts, setRecharts] = useState<RechartsModule | null>(null);
 
   useEffect(() => {
     import('recharts').then((mod) => setRecharts(mod));
   }, []);
 
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
-
   // Deviation from 1.00 (Center of Ideal Range)
   const chartData = data.map((item: EfficiencyTrend) => ({
     ...item,
     deviation: item.score - 1.0,
   }));
-
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
 
   if (!Recharts) {
     return (

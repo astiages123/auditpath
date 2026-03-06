@@ -7,19 +7,11 @@ import {
 } from '@/features/courses/hooks/useCourses';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
-// ===========================
-// === PROPS DEFINITION ===
-// ===========================
-
 export interface CourseSelectorProps {
   onClose: () => void;
   modalRef: React.RefObject<HTMLDivElement | null>;
   onBackdropClick: (e: React.MouseEvent) => void;
 }
-
-// ===========================
-// === COMPONENT DEFINITION ===
-// ===========================
 
 export function CourseSelector({
   onClose,
@@ -39,7 +31,9 @@ export function CourseSelector({
       );
 
   const handleCourseSelect = (courseId: string) => {
-    const course = courses.find((c) => c.id === courseId);
+    const course = courses.find(
+      (candidateCourse) => candidateCourse.id === courseId
+    );
     if (course) {
       setCourse({
         id: course.id,

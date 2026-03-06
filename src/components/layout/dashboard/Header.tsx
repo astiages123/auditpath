@@ -11,12 +11,10 @@ import { ROUTES } from '@/utils/routes';
 import logo from '@/assets/logo.svg';
 
 export function DashHeader() {
-  // === HOOKS ===
   const { user, signOut } = useAuth();
   const { setMobileMenuOpen } = useUIStore();
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
-  // === RENDER ===
   return (
     <header className="h-16 lg:h-20 flex items-center justify-between px-4 lg:px-5 border-b border-accent/15 bg-background/80 backdrop-blur-sm shrink-0">
       {/* Sol: Logo (Mobile) + Breadcrumb (Desktop) */}

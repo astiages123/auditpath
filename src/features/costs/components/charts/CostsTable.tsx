@@ -1,6 +1,4 @@
-// ==========================================
 // IMPORTS
-// ==========================================
 
 import { FC } from 'react';
 import { History, ChevronDown } from 'lucide-react';
@@ -20,9 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { GenerationCostLog } from '@/features/costs/logic/costsLogic';
 
-// ==========================================
 // INTERFACES
-// ==========================================
 
 interface CostsTableProps {
   logs: GenerationCostLog[];
@@ -33,9 +29,7 @@ interface CostsTableProps {
   onLoadMore: () => void;
 }
 
-// ==========================================
 // HELPER COMPONENTS
-// ==========================================
 
 const getUsageTypeBadge = (type: string | null) => {
   switch (type) {
@@ -80,9 +74,7 @@ const getUsageTypeBadge = (type: string | null) => {
   }
 };
 
-// ==========================================
 // COMPONENT
-// ==========================================
 
 export const CostsTable: FC<CostsTableProps> = ({
   logs,
@@ -92,7 +84,6 @@ export const CostsTable: FC<CostsTableProps> = ({
   formatCurrency,
   onLoadMore,
 }) => {
-  // === RENDER ===
   return (
     <Card className="bg-card/30 border-border shadow-lg">
       <CardHeader className="border-b border-border/40 bg-card/20 py-4 flex flex-row items-center justify-between">

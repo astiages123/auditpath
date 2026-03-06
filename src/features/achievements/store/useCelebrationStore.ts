@@ -1,10 +1,6 @@
 import { create } from 'zustand';
 import type { LucideIcon } from 'lucide-react';
 
-// ===========================
-// === TYPES ===
-// ===========================
-
 /**
  * Defines the type of celebration being presented.
  */
@@ -39,10 +35,6 @@ export interface CelebrationStore {
   clearCelebrations: () => void;
 }
 
-// ===========================
-// === STORE CREATION ===
-// ===========================
-
 /**
  * Zustand store for managing celebration events sequentially.
  */
@@ -53,23 +45,21 @@ export const useCelebrationStore = create<CelebrationStore>()((set, get) => ({
 
   enqueueCelebration: (event) => {
     const { currentCelebration, celebrationQueue } = get();
-    // Deduping: Avoid enqueuing an identical event
     if (
       currentCelebration?.id === event.id ||
-      celebrationQueue.some((e) => e.id === event.id)
+      celebrationQueue.some((queuedEvent) => queuedEvent.id === event.id)
     ) {
       return;
     }
 
     set((state) => {
-      // If none playing, immediately trigger it
       if (!state.currentCelebration) {
         return {
           currentCelebration: event,
           isCelebrationOpen: true,
         };
       }
-      // Otherwise, add to the back of the queue
+
       return {
         celebrationQueue: [...state.celebrationQueue, event],
       };
@@ -87,12 +77,12 @@ export const useCelebrationStore = create<CelebrationStore>()((set, get) => ({
           celebrationQueue: remainingQueue,
           isCelebrationOpen: true,
         };
-      } else {
-        return {
-          currentCelebration: null,
-          isCelebrationOpen: false,
-        };
       }
+
+      return {
+        currentCelebration: null,
+        isCelebrationOpen: false,
+      };
     });
   },
 

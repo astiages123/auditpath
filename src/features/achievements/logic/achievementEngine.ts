@@ -6,10 +6,6 @@ import {
 } from '../types/achievementsTypes';
 import { ACHIEVEMENTS } from './definitions';
 
-// ===========================
-// === MASTERY CHECKS ===
-// ===========================
-
 /**
  * Checks if a specific topic within a course has been mastered by the user.
  *
@@ -23,20 +19,13 @@ export function checkTopicMastery(
   topicId: string,
   courseId: string
 ): boolean {
-  try {
-    const topic = topicStats.find(
-      (t) => t.topicId === topicId && t.courseId === courseId
-    );
-    return topic?.isMastered ?? false;
-  } catch (error) {
-    console.error('[achievementEngine][checkTopicMastery] Error:', error);
-    return false;
-  }
-}
+  const topic = topicStats.find(
+    (topicStat) =>
+      topicStat.topicId === topicId && topicStat.courseId === courseId
+  );
 
-// ===========================
-// === ACHIEVEMENT CALCULATION ===
-// ===========================
+  return topic?.isMastered ?? false;
+}
 
 /**
  * Calculates and returns a list of all achievement IDs that the user has currently unlocked,
@@ -50,19 +39,10 @@ export function calculateAchievements(
   stats: ProgressStats,
   log: ActivityLog
 ): string[] {
-  try {
-    return ACHIEVEMENTS.filter((acc) =>
-      isAchievementUnlocked(acc, stats, log)
-    ).map((acc) => acc.id);
-  } catch (error) {
-    console.error('[achievementEngine][calculateAchievements] Error:', error);
-    return [];
-  }
+  return ACHIEVEMENTS.filter((achievement) =>
+    isAchievementUnlocked(achievement, stats, log)
+  ).map((achievement) => achievement.id);
 }
-
-// ===========================
-// === UNLOCK LOGIC ===
-// ===========================
 
 /**
  * Evaluates whether a single achievement's requirements are met by the user's stats and log.
@@ -77,56 +57,49 @@ export function isAchievementUnlocked(
   stats: ProgressStats,
   log: ActivityLog
 ): boolean {
-  try {
-    const req = achievement.requirement;
+  const requirement = achievement.requirement;
 
-    // Evaluate the requirement based on its discriminant 'type'
-    switch (req.type) {
-      case 'category_progress': {
-        const cat = stats.categoryProgress[req.category];
-        // Ensure the category exists and has a total greater than zero to avoid division by zero
-        if (!cat || cat.totalHours === 0) return false;
-        const percent = (cat.completedHours / cat.totalHours) * 100;
-        return percent >= req.percentage;
-      }
+  switch (requirement.type) {
+    case 'category_progress': {
+      const categoryProgress = stats.categoryProgress[requirement.category];
+      if (!categoryProgress || categoryProgress.totalHours === 0) return false;
 
-      case 'multi_category_progress': {
-        // Every listed category in the requirement must meet its specified percentage
-        return req.categories.every((c) => {
-          const p = stats.categoryProgress[c.category];
-          if (!p || p.totalHours === 0) return false;
-          const percent = (p.completedHours / p.totalHours) * 100;
-          return percent >= c.percentage;
-        });
-      }
-
-      case 'all_progress': {
-        // Check progress against total hours across all categories
-        if (stats.totalHours === 0) return false;
-        const percent = (stats.completedHours / stats.totalHours) * 100;
-        return percent >= req.percentage;
-      }
-
-      case 'daily_progress': {
-        // Unlocked if the videos completed today meets or exceeds the required count
-        return log.dailyVideosCompleted >= req.count;
-      }
-
-      case 'total_active_days': {
-        // Unlocked based on the lifetime total active days of the user
-        return log.totalActiveDays >= req.days;
-      }
-
-      case 'minimum_videos': {
-        // Unlocked based on the total number of videos completed all-time
-        return stats.completedVideos >= req.count;
-      }
-
-      default:
-        return false;
+      const percentage =
+        (categoryProgress.completedHours / categoryProgress.totalHours) * 100;
+      return percentage >= requirement.percentage;
     }
-  } catch (error) {
-    console.error('[achievementEngine][isAchievementUnlocked] Error:', error);
-    return false;
+
+    case 'multi_category_progress':
+      return requirement.categories.every((categoryRequirement) => {
+        const categoryProgress =
+          stats.categoryProgress[categoryRequirement.category];
+
+        if (!categoryProgress || categoryProgress.totalHours === 0) {
+          return false;
+        }
+
+        const percentage =
+          (categoryProgress.completedHours / categoryProgress.totalHours) * 100;
+        return percentage >= categoryRequirement.percentage;
+      });
+
+    case 'all_progress': {
+      if (stats.totalHours === 0) return false;
+
+      const percentage = (stats.completedHours / stats.totalHours) * 100;
+      return percentage >= requirement.percentage;
+    }
+
+    case 'daily_progress':
+      return log.dailyVideosCompleted >= requirement.count;
+
+    case 'total_active_days':
+      return log.totalActiveDays >= requirement.days;
+
+    case 'minimum_videos':
+      return stats.completedVideos >= requirement.count;
+
+    default:
+      return false;
   }
 }

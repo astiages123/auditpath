@@ -11,10 +11,6 @@ import {
 } from '@/components/ui/tooltip';
 import { cn } from '@/utils/stringHelpers';
 
-// ==========================================
-// === TYPES / PROPS ===
-// ==========================================
-
 export interface StatisticsCardProps {
   /** Card title shown in the header */
   title: string;
@@ -44,10 +40,6 @@ export interface StatisticsCardProps {
   onClick?: () => void;
 }
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 /**
  * StatisticsCard is the central UI component for all cards on the Statistics page.
  * It provides consistent styling, hover effects, skeletons, and tooltips.
@@ -67,7 +59,6 @@ export const StatisticsCard = ({
   className,
   onClick,
 }: StatisticsCardProps) => {
-  // === RENDER SKELETON ===
   if (loading) {
     return (
       <Card
@@ -92,7 +83,6 @@ export const StatisticsCard = ({
     );
   }
 
-  // === RENDER MAIN ===
   return (
     <Card
       className={cn(

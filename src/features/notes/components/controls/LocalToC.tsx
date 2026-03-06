@@ -4,9 +4,6 @@ import { cn } from '@/utils/stringHelpers';
 import { Button } from '@/components/ui/button';
 import { ToCTitleRenderer } from '@/features/notes/components/controls/ToCTitleRenderer';
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
 export interface LocalToCItem {
   /** Başlık ID'si */
   id: string;
@@ -27,9 +24,6 @@ export interface LocalToCProps {
   onToggle?: () => void;
 }
 
-// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
-// ===========================
-
 /**
  * Sayfa içerisindeki alt başlıkların tamamını listeleyen "İçindekiler" paneli.
  *
@@ -44,8 +38,6 @@ export const LocalToC = memo(function LocalToC({
 }: LocalToCProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // === YARDIMCI MANTIK & EFEKTLER ===
-
   useEffect(() => {
     try {
       if (!activeId || !containerRef.current) return;
@@ -55,12 +47,10 @@ export const LocalToC = memo(function LocalToC({
       if (activeEl) {
         activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
-    } catch (error: unknown) {
-      console.error('[LocalToC][activeIdEffect] Hata:', error);
+    } catch {
+      // Kaydırma yardımcı davranışı başarısız olsa da panel kullanılabilir kalır.
     }
   }, [activeId]);
-
-  // === UI RENDER ===
 
   return (
     <div className="flex flex-col h-full overflow-hidden select-none">

@@ -9,28 +9,16 @@ import {
 
 import type { DayActivity } from '@/features/statistics/types/statisticsTypes';
 
-// ==========================================
-// === TYPES / PROPS ===
-// ==========================================
-
 export interface StatisticsHeatmapProps {
   data: DayActivity[];
 }
 
 export type HeatmapLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 /**
  * A GitHub-like contribution heatmap showing daily active focus minutes.
  */
 export function StatisticsHeatmap({ data }: StatisticsHeatmapProps) {
-  // ==========================================
-  // === HELPERS ===
-  // ==========================================
-
   const getLevel = (day: DayActivity): HeatmapLevel => {
     const minutes = day.totalMinutes || 0;
     if (minutes > 200) return 5;
@@ -68,9 +56,6 @@ export function StatisticsHeatmap({ data }: StatisticsHeatmapProps) {
     });
   };
 
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   return (
     <div className="flex flex-col h-full w-full py-1">
       <div className="w-full flex justify-center">

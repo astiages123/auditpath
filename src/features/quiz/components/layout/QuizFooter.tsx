@@ -5,8 +5,6 @@ import { ProgressDots } from '@/features/quiz/components/content/QuizStatus';
 import { cn } from '@/utils/stringHelpers';
 import { Button } from '@/components/ui/button';
 
-// === TYPES: QUIZ FOOTER ===
-
 interface QuizFooterProps {
   /** Sorunun cevaplanıp cevaplanmadığı */
   isAnswered: boolean;
@@ -36,8 +34,6 @@ interface QuizFooterProps {
   questionResults: Record<string, 'correct' | 'incorrect' | 'blank'>;
 }
 
-// === COMPONENT: QUIZ FOOTER ===
-
 /**
  * Aktif soru cevaplama ekranının alt çubuğu.
  * İlerleme noktalarını, kontrol butonlarını ve çözüm panelini tetikleyen butonları içerir.
@@ -57,8 +53,6 @@ export const QuizFooter: FC<QuizFooterProps> = ({
   progressIndex,
   questionResults,
 }) => {
-  // === RENDER LOGIC ===
-
   const isNextActive = isAnswered || selectedAnswer !== null;
 
   const footerWrapperClass = cn(
@@ -73,8 +67,6 @@ export const QuizFooter: FC<QuizFooterProps> = ({
     'duration-200 flex font-heading group flex-none',
     isNextActive ? 'shadow-lg shadow-primary/10 hover:bg-primary/90' : ''
   );
-
-  // === RENDER ===
 
   return (
     <footer className={footerWrapperClass}>
@@ -161,8 +153,6 @@ export const QuizFooter: FC<QuizFooterProps> = ({
   );
 };
 
-// === TYPES: ACTION FOOTER ===
-
 interface QuizActionFooterProps {
   /** Quiz ara yüzünde butonun görünürlüğü için durum */
   isAnswered: boolean;
@@ -178,8 +168,6 @@ interface QuizActionFooterProps {
   onNext: () => void;
 }
 
-// === COMPONENT: ACTION FOOTER ===
-
 /**
  * Geçiş ekranları veya set bitişleri için merkezi butonu temsil eder.
  */
@@ -191,8 +179,6 @@ export function QuizActionFooter({
   totalBatches,
   onNext,
 }: QuizActionFooterProps) {
-  // === RENDER LOGIC ===
-
   if (!isAnswered) return null;
 
   const btnClass = cn(
@@ -202,8 +188,6 @@ export function QuizActionFooter({
       ? 'bg-primary/70 cursor-not-allowed'
       : 'bg-primary hover:bg-primary/90 active:scale-[0.98]'
   );
-
-  // === RENDER ===
 
   return (
     <div className="w-full max-w-3xl mx-auto">

@@ -68,7 +68,9 @@ export function useQuizPageLogic() {
     if (topics.length === 0) return;
 
     if (topicSlug) {
-      const topic = topics.find((t) => slugify(t.name) === topicSlug);
+      const topic = topics.find(
+        (topicItem) => slugify(topicItem.name) === topicSlug
+      );
       if (topic && (!selectedTopic || selectedTopic.name !== topic.name)) {
         setSelectedTopic(topic);
       }

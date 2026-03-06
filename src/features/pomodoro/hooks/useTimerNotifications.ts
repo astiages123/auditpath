@@ -4,10 +4,6 @@ import { playNotificationSound } from '../logic/audioUtils';
 import { logger } from '@/utils/logger';
 import faviconSvg from '@/assets/favicon.svg';
 
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
-
 export interface UseTimerNotificationsProps {
   timeLeft: number;
   isActive: boolean;
@@ -16,10 +12,6 @@ export interface UseTimerNotificationsProps {
   originalStartTime: number | null;
   startTime: number | null;
 }
-
-// ===========================
-// === HOOK DEFINITION ===
-// ===========================
 
 /**
  * Handles automated user notifications (Browser + Application sounds).
@@ -45,7 +37,6 @@ export function useTimerNotifications({
           isBreak ? 'break' : 'work'
         }`;
 
-        // PREVENT DOUBLE FIRE
         if (lastNotifiedRef.current === notificationKey) return;
         lastNotifiedRef.current = notificationKey;
 
@@ -53,10 +44,7 @@ export function useTimerNotifications({
           ? 'Harika iş çıkardın! Şimdi kısa bir mola zamanı. ☕'
           : 'Mola bitti, tekrar odaklanmaya hazır mısın? 💪';
 
-        // Sonner Toast
         toast.success(message, { duration: 2000 });
-
-        // Notification Tool
         const sendNotification = () => {
           if (
             'Notification' in window &&
@@ -75,10 +63,6 @@ export function useTimerNotifications({
                 notification.close();
               };
             } catch (error: unknown) {
-              console.error(
-                '[useTimerNotifications][sendNotification] Hata:',
-                error
-              );
               logger.error(
                 'UseTimerNotifications',
                 'sendNotification',

@@ -1,18 +1,10 @@
 import { FlowState } from '../types';
 
-// ==========================================
-// === TYPES ===
-// ==========================================
-
 /** Represents the ui configuration for a specific flow state */
 export interface FlowStateConfiguration {
   color: string;
   label: string;
 }
-
-// ==========================================
-// === CONFIGURATION ===
-// ==========================================
 
 /** The master configuration object mapping FlowState to UI rendering details */
 export const FLOW_STATE_CONFIG: Record<FlowState, FlowStateConfiguration> = {
@@ -23,10 +15,6 @@ export const FLOW_STATE_CONFIG: Record<FlowState, FlowStateConfiguration> = {
   shallow: { color: 'text-rose-500', label: 'Çok Hızlı ve Yüzeysellik' },
 };
 
-// ==========================================
-// === HELPERS ===
-// ==========================================
-
 /**
  * Safely fetches the color string for a given flow state
  *
@@ -34,13 +22,13 @@ export const FLOW_STATE_CONFIG: Record<FlowState, FlowStateConfiguration> = {
  * @returns Tailwind CSS color class
  */
 export const getFlowColor = (stateName: string): string => {
-  try {
-    const configuration = FLOW_STATE_CONFIG[stateName as FlowState];
-    return configuration ? configuration.color : 'text-rose-500';
-  } catch (error) {
-    console.error('[flowStateConfig][getFlowColor] Hata:', error);
+  const configuration = FLOW_STATE_CONFIG[stateName as FlowState];
+
+  if (!configuration) {
     return 'text-rose-500';
   }
+
+  return configuration.color;
 };
 
 /**
@@ -50,11 +38,11 @@ export const getFlowColor = (stateName: string): string => {
  * @returns Readable label for the UI
  */
 export const getFlowStatusLabel = (stateName: string): string => {
-  try {
-    const configuration = FLOW_STATE_CONFIG[stateName as FlowState];
-    return configuration ? configuration.label : 'Bilinmeyen Durum';
-  } catch (error) {
-    console.error('[flowStateConfig][getFlowStatusLabel] Hata:', error);
+  const configuration = FLOW_STATE_CONFIG[stateName as FlowState];
+
+  if (!configuration) {
     return 'Bilinmeyen Durum';
   }
+
+  return configuration.label;
 };

@@ -1,8 +1,6 @@
 import { MASTERY_THRESHOLD } from '../utils/constants';
 import { type QuizResults, type TestResultSummary } from '../types';
 
-// === SECTION: Score & Mastery Calculations ===
-
 /**
  * Başarı yüzdesini hesaplar.
  * @param correct - Doğru sayısı
@@ -95,8 +93,6 @@ export function updateResults(
 
   return next;
 }
-
-// === SECTION: Quota & Limit Calculations ===
 
 /**
  * Konsept sayısına göre antrenman ve deneme kotalarını hesaplar.

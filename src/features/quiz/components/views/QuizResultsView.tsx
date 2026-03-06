@@ -36,8 +36,6 @@ interface QuizResultsViewProps {
   onClose?: () => void;
 }
 
-// === SUB-COMPONENTS ===
-
 /**
  * Başarı yüzdesini dairesel bir grafik ile görselleştirir.
  */
@@ -349,8 +347,6 @@ const QuestionReviewList = memo(
   }
 );
 
-// === MAIN COMPONENT ===
-
 /**
  * Quiz tamamlandığında gösterilen sonuç özet ekranı.
  * Başarı puanı, metrikler, içgörüler ve soru geçmişini içerir.
@@ -361,7 +357,6 @@ export function QuizResultsView({
   courseName,
   onClose,
 }: QuizResultsViewProps) {
-  // === STATE & MEMO ===
   const [animatedPercent, setAnimatedPercent] = useState(0);
 
   const stats = useMemo(
@@ -380,13 +375,11 @@ export function QuizResultsView({
     [courseName]
   );
 
-  // === SIDE EFFECTS ===
   useEffect(() => {
     const timer = setTimeout(() => setAnimatedPercent(stats.percentage), 500);
     return () => clearTimeout(timer);
   }, [stats.percentage]);
 
-  // === RENDER ===
   const submitBtnClass = cn(
     'flex-1 py-4 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground',
     'font-bold transition-all shadow-lg flex-center gap-2'

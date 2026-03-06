@@ -7,13 +7,10 @@ import {
   calculateMasteryChains,
   processGraphForAtlas,
 } from '@/features/quiz/logic/quizCoreLogic';
+import { logger } from '@/utils/logger';
 
 import type { ConceptMapItem } from '@/features/quiz/types';
 import type { CourseMastery } from '@/features/courses/types/courseTypes';
-
-// ==========================================
-// === TYPES ===
-// ==========================================
 
 export interface FormattedLessonMastery {
   lessonId: string;
@@ -48,10 +45,6 @@ interface ChunkMasteryRow {
   mastery_score: number | null;
 }
 
-// ==========================================
-// === HOOK ===
-// ==========================================
-
 /**
  * Retrieves and processes mastery-related statistics mapping course mastery metrics
  * as well as evaluating note chunks metadata to compute a knowledge graph visualization properties.
@@ -64,32 +57,36 @@ export function useMasteryChains(): MasteryChainsHook {
   const [masteryChainStats, setMasteryChainStats] =
     useState<MasteryChainStats | null>(null);
 
-  // --- COURSE MASTERY ---
   useEffect(() => {
-    let mounted = true;
+    let isMounted = true;
 
     async function fetchMastery() {
       if (!user?.id) return;
+
       try {
         const mastery = await getCourseMastery(user.id);
-        if (mounted && mastery) {
+        if (isMounted && mastery) {
           setCourseMastery(mastery);
         }
-      } catch (error) {
-        console.error('[useMasteryChains][fetchMastery] Hata:', error);
+      } catch (fetchError) {
+        logger.error(
+          'useMasteryChains',
+          'fetchMastery',
+          'Mastery fetch failed',
+          fetchError as Error
+        );
       }
     }
 
     fetchMastery();
 
     return () => {
-      mounted = false;
+      isMounted = false;
     };
   }, [user?.id]);
 
-  // --- MASTERY CHAIN COMPUTATION ---
   useEffect(() => {
-    let mounted = true;
+    let isMounted = true;
 
     async function fetchMasteryChains() {
       if (!user?.id) return;
@@ -114,11 +111,12 @@ export function useMasteryChains(): MasteryChainsHook {
           ]
         );
 
-        if (!mounted || !chunksData) return;
+        if (!isMounted || !chunksData) return;
 
         const chunkMasteryMap = new Map<string, number>();
         (masteryData || []).forEach((masteryItem: ChunkMasteryRow) => {
           if (!masteryItem.chunk_id) return;
+
           chunkMasteryMap.set(
             masteryItem.chunk_id,
             masteryItem.mastery_score || 0
@@ -128,53 +126,58 @@ export function useMasteryChains(): MasteryChainsHook {
         const allConcepts: ConceptMapItem[] = [];
         const conceptScoreMap: Record<string, number> = {};
 
-        chunksData?.forEach((chunk: NoteChunkRow) => {
+        chunksData.forEach((chunk: NoteChunkRow) => {
           if (
-            typeof chunk.metadata === 'object' &&
-            chunk.metadata !== null &&
-            'concept_map' in chunk.metadata &&
-            Array.isArray(chunk.metadata.concept_map)
+            typeof chunk.metadata !== 'object' ||
+            chunk.metadata === null ||
+            !('concept_map' in chunk.metadata) ||
+            !Array.isArray(chunk.metadata.concept_map)
           ) {
-            const score = chunkMasteryMap.get(chunk.id) || 0;
-
-            chunk.metadata.concept_map.forEach(
-              (conceptItem: ConceptMapItem) => {
-                allConcepts.push(conceptItem);
-                const current = conceptScoreMap[conceptItem.baslik] || 0;
-                conceptScoreMap[conceptItem.baslik] = Math.max(current, score);
-              }
-            );
+            return;
           }
+
+          const score = chunkMasteryMap.get(chunk.id) || 0;
+
+          chunk.metadata.concept_map.forEach((conceptItem: ConceptMapItem) => {
+            allConcepts.push(conceptItem);
+            const currentScore = conceptScoreMap[conceptItem.baslik] || 0;
+            conceptScoreMap[conceptItem.baslik] = Math.max(currentScore, score);
+          });
         });
 
         const rawNodes = calculateMasteryChains(allConcepts, conceptScoreMap);
         const stats = processGraphForAtlas(rawNodes);
 
         setMasteryChainStats(stats as MasteryChainStats);
-      } catch (error) {
-        console.error('[useMasteryChains][fetchMasteryChains] Hata:', error);
+      } catch (fetchError) {
+        logger.error(
+          'useMasteryChains',
+          'fetchMasteryChains',
+          'Mastery chain fetch failed',
+          fetchError as Error
+        );
       }
     }
 
     fetchMasteryChains();
 
     return () => {
-      mounted = false;
+      isMounted = false;
     };
   }, [user?.id]);
 
-  // --- DERIVED STATE ---
-  const lessonMastery: FormattedLessonMastery[] = courseMastery.map((m) => ({
-    lessonId: m.courseId,
-    title: m.courseName,
-    type: m.courseType,
-    mastery: m.masteryScore,
-    videoProgress: m.videoProgress,
-    questionProgress: m.questionProgress,
-    goal: 100,
-  }));
+  const lessonMastery: FormattedLessonMastery[] = courseMastery.map(
+    (mastery) => ({
+      lessonId: mastery.courseId,
+      title: mastery.courseName,
+      type: mastery.courseType,
+      mastery: mastery.masteryScore,
+      videoProgress: mastery.videoProgress,
+      questionProgress: mastery.questionProgress,
+      goal: 100,
+    })
+  );
 
-  // --- RETURN ---
   return {
     lessonMastery,
     masteryChainStats,

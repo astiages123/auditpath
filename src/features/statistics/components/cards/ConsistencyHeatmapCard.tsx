@@ -4,17 +4,9 @@ import { StatisticsHeatmap } from '@/features/statistics/components/charts/Stati
 
 import type { DayActivity } from '@/features/statistics/types/statisticsTypes';
 
-// ==========================================
-// === PROPS ===
-// ==========================================
-
 export interface ConsistencyHeatmapCardProps {
   consistencyData: DayActivity[];
 }
-
-// ==========================================
-// === COMPONENT ===
-// ==========================================
 
 /**
  * Displays a wrapper card for a heatmap showing daily consistency.
@@ -22,9 +14,6 @@ export interface ConsistencyHeatmapCardProps {
 export const ConsistencyHeatmapCard = ({
   consistencyData,
 }: ConsistencyHeatmapCardProps) => {
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   return (
     <StatisticsCard
       title="Süreklilik Haritası"

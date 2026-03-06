@@ -1,13 +1,5 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import type { FC } from 'react';
 import { Sparkles, Play, TrendingUp } from 'lucide-react';
-
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
 
 export interface RoadmapHeroProps {
   currentMilestone: {
@@ -26,10 +18,6 @@ export interface RoadmapHeroProps {
   progress: number;
   estimatedDays?: number;
 }
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * Renders the hero section of the roadmap, showcasing the current milestone,

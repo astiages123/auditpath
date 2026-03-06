@@ -3,10 +3,7 @@ import { Card } from '@/components/ui/card';
 import { useLocation } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 
-// === COMPONENTS ===
-
 export function PageHeaderSkeleton() {
-  // === RENDER ===
   return (
     <div className="flex flex-col gap-2 mb-8 animate-pulse">
       <Skeleton className="h-10 w-64 md:w-96" />
@@ -16,7 +13,6 @@ export function PageHeaderSkeleton() {
 }
 
 export function StatsSkeleton() {
-  // === RENDER ===
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {[1, 2, 3, 4].map((i) => (
@@ -32,7 +28,6 @@ export function StatsSkeleton() {
 }
 
 export function CardSkeleton({ className = '' }: { className?: string }) {
-  // === RENDER ===
   return (
     <Card className={`p-6 ${className}`}>
       <div className="space-y-4">
@@ -51,7 +46,6 @@ export function CardSkeleton({ className = '' }: { className?: string }) {
 }
 
 export function TableSkeleton({ rows = 5 }: { rows?: number }) {
-  // === RENDER ===
   return (
     <div className="space-y-4">
       <div className="flex justify-between mb-4">
@@ -73,7 +67,6 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
 }
 
 export function HomeProgressSkeleton() {
-  // === RENDER ===
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-pulse">
       <Card className="p-6 h-[180px]">
@@ -106,7 +99,6 @@ export function HomeProgressSkeleton() {
 }
 
 export function CategoryGridSkeleton() {
-  // === RENDER ===
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start animate-pulse">
       {[1, 2, 3, 4].map((i) => (
@@ -137,7 +129,6 @@ export function CategoryGridSkeleton() {
 }
 
 export function LibraryCardSkeleton() {
-  // === RENDER ===
   return (
     <Card className="rounded-[2.5rem] overflow-hidden animate-pulse border-border/40">
       <div className="p-5 md:p-8 space-y-4 md:space-y-6">
@@ -171,7 +162,6 @@ export function LibraryCardSkeleton() {
 }
 
 export function EfficiencyPageSkeleton() {
-  // === RENDER ===
   return (
     <div className="space-y-6 animate-pulse">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -195,7 +185,6 @@ export function EfficiencyPageSkeleton() {
 }
 
 export function LibraryGridSkeleton() {
-  // === RENDER ===
   return (
     <div className="flex flex-col gap-6 animate-pulse h-full">
       {/* Header Skeleton */}
@@ -246,7 +235,6 @@ export function LibraryGridSkeleton() {
 }
 
 export function SplitLayoutSkeleton() {
-  // === RENDER ===
   return (
     <div className="flex flex-col h-[calc(100vh-160px)] animate-pulse">
       <div className="flex-1 grid lg:grid-cols-[240px_1fr_220px] gap-4 min-h-0">
@@ -306,7 +294,6 @@ export function SplitLayoutSkeleton() {
 }
 
 export function DashboardHomeSkeleton() {
-  // === RENDER ===
   return (
     <div className="space-y-8 animate-pulse">
       <PageHeaderSkeleton />
@@ -320,10 +307,8 @@ export function DashboardHomeSkeleton() {
 }
 
 export function ContentSkeleton() {
-  // === HOOKS ===
   const { pathname } = useLocation();
 
-  // === RENDER ===
   // Normalize path (remove trailing slash except for root)
   const path = pathname !== '/' ? pathname.replace(/\/$/, '') : pathname;
 

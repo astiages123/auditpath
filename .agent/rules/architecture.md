@@ -44,5 +44,4 @@ trigger: always_on
 
 ## Test Yapısı
 
-- **Organizasyon:** Testler `src/__tests__/` altında özellik (feature) bazlı klasörlenmelidir.
-- **Düz Yapı:** Özellik klasörleri altında `logic/`, `utils/` gibi ek alt klasörler **kullanılmamalıdır**. Test dosyaları doğrudan özellik klasörünün içinde yer almalıdır. (Örn: `src/__tests__/quiz/quizCoreLogic.test.ts`)
+Test kuralları için bkz: `testing.md`

@@ -16,9 +16,6 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/utils/stringHelpers';
 import { ROUTES } from '@/utils/routes';
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
 export interface CurrentChunkMetadata {
   /** Bölüm Ana Başlığı */
   section_title: string;
@@ -53,9 +50,6 @@ export interface NotesHeaderProps {
   setIsRightPanelVisible?: (visible: boolean) => void;
 }
 
-// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
-// ===========================
-
 /**
  * Notlar sayfasının en üstünde yer alan durum başlığı, mobil hamburger menü
  * giriş kapısı ile ilerleme barını (progress bar) bünyesinde barındırır.
@@ -82,19 +76,15 @@ export const NotesHeader: FC<NotesHeaderProps> = ({
   const navigate = useNavigate();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // === EFEKTLER (EFFECTS) ===
-
   useEffect(() => {
     try {
       if (isSearchOpen) {
         searchInputRef.current?.focus();
       }
-    } catch (error: unknown) {
-      console.error('[NotesHeader][searchFocusEffect] Hata:', error);
+    } catch {
+      // Odaklanma başarısız olsa da arama kutusu kullanılmaya devam eder.
     }
   }, [isSearchOpen]);
-
-  // === UI RENDER ===
 
   return (
     <div

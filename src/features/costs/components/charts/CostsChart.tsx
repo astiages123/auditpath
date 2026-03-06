@@ -1,15 +1,11 @@
-// ==========================================
 // IMPORTS
-// ==========================================
 
 import { FC, useState, useEffect } from 'react';
 import { TrendingUp } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-// ==========================================
 // TYPES & INTERFACES
-// ==========================================
 
 type RechartsModule = typeof import('recharts');
 
@@ -18,23 +14,18 @@ interface CostsChartProps {
   formatCurrency: (value: number) => string;
 }
 
-// ==========================================
 // COMPONENT
-// ==========================================
 
 export const CostsChart: FC<CostsChartProps> = ({
   dailyData,
   formatCurrency,
 }) => {
-  // === STATE ===
   const [Recharts, setRecharts] = useState<RechartsModule | null>(null);
 
-  // === EFFECTS ===
   useEffect(() => {
     import('recharts').then((mod) => setRecharts(mod));
   }, []);
 
-  // === RENDER ===
   if (!Recharts) {
     return (
       <Card className="bg-card/30 border-border shadow-2xl overflow-hidden">
@@ -141,10 +132,12 @@ export const CostsChart: FC<CostsChartProps> = ({
                     'Harcama',
                   ]}
                   labelFormatter={(label, payload) => {
-                    const p = payload as Array<{
+                    const payloadEntries = payload as Array<{
                       payload?: { fullDate?: string };
                     }>;
-                    return p[0]?.payload?.fullDate || String(label);
+                    return (
+                      payloadEntries[0]?.payload?.fullDate || String(label)
+                    );
                   }}
                   cursor={{
                     stroke: 'var(--primary)',

@@ -1,8 +1,6 @@
 import { motion } from 'framer-motion';
 import { CheckCircle2, ArrowRight, Brain } from 'lucide-react';
 
-// === TYPES ===
-
 interface IntermissionScreenProps {
   /** Kaçıncı setteyiz? (0 tabanlı) */
   batchIndex: number;
@@ -16,8 +14,6 @@ interface IntermissionScreenProps {
   incorrectCount?: number;
 }
 
-// === COMPONENT ===
-
 /**
  * Quiz setleri arasında gösterilen ara ekran.
  * Kullanıcıya mevcut setin özetini sunar ve mola vermesini tavsiye eder.
@@ -29,8 +25,6 @@ export function IntermissionScreen({
   correctCount = 0,
   incorrectCount = 0,
 }: IntermissionScreenProps) {
-  // === RENDER ===
-
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}

@@ -1,9 +1,5 @@
 import { create } from 'zustand';
 
-// ============================================================================
-// STATE TYPES
-// ============================================================================
-
 /**
  * Quiz zamanlayıcısı (timer) durumunu ve eylemlerini tanımlayan arayüz.
  * Bu store, quiz sırasında geçen süreyi milisaniye cinsinden takip eder
@@ -38,10 +34,6 @@ interface QuizTimerState {
   detachListener: () => void;
 }
 
-// ============================================================================
-// INITIAL STATE & STORE
-// ============================================================================
-
 /**
  * Quiz zamanlayıcısını (timer) yöneten Zustand store.
  * Bu store, uygulamanın farklı yerlerinden quiz süresine erişimi sağlar.
@@ -51,10 +43,6 @@ export const useQuizTimerStore = create<QuizTimerState>((set, get) => ({
   accumulatedTime: 0,
   isRunning: false,
   isListenerAttached: false,
-
-  // ============================================================================
-  // STATE MANAGEMENT / HANDLERS
-  // ============================================================================
 
   handleVisibilityChange: () => {
     const { startTime, isRunning } = get();
@@ -98,10 +86,6 @@ export const useQuizTimerStore = create<QuizTimerState>((set, get) => ({
     }
   },
 
-  // ============================================================================
-  // ACTIONS
-  // ============================================================================
-
   start: () => {
     get().attachListener();
     const { startTime, isRunning } = get();
@@ -141,10 +125,6 @@ export const useQuizTimerStore = create<QuizTimerState>((set, get) => ({
       isRunning: false,
     });
   },
-
-  // ============================================================================
-  // SELECTORS / GETTERS
-  // ============================================================================
 
   getTime: () => {
     const { startTime, accumulatedTime, isRunning } = get();

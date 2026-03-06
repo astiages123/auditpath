@@ -16,8 +16,6 @@ import { cn } from '@/utils/stringHelpers';
 import { cleanMathContent } from '@/features/quiz/utils/mathUtils';
 import { useQuizTimerStore } from '@/features/quiz/store';
 
-// === SECTION: TIMER COMPONENT ===
-
 interface QuizTimerProps {
   /** Zamanlayıcının çalışıp çalışmadığı */
   isRunning: boolean;
@@ -33,12 +31,10 @@ export const QuizTimer = memo(function QuizTimer({
   isRunning,
   className,
 }: QuizTimerProps) {
-  // === STATE ===
   const [elapsed, setElapsed] = useState(() =>
     Math.floor(useQuizTimerStore.getState().getTime() / 1000)
   );
 
-  // === SIDE EFFECTS ===
   useEffect(() => {
     const updateTime = () => {
       setElapsed(Math.floor(useQuizTimerStore.getState().getTime() / 1000));
@@ -52,12 +48,10 @@ export const QuizTimer = memo(function QuizTimer({
     return () => clearInterval(interval);
   }, [isRunning]);
 
-  // === RENDER LOGIC ===
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
   const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-  // === RENDER ===
   return (
     <div
       className={cn(
@@ -70,8 +64,6 @@ export const QuizTimer = memo(function QuizTimer({
     </div>
   );
 });
-
-// === SECTION: PROGRESS DOTS ===
 
 interface ProgressDotsProps {
   /** Soru havuzundaki benzersiz ID'ler */
@@ -134,8 +126,6 @@ export const ProgressDots: React.FC<ProgressDotsProps> = ({
   );
 };
 
-// === SECTION: QUIZ PROGRESS BAR ===
-
 interface QuizProgressProps {
   /** Mevcut soru indeksi */
   currentReviewIndex: number;
@@ -174,11 +164,9 @@ export const QuizProgress: React.FC<QuizProgressProps> = ({
   questionResults: _questionResults = {},
   selectedAnswer: _selectedAnswer = null,
 }) => {
-  // === CALCULATIONS ===
   const masteryDelta = lastSubmissionResult?.scoreDelta ?? null;
   const mastery = currentMastery || (lastSubmissionResult?.newMastery ?? 0);
 
-  // === RENDER ===
   return (
     <div className="flex items-center justify-between px-6 md:px-10 py-3 md:py-4 border-b border-white/5 bg-transparent">
       <div className="flex items-center gap-6">
@@ -232,8 +220,6 @@ export const QuizProgress: React.FC<QuizProgressProps> = ({
     </div>
   );
 };
-
-// === SECTION: STATUS VIEWS ===
 
 interface QuizLoadingViewProps {
   /** Yükleme durumu */
@@ -337,8 +323,6 @@ export const QuizErrorView: React.FC<QuizErrorViewProps> = ({
   </div>
 );
 
-// === SECTION: MATH RENDERER ===
-
 const remarkPlugins = [remarkMath];
 const rehypePlugins = [rehypeKatex];
 const markdownComponents = {
@@ -358,10 +342,8 @@ interface MathRendererProps {
 export const MathRenderer = memo(function MathRenderer({
   content,
 }: MathRendererProps) {
-  // === RENDER LOGIC ===
   const cleanContent = cleanMathContent(content);
 
-  // === RENDER ===
   return (
     <div className="math-rendering upright-math">
       <ReactMarkdown

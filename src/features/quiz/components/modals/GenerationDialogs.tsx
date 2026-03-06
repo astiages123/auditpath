@@ -4,8 +4,6 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 
-// === TYPES: LOADING DIALOG ===
-
 interface GenerationLoadingDialogProps {
   /** Görünürlük durumu */
   open: boolean;
@@ -17,19 +15,19 @@ interface GenerationLoadingDialogProps {
   logs: string[];
 }
 
-// === COMPONENT: LOADING DIALOG ===
-
 /**
  * Soru üretimi sırasındaki teknik süreci gösteren bilgilendirme dialogu.
  */
 export const GenerationLoadingDialog: FC<GenerationLoadingDialogProps> = ({
-  open,
+  open: isOpen,
   status,
   currentStep,
   logs,
 }) => {
+  const handleOpenChange = () => {};
+
   return (
-    <Dialog open={open} onOpenChange={() => {}}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[500px] border-white/10 bg-[#0A0A0B]/95 backdrop-blur-2xl">
         <div className="space-y-6 py-4">
           {/* Header */}
@@ -76,8 +74,6 @@ export const GenerationLoadingDialog: FC<GenerationLoadingDialogProps> = ({
   );
 };
 
-// === TYPES: SUCCESS DIALOG ===
-
 interface GenerationSuccessDialogProps {
   /** Görünürlük durumu */
   open: boolean;
@@ -87,18 +83,22 @@ interface GenerationSuccessDialogProps {
   savedCount: number;
 }
 
-// === COMPONENT: SUCCESS DIALOG ===
-
 /**
  * Üretim süreci başarıyla tamamlandığında gösterilen tebrik dialogu.
  */
 export const GenerationSuccessDialog: FC<GenerationSuccessDialogProps> = ({
-  open,
+  open: isOpen,
   onClose,
   savedCount,
 }) => {
+  const handleOpenChange = (isDialogOpen: boolean) => {
+    if (!isDialogOpen) {
+      onClose();
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(val) => !val && onClose()}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[400px] border-white/10 bg-[#0A0A0B]/95 backdrop-blur-2xl">
         <div className="flex flex-col items-center text-center space-y-4 py-6">
           <div className="h-16 w-16 rounded-full bg-emerald-500/10 flex items-center justify-center">

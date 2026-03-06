@@ -2,10 +2,6 @@ import { StatisticsCard } from '@/features/statistics/components/cards/Statistic
 import { Brain, AlertTriangle, Lightbulb, Zap } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 
-// ==========================================
-// === TYPES / PROPS ===
-// ==========================================
-
 export interface CognitiveAnalysis {
   focusScore?: number;
   topConfused?: { text: string; count: number }[];
@@ -19,10 +15,6 @@ export interface CognitiveInsightsCardProps {
   cognitiveAnalysis: CognitiveAnalysis | null;
 }
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 /**
  * Displays user's cognitive health, including their focus score,
  * confusion topics, recent insights, and areas of missing knowledge.
@@ -31,19 +23,11 @@ export const CognitiveInsightsCard = ({
   loading,
   cognitiveAnalysis,
 }: CognitiveInsightsCardProps) => {
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
-
   const { focusScore, topConfused, recentInsights, criticalTopics, hasData } =
     cognitiveAnalysis || {};
 
   const hideData =
     !hasData || (!topConfused?.length && !recentInsights?.length);
-
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
 
   return (
     <StatisticsCard

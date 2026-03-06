@@ -11,10 +11,6 @@ import type { Rank } from '@/types/auth';
 import { logger } from '@/utils/logger';
 import { getCategories } from '@/features/courses/services/courseService';
 
-// ===========================
-// === CONSTANTS & TYPES ===
-// ===========================
-
 export const achievementKeys = {
   all: ['achievements'] as const,
   uncelebrated: (userId: string) =>
@@ -26,10 +22,6 @@ interface SyncContext {
   userId: string;
   queryClient: ReturnType<typeof useQueryClient>;
 }
-
-// ===========================
-// === SYNC LOGIC ===
-// ===========================
 
 /**
  * Internal logic to synchronize unlocked achievements based on user activity and stats.
@@ -50,49 +42,49 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
 
     // Fetch previously unlocked achievements
     const dbUnlocked = await getUnlockedAchievements(userId);
-    const dbIds = new Set<string>(dbUnlocked.map((x) => x.id));
+    const dbIds = new Set<string>(
+      dbUnlocked.map((achievement) => achievement.id)
+    );
 
     // Calculate currently eligible achievements
     const eligibleIds = new Set<string>();
 
     // Step 1: Algorithmic standard achievements
-    const algoIds = calculateAchievements(stats, activityLog);
-    algoIds.forEach((id) => eligibleIds.add(id));
+    const algorithmicIds = calculateAchievements(stats, activityLog);
+    algorithmicIds.forEach((id) => eligibleIds.add(id));
 
     // Step 2: Ranks
     const currentRankId = stats.currentRank?.id;
     const currentRankOrder =
-      (RANKS as Rank[]).find((r: Rank) => r.id === currentRankId)?.order ?? -1;
+      (RANKS as Rank[]).find((rank: Rank) => rank.id === currentRankId)
+        ?.order ?? -1;
 
     if (currentRankOrder >= 0) {
-      (RANKS as Rank[]).forEach((r: Rank) => {
-        if (r.order <= currentRankOrder) {
-          if (r.id === '1') return; // Rank 1 handled implicitly
-          eligibleIds.add(`RANK_UP:${r.id}`);
+      (RANKS as Rank[]).forEach((rank: Rank) => {
+        if (rank.order <= currentRankOrder) {
+          if (rank.id === '1') return;
+          eligibleIds.add(`RANK_UP:${rank.id}`);
         }
       });
     }
 
-    // Step 3: Category Completions
-    categories.forEach((cat) => {
-      const catSlug = cat.slug;
-      const catStats =
-        stats.categoryProgress[catSlug] ||
-        stats.categoryProgress[catSlug.toLowerCase()];
+    categories.forEach((category) => {
+      const categorySlug = category.slug;
+      const categoryStats =
+        stats.categoryProgress[categorySlug] ||
+        stats.categoryProgress[categorySlug.toLowerCase()];
 
       if (
-        catStats &&
-        catStats.completedVideos >= catStats.totalVideos &&
-        catStats.totalVideos > 0
+        categoryStats &&
+        categoryStats.completedVideos >= categoryStats.totalVideos &&
+        categoryStats.totalVideos > 0
       ) {
-        eligibleIds.add(`CATEGORY_COMPLETION:${catSlug}`);
+        eligibleIds.add(`CATEGORY_COMPLETION:${categorySlug}`);
       }
     });
 
-    // Identify achievements that are eligible but not yet in the DB
     const toUnlock = [...eligibleIds].filter((id) => !dbIds.has(id));
 
-    // Execute Unlocks
     if (toUnlock.length > 0) {
       const updates = toUnlock.map((id) => {
         let unlockDate = new Date().toISOString();
@@ -126,21 +118,17 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
       });
     }
 
-    // Revoke Logic (For non-permanent achievements that no longer qualify)
     const hasDbAchievements = dbUnlocked.length > 0;
     const isHydrated = !!stats.currentRank;
     const isIncompleteLoad = hasDbAchievements && !isHydrated;
 
     if (!isIncompleteLoad) {
       const toRevoke = [...dbIds].filter((id) => {
-        // If still eligible, do not revoke
         if (eligibleIds.has(id)) return false;
 
-        // Check isPermanent definition flag
         const achievementDef = ACHIEVEMENTS.find((a) => a.id === id);
         if (achievementDef?.isPermanent) return false;
 
-        // Dynamic and legacy achievements handling
         if (id.startsWith('RANK_UP:')) return false;
 
         return true;
@@ -169,10 +157,6 @@ async function syncAchievements({ stats, userId, queryClient }: SyncContext) {
     return false;
   }
 }
-
-// ===========================
-// === EXPORTED HOOKS ===
-// ===========================
 
 /**
  * Hook to implicitly synchronize user achievements upon progression.
@@ -253,10 +237,6 @@ export function useAchievements(userId: string) {
   });
 }
 
-// ===========================
-// === MARK COMPLETION ===
-// ===========================
-
 /**
  * Marks an achievement as celebrated to suppress future popups.
  */
@@ -276,7 +256,7 @@ export async function markAsCelebrated(
     );
 
     if (!success) throw new Error('Failed to mark as celebrated');
-  } catch (error) {
-    console.error('[useAchievements][markAsCelebrated] Error:', error);
+  } catch {
+    // Başarı kutlaması kritik olmayan bir yan etki; hata durumunda sessizce devam edilir.
   }
 }

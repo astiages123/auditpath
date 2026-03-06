@@ -1,10 +1,6 @@
 import { type ClassValue, clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-// ===========================
-// === CSS & SINIF YARDIMCILARI ===
-// ===========================
-
 /**
  * Tailwind CSS sınıflarını güvenli bir şekilde birleştirir ve çakışmaları (conflict) önler.
  * @param inputs - Birleştirilecek sınıf değerleri listesi
@@ -14,10 +10,6 @@ import { twMerge } from 'tailwind-merge';
 export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
-
-// ===========================
-// === METİN (STRING) YARDIMCILARI ===
-// ===========================
 
 /**
  * Verilen metni URL dostu bir slug haline getirir.

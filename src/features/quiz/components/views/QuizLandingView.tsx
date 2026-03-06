@@ -14,8 +14,6 @@ import { CATEGORY_THEMES } from '@/features/courses/utils/coursesConfig';
 import { getCourseIcon } from '@/features/courses/logic/coursesLogic';
 import { type LandingCourseStats } from '@/features/quiz/types';
 
-// === TYPES ===
-
 interface QuizLandingViewProps {
   /** Kategorize edilmiş ders listesi */
   categories: Category[];
@@ -27,8 +25,6 @@ interface QuizLandingViewProps {
   isLoading: boolean;
 }
 
-// === COMPONENT ===
-
 /**
  * Sınav Merkezi'nin ana giriş ekranı.
  * Kategorilere ayrılmış dersleri, her dersin ilerleme durumunu ve ustalık puanını görselleştirir.
@@ -39,7 +35,26 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
   onCourseSelect,
   isLoading,
 }) => {
-  // === RENDER LOGIC ===
+  const getCategoryTheme = (category: Category) => {
+    return (
+      CATEGORY_THEMES[category.name.toUpperCase()] ||
+      CATEGORY_THEMES['İKTİSAT'] ||
+      Object.values(CATEGORY_THEMES)[0]
+    );
+  };
+
+  const handleCourseCardKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    course: Course
+  ) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      onCourseSelect(course);
+    }
+  };
+
+  const handleCourseCardClick = (course: Course) => {
+    onCourseSelect(course);
+  };
 
   if (isLoading) {
     return (
@@ -52,7 +67,6 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
     );
   }
 
-  // === RENDER ===
   return (
     <div className="flex-1 flex min-h-full">
       {/* Yan Menü / İçindekiler */}
@@ -79,10 +93,7 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
                     a.name.localeCompare(b.name)
                 )
                 .map((category, idx) => {
-                  const categoryTheme =
-                    CATEGORY_THEMES[category.name.toUpperCase()] ||
-                    CATEGORY_THEMES['İKTİSAT'] ||
-                    Object.values(CATEGORY_THEMES)[0];
+                  const categoryTheme = getCategoryTheme(category);
                   const CatIcon = categoryTheme?.Icon || Brain;
 
                   return (
@@ -114,138 +125,131 @@ export const QuizLandingView: FC<QuizLandingViewProps> = ({
               (a.sort_order || 0) - (b.sort_order || 0) ||
               a.name.localeCompare(b.name)
           )
-          .map((category, catIdx) => (
-            <section
-              key={category.id}
-              id={`category-${catIdx}`}
-              className="space-y-8 pt-4 first:pt-0"
-            >
-              <div className="flex items-center justify-between group">
-                <div className="flex items-center gap-3">
-                  {(() => {
-                    const categoryTheme =
-                      CATEGORY_THEMES[category.name.toUpperCase()] ||
-                      CATEGORY_THEMES['İKTİSAT'] ||
-                      Object.values(CATEGORY_THEMES)[0];
-                    const CatIcon = categoryTheme?.Icon || Brain;
-                    return (
-                      <div className="w-12 h-12 rounded-2xl bg-secondary/50 flex items-center justify-center text-primary/80">
-                        <CatIcon className="size-5" />
-                      </div>
-                    );
-                  })()}
-                  <h2 className="text-2xl font-black tracking-tight uppercase text-foreground/90 font-sans">
-                    {category.name}
-                  </h2>
+          .map((category, catIdx) => {
+            const CategoryIcon = getCategoryTheme(category)?.Icon || Brain;
+
+            return (
+              <section
+                key={category.id}
+                id={`category-${catIdx}`}
+                className="space-y-8 pt-4 first:pt-0"
+              >
+                <div className="flex items-center justify-between group">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-secondary/50 flex items-center justify-center text-primary/80">
+                      <CategoryIcon className="size-5" />
+                    </div>
+                    <h2 className="text-2xl font-black tracking-tight uppercase text-foreground/90 font-sans">
+                      {category.name}
+                    </h2>
+                  </div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground bg-secondary/50 px-4 py-1.5 rounded-full border">
+                    {category.courses?.length || 0} Ders
+                  </div>
                 </div>
-                <div className="text-[10px] font-black uppercase tracking-widest text-muted-foreground bg-secondary/50 px-4 py-1.5 rounded-full border">
-                  {category.courses?.length || 0} Ders
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
-                {[...category.courses]
-                  .sort(
-                    (a, b) =>
-                      (a.sort_order || 0) - (b.sort_order || 0) ||
-                      a.name.localeCompare(b.name)
-                  )
-                  .map((course) => {
-                    const Icon = getCourseIcon(
-                      course.name,
-                      course.course_slug ?? course.id
-                    );
-                    const stats = dashboardStats[course.id];
-                    const mastery = stats?.averageMastery || 0;
-                    const lastStudy = stats?.lastStudyDate
-                      ? new Date(stats.lastStudyDate).toLocaleDateString(
-                          'tr-TR',
-                          {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: '2-digit',
+                <div className="grid grid-cols-1 md:grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+                  {[...category.courses]
+                    .sort(
+                      (a, b) =>
+                        (a.sort_order || 0) - (b.sort_order || 0) ||
+                        a.name.localeCompare(b.name)
+                    )
+                    .map((course) => {
+                      const Icon = getCourseIcon(
+                        course.name,
+                        course.course_slug ?? course.id
+                      );
+                      const stats = dashboardStats[course.id];
+                      const mastery = stats?.averageMastery || 0;
+                      const lastStudy = stats?.lastStudyDate
+                        ? new Date(stats.lastStudyDate).toLocaleDateString(
+                            'tr-TR',
+                            {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: '2-digit',
+                            }
+                          )
+                        : 'Hiç';
+
+                      return (
+                        <div
+                          key={course.id}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleCourseCardClick(course)}
+                          onKeyDown={(event) =>
+                            handleCourseCardKeyDown(event, course)
                           }
-                        )
-                      : 'Hiç';
-
-                    return (
-                      <div
-                        key={course.id}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => onCourseSelect(course)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            onCourseSelect(course);
-                          }
-                        }}
-                        className="group relative bg-card backdrop-blur-sm border border-border/40 rounded-[2.5rem] overflow-hidden cursor-pointer shadow-sm hover:border-primary/30"
-                      >
-                        <div className="p-8 space-y-6">
-                          <div className="flex items-center justify-between">
-                            <div className="w-14 h-14 rounded-2xl bg-secondary/80 flex items-center justify-center text-foreground/70 shadow-inner">
-                              <Icon className="size-5" />
-                            </div>
-                            <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 whitespace-nowrap">
-                              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                              Aktif
-                            </div>
-                          </div>
-
-                          <div className="space-y-1">
-                            <h3 className="text-xl font-black leading-tight group-hover:text-primary line-clamp-2 min-h-[3.5rem]">
-                              {course.name}
-                            </h3>
-                          </div>
-
-                          <div className="space-y-3 pt-2">
-                            <div className="flex justify-between items-end text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-                              <span className="flex items-center gap-1.5">
-                                <Brain className="size-5 text-primary/60" />
-                                İlerleme
-                              </span>
-                              <span className="text-foreground text-sm tracking-tight">
-                                %{mastery}
-                              </span>
-                            </div>
-                            <div className="relative h-3 w-full bg-foreground/10 rounded-full overflow-hidden shadow-inner font-black">
-                              <div
-                                style={{ width: `${mastery}%` }}
-                                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary/80 to-primary rounded-full"
-                              />
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Akıllı Alt Bilgi */}
-                        <div className="px-8 py-5 bg-secondary/30 border-t border-border/30 flex flex-col gap-3 group-hover:bg-primary/[0.03]">
-                          <div className="flex items-center justify-between w-full">
-                            <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground">
-                              <div className="flex items-center gap-2">
-                                <Calendar className="size-5 text-primary/40" />
-                                <span>Son: {lastStudy}</span>
+                          className="group relative bg-card backdrop-blur-sm border border-border/40 rounded-[2.5rem] overflow-hidden cursor-pointer shadow-sm hover:border-primary/30"
+                        >
+                          <div className="p-8 space-y-6">
+                            <div className="flex items-center justify-between">
+                              <div className="w-14 h-14 rounded-2xl bg-secondary/80 flex items-center justify-center text-foreground/70 shadow-inner">
+                                <Icon className="size-5" />
                               </div>
-                              {stats?.difficultSubject && (
-                                <div className="flex items-center gap-2 text-orange-500/80">
-                                  <AlertTriangle className="size-5" />
-                                  <span className="truncate max-w-[120px]">
-                                    {stats.difficultSubject}
-                                  </span>
-                                </div>
-                              )}
+                              <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20 whitespace-nowrap">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                Aktif
+                              </div>
                             </div>
-                            <div className="flex items-center gap-1 text-[11px] font-black text-primary uppercase tracking-wider">
-                              Sınava Başla
-                              <ArrowRight className="size-5 translate-x-0 group-hover:translate-x-1 transition-transform" />
+
+                            <div className="space-y-1">
+                              <h3 className="text-xl font-black leading-tight group-hover:text-primary line-clamp-2 min-h-[3.5rem]">
+                                {course.name}
+                              </h3>
+                            </div>
+
+                            <div className="space-y-3 pt-2">
+                              <div className="flex justify-between items-end text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                                <span className="flex items-center gap-1.5">
+                                  <Brain className="size-5 text-primary/60" />
+                                  İlerleme
+                                </span>
+                                <span className="text-foreground text-sm tracking-tight">
+                                  %{mastery}
+                                </span>
+                              </div>
+                              <div className="relative h-3 w-full bg-foreground/10 rounded-full overflow-hidden shadow-inner font-black">
+                                <div
+                                  style={{ width: `${mastery}%` }}
+                                  className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary/80 to-primary rounded-full"
+                                />
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Akıllı Alt Bilgi */}
+                          <div className="px-8 py-5 bg-secondary/30 border-t border-border/30 flex flex-col gap-3 group-hover:bg-primary/[0.03]">
+                            <div className="flex items-center justify-between w-full">
+                              <div className="flex items-center gap-4 text-[10px] font-bold text-muted-foreground">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="size-5 text-primary/40" />
+                                  <span>Son: {lastStudy}</span>
+                                </div>
+                                {stats?.difficultSubject && (
+                                  <div className="flex items-center gap-2 text-orange-500/80">
+                                    <AlertTriangle className="size-5" />
+                                    <span className="truncate max-w-[120px]">
+                                      {stats.difficultSubject}
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1 text-[11px] font-black text-primary uppercase tracking-wider">
+                                Sınava Başla
+                                <ArrowRight className="size-5 translate-x-0 group-hover:translate-x-1 transition-transform" />
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-              </div>
-            </section>
-          ))}
+                      );
+                    })}
+                </div>
+              </section>
+            );
+          })}
 
         {/* Kategorisiz Durumu */}
         {categories.length === 0 && !isLoading && (

@@ -3,10 +3,6 @@ import { Target } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 import { CommonEmptyState } from '@/features/statistics/components/shared/CardElements';
 
-// ==========================================
-// === TYPES / PROPS ===
-// ==========================================
-
 export interface MasteryItem {
   lessonId: string;
   title: string;
@@ -20,23 +16,13 @@ export interface MasteryProgressNavigatorProps {
   sessions: MasteryItem[];
 }
 
-// ==========================================
-// === COMPONENT ===
-// ==========================================
-
 export const MasteryProgressNavigator = ({
   sessions,
 }: MasteryProgressNavigatorProps) => {
-  // ==========================================
-  // === DERIVED STATE ===
-  // ==========================================
   const sortedSessions = useMemo(() => {
     return [...sessions].sort((a, b) => b.mastery - a.mastery);
   }, [sessions]);
 
-  // ==========================================
-  // === RENDER ===
-  // ==========================================
   return (
     <div className="mt-4 p-4 border border-border/50 rounded-xl bg-white/5 space-y-6">
       <div className="flex items-center justify-between">

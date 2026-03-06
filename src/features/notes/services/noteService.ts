@@ -9,9 +9,6 @@ import {
 import { processTopicContent } from '../logic/contentProcessor';
 import { type TopicMetadata } from '../logic/contentProcessor';
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
 /**
  * Senkronizasyon işlemi sonucunda dönen istatistikleri tanımlar.
  */
@@ -48,9 +45,6 @@ export interface CourseNotesData {
   chunks: CourseTopic[];
 }
 
-// === BÖLÜM ADI: İŞ MANTIĞI & SERVİSLER (LOGIC & SERVICES) ===
-// ===========================
-
 /**
  * Verilen kurs adlandırıcıya göre ilgili konu parçalarını (chunks) veritabanından çeker,
  * ardından ilgili metinlerin markdown işlemelerini yapar ve geriye döner.
@@ -65,44 +59,38 @@ export async function fetchCourseNotes(
   courseSlug: string,
   signal?: AbortSignal
 ): Promise<CourseNotesData | null> {
-  try {
-    const targetCourseId: string | null = await getCourseIdBySlug(courseSlug);
+  const targetCourseId: string | null = await getCourseIdBySlug(courseSlug);
 
-    if (!targetCourseId || (signal && signal.aborted)) {
-      return null;
-    }
-
-    const courseTopicsData: CourseTopic[] = await getCourseTopics(
-      userId,
-      targetCourseId,
-      signal
-    );
-
-    if (signal && signal.aborted) {
-      return null;
-    }
-
-    const processedData: CourseTopic[] = courseTopicsData.map(
-      (chunk: CourseTopic) => {
-        const metadata: TopicMetadata | null =
-          chunk.metadata as TopicMetadata | null;
-
-        return {
-          ...chunk,
-          content: processTopicContent(chunk.content, metadata),
-        };
-      }
-    );
-
-    return {
-      courseName: processedData[0]?.course_name || '',
-      chunks: processedData,
-    };
-  } catch (error: unknown) {
-    if (signal && signal.aborted) return null;
-    console.error('[noteService][fetchCourseNotes] Hata:', error);
-    throw error;
+  if (!targetCourseId || (signal && signal.aborted)) {
+    return null;
   }
+
+  const courseTopicsData: CourseTopic[] = await getCourseTopics(
+    userId,
+    targetCourseId,
+    signal
+  );
+
+  if (signal && signal.aborted) {
+    return null;
+  }
+
+  const processedData: CourseTopic[] = courseTopicsData.map(
+    (chunk: CourseTopic) => {
+      const metadata: TopicMetadata | null =
+        chunk.metadata as TopicMetadata | null;
+
+      return {
+        ...chunk,
+        content: processTopicContent(chunk.content, metadata),
+      };
+    }
+  );
+
+  return {
+    courseName: processedData[0]?.course_name || '',
+    chunks: processedData,
+  };
 }
 
 /**
@@ -111,22 +99,17 @@ export async function fetchCourseNotes(
  * @returns {Promise<SyncResponse>} Edge Function'dan dönen başarı durumu ve istatistikleri barındıran nesne.
  */
 export async function invokeNotionSync(): Promise<SyncResponse> {
-  try {
-    const { data: syncData } = await safeQuery<SyncResponse>(
-      supabase.functions.invoke<SyncResponse>('notion-sync', {
-        method: 'POST',
-        body: {},
-      }) as PromiseLike<{ data: SyncResponse | null; error: unknown }>,
-      'invokeNotionSync error'
-    );
+  const { data: syncData } = await safeQuery<SyncResponse>(
+    supabase.functions.invoke<SyncResponse>('notion-sync', {
+      method: 'POST',
+      body: {},
+    }) as PromiseLike<{ data: SyncResponse | null; error: unknown }>,
+    'invokeNotionSync error'
+  );
 
-    if (!syncData) {
-      throw new Error('Senkronizasyon servisinden yanıt alınamadı.');
-    }
-
-    return syncData;
-  } catch (error: unknown) {
-    console.error('[noteService][invokeNotionSync] Hata:', error);
-    throw error;
+  if (!syncData) {
+    throw new Error('Senkronizasyon servisinden yanıt alınamadı.');
   }
+
+  return syncData;
 }

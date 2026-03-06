@@ -3,8 +3,6 @@ import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useQuizEngine } from '@/features/quiz/hooks/useQuizEngine';
 import { QuizView } from '@/features/quiz/components/views/QuizView';
 
-// === TYPES ===
-
 interface QuizContainerProps {
   /** Note chunk ID (opsiyonel, konu bazlı quiz için) */
   chunkId?: string;
@@ -23,7 +21,6 @@ export function QuizContainer({
   courseId,
   onClose,
 }: QuizContainerProps) {
-  // === HOOKS ===
   const { user } = useAuth();
   const {
     state,
@@ -37,7 +34,6 @@ export function QuizContainer({
     toggleExplanation,
   } = useQuizEngine(courseId || '');
 
-  // === SIDE EFFECTS ===
   useEffect(() => {
     // Sadece kullanıcı/kurs varsa VE henüz başlamamış/yüklenmiyorsa başlat
     if (user?.id && courseId && !state.hasStarted && !state.isLoading) {
@@ -52,7 +48,6 @@ export function QuizContainer({
     state.isLoading,
   ]);
 
-  // === RENDER ===
   return (
     <QuizView
       state={state}

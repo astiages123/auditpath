@@ -9,10 +9,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-// ===========================
-// === PROPS DEFINITION ===
-// ===========================
-
 export interface PomodoroAlertsProps {
   showCloseAlert: boolean;
   setShowCloseAlert: (show: boolean) => void;
@@ -21,10 +17,6 @@ export interface PomodoroAlertsProps {
   onConfirmClose: () => void;
   onConfirmFinish: () => void;
 }
-
-// ===========================
-// === COMPONENT DEFINITION ===
-// ===========================
 
 export function PomodoroAlerts({
   showCloseAlert,

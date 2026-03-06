@@ -1,7 +1,3 @@
-// ==========================================
-// IMPORTS
-// ==========================================
-
 import { eachDayOfInterval, format, startOfWeek } from 'date-fns';
 import { tr } from 'date-fns/locale';
 
@@ -9,25 +5,13 @@ import { formatDateKey } from '@/utils/dateUtils';
 
 import { GenerationCostLog, GenerationCostLogSchema } from '../types/costTypes';
 
-// ==========================================
-// EXPORTS & SCHEMAS
-// ==========================================
-
 export { type GenerationCostLog, GenerationCostLogSchema };
-
-// ==========================================
-// CONSTANTS
-// ==========================================
 
 /**
  * Use a scaling factor to perform integer arithmetic for currency to avoid floating point errors.
  * e.g. $0.0001 -> 1 (if factor is 10000)
  */
 const CURRENCY_SCALING_FACTOR = 10000;
-
-// ==========================================
-// LOGIC FUNCTIONS
-// ==========================================
 
 /**
  * Validates and sanitizes raw log data from Supabase.
@@ -38,12 +22,10 @@ const CURRENCY_SCALING_FACTOR = 10000;
  */
 export function validateLogs(rawLogs: unknown[]): GenerationCostLog[] {
   const validLogs: GenerationCostLog[] = [];
-  rawLogs.forEach((log) => {
-    const result = GenerationCostLogSchema.safeParse(log);
+  rawLogs.forEach((rawLog) => {
+    const result = GenerationCostLogSchema.safeParse(rawLog);
     if (result.success) {
       validLogs.push(result.data);
-    } else {
-      console.warn('[costsLogic][validateLogs] Hata:', result.error);
     }
   });
   return validLogs;
@@ -66,8 +48,12 @@ export function processDailyData(
   // 1. Determine Date Range
   // We need the min date to start the chart, and we go up to today.
   const timestamps = logs
-    .map((l) => (l.created_at ? new Date(l.created_at).getTime() : 0))
-    .filter((t) => t > 0);
+    .map((generationLog) =>
+      generationLog.created_at
+        ? new Date(generationLog.created_at).getTime()
+        : 0
+    )
+    .filter((timestamp) => timestamp > 0);
 
   if (timestamps.length === 0) return [];
 
@@ -147,19 +133,21 @@ export function calculateTotalCostUsd(logs: GenerationCostLog[]): number {
 export function calculateCacheHitRate(logs: GenerationCostLog[]): number {
   // Sadece önbellek mekanizması olan modelleri hesaplamaya dahil et
   const eligibleLogs = logs.filter(
-    (l) =>
-      l.provider?.toLowerCase() === 'mimo' ||
-      l.provider?.toLowerCase() === 'deepseek'
+    (generationLog) =>
+      generationLog.provider?.toLowerCase() === 'mimo' ||
+      generationLog.provider?.toLowerCase() === 'deepseek'
   );
 
   const totalPromptTokens = eligibleLogs.reduce(
-    (acc, l) => acc + (l.prompt_tokens || 0),
+    (accumulator, generationLog) =>
+      accumulator + (generationLog.prompt_tokens || 0),
     0
   );
   if (totalPromptTokens === 0) return 0;
 
   const totalCachedTokens = eligibleLogs.reduce(
-    (acc, l) => acc + (l.cached_tokens || 0),
+    (accumulator, generationLog) =>
+      accumulator + (generationLog.cached_tokens || 0),
     0
   );
 

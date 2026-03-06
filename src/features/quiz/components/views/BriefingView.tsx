@@ -18,8 +18,6 @@ interface BriefingViewProps {
   onStartQuiz: () => void;
 }
 
-// === CONSTANTS: ANIMATION VARIANTS ===
-
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -33,8 +31,6 @@ const itemVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
-// === COMPONENT ===
-
 /**
  * Quiz öncesi bilgilendirme ekranı.
  * Kavram matrisini, zorluk analizini ve soru dağılımını gösterir.
@@ -43,12 +39,8 @@ export function BriefingView({
   completionStatus,
   onStartQuiz,
 }: BriefingViewProps) {
-  // === RENDER LOGIC ===
-
   const isReady =
     completionStatus.antrenman.existing >= completionStatus.antrenman.quota;
-
-  // === RENDER ===
 
   return (
     <motion.div
@@ -105,27 +97,27 @@ export function BriefingView({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/30">
-                {completionStatus.concepts?.map((c) => (
+                {completionStatus.concepts?.map((concept) => (
                   <tr
-                    key={c.baslik}
+                    key={concept.baslik}
                     className="hover:bg-primary/5 transition-colors group"
                   >
                     <td className="px-4 py-3 border-r border-border/10">
                       <div className="font-bold text-foreground/90 group-hover:text-primary transition-colors">
-                        {c.baslik}
+                        {concept.baslik}
                       </div>
                     </td>
                     <td className="px-4 py-3 text-center">
                       <span
                         className={`inline-flex items-center justify-center min-w-[80px] text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border shadow-xs ${
-                          c.seviye === 'Analiz'
+                          concept.seviye === 'Analiz'
                             ? 'bg-red-500/10 text-red-500 border-red-500/20'
-                            : c.seviye === 'Uygulama'
+                            : concept.seviye === 'Uygulama'
                               ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
                               : 'bg-blue-500/10 text-blue-500 border-blue-500/20'
                         }`}
                       >
-                        {c.seviye}
+                        {concept.seviye}
                       </span>
                     </td>
                   </tr>
@@ -224,25 +216,28 @@ export function BriefingView({
                   color: 'text-purple-500',
                   bg: 'bg-purple-500/10',
                 },
-              ].map((d) => (
+              ].map((dimension) => (
                 <div
-                  key={d.label}
+                  key={dimension.label}
                   className="text-center p-2 rounded-lg hover:bg-muted/50 transition-colors"
                 >
                   <div
-                    className={`flex justify-center mb-2 w-10 h-10 mx-auto items-center rounded-lg ${d.bg}`}
+                    className={`flex justify-center mb-2 w-10 h-10 mx-auto items-center rounded-lg ${dimension.bg}`}
                   >
-                    <d.icon size={22} className={`${d.color}`} />
+                    <dimension.icon
+                      size={22}
+                      className={`${dimension.color}`}
+                    />
                   </div>
                   <div className="text-3xl font-black leading-none mb-1">
-                    {d.existing}
+                    {dimension.existing}
                     <span className="text-base text-muted-foreground">
                       {' '}
-                      / {d.quota}
+                      / {dimension.quota}
                     </span>
                   </div>
                   <div className="text-[11px] font-black text-muted-foreground uppercase tracking-tight">
-                    {d.label}
+                    {dimension.label}
                   </div>
                 </div>
               ))}

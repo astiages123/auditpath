@@ -26,10 +26,6 @@ import { SealDetailModal } from '@/features/achievements/components/modals/SealD
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { logger } from '@/utils/logger';
 
-// ===========================
-// === CONSTANTS ===
-// ===========================
-
 const GUILD_ORDER: GuildType[] = [
   'HUKUK',
   'IKTISAT',
@@ -52,10 +48,6 @@ const GUILD_ICONS: Record<GuildType, React.ReactNode> = {
   MASTERY: <Crown className="w-5 h-5" />,
   TITLES: <Award className="w-5 h-5" />,
 };
-
-// ===========================
-// === COMPONENT ===
-// ===========================
 
 /**
  * AchievementsRoom Component
@@ -83,7 +75,10 @@ export function AchievementsRoom() {
         const dbUnlocked = await getDbUnlocked(user.id);
         setUnlockedAchievements(
           new Map(
-            dbUnlocked.map((a: UnlockedAchievement) => [a.id, a.unlockedAt])
+            dbUnlocked.map((achievement: UnlockedAchievement) => [
+              achievement.id,
+              achievement.unlockedAt,
+            ])
           )
         );
       } catch (error) {

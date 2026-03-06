@@ -47,15 +47,13 @@ export async function reviseQuestion(
     }
   );
 
-  if (result) {
-    return {
-      ...result,
-      bloomLevel: originalQuestion.bloomLevel,
-      img: originalQuestion.img,
-      concept: originalQuestion.concept,
-      insight: result.insight ?? undefined,
-    } satisfies GeneratedQuestion;
-  }
+  if (!result) return null;
 
-  return null;
+  return {
+    ...result,
+    bloomLevel: originalQuestion.bloomLevel,
+    img: originalQuestion.img,
+    concept: originalQuestion.concept,
+    insight: result.insight ?? undefined,
+  } satisfies GeneratedQuestion;
 }

@@ -8,16 +8,10 @@ import { slugify } from '@/utils/stringHelpers';
 import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { markdownComponents } from '@/features/notes/components/content/MarkdownComponents';
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
 export interface MarkdownSectionProps {
   /** Eğitimin alt bölüm içerik objesi (Markdown yığını) */
   chunk: CourseTopic;
 }
-
-// === BÖLÜM ADI: BİLEŞEN (COMPONENT) ===
-// ===========================
 
 /**
  * Derse ait metin parçacıklarını (chunk) birer makale (prose) bloğu
@@ -30,8 +24,6 @@ export const MarkdownSection = memo(function MarkdownSection({
   chunk,
 }: MarkdownSectionProps): React.ReactElement {
   const sectionId: string = slugify(chunk.section_title);
-
-  // === UI RENDER ===
 
   return (
     <div

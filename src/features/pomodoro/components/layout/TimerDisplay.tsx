@@ -4,10 +4,6 @@ import { motion } from 'framer-motion';
 import { cn } from '@/utils/stringHelpers';
 import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 
-// ===========================
-// === COMPONENT DEFINITION ===
-// ===========================
-
 export function TimerDisplay() {
   const {
     mode,
@@ -32,11 +28,11 @@ export function TimerDisplay() {
     const updatePauseTimer = () => {
       const now = Date.now();
       const diffInSeconds = Math.floor((now - pauseStartTime) / 1000);
-      const m = Math.floor(diffInSeconds / 60)
+      const minutesText = Math.floor(diffInSeconds / 60)
         .toString()
         .padStart(2, '0');
-      const s = (diffInSeconds % 60).toString().padStart(2, '0');
-      setCurrentPauseDuration(`${m}:${s}`);
+      const secondsText = (diffInSeconds % 60).toString().padStart(2, '0');
+      setCurrentPauseDuration(`${minutesText}:${secondsText}`);
     };
 
     updatePauseTimer();
@@ -53,7 +49,6 @@ export function TimerDisplay() {
 
   return (
     <>
-      {/* === LEFT BLOCK: Context === */}
       <div className="flex items-center gap-3 min-w-0 flex-1">
         <div className="size-10 shrink-0 rounded-xl bg-black/20 border border-white/10 flex items-center justify-center text-white">
           <Target size={20} />
@@ -71,7 +66,6 @@ export function TimerDisplay() {
       {/* Divider */}
       <div className="h-8 w-px bg-white/10 shrink-0 hidden sm:block" />
 
-      {/* === CENTER BLOCK: Timer === */}
       <div className="flex items-center gap-4 shrink-0 px-2">
         {/* Timer digits */}
         <div className="flex items-center">

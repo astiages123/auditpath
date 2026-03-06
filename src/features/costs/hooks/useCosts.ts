@@ -60,7 +60,7 @@ export function useCosts() {
             model: selectedProvider,
           }),
           ExchangeRateService.getUsdToTryRate(),
-          CostsService.fetchAvailableProviders(startDate),
+          CostsService.fetchAvailableModels(startDate),
         ]);
 
       setState({

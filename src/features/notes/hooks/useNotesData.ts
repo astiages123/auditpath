@@ -4,9 +4,6 @@ import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import { storage } from '@/shared/services/storageService';
 import { logger } from '@/utils/logger';
 
-// === BÖLÜM ADI: TİPLER (TYPES) ===
-// ===========================
-
 export interface UseNotesDataProps {
   /** Kurs adlandırıcısı (URL path için, örn: ATA_584) */
   courseSlug: string;
@@ -45,9 +42,6 @@ export interface CachedNotesPayload {
   timestamp: number;
 }
 
-// === BÖLÜM ADI: YARDIMCI FONKSİYONLAR (HELPERS) ===
-// ===========================
-
 function notesReducer(state: NotesState, action: NotesAction): NotesState {
   switch (action.type) {
     case 'FETCH_START':
@@ -68,9 +62,6 @@ function notesReducer(state: NotesState, action: NotesAction): NotesState {
       return state;
   }
 }
-
-// === BÖLÜM ADI: HOOK İŞ MANTIĞI ===
-// ===========================
 
 /**
  * Belirli bir kursun not içeriklerini, önbelleği (cache) de kullaranak asenkron yükler.
@@ -104,10 +95,8 @@ export function useNotesData({
       try {
         dispatch({ type: 'FETCH_START' });
 
-        // Önbellek (Cache) Katmanı Okuma
-        const cacheKey: string = `cached_notes_v6_${courseSlug}`;
-        const cachedContent: CachedNotesPayload | null =
-          storage.get<CachedNotesPayload>(cacheKey, userId);
+        const cacheKey = `cached_notes_v6_${courseSlug}`;
+        const cachedContent = storage.get<CachedNotesPayload>(cacheKey, userId);
 
         if (cachedContent?.data) {
           dispatch({
@@ -117,16 +106,12 @@ export function useNotesData({
           });
         }
 
-        // Uzak sunucudan (Supabase) yeni veri çekme işlemi
         const fetchedResult = await fetchCourseNotes(
           userId,
           courseSlug,
           signal
         );
-
-        if (signal.aborted || !fetchedResult) {
-          return;
-        }
+        if (signal.aborted || !fetchedResult) return;
 
         if (fetchedResult.chunks.length > 0) {
           startTransition(() => {
@@ -137,7 +122,6 @@ export function useNotesData({
             });
           });
 
-          // Güncel veriyi önbelleğe kaydet
           storage.set(
             cacheKey,
             {
@@ -146,22 +130,23 @@ export function useNotesData({
             },
             { userId }
           );
-        } else if (!cachedContent) {
+          return;
+        }
+
+        if (!cachedContent) {
           dispatch({
             type: 'FETCH_ERROR',
             error: 'Bu ders için henüz içerik bulunmuyor.',
           });
         }
-      } catch (err: unknown) {
-        if (signal.aborted) {
-          return;
-        }
-        console.error('[useNotesData][fetchData] Hata:', err);
+      } catch (fetchError: unknown) {
+        if (signal.aborted) return;
+
         logger.error(
           'useNotesData',
           'fetchData',
           'Notes loading error',
-          err as Error
+          fetchError as Error
         );
         dispatch({
           type: 'FETCH_ERROR',
