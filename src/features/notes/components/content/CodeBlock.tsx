@@ -1,15 +1,17 @@
-import React, { lazy, Suspense, useState } from 'react';
-import katex from 'katex';
-import 'katex/dist/katex.min.css';
+import React, { lazy, Suspense, useState, useEffect } from 'react';
 import { Copy, Check } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
 import { sanitizeHtml } from '@/shared/utils/sanitizers/htmlSanitizer';
 import { logger } from '@/utils/logger';
+
 const MermaidDiagram = lazy(() =>
   import('./MermaidDiagram').then((module) => ({
     default: module.MermaidDiagram,
   }))
 );
+
+// KaTeX CSS should still be loaded if needed, or we can load it dynamically too
+import 'katex/dist/katex.min.css';
 
 export interface CodeBlockProps extends React.HTMLAttributes<HTMLElement> {
   /** Satır içi kod olup olmadığını belirtir */
@@ -55,45 +57,58 @@ export const CodeBlock = ({
     (code.trim().startsWith('$') && code.trim().endsWith('$'))
   );
 
-  const sanitizedHtml: MathRenderResult | null = React.useMemo(() => {
-    if (!isMath) return null;
+  const [mathHtml, setMathHtml] = useState<MathRenderResult | null>(null);
 
-    const isDisplay: boolean = !!(
-      code.trim().startsWith('$$') ||
-      (match && (match[1] === 'math' || match[1] === 'latex'))
-    );
-    const content: string = code
-      .trim()
-      .replace(/^(\$\$|\\\[|\\\(|\$)/, '')
-      .replace(/(\$\$|\\\]|\\\)|\$)$/, '');
+  useEffect(() => {
+    if (!isMath) return;
 
-    try {
-      const html: string = katex.renderToString(content, {
-        displayMode: isDisplay,
-        throwOnError: false,
-      });
-      return { html: sanitizeHtml(html), isDisplay };
-    } catch (error: unknown) {
-      logger.error(
-        'CodeBlock',
-        'sanitizedHtml',
-        'KaTeX fallback render error:',
-        error as Error
+    const renderMath = async () => {
+      const isDisplay: boolean = !!(
+        code.trim().startsWith('$$') ||
+        (match && (match[1] === 'math' || match[1] === 'latex'))
       );
-      return null;
-    }
+      const content: string = code
+        .trim()
+        .replace(/^(\$\$|\\\[|\\\(|\$)/, '')
+        .replace(/(\$\$|\\\]|\\\)|\$)$/, '');
+
+      try {
+        const katex = (await import('katex')).default;
+        const html: string = katex.renderToString(content, {
+          displayMode: isDisplay,
+          throwOnError: false,
+        });
+        setMathHtml({ html: sanitizeHtml(html), isDisplay });
+      } catch (error: unknown) {
+        logger.error(
+          'CodeBlock',
+          'renderMath',
+          'KaTeX render error:',
+          error as Error
+        );
+      }
+    };
+
+    renderMath();
   }, [code, isMath, match]);
 
-  if (isMath && sanitizedHtml) {
-    if (sanitizedHtml.isDisplay) {
+  if (isMath) {
+    if (!mathHtml) {
+      return (
+        <div className="my-4 text-center opacity-50">
+          Matematik ifadesi yükleniyor...
+        </div>
+      );
+    }
+    if (mathHtml.isDisplay) {
       return (
         <div
           className="my-8 text-lg overflow-x-auto text-center"
-          dangerouslySetInnerHTML={{ __html: sanitizedHtml.html }}
+          dangerouslySetInnerHTML={{ __html: mathHtml.html }}
         />
       );
     }
-    return <span dangerouslySetInnerHTML={{ __html: sanitizedHtml.html }} />;
+    return <span dangerouslySetInnerHTML={{ __html: mathHtml.html }} />;
   }
 
   if (inline || !match) {

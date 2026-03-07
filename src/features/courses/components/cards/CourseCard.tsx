@@ -101,7 +101,7 @@ export function CourseCard({
                 <span className="text-lg font-black text-foreground ml-auto">
                   %{Math.round(progressPercent)}
                 </span>
-                <p className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-tighter mt-0.5">
+                <p className="text-[9px] font-bold text-muted-foreground/90 uppercase tracking-tighter mt-0.5">
                   İlerleme
                 </p>
               </div>

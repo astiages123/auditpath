@@ -231,7 +231,7 @@ export const FocusHubCard = ({
                       içerik
                     </span>
                   </p>
-                  <p className="text-[12px] text-muted-foreground/60 leading-tight">
+                  <p className="text-[12px] text-muted-foreground/90 leading-tight">
                     {todayVideoMinutes + todayReadingMinutes} dk toplam
                     {pagesRead > 0 && (
                       <span className="block italic text-emerald-400/80">

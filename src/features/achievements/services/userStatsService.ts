@@ -16,9 +16,15 @@ type CategoryProgressItem = {
 };
 
 type VideoProgressPayload = {
-  duration_minutes: number;
-  course_id: string;
+  duration_minutes: number | null;
+  course_id: string | null;
   duration: string;
+};
+
+type ProgressItem = {
+  completed_at?: string | null;
+  updated_at?: string | null;
+  video: VideoProgressPayload | null;
 };
 
 export interface UserProgressData {
@@ -53,21 +59,45 @@ export async function getUserStats(
   predefinedCategories?: Category[]
 ): Promise<UserProgressData | null> {
   let categories: Category[] = predefinedCategories ?? [];
+  let progressPromise;
+  let progressData: ProgressItem[] | null = null;
 
   if (!predefinedCategories) {
-    const { data: fetchedCategories, error: categoryError } = await supabase
+    const categoriesPromise = supabase
       .from('categories')
       .select(
         'id, name, sort_order, total_hours, courses(id, name, course_slug, total_videos, total_pages, total_hours, type, sort_order)'
       )
       .order('sort_order');
 
-    if (categoryError) {
-      throw categoryError;
-    }
+    progressPromise = supabase
+      .from('video_progress')
+      .select('*, video:videos(duration_minutes, course_id, duration)')
+      .eq('user_id', userId)
+      .eq('completed', true);
 
-    categories = (fetchedCategories as Category[]) || [];
+    const [categoryResult, progressResult] = await Promise.all([
+      categoriesPromise,
+      progressPromise,
+    ]);
+
+    if (categoryResult.error) throw categoryResult.error;
+    if (progressResult.error) throw progressResult.error;
+
+    categories = (categoryResult.data as Category[]) || [];
+    progressData = progressResult.data;
+  } else {
+    const progressResult = await supabase
+      .from('video_progress')
+      .select('*, video:videos(duration_minutes, course_id, duration)')
+      .eq('user_id', userId)
+      .eq('completed', true);
+
+    if (progressResult.error) throw progressResult.error;
+    progressData = progressResult.data;
   }
+
+  const progress = progressData;
 
   const courseToCategoryMap: Record<string, string> = {};
   const courseIdToSlugMap: Record<string, string> = {};
@@ -119,16 +149,6 @@ export async function getUserStats(
     0
   );
 
-  const { data: progress, error: progressError } = await supabase
-    .from('video_progress')
-    .select('*, video:videos(duration_minutes, course_id, duration)')
-    .eq('user_id', userId)
-    .eq('completed', true);
-
-  if (progressError) {
-    throw progressError;
-  }
-
   let completedVideos = 0;
   let completedReadings = 0;
   let completedPages = 0;
@@ -156,9 +176,11 @@ export async function getUserStats(
         continue;
       }
 
-      const durationHours = video.duration_minutes / 60;
+      const durationHours = (video.duration_minutes || 0) / 60;
       completedHours += durationHours;
-      const courseType = courseIdToTypeMap[video.course_id] || 'video';
+      const courseType =
+        (video.course_id ? courseIdToTypeMap[video.course_id] : null) ||
+        'video';
 
       let parsedPages = 0;
       if (courseType === 'reading') {
@@ -174,10 +196,14 @@ export async function getUserStats(
         completedVideos += 1;
       }
 
-      const courseSlug = courseIdToSlugMap[video.course_id] || video.course_id;
+      const courseSlug = video.course_id
+        ? courseIdToSlugMap[video.course_id] || video.course_id
+        : 'unknown';
       courseProgress[courseSlug] = (courseProgress[courseSlug] || 0) + 1;
 
-      const categoryName = courseToCategoryMap[video.course_id];
+      const categoryName = video.course_id
+        ? courseToCategoryMap[video.course_id]
+        : null;
       if (!categoryName) {
         continue;
       }

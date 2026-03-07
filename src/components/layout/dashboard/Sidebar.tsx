@@ -92,7 +92,7 @@ export function Sidebar() {
                 className={cn('space-y-1', groupIndex > 0 && 'mt-6')}
               >
                 {!isCollapsed && (
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60 px-3 mb-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground px-3 mb-2">
                     {NAV_GROUP_LABELS[groupKey]}
                   </p>
                 )}

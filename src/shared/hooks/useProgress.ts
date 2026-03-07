@@ -5,6 +5,7 @@ import { getUserStats } from '@/features/achievements/services/userStatsService'
 import type { Rank } from '@/types/auth';
 import { calculateStaticTotals } from '@/features/courses/logic/courseStats';
 import { useCategories } from '@/features/courses/hooks/useCategories';
+import type { Category } from '@/features/courses/types/courseTypes';
 
 export interface CategoryProgress {
   completedVideos: number;
@@ -90,7 +91,12 @@ export function useProgress() {
     data: stats,
     isLoading,
     refetch,
-  } = useProgressQuery(userId, staticTotals);
+  } = useProgressQuery(
+    userId,
+    staticTotals,
+    undefined,
+    categories || undefined
+  );
   const { updateProgress } = useOptimisticProgress(courseCategorySlugMap);
 
   const refreshProgress = useCallback(() => {
@@ -139,14 +145,19 @@ export function useProgress() {
 export function useProgressQuery(
   userId?: string,
   staticTotals?: StaticTotals | null,
-  initialStats?: Partial<ProgressStats>
+  initialStats?: Partial<ProgressStats>,
+  categories?: Category[]
 ) {
   return useQuery({
-    queryKey: [...progressKeys.user(userId || 'guest'), staticTotals !== null],
+    queryKey: [
+      ...progressKeys.user(userId || 'guest'),
+      staticTotals !== null,
+      !!categories,
+    ],
     queryFn: async (): Promise<ProgressStats> => {
       if (!userId || !staticTotals) return defaultStats;
 
-      const dbStats = await getUserStats(userId);
+      const dbStats = await getUserStats(userId, categories);
       if (!dbStats) return defaultStats;
 
       const mergedCategoryProgress: Record<string, CategoryProgress> = {

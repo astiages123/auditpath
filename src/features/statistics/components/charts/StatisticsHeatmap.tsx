@@ -110,7 +110,7 @@ export function StatisticsHeatmap({ data }: StatisticsHeatmapProps) {
       {/* Minimal Legend */}
       <div className="flex items-center justify-end mt-5 pt-3 border-t border-white/5">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted-foreground/60 mr-1.5 uppercase font-medium">
+          <span className="text-[10px] text-muted-foreground/90 mr-1.5 uppercase font-medium">
             Az
           </span>
           <div className="flex gap-1.5">
@@ -124,7 +124,7 @@ export function StatisticsHeatmap({ data }: StatisticsHeatmapProps) {
               />
             ))}
           </div>
-          <span className="text-[10px] text-muted-foreground/60 ml-1.5 uppercase font-medium">
+          <span className="text-[10px] text-muted-foreground/90 ml-1.5 uppercase font-medium">
             Çok
           </span>
         </div>

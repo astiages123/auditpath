@@ -275,12 +275,18 @@ export function CourseList({
                   >
                     %{progress}
                   </span>
-                  <p className="text-[8px] sm:text-[9px] font-bold text-muted-foreground/60 uppercase tracking-tighter mt-0.5">
+                  <p className="text-[8px] sm:text-[9px] font-bold text-muted-foreground/90 uppercase tracking-tighter mt-0.5">
                     İlerleme
                   </p>
                 </div>
-
-                <div className="p-2 rounded-xl bg-surface/50 border border-white/5 text-muted-foreground group-hover:text-white transition-colors">
+                <div
+                  className="p-2 rounded-xl bg-surface/50 border border-white/5 text-muted-foreground group-hover:text-white transition-colors"
+                  aria-label={
+                    expandedCourse === course.id
+                      ? 'Ders detaylarını kapat'
+                      : 'Ders detaylarını aç'
+                  }
+                >
                   {expandedCourse === course.id ? (
                     <ChevronUp className="size-4" />
                   ) : (

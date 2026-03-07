@@ -219,7 +219,7 @@ export const RoadmapPath: FC<RoadmapPathProps> = ({
                         ? 'text-accent'
                         : isCompleted
                           ? 'text-foreground'
-                          : 'text-muted-foreground/60'
+                          : 'text-muted-foreground'
                     )}
                   >
                     {milestone.title}
@@ -234,7 +234,7 @@ export const RoadmapPath: FC<RoadmapPathProps> = ({
                     'text-xs leading-tight line-clamp-2',
                     isCurrent
                       ? 'text-muted-foreground'
-                      : 'text-muted-foreground/40'
+                      : 'text-muted-foreground/80'
                   )}
                 >
                   "{milestone.motto}"

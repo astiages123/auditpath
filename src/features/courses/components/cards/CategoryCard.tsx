@@ -210,7 +210,7 @@ export function CategoryCard({
               <span className="text-lg sm:text-xl font-black text-white leading-none">
                 %{progress}
               </span>
-              <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground/60 uppercase tracking-tighter mt-0.5 sm:mt-1">
+              <p className="text-[9px] font-bold text-muted-foreground/90 uppercase tracking-tighter mt-0.5">
                 İlerleme
               </p>
             </div>

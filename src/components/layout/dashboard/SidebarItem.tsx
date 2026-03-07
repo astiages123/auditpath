@@ -45,13 +45,14 @@ export function SidebarItem({ item, isCollapsed, onAction }: SidebarItemProps) {
   );
 
   const element = item.href ? (
-    <Link to={item.href} className={sharedClassName}>
+    <Link to={item.href} className={sharedClassName} aria-label={item.label}>
       {inner}
     </Link>
   ) : (
     <button
       onClick={() => item.action && onAction?.(item.action)}
       className={cn(sharedClassName, 'text-left')}
+      aria-label={item.label}
     >
       {inner}
     </button>

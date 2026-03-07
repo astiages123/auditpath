@@ -51,9 +51,10 @@ export const SearchResultsSidebar = memo(function SearchResultsSidebar({
               key={result.id}
               onClick={() => onResultClick(result)}
               className="w-full group text-left p-3 rounded-xl border border-border/40 bg-card/50 hover:bg-primary/5 hover:border-primary/30 transition-all duration-300 transition-colors"
+              aria-label={`${result.match} araması için sonuç detayı`}
             >
               <div className="text-[13px] leading-relaxed overflow-hidden">
-                <div className="text-muted-foreground/60 line-clamp-2">
+                <div className="text-muted-foreground/90 line-clamp-2">
                   <ReactMarkdown
                     remarkPlugins={[remarkMath]}
                     rehypePlugins={[

@@ -40,7 +40,7 @@ export const CostsHeader: FC<CostsHeaderProps> = ({
           {title}
         </h1>
         {subtitle && (
-          <p className="text-muted-foreground text-base md:text-lg max-w-2xl">
+          <p className="text-muted-foreground/90 text-xs font-medium md:text-lg max-w-2xl">
             {subtitle}
           </p>
         )}

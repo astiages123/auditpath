@@ -52,6 +52,7 @@ export function RankCard({
                   <img
                     src={currentRankImage}
                     alt={currentRank?.name}
+                    fetchPriority="high"
                     className="size-full object-cover transition-transform group-hover:scale-110 duration-500"
                   />
                 </div>

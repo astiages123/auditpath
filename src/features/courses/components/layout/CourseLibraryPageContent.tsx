@@ -159,7 +159,7 @@ function CourseRow({
         <p className="text-sm font-bold text-foreground leading-snug truncate group-hover:text-primary transition-colors">
           {course.name}
         </p>
-        <p className="text-[11px] text-muted-foreground/60 font-medium mt-0.5">
+        <p className="text-[11px] text-muted-foreground/90 font-medium mt-0.5">
           {course.total_videos ? `${course.total_videos} video` : '—'}
           {course.total_hours ? ` • ${formatDuration(course.total_hours)}` : ''}
         </p>

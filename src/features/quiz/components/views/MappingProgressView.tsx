@@ -208,7 +208,7 @@ export function MappingProgressView({
             className="w-full flex items-center justify-between px-2 h-8"
             onClick={() => setShowLogs(!showLogs)}
           >
-            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/60">
+            <span className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground/90">
               Teknik Kayıtlar
             </span>
             {showLogs ? (

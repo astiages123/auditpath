@@ -135,7 +135,7 @@ export const SessionListItem: FC<SessionListItemProps> = ({
 
       <div className="flex items-center gap-4">
         <div className="flex flex-col items-end">
-          <span className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-tighter mb-0.5">
+          <span className="text-[10px] font-bold text-muted-foreground/90 uppercase tracking-tighter mb-0.5">
             Odak Gücü
           </span>
           <span
