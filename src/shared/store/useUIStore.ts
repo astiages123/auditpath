@@ -25,7 +25,7 @@ export const useUIStore = create<UIStore>()(
         set((state) => ({ isSidebarCollapsed: !state.isSidebarCollapsed })),
     }),
     {
-      name: 'auditpath-ui-storage',
+      name: 'sapiera-ui-storage',
       partialize: (state) => ({ isSidebarCollapsed: state.isSidebarCollapsed }),
     }
   )

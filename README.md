@@ -1,6 +1,6 @@
-# AuditPath 🛡️
+# Sapiera 🛡️
 
-[![Live Demo](https://img.shields.io/badge/🚀_Demo-audit--path.vercel.app-black?style=for-the-badge)](https://audit-path.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/🚀_Demo-sapiera.vercel.app-black?style=for-the-badge)](https://sapiera.vercel.app/)
 ![Stack](https://img.shields.io/badge/React_19_|_TypeScript_|_Supabase-blue?style=for-the-badge&logo=typescript)
 
 Denetimcilik ve KPSS sınavlarına hazırlık için kişisel öğrenme platformu.  

@@ -4,7 +4,7 @@ import { PageHeader } from '@/shared/components/PageHeader';
 
 export default function AchievementsPage() {
   useEffect(() => {
-    document.title = 'Başarılar | AuditPath';
+    document.title = 'Başarılar | Sapiera';
     // Meta description update (optional, but keep it consistent with what was there)
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {

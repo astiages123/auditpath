@@ -50,7 +50,7 @@
   font-display: swap;
 }
 
-/* AuditPath Custom Theme - Dark Mode Only */
+/* Sapiera Custom Theme - Dark Mode Only */
 :root {
   --background: oklch(20.46% 0 0deg);
   --foreground: oklch(92.19% 0 0deg);

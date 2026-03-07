@@ -139,8 +139,8 @@ describe('Quiz user flow integration', () => {
 
     mockGetCourseBySlug.mockResolvedValue({
       id: '550e8400-e29b-41d4-a716-446655440000',
-      name: 'Audit Path',
-      course_slug: 'audit-path',
+      name: 'Sapiera',
+      course_slug: 'sapiera',
     });
 
     mockGetCourseTopicsWithCounts.mockResolvedValue([
@@ -233,10 +233,10 @@ describe('Quiz user flow integration', () => {
   it('resolves course, selects topic, opens briefing and starts the quiz session', async () => {
     const user = userEvent.setup();
 
-    renderQuizFlow('/quiz/audit-path');
+    renderQuizFlow('/quiz/sapiera');
 
     await screen.findByText('Başlamaya Hazır Mısın?');
-    expect(screen.getAllByText('Audit Path').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Sapiera').length).toBeGreaterThan(0);
 
     await user.click(
       await screen.findByRole('button', { name: /Genel Esaslar/i })

@@ -23,7 +23,7 @@ GRANT EXECUTE ON FUNCTION public.get_email_by_username(text) TO service_role;
 REVOKE EXECUTE ON FUNCTION public.increment_course_session(uuid, uuid) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.increment_course_session(uuid, uuid) TO service_role;
 
--- 4. Storage Güvenlik Politikaları (lessons, pdfs, AuditPath)
+-- 4. Storage Güvenlik Politikaları (lessons, pdfs, Sapiera)
 -- Okuma (SELECT) yetkisi statik linkler için public kalacak, ancak yükleme/silme kısıtlanacak.
 
 -- 'lessons' bucket
@@ -34,6 +34,6 @@ CREATE POLICY "lessons_admin_all" ON storage.objects FOR ALL TO service_role USI
 CREATE POLICY "pdfs_public_read" ON storage.objects FOR SELECT TO public USING (bucket_id = 'pdfs');
 CREATE POLICY "pdfs_admin_all" ON storage.objects FOR ALL TO service_role USING (bucket_id = 'pdfs') WITH CHECK (bucket_id = 'pdfs');
 
--- 'AuditPath' bucket
-CREATE POLICY "AuditPath_public_read" ON storage.objects FOR SELECT TO public USING (bucket_id = 'AuditPath');
-CREATE POLICY "AuditPath_admin_all" ON storage.objects FOR ALL TO service_role USING (bucket_id = 'AuditPath') WITH CHECK (bucket_id = 'AuditPath');
+-- 'Sapiera' bucket
+CREATE POLICY "Sapiera_public_read" ON storage.objects FOR SELECT TO public USING (bucket_id = 'Sapiera');
+CREATE POLICY "Sapiera_admin_all" ON storage.objects FOR ALL TO service_role USING (bucket_id = 'Sapiera') WITH CHECK (bucket_id = 'Sapiera');

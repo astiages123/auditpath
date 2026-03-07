@@ -7,7 +7,7 @@ export default function RoadmapPage() {
   const { stats, isLoading } = useProgress();
 
   useEffect(() => {
-    document.title = 'Yolculuk | AuditPath';
+    document.title = 'Yolculuk | Sapiera';
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute(

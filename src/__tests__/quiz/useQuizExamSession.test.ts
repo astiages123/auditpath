@@ -96,7 +96,7 @@ describe('useQuizExamSession', () => {
     const hook = renderHook(() =>
       useQuizExamSession({
         courseId: 'course-1',
-        courseName: 'Audit Path',
+        courseName: 'Sapiera',
         userId: 'user-1',
         selectedTopic,
         chunkId: 'chunk-1',

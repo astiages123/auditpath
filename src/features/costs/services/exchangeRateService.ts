@@ -15,7 +15,7 @@ type ExchangeRate = z.infer<typeof ExchangeRateSchema>;
 
 const EXCHANGE_RATE_API = 'https://api.exchangerate-api.com/v4/latest/USD';
 const PAIR_USD_TRY = 'USD-TRY';
-const STORAGE_KEY = 'auditpath_exchange_rate_usd_try';
+const STORAGE_KEY = 'sapiera_exchange_rate_usd_try';
 
 export const ExchangeRateService = {
   /**

@@ -35,7 +35,7 @@ describe('storageService', () => {
     const testData = { foo: 'bar' };
     storage.set('test-key', testData);
 
-    const raw = localStorage.getItem('auditpath_test-key');
+    const raw = localStorage.getItem('sapiera_test-key');
     const parsed = JSON.parse(raw!);
 
     expect(parsed.value).toEqual(testData);
@@ -59,11 +59,11 @@ describe('storageService', () => {
       value: testData,
       timestamp: now - 25 * 60 * 60 * 1000, // 25 hours ago (TTL is 24)
     };
-    localStorage.setItem('auditpath_expired', JSON.stringify(item));
+    localStorage.setItem('sapiera_expired', JSON.stringify(item));
 
     const result = storage.get('expired');
     expect(result).toBeNull();
-    expect(localStorage.getItem('auditpath_expired')).toBeNull();
+    expect(localStorage.getItem('sapiera_expired')).toBeNull();
   });
 
   it('4. Belirtilen anahtara sahip veriyi siler', () => {
@@ -78,17 +78,17 @@ describe('storageService', () => {
 
     // One valid, one expired
     localStorage.setItem(
-      'auditpath_valid',
+      'sapiera_valid',
       JSON.stringify({ value: 'ok', timestamp: now })
     );
     localStorage.setItem(
-      'auditpath_old',
+      'sapiera_old',
       JSON.stringify({ value: 'old', timestamp: now - ttlMs - 1000 })
     );
 
     storage.cleanup();
 
-    expect(localStorage.getItem('auditpath_valid')).not.toBeNull();
-    expect(localStorage.getItem('auditpath_old')).toBeNull();
+    expect(localStorage.getItem('sapiera_valid')).not.toBeNull();
+    expect(localStorage.getItem('sapiera_old')).toBeNull();
   });
 });

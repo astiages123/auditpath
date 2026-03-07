@@ -11,12 +11,12 @@ export default function HomePage() {
   const { categories, stats, loading: isLoading, error } = useHomeData();
 
   useEffect(() => {
-    document.title = 'AuditPath';
+    document.title = 'Sapiera';
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute(
         'content',
-        'Müfettişlik yolculuğuna başla. AuditPath ile ilerlemeni takip et.'
+        'Başarı yolculuğuna başla. Sapiera ile ilerlemeni takip et.'
       );
     }
   }, []);

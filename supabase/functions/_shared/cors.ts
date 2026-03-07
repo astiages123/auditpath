@@ -1,6 +1,6 @@
 const allowedOrigins = [
   'http://localhost:5173', // Lokal geliştirme için
-  'https://auditpath.vercel.app', // Vercel canlı domainin,
+  'https://sapiera.vercel.app', // Vercel canlı domainin,
 ];
 
 export const corsHeaders = (req: Request): Record<string, string> => {

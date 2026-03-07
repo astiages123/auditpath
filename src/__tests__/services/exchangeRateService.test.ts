@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExchangeRateService } from '@/features/costs/services/exchangeRateService';
 
-const STORAGE_KEY = 'auditpath_exchange_rate_usd_try';
+const STORAGE_KEY = 'sapiera_exchange_rate_usd_try';
 const storage = new Map<string, string>();
 
 global.fetch = vi.fn();

@@ -97,7 +97,7 @@ export const removeFirstBulb = (node: ReactNode): ReactNode => {
 };
 
 /**
- * React-Markdown tarafından ayrıştırılan etiketlerin AuditPath'a özel CSS ve element mappingleri.
+ * React-Markdown tarafından ayrıştırılan etiketlerin Sapiera'ya özel CSS ve element mappingleri.
  */
 export const markdownComponents = {
   h1: React.memo(

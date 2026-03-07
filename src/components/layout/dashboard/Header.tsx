@@ -24,9 +24,9 @@ export function DashHeader() {
           to={ROUTES.HOME}
           className="lg:hidden shrink-0 flex items-center gap-2"
         >
-          <img src={logo} alt="Audit Path" className="size-8 object-contain" />
+          <img src={logo} alt="Sapiera" className="size-8 object-contain" />
           <span className="text-lg font-heading font-bold tracking-tight text-foreground">
-            Audit Path
+            Sapiera
           </span>
         </Link>
 

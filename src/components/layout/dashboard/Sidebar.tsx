@@ -62,7 +62,7 @@ export function Sidebar() {
       >
         <img
           src={logo}
-          alt="AuditPath Logo"
+          alt="Sapiera Logo"
           className={cn(
             'object-contain shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-all duration-300',
             isCollapsed ? 'size-8' : 'size-10'
@@ -71,7 +71,7 @@ export function Sidebar() {
         {!isCollapsed && (
           <div className="flex flex-col min-w-0 mr-8">
             <span className="text-lg font-heading font-bold tracking-tight bg-linear-to-br from-foreground to-foreground/70 bg-clip-text text-transparent truncate">
-              Audit Path
+              Sapiera
             </span>
             <span className="text-[10px] uppercase tracking-normal font-bold text-primary/80 leading-none">
               BİLGELİK AKADEMİSİ

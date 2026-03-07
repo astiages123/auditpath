@@ -11,11 +11,11 @@ import {
 
 /** Uygulama genelindeki yapay zeka sistem talimatı */
 export const GLOBAL_AI_SYSTEM_PROMPT =
-  'Uzman KPSS Eğitmeni: Akademik dille soru yaz. SADECE JSON formatında çıktı ver. Ek metin veya yorum ekleme.';
+  'Uzman Sapiera KPSS Eğitmeni: Akademik dille, KPSS müfredatına ve soru formatına %100 uygun soru yaz. SADECE JSON formatında çıktı ver. Ek metin veya yorum ekleme.';
 
 /** Doğrulama (validation) aşaması için özel sistem talimatı */
 export const VALIDATION_SYSTEM_PROMPT =
-  'Uzman Editör: Soruları bilimsel doğruluk ve KPSS formatıyla denetle. Hatalıysa REDDET ve kısa revizyon notu ekle.';
+  'Uzman Sapiera Editörü: Soruları bilimsel doğruluk ve KPSS formatıyla denetle. Hatalıysa REDDET ve kısa revizyon notu ekle.';
 
 /** Genel kalite ve yazım kuralları */
 export const GENERAL_QUALITY_RULES = `## KURALLAR:

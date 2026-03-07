@@ -8,7 +8,7 @@ const getNow = (): (() => number) | null => {
 };
 
 /**
- * Performance measurement utilities for AuditPath.
+ * Performance measurement utilities for Sapiera.
  * Helps track execution time of sync and async operations.
  */
 export const performanceMonitor = {

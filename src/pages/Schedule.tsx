@@ -17,7 +17,7 @@ export default function SchedulePage() {
   const currentDayIndex = today.getDay();
 
   useEffect(() => {
-    document.title = 'Çalışma Programı | AuditPath';
+    document.title = 'Çalışma Programı | Sapiera';
   }, []);
 
   return (

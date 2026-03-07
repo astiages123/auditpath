@@ -12,7 +12,7 @@ export interface StorageOptions {
   userId?: string;
 }
 
-const DEFAULT_BASE_PREFIX = 'auditpath_';
+const DEFAULT_BASE_PREFIX = 'sapiera_';
 const DEFAULT_TTL = DEFAULT_STORAGE_TTL_MS;
 
 function safeParse<T>(json: string | null): T | null {

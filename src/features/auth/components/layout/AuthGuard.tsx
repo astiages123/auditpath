@@ -34,7 +34,7 @@ export function AuthGuard() {
               <div className="w-16 h-16 bg-primary/20 rounded-2xl flex items-center justify-center mb-2 shadow-inner ring-1 ring-white/10">
                 <img
                   src={logo}
-                  alt="AuditPath Logo"
+                  alt="Sapiera Logo"
                   className="w-10 h-10 object-contain drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
                   loading="lazy"
                   decoding="async"
@@ -54,7 +54,7 @@ export function AuthGuard() {
             </div>
           </div>
           <p className="text-center text-xs text-muted-foreground mt-8 opacity-60">
-            &copy; {new Date().getFullYear()} AuditPath. Tüm hakları saklıdır.
+            &copy; {new Date().getFullYear()} Sapiera. Tüm hakları saklıdır.
           </p>
         </div>
       </div>

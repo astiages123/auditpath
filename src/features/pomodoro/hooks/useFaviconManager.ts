@@ -18,7 +18,7 @@ export function useFaviconManager(
       faviconRef.current.href = faviconIco;
     }
     // eslint-disable-next-line react-compiler/react-compiler
-    document.title = 'AuditPath';
+    document.title = 'Sapiera';
   }, []);
 
   const getColors = useCallback(() => {
