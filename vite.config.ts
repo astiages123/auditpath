@@ -25,6 +25,18 @@ export default defineConfig(({ mode }) => ({
   },
   build: {
     chunkSizeWarningLimit: 2600,
+    modulePreload: {
+      resolveDependencies(filename, deps, { hostId: _hostId }) {
+        // Prevent preloading heavy mermaid and katex on initial load
+        if (
+          filename.includes('vendor-mermaid') ||
+          filename.includes('vendor-katex')
+        ) {
+          return [];
+        }
+        return deps;
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {

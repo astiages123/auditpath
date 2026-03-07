@@ -1,6 +1,55 @@
 @import url('tailwindcss');
 @import url('tw-animate-css');
 
+/* Local Font Definitions */
+@font-face {
+  font-family: Outfit;
+  src: url('/fonts/outfit-v11-latin-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Outfit;
+  src: url('/fonts/outfit-v11-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Poppins;
+  src: url('/fonts/poppins-v20-latin-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Poppins;
+  src: url('/fonts/poppins-v20-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roboto Mono';
+  src: url('/fonts/roboto-mono-v22-latin-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Roboto Mono';
+  src: url('/fonts/roboto-mono-v22-latin-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* AuditPath Custom Theme - Dark Mode Only */
 :root {
   --background: oklch(20.46% 0 0deg);
@@ -26,9 +75,9 @@
   --chart-2: oklch(66.58% 0.1574 58.3183deg);
   --chart-3: oklch(47.32% 0.1247 46.2007deg);
   --chart-4: oklch(55.53% 0.1455 48.9975deg);
-  --font-sans: poppins, sans-serif;
+  --font-sans: 'Poppins', system-ui, sans-serif;
   --font-mono: 'Roboto Mono', monospace;
-  --font-heading: outfit, sans-serif;
+  --font-heading: 'Outfit', system-ui, sans-serif;
   --radius: 0.75rem;
   --surface: color-mix(in oklch, var(--card), transparent);
   --surface-hover: color-mix(in oklch, white 10%, transparent);
