@@ -75,7 +75,7 @@ export const LocalToC = memo(function LocalToC({
       {/* Liste Gövdesi */}
       <div className="flex-1 overflow-y-auto custom-scrollbar px-3 pb-6">
         {items.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground/30 italic px-4 py-2">
+          <p className="text-sm text-foreground text-center py-5">
             Alt başlık bulunmuyor.
           </p>
         ) : (
