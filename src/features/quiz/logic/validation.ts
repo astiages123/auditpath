@@ -9,10 +9,14 @@ import { generate } from './structuredGenerator';
  */
 export async function validateBatch(
   questions: GeneratedQuestion[],
-  content: string
+  content: string,
+  courseName?: string,
+  sectionTitle?: string
 ): Promise<z.infer<typeof BatchValidationResultSchema> | null> {
   const contextPrompt = PromptArchitect.buildContext(
-    PromptArchitect.cleanReferenceImages(content)
+    PromptArchitect.cleanReferenceImages(content).slice(0, 4000),
+    courseName,
+    sectionTitle
   );
   const taskPrompt = PromptArchitect.batchValidationPrompt(questions);
   const aiConfig = getTaskConfig('validation');
@@ -36,7 +40,7 @@ export async function validateBatch(
   if (result) {
     // Skor bazlı karar düzeltme (Logic layer override)
     result.results.forEach((r) => {
-      // Mesaj uzunluklarını kod seviyesinde de sınırlayarak token tasarrufu ve UI tutarlılığı sa@lıyoruz
+      // Mesaj uzunluklarını kod seviyesinde de sınırlayarak token tasarrufu ve UI tutarlılığı sağlıyoruz
       r.critical_faults = r.critical_faults.map((f) => f.slice(0, 150));
       r.improvement_suggestion = r.improvement_suggestion.slice(0, 150);
 

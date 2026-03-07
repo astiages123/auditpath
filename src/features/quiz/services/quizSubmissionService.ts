@@ -8,9 +8,12 @@ import {
   type SubmissionResult,
   SubmitQuizAnswerSchema,
 } from '@/features/quiz/types';
-import { calculateQuizResult } from '../logic/srsLogic';
-import { getChunkMastery } from './quizCoreService';
-import { getQuestionData, getUserQuestionStatus } from './quizQuestionService';
+import {
+  calculateAggregateMastery,
+  calculateQuizResult,
+} from '../logic/srsLogic';
+import { getChunkMastery } from './quizChunkService';
+import { getQuestionData, getUserQuestionStatus } from './quizReadService';
 
 const MODULE = 'QuizSubmissionService';
 
@@ -320,32 +323,15 @@ export async function submitQuizAnswer(
 
   let totalQuestionsSeen: number | undefined;
   if (targetChunkId) {
-    const repToScore: Record<number, number> = {
-      0: 0,
-      1: 33,
-      2: 66,
-      3: 100,
-    };
-    const oldRepCount = currentStatus ? currentStatus.rep_count : -1;
-    const oldScore =
-      oldRepCount >= 0 ? (repToScore[Math.min(oldRepCount, 3)] ?? 100) : 0;
-    const newScore = repToScore[Math.min(result.newRepCount, 3)] ?? 100;
+    const { newMastery, newTotalSeen } = calculateAggregateMastery({
+      currentMastery: masteryData?.mastery_score ?? 0,
+      totalQuestionsSeen: masteryData?.total_questions_seen ?? 0,
+      oldRepCount: currentStatus ? currentStatus.rep_count : -1,
+      newRepCount: result.newRepCount,
+    });
 
-    let totalQuestions = masteryData?.total_questions_seen ?? 0;
-    const oldMastery = masteryData?.mastery_score ?? 0;
-    const isNewQuestion = oldRepCount === -1;
-
-    const currentTotalScore = oldMastery * totalQuestions;
-    if (isNewQuestion) {
-      totalQuestions += 1;
-    }
-
-    const newTotalScore = currentTotalScore - oldScore + newScore;
-    const newMastery =
-      totalQuestions > 0 ? Math.round(newTotalScore / totalQuestions) : 0;
-    const cappedMastery = Math.min(100, Math.max(0, newMastery));
-    totalQuestionsSeen = totalQuestions;
-    result.newMastery = cappedMastery;
+    totalQuestionsSeen = newTotalSeen;
+    result.newMastery = newMastery;
   }
 
   const submissionWrite = await applyQuizSubmissionTransaction({

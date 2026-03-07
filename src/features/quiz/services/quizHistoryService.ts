@@ -8,12 +8,9 @@ import {
   type ReviewItem,
   type SessionContext,
 } from '@/features/quiz/types';
-import { getCourseName, getFrontierChunkId } from './quizCoreService';
-import {
-  fetchNewFollowups,
-  fetchQuestionsByStatus,
-  fetchWaterfallTrainingQuestions,
-} from './quizQuestionService';
+import { getCourseName, getFrontierChunkId } from './quizCourseService';
+import { fetchNewFollowups, fetchQuestionsByStatus } from './quizReadService';
+import { fetchWaterfallTrainingQuestions } from './quizGenerationService';
 import { incrementCourseSession } from './quizSubmissionService';
 
 const MODULE = 'QuizHistoryService';
@@ -303,8 +300,9 @@ export async function getReviewQueue(
             ? String(followUpQuestion.id)
             : null;
 
-        if (!questionId || usedIds.has(questionId) || queue.length >= limit)
+        if (!questionId || usedIds.has(questionId) || queue.length >= limit) {
           return;
+        }
 
         usedIds.add(questionId);
         queue.push({

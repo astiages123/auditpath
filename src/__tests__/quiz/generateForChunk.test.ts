@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   ensureConcepts: vi.fn(),
   draftBatch: vi.fn(),
   validateBatch: vi.fn(),
-  reviseQuestion: vi.fn(),
+  reviseQuestions: vi.fn(),
   determineNodeStrategy: vi.fn(),
   shuffle: vi.fn((items: unknown[]) => items),
 }));
@@ -21,11 +21,11 @@ vi.mock('@/features/quiz/services/quizSubmissionService', () => ({
   updateChunkAILogic: mocks.updateChunkAILogic,
 }));
 
-vi.mock('@/features/quiz/services/quizCoreService', () => ({
+vi.mock('@/features/quiz/services/quizChunkService', () => ({
   getChunkWithContent: mocks.getChunkWithContent,
 }));
 
-vi.mock('@/features/quiz/services/quizQuestionService', () => ({
+vi.mock('@/features/quiz/services/quizRepository', () => ({
   createQuestion: mocks.createQuestion,
   fetchCachedQuestion: mocks.fetchCachedQuestion,
   fetchCachedQuestionTitles: mocks.fetchCachedQuestionTitles,
@@ -50,7 +50,7 @@ vi.mock('@/features/quiz/logic/validation', () => ({
 }));
 
 vi.mock('@/features/quiz/logic/revision', () => ({
-  reviseQuestion: mocks.reviseQuestion,
+  reviseQuestions: mocks.reviseQuestions,
 }));
 
 vi.mock('@/features/quiz/logic/quizParserStrategy', () => ({
@@ -160,7 +160,7 @@ describe('generateForChunk', () => {
     );
     expect(mocks.draftBatch).toHaveBeenCalled();
     expect(mocks.validateBatch).toHaveBeenCalled();
-    expect(mocks.reviseQuestion).not.toHaveBeenCalled();
+    expect(mocks.reviseQuestions).not.toHaveBeenCalled();
     expect(mocks.createQuestion).toHaveBeenCalledWith(
       expect.objectContaining({
         chunk_id: 'chunk-1',
@@ -198,7 +198,7 @@ describe('generateForChunk', () => {
         },
       ],
     });
-    mocks.reviseQuestion.mockResolvedValue(revisedQuestion);
+    mocks.reviseQuestions.mockResolvedValue([revisedQuestion]);
 
     const callbacks = createCallbacks();
 
@@ -207,11 +207,12 @@ describe('generateForChunk', () => {
       userId: 'user-2',
     });
 
-    expect(mocks.reviseQuestion).toHaveBeenCalledWith(
-      approvedQuestion,
-      expect.objectContaining({
-        decision: 'REJECTED',
-      }),
+    expect(mocks.reviseQuestions).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          question: approvedQuestion,
+        }),
+      ],
       expect.any(String)
     );
     expect(mocks.createQuestion).toHaveBeenCalledWith(

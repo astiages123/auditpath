@@ -16,9 +16,15 @@ const {
   mockGenerateForChunk: vi.fn(),
 }));
 
-vi.mock('@/features/quiz/services/quizQuestionService', () => ({
+vi.mock('@/features/quiz/services/quizRepository', () => ({
   fetchGeneratedQuestionsByCourse: mockFetchGeneratedQuestionsByCourse,
+}));
+
+vi.mock('@/features/quiz/services/quizReadService', () => ({
   fetchQuestionsByIds: mockFetchQuestionsByIds,
+}));
+
+vi.mock('@/features/quiz/services/quizGenerationService', () => ({
   generateSmartExam: mockGenerateSmartExam,
 }));
 
@@ -50,7 +56,7 @@ function makeStoredQuestion(id: string) {
     question_data: {
       q: `Question ${id}`,
       exp: 'Explanation',
-      o: ['A', 'B', 'C', 'D'],
+      o: ['A', 'B', 'C', 'D', 'E'],
       a: 0,
       type: 'multiple_choice' as const,
     },

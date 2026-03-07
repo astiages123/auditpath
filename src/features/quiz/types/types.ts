@@ -85,14 +85,19 @@ export interface ConceptMapItem {
   [key: string]: unknown;
 }
 
-/** Bloom seviyeleri */
-export type BloomLevel =
-  | 'Bilgi'
-  | 'Uygulama'
-  | 'Analiz'
-  | 'knowledge'
-  | 'application'
-  | 'analysis';
+/** Bloom seviyeleri (İngilizce standart) */
+export type BloomLevel = 'knowledge' | 'application' | 'analysis';
+
+/** Bloom seviyesinin Türkçe karşılığını döndürür (prompt'larda kullanılır) */
+const bloomLevelTurkishMap: Record<BloomLevel, string> = {
+  knowledge: 'Bilgi',
+  application: 'Uygulama',
+  analysis: 'Analiz',
+};
+
+export function toTurkishBloomLevel(level: BloomLevel): string {
+  return bloomLevelTurkishMap[level] || level;
+}
 
 /** Quiz yanıt tipleri */
 export type QuizResponseType = 'correct' | 'incorrect' | 'blank';

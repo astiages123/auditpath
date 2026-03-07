@@ -109,11 +109,58 @@ export function calculateQuizResult(
   const nextSessionOffset = calculateNextSession(responseType, newRepCount);
 
   return {
-    newStatus: newRepCount >= 3 ? 'mastered' : 'reviewing',
+    newStatus:
+      newRepCount >= 3 ? 'mastered' : newRepCount > 0 ? 'reviewing' : 'active',
     newRepCount,
     nextReviewSession: sessionNumber + nextSessionOffset,
     scoreDelta: calculateScoreChange(responseType),
     isCorrect: responseType === 'correct',
-    newMastery: 0,
+    newMastery: repCountToMasteryScore(newRepCount),
+  };
+}
+
+/** Tekrar sayısını (rep_count) mastery yüzdesine dönüştürür */
+const REP_TO_SCORE: Record<number, number> = { 0: 0, 1: 33, 2: 66, 3: 100 };
+
+/**
+ * Tekrar sayısına göre mastery skorunu hesaplar.
+ * @param repCount - Başarılı tekrar sayısı
+ * @returns Mastery yüzdesi (0-100)
+ */
+export function repCountToMasteryScore(repCount: number): number {
+  return REP_TO_SCORE[Math.min(repCount, 3)] ?? 100;
+}
+
+/**
+ * Ünite bazlı toplam (aggregate) mastery skorunu hesaplar.
+ * @param params - Hesaplama için gerekli veriler
+ * @returns Yeni toplam mastery skoru (0-100) ve güncellenmiş toplam görülen soru sayısı
+ */
+export function calculateAggregateMastery(params: {
+  currentMastery: number;
+  totalQuestionsSeen: number;
+  oldRepCount: number; // -1 ise yeni soru
+  newRepCount: number;
+}): { newMastery: number; newTotalSeen: number } {
+  const { currentMastery, totalQuestionsSeen, oldRepCount, newRepCount } =
+    params;
+
+  const oldScore = oldRepCount >= 0 ? repCountToMasteryScore(oldRepCount) : 0;
+  const newScore = repCountToMasteryScore(newRepCount);
+
+  let newTotalSeen = totalQuestionsSeen;
+  if (oldRepCount === -1) {
+    newTotalSeen += 1;
+  }
+
+  const currentTotalScore = currentMastery * totalQuestionsSeen;
+  const newTotalScore = currentTotalScore - oldScore + newScore;
+
+  const newMastery =
+    newTotalSeen > 0 ? Math.round(newTotalScore / newTotalSeen) : 0;
+
+  return {
+    newMastery: Math.min(100, Math.max(0, newMastery)),
+    newTotalSeen,
   };
 }

@@ -5,11 +5,9 @@ import {
   useStartQuizSessionMutation,
   useSubmitAnswerMutation,
 } from './useQuizQueries';
-import {
-  fetchQuestionsByCourse,
-  fetchQuestionsByIds,
-  getReviewQueue,
-} from '@/features/quiz/services/quizService';
+import { fetchQuestionsByCourse } from '@/features/quiz/services/quizRepository';
+import { fetchQuestionsByIds } from '@/features/quiz/services/quizReadService';
+import { getReviewQueue } from '@/features/quiz/services/quizHistoryService';
 import {
   MultipleChoiceQuestion,
   QuizQuestion,

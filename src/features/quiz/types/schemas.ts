@@ -34,9 +34,9 @@ export const BaseQuestionSchema = z.object({
   img: z.number().nullable().optional(),
   imageUrls: z.array(z.string()).optional(),
   imgPath: z.string().nullable().optional(),
-  diagnosis: z.string().optional(),
-  insight: z.string().optional(),
-  evidence: z.string().optional(),
+  diagnosis: z.string().nullable().optional(),
+  insight: z.string().nullable().optional(),
+  evidence: z.string().nullable().optional(),
   chunk_id: z.string().optional(),
   courseSlug: z.string().optional(),
   topicSlug: z.string().optional(),
@@ -45,8 +45,8 @@ export const BaseQuestionSchema = z.object({
 /** Çoktan seçmeli soru validasyon şeması */
 export const MultipleChoiceQuestionSchema = BaseQuestionSchema.extend({
   type: z.literal('multiple_choice'),
-  o: z.array(z.string()),
-  a: z.number(),
+  o: z.array(z.string()).length(5),
+  a: z.number().int().min(0).max(4),
 });
 
 /** Doğru-Yanlış soru validasyon şeması */
@@ -56,11 +56,29 @@ export const TrueFalseQuestionSchema = BaseQuestionSchema.extend({
   a: z.number().min(0).max(1),
 });
 
-/** Discriminated Union kullanılarak birleştirilmiş genel soru şeması */
-export const QuizQuestionSchema = z.discriminatedUnion('type', [
+const QuizQuestionUnionSchema = z.discriminatedUnion('type', [
   MultipleChoiceQuestionSchema,
   TrueFalseQuestionSchema,
 ]);
+
+/** Discriminated Union kullanılarak birleştirilmiş genel soru şeması */
+export const QuizQuestionSchema = z.preprocess((data: unknown) => {
+  if (typeof data !== 'object' || data === null) return data;
+
+  const item = { ...(data as Record<string, unknown>) };
+  if (item.type) return item;
+
+  const options = Array.isArray(item.o) ? item.o : null;
+  const answer = item.a;
+
+  if (options?.length === 2 && (answer === 0 || answer === 1)) {
+    item.type = 'true_false';
+    return item;
+  }
+
+  item.type = 'multiple_choice';
+  return item;
+}, QuizQuestionUnionSchema);
 
 /** Validasyonu yapılmış genel quiz sorusu tipi */
 export type ValidatedQuizQuestion = z.infer<typeof QuizQuestionSchema>;
@@ -281,6 +299,8 @@ export const GeneratedQuestionSchema = z.preprocess(
     }, z.number().nullable().optional().default(null)),
     diagnosis: z.string().max(1000).optional().default(''),
     insight: z.string().max(1000).nullable().optional().default(''),
+    bloomLevel: z.string().optional(),
+    concept: z.string().optional(),
   })
 );
 
@@ -293,6 +313,15 @@ export const BatchGeneratedQuestionSchema = z.object({
 export type BatchGeneratedQuestion = z.infer<
   typeof BatchGeneratedQuestionSchema
 >;
+
+/** Toplu revizyon yanıtı şeması — her soru index ile eşleştirilir */
+export const BatchRevisionResponseSchema = z.object({
+  questions: z.array(
+    GeneratedQuestionSchema.and(z.object({ index: z.number().int().min(0) }))
+  ),
+});
+
+export type BatchRevisionResponse = z.infer<typeof BatchRevisionResponseSchema>;
 
 const BaseValidationResultSchema = z.object({
   total_score: z.coerce.number().min(0).max(100),

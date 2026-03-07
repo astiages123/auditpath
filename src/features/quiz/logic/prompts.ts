@@ -6,6 +6,7 @@ import {
   type ConceptMapItem,
   type GeneratedQuestion,
   type Message,
+  toTurkishBloomLevel,
 } from '../types';
 
 /** Uygulama genelindeki yapay zeka sistem talimatı */
@@ -21,7 +22,7 @@ export const GENERAL_QUALITY_RULES = `## KURALLAR:
 1. Akademik dil kullan, KPSS formatına uy.
 2. Sadece metne bağlı kal veya metinden türet.
 3. 5 şık (A-E) üret, çeldiriciler güçlü olsun.
-4. JSON ve LaTeX güvenliği: \\\\ karakterini çiftle.`;
+4. Matematiksel ifade varsa LaTeX kullan ve \\\\ karakterini çiftleyin.`;
 
 /** Bloom seviyeleri için özel talimatlar */
 export const BLOOM_INSTRUCTIONS: Record<string, string> = {
@@ -131,15 +132,37 @@ export function buildDraftingPrompt(
   strategy: { bloomLevel: string; instruction: string },
   usageType: 'antrenman' | 'deneme' = 'antrenman',
   previousDiagnoses?: string[],
-  courseName: string = ''
+  courseName: string = '',
+  conceptStrategies?: Array<{
+    baslik: string;
+    bloomLevel: string;
+    instruction: string;
+    focus?: string;
+  }>
 ): string {
   const conceptTitles = concepts
     .map((conceptItem) => conceptItem.baslik)
     .join(', ');
+  const strategyBlock =
+    conceptStrategies && conceptStrategies.length > 0
+      ? `\nKAVRAM BAZLI ÜRETİM PLANI:
+${conceptStrategies
+  .map(
+    (item, index) =>
+      `${index + 1}. ${item.baslik} | seviye=${toTurkishBloomLevel(
+        item.bloomLevel as 'knowledge' | 'application' | 'analysis'
+      )} | odak=${item.focus || 'genel'} | talimat=${item.instruction}`
+  )
+  .join('\n')}
+
+Çoklu üretimde soruları yukarıdaki sıra ile üret. Her soru listedeki ilgili kavramın seviye ve talimatına uysun.`
+      : '';
   return `### GÖREV: SORU ÜRETİMİ
 Ders: ${courseName}
 Tür: ${usageType}
-Seviye: ${strategy.bloomLevel}
+Seviye: ${toTurkishBloomLevel(
+    strategy.bloomLevel as 'knowledge' | 'application' | 'analysis'
+  )}
 Kavramlar: ${conceptTitles}
 
 Talimat: ${strategy.instruction}
@@ -151,6 +174,7 @@ ${
     ? `\nZAYIF NOKTALAR: ${previousDiagnoses.join(', ')}`
     : ''
 }
+${strategyBlock}
 
 ### ZORUNLU JSON FORMATI
 Yanıtını aşağıdaki şemaya BİREBİR uygun, geçerli bir JSON objesi olarak döndür. Markdown etiketi kullanma.
@@ -175,7 +199,15 @@ export function buildBatchValidationPrompt(
     .map(
       (question, index) =>
         `### Soru ${index}:\n${JSON.stringify(
-          { q: question.q, o: question.o, a: question.a, exp: question.exp },
+          {
+            q: question.q,
+            o: question.o,
+            a: question.a,
+            exp: question.exp,
+            evidence: question.evidence || '',
+            diagnosis: question.diagnosis || '',
+            insight: question.insight || '',
+          },
           null,
           2
         )}`
@@ -185,6 +217,7 @@ export function buildBatchValidationPrompt(
   return `### GÖREV: SORU DENETİMİ
 Sana verilen ${questions.length} soruyu; bilimsel doğruluk ve format açısından denetle.
 Hatalı olanları REDDET ve revizyon önerisi sun.
+Özellikle şu alanları denetle: doğru cevap-açıklama tutarlılığı, seçenek kalitesi, evidence alanının metne dayanması, diagnosis ve insight alanlarının boş/uydurma olmaması.
 
 ${questionList}
 
@@ -212,7 +245,6 @@ export function buildFollowUpPrompt(
   selectedAnswer: number,
   correctAnswer: number,
   bloomLevel: string,
-  _context: string,
   previousDiagnoses: string[]
 ): string {
   return `### GÖREV: TAKİP SORUSU ÜRETİMİ
@@ -222,7 +254,9 @@ Doğru Cevap: ${question.o[correctAnswer]}
 Dayanak Metni: ${evidence}
 
 Kullanıcı bu soruyu yanlış cevapladı. Yanlış anladığı noktayı veya kavram karmaşasını gidermek için yeni bir soru üret.
-Seviye: ${bloomLevel}
+Seviye: ${toTurkishBloomLevel(
+    bloomLevel as 'knowledge' | 'application' | 'analysis'
+  )}
 ${
   previousDiagnoses.length
     ? `Geçmiş Teşhisler: ${previousDiagnoses.join(', ')}`

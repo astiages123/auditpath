@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase';
 import {
   getCourseIdBySlug,
   getCourseTopics,
-} from '@/features/quiz/services/quizCoreService';
+} from '@/shared/services/courseSharedService';
 import type { CourseTopic } from '@/features/courses/types/courseTypes';
 
 vi.mock('@/lib/supabase', () => ({
@@ -18,7 +18,7 @@ vi.mock('@/lib/supabase', () => ({
   },
 }));
 
-vi.mock('@/features/quiz/services/quizCoreService', () => ({
+vi.mock('@/shared/services/courseSharedService', () => ({
   getCourseIdBySlug: vi.fn(),
   getCourseTopics: vi.fn(),
 }));

@@ -1,5 +1,10 @@
 import { Calendar, Award } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import {
   GUILDS,
   getRequirementDescription,
@@ -77,7 +82,7 @@ export function SealDetailModal({
         </div>
 
         {/* Seal Image */}
-        <div className="flex justify-center py-4">
+        <div className="flex justify-center">
           <div className="relative w-32 h-32">
             <img
               src={achievement.imagePath}
@@ -90,19 +95,21 @@ export function SealDetailModal({
         </div>
 
         {/* Footer info - Motto, Requirement, Date */}
-        <div className="px-6 pb-6 space-y-3">
+        <div className="px-6 space-y-3">
           {/* Requirement */}
-          <p className="text-center text-sm text-muted-foreground">
+          <DialogDescription className="text-center text-sm text-foreground">
             {getRequirementDescription(achievement.requirement)}
-          </p>
+          </DialogDescription>
 
           {/* Motto */}
-          <blockquote className="italic text-foreground/80 border-l-2 border-primary/40 pl-3 text-sm leading-relaxed">
-            &ldquo;{achievement.motto}&rdquo;
-          </blockquote>
+          <div className="flex justify-center">
+            <blockquote className="w-fit italic text-foreground/80 border-l-2 border-primary/40 pl-3 text-sm leading-relaxed text-center">
+              &ldquo;{achievement.motto}&rdquo;
+            </blockquote>
+          </div>
 
           {/* Status/Date */}
-          <div className="pt-2 border-t border-border/40">
+          <div className="py-5 border-t border-border/40">
             {isUnlocked && unlockDate ? (
               <div className="flex items-center justify-center gap-2 text-sm text-primary">
                 <Calendar className="w-4 h-4 shrink-0" />

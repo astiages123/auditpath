@@ -24,12 +24,23 @@ type AnalysisLogCallback = (
  */
 export async function analyzeNoteChunk(
   text: string,
+  contextInfo?: {
+    courseName?: string;
+    sectionTitle?: string;
+  },
   onLog?: AnalysisLogCallback
 ): Promise<ValidatedAILogic> {
   onLog?.('Chunk analizi başlatılıyor...', { contentLength: text.length });
 
-  const context = PromptArchitect.buildContext(text);
-  const task = PromptArchitect.analysisPrompt('Bilinmeyen Bölüm', 'Genel Ders');
+  const context = PromptArchitect.buildContext(
+    text,
+    contextInfo?.courseName,
+    contextInfo?.sectionTitle
+  );
+  const task = PromptArchitect.analysisPrompt(
+    contextInfo?.sectionTitle || 'Bilinmeyen Bölüm',
+    contextInfo?.courseName || 'Genel Ders'
+  );
   const messages = PromptArchitect.assemble(
     GLOBAL_AI_SYSTEM_PROMPT,
     context,
@@ -102,6 +113,10 @@ export async function ensureConcepts(
   log('MAPPING', 'Konunun kritik noktaları belirleniyor...');
   const analysisResult = await analyzeNoteChunk(
     chunk.content,
+    {
+      courseName: chunk.course_name || undefined,
+      sectionTitle: chunk.section_title || undefined,
+    },
     (message, details) => log('MAPPING', message, details)
   );
 

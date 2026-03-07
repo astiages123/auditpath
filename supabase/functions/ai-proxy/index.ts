@@ -7,8 +7,8 @@ const PROVIDERS = {
   cerebras: {
     url: 'https://api.cerebras.ai/v1/chat/completions',
     envKey: 'CEREBRAS_API_KEY',
-    defaultModel: 'llama3.3-70b',
-    allowedModels: ['llama3.3-70b', 'llama3.1-8b'],
+    defaultModel: 'gpt-oss-120b',
+    allowedModels: ['gpt-oss-120b'],
   },
   mimo: {
     url: 'https://api.xiaomimimo.com/v1/chat/completions',
@@ -25,12 +25,8 @@ const PROVIDERS = {
   google: {
     url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     envKey: 'GEMINI_API_KEY',
-    defaultModel: 'gemini-2.0-flash',
-    allowedModels: [
-      'gemini-2.0-flash',
-      'gemini-2.0-flash-lite-preview-02-05',
-      'gemini-1.5-flash',
-    ],
+    defaultModel: 'gemini-3.1-flash-lite-preview',
+    allowedModels: ['gemini-3.1-flash-lite-preview'],
   },
 };
 
@@ -181,6 +177,13 @@ Deno.serve(async (req: Request) => {
       body.chat_template_kwargs = { enable_thinking: true };
     }
     if (resolvedProvider === 'deepseek') {
+      body.response_format = { type: 'json_object' };
+    }
+    if (resolvedProvider === 'google') {
+      body.reasoning_effort = 'high';
+    }
+    if (resolvedProvider === 'cerebras') {
+      body.reasoning_effort = 'high';
       body.response_format = { type: 'json_object' };
     }
 

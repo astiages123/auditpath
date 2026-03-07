@@ -1,11 +1,11 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { fetchQuestionsByCourse } from '@/features/quiz/services/quizRepository';
+import { fetchQuestionsByIds } from '@/features/quiz/services/quizReadService';
 import {
-  fetchQuestionsByCourse,
-  fetchQuestionsByIds,
   getReviewQueue,
   startQuizSession,
-  submitQuizAnswer,
-} from '@/features/quiz/services/quizService';
+} from '@/features/quiz/services/quizHistoryService';
+import { submitQuizAnswer } from '@/features/quiz/services/quizSubmissionService';
 import { generateForChunk } from '@/features/quiz/logic/quizParser';
 import { QuizResponseType, SessionContext } from '@/features/quiz/types';
 import { GeneratorCallbacks } from '@/features/quiz/types';

@@ -76,7 +76,7 @@ export async function getTopicQuestions(
     );
     const courseSlug = question.course?.course_slug;
     return {
-      type: 'multiple_choice',
+      type: questionData.type,
       q: questionData.q,
       o: questionData.o,
       a: questionData.a,
@@ -86,7 +86,9 @@ export async function getTopicQuestions(
       insight: questionData.insight,
       evidence: questionData.evidence,
       imgPath:
-        questionData.img && courseSlug
+        questionData.img !== null &&
+        questionData.img !== undefined &&
+        courseSlug
           ? `/notes/${courseSlug}/media/`
           : undefined,
     } as QuizQuestion;

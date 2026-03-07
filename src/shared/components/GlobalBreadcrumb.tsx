@@ -13,13 +13,13 @@ import {
   Brain,
   BookOpen,
   LibraryBig,
-  Trophy,
   ChartScatter,
   LineSquiggle,
   HandCoins,
   BookCheck,
   BookMarked,
   PanelLeft,
+  Medal,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { getCourseBySlug } from '@/features/courses/services/courseService';
@@ -172,7 +172,7 @@ export function GlobalBreadcrumb() {
                       if (pathValue === 'roadmap')
                         return <LineSquiggle className="size-4" />;
                       if (pathValue === 'achievements')
-                        return <Trophy className="size-4" />;
+                        return <Medal className="size-4" />;
                       if (pathValue === 'statistics')
                         return <ChartScatter className="size-4" />;
                       if (pathValue === 'costs')
@@ -205,7 +205,7 @@ export function GlobalBreadcrumb() {
                         if (pathValue === 'roadmap')
                           return <LineSquiggle className="size-4" />;
                         if (pathValue === 'achievements')
-                          return <Trophy className="size-4" />;
+                          return <Medal className="size-4" />;
                         if (pathValue === 'statistics')
                           return <ChartScatter className="size-4" />;
                         if (pathValue === 'costs')

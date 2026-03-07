@@ -17,36 +17,18 @@ import {
   updateChunkAILogic,
   updateChunkStatus,
 } from '../services/quizSubmissionService';
-import { getChunkWithContent } from '../services/quizCoreService';
+import { getChunkWithContent } from '../services/quizChunkService';
 import {
   createQuestion,
   fetchCachedQuestionTitles,
-} from '../services/quizQuestionService';
+} from '../services/quizRepository';
 
 // Yeni modüllerden içe aktarmalar
-import {
-  determineNodeStrategy,
-  getSubjectStrategy,
-} from './quizParserStrategy';
-import { parseJsonResponse } from './quizParserHelpers';
-import { analyzeNoteChunk, ensureConcepts } from './analysis';
-import { draftBatch, draftQuestion } from './drafting';
+import { determineNodeStrategy } from './quizParserStrategy';
+import { ensureConcepts } from './analysis';
+import { draftBatch } from './drafting';
 import { validateBatch } from './validation';
-import { reviseQuestion } from './revision';
-
-// Mevcut dışa aktarmaları koruyoruz (Public API bozulmasın diye re-export yapıyoruz)
-export {
-  analyzeNoteChunk,
-  determineNodeStrategy,
-  draftBatch,
-  draftQuestion,
-  ensureConcepts,
-  ensureQuotas,
-  getSubjectStrategy,
-  parseJsonResponse,
-  reviseQuestion,
-  validateBatch,
-};
+import { reviseQuestions } from './revision';
 
 /**
  * Belirli bir chunk için kotaları garanti eder.
@@ -254,8 +236,26 @@ export async function generateForChunk(
       );
       const validationResponse = await validateBatch(
         draftedBatchResult,
-        cleanContent
+        cleanContent,
+        chunk.course_name || undefined,
+        chunk.section_title || undefined
       );
+
+      // Onaylananları ve reddedilenleri ayır
+      const approvedQuestions: {
+        index: number;
+        question: (typeof draftedBatchResult)[0];
+      }[] = [];
+      const rejectedEntries: {
+        index: number;
+        question: (typeof draftedBatchResult)[0];
+        validation: {
+          total_score: number;
+          decision: 'APPROVED' | 'REJECTED';
+          critical_faults: string[];
+          improvement_suggestion: string;
+        };
+      }[] = [];
 
       for (let j = 0; j < draftedBatchResult.length; j++) {
         if (options.signal?.aborted) {
@@ -265,7 +265,7 @@ export async function generateForChunk(
         const bufferItem = draftingBuffer[j];
         if (!bufferItem) continue;
 
-        let question = draftedBatchResult[j];
+        const question = draftedBatchResult[j];
         const validation =
           validationResponse?.results[j] ??
           validationResponse?.results.find(
@@ -273,31 +273,57 @@ export async function generateForChunk(
           );
 
         if (!validation || validation.decision === 'REJECTED') {
-          log(
-            'REVISION',
-            `${bufferItem.concept.baslik} sorusu için revizyon yapılıyor...`
-          );
-          const revised = await reviseQuestion(
+          rejectedEntries.push({
+            index: j,
             question,
-            validation || {
-              index: j,
+            validation: validation || {
               total_score: 0,
-              decision: 'REJECTED',
+              decision: 'REJECTED' as const,
               critical_faults: ['Batch validation error'],
               improvement_suggestion: 'Soru formatı tamamen hatalı.',
             },
-            sharedContext
-          );
+          });
+        } else {
+          approvedQuestions.push({ index: j, question });
+        }
+      }
 
-          if (!revised) {
-            log(
-              'REVISION',
-              `Revizyon başarısız, kavram atlanıyor: ${bufferItem.concept.baslik}`
-            );
-            continue;
+      // Reddedilenleri toplu revize et
+      const revisedMap = new Map<number, (typeof draftedBatchResult)[0]>();
+      if (rejectedEntries.length > 0) {
+        log(
+          'REVISION',
+          `${rejectedEntries.length} reddedilen soru toplu revize ediliyor...`
+        );
+        const revisedResults = await reviseQuestions(
+          rejectedEntries.map((entry) => ({
+            question: entry.question,
+            validation: entry.validation,
+          })),
+          sharedContext
+        );
+        rejectedEntries.forEach((entry, revisionIndex) => {
+          const revised = revisedResults[revisionIndex];
+          if (revised) {
+            revisedMap.set(entry.index, revised);
           }
+        });
+      }
 
-          question = revised;
+      // Tüm soruları kaydet (onaylanan + başarıyla revize edilen)
+      for (let j = 0; j < draftedBatchResult.length; j++) {
+        const bufferItem = draftingBuffer[j];
+        if (!bufferItem) continue;
+
+        const question =
+          revisedMap.get(j) ??
+          approvedQuestions.find((item) => item.index === j)?.question;
+        if (!question) {
+          log(
+            'REVISION',
+            `Revizyon başarısız, kavram atlanıyor: ${bufferItem.concept.baslik}`
+          );
+          continue;
         }
 
         log('SAVING', `${bufferItem.concept.baslik} kütüphaneye ekleniyor...`);
@@ -313,6 +339,7 @@ export async function generateForChunk(
             | null,
           created_by: options.userId,
           question_data: {
+            type: 'multiple_choice',
             q: question.q,
             o: question.o,
             a: question.a,

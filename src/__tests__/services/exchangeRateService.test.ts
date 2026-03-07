@@ -1,42 +1,40 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ExchangeRateService } from '@/features/costs/services/exchangeRateService';
-import { supabase } from '@/lib/supabase';
 
-vi.mock('@/lib/supabase', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn(),
-      upsert: vi.fn(),
-    })),
-  },
-}));
+const STORAGE_KEY = 'auditpath_exchange_rate_usd_try';
+const storage = new Map<string, string>();
 
 global.fetch = vi.fn();
+vi.stubGlobal('localStorage', {
+  getItem: vi.fn((key: string) => storage.get(key) ?? null),
+  setItem: vi.fn((key: string, value: string) => {
+    storage.set(key, value);
+  }),
+  removeItem: vi.fn((key: string) => {
+    storage.delete(key);
+  }),
+  clear: vi.fn(() => {
+    storage.clear();
+  }),
+});
 
 describe('ExchangeRateService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    storage.clear();
+    localStorage.clear();
   });
 
   it('should return cached rate if under 24 hours', async () => {
     const freshDate = new Date().toISOString();
-    const mockQuery = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({
-        data: {
-          currency_pair: 'USD-TRY',
-          rate: 33.5,
-          updated_at: freshDate,
-        },
-        error: null,
-      }),
-      upsert: vi.fn(),
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        currency_pair: 'USD-TRY',
+        rate: 33.5,
+        updated_at: freshDate,
+      })
+    );
 
     const rate = await ExchangeRateService.getUsdToTryRate();
     expect(rate).toBe(33.5);
@@ -45,21 +43,14 @@ describe('ExchangeRateService', () => {
 
   it('should refresh from API if cached rate is stale (>24h)', async () => {
     const staleDate = new Date(Date.now() - 30 * 60 * 60 * 1000).toISOString();
-    const mockQuery = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({
-        data: {
-          currency_pair: 'USD-TRY',
-          rate: 33.5,
-          updated_at: staleDate,
-        },
-        error: null,
-      }),
-      upsert: vi.fn(),
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        currency_pair: 'USD-TRY',
+        rate: 33.5,
+        updated_at: staleDate,
+      })
+    );
 
     vi.mocked(global.fetch).mockResolvedValue({
       ok: true,
@@ -75,21 +66,14 @@ describe('ExchangeRateService', () => {
     const staleDate = new Date(
       Date.now() - 2 * 24 * 60 * 60 * 1000
     ).toISOString();
-    const mockQuery = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({
-        data: {
-          currency_pair: 'USD-TRY',
-          rate: 33.5,
-          updated_at: staleDate,
-        },
-        error: null,
-      }),
-      upsert: vi.fn(),
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        currency_pair: 'USD-TRY',
+        rate: 33.5,
+        updated_at: staleDate,
+      })
+    );
 
     vi.mocked(global.fetch).mockRejectedValue(new Error('Network error'));
 
@@ -97,21 +81,10 @@ describe('ExchangeRateService', () => {
     expect(rate).toBe(33.5);
   });
 
-  it('should use hardcoded fallback 35.0 if all sources fail', async () => {
-    const mockQuery = {
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({
-        data: null,
-        error: null,
-      }),
-      upsert: vi.fn(),
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    vi.mocked(supabase.from).mockReturnValue(mockQuery as any);
+  it('should return null if cache is missing and API fails', async () => {
     vi.mocked(global.fetch).mockRejectedValue(new Error('API Down'));
 
     const rate = await ExchangeRateService.getUsdToTryRate();
-    expect(rate).toBe(35.0);
+    expect(rate).toBeNull();
   });
 });

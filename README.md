@@ -14,11 +14,11 @@ Quiz, notlar, Pomodoro zamanlayıcısı, başarımlar ve çalışma analizi tek 
 
 Farklı AI modelleri görev bazlı çalışır:
 
-| Görev                     | Model               |
-| ------------------------- | ------------------- |
-| Soru analizi              | Google Gemini Flash |
-| Kalite doğrulama          | gpt-oss-120b        |
-| Açıklama & takip soruları | DeepSeek Chat       |
+| Görev                     | Model                 |
+| ------------------------- | --------------------- |
+| Soru analizi              | Gemini 3.1 Flash-Lite |
+| Kalite doğrulama          | gpt-oss-120b          |
+| Açıklama & takip soruları | DeepSeek Chat         |
 
 Sorular çok aşamalı bir üretim hattından geçer: **Analiz → Taslak → Doğrulama → Revizyon.** Zod ile runtime şema kontrolü yapılır, yanlış ama mantıklı çeldirici şıklar üretilir.
 
@@ -50,15 +50,15 @@ Günlük/haftalık çalışma metrikleri, Bloom Taksonomisi bazlı bilişsel yü
 
 ## Teknoloji Yığını
 
-| Katman    | Teknoloji                                        |
-| --------- | ------------------------------------------------ |
-| Frontend  | React 19, TypeScript, Vite                       |
-| UI        | Radix UI, Tailwind CSS v4, Framer Motion         |
-| State     | Zustand, TanStack Query                          |
-| Backend   | Supabase (PostgreSQL + Auth + Edge Functions)    |
-| Grafikler | Recharts, Mermaid                                |
-| Test      | Vitest, Testing Library                          |
-| AI        | Google Gemini, DeepSeek, Cerebras (gpt-oss-120b) |
+| Katman    | Teknoloji                                                   |
+| --------- | ----------------------------------------------------------- |
+| Frontend  | React 19, TypeScript, Vite                                  |
+| UI        | Radix UI, Tailwind CSS v4, Framer Motion                    |
+| State     | Zustand, TanStack Query                                     |
+| Backend   | Supabase (PostgreSQL + Auth + Edge Functions)               |
+| Grafikler | Recharts, Mermaid                                           |
+| Test      | Vitest, Testing Library                                     |
+| AI        | Gemini 3.1 Flash-Lite, DeepSeek Chat, Cerebras gpt-oss-120b |
 
 ---
 

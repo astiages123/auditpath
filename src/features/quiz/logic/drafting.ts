@@ -25,6 +25,11 @@ type DraftBatchInput = {
   sharedContextPrompt: string;
 };
 
+type ResolvedConceptStrategy = {
+  conceptEntry: { concept: ConceptMapItem; index: number };
+  strategy: NonNullable<ReturnType<typeof determineNodeStrategy>>;
+};
+
 /**
  * Belirli bir kavram için soru tasarlar.
  */
@@ -80,20 +85,33 @@ export async function draftBatch(
 ): Promise<GeneratedQuestion[] | null> {
   if (input.concepts.length === 0) return [];
 
-  const firstConcept = input.concepts[0];
-  const strategy = determineNodeStrategy(
-    firstConcept.index,
-    firstConcept.concept,
-    input.courseName
-  );
-  if (!strategy) return null;
+  const strategies: ResolvedConceptStrategy[] = input.concepts
+    .map((conceptEntry) => ({
+      conceptEntry,
+      strategy: determineNodeStrategy(
+        conceptEntry.index,
+        conceptEntry.concept,
+        input.courseName
+      ),
+    }))
+    .filter((item): item is ResolvedConceptStrategy => item.strategy !== null);
+
+  if (strategies.length === 0) return null;
+
+  const fallbackStrategy = strategies[0].strategy;
 
   const taskPrompt = PromptArchitect.draftingPrompt(
-    input.concepts.map((conceptEntry) => conceptEntry.concept),
-    strategy,
+    strategies.map((item) => item.conceptEntry.concept),
+    fallbackStrategy,
     input.usageType,
     undefined,
-    input.courseName
+    input.courseName,
+    strategies.map((item) => ({
+      baslik: item.conceptEntry.concept.baslik,
+      bloomLevel: item.strategy.bloomLevel,
+      instruction: item.strategy.instruction,
+      focus: item.conceptEntry.concept.odak,
+    }))
   );
   const aiConfig = getTaskConfig('drafting');
 
@@ -103,7 +121,7 @@ export async function draftBatch(
       : GLOBAL_AI_SYSTEM_PROMPT,
     input.sharedContextPrompt,
     taskPrompt +
-      `\n\nBu istekte ${input.concepts.length} kavram var. Her kavram için ayrı bir soru üret ve hepsini tek bir JSON objesi içinde döndür:\n{"questions": [{soru1}, {soru2}, ...]}`
+      `\n\nBu istekte ${strategies.length} kavram var. Her kavram için ayrı bir soru üret ve hepsini tek bir JSON objesi içinde döndür. Sıra korunmalı:\n{"questions": [{soru1}, {soru2}, ...]}`
   );
 
   const result = await generate<z.infer<typeof BatchGeneratedQuestionSchema>>(
@@ -117,18 +135,13 @@ export async function draftBatch(
   if (!result) return null;
 
   return result.questions.map((generatedQuestion, index) => {
-    const inputConcept = input.concepts[index] || input.concepts[0];
-    const itemStrategy = determineNodeStrategy(
-      inputConcept.index,
-      inputConcept.concept,
-      input.courseName
-    );
+    const strategyEntry = strategies[index] || strategies[0];
 
     return {
       ...generatedQuestion,
-      bloomLevel: itemStrategy?.bloomLevel || 'knowledge',
+      bloomLevel: strategyEntry.strategy.bloomLevel,
       img: generatedQuestion.img ?? null,
-      concept: inputConcept.concept.baslik,
+      concept: strategyEntry.conceptEntry.concept.baslik,
       insight: generatedQuestion.insight ?? undefined,
     } satisfies GeneratedQuestion;
   });

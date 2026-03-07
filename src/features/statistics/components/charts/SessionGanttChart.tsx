@@ -28,7 +28,7 @@ export const SessionGanttChart = ({
       case 'break':
         return 'bg-sky-900 border-sky-800/50 text-sky-200';
       case 'pause':
-        return 'bg-gray-700 border-gray-800/50 text-gray-200';
+        return 'bg-zinc-900 border-zinc-800/50 text-zinc-200';
       default:
         return 'bg-primary/20 border-primary/40 text-primary';
     }

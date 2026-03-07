@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  calculateAggregateMastery,
   calculateNextRepCount,
   calculateNextSession,
   calculateQuizResult,
@@ -52,7 +53,7 @@ describe('srsLogic - Testleri', () => {
       expect(result).toEqual({
         isCorrect: true,
         scoreDelta: 10,
-        newMastery: 0, // Currently hardcoded to 0 in implementation
+        newMastery: 66, // repCountToMasteryScore(2)
         newStatus: 'reviewing',
         nextReviewSession: 14, // 10 + gap(4) for newRepCount 2
         newRepCount: 2,
@@ -69,6 +70,39 @@ describe('srsLogic - Testleri', () => {
       const result = calculateQuizResult(null, 'correct', 0, 1);
       expect(result.newRepCount).toBe(1);
       expect(result.newStatus).toBe('reviewing');
+      expect(result.newMastery).toBe(33); // repCountToMasteryScore(1)
+    });
+  });
+
+  describe('calculateAggregateMastery', () => {
+    it('9. Yeni bir soru eklendiğinde toplam soru sayısını ve mastery skorunu doğru hesaplar', () => {
+      const result = calculateAggregateMastery({
+        currentMastery: 0,
+        totalQuestionsSeen: 0,
+        oldRepCount: -1,
+        newRepCount: 1,
+      });
+
+      expect(result).toEqual({
+        newMastery: 33,
+        newTotalSeen: 1,
+      });
+    });
+
+    it('10. Mevcut bir sorunun tekrarı yapıldığında mastery skorunu günceller', () => {
+      // 3 soru var, toplam mastery 50 (toplam puan 150)
+      // Bir soru rep_count 1 -> 2 (33 -> 66)
+      const result = calculateAggregateMastery({
+        currentMastery: 50,
+        totalQuestionsSeen: 3,
+        oldRepCount: 1,
+        newRepCount: 2,
+      });
+
+      // 150 - 33 + 66 = 183
+      // 183 / 3 = 61
+      expect(result.newMastery).toBe(61);
+      expect(result.newTotalSeen).toBe(3);
     });
   });
 });

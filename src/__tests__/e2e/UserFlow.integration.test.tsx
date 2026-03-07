@@ -14,6 +14,7 @@ const {
   mockGetCourseTopicsWithCounts,
   mockGetCourseProgress,
   mockGetTopicCompletionStatus,
+  mockGetChunkQuotaStatus,
   mockGetFirstChunkIdForTopic,
   mockStartQuizSession,
   mockGetReviewQueue,
@@ -26,6 +27,7 @@ const {
   mockGetCourseTopicsWithCounts: vi.fn(),
   mockGetCourseProgress: vi.fn(),
   mockGetTopicCompletionStatus: vi.fn(),
+  mockGetChunkQuotaStatus: vi.fn(),
   mockGetFirstChunkIdForTopic: vi.fn(),
   mockStartQuizSession: vi.fn(),
   mockGetReviewQueue: vi.fn(),
@@ -43,17 +45,27 @@ vi.mock('@/features/quiz/services/quizStatusService', () => ({
   getCourseTopicsWithCounts: mockGetCourseTopicsWithCounts,
   getCourseProgress: mockGetCourseProgress,
   getTopicCompletionStatus: mockGetTopicCompletionStatus,
+  getChunkQuotaStatus: mockGetChunkQuotaStatus,
 }));
 
 vi.mock('@/features/quiz/services/quizChunkService', () => ({
   getFirstChunkIdForTopic: mockGetFirstChunkIdForTopic,
 }));
 
-vi.mock('@/features/quiz/services/quizService', () => ({
+vi.mock('@/features/quiz/services/quizHistoryService', () => ({
   startQuizSession: mockStartQuizSession,
   getReviewQueue: mockGetReviewQueue,
+}));
+
+vi.mock('@/features/quiz/services/quizReadService', () => ({
   fetchQuestionsByIds: mockFetchQuestionsByIds,
+}));
+
+vi.mock('@/features/quiz/services/quizRepository', () => ({
   fetchQuestionsByCourse: mockFetchQuestionsByCourse,
+}));
+
+vi.mock('@/features/quiz/services/quizSubmissionService', () => ({
   submitQuizAnswer: mockSubmitQuizAnswer,
 }));
 
@@ -64,6 +76,15 @@ vi.mock('@/features/quiz/logic/quizParser', () => ({
 vi.mock('@/shared/services/pomodoroAdapter', () => ({
   pomodoroAdapter: {
     associateQuizWithPomodoro: vi.fn(),
+  },
+}));
+
+vi.mock('@/shared/services/storageService', () => ({
+  storage: {
+    get: vi.fn(() => null),
+    set: vi.fn(),
+    remove: vi.fn(),
+    cleanup: vi.fn(),
   },
 }));
 
@@ -139,6 +160,13 @@ describe('Quiz user flow integration', () => {
       '660e8400-e29b-41d4-a716-446655440000'
     );
 
+    mockGetChunkQuotaStatus.mockResolvedValue({
+      status: 'READY',
+      used: 10,
+      total: 10,
+      conceptCount: 1,
+    });
+
     mockGetTopicCompletionStatus.mockResolvedValue({
       completed: false,
       antrenman: {
@@ -192,7 +220,7 @@ describe('Quiz user flow integration', () => {
         question_data: {
           q: 'İlk kontrol adımı nedir?',
           exp: 'Risk odaklı planlama ile başlanır.',
-          o: ['Planlama', 'Raporlama'],
+          o: ['Planlama', 'Raporlama', 'İzleme', 'Test', 'Arşiv'],
           a: 0,
           type: 'multiple_choice',
         },

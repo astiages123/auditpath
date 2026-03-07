@@ -72,23 +72,27 @@ const getTokenDebugInfo = (token: string): TokenDebugInfo => {
   let base64 = payloadBase64Url.replace(/-/g, '+').replace(/_/g, '/');
   base64 += '='.repeat((4 - (base64.length % 4)) % 4);
 
-  const payloadText = decodeURIComponent(
-    atob(base64)
-      .split('')
-      .map(
-        (character) =>
-          `%${`00${character.charCodeAt(0).toString(16)}`.slice(-2)}`
-      )
-      .join('')
-  );
+  try {
+    const payloadText = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(
+          (character) =>
+            `%${`00${character.charCodeAt(0).toString(16)}`.slice(-2)}`
+        )
+        .join('')
+    );
 
-  const payload = JSON.parse(payloadText) as { exp?: number };
-  if (typeof payload.exp !== 'number') {
+    const payload = JSON.parse(payloadText) as { exp?: number };
+    if (typeof payload.exp !== 'number') {
+      return { preview, expIso: null, expMs: null };
+    }
+
+    const expMs = payload.exp * 1000;
+    return { preview, expIso: new Date(expMs).toISOString(), expMs };
+  } catch {
     return { preview, expIso: null, expMs: null };
   }
-
-  const expMs = payload.exp * 1000;
-  return { preview, expIso: new Date(expMs).toISOString(), expMs };
 };
 
 async function ensureSessionToken(func: string): Promise<{

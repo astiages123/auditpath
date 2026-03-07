@@ -19,7 +19,7 @@ export interface StructuredOptions<T> {
 
 const DEFAULT_RETRY_PROMPT = `BİR ÖNCEKİ CEVABIN JSON ŞEMASINA UYMUYORDU. 
 Lütfen cevabını SADECE geçerli bir JSON objesi olarak tekrar gönder. Markdown etiketi ( \`\`\`json ) kullanma.`;
-const GOOGLE_MODEL = 'gemini-3-flash-preview';
+const GOOGLE_MODEL = 'gemini-3.1-flash-lite-preview';
 
 function extractJsonPayload(content: string): string {
   const cleaned = content

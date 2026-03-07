@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  determineNodeStrategy,
-  parseJsonResponse,
-} from '../../features/quiz/logic/quizParser';
+import { determineNodeStrategy } from '../../features/quiz/logic/quizParserStrategy';
+import { parseJsonResponse } from '../../features/quiz/logic/quizParserHelpers';
 
 describe('quizParser - Testleri', () => {
   describe('parseJsonResponse', () => {

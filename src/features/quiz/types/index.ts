@@ -9,6 +9,8 @@ export {
   BaseQuestionSchema,
   type BatchGeneratedQuestion,
   BatchGeneratedQuestionSchema,
+  type BatchRevisionResponse,
+  BatchRevisionResponseSchema,
   type BatchValidationResult,
   BatchValidationResultSchema,
   ChunkMetadataSchema,

@@ -6,11 +6,9 @@ import {
 } from '@/features/courses/types/courseTypes';
 import { parseOrThrow } from '@/utils/validation';
 import { logger } from '@/utils/logger';
-import {
-  fetchGeneratedQuestionsByCourse,
-  fetchQuestionsByIds,
-  generateSmartExam,
-} from '@/features/quiz/services/quizQuestionService';
+import { fetchGeneratedQuestionsByCourse } from '@/features/quiz/services/quizRepository';
+import { fetchQuestionsByIds } from '@/features/quiz/services/quizReadService';
+import { generateSmartExam } from '@/features/quiz/services/quizGenerationService';
 import { generateForChunk } from '@/features/quiz/logic/quizParser';
 import { getTopicCompletionStatus } from '@/features/quiz/services/quizStatusService';
 

@@ -1,11 +1,11 @@
 import { supabase } from '@/lib/supabase';
 import { logger } from '@/utils/logger';
 import { safeQuery } from '@/lib/supabaseHelpers';
-import { getCourseName, getCourseStatsAggregate } from './quizCoreService';
+import { getCourseName, getCourseStatsAggregate } from './quizCourseService';
 import {
   getMasteredQuestionsCount,
   getTotalQuestionsInCourse,
-} from './quizQuestionService';
+} from './quizReadService';
 import type { LandingCourseStats } from '../types/types';
 
 const MODULE = 'QuizLandingService';

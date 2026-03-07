@@ -34,7 +34,7 @@ const TASK_CONFIGS: Record<AITask, AIConfig> = {
   /** Veri ve içerik analizi */
   analysis: {
     provider: 'google',
-    model: 'gemini-3-flash-preview',
+    model: 'gemini-3.1-flash-lite-preview',
     temperature: 0.7,
   },
   validation: {

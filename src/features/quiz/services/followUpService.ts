@@ -6,13 +6,19 @@ import { safeQuery } from '@/lib/supabaseHelpers';
 import { z } from 'zod';
 import {
   GeneratedQuestionSchema,
+  type BloomLevel,
   type Message,
   type ValidatedChunkWithContent,
 } from '../types';
-import { buildFollowUpPrompt } from '../logic/prompts';
+import {
+  buildFollowUpPrompt,
+  GLOBAL_AI_SYSTEM_PROMPT,
+  PromptArchitect,
+} from '../logic/prompts';
 import { generate as generateStructured } from '../logic/structuredGenerator';
-import { getChunkWithContent, getRecentDiagnoses } from './quizCoreService';
-import { getQuestionData } from './quizQuestionService';
+import { getChunkWithContent, getRecentDiagnoses } from './quizChunkService';
+import { getQuestionData } from './quizReadService';
+import { getSubjectGuidelines } from './quizInfoService';
 
 const MODULE = 'FollowUpService';
 
@@ -82,29 +88,43 @@ export async function generateFollowUpForWrongAnswer(
     );
   }
 
+  const guidelines = await getSubjectGuidelines(chunk?.course_name || '');
+  const contextPrompt = PromptArchitect.buildContext(
+    PromptArchitect.cleanReferenceImages(chunk?.content || ''),
+    chunk?.course_name || undefined,
+    chunk?.section_title || undefined,
+    guidelines || undefined
+  );
+
+  const resolvedBloomLevel: BloomLevel =
+    originalQuestionData.bloom_level === 'knowledge' ||
+    originalQuestionData.bloom_level === 'analysis' ||
+    originalQuestionData.bloom_level === 'application'
+      ? originalQuestionData.bloom_level
+      : 'application';
+
   const evidence = questionData.evidence || questionData.exp;
   const taskPrompt = buildFollowUpPrompt(
     evidence,
     {
       ...questionData,
-      bloomLevel: 'Uygulama',
+      bloomLevel: resolvedBloomLevel,
       concept: originalQuestionData.concept_title || '',
     },
     selectedAnswer ?? -1,
     questionData.a,
-    'Uygulama',
-    '',
+    resolvedBloomLevel,
     previousDiagnoses
   );
 
   const config = getTaskConfig('followup');
-  const messages: Message[] = [
-    {
-      role: 'system' as const,
-      content: config.systemPromptPrefix || 'Sen bir öğretmen asistanısın.',
-    },
-    { role: 'user' as const, content: taskPrompt },
-  ];
+  const messages: Message[] = PromptArchitect.assemble(
+    config.systemPromptPrefix
+      ? `${config.systemPromptPrefix}\n${GLOBAL_AI_SYSTEM_PROMPT}`
+      : GLOBAL_AI_SYSTEM_PROMPT,
+    contextPrompt,
+    taskPrompt
+  );
 
   const result = await generateStructured(messages, {
     schema: GeneratedQuestionSchema,
@@ -146,10 +166,11 @@ export async function generateFollowUpForWrongAnswer(
     course_id: courseId,
     section_title: chunk?.section_title || '',
     usage_type: 'antrenman' as const,
-    bloom_level: 'application' as const,
+    bloom_level: resolvedBloomLevel,
     parent_question_id: questionId,
     created_by: userId,
     question_data: {
+      type: 'multiple_choice',
       q: generatedQuestion.q,
       o: generatedQuestion.o,
       a: generatedQuestion.a,
