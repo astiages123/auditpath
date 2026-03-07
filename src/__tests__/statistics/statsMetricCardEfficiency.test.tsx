@@ -12,8 +12,6 @@ import {
 import { MasteryProgressNavigator } from '@/features/statistics/components/content/MasteryProgressNavigator';
 import { FocusHubCard } from '@/features/statistics/components/cards/FocusHubCard';
 
-// === MOCKs: Karmaşık alt bileşenler ve hook'lar ===
-
 vi.mock('@/features/statistics/components/modals/StatisticsModal', () => ({
   StatisticsModal: ({
     trigger,
@@ -79,8 +77,6 @@ import { useStatisticsLogic } from '@/features/statistics/hooks/useStatistics';
 import { type DailyMetrics } from '@/features/statistics/hooks/useDailyMetrics';
 import { type DailyEfficiencySummary } from '@/features/statistics/types/statisticsTypes';
 
-// === Shared mock helper ===
-
 const mockEfficiencyLogic = (overrides = {}) => {
   (useStatisticsLogic as ReturnType<typeof vi.fn>).mockReturnValue({
     learningFlow: 0.5,
@@ -93,10 +89,6 @@ const mockEfficiencyLogic = (overrides = {}) => {
     ...overrides,
   });
 };
-
-// ============================================================
-// 1. StatsMetricCard (StatsMetricCard.tsx)
-// ============================================================
 
 describe('StatsMetricCard (StatsMetricCard.tsx)', () => {
   it('label ve value değerlerini doğru render eder', () => {
@@ -145,10 +137,6 @@ describe('StatsMetricCard (StatsMetricCard.tsx)', () => {
     expect(svg).toHaveClass('text-sky-400');
   });
 });
-
-// ============================================================
-// 2. DashStatCard (CardElements.tsx — StatCard)
-// ============================================================
 
 describe('StatCard (CardElements.tsx)', () => {
   it('title ve value değerlerini doğru render eder', () => {
@@ -211,10 +199,6 @@ describe('StatCard (CardElements.tsx)', () => {
   });
 });
 
-// ============================================================
-// 3. TrendBadge (CardElements.tsx)
-// ============================================================
-
 describe('TrendBadge (CardElements.tsx)', () => {
   it('pozitif yüzdede yeşil class ile render edilir', () => {
     const { container } = render(<TrendBadge percentage={20} />);
@@ -235,10 +219,6 @@ describe('TrendBadge (CardElements.tsx)', () => {
     expect(container.firstChild).toBeNull();
   });
 });
-
-// ============================================================
-// 4. MasteryProgressNavigator — skor bazlı renk mantığı
-// ============================================================
 
 describe('MasteryProgressNavigator — skor / renk mantığı', () => {
   const baseSessions = [
@@ -345,10 +325,6 @@ describe('MasteryProgressNavigator — skor / renk mantığı', () => {
     expect(screen.getByText('Medeni Hukuk')).toBeInTheDocument();
   });
 });
-
-// ============================================================
-// 5. FocusHubCard — hook verisi ve saniye → dakika dönüşümü
-// ============================================================
 
 describe('FocusHubCard', () => {
   const defaultMetrics: DailyMetrics = {

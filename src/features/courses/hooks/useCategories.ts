@@ -1,15 +1,7 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { getCategories } from '@/features/courses/services/courseService';
 import type { Category } from '../types/courseTypes';
 import { queryKeys } from '@/shared/utils/queryKeys';
-
-// ===========================
-// === HOOK ===
-// ===========================
 
 /**
  * Hook to fetch all categories from the database.

@@ -10,7 +10,7 @@ const MODULE = 'QuizStatusService';
 interface ChunkTopicData {
   id: string;
   section_title: string;
-  ai_logic: unknown;
+  ai_logic?: unknown;
 }
 
 interface TopicStatus {
@@ -84,7 +84,7 @@ export async function calculateTopicQuota(
     const progressResult = await safeQuery(
       supabase
         .from('user_quiz_progress')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('chunk_id', chunkId),
       `${FUNC} progress count error`,
@@ -121,7 +121,7 @@ export async function getCourseCompletionStatus(
   const chunksResult = await safeQuery<ChunkTopicData[]>(
     supabase
       .from('note_chunks')
-      .select('id, section_title, ai_logic')
+      .select('id, section_title')
       .eq('course_id', courseId),
     `${FUNC} chunks error`,
     { courseId }
@@ -280,7 +280,7 @@ export async function getTopicCompletionStatus(
     const antrenmanSolvedResult = await safeQuery(
       supabase
         .from('user_quiz_progress')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('user_id', userId)
         .eq('chunk_id', chunkId),
       `${FUNC} antrenman solved count error`,
@@ -294,7 +294,7 @@ export async function getTopicCompletionStatus(
     const antrenmanPoolResult = await safeQuery(
       supabase
         .from('questions')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('chunk_id', chunkId)
         .eq('usage_type', 'antrenman'),
       `${FUNC} antrenman pool count error`,
@@ -308,7 +308,7 @@ export async function getTopicCompletionStatus(
     const denemePoolResult = await safeQuery(
       supabase
         .from('questions')
-        .select('*', { count: 'exact', head: true })
+        .select('id', { count: 'exact', head: true })
         .eq('chunk_id', chunkId)
         .eq('usage_type', 'deneme'),
       `${FUNC} deneme pool count error`,

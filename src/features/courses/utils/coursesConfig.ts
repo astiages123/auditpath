@@ -1,7 +1,3 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import {
   BadgeTurkishLira,
   Banknote,
@@ -41,10 +37,6 @@ import {
   Vote,
 } from 'lucide-react';
 
-// ===========================
-// === TYPE DEFINITIONS ===
-// ===========================
-
 /** Represents a daily block structure in the schedule */
 export interface DailyBlock {
   name: string; // "SABAH BLOK", "AKŞAM BLOK", "FİNAL BLOK"
@@ -72,10 +64,6 @@ export type CourseTheme =
   | 'rose'
   | 'orange'
   | 'primary';
-
-// ===========================
-// === THEME CONFIGURATIONS ===
-// ===========================
 
 /** Styling configurations for every existing course theme */
 export const COURSE_THEME_CONFIG: Record<
@@ -162,10 +150,6 @@ export const COURSE_THEME_CONFIG: Record<
   },
 };
 
-// ===========================
-// === COURSE CATEGORY THEMES ===
-// ===========================
-
 /** Global default themes mapped to broad categories */
 export const CATEGORY_THEMES: Record<
   string,
@@ -221,10 +205,6 @@ export const ICON_OVERRIDES: Record<string, LucideIcon> = {
   'uluslararasi-orgutler': Globe,
   'uluslararasi-iliskiler-kuramlari': Brain,
 };
-
-// ===========================
-// === WEEKLY SCHEDULE ===
-// ===========================
 
 /** Standard weekly schedule distribution layout */
 export const WEEKLY_SCHEDULE: WeeklyScheduleItem[] = [

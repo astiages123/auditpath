@@ -1,7 +1,3 @@
-// ===========================
-// === POMODORO DURATIONS ===
-// ===========================
-
 /**
  * Pomodoro work duration in seconds (50 minutes)
  */

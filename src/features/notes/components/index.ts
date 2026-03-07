@@ -1,7 +1,7 @@
 export { CodeBlock } from './content/CodeBlock';
 export { markdownComponents } from './content/MarkdownComponents';
 export { MarkdownSection } from './content/MarkdownSection';
-export { MermaidDiagram } from './content/MermaidDiagram';
+// MermaidDiagram only exported as lazy in CodeBlock.tsx
 
 export { NotesCourseOverview } from './content/NotesCourseOverview';
 export { NotesHeader } from './layout/NotesHeader';

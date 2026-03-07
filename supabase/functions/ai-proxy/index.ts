@@ -7,22 +7,30 @@ const PROVIDERS = {
   cerebras: {
     url: 'https://api.cerebras.ai/v1/chat/completions',
     envKey: 'CEREBRAS_API_KEY',
-    defaultModel: 'gpt-oss-120b', // using user's explicit model request
+    defaultModel: 'llama3.3-70b',
+    allowedModels: ['llama3.3-70b', 'llama3.1-8b'],
   },
   mimo: {
     url: 'https://api.xiaomimimo.com/v1/chat/completions',
     envKey: 'MIMO_API_KEY',
     defaultModel: 'mimo-v2-flash',
+    allowedModels: ['mimo-v2-flash', 'mimo-v2-thinking'],
   },
   deepseek: {
     url: 'https://api.deepseek.com/v1/chat/completions',
     envKey: 'DEEPSEEK_API_KEY',
     defaultModel: 'deepseek-chat',
+    allowedModels: ['deepseek-chat', 'deepseek-reasoner'],
   },
   google: {
     url: 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
     envKey: 'GEMINI_API_KEY',
-    defaultModel: 'gemini-3-flash-preview',
+    defaultModel: 'gemini-2.0-flash',
+    allowedModels: [
+      'gemini-2.0-flash',
+      'gemini-2.0-flash-lite-preview-02-05',
+      'gemini-1.5-flash',
+    ],
   },
 };
 
@@ -142,6 +150,17 @@ Deno.serve(async (req: Request) => {
 
     const targetModel = model || config.defaultModel;
 
+    // Validate model against allowlist
+    if (!config.allowedModels.includes(targetModel)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid model for this provider' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     // 4. Prepare and Call AI API
     // Cerebras Limits: 30 RPM, 60,000 TPM
     const defaultMaxTokens =
@@ -202,11 +221,11 @@ Deno.serve(async (req: Request) => {
       });
       return new Response(
         JSON.stringify({
-          error: `API Error: ${response.status}`,
-          details: responseText,
+          error: 'AI Provider Error',
+          status: response.status,
         }),
         {
-          status: response.status,
+          status: 502, // Bad Gateway
           headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
         }
       );
@@ -271,7 +290,7 @@ Deno.serve(async (req: Request) => {
       usage_type: 'exception',
       error_message: msg,
     });
-    return new Response(JSON.stringify({ error: msg }), {
+    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
       status: 500,
       headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
     });

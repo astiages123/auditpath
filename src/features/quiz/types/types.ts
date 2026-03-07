@@ -1,12 +1,8 @@
 import { LogCallback, Message } from '@/types/common';
 import type { Json } from '@/types/database.types';
 
-// === SECTION: Re-exports ===
-
 export { type LogCallback, type Message };
 export type { Json };
-
-// === SECTION: AI & Provider Types ===
 
 /** AI tarafından üretilen ham yanıt nesnesi */
 export interface AIResponse {
@@ -21,8 +17,6 @@ export interface AIResponse {
 
 /** Desteklenen LLM sağlayıcıları */
 export type LLMProvider = 'cerebras' | 'google' | 'mimo' | 'deepseek';
-
-// === SECTION: Analytics & Stats ===
 
 /** Veritabanına yeni bir quiz sorusu eklemek için kullanılan nesne */
 export interface QuizInsert {
@@ -70,8 +64,6 @@ export interface SRSStats {
   retentionRate: number;
 }
 
-// === SECTION: Concept & Mastery Domain ===
-
 /** Konu yetkinlik detayları */
 export interface SubjectCompetency {
   subject: string;
@@ -92,8 +84,6 @@ export interface ConceptMapItem {
   prerequisites?: string[];
   [key: string]: unknown;
 }
-
-// === SECTION: Question Definitions ===
 
 /** Bloom seviyeleri */
 export type BloomLevel =
@@ -186,8 +176,6 @@ export interface LandingCourseStats {
   }[];
 }
 
-// === SECTION: Exam & Atlas Domain ===
-
 /** Sınav soru dağılımı girdisi */
 export interface ExamDistributionInput {
   examTotal: number;
@@ -224,8 +212,6 @@ export interface MasteryChainStats {
   nodes: MasteryNode[];
   edges: { source: string; target: string; isStrong: boolean }[];
 }
-
-// === SECTION: Session & History ===
 
 /** Geçmiş quiz oturumu özeti */
 export interface RecentQuizSession {
@@ -310,8 +296,6 @@ export type QuizHistoryItem = QuizQuestion & {
   isCorrect: boolean | null;
   responseType: QuizResponseType;
 };
-
-// === SECTION: Application State Types ===
 
 /** Quiz bileşeni içindeki UI durumu */
 export interface QuizState {

@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   updateChunkAILogic: vi.fn(),
   getChunkWithContent: vi.fn(),
   fetchCachedQuestion: vi.fn(),
+  fetchCachedQuestionTitles: vi.fn(),
   createQuestion: vi.fn(),
   getSubjectGuidelines: vi.fn(),
   ensureConcepts: vi.fn(),
@@ -27,6 +28,7 @@ vi.mock('@/features/quiz/services/quizCoreService', () => ({
 vi.mock('@/features/quiz/services/quizQuestionService', () => ({
   createQuestion: mocks.createQuestion,
   fetchCachedQuestion: mocks.fetchCachedQuestion,
+  fetchCachedQuestionTitles: mocks.fetchCachedQuestionTitles,
 }));
 
 vi.mock('@/features/quiz/services/quizInfoService', () => ({
@@ -118,6 +120,7 @@ describe('generateForChunk', () => {
     mocks.getChunkWithContent.mockResolvedValue(rawChunk);
     mocks.updateChunkAILogic.mockResolvedValue({ error: null });
     mocks.fetchCachedQuestion.mockResolvedValue(null);
+    mocks.fetchCachedQuestionTitles.mockResolvedValue(new Set());
     mocks.getSubjectGuidelines.mockResolvedValue('Türkçe guideline');
     mocks.ensureConcepts.mockResolvedValue({
       concepts: [concept],

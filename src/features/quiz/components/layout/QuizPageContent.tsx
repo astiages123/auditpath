@@ -1,18 +1,10 @@
 import { BookOpen, Menu, X } from 'lucide-react';
-import { ErrorBoundary } from '@/components/ui/error-boundary';
 import { Button } from '@/components/ui/button';
 import { TopicSidebar } from '@/features/quiz/components/layout/QuizSideComponents';
-import {
-  InitialStateView,
-  CourseOverview,
-} from '@/features/quiz/components/views/QuizIntroViews';
-import { MappingProgressView } from '@/features/quiz/components/views/MappingProgressView';
-import { BriefingView } from '@/features/quiz/components/views/BriefingView';
-import { SmartExamView } from '@/features/quiz/components/views/SmartExamView';
-import { QuizContainer } from '@/features/quiz/components/layout/QuizContainer';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { SplitLayoutSkeleton } from '@/shared/components/SkeletonTemplates';
 import { cn } from '@/utils/stringHelpers';
+import { QuizFlowPanel } from '@/features/quiz/components/layout/QuizFlowPanel';
 import { useQuizPageLogic } from '@/features/quiz/hooks/useQuizPageLogic';
 
 export function QuizPageContent() {
@@ -81,87 +73,58 @@ export function QuizPageContent() {
           )}
 
           <div className="flex flex-col min-h-0 flex-1 bg-card rounded-xl border overflow-hidden h-full">
-            <ErrorBoundary>
-              {isQuizActive && selectedTopic ? (
-                <QuizContainer
-                  chunkId={chunkId || undefined}
-                  courseId={courseData?.id || ''}
-                  onClose={handleBack}
-                />
-              ) : (
-                <div className="flex flex-col flex-1 min-h-0">
-                  <div
-                    id="notes-sticky-header"
-                    className="group flex flex-col border-b border-border/10 shrink-0 bg-card/80 backdrop-blur-md z-10 transition-all duration-300"
+            <div className="flex flex-col flex-1 min-h-0">
+              <div
+                id="notes-sticky-header"
+                className="group flex flex-col border-b border-border/10 shrink-0 bg-card/80 backdrop-blur-md z-10 transition-all duration-300"
+              >
+                <div className="flex items-center gap-3 px-6 py-4">
+                  <button
+                    className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-accent transition-colors"
+                    onClick={() => setIsMobileSidebarOpen(true)}
                   >
-                    <div className="flex items-center gap-3 px-6 py-4">
-                      <button
-                        className="lg:hidden flex items-center justify-center w-8 h-8 rounded-lg hover:bg-accent transition-colors"
-                        onClick={() => setIsMobileSidebarOpen(true)}
-                      >
-                        <Menu className="w-4 h-4" />
-                      </button>
-                      <div className="w-8 h-8 bg-primary/10 rounded-lg hidden lg:flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                        <BookOpen className="w-4 h-4" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-base font-semibold text-foreground truncate">
-                          {selectedTopic
-                            ? selectedTopic.name
-                            : courseData?.name}
-                        </h3>
-                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
-                          Sınav Merkezi
-                        </p>
-                      </div>
-                    </div>
+                    <Menu className="w-4 h-4" />
+                  </button>
+                  <div className="w-8 h-8 bg-primary/10 rounded-lg hidden lg:flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <BookOpen className="w-4 h-4" />
                   </div>
-
-                  <div
-                    id="notes-scroll-container"
-                    className="flex-1 min-h-0 p-4 lg:p-6 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar mx-auto w-full"
-                  >
-                    <div className="w-full flex-1 flex flex-col min-h-0 mx-auto transition-all duration-300 max-w-6xl">
-                      {selectedTopic ? (
-                        <div className="flex-1 flex flex-col min-h-0">
-                          {quizPhase === quizPhaseOptions.NOT_ANALYZED && (
-                            <InitialStateView onGenerate={handleGenerate} />
-                          )}
-
-                          {quizPhase === quizPhaseOptions.MAPPING && (
-                            <MappingProgressView
-                              examProgress={examProgress}
-                              examLogs={examLogs}
-                              onCancel={handleStopGeneration}
-                            />
-                          )}
-
-                          {quizPhase === quizPhaseOptions.BRIEFING &&
-                            completionStatus && (
-                              <BriefingView
-                                completionStatus={completionStatus}
-                                onStartQuiz={handleStartQuiz}
-                              />
-                            )}
-                        </div>
-                      ) : isGeneratingExam ? (
-                        <div className="flex-1 flex items-center justify-center">
-                          <SmartExamView
-                            examProgress={examProgress}
-                            examLogs={examLogs}
-                          />
-                        </div>
-                      ) : (
-                        <CourseOverview
-                          courseName={courseData?.name || ''}
-                          progress={courseProgress}
-                        />
-                      )}
-                    </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-semibold text-foreground truncate">
+                      {selectedTopic ? selectedTopic.name : courseData?.name}
+                    </h3>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+                      Sınav Merkezi
+                    </p>
                   </div>
                 </div>
-              )}
-            </ErrorBoundary>
+              </div>
+
+              <div
+                id="notes-scroll-container"
+                className="flex-1 min-h-0 p-4 lg:p-6 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar mx-auto w-full"
+              >
+                <div className="w-full flex-1 flex flex-col min-h-0 mx-auto transition-all duration-300 max-w-6xl">
+                  <QuizFlowPanel
+                    quizPhase={quizPhase}
+                    quizPhaseOptions={quizPhaseOptions}
+                    selectedTopic={selectedTopic}
+                    isQuizActive={isQuizActive}
+                    chunkId={chunkId}
+                    courseId={courseData?.id || ''}
+                    courseName={courseData?.name || ''}
+                    courseProgress={courseProgress}
+                    isGeneratingExam={isGeneratingExam}
+                    examProgress={examProgress}
+                    examLogs={examLogs}
+                    completionStatus={completionStatus}
+                    onBack={handleBack}
+                    onGenerate={handleGenerate}
+                    onStopGeneration={handleStopGeneration}
+                    onStartQuiz={handleStartQuiz}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

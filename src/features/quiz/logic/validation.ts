@@ -36,6 +36,10 @@ export async function validateBatch(
   if (result) {
     // Skor bazlı karar düzeltme (Logic layer override)
     result.results.forEach((r) => {
+      // Mesaj uzunluklarını kod seviyesinde de sınırlayarak token tasarrufu ve UI tutarlılığı sa@lıyoruz
+      r.critical_faults = r.critical_faults.map((f) => f.slice(0, 150));
+      r.improvement_suggestion = r.improvement_suggestion.slice(0, 150);
+
       if (r.total_score >= 70 && r.decision === 'REJECTED') {
         r.decision = 'APPROVED';
       } else if (r.total_score < 70 && r.decision === 'APPROVED') {

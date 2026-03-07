@@ -2,16 +2,8 @@ import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '@/types/database.types';
 import { env } from '@/utils/env';
 
-// ===========================
-// === TİP TANIMLAMALARI ===
-// ===========================
-
 export type { Database };
 export type { SupabaseClient };
-
-// ===========================
-// === CLIENT YÖNETİMİ ===
-// ===========================
 
 /**
  * Supabase client singleton örneği.

@@ -1,14 +1,6 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database.types';
-
-// ===========================
-// === INTERFACES & TYPES ===
-// ===========================
 
 export interface CourseWithName {
   id: string;
@@ -28,10 +20,6 @@ export const courseKeys = {
   byId: (id: string) => [...courseKeys.all, 'byId', id] as const,
   names: () => [...courseKeys.all, 'names'] as const,
 };
-
-// ===========================
-// === HOOKS ===
-// ===========================
 
 /**
  * Custom hook to get all courses with only id and name.

@@ -10,22 +10,18 @@ import {
 
 /** Uygulama genelindeki yapay zeka sistem talimatı */
 export const GLOBAL_AI_SYSTEM_PROMPT =
-  'Sen KPSS formatında, akademik dille soru yazan uzman bir yapay zekasın. SADECE JSON formatında çıktı ver. Cevabın dışında hiçbir metin, yorum veya markdown karakteri bulunmamalıdır.';
+  'Uzman KPSS Eğitmeni: Akademik dille soru yaz. SADECE JSON formatında çıktı ver. Ek metin veya yorum ekleme.';
 
 /** Doğrulama (validation) aşaması için özel sistem talimatı */
-export const VALIDATION_SYSTEM_PROMPT = `
-Sen titiz bir editör ve denetçisin. 
-Sana verilen soruları; bilimsel doğruluk, anlatım bozukluğu, kurgu hatası ve çeldirici kalitesi açısından denetlersin.
-Eğer bir soru hatalıysa, neden hatalı olduğunu açıklar ve revizyon önerisi sunarsın.
-`;
+export const VALIDATION_SYSTEM_PROMPT =
+  'Uzman Editör: Soruları bilimsel doğruluk ve KPSS formatıyla denetle. Hatalıysa REDDET ve kısa revizyon notu ekle.';
 
 /** Genel kalite ve yazım kuralları */
-export const GENERAL_QUALITY_RULES = `## GENEL KALİTE KURALLARI:
-1. **Akademik Dil:** Soru kökü ve şıklar resmi, akademik ve sınav formatına (KPSS) uygun olmalıdır.
-2. **Kapsam:** Metnin dışına çıkma, ancak metindeki bilgiyi farklı bir bağlamda veya örnekle sorgulayabilirsin.
-3. **Çeldiriciler:** Çeldiricilerin en az ikisi, metindeki diğer kavramlarla doğrudan ilişkili ama sorulan odak noktasıyla çelişen ifadeler olmalıdır.
-4. **Şık Yapısı:** Her zaman tam 5 adet (A,B,C,D,E) seçenek olmalıdır. Harf eklemeyin.
-5. **JSON GÜVENLİĞİ:** LaTeX komutlarında ters eğik çizgi (\\\\) karakterini KESİNLİKLE çiftle.`;
+export const GENERAL_QUALITY_RULES = `## KURALLAR:
+1. Akademik dil kullan, KPSS formatına uy.
+2. Sadece metne bağlı kal veya metinden türet.
+3. 5 şık (A-E) üret, çeldiriciler güçlü olsun.
+4. JSON ve LaTeX güvenliği: \\\\ karakterini çiftle.`;
 
 /** Bloom seviyeleri için özel talimatlar */
 export const BLOOM_INSTRUCTIONS: Record<string, string> = {

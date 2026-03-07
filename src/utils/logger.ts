@@ -1,9 +1,5 @@
 import { env } from '@/utils/env';
 
-// ===========================
-// === MERKEZİ LOG SİSTEMİ ===
-// ===========================
-
 /**
  * Uygulama genelinde kullanılacak merkezi loglama aracı.
  * Geliştirme ortamında detaylı bilgi verirken, üretim ortamında (production) loglamayı kısıtlar.
@@ -44,16 +40,26 @@ export const logger = {
    * @example logger.error('Database', 'saveResult', 'Veri kaydedilemedi', error)
    */
   error(module: string, func: string, message: string, error?: unknown): void {
-    if (!env.app.isDev) return;
-
     const prefix = this._getPrefix(module, func);
+    const isDev = env.app.isDev;
+
     if (error instanceof Error) {
-      console.error(`${prefix} ❌ ${message}:`, {
+      const errorPayload = {
         message: error.message,
-        stack: error.stack,
-      });
+        stack: isDev ? error.stack : undefined,
+      };
+
+      if (isDev) {
+        console.error(`${prefix} ❌ ${message}:`, errorPayload);
+      } else {
+        console.error(`❌ [ERROR] ${message}:`, errorPayload.message);
+      }
     } else {
-      console.error(`${prefix} ❌ ${message}:`, error ?? '');
+      if (isDev) {
+        console.error(`${prefix} ❌ ${message}:`, error ?? '');
+      } else {
+        console.error(`❌ [ERROR] ${message}:`, error ?? '');
+      }
     }
   },
 

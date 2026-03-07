@@ -12,10 +12,6 @@ import {
 import { getRankIcon, type Rank } from './rankIcons';
 import { RANKS } from '../utils/constants';
 
-// ===========================
-// === TYPES ===
-// ===========================
-
 export interface CelebrationAsset {
   title: string;
   description: string;
@@ -25,10 +21,6 @@ export interface CelebrationAsset {
   variant: 'course' | 'rank' | 'achievement';
   metadata?: Record<string, unknown>;
 }
-
-// ===========================
-// === ASSET RETRIEVAL ===
-// ===========================
 
 /**
  * Retrieves celebration asset details (title, description, icon, etc.)

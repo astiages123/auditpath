@@ -9,8 +9,6 @@ import { z } from 'zod';
  * - Local storage
  */
 
-// === SECTION: Concept Map Schemas ===
-
 /**
  * Kavram haritası içindeki tek bir kavramın validasyon şeması.
  * Basit nesne yapısını doğrular.
@@ -27,8 +25,6 @@ export const ConceptMapItemSchema = z.object({
 
 /** Validasyonu yapılmış kavram haritası ögesi tipi */
 export type ValidatedConceptMapItem = z.infer<typeof ConceptMapItemSchema>;
-
-// === SECTION: Quiz Question Schemas ===
 
 /** Tüm sorular için temel validasyon şeması */
 export const BaseQuestionSchema = z.object({
@@ -72,8 +68,6 @@ export type ValidatedQuizQuestion = z.infer<typeof QuizQuestionSchema>;
 /** Soru durumu (active, reviewing, mastered) validasyon şeması */
 export const QuestionStatusSchema = z.enum(['active', 'reviewing', 'mastered']);
 
-// === SECTION: Chunk Logic & Metadata Schemas ===
-
 /**
  * Yapay zeka analiz mantığını (difficulty, concepts, quotas) kapsayan şema.
  * Supabase `ai_logic` sütunu için validasyon sağlar.
@@ -101,8 +95,6 @@ export const ChunkMetadataSchema = z.object({}).passthrough();
 
 /** Validasyonu yapılmış Chunk Metadata tipi */
 export type ValidatedChunkMetadata = z.infer<typeof ChunkMetadataSchema>;
-
-// === SECTION: Repository Row Schemas ===
 
 /** Veritabanındaki `questions` tablosunun temel satır şeması */
 export const QuestionRowSchema = z.object({
@@ -152,8 +144,6 @@ export type ValidatedFollowUpQuestion = z.infer<
   typeof FollowUpQuestionRowSchema
 >;
 
-// === SECTION: Core Reference Schemas ===
-
 /** Döviz kuru şeması (Para birimi dönüşümleri için) */
 export const ExchangeRateSchema = z.object({
   TRY: z.number(),
@@ -163,8 +153,6 @@ export const ExchangeRateSchema = z.object({
 
 /** Validasyonu yapılmış döviz kuru tipi */
 export type ValidatedExchangeRate = z.infer<typeof ExchangeRateSchema>;
-
-// === SECTION: Note & Content Schemas ===
 
 /** İçerik ve AI mantığı ile birlikte Chunk şeması */
 export const ChunkWithContentSchema = z.object({
@@ -181,13 +169,7 @@ export const ChunkWithContentSchema = z.object({
 /** Validasyonu yapılmış içerikli Chunk tipi */
 export type ValidatedChunkWithContent = z.infer<typeof ChunkWithContentSchema>;
 
-// ============================================================================
-// Pomodoro Timeline Schemas
-// ============================================================================
-
 // Timeline schemas removed - no longer needed
-
-// === SECTION: Quiz Engine & Generation Schemas ===
 
 /**
  * Üretim sürecinde kullanılan kavram haritası şeması.

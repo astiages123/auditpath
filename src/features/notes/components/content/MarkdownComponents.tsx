@@ -16,7 +16,8 @@ import React, {
 } from 'react';
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
-import 'katex/dist/katex.min.css';
+// katex.min.css is already imported in CodeBlock.tsx which is used here
+// import 'katex/dist/katex.min.css';
 import { Lightbulb } from 'lucide-react';
 import { cn, slugify } from '@/utils/stringHelpers';
 import { CodeBlock } from '@/features/notes/components/content/CodeBlock';

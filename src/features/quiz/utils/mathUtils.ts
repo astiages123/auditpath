@@ -1,5 +1,3 @@
-// === SECTION: String & Content Formatting ===
-
 /**
  * Matematiksel içeriği temizler ve KaTeX render işlemi için hazırlar.
  * @param content - Temizlenecek ham metin
@@ -28,8 +26,6 @@ export const cleanMathContent = (
       .trim()
   );
 };
-
-// === SECTION: Array Operations ===
 
 /**
  * Bir diziyi Fisher-Yates algoritması kullanarak karıştırır.

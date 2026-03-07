@@ -12,10 +12,6 @@ import type {
 } from '@/features/statistics/types/statisticsTypes';
 import { processDailyStats } from './statisticsCoreService';
 
-// ==========================================
-// === TYPES ===
-// ==========================================
-
 export type QuizProgressData = {
   course_id: string;
   question_id: string;
@@ -40,10 +36,6 @@ type DailyStatsVideoComparisonRow = {
   video_id: string | null;
 };
 
-// ==========================================
-// === LOGGING FUNCTIONS ===
-// ==========================================
-
 /**
  * Log a new activity (pomodoro, video, or quiz).
  *
@@ -57,76 +49,65 @@ export async function logActivity(
   type: 'pomodoro' | 'video' | 'quiz',
   data: ActivityData
 ): Promise<boolean> {
-  try {
-    let successFlag = false;
-    if (type === 'pomodoro') {
-      const pomodoroData = data as PomodoroInsert;
-      const insertData: Database['public']['Tables']['pomodoro_sessions']['Insert'] =
-        {
-          user_id: userId,
-          course_id: pomodoroData.course_id,
-          course_name: pomodoroData.course_name,
-          started_at: pomodoroData.started_at,
-          ended_at: pomodoroData.ended_at || new Date().toISOString(),
-          timeline: pomodoroData.timeline,
-          total_work_time: pomodoroData.total_work_time,
-          total_break_time: pomodoroData.total_break_time,
-          total_pause_time: pomodoroData.total_pause_time,
-        };
-      const res = await safeQuery(
-        supabase.from('pomodoro_sessions').insert(insertData),
-        'Error inserting pomodoro session'
-      );
-      successFlag = res.success;
-    } else if (type === 'video') {
-      const videoData = data as VideoUpsert;
-      const insertData: Database['public']['Tables']['video_progress']['Insert'] =
-        {
-          user_id: userId,
-          video_id: videoData.video_id,
-          completed: videoData.completed,
-          completed_at: videoData.completed_at,
-          item_type: 'video',
-        };
-      const res = await safeQuery(
-        supabase.from('video_progress').upsert(insertData),
-        'Error upserting video progress'
-      );
-      successFlag = res.success;
-    } else {
-      const quizData = data as QuizProgressData;
-      const insertData: Database['public']['Tables']['user_quiz_progress']['Insert'] =
-        {
-          user_id: userId,
-          course_id: quizData.course_id,
-          question_id: quizData.question_id,
-          chunk_id: quizData.chunk_id || null,
-          response_type: (quizData.response_type || 'blank') as
-            | 'correct'
-            | 'incorrect'
-            | 'blank',
-          session_number: quizData.session_number || 1,
-          ai_diagnosis: quizData.ai_diagnosis || null,
-          ai_insight: quizData.ai_insight || null,
-        };
-      const res = await safeQuery(
-        supabase.from('user_quiz_progress').insert(insertData),
-        'Error inserting quiz progress'
-      );
-      successFlag = res.success;
-    }
-
-    if (!successFlag) throw new Error('Activity logging failed');
-    return true;
-  } catch (err) {
-    console.error('[ActivityService][logActivity] Hata:', err);
-    return false;
+  if (type === 'pomodoro') {
+    const pomodoroData = data as PomodoroInsert;
+    const insertData: Database['public']['Tables']['pomodoro_sessions']['Insert'] =
+      {
+        user_id: userId,
+        course_id: pomodoroData.course_id,
+        course_name: pomodoroData.course_name,
+        started_at: pomodoroData.started_at,
+        ended_at: pomodoroData.ended_at || new Date().toISOString(),
+        timeline: pomodoroData.timeline,
+        total_work_time: pomodoroData.total_work_time,
+        total_break_time: pomodoroData.total_break_time,
+        total_pause_time: pomodoroData.total_pause_time,
+      };
+    const { success } = await safeQuery(
+      supabase.from('pomodoro_sessions').insert(insertData),
+      'Error inserting pomodoro session'
+    );
+    if (!success) throw new Error('Pomodoro activity logging failed');
+  } else if (type === 'video') {
+    const videoData = data as VideoUpsert;
+    const insertData: Database['public']['Tables']['video_progress']['Insert'] =
+      {
+        user_id: userId,
+        video_id: videoData.video_id,
+        completed: videoData.completed,
+        completed_at: videoData.completed_at,
+        item_type: 'video',
+      };
+    const { success } = await safeQuery(
+      supabase.from('video_progress').upsert(insertData),
+      'Error upserting video progress'
+    );
+    if (!success) throw new Error('Video activity logging failed');
+  } else {
+    const quizData = data as QuizProgressData;
+    const insertData: Database['public']['Tables']['user_quiz_progress']['Insert'] =
+      {
+        user_id: userId,
+        course_id: quizData.course_id,
+        question_id: quizData.question_id,
+        chunk_id: quizData.chunk_id || null,
+        response_type: (quizData.response_type || 'blank') as
+          | 'correct'
+          | 'incorrect'
+          | 'blank',
+        session_number: quizData.session_number || 1,
+        ai_diagnosis: quizData.ai_diagnosis || null,
+        ai_insight: quizData.ai_insight || null,
+      };
+    const { success } = await safeQuery(
+      supabase.from('user_quiz_progress').insert(insertData),
+      'Error inserting quiz progress'
+    );
+    if (!success) throw new Error('Quiz activity logging failed');
   }
-}
 
-// ==========================================
-// === DB FETCHING FUNCTIONS ===
-// ==========================================
+  return true;
+}
 
 /**
  * Get daily statistics fetching logic.

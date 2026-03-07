@@ -1,9 +1,5 @@
 import { z } from 'zod';
 
-// ==========================================
-// SCHEMAS
-// ==========================================
-
 /**
  * Zod schema for validating raw AI generation cost logs from Supabase.
  */
@@ -21,10 +17,6 @@ export const GenerationCostLogSchema = z.object({
   latency_ms: z.number().nullable().optional(),
   status: z.number().nullable().optional(),
 });
-
-// ==========================================
-// TYPES
-// ==========================================
 
 /**
  * Type inferred from the GenerationCostLogSchema.

@@ -1,7 +1,3 @@
-// ===========================
-// === UYGULAMA ROTALARI ===
-// ===========================
-
 /**
  * Uygulama genelinde kullanılan tüm sayfa rotalarının (URL path) merkezi listesi.
  */

@@ -210,7 +210,7 @@ export function useQuestionGeneration({
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (status?.status === 'PROCESSING') {
-      interval = setInterval(refreshStatus, 5000);
+      interval = setInterval(refreshStatus, 15000);
     }
     return () => clearInterval(interval);
   }, [refreshStatus, status?.status]);

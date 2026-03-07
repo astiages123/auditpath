@@ -44,10 +44,10 @@ vi.mock('@/features/quiz/hooks/useQuizTimer', () => ({
   }),
 }));
 
-vi.mock('@/features/quiz/store/useQuotaStore', () => ({
-  useQuotaStore: {
+vi.mock('@/features/quiz/store/useQuizTimerStore', () => ({
+  useQuizTimerStore: {
     getState: () => ({
-      decrementClientQuota: mockDecrementClientQuota,
+      // Gerekli metodlar buraya eklenebilir
     }),
   },
 }));
@@ -64,6 +64,20 @@ vi.mock('@/shared/services/pomodoroAdapter', () => ({
   pomodoroAdapter: {
     associateQuizWithPomodoro: vi.fn(),
   },
+}));
+
+vi.mock('@/features/auth/hooks/useAuth', () => ({
+  useAuth: () => ({
+    user: { id: 'user-1' },
+  }),
+}));
+
+vi.mock('@/features/quiz/hooks/useQuota', () => ({
+  useQuota: () => ({
+    quotas: { antrenman: 5, deneme: 5 },
+    isLoading: false,
+    decrementClientQuota: mockDecrementClientQuota,
+  }),
 }));
 
 const createQuestion = (id: string): QuizQuestion => ({

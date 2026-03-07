@@ -8,23 +8,11 @@ import {
 } from '@/features/pomodoro/types/pomodoroTypes';
 import { BloomStats } from '@/features/quiz/types';
 
-// ==========================================
-// === RE-EXPORTS ===
-// ==========================================
-
 export type { BloomStats, DetailedSession, RecentSession };
 export { PauseIntervalSchema, TimelineEventSchema };
 
-// ==========================================
-// === ENUMS & LITERALS ===
-// ==========================================
-
 /** Flow state literal representing the user's learning state */
 export type FlowState = 'stuck' | 'deep' | 'optimal' | 'speed' | 'shallow';
-
-// ==========================================
-// === BASIC DATA INTERFACES ===
-// ==========================================
 
 /** Daily statistics for efficiency metrics */
 export interface DailyStats {
@@ -181,10 +169,6 @@ export interface FocusPowerTrendProps {
   rangeLabel?: 'week' | 'month' | 'all';
 }
 
-// ==========================================
-// === COMPOSITE INTERFACES ===
-// ==========================================
-
 /** Data specifically formatted for dashboard card displays */
 export interface CardEfficiencyData {
   loading: boolean;
@@ -217,10 +201,6 @@ export interface CardEfficiencyData {
   focusPowerMonth: FocusPowerPoint[];
   focusPowerAll: FocusPowerPoint[];
 }
-
-// ==========================================
-// === ZOD SCHEMAS ===
-// ==========================================
 
 /** Schema validation for a regular session */
 export const SessionSchema = z.object({

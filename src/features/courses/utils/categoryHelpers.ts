@@ -1,7 +1,3 @@
-// ===========================
-// === EXPORTS ===
-// ===========================
-
 /**
  * Normalize category names to database slugs for consistent matching.
  *

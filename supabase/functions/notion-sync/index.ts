@@ -412,8 +412,9 @@ serve(async (req) => {
       headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },
     });
   } catch (err) {
+    console.error('[ERROR] Sync function failed:', err);
     return new Response(
-      JSON.stringify({ success: false, error: String(err) }),
+      JSON.stringify({ success: false, error: 'Internal Server Error' }),
       {
         status: 500,
         headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },

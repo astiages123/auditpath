@@ -1,5 +1,3 @@
-// === TYPES ===
-
 import { AuthError, Session, User } from '@supabase/supabase-js';
 
 /**

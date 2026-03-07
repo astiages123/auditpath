@@ -4,7 +4,8 @@ import { updateResults } from '@/features/quiz/logic/quizCoreLogic';
 import { MASTERY_THRESHOLD } from '@/features/quiz/utils/constants';
 import { logger } from '@/utils/logger';
 import { useCelebrationStore } from '@/features/achievements/store';
-import { useQuotaStore } from '@/features/quiz/store';
+import { useQuota } from '@/features/quiz/hooks/useQuota';
+import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useQuizEngineApi } from './useQuizEngineApi';
 import type {
   QuizResponseType,
@@ -34,6 +35,8 @@ export function useQuizEngineResults({
   stopTimer,
   startTimer,
 }: UseQuizEngineResultsOptions) {
+  const { user } = useAuth();
+  const { decrementClientQuota } = useQuota(user?.id);
   const api = useQuizEngineApi();
 
   const submitAnswer = useCallback(
@@ -118,7 +121,7 @@ export function useQuizEngineResults({
           });
         }
 
-        useQuotaStore.getState().decrementClientQuota();
+        decrementClientQuota();
       } catch (error) {
         logger.error(
           'QuizEngineResults',
@@ -144,6 +147,7 @@ export function useQuizEngineResults({
       api,
       setState,
       startTimer,
+      decrementClientQuota,
     ]
   );
 

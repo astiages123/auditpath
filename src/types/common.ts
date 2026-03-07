@@ -1,17 +1,9 @@
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
-// ===========================
-// === KİMLİK (AUTH) TİPLERİ ===
-// ===========================
-
 /**
  * Standart Kullanıcı tipi, Supabase User tipini referans alır.
  */
 export type User = SupabaseUser;
-
-// ===========================
-// === YAPAY ZEKA (AI) TİPLERİ ===
-// ===========================
 
 /**
  * Yapay zeka yanıtındaki token kullanımı ve diğer meta verileri temsil eder.
@@ -30,10 +22,6 @@ export interface AIResponseMetadata {
   };
 }
 
-// ===========================
-// === API & AĞ TİPLERİ ===
-// ===========================
-
 /**
  * Genel API yanıtlarını sarmalayan standart arayüz.
  * @template T - Yanıt verisinin tipi.
@@ -44,10 +32,6 @@ export interface ApiResponse<T = unknown> {
   error?: string;
   status?: number;
 }
-
-// ===========================
-// === JSON & VERİ TİPLERİ ===
-// ===========================
 
 /**
  * Üstesinden gelinemeyen veya esnek JSON verilerini güvenli şekilde tiplendirmek için kullanılır.
@@ -61,10 +45,6 @@ export type Json =
       [key: string]: Json | undefined;
     }
   | Json[];
-
-// ===========================
-// === LOGLAMA TİPLERİ ===
-// ===========================
 
 /**
  * Genel amaçlı loglama geri çağırım (callback) fonksiyonu tipi.
@@ -88,10 +68,6 @@ export interface LogMessage {
   details?: Record<string, unknown> | Error;
   timestamp: string;
 }
-
-// ===========================
-// === ARAYÜZ (UI) & İLETİŞİM TİPLERİ ===
-// ===========================
 
 /**
  * LLM (Büyük Dil Modeli) ile etkileşim mesajını temsil eder.

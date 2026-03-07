@@ -37,6 +37,28 @@ export async function fetchCachedQuestion(
   return (count || 0) > 0;
 }
 
+/** Belirli bir chunk ve kullanım türü için önceden üretilmiş soru başlıklarını topluca getirir */
+export async function fetchCachedQuestionTitles(
+  chunk_id: string,
+  usage_type: 'antrenman' | 'deneme'
+): Promise<Set<string>> {
+  const { data } = await safeQuery<{ concept_title: string | null }[]>(
+    supabase
+      .from('questions')
+      .select('concept_title')
+      .eq('chunk_id', chunk_id)
+      .eq('usage_type', usage_type),
+    'fetchCachedQuestionTitles error',
+    { chunk_id }
+  );
+
+  return new Set(
+    (data || [])
+      .map((q) => q.concept_title)
+      .filter((title): title is string => title !== null)
+  );
+}
+
 /** Belirli bir chunk ve kullanım tipi için üretilen soruları getirir */
 export async function fetchGeneratedQuestionsByChunk(
   chunkId: string,

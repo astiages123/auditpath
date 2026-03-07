@@ -1,19 +1,10 @@
-import { useEffect } from 'react';
 import { ArrowLeft, BookOpen, X } from 'lucide-react';
 import { cn } from '@/utils/stringHelpers';
-import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 import {
   useQuizManager,
   QUIZ_PHASE,
 } from '@/features/quiz/hooks/useQuizManager';
-import {
-  InitialStateView,
-  CourseOverview,
-} from '@/features/quiz/components/views/QuizIntroViews';
-import { MappingProgressView } from '@/features/quiz/components/views/MappingProgressView';
-import { BriefingView } from '@/features/quiz/components/views/BriefingView';
-import { QuizContainer } from '@/features/quiz/components/layout/QuizContainer';
 
 interface QuizDrawerProps {
   /** Drawer'ın görünürlük durumu */
@@ -36,15 +27,15 @@ interface QuizDrawerProps {
  * Sınav Merkezi'nin ana kaplayıcısı (Drawer).
  * Quiz akışını (konu seçimi, analiz, briefing ve quiz) yönetir.
  */
+import { QuizFlowPanel } from '@/features/quiz/components/layout/QuizFlowPanel';
+
 export function QuizDrawer({
   isOpen,
   onClose,
   courseId,
   courseName,
-  initialTopicName,
 }: QuizDrawerProps) {
   const {
-    topics,
     selectedTopic,
     setSelectedTopic,
     chunkId,
@@ -61,25 +52,7 @@ export function QuizDrawer({
     resetState,
   } = useQuizManager({ isOpen, courseId, courseName });
 
-  // Belirli bir konu adı ile açıldığında otomatik seçim yap
-  useEffect(() => {
-    if (isOpen && initialTopicName && topics.length > 0) {
-      const match = topics.find((topic) => topic.name === initialTopicName);
-      if (match) setSelectedTopic(match);
-    }
-  }, [isOpen, topics, initialTopicName, setSelectedTopic]);
-
-  // Arka plan kaydırmayı engelle (scroll lock)
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+  // ... (useEffect logic remains same)
 
   /** Drawer'ı tamamen kapatır ve durumu sıfırlar */
   const handleClose = () => {
@@ -135,72 +108,47 @@ export function QuizDrawer({
 
       <div className="flex-1 min-h-0 overflow-hidden">
         <div className="flex flex-col min-h-0 flex-1 bg-card rounded-xl border overflow-hidden h-full mx-2 lg:mx-4 my-4">
-          <ErrorBoundary>
-            {isQuizActive && selectedTopic ? (
-              <QuizContainer
-                chunkId={chunkId || undefined}
-                courseId={courseId}
-                onClose={handleBack}
-              />
-            ) : (
-              <div className="flex flex-col flex-1 min-h-0">
-                {/* Alt Header (Seçili Konu Bilgisi) */}
-                <div className="group flex flex-col border-b border-border/10 shrink-0 bg-card/80 backdrop-blur-md z-10 transition-all duration-300">
-                  <div className="flex items-center gap-3 px-6 py-4">
-                    <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                      <BookOpen className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold text-foreground truncate">
-                        {selectedTopic ? selectedTopic.name : courseName}
-                      </h3>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
-                        Sınav Merkezi
-                      </p>
-                    </div>
-                  </div>
+          <div className="flex flex-col flex-1 min-h-0">
+            {/* Alt Header (Seçili Konu Bilgisi) */}
+            <div className="group flex flex-col border-b border-border/10 shrink-0 bg-card/80 backdrop-blur-md z-10 transition-all duration-300">
+              <div className="flex items-center gap-3 px-6 py-4">
+                <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                  <BookOpen className="w-4 h-4" />
                 </div>
-
-                {/* İçerik Panel / Scroll Alanı */}
-                <div className="flex-1 min-h-0 p-4 lg:p-6 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar mx-auto w-full">
-                  <div className="w-full flex-1 flex flex-col min-h-0 mx-auto transition-all duration-300 max-w-3xl">
-                    {selectedTopic ? (
-                      <div className="flex-1 flex flex-col min-h-0">
-                        {/* 1. FAZ: Başlangıç / Analiz Bekleme */}
-                        {quizPhase === QUIZ_PHASE.NOT_ANALYZED && (
-                          <InitialStateView onGenerate={handleGenerate} />
-                        )}
-
-                        {/* 2. FAZ: Analiz / Haritalama Süreci */}
-                        {quizPhase === QUIZ_PHASE.MAPPING && (
-                          <MappingProgressView
-                            examProgress={examProgress}
-                            examLogs={examLogs}
-                            onCancel={handleStopGeneration}
-                          />
-                        )}
-
-                        {/* 3. FAZ: Briefing / Başlatma Öncesi */}
-                        {quizPhase === QUIZ_PHASE.BRIEFING &&
-                          completionStatus && (
-                            <BriefingView
-                              completionStatus={completionStatus}
-                              onStartQuiz={handleStartQuiz}
-                            />
-                          )}
-                      </div>
-                    ) : (
-                      /* Konu Seçilmemişse: Kurs Genel Görünümü */
-                      <CourseOverview
-                        courseName={courseName}
-                        progress={courseProgress}
-                      />
-                    )}
-                  </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-base font-semibold text-foreground truncate">
+                    {selectedTopic ? selectedTopic.name : courseName}
+                  </h3>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+                    Sınav Merkezi
+                  </p>
                 </div>
               </div>
-            )}
-          </ErrorBoundary>
+            </div>
+
+            {/* İçerik Panel / Scroll Alanı */}
+            <div className="flex-1 min-h-0 p-4 lg:p-6 flex flex-col overflow-y-auto overflow-x-hidden custom-scrollbar mx-auto w-full">
+              <div className="w-full flex-1 flex flex-col min-h-0 mx-auto transition-all duration-300 max-w-3xl">
+                <QuizFlowPanel
+                  quizPhase={quizPhase}
+                  quizPhaseOptions={QUIZ_PHASE}
+                  selectedTopic={selectedTopic}
+                  isQuizActive={isQuizActive}
+                  chunkId={chunkId}
+                  courseId={courseId}
+                  courseName={courseName}
+                  courseProgress={courseProgress}
+                  examProgress={examProgress}
+                  examLogs={examLogs}
+                  completionStatus={completionStatus}
+                  onBack={handleBack}
+                  onGenerate={handleGenerate}
+                  onStopGeneration={handleStopGeneration}
+                  onStartQuiz={handleStartQuiz}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

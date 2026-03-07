@@ -1,4 +1,3 @@
-// === TYPES ===
 import {
   Dialog,
   DialogContent,
@@ -10,13 +9,11 @@ import { AuthForms } from '@/features/auth/components/forms/AuthForms';
 import { type AuthModalProps } from '@/features/auth/types';
 import logo from '@/assets/logo.svg';
 
-// === COMPONENTS ===
 /**
  * Modal component that wraps the authentication forms.
  * @param {AuthModalProps} props - Component props.
  */
 export function AuthModal({ open, onOpenChange }: AuthModalProps) {
-  // === RENDER ===
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px] border-border/40 bg-background/95 backdrop-blur-xl shadow-2xl p-6 gap-6">

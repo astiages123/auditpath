@@ -7,10 +7,6 @@ import {
 
 import type { FlowState } from '../types/statisticsTypes';
 
-// ==========================================
-// === TYPES ===
-// ==========================================
-
 export interface EfficiencyMetrics {
   totalVideoTime: number; // in minutes
   totalReadingTime: number; // in minutes
@@ -26,10 +22,6 @@ export interface EfficiencyLogicResult {
   currentMinutes: number;
   formattedCurrentTime: string;
 }
-
-// ==========================================
-// === HOOK ===
-// ==========================================
 
 /**
  * Encapsulates calculation of goal progress and learning flow scores

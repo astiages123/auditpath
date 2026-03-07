@@ -1,4 +1,3 @@
-// === TYPES ===
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   User,
@@ -16,7 +15,6 @@ import { toast } from 'sonner';
  * Provides authentication state and methods to the application.
  */
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // === STATE ===
   const [state, setState] = useState<{
     user: User | null;
     session: Session | null;
@@ -31,7 +29,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const supabase = getSupabase();
 
-  // === HANDLERS ===
   /**
    * Clears the current authentication error.
    */
@@ -65,7 +62,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [supabase.auth]);
 
-  // === EFFECTS ===
   useEffect(() => {
     let mounted = true;
 
@@ -147,7 +143,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, [supabase.auth]);
 
-  // === RENDER ===
   const value = useMemo(
     () => ({
       user: state.user,

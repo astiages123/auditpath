@@ -12,7 +12,7 @@ import logo from '@/assets/logo.svg';
 
 export function DashHeader() {
   const { user, signOut } = useAuth();
-  const { setMobileMenuOpen } = useUIStore();
+  const setMobileMenuOpen = useUIStore((state) => state.setMobileMenuOpen);
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
   return (

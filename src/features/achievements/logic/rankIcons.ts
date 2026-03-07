@@ -2,10 +2,6 @@ import { Briefcase, Crown, type LucideIcon, Shield, Star } from 'lucide-react';
 
 export type { Rank } from '@/types/auth';
 
-// ===========================
-// === RANK ICON REPOSITORY ===
-// ===========================
-
 /**
  * A mapping of rank names to their corresponding display icons.
  */
@@ -15,10 +11,6 @@ export const rankIcons: Record<string, LucideIcon> = {
   'Sınır Muhafızı': Shield,
   'Yüce Bilgin': Crown,
 };
-
-// ===========================
-// === RANK ICON HELPERS ===
-// ===========================
 
 /**
  * Retrieves the icon component associated with a rank name.

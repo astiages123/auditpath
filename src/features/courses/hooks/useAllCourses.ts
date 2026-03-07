@@ -1,14 +1,6 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { getAllCourses } from '@/features/courses/services/courseService';
 import type { Course } from '../types/courseTypes';
-
-// ===========================
-// === HOOK ===
-// ===========================
 
 /**
  * Hook to fetch all courses from the database.

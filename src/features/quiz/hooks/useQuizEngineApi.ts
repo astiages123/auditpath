@@ -13,6 +13,7 @@ import {
 import {
   MultipleChoiceQuestion,
   QuizQuestion,
+  QuizQuestionSchema,
   QuizResponseType,
   SessionContext,
   TrueFalseQuestion,
@@ -61,7 +62,10 @@ export function useQuizEngineApi() {
           const questionData = question.question_data as
             | TrueFalseQuestion
             | MultipleChoiceQuestion;
-          return { ...questionData, id: question.id } as QuizQuestion;
+
+          // Type assertion yerine güvenli şema doğrulama
+          const validatedData = QuizQuestionSchema.parse(questionData);
+          return { ...validatedData, id: question.id };
         }
       );
     },
@@ -113,7 +117,9 @@ export function useQuizEngineApi() {
         const questionData = question.question_data as
           | TrueFalseQuestion
           | MultipleChoiceQuestion;
-        return { ...questionData, id: question.id } as QuizQuestion;
+
+        const validatedData = QuizQuestionSchema.parse(questionData);
+        return { ...validatedData, id: question.id };
       });
     },
     [queryClient]

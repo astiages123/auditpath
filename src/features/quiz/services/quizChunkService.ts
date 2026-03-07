@@ -76,7 +76,7 @@ export async function getCourseTopics(
   let query = supabase
     .from('note_chunks')
     .select(
-      'id, created_at, course_id, course_name, section_title, chunk_order, content, status, last_synced_at, metadata, ai_logic'
+      'id, created_at, course_id, course_name, section_title, chunk_order, status, last_synced_at, metadata'
     )
     .eq('course_id', courseId)
     .order('chunk_order', { ascending: true });

@@ -3,9 +3,6 @@
  * Bu dosya, notlar özelliği için kullanılan temel veri tiplerini dışa aktarır.
  */
 
-// === BÖLÜM ADI: SEARCH TYPES ===
-// ===========================
-
 /**
  * Arama sonuçlarında dönen her bir öğeyi temsil eden arayüz.
  */

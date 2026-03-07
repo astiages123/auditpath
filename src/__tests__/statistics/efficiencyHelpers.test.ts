@@ -8,9 +8,6 @@ import {
 } from '@/features/statistics/logic/statisticsHelpers';
 import { EFFICIENCY_THRESHOLDS } from '@/features/statistics/utils/constants';
 
-// ============================================================
-// calculateEfficiencyScore
-// ============================================================
 describe('calculateEfficiencyScore', () => {
   it('sıfır çalışma süresinde 0 dönmeli (sıfır bölme koruması)', () => {
     expect(calculateEfficiencyScore(60, 0)).toBe(0);
@@ -38,10 +35,6 @@ describe('calculateEfficiencyScore', () => {
   });
 });
 
-// ============================================================
-// calculateLearningFlow (statisticsHelpers versiyonu)
-// - Hem skor hem state dönmeli
-// ============================================================
 describe('calculateLearningFlow (statisticsHelpers)', () => {
   it('sıfır pomodoro süresinde {score: 0, state: "stuck"} dönmeli', () => {
     const result = calculateLearningFlow({
@@ -118,9 +111,6 @@ describe('calculateLearningFlow (statisticsHelpers)', () => {
   });
 });
 
-// ============================================================
-// calculateGoalProgress
-// ============================================================
 describe('calculateGoalProgress', () => {
   it('sıfır hedefte 0 dönmeli (sıfır bölme koruması)', () => {
     expect(calculateGoalProgress(100, 0)).toBe(0);
@@ -152,9 +142,6 @@ describe('calculateGoalProgress', () => {
   });
 });
 
-// ============================================================
-// formatEfficiencyTime
-// ============================================================
 describe('formatEfficiencyTime', () => {
   it('60 dakikayı "1sa 0dk" olarak formatlamalı', () => {
     expect(formatEfficiencyTime(60)).toBe('1sa 0dk');
@@ -177,9 +164,6 @@ describe('formatEfficiencyTime', () => {
   });
 });
 
-// ============================================================
-// generateDateRange
-// ============================================================
 describe('generateDateRange', () => {
   it('doğru sayıda tarih üretmeli', () => {
     const dates = generateDateRange(7);

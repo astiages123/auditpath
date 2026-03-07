@@ -1,7 +1,3 @@
-// ===========================
-// === (COMPOSITE) BİRLEŞİK TİPLER ===
-// ===========================
-
 /**
  * Supabase veritabanındaki composite tipleri çıkarmak için kullanılır.
  */
@@ -21,10 +17,6 @@ export type CompositeTypes<
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
     ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
     : never;
-
-// ===========================
-// === VERİTABANI SABİTLERİ ===
-// ===========================
 
 /**
  * Veritabanı enum değerlerinin uygulama içi kontrol sabitleri.
@@ -48,10 +40,6 @@ export const Constants = {
     },
   },
 } as const;
-
-// ===========================
-// === ANA VERİTABANI ŞEMASI ===
-// ===========================
 
 /**
  * Tüm tabloları, view'ları, fonksiyonları ve enum'ları içeren ana veritabanı yapısı.
@@ -976,20 +964,12 @@ export interface Database {
   };
 }
 
-// ===========================
-// === YARDIMCI İÇ TİPLER (INTERNAL) ===
-// ===========================
-
 type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>;
 
 type DefaultSchema = DatabaseWithoutInternals[Extract<
   keyof Database,
   'public'
 >];
-
-// ===========================
-// === ENUM (SEÇENEK) TİPLERİ ===
-// ===========================
 
 /**
  * Veritabanında tanımlı numaralandırılabilir (Enum) tiplerin çıkarımını sağlar.
@@ -1011,10 +991,6 @@ export type Enums<
     ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
     : never;
 
-// ===========================
-// === JSON ÇOK AMAÇLI TİPİ ===
-// ===========================
-
 /**
  * Tablolarda bulunan jsonb/json kolonlarını güvenli tipte tutar.
  */
@@ -1025,10 +1001,6 @@ export type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[];
-
-// ===========================
-// === TABLO OKUMA VE YAZMA TİPLERİ ===
-// ===========================
 
 /**
  * Belirtilen tablodaki 'Row' (okuma) veri yapısını döndürür.

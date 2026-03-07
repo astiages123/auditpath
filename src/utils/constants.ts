@@ -3,10 +3,6 @@
  * Özelliğe (feature) özel sabitler ilgili özellik klasörlerinde tutulmalıdır.
  */
 
-// ===========================
-// === OTURUM VE CACHE ===
-// ===========================
-
 /**
  * Oturum geçerlilik süresi (12 saat).
  * JWT token kontrolleri için kullanılır.
@@ -22,10 +18,6 @@ export const DEFAULT_STORAGE_TTL_MS = 24 * 60 * 60 * 1000;
  * Çevrimdışı işlem kuyruğu ömrü (7 gün).
  */
 export const OFFLINE_QUEUE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-
-// ===========================
-// === SİSTEM AYARLARI ===
-// ===========================
 
 /**
  * Yapay Zeka (LLM) istek zaman aşımı süresi (90 saniye).

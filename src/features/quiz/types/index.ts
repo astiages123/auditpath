@@ -2,10 +2,8 @@
  * Quiz özellik grubu için tüm tiplerin ve şemaların merkezi dışa aktarma dosyası.
  */
 
-// === SECTION: Types ===
 export * from './types';
 
-// === SECTION: Schemas & Validated Types ===
 export {
   AILogicSchema,
   BaseQuestionSchema,

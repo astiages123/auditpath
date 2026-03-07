@@ -1,7 +1,3 @@
-// ===========================
-// === TİP TANIMLAMALARI ===
-// ===========================
-
 /**
  * Desteklenen AI görev tiplerinin listesi.
  */
@@ -30,10 +26,6 @@ export interface AIConfig {
   /** Sistem istemine eklenecek varsayılan önek */
   systemPromptPrefix?: string;
 }
-
-// ===========================
-// === GÖREV YAPILANDIRMALARI ===
-// ===========================
 
 /**
  * Her bir görev tipi için varsayılan model ve parametre ayarları.
@@ -75,10 +67,6 @@ const TASK_CONFIGS: Record<AITask, AIConfig> = {
     temperature: 0.6,
   },
 };
-
-// ===========================
-// === YARDIMCI FONKSİYONLAR ===
-// ===========================
 
 /**
  * Belirtilen görev tipine uygun AI yapılandırmasını döner.

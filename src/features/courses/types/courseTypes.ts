@@ -1,14 +1,6 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import type { Database } from '@/types/database.types';
 import type { ConceptMapItem } from '@/features/quiz/types';
 import type { Rank } from '@/types/auth';
-
-// ===========================
-// === ENUM TYPES ===
-// ===========================
 
 export interface RankInfo extends Rank {
   threshold?: number;
@@ -19,10 +11,6 @@ export type CourseType = Database['public']['Enums']['course_type_enum'];
 
 /** Database enum for item types (e.g., video, reading) */
 export type ItemType = Database['public']['Enums']['item_type_enum'];
-
-// ===========================
-// === ENTITY TYPES ===
-// ===========================
 
 /** Represents a single course record */
 export type Course = Database['public']['Tables']['courses']['Row'];
@@ -39,10 +27,6 @@ export type Category = Database['public']['Tables']['categories']['Row'] & {
 export type CourseTopic = Database['public']['Tables']['note_chunks']['Row'] & {
   questionCount?: number;
 };
-
-// ===========================
-// === STATISTIC TYPES ===
-// ===========================
 
 /** Statistics and details representing completion and quiz status of a topic */
 export interface TopicCompletionStats {

@@ -1,9 +1,5 @@
 import type { Rank } from '@/types/auth';
 
-// ===========================
-// === RANK CONSTANTS ===
-// ===========================
-
 /**
  * Predefined list of global user ranks based on progress percentage.
  */

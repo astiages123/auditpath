@@ -1,7 +1,3 @@
-// ===========================
-// === IMPORTS ===
-// ===========================
-
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/features/auth/hooks/useAuth';
@@ -12,20 +8,12 @@ import { RANKS } from '@/features/achievements/utils/constants';
 import { useCategories } from './useCategories';
 import { useAllCourses } from './useAllCourses';
 
-// ===========================
-// === INTERFACES ===
-// ===========================
-
 export interface HomeData {
   categories: Category[];
   stats: ProgressStats;
   loading: boolean;
   error: string | null;
 }
-
-// ===========================
-// === HOOK ===
-// ===========================
 
 /**
  * Hook to retrieve curated data for the user's home dashboard.

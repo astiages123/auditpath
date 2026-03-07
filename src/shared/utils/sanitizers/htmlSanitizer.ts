@@ -1,10 +1,6 @@
 import DOMPurify from 'dompurify';
 
-// === TYPES ===
-
 export type ContentType = 'strict' | 'markdown' | 'raw' | 'html';
-
-// === CONFIG ===
 
 const COMMON_FORBID_ATTR = [
   'onerror',
@@ -232,8 +228,6 @@ export const HTML_CONFIG = {
     'onscroll',
   ],
 };
-
-// === FUNCTIONS ===
 
 /**
  * Sanitizes a string using DOMPurify with the specified configuration

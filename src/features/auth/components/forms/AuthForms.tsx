@@ -1,4 +1,3 @@
-// === TYPES ===
 import { useState, useCallback } from 'react';
 import * as z from 'zod';
 import { Loader2 } from 'lucide-react';
@@ -59,7 +58,6 @@ const SUPABASE_ERROR_MESSAGES: Record<string, string> = {
 /** Tracks the time of the last request for rate limiting. */
 let lastRequestTime = 0;
 
-// === HELPERS ===
 /**
  * Resolves a user-friendly error message from a Supabase error.
  * @param error - The error object from Supabase.
@@ -71,19 +69,16 @@ const getSupabaseErrorMessage = (error: unknown): string => {
   return SUPABASE_ERROR_MESSAGES[code] || SUPABASE_ERROR_MESSAGES.default;
 };
 
-// === COMPONENTS ===
 /**
  * Component for login and registration forms.
  * @param {Object} props - Component props.
  * @param {() => void} [props.onSuccess] - Callback on successful authentication.
  */
 export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
-  // === STATE ===
   const [formData, setFormData] = useState({ identifier: '', password: '' });
   const [errors, setErrors] = useState<AuthFormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // === HANDLERS ===
   /**
    * Handles input changes and clears associated errors.
    */
@@ -179,7 +174,6 @@ export function AuthForms({ onSuccess }: { onSuccess?: () => void }) {
     [formData, onSuccess]
   );
 
-  // === RENDER ===
   return (
     <div className="grid gap-6">
       <form onSubmit={handleSubmit}>

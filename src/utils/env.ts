@@ -1,9 +1,5 @@
 import { logger } from '@/utils/logger';
 
-// ===========================
-// === TİP TANIMLAMALARI ===
-// ===========================
-
 /**
  * Uygulama genelinde kullanılan çevre değişkenleri yapılandırması.
  */
@@ -27,10 +23,6 @@ export interface EnvConfig {
     siteUrl: string;
   };
 }
-
-// ===========================
-// === YARDIMCI İŞLEVLER ===
-// ===========================
 
 /**
  * Hem Vite (client) hem de Node.js ortamlarında çevre değişkenlerini güvenli bir şekilde okur.
@@ -86,10 +78,6 @@ const getRequiredEnvVar = (key: string): string => {
 
   return value;
 };
-
-// ===========================
-// === YAPILANDIRMA ÇIKTISI ===
-// ===========================
 
 const currentMode =
   getEnvValue('MODE') || getEnvValue('NODE_ENV') || 'development';

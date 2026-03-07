@@ -2,10 +2,6 @@ import { z } from 'zod';
 import { Json } from '@/types/common';
 import { QuizInsert } from '@/features/quiz/types';
 
-// ===========================
-// === ENUMS & SCHEMAS ===
-// ===========================
-
 /**
  * Valid event types for the pomodoro timeline.
  */
@@ -46,10 +42,6 @@ export const PauseIntervalSchema = z.object({
   end: z.string(),
 });
 
-// ===========================
-// === DATABASE INSERTS & UPSERTS ===
-// ===========================
-
 /**
  * Data required to insert a new pomodoro session into the database.
  */
@@ -81,10 +73,6 @@ export interface VideoUpsert {
  * Union type representing valid activity data formats.
  */
 export type ActivityData = PomodoroInsert | VideoUpsert | QuizInsert;
-
-// ===========================
-// === UI / FRONTEND INTERFACES ===
-// ===========================
 
 /**
  * Represents a single recent activity item to display to the user.

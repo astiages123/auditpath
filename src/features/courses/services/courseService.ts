@@ -32,7 +32,9 @@ export async function getCategories(): Promise<Category[]> {
 export async function getAllCourses(): Promise<Course[]> {
   const { data, error } = await supabase
     .from('courses')
-    .select('*')
+    .select(
+      'id, name, course_slug, total_videos, total_pages, total_hours, type, sort_order, category_id, created_at, instructor, playlist_url, updated_at'
+    )
     .order('sort_order');
 
   if (error) {
@@ -50,7 +52,9 @@ export async function getCourseBySlug(
 ): Promise<Course | null> {
   const { data, error } = await supabase
     .from('courses')
-    .select('*')
+    .select(
+      'id, name, course_slug, total_videos, total_pages, total_hours, type, sort_order, category_id, created_at, instructor, playlist_url, updated_at'
+    )
     .eq('course_slug', courseSlug)
     .single();
 

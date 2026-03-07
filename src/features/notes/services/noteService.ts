@@ -4,7 +4,7 @@ import { type CourseTopic } from '@/features/courses/types/courseTypes';
 import {
   getCourseIdBySlug,
   getCourseTopics,
-} from '@/features/quiz/services/quizCoreService';
+} from '@/shared/services/courseSharedService';
 
 import { processTopicContent } from '../logic/contentProcessor';
 import { type TopicMetadata } from '../logic/contentProcessor';

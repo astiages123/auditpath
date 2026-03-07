@@ -69,3 +69,68 @@ export async function unlockAchievement(
     { userId, achievementId }
   );
 }
+/**
+ * Birden fazla başarıyı toplu olarak kaydeder.
+ */
+export async function bulkUpsertAchievements(
+  updates: Array<{
+    user_id: string;
+    achievement_id: string;
+    unlocked_at: string;
+    is_celebrated: boolean;
+  }>
+) {
+  return safeQuery(
+    supabase.from('user_achievements').upsert(updates, {
+      onConflict: 'user_id,achievement_id',
+      ignoreDuplicates: true,
+    }),
+    'Error upserting unlocked achievements'
+  );
+}
+
+/**
+ * Belirli başarıları kullanıcıdan geri alır (siler).
+ */
+export async function revokeAchievements(
+  userId: string,
+  achievementIds: string[]
+) {
+  return safeQuery(
+    supabase
+      .from('user_achievements')
+      .delete()
+      .eq('user_id', userId)
+      .in('achievement_id', achievementIds),
+    'Error revoking achievements'
+  );
+}
+
+/**
+ * Kutlanmamış başarıları getirir.
+ */
+export async function getUncelebratedAchievements(userId: string) {
+  return safeQuery<{ achievement_id: string }[]>(
+    supabase
+      .from('user_achievements')
+      .select('achievement_id')
+      .eq('user_id', userId)
+      .eq('is_celebrated', false),
+    'Error fetching uncelebrated achievements'
+  );
+}
+
+/**
+ * Bir başarıyı kutlandı olarak işaretler.
+ */
+export async function markAsCelebrated(userId: string, achievementId: string) {
+  return safeQuery(
+    supabase
+      .from('user_achievements')
+      .update({ is_celebrated: true })
+      .eq('user_id', userId)
+      .eq('achievement_id', achievementId)
+      .eq('is_celebrated', false),
+    'Error marking achievement as celebrated'
+  );
+}

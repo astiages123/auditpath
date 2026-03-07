@@ -1,13 +1,5 @@
-// ==========================================
-// === TARGET CONSTANTS ===
-// ==========================================
-
 /** Standart günlük çalışma hedefi (dakika) */
 export const DAILY_GOAL_MINUTES: number = 200;
-
-// ==========================================
-// === EFFICIENCY THRESHOLDS ===
-// ==========================================
 
 /** Eşik değerleri için arayüz tanımlaması */
 export interface EfficiencyThresholds {
@@ -26,10 +18,6 @@ export const EFFICIENCY_THRESHOLDS: EfficiencyThresholds = {
   SPEED: 1.7,
   ALARM_THRESHOLD: 2.5,
 };
-
-// ==========================================
-// === GLOBAL CONFIG ===
-// ==========================================
 
 /** Genel verimlilik ayarları objesi için arayüz */
 export interface EfficiencyConfiguration {

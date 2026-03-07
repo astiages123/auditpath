@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useUIStore } from '@/shared/store/useUIStore';
-import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/stringHelpers';
 import { TooltipProvider } from '@/components/ui/tooltip';
@@ -12,6 +11,7 @@ import {
   NAV_GROUP_LABELS,
   type NavGroup,
 } from './nav-config';
+import { usePomodoroUIStore } from '@/features/pomodoro/store';
 import type { NavItem } from './nav-config';
 
 const GROUP_ORDER: NavItem['group'][] = ['navigation', 'action', 'meta'];
@@ -19,7 +19,7 @@ const GROUP_ORDER: NavItem['group'][] = ['navigation', 'action', 'meta'];
 export function Sidebar() {
   const isSidebarCollapsed = useUIStore((state) => state.isSidebarCollapsed);
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
-  const { setOpen: setPomodoroOpen } = usePomodoro();
+  const setPomodoroOpen = usePomodoroUIStore((state) => state.setWidgetOpen);
 
   const isCollapsed = isSidebarCollapsed;
   const groupedItems = getNavItemsByGroup();

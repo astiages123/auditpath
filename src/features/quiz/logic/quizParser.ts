@@ -20,7 +20,7 @@ import {
 import { getChunkWithContent } from '../services/quizCoreService';
 import {
   createQuestion,
-  fetchCachedQuestion,
+  fetchCachedQuestionTitles,
 } from '../services/quizQuestionService';
 
 // Yeni modüllerden içe aktarmalar
@@ -184,6 +184,9 @@ export async function generateForChunk(
         ? concepts
         : shuffle([...concepts]).slice(0, typeQuotas);
 
+    // Önceden üretilmiş soru başlıklarını topluca çekiyoruz (Batch Check)
+    const cachedTitles = await fetchCachedQuestionTitles(chunk.id, usageType);
+
     let draftingBuffer: { index: number; concept: ConceptMapItem }[] = [];
     const batchSize = 3;
 
@@ -197,13 +200,9 @@ export async function generateForChunk(
       }
 
       const concept = targetConcepts[i];
-      const cached = await fetchCachedQuestion(
-        chunk.id,
-        usageType,
-        concept.baslik
-      );
+      const isCached = cachedTitles.has(concept.baslik);
 
-      if (cached) {
+      if (isCached) {
         totalGeneratedCount++;
         callbacks.onQuestionSaved(totalGeneratedCount);
         continue;

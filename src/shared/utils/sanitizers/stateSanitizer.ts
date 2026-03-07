@@ -1,7 +1,5 @@
 import { ContentType, sanitizeString } from './htmlSanitizer';
 
-// === FUNCTIONS ===
-
 /**
  * Deep sanitizes an object using DOMPurify
  * @param obj - The object to sanitize

@@ -19,35 +19,36 @@ export type PomodoroMode = 'work' | 'break';
  * @returns Combined Pomodoro state and control functions
  */
 export function usePomodoro() {
-  const {
-    timeLeft,
-    isActive,
-    isBreak,
-    startTime,
-    duration,
-    pauseStartTime,
-    startTimer,
-    pauseTimer,
-    resetTimer,
-    setMode,
-    tick: storeTick,
-  } = useTimerStore();
+  const timeLeft = useTimerStore((s) => s.timeLeft);
+  const isActive = useTimerStore((s) => s.isActive);
+  const isBreak = useTimerStore((s) => s.isBreak);
+  const startTime = useTimerStore((s) => s.startTime);
+  const duration = useTimerStore((s) => s.duration);
+  const pauseStartTime = useTimerStore((s) => s.pauseStartTime);
+  const startTimer = useTimerStore((s) => s.startTimer);
+  const pauseTimer = useTimerStore((s) => s.pauseTimer);
+  const resetTimer = useTimerStore((s) => s.resetTimer);
+  const setMode = useTimerStore((s) => s.setMode);
+  const storeTick = useTimerStore((s) => s.tick);
 
-  const {
-    sessionId,
-    sessionCount,
-    incrementSession,
-    timeline,
-    setHasRestored,
-    originalStartTime,
-    getPauseDuration,
-    addTimelineEvent,
-    closeLastTimelineEvent,
-    resetSession,
-  } = usePomodoroSessionStore();
+  const sessionId = usePomodoroSessionStore((s) => s.sessionId);
+  const sessionCount = usePomodoroSessionStore((s) => s.sessionCount);
+  const incrementSession = usePomodoroSessionStore((s) => s.incrementSession);
+  const timeline = usePomodoroSessionStore((s) => s.timeline);
+  const setHasRestored = usePomodoroSessionStore((s) => s.setHasRestored);
+  const originalStartTime = usePomodoroSessionStore((s) => s.originalStartTime);
+  const getPauseDuration = usePomodoroSessionStore((s) => s.getPauseDuration);
+  const addTimelineEvent = usePomodoroSessionStore((s) => s.addTimelineEvent);
+  const closeLastTimelineEvent = usePomodoroSessionStore(
+    (s) => s.closeLastTimelineEvent
+  );
+  const resetSession = usePomodoroSessionStore((s) => s.resetSession);
 
-  const { selectedCourse, setCourse, isWidgetOpen, setWidgetOpen, resetUI } =
-    usePomodoroUIStore();
+  const selectedCourse = usePomodoroUIStore((s) => s.selectedCourse);
+  const setCourse = usePomodoroUIStore((s) => s.setCourse);
+  const isWidgetOpen = usePomodoroUIStore((s) => s.isWidgetOpen);
+  const setWidgetOpen = usePomodoroUIStore((s) => s.setWidgetOpen);
+  const resetUI = usePomodoroUIStore((s) => s.resetUI);
 
   const { user } = useAuth();
   const userId = user?.id;

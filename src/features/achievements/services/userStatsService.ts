@@ -57,14 +57,16 @@ export async function getUserStats(
   if (!predefinedCategories) {
     const { data: fetchedCategories, error: categoryError } = await supabase
       .from('categories')
-      .select('*, courses(*)')
+      .select(
+        'id, name, sort_order, total_hours, courses(id, name, course_slug, total_videos, total_pages, total_hours, type, sort_order)'
+      )
       .order('sort_order');
 
     if (categoryError) {
       throw categoryError;
     }
 
-    categories = fetchedCategories || [];
+    categories = (fetchedCategories as Category[]) || [];
   }
 
   const courseToCategoryMap: Record<string, string> = {};

@@ -6,8 +6,6 @@ import { RecentActivitiesContainer } from '@/features/statistics/components/cont
 import { formatEfficiencyTime } from '@/features/statistics/logic/statisticsHelpers';
 import { RecentSession } from '@/features/pomodoro/types/pomodoroTypes';
 
-// === MOCKs: Karmaşık alt bileşenler ===
-
 // StatisticsModal: Trigger içeriğini ve children'ı doğrudan render eder,
 // Radix Dialog portalını tetiklemez.
 vi.mock('@/features/statistics/components/modals/StatisticsModal', () => ({
@@ -54,8 +52,6 @@ vi.mock('@/features/statistics/hooks/useStatisticsTrends', () => ({
   useStatisticsTrends: vi.fn(),
 }));
 
-// === MOCK VERİ ===
-
 /** 3 farklı derse ait mock RecentSession listesi */
 const mockSessions: RecentSession[] = [
   {
@@ -96,8 +92,6 @@ const mockSessions: RecentSession[] = [
   },
 ];
 
-// === YARDIMCI FONKSIYON TESTLERİ ===
-
 describe('formatEfficiencyTime', () => {
   it('sadece dakika varsa "0sa Xdk" formatında döndürür', () => {
     expect(formatEfficiencyTime(45)).toBe('0sa 45dk');
@@ -115,8 +109,6 @@ describe('formatEfficiencyTime', () => {
     expect(formatEfficiencyTime(0)).toBe('0sa 0dk');
   });
 });
-
-// === RecentActivitiesCard BİLEŞEN TESTLERİ ===
 
 describe('RecentActivitiesCard', () => {
   it('3 farklı dersin adını listede render eder', () => {
@@ -224,8 +216,6 @@ describe('RecentActivitiesCard', () => {
     expect(labels.length).toBeGreaterThanOrEqual(1);
   });
 });
-
-// === RecentActivitiesContainer BİLEŞEN TESTLERİ ===
 
 describe('RecentActivitiesContainer', () => {
   it('oturum listesi görünür', () => {

@@ -1,10 +1,6 @@
 import type { Rank } from '@/types/auth';
 import { RANKS } from './constants';
 
-// ===========================
-// === RANK RESOLUTION ===
-// ===========================
-
 /**
  * Retrieves the appropriate rank for a given progress percentage.
  *

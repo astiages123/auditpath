@@ -29,6 +29,10 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
+          if (id.includes('mermaid')) return 'vendor-mermaid';
+          if (id.includes('recharts')) return 'vendor-recharts';
+          if (id.includes('katex')) return 'vendor-katex';
+          if (id.includes('framer-motion')) return 'vendor-motion';
           if (id.includes('@supabase')) return 'vendor-supabase';
           if (id.includes('node_modules/react')) return 'vendor-react';
         },

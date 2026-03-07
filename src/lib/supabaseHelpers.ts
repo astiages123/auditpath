@@ -3,10 +3,6 @@ import { PostgrestError } from '@supabase/supabase-js';
 import { ApiResponse } from '@/types/common';
 import { logger } from '@/utils/logger';
 
-// ===========================
-// === TİP TANIMLAMALARI ===
-// ===========================
-
 /**
  * Güvenli sorgu sonuçları için standart dönüş tipi.
  * ApiResponse yapısını sayma (count) bilgisi ile genişletir.
@@ -15,10 +11,6 @@ export interface SafeQueryResult<T> extends ApiResponse<T> {
   /** Sorgu sonucundaki toplam kayıt sayısı (eğer istenmişse) */
   count: number | null;
 }
-
-// ===========================
-// === HATA YÖNETİMİ ===
-// ===========================
 
 /**
  * Supabase işlemlerinde meydana gelen hataları standart bir formatta işler ve loglar.
@@ -55,10 +47,6 @@ export async function handleSupabaseError(
     onRetry();
   }
 }
-
-// ===========================
-// === GÜVENLİ SORGU İŞLEMLERİ ===
-// ===========================
 
 /**
  * Bir Supabase sorgu sözünü (promise) güvenli bir şekilde yürütür.

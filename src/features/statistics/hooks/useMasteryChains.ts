@@ -1,8 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { getCourseMastery } from '@/features/achievements/services/userStatsService';
-import { supabase } from '@/lib/supabase';
-import { safeQuery } from '@/lib/supabaseHelpers';
+import {
+  type ChunkMasteryRow,
+  getNoteChunksWithMetadata,
+  getUserChunkMasteries,
+  type NoteChunkRow,
+} from '../services/masteryService';
 import {
   calculateMasteryChains,
   processGraphForAtlas,
@@ -32,17 +36,6 @@ export interface MasteryChainStats {
 export interface MasteryChainsHook {
   lessonMastery: FormattedLessonMastery[];
   masteryChainStats: MasteryChainStats | null;
-}
-
-interface NoteChunkRow {
-  id: string;
-  metadata: unknown;
-  course_id: string | null;
-}
-
-interface ChunkMasteryRow {
-  chunk_id: string | null;
-  mastery_score: number | null;
 }
 
 /**
@@ -92,24 +85,13 @@ export function useMasteryChains(): MasteryChainsHook {
       if (!user?.id) return;
 
       try {
-        const [{ data: chunksData }, { data: masteryData }] = await Promise.all(
-          [
-            safeQuery<NoteChunkRow[]>(
-              supabase
-                .from('note_chunks')
-                .select('id, metadata, course_id')
-                .not('metadata', 'is', null),
-              'Error fetching note chunks'
-            ),
-            safeQuery<ChunkMasteryRow[]>(
-              supabase
-                .from('chunk_mastery')
-                .select('chunk_id, mastery_score')
-                .eq('user_id', user.id),
-              'Error fetching chunk mastery'
-            ),
-          ]
-        );
+        const [chunksResult, masteryResult] = await Promise.all([
+          getNoteChunksWithMetadata(),
+          getUserChunkMasteries(user.id),
+        ]);
+
+        const chunksData = chunksResult.data;
+        const masteryData = masteryResult.data;
 
         if (!isMounted || !chunksData) return;
 

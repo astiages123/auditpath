@@ -1,14 +1,6 @@
-// ===========================
-// === WORKER STATE ===
-// ===========================
-
 let timer: ReturnType<typeof setInterval> | null = null;
 
 export type TimerWorkerMessage = 'START' | 'STOP';
-
-// ===========================
-// === MESSAGE HANDLER ===
-// ===========================
 
 self.onmessage = (e: MessageEvent<TimerWorkerMessage>) => {
   const messageData = e.data;

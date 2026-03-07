@@ -28,22 +28,25 @@ import { logger } from '@/utils/logger';
 
 export function TimerController() {
   // Timer state
-  const { isActive, timeLeft, isBreak, duration, startTime } = useTimerStore();
-  const tick = useTimerStore((state) => state.tick);
+  const isActive = useTimerStore((s) => s.isActive);
+  const timeLeft = useTimerStore((s) => s.timeLeft);
+  const isBreak = useTimerStore((s) => s.isBreak);
+  const duration = useTimerStore((s) => s.duration);
+  const startTime = useTimerStore((s) => s.startTime);
+  const tick = useTimerStore((s) => s.tick);
 
   // Session state
-  const {
-    sessionId,
-    timeline,
-    originalStartTime,
-    setSessionCount,
-    setSessionId,
-    setHasRestored,
-    hasRestored,
-  } = usePomodoroSessionStore();
+  const sessionId = usePomodoroSessionStore((s) => s.sessionId);
+  const timeline = usePomodoroSessionStore((s) => s.timeline);
+  const originalStartTime = usePomodoroSessionStore((s) => s.originalStartTime);
+  const setSessionCount = usePomodoroSessionStore((s) => s.setSessionCount);
+  const setSessionId = usePomodoroSessionStore((s) => s.setSessionId);
+  const setHasRestored = usePomodoroSessionStore((s) => s.setHasRestored);
+  const hasRestored = usePomodoroSessionStore((s) => s.hasRestored);
 
   // UI state
-  const { selectedCourse, setCourse } = usePomodoroUIStore();
+  const selectedCourse = usePomodoroUIStore((s) => s.selectedCourse);
+  const setCourse = usePomodoroUIStore((s) => s.setCourse);
 
   const { user, session } = useAuth();
   const userId = user?.id;

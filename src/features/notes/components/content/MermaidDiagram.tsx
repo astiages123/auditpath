@@ -63,16 +63,34 @@ export const MermaidDiagram = memo(function MermaidDiagram({
   code,
 }: MermaidDiagramProps): React.ReactElement {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(false);
   const [state, setState] = useState<MermaidDiagramState>({
     svg: '',
     error: null,
-    isLoading: true,
+    isLoading: false, // Initially idle
   });
 
   useEffect(() => {
-    const renderDiagram = async (): Promise<void> => {
-      if (!code.trim()) return;
+    if (!containerRef.current) return;
 
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' } // Load slightly before coming into view
+    );
+
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible || !code.trim()) return;
+
+    const renderDiagram = async (): Promise<void> => {
       try {
         setState((prev: MermaidDiagramState) => ({
           ...prev,
@@ -105,13 +123,20 @@ export const MermaidDiagram = memo(function MermaidDiagram({
     };
 
     renderDiagram();
-  }, [code]);
+  }, [code, isVisible]);
 
-  if (state.isLoading) {
+  if (!isVisible || state.isLoading) {
     return (
-      <div className="my-8 rounded-xl border border-border/50 bg-card p-8 flex items-center justify-center">
+      <div
+        ref={containerRef}
+        className="my-8 min-h-[150px] rounded-xl border border-border/50 bg-card p-8 flex items-center justify-center"
+      >
         <Loader2 className="w-6 h-6 text-primary animate-spin" />
-        <span className="ml-3 text-foreground/90">Diyagram yükleniyor...</span>
+        <span className="ml-3 text-foreground/90">
+          {!isVisible
+            ? 'Görüntülenince yüklenecek...'
+            : 'Diyagram yükleniyor...'}
+        </span>
       </div>
     );
   }
@@ -130,7 +155,6 @@ export const MermaidDiagram = memo(function MermaidDiagram({
 
   return (
     <div
-      ref={containerRef}
       className="my-8 p-6 rounded-xl overflow-x-auto flex justify-center [&_svg]:max-w-full"
       dangerouslySetInnerHTML={{ __html: state.svg }}
     />

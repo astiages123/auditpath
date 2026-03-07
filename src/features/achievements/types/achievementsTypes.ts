@@ -1,9 +1,5 @@
 import type { Rank } from '@/types/auth';
 
-// ===========================
-// === BASIC TYPES ===
-// ===========================
-
 /**
  * Represents an achievement unlocked by the user.
  */
@@ -11,10 +7,6 @@ export interface UnlockedAchievement {
   id: string;
   unlockedAt: string;
 }
-
-// ===========================
-// === GUILD TYPES ===
-// ===========================
 
 /**
  * Represents the type of a guild.
@@ -40,10 +32,6 @@ export interface GuildInfo {
   color: string;
   topicMasteryBadge?: string;
 }
-
-// ===========================
-// === ACHIEVEMENT DEFINITIONS ===
-// ===========================
 
 /**
  * Represents the requirements to unlock an achievement.
@@ -73,10 +61,6 @@ export interface Achievement {
   isPermanent?: boolean;
 }
 
-// ===========================
-// === PROGRESS STATS ===
-// ===========================
-
 /**
  * Represents progress for a specific category.
  */
@@ -105,10 +89,6 @@ export interface ProgressStats {
   estimatedDays?: number;
   dailyAverage?: number;
 }
-
-// ===========================
-// === ACTIVITY & MASTERY ===
-// ===========================
 
 /**
  * Represents a log of user activity.

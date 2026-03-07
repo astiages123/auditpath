@@ -1,17 +1,26 @@
 import { logger } from '@/utils/logger';
 
-const notificationAudio: HTMLAudioElement | null =
-  typeof window !== 'undefined' ? new Audio('/audio/alarmRing.mp3') : null;
+let notificationAudio: HTMLAudioElement | null = null;
+
+const getAudio = () => {
+  if (typeof window === 'undefined') return null;
+  if (!notificationAudio) {
+    notificationAudio = new Audio('/audio/alarmRing.mp3');
+    notificationAudio.preload = 'none'; // Sadece çalınacağı zaman yüklenmeye başlasın
+  }
+  return notificationAudio;
+};
 
 /**
  * Plays the notification sound when a timer ends.
  * Catches and logs errors if playback fails due to missing user gesture context.
  */
 export const playNotificationSound = (): void => {
-  if (!notificationAudio) return;
+  const audio = getAudio();
+  if (!audio) return;
 
-  notificationAudio.currentTime = 0;
-  void notificationAudio.play().catch((playbackError: unknown) => {
+  audio.currentTime = 0;
+  void audio.play().catch((playbackError: unknown) => {
     logger.warn(
       'AudioUtils',
       'playNotificationSound',
@@ -26,10 +35,11 @@ export const playNotificationSound = (): void => {
  * Call this function on the first user interaction (e.g. click).
  */
 export const unlockAudio = (): void => {
-  if (!notificationAudio) return;
+  const audio = getAudio();
+  if (!audio) return;
 
-  void notificationAudio.play().then(() => {
-    notificationAudio.pause();
-    notificationAudio.currentTime = 0;
+  void audio.play().then(() => {
+    audio.pause();
+    audio.currentTime = 0;
   });
 };

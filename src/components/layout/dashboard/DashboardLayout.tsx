@@ -5,7 +5,6 @@ import { useCelebration } from '@/shared/hooks/useCelebration';
 import { useCelebrationStore } from '@/features/achievements/store/useCelebrationStore';
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { useUIStore } from '@/shared/store/useUIStore';
-import { usePomodoro } from '@/features/pomodoro/hooks/usePomodoro';
 import { syncPendingSessions } from '@/features/pomodoro/services/pomodoroService';
 import { MobileSidebar } from '../MobileSidebar';
 import { Sidebar } from './Sidebar';
@@ -46,7 +45,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
   const { isMobileMenuOpen, setMobileMenuOpen, isSidebarCollapsed } =
     useUIStore();
-  usePomodoro();
 
   const location = useLocation();
 
